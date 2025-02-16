@@ -42,8 +42,7 @@ class API : public FastCGIAPI
 	};
 
 	API(bool noFileSystemAccess, json configurationRoot, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
-		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-		shared_ptr<spdlog::logger> logger);
+		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData);
 
 	~API();
 
@@ -63,7 +62,6 @@ class API : public FastCGIAPI
 	void stopUploadFileProgressThread();
 
   private:
-	shared_ptr<spdlog::logger> _logger;
 	json _configurationRoot;
 
 	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool> _userKeyWorkspaceAndFlags;

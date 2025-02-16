@@ -1002,7 +1002,7 @@ void API::addUpdateEncodingProfilesSet(
 
 		try
 		{
-			Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+			Validator validator(_mmsEngineDBFacade, _configurationRoot);
 			validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
 
 			string field = "label";
@@ -1173,7 +1173,7 @@ void API::addEncodingProfile(
 
 		try
 		{
-			Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+			Validator validator(_mmsEngineDBFacade, _configurationRoot);
 			validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
 
 			string field = "label";

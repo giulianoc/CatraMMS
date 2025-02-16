@@ -118,44 +118,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						_mmsEngineDBFacade->checkWorkspaceStorageAndMaxIngestionNumber(workspace->_workspaceKey);
 					}
 				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						string() + "checkWorkspaceStorageAndMaxIngestionNumber failed" + ", _processorIdentifier: " +
-						to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-					);
-					string errorMessage = e.what();
-
-					SPDLOG_INFO(
-						string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber" + ", errorMessage: " + e.what()
-					);
-					try
-					{
-						_mmsEngineDBFacade->updateIngestionJob(
-							ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber, e.what()
-						);
-					}
-					catch (runtime_error &re)
-					{
-						SPDLOG_INFO(
-							string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) +
-							", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber" + ", errorMessage: " + re.what()
-						);
-					}
-					catch (exception &ex)
-					{
-						SPDLOG_INFO(
-							string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) +
-							", IngestionStatus: " + "End_WorkspaceReachedMaxStorageOrIngestionNumber" + ", errorMessage: " + ex.what()
-						);
-					}
-
-					throw e;
-				}
 				catch (exception &e)
 				{
 					SPDLOG_ERROR(
@@ -200,7 +162,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					ingestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress ||
 					ingestionStatus == MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress)
 				{
-					// source binary download or uploaded terminated
+					// source binary download or upload terminated (sourceBinaryTransferred is true)
 
 					string sourceFileName = to_string(ingestionJobKey) + "_source";
 
@@ -241,7 +203,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					{
 						parametersRoot = JSONUtils::toJson(metaDataContent);
 					}
-					catch (runtime_error &e)
+					catch (exception &e)
 					{
 						string errorMessage = string("metadata json is not well format") +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -283,49 +245,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 					try
 					{
-						Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+						Validator validator(_mmsEngineDBFacade, _configurationRoot);
 						if (ingestionType == MMSEngineDBFacade::IngestionType::GroupOfTasks)
 							validator.validateGroupOfTasksMetadata(workspace->_workspaceKey, parametersRoot);
 						else
 							dependencies = validator.validateSingleTaskMetadata(workspace->_workspaceKey, ingestionType, parametersRoot);
-					}
-					catch (runtime_error &e)
-					{
-						SPDLOG_ERROR(
-							string() + "validateMetadata failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-						);
-
-						string errorMessage = e.what();
-
-						SPDLOG_INFO(
-							string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_ValidationMetadataFailed" +
-							", errorMessage: " + errorMessage + ", processorMMS: " + ""
-						);
-						try
-						{
-							_mmsEngineDBFacade->updateIngestionJob(
-								ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_ValidationMetadataFailed, errorMessage
-							);
-						}
-						catch (runtime_error &re)
-						{
-							SPDLOG_INFO(
-								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_ValidationMetadataFailed" +
-								", errorMessage: " + re.what()
-							);
-						}
-						catch (exception &ex)
-						{
-							SPDLOG_INFO(
-								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_ValidationMetadataFailed" +
-								", errorMessage: " + ex.what()
-							);
-						}
-
-						throw runtime_error(errorMessage);
 					}
 					catch (exception &e)
 					{
@@ -374,45 +298,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageGroupOfTasks(ingestionJobKey, workspace, parametersRoot);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageGroupOfTasks failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -460,53 +345,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							string mediaFileFormat;
 							string md5FileCheckSum;
 							int fileSizeInBytes;
+							int64_t encodingProfileKey;
 							bool externalReadOnlyStorage;
 							try
 							{
-								tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> mediaSourceDetails =
-									getMediaSourceDetails(ingestionJobKey, workspace, ingestionType, parametersRoot);
-
-								tie(nextIngestionStatus, mediaSourceURL, mediaFileFormat, md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) =
-									mediaSourceDetails;
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "getMediaSourceDetails failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_ValidationMediaSourceFailed" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_ValidationMediaSourceFailed, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
+								tie(nextIngestionStatus, mediaSourceURL, mediaFileFormat, encodingProfileKey, md5FileCheckSum, fileSizeInBytes,
+									externalReadOnlyStorage) = getMediaSourceDetails(ingestionJobKey, workspace, ingestionType, parametersRoot);
 							}
 							catch (exception &e)
 							{
@@ -597,14 +441,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 									if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress)
 									{
-										/* 2021-02-19: check on threads is
-										 *already done in
-										 *handleCheckIngestionEvent 2021-06-19:
-										 *we still have to check the thread
-										 *limit because, in case
-										 *handleCheckIngestionEvent gets 20
-										 *events, we have still to postpone all
-										 *the events overcoming the thread limit
+										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+										 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
+										 * 		events, we have still to postpone all the events overcoming the thread limit
 										 */
 										int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
 										if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
@@ -669,14 +508,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 									else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress)
 									{
-										/* 2021-02-19: check on threads is
-										 *already done in
-										 *handleCheckIngestionEvent 2021-06-19:
-										 *we still have to check the thread
-										 *limit because, in case
-										 *handleCheckIngestionEvent gets 20
-										 *events, we have still to postpone all
-										 *the events overcoming the thread limit
+										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+										 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
+										 * 		events, we have still to postpone all the events overcoming the thread limit
 										 */
 										int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
 										if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
@@ -732,14 +566,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 									else if (nextIngestionStatus == MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress)
 									{
-										/* 2021-02-19: check on threads is
-										 *already done in
-										 *handleCheckIngestionEvent 2021-06-19:
-										 *we still have to check the thread
-										 *limit because, in case
-										 *handleCheckIngestionEvent gets 20
-										 *events, we have still to postpone all
-										 *the events overcoming the thread limit
+										/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+										 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
+										 * 		events, we have still to postpone all the events overcoming the thread limit
 										 */
 										int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
 										if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
@@ -874,44 +703,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									removeContentThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "removeContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -1008,44 +799,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									);
 									ftpDeliveryContentThread.detach();
 								}
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "ftpDeliveryContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -1164,44 +917,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									localCopyContentThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "localCopyContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -1308,44 +1023,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									httpCallbackThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "httpCallbackThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -1391,45 +1068,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageEncodeTask(ingestionJobKey, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageEncodeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -1477,45 +1115,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageVideoSpeedTask(ingestionJobKey, workspace, parametersRoot, dependencies);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageVideoSpeedTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -1561,45 +1160,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								managePictureInPictureTask(ingestionJobKey, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "managePictureInPictureTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -1647,45 +1207,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageIntroOutroOverlayTask(ingestionJobKey, workspace, parametersRoot, dependencies);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageIntroOutroOverlayTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -1731,45 +1252,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageAddSilentAudioTask(ingestionJobKey, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageAddSilentAudioTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -1892,45 +1374,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "generateAndIngestFramesTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -1979,45 +1422,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageSlideShowTask(ingestionJobKey, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageSlideShowTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -2117,44 +1521,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									manageConcatThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageConcatThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -2252,44 +1618,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									manageCutMediaThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageCutMediaThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -2329,138 +1657,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								throw runtime_error(errorMessage);
 							}
-							/*
-							try
-							{
-								generateAndIngestCutMediaTask(
-										ingestionJobKey,
-										workspace,
-										parametersRoot,
-										dependencies);
-							}
-							catch(runtime_error& e)
-							{
-								SPDLOG_ERROR(string() +
-							"generateAndIngestCutMediaTask failed"
-									+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-										+ ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(string() + "Update
-							IngestionJob"
-									+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-									+ ", IngestionStatus: " +
-							"End_IngestionFailure"
-									+ ", errorMessage: " + errorMessage
-									+ ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob
-							(ingestionJobKey,
-										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-										errorMessage
-										);
-								}
-								catch(runtime_error& re)
-								{
-									SPDLOG_INFO(string() + "Update
-							IngestionJob failed"
-										+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-										+ ", IngestionStatus: " +
-							"End_IngestionFailure"
-										+ ", errorMessage: " + re.what()
-									);
-								}
-								catch(exception& ex)
-								{
-									SPDLOG_INFO(string() + "Update
-							IngestionJob failed"
-										+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-										+ ", IngestionStatus: " +
-							"End_IngestionFailure"
-										+ ", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
-							catch(exception& e)
-							{
-								SPDLOG_ERROR(string() +
-							"generateAndIngestCutMediaTask failed"
-									+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-										+ ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(string() + "Update
-							IngestionJob"
-									+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-									+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-									+ ", IngestionStatus: " +
-							"End_IngestionFailure"
-									+ ", errorMessage: " + errorMessage
-									+ ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob
-							(ingestionJobKey,
-										MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
-										errorMessage
-										);
-								}
-								catch(runtime_error& re)
-								{
-									SPDLOG_INFO(string() + "Update
-							IngestionJob failed"
-										+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-										+ ", IngestionStatus: " +
-							"End_IngestionFailure"
-										+ ", errorMessage: " + re.what()
-									);
-								}
-								catch(exception& ex)
-								{
-									SPDLOG_INFO(string() + "Update
-							IngestionJob failed"
-										+ ", _processorIdentifier: " +
-							to_string(_processorIdentifier)
-										+ ", ingestionJobKey: " +
-							to_string(ingestionJobKey)
-										+ ", IngestionStatus: " +
-							"End_IngestionFailure"
-										+ ", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
-							*/
 						}
 						else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTracks)
 						{
@@ -2516,44 +1712,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									extractTracksContentThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "extractTracksContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -2603,45 +1761,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageOverlayImageOnVideoTask(ingestionJobKey, workspace, parametersRoot, dependencies);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageOverlayImageOnVideoTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -2690,45 +1809,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageOverlayTextOnVideoTask(ingestionJobKey, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageOverlayTextOnVideoTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -2834,45 +1914,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										dependencies);
 								*/
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "emailNotificationThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -2963,45 +2004,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									checkStreamingThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "checkStreamingThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -3050,45 +2052,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageMediaCrossReferenceTask(ingestionJobKey, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageMediaCrossReferenceTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -3195,44 +2158,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										dependencies);
 								*/
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "postOnFacebookThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -3338,44 +2263,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										dependencies);
 								*/
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "postOnYouTubeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -3424,45 +2311,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageFaceRecognitionMediaTask(ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageFaceRecognitionMediaTask failed" + ", _processorIdentifier: " +
-									to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -3513,45 +2361,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageFaceIdentificationMediaTask(ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageFaceIdentificationMediaTask failed" + ", _processorIdentifier: " +
-									to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -3597,45 +2406,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageLiveRecorder(ingestionJobKey, ingestionJobLabel, ingestionStatus, workspace, parametersRoot);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageLiveRecorder failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -3683,45 +2453,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageLiveProxy(ingestionJobKey, ingestionStatus, workspace, parametersRoot);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageLiveProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -3767,45 +2498,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageVODProxy(ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageVODProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -3853,45 +2545,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							{
 								manageCountdown(ingestionJobKey, ingestionStatus, /* ingestionDate, */ workspace, parametersRoot, dependencies);
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageCountdown failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -3937,45 +2590,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							try
 							{
 								manageLiveGrid(ingestionJobKey, ingestionStatus, workspace, parametersRoot);
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageLiveGrid failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-									", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -4080,44 +2694,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									}
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "manageLiveCutThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -4209,44 +2785,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									youTubeLiveBroadcastThread.detach();
 								}
 							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "youTubeLiveBroadcastThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
@@ -4337,44 +2875,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									);
 									facebookLiveBroadcastThread.detach();
 								}
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "facebookLiveBroadcastThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{
@@ -4469,44 +2969,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									);
 									changeFileFormatThread.detach();
 								}
-							}
-							catch (runtime_error &e)
-							{
-								SPDLOG_ERROR(
-									string() + "changeFileFormatThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-								);
-
-								string errorMessage = e.what();
-
-								SPDLOG_INFO(
-									string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage + ", processorMMS: " + ""
-								);
-								try
-								{
-									_mmsEngineDBFacade->updateIngestionJob(
-										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
-									);
-								}
-								catch (runtime_error &re)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + re.what()
-									);
-								}
-								catch (exception &ex)
-								{
-									SPDLOG_INFO(
-										string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" +
-										", errorMessage: " + ex.what()
-									);
-								}
-
-								throw runtime_error(errorMessage);
 							}
 							catch (exception &e)
 							{

@@ -37,15 +37,12 @@
 
 API::API(
 	bool noFileSystemAccess, json configurationRoot, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
-	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-	shared_ptr<spdlog::logger> logger
+	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
 	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization)
 {
 	_configurationRoot = configurationRoot;
-
-	_logger = spdlog::default_logger();
 
 	string encodingPriority = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPriority", "low");
 	SPDLOG_INFO(

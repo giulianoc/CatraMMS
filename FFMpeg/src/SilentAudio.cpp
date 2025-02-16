@@ -13,17 +13,7 @@
 #include "FFMpeg.h"
 #include "FFMpegEncodingParameters.h"
 #include "catralibraries/ProcessUtility.h"
-/*
-#include "FFMpegFilters.h"
-#include "JSONUtils.h"
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <fstream>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
+#include "spdlog/spdlog.h"
 
 void FFMpeg::silentAudio(
 	string videoAssetPathName, int64_t videoDurationInMilliSeconds,
@@ -40,11 +30,11 @@ void FFMpeg::silentAudio(
 
 	_currentApiName = APIName::SilentAudio;
 
-	_logger->info(
-		__FILEREF__ + "Received " + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", encodingJobKey: " + to_string(encodingJobKey) + ", videoAssetPathName: " + videoAssetPathName +
-		", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds) + ", addType: " + addType + ", seconds: " + to_string(seconds) +
-		", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+	SPDLOG_INFO(
+		"Received {}"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}",
+		toString(_currentApiName), ingestionJobKey, encodingJobKey
 	);
 
 	setStatus(ingestionJobKey, encodingJobKey, videoDurationInMilliSeconds, videoAssetPathName, stagingEncodedAssetPathName);
@@ -53,8 +43,13 @@ void FFMpeg::silentAudio(
 	{
 		if (!fs::exists(videoAssetPathName))
 		{
-			string errorMessage = string("video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", videoAssetPathName: " + videoAssetPathName;
+			string errorMessage = std::format(
+				"video asset path name not existing"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", videoAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, videoAssetPathName
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -71,7 +66,7 @@ void FFMpeg::silentAudio(
 
 			_twoPasses, // out
 
-			_ffmpegTempDir, _ffmpegTtfFontDir, _logger
+			_ffmpegTempDir, _ffmpegTtfFontDir
 		);
 
 		{
@@ -248,9 +243,12 @@ void FFMpeg::silentAudio(
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-					_logger->info(
-						__FILEREF__ + toString(_currentApiName) + ": Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					SPDLOG_INFO(
+						"{}: Executing ffmpeg command"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}",
+						toString(_currentApiName), encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
 					);
 
 					bool redirectionStdOutput = true;
@@ -263,25 +261,35 @@ void FFMpeg::silentAudio(
 					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
-						string errorMessage = __FILEREF__ + toString(_currentApiName) + ": ffmpeg command failed" +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", iReturnedStatus: " + to_string(iReturnedStatus) +
-											  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						SPDLOG_ERROR(errorMessage);
+						SPDLOG_ERROR(
+							"{}: ffmpeg command failed"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", iReturnedStatus: {}"
+							", ffmpegArgumentList: {}",
+							toString(_currentApiName), encodingJobKey, ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+						);
 
 						// to hide the ffmpeg staff
-						errorMessage = __FILEREF__ + toString(_currentApiName) + " command failed" +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey);
+						string errorMessage = std::format(
+							"{} command failed"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}",
+							toString(_currentApiName), encodingJobKey, ingestionJobKey
+						);
 						throw runtime_error(errorMessage);
 					}
 
 					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-					_logger->info(
-						__FILEREF__ + toString(_currentApiName) + ": Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					SPDLOG_INFO(
+						"{}: Executed ffmpeg command"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}"
+						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+						toString(_currentApiName), encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(),
+						chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 					);
 				}
 				catch (runtime_error &e)
@@ -291,19 +299,38 @@ void FFMpeg::silentAudio(
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
 					if (iReturnedStatus == 9) // 9 means: SIGKILL
-						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-									   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+						errorMessage = std::format(
+							"ffmpeg: ffmpeg command failed because killed by the user"
+							", _outputFfmpegPathFileName: {}"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", ffmpegArgumentList: {}"
+							", lastPartOfFfmpegOutputFile: {}"
+							", e.what(): {}",
+							_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+							e.what()
+						);
 					else
-						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+						errorMessage = std::format(
+							"ffmpeg: ffmpeg command failed"
+							", _outputFfmpegPathFileName: {}"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", ffmpegArgumentList: {}"
+							", lastPartOfFfmpegOutputFile: {}"
+							", e.what(): {}",
+							_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+							e.what()
+						);
 					SPDLOG_ERROR(errorMessage);
 
-					_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					SPDLOG_INFO(
+						"remove"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}",
+						ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName
+					);
 					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9) // 9 means: SIGKILL
@@ -312,96 +339,118 @@ void FFMpeg::silentAudio(
 						throw e;
 				}
 
-				_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}",
+					ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName
+				);
 				fs::remove_all(_outputFfmpegPathFileName);
 			}
 
-			_logger->info(
-				__FILEREF__ + toString(_currentApiName) + " file generated" + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"{} file generated"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				toString(_currentApiName), encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName
 			);
 
 			unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
 			if (ulFileSize == 0)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0" +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_INFO(
+					"ffmpeg: ffmpeg command failed, encoded file size is 0"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}"
+					", ffmpegArgumentList: {}",
+					encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
+				);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "command failed, encoded file size is 0" + ", encodingJobKey: " + to_string(encodingJobKey) +
-							   ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format(
+					"command failed, encoded file size is 0"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}",
+					encodingJobKey, ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 		}
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(
-			__FILEREF__ + toString(_currentApiName) + " ffmpeg failed" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"{} ffmpeg failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", stagingEncodedAssetPathName: {}",
+			toString(_currentApiName), encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName + ", e.what(): " + e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + toString(_currentApiName) + " ffmpeg failed" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"{} ffmpeg failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", stagingEncodedAssetPathName: {}",
+			toString(_currentApiName), encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName + ", e.what(): " + e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + toString(_currentApiName) + " ffmpeg failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		SPDLOG_ERROR(
+			"{} ffmpeg failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", stagingEncodedAssetPathName: {}",
+			toString(_currentApiName), encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName + ", e.what(): " + e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;

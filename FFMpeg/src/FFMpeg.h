@@ -86,7 +86,7 @@ struct EncodingIsAlreadyRunning : public exception
 class FFMpeg
 {
   public:
-	FFMpeg(json configuration, shared_ptr<spdlog::logger> logger);
+	FFMpeg(json configuration);
 
 	~FFMpeg();
 
@@ -309,7 +309,7 @@ class FFMpeg
 
 	void streamingToFile(int64_t ingestionJobKey, bool regenerateTimestamps, string sourceReferenceURL, string destinationPathName);
 
-	static void encodingVideoCodecValidation(string codec, shared_ptr<spdlog::logger> logger);
+	static void encodingVideoCodecValidation(string codec);
 
 	pair<string, string> retrieveStreamingYouTubeURL(int64_t ingestionJobKey, string youTubeURL);
 	string getDrawTextTemporaryPathName(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex = -1);
@@ -471,7 +471,6 @@ class FFMpeg
 			throw runtime_error(string("Wrong APIName") + ", current apiName: " + apiName);
 	}
 
-	shared_ptr<spdlog::logger> _logger;
 	string _ffmpegPath;
 	string _ffmpegTempDir;
 	string _ffmpegEndlessRecursivePlaylistDir;

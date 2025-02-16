@@ -145,7 +145,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				string frameAssetPathName = workspaceIngestionRepository + "/" + frameFileName;
 
 				pid_t childPid;
-				FFMpeg ffmpeg(_configurationRoot, _logger);
+				FFMpeg ffmpeg(_configurationRoot);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight,
 					&childPid

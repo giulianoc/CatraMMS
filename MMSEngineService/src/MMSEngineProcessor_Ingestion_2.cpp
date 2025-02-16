@@ -163,6 +163,23 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			workspaceIngestionBinaryPathName = _mmsStorage->getWorkspaceIngestionRepository(localAssetIngestionEvent.getWorkspace());
 			workspaceIngestionBinaryPathName.append("/").append(localAssetIngestionEvent.getIngestionSourceFileName());
 
+			// 2025-02-14: viene aggiunto un profilo di encoding ad un mediaitem e viene eseguito da un encoder esterno.
+			// 	Per aggiungerlo il file viene ingestato tramite PUSH con il nome <ingestionkey>_source nella workspace ingestion directory.
+			// 	Il nome del file finale sarà <ingestionkey>_source.<encoding file format>.
+			// 	Il blocco che segue semplicemente aggiunge al nome '-'<encoding profile key> in modo che il file finale sarà
+			// 	<ingestionkey>_source-<encoding profile key>.<encoding file format>
+			// 	E' puramente un cambio estetico del nome del file. Se dovesse creare problemi puo essere eliminato
+			// 	Attualmente l'ho commentato perchè da un problema e non ho tempo di capire. Bisognerebbe, oltre che capire il problema,
+			// 	- cercare dove viene usato _source nel codice per gestire questo scenario
+			// 	- rivedere la documentazione (se non esiste scriverla) per essere sicuri di non avere problemi
+			/*
+			{
+				int64_t encodingProfileKey = JSONUtils::asInt64(parametersRoot, "encodingProfileKey", -1);
+				if (encodingProfileKey != -1)
+					workspaceIngestionBinaryPathName.append(std::format("-{}", encodingProfileKey));
+			}
+			*/
+
 			string field = "fileFormat";
 			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 			if (fileFormat == "streaming-to-mp4")
@@ -363,7 +380,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	);
 
 	string metadataFileContent;
-	Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+	Validator validator(_mmsEngineDBFacade, _configurationRoot);
 	try
 	{
 		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies;
@@ -510,17 +527,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	string mediaFileFormat;
 	string md5FileCheckSum;
 	int fileSizeInBytes;
+	int64_t encodingProfileKey;
 	bool externalReadOnlyStorage;
 	try
 	{
 		string mediaSourceURL;
 
-		tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> mediaSourceDetails = getMediaSourceDetails(
-			localAssetIngestionEvent.getIngestionJobKey(), localAssetIngestionEvent.getWorkspace(), localAssetIngestionEvent.getIngestionType(),
-			parametersRoot
-		);
-
-		tie(nextIngestionStatus, mediaSourceURL, mediaFileFormat, md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) = mediaSourceDetails;
+		tie(nextIngestionStatus, mediaSourceURL, mediaFileFormat, encodingProfileKey, md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage) =
+			getMediaSourceDetails(
+				localAssetIngestionEvent.getIngestionJobKey(), localAssetIngestionEvent.getWorkspace(), localAssetIngestionEvent.getIngestionType(),
+				parametersRoot
+			);
 
 		// in case of youtube url, the real URL to be used has to be calcolated
 		// Here the mediaFileFormat is retrieved
@@ -530,7 +547,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			if ((mediaSourceURL.size() >= youTubePrefix1.size() && 0 == mediaSourceURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
 				(mediaSourceURL.size() >= youTubePrefix2.size() && 0 == mediaSourceURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
 			{
-				FFMpeg ffmpeg(_configurationRoot, _logger);
+				FFMpeg ffmpeg(_configurationRoot);
 				pair<string, string> streamingURLDetails =
 					ffmpeg.retrieveStreamingYouTubeURL(localAssetIngestionEvent.getIngestionJobKey(), mediaSourceURL);
 
@@ -1199,7 +1216,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	{
 		try
 		{
-			FFMpeg ffmpeg(_configurationRoot, _logger);
+			FFMpeg ffmpeg(_configurationRoot);
 			// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 			// mediaInfo;
 
@@ -2618,7 +2635,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 	}
 }
 
-tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> MMSEngineProcessor::getMediaSourceDetails(
+tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, bool> MMSEngineProcessor::getMediaSourceDetails(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot
 )
 {
@@ -2629,11 +2646,15 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> MMS
 	string mediaFileFormat;
 	bool externalReadOnlyStorage;
 
-	string field;
 	if (ingestionType != MMSEngineDBFacade::IngestionType::AddContent)
 	{
-		string errorMessage = string() + "ingestionType is wrong" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
+		string errorMessage = std::format(
+			"ingestionType is wrong"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", ingestionType: {}",
+			_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionType)
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -2641,86 +2662,47 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> MMS
 
 	externalReadOnlyStorage = false;
 	{
-		field = "sourceURL";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
-			mediaSourceURL = JSONUtils::asString(parametersRoot, field, "");
+		if (JSONUtils::isMetadataPresent(parametersRoot, "sourceURL"))
+			mediaSourceURL = JSONUtils::asString(parametersRoot, "sourceURL", "");
 
-		field = "fileFormat";
-		mediaFileFormat = JSONUtils::asString(parametersRoot, field, "");
+		mediaFileFormat = JSONUtils::asString(parametersRoot, "fileFormat", "");
 
-		// string httpPrefix("http://");
-		// string httpsPrefix("https://");
-		// // string ftpPrefix("ftp://");
-		// string ftpsPrefix("ftps://");
-		// string movePrefix("move://"); // move:///dir1/dir2/.../file
-		// string mvPrefix("mv://");
-		// string copyPrefix("copy://");
-		// string cpPrefix("cp://");
-		// string externalStoragePrefix("externalStorage://");
-		// if ((mediaSourceURL.size() >= httpPrefix.size() && 0 == mediaSourceURL.compare(0, httpPrefix.size(), httpPrefix)) ||
-		// 	(mediaSourceURL.size() >= httpsPrefix.size() && 0 == mediaSourceURL.compare(0, httpsPrefix.size(), httpsPrefix)) ||
-		// 	(mediaSourceURL.size() >= ftpPrefix.size() && 0 == mediaSourceURL.compare(0, ftpPrefix.size(), ftpPrefix)) ||
-		// 	(mediaSourceURL.size() >= ftpsPrefix.size() && 0 == mediaSourceURL.compare(0, ftpsPrefix.size(), ftpsPrefix)))
 		if (mediaSourceURL.starts_with("http://") || mediaSourceURL.starts_with("https://") || mediaSourceURL.starts_with("ftp://") ||
 			mediaSourceURL.starts_with("ftps://"))
-		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceDownloadingInProgress;
-		}
 		else if (mediaSourceURL.starts_with("move://") || mediaSourceURL.starts_with("mv://"))
-		{
-			// else if ((mediaSourceURL.size() >= movePrefix.size() && 0 == mediaSourceURL.compare(0, movePrefix.size(), movePrefix)) ||
-			// 	 (mediaSourceURL.size() >= mvPrefix.size() && 0 == mediaSourceURL.compare(0, mvPrefix.size(), mvPrefix)))
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceMovingInProgress;
-		}
 		else if (mediaSourceURL.starts_with("copy://") || mediaSourceURL.starts_with("cp://"))
-		// else if ((mediaSourceURL.size() >= copyPrefix.size() && 0 == mediaSourceURL.compare(0, copyPrefix.size(), copyPrefix)) ||
-		// 	 (mediaSourceURL.size() >= cpPrefix.size() && 0 == mediaSourceURL.compare(0, cpPrefix.size(), cpPrefix)))
-		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceCopingInProgress;
-		}
 		else if (mediaSourceURL.starts_with("externalStorage://"))
-		// else if (mediaSourceURL.size() >= externalStoragePrefix.size() &&
-		// 	 0 == mediaSourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
-		{
 			externalReadOnlyStorage = true;
-		}
 		else
-		{
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress;
-		}
 	}
 
-	string md5FileCheckSum;
-	field = "MD5FileCheckSum";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
-	{
-		// MD5         md5;
-		// char        md5RealDigest [32 + 1];
+	string md5FileCheckSum = JSONUtils::asString(parametersRoot, "md5FileCheckSum");
 
-		md5FileCheckSum = JSONUtils::asString(parametersRoot, field, "");
-	}
-
-	int fileSizeInBytes = -1;
-	field = "FileSizeInBytes";
-	fileSizeInBytes = JSONUtils::asInt(parametersRoot, field, -1);
-
-	/*
-	tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int>
-	mediaSourceDetails; get<0>(mediaSourceDetails) = nextIngestionStatus;
-	get<1>(mediaSourceDetails) = mediaSourceURL;
-	get<2>(mediaSourceDetails) = mediaFileFormat;
-	get<3>(mediaSourceDetails) = md5FileCheckSum;
-	get<4>(mediaSourceDetails) = fileSizeInBytes;
-	*/
+	int fileSizeInBytes = JSONUtils::asInt(parametersRoot, "fileSizeInBytes", -1);
+	int64_t encodingProfileKey = JSONUtils::asInt(parametersRoot, "encodingProfileKey", -1);
 
 	SPDLOG_INFO(
-		string() + "media source details" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-		", ingestionJobKey: " + to_string(ingestionJobKey) + ", nextIngestionStatus: " + MMSEngineDBFacade::toString(nextIngestionStatus) +
-		", mediaSourceURL: " + mediaSourceURL + ", mediaFileFormat: " + mediaFileFormat + ", md5FileCheckSum: " + md5FileCheckSum +
-		", fileSizeInBytes: " + to_string(fileSizeInBytes) + ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage)
+		"media source details"
+		", _processorIdentifier: {}"
+		", ingestionJobKey: {}"
+		", nextIngestionStatus: {}"
+		", mediaSourceURL: {}"
+		", encodingProfileKey: {}"
+		", mediaFileFormat: {}"
+		", md5FileCheckSum: {}"
+		", fileSizeInBytes: {}"
+		", externalReadOnlyStorage: {}",
+		_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(nextIngestionStatus), mediaSourceURL, encodingProfileKey, mediaFileFormat,
+		md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage
 	);
 
-	return make_tuple(nextIngestionStatus, mediaSourceURL, mediaFileFormat, md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage);
+	return make_tuple(
+		nextIngestionStatus, mediaSourceURL, mediaFileFormat, encodingProfileKey, md5FileCheckSum, fileSizeInBytes, externalReadOnlyStorage
+	);
 }
 
 void MMSEngineProcessor::validateMediaSourceFile(
@@ -3105,7 +3087,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			try
 			{
-				FFMpeg ffmpeg(_configurationRoot, _logger);
+				FFMpeg ffmpeg(_configurationRoot);
 				pair<string, string> streamingURLDetails = ffmpeg.retrieveStreamingYouTubeURL(ingestionJobKey, sourceReferenceURL);
 
 				string streamingYouTubeURL;
@@ -3189,7 +3171,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			);
 
 			// regenerateTimestamps (see docs/TASK_01_Add_Content_JSON_Format.txt)
-			FFMpeg ffmpeg(_configurationRoot, _logger);
+			FFMpeg ffmpeg(_configurationRoot);
 			ffmpeg.streamingToFile(ingestionJobKey, regenerateTimestamps, sourceReferenceURL, destBinaryPathName);
 
 			bool downloadingCompleted = true;

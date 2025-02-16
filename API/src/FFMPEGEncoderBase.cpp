@@ -3,12 +3,10 @@
 #include "JSONUtils.h"
 #include "spdlog/spdlog.h"
 
-FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot, shared_ptr<spdlog::logger> logger)
+FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot)
 {
 	try
 	{
-		_logger = logger;
-
 		_mmsAPITimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"], "timeoutInSeconds", 120);
 		SPDLOG_INFO(
 			"Configuration item"

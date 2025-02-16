@@ -113,7 +113,7 @@ void FFMpeg::encodeContent(
 
 			_twoPasses, // out
 
-			_ffmpegTempDir, _ffmpegTtfFontDir, _logger
+			_ffmpegTempDir, _ffmpegTtfFontDir
 		);
 
 		{

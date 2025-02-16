@@ -29,7 +29,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 	FFMPEGEncoderDaemons(
 		json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
 		mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, mutex *cpuUsageMutex,
-		deque<int> *cpuUsage, shared_ptr<spdlog::logger> logger
+		deque<int> *cpuUsage
 	);
 	~FFMPEGEncoderDaemons();
 

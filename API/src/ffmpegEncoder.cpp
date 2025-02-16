@@ -195,7 +195,7 @@ int main(int argc, char **argv)
 				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = make_shared<FFMPEGEncoderBase::Encoding>();
 				encoding->_available = true;
 				encoding->_childPid = 0; // not running
-				encoding->_ffmpeg = make_shared<FFMpeg>(configurationRoot, logger);
+				encoding->_ffmpeg = make_shared<FFMpeg>(configurationRoot);
 
 				encodingsCapability.push_back(encoding);
 			}
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 				liveProxy->_available = true;
 				liveProxy->_childPid = 0; // not running
 				liveProxy->_ingestionJobKey = 0;
-				liveProxy->_ffmpeg = make_shared<FFMpeg>(configurationRoot, logger);
+				liveProxy->_ffmpeg = make_shared<FFMpeg>(configurationRoot);
 
 				liveProxiesCapability.push_back(liveProxy);
 			}
@@ -230,7 +230,7 @@ int main(int argc, char **argv)
 				liveRecording->_childPid = 0; // not running
 				liveRecording->_ingestionJobKey = 0;
 				liveRecording->_encodingParametersRoot = nullptr;
-				liveRecording->_ffmpeg = make_shared<FFMpeg>(configurationRoot, logger);
+				liveRecording->_ffmpeg = make_shared<FFMpeg>(configurationRoot);
 
 				liveRecordingsCapability.push_back(liveRecording);
 			}
@@ -263,9 +263,7 @@ int main(int argc, char **argv)
 
 				&encodingCompletedMutex, &encodingCompletedMap, &lastEncodingCompletedCheck,
 
-				&tvChannelsPortsMutex, &tvChannelPort_CurrentOffset,
-
-				logger
+				&tvChannelsPortsMutex, &tvChannelPort_CurrentOffset
 			);
 
 			ffmpegEncoders.push_back(ffmpegEncoder);
@@ -282,7 +280,7 @@ int main(int argc, char **argv)
 			// thread liveRecorderVirtualVODIngestion(&FFMPEGEncoder::liveRecorderVirtualVODIngestionThread,
 			// 		ffmpegEncoders[0]);
 			shared_ptr<LiveRecorderDaemons> liveRecorderDaemons =
-				make_shared<LiveRecorderDaemons>(configurationRoot, &liveRecordingMutex, &liveRecordingsCapability, logger);
+				make_shared<LiveRecorderDaemons>(configurationRoot, &liveRecordingMutex, &liveRecordingsCapability);
 
 			thread liveRecorderChunksIngestion(&LiveRecorderDaemons::startChunksIngestionThread, liveRecorderDaemons);
 			thread liveRecorderVirtualVODIngestion(&LiveRecorderDaemons::startVirtualVODIngestionThread, liveRecorderDaemons);
@@ -290,8 +288,7 @@ int main(int argc, char **argv)
 			// thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
 			// thread cpuUsage(&FFMPEGEncoder::cpuUsageThread, ffmpegEncoders[0]);
 			shared_ptr<FFMPEGEncoderDaemons> ffmpegEncoderDaemons = make_shared<FFMPEGEncoderDaemons>(
-				configurationRoot, &liveRecordingMutex, &liveRecordingsCapability, &liveProxyMutex, &liveProxiesCapability, &cpuUsageMutex, &cpuUsage,
-				logger
+				configurationRoot, &liveRecordingMutex, &liveRecordingsCapability, &liveProxyMutex, &liveProxiesCapability, &cpuUsageMutex, &cpuUsage
 			);
 
 			thread monitor(&FFMPEGEncoderDaemons::startMonitorThread, ffmpegEncoderDaemons);

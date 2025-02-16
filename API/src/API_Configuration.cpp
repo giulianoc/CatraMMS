@@ -124,7 +124,7 @@ void API::addYouTubeConf(
 		string sResponse;
 		try
 		{
-			Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+			Validator validator(_mmsEngineDBFacade, _configurationRoot);
 			if (!validator.isYouTubeTokenTypeValid(tokenType))
 			{
 				string errorMessage = string("The 'tokenType' is not valid") + ", tokenType: " + tokenType;
@@ -296,7 +296,7 @@ void API::modifyYouTubeConf(
 
 			if (tokenTypeModified)
 			{
-				Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+				Validator validator(_mmsEngineDBFacade, _configurationRoot);
 				if (!validator.isYouTubeTokenTypeValid(tokenType))
 				{
 					string errorMessage = string("The 'tokenType' is not valid");

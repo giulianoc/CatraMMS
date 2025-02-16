@@ -13725,7 +13725,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(
 	{
 		try
 		{
-			FFMpeg ffmpeg (_configuration, _logger);
+			FFMpeg ffmpeg (_configuration);
 			pair<string, string> streamingLiveURLDetails =
 				ffmpeg.retrieveStreamingYouTubeURL(ingestionJobKey, liveURL);
 

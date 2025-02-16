@@ -300,8 +300,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", encodedNFSStagingAssetPathName: {}",
 					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName
 				);
-				int64_t moveElapsedInSeconds =
-					MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, _logger);
+				int64_t moveElapsedInSeconds = MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName);
 				SPDLOG_INFO(
 					"moved file"
 					", _ingestionJobKey: {}"

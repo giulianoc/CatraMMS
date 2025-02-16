@@ -349,7 +349,7 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		else
 		{
-			FFMpeg ffmpeg(_configurationRoot, _logger);
+			FFMpeg ffmpeg(_configurationRoot);
 			ffmpeg.concat(
 				ingestionJobKey, concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false, sourcePhysicalPaths,
 				concatenatedMediaPathName
@@ -395,7 +395,7 @@ void MMSEngineProcessor::manageConcatThread(
 			);
 			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = true;
-			FFMpeg ffmpeg(_configurationRoot, _logger);
+			FFMpeg ffmpeg(_configurationRoot);
 			mediaInfoDetails =
 				ffmpeg.getMediaInfo(ingestionJobKey, isMMSAssetPathName, timeoutInSeconds, concatenatedMediaPathName, videoTracks, audioTracks);
 
@@ -1191,7 +1191,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
 			string cutMediaPathName = workspaceIngestionRepository + "/" + localSourceFileName;
 
-			FFMpeg ffmpeg(_configurationRoot, _logger);
+			FFMpeg ffmpeg(_configurationRoot);
 			ffmpeg.cutWithoutEncoding(
 				ingestionJobKey, sourceAssetPathName, referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false, cutType,
 				"", // startKeyFramesSeekingInterval,

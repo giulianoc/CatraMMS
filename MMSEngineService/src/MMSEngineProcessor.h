@@ -377,7 +377,7 @@ class MMSEngineProcessor
 		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
-	tuple<MMSEngineDBFacade::IngestionStatus, string, string, string, int, bool> getMediaSourceDetails(
+	tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, bool> getMediaSourceDetails(
 		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot
 	);
 

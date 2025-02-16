@@ -217,13 +217,10 @@ class FFMPEGEncoderBase
 	};
 
   public:
-	FFMPEGEncoderBase(json configurationRoot, shared_ptr<spdlog::logger> logger);
+	FFMPEGEncoderBase(json configurationRoot);
 	~FFMPEGEncoderBase();
 
-  private:
   protected:
-	shared_ptr<spdlog::logger> _logger;
-
 	int64_t _mmsAPITimeoutInSeconds;
 	int64_t _mmsBinaryTimeoutInSeconds;
 

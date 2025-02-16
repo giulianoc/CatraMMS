@@ -15,10 +15,8 @@
 #include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
 
-FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
+FFMpeg::FFMpeg(json configuration)
 {
-	_logger = logger;
-
 	_ffmpegPath = JSONUtils::asString(configuration["ffmpeg"], "path", "");
 	_ffmpegTempDir = JSONUtils::asString(configuration["ffmpeg"], "tempDir", "");
 	_ffmpegEndlessRecursivePlaylistDir = JSONUtils::asString(configuration["ffmpeg"], "endlessRecursivePlaylistDir", "");
@@ -75,7 +73,7 @@ FFMpeg::FFMpeg(json configuration, shared_ptr<spdlog::logger> logger)
 
 FFMpeg::~FFMpeg() {}
 
-void FFMpeg::encodingVideoCodecValidation(string codec, shared_ptr<spdlog::logger> logger)
+void FFMpeg::encodingVideoCodecValidation(string codec)
 {
 	if (codec != "libx264" && codec != "libvpx" && codec != "rawvideo" && codec != "mpeg4" && codec != "xvid")
 	{

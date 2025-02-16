@@ -13,17 +13,8 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
-/*
-#include "FFMpegEncodingParameters.h"
-#include "FFMpegFilters.h"
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include <filesystem>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 void FFMpeg::liveGrid(
 	int64_t ingestionJobKey, int64_t encodingJobKey, bool externalEncoder, string userAgent,
@@ -58,17 +49,23 @@ void FFMpeg::liveGrid(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "Received " + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey)
+		SPDLOG_INFO(
+			"Received {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}",
+			toString(_currentApiName), ingestionJobKey, encodingJobKey
 		);
 
 		// gestiamo solamente un outputsRoot
 		if (outputsRoot.size() != 1)
 		{
-			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", outputsRoot.size: " + to_string(outputsRoot.size());
+			string errorMessage = std::format(
+				"{}. Wrong output parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputsRoot.size: {}",
+				toString(_currentApiName), ingestionJobKey, encodingJobKey, outputsRoot.size()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -77,9 +74,12 @@ void FFMpeg::liveGrid(
 		vector<string> ffmpegOutputArgumentList;
 		try
 		{
-			_logger->info(
-				__FILEREF__ + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", outputsRoot.size: " + to_string(outputsRoot.size())
+			SPDLOG_INFO(
+				"{}"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputsRoot.size: {}",
+				toString(_currentApiName), ingestionJobKey, encodingJobKey, outputsRoot.size()
 			);
 			outputsRootToFfmpeg(
 				ingestionJobKey, encodingJobKey, externalEncoder,
@@ -97,26 +97,37 @@ void FFMpeg::liveGrid(
 						ffmpegOutputArgumentList.begin(), ffmpegOutputArgumentList.end(),
 						ostream_iterator<string>(ffmpegOutputArgumentListStream, " ")
 					);
-				_logger->info(
-					__FILEREF__ + toString(_currentApiName) + ": ffmpegOutputArgumentList" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegOutputArgumentList: " + ffmpegOutputArgumentListStream.str()
+				SPDLOG_INFO(
+					"{}: ffmpegOutputArgumentList"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", ffmpegOutputArgumentList: {}",
+					toString(_currentApiName), ingestionJobKey, encodingJobKey, ffmpegOutputArgumentListStream.str()
 				);
 			}
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", exception: " + e.what();
+			string errorMessage = std::format(
+				"{}. Wrong output parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", exception: {}",
+				toString(_currentApiName), ingestionJobKey, encodingJobKey, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + toString(_currentApiName) + ". Wrong output parameters" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", exception: " + e.what();
+			string errorMessage = std::format(
+				"{}. Wrong output parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", exception: {}",
+				toString(_currentApiName), ingestionJobKey, encodingJobKey, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -301,7 +312,7 @@ void FFMpeg::liveGrid(
 					height = scaleHeight;
 
 				/*
-				_logger->info(__FILEREF__ + "Widthhhhhhh"
+				info(__FILEREF__ + "Widthhhhhhh"
 					+ ", inputChannelIndex: " + to_string(inputChannelIndex)
 					+ ", gridWidth: " + to_string(gridWidth)
 					+ ", gridColumns: " + to_string(gridColumns)
@@ -311,7 +322,7 @@ void FFMpeg::liveGrid(
 					+ ", width: " + to_string(width)
 				);
 
-				_logger->info(__FILEREF__ + "Heightttttttt"
+				info(__FILEREF__ + "Heightttttttt"
 					+ ", inputChannelIndex: " + to_string(inputChannelIndex)
 					+ ", gridHeight: " + to_string(gridHeight)
 					+ ", gridRows: " + to_string(gridRows)
@@ -636,7 +647,11 @@ void FFMpeg::liveGrid(
 
 					bool noErrorIfExists = true;
 					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory (if needed)" + ", audioPathName: " + audioPathName);
+					SPDLOG_INFO(
+						"Creating directory (if needed)"
+						", audioPathName: {}",
+						audioPathName
+					);
 					fs::create_directories(audioPathName);
 					fs::permissions(
 						audioPathName,
@@ -652,7 +667,11 @@ void FFMpeg::liveGrid(
 
 					bool noErrorIfExists = true;
 					bool recursive = true;
-					_logger->info(__FILEREF__ + "Creating directory (if needed)" + ", videoPathName: " + videoPathName);
+					SPDLOG_INFO(
+						"Creating directory (if needed)"
+						", videoPathName: {}",
+						videoPathName
+					);
 					fs::create_directories(videoPathName);
 					fs::permissions(
 						videoPathName,
@@ -705,10 +724,13 @@ void FFMpeg::liveGrid(
 		if (!ffmpegArgumentList.empty())
 			copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-		_logger->info(
-			__FILEREF__ + "liveGrid: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-			", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+		SPDLOG_INFO(
+			"liveGrid: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", _outputFfmpegPathFileName: {}"
+			", ffmpegArgumentList: {}",
+			ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str()
 		);
 
 		startFfmpegCommand = chrono::system_clock::now();
@@ -723,10 +745,15 @@ void FFMpeg::liveGrid(
 		*pChildPid = 0;
 		if (iReturnedStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "liveGrid: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", iReturnedStatus: " + to_string(iReturnedStatus) +
-								  ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-								  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
+			string errorMessage = std::format(
+				"liveGrid: ffmpeg command failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", iReturnedStatus: {}"
+				", _outputFfmpegPathFileName: {}"
+				", ffmpegArgumentList: {}",
+				ingestionJobKey, encodingJobKey, iReturnedStatus, _outputFfmpegPathFileName, ffmpegArgumentListStream.str()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
@@ -737,11 +764,14 @@ void FFMpeg::liveGrid(
 
 		endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "liveGrid: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"liveGrid: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", ffmpegArgumentList: {}"
+			", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+			ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str(),
+			chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 
 		try
@@ -750,16 +780,26 @@ void FFMpeg::liveGrid(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+			string errorMessage = std::format(
+				"outputsRootToFfmpeg_clean failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+			string errorMessage = std::format(
+				"outputsRootToFfmpeg_clean failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
@@ -780,10 +820,16 @@ void FFMpeg::liveGrid(
 		}
 		else
 		{
-			errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", encodingJobKey: " + to_string(encodingJobKey) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-						   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
-						   ", e.what(): " + e.what();
+			errorMessage = std::format(
+				"ffmpeg: ffmpeg command failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", _outputFfmpegPathFileName: {}"
+				", ffmpegArgumentList: {}"
+				", lastPartOfFfmpegOutputFile: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile, e.what()
+			);
 
 			/*
 			{
@@ -808,7 +854,7 @@ void FFMpeg::liveGrid(
 					+ ".liveGrid.log.debug"
 				;
 
-				_logger->info(__FILEREF__ + "Coping"
+				info(__FILEREF__ + "Coping"
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", encodingJobKey: " + to_string(encodingJobKey)
 					+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
@@ -821,7 +867,7 @@ void FFMpeg::liveGrid(
 		SPDLOG_ERROR(errorMessage);
 
 		/*
-		_logger->info(__FILEREF__ + "Remove"
+		info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
@@ -835,16 +881,26 @@ void FFMpeg::liveGrid(
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+			string errorMessage = std::format(
+				"outputsRootToFfmpeg_clean failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+			string errorMessage = std::format(
+				"outputsRootToFfmpeg_clean failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, encodingJobKey, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// throw e;
@@ -863,7 +919,7 @@ void FFMpeg::liveGrid(
 	renameOutputFfmpegPathFileName(ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName);
 
 	/*
-	_logger->info(__FILEREF__ + "Remove"
+	info(__FILEREF__ + "Remove"
 		+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 		+ ", encodingJobKey: " + to_string(encodingJobKey)
 		+ ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);

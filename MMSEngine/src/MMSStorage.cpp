@@ -5,6 +5,7 @@
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
 #include "catralibraries/System.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 
 MMSStorage::MMSStorage(
@@ -1386,7 +1387,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			int64_t moveElapsedInSeconds;
 			try
 			{
-				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName, _logger);
+				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 			catch (runtime_error &e)
 			{
@@ -1407,7 +1408,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 					", to: " + mmsAssetPathName.string() + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
 				);
 
-				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName, _logger);
+				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 
 			// 2024-02-11: è capitato (poche volte) che le size del source e della dest siano differenti
@@ -1440,7 +1441,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 	return mmsAssetPathName;
 }
 
-int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest, shared_ptr<spdlog::logger> logger)
+int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest)
 {
 	chrono::system_clock::time_point startPoint;
 	chrono::system_clock::time_point endPoint;
@@ -1500,10 +1501,16 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 			}
 			catch (fs::filesystem_error &e)
 			{
-				logger->error(
-					__FILEREF__ + "move (copy and remove) failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", source: " +
-					source.string() + ", dest: " + dest.string() + ", e.what: " + e.what() + ", code value: " + to_string(e.code().value()) +
-					", code message: " + e.code().message() + ", code category: " + e.code().category().name()
+				SPDLOG_ERROR(
+					"move (copy and remove) failed"
+					", ingestionJobKey: {}"
+					", source: {}"
+					", dest: {}"
+					", e.what: {}"
+					", code value: {}"
+					", code message: {}"
+					", code category: {}",
+					ingestionJobKey, source.string(), dest.string(), e.what(), e.code().value(), e.code().message(), e.code().category().name()
 				);
 
 				throw e;
@@ -1511,19 +1518,31 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 		}
 		else if (e.code().value() == 17) // filesystem error: cannot copy: File exists
 		{
-			logger->info(
-				__FILEREF__ + "No move to be done, file already exists" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", source: " +
-				source.string() + ", dest: " + dest.string() + ", e.what: " + e.what() + ", code value: " + to_string(e.code().value()) +
-				", code message: " + e.code().message() + ", code category: " + e.code().category().name()
+			SPDLOG_INFO(
+				"No move to be done, file already exists"
+				", ingestionJobKey: {}"
+				", source: {}"
+				", dest: {}"
+				", e.what: {}"
+				", code value: {}"
+				", code message: {}"
+				", code category: {}",
+				ingestionJobKey, source.string(), dest.string(), e.what(), e.code().value(), e.code().message(), e.code().category().name()
 			);
 			endPoint = chrono::system_clock::now();
 		}
 		else
 		{
-			logger->error(
-				__FILEREF__ + "Move failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", source: " + source.string() +
-				", dest: " + dest.string() + ", e.what: " + e.what() + ", code value: " + to_string(e.code().value()) +
-				", code message: " + e.code().message() + ", code category: " + e.code().category().name()
+			SPDLOG_ERROR(
+				"Move failed"
+				", ingestionJobKey: {}"
+				", source: {}"
+				", dest: {}"
+				", e.what: {}"
+				", code value: {}"
+				", code message: {}"
+				", code category: {}",
+				ingestionJobKey, source.string(), dest.string(), e.what(), e.code().value(), e.code().message(), e.code().category().name()
 			);
 
 			throw e;

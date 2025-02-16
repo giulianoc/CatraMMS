@@ -69,14 +69,11 @@ FFMPEGEncoder::FFMPEGEncoder(
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap,
 	chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
-	mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
-
-	shared_ptr<spdlog::logger> logger
+	mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex)
 {
 
-	_logger = spdlog::default_logger();
 	_configurationRoot = configurationRoot;
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
 	SPDLOG_INFO(
@@ -2305,9 +2302,7 @@ void FFMPEGEncoder::encodeContentThread(
 {
 	try
 	{
-		EncodeContent encodeContent(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
-		);
+		EncodeContent encodeContent(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		encodeContent.encodeContent(metadataRoot);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
@@ -2347,7 +2342,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 	try
 	{
 		OverlayImageOnVideo overlayImageOnVideo(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		overlayImageOnVideo.encodeContent(metadataRoot);
 	}
@@ -2383,7 +2378,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 	try
 	{
 		OverlayTextOnVideo overlayTextOnVideo(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		overlayTextOnVideo.encodeContent(metadataRoot);
 	}
@@ -2418,9 +2413,7 @@ void FFMPEGEncoder::generateFramesThread(
 {
 	try
 	{
-		GenerateFrames generateFrames(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
-		);
+		GenerateFrames generateFrames(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		generateFrames.encodeContent(metadataRoot);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
@@ -2443,7 +2436,7 @@ void FFMPEGEncoder::slideShowThread(
 {
 	try
 	{
-		SlideShow slideShow(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		SlideShow slideShow(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		slideShow.encodeContent(metadataRoot);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
@@ -2467,7 +2460,7 @@ void FFMPEGEncoder::videoSpeedThread(
 {
 	try
 	{
-		VideoSpeed videoSpeed(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger);
+		VideoSpeed videoSpeed(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		videoSpeed.encodeContent(metadataRoot);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
@@ -2501,9 +2494,7 @@ void FFMPEGEncoder::addSilentAudioThread(
 {
 	try
 	{
-		AddSilentAudio addSilentAudio(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
-		);
+		AddSilentAudio addSilentAudio(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		addSilentAudio.encodeContent(metadataRoot);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
@@ -2538,7 +2529,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 	try
 	{
 		PictureInPicture pictureInPicture(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		pictureInPicture.encodeContent(metadataRoot);
 	}
@@ -2574,7 +2565,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 	try
 	{
 		IntroOutroOverlay introOutroOverlay(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		introOutroOverlay.encodeContent(metadataRoot);
 	}
@@ -2610,7 +2601,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 	try
 	{
 		CutFrameAccurate cutFrameAccurate(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
+			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		cutFrameAccurate.encodeContent(metadataRoot);
 	}
@@ -2646,8 +2637,8 @@ void FFMPEGEncoder::liveRecorderThread(
 	try
 	{
 		LiveRecorder liveRecorder(
-			liveRecording, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger,
-			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset
+			liveRecording, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _tvChannelsPortsMutex,
+			_tvChannelPort_CurrentOffset
 		);
 		liveRecorder.encodeContent(requestBody);
 	}
@@ -2701,8 +2692,8 @@ void FFMPEGEncoder::liveProxyThread(
 	try
 	{
 		LiveProxy liveProxy(
-			liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger,
-			_tvChannelsPortsMutex, _tvChannelPort_CurrentOffset
+			liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _tvChannelsPortsMutex,
+			_tvChannelPort_CurrentOffset
 		);
 		liveProxy.encodeContent(requestBody);
 	}
@@ -2755,9 +2746,7 @@ void FFMPEGEncoder::liveGridThread(
 {
 	try
 	{
-		LiveGrid liveGrid(
-			liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _logger
-		);
+		LiveGrid liveGrid(liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		liveGrid.encodeContent(requestBody);
 	}
 	catch (FFMpegEncodingKilledByUser &e)

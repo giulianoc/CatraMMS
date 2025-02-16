@@ -270,8 +270,7 @@ int main(int argc, char **argv)
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
 			shared_ptr<API> api = make_shared<API>(
-				noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization, &fcgiAcceptMutex, &fileUploadProgressData,
-				logger
+				noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization, &fcgiAcceptMutex, &fileUploadProgressData
 			);
 
 			apis.push_back(api);

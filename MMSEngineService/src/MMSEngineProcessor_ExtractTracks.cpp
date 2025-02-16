@@ -127,7 +127,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 						extractTrackMediaPathName = workspaceIngestionRepository + "/" + localSourceFileName;
 					}
 
-					FFMpeg ffmpeg(_configurationRoot, _logger);
+					FFMpeg ffmpeg(_configurationRoot);
 
 					ffmpeg.extractTrackMediaToIngest(ingestionJobKey, mmsAssetPathName, tracksToBeExtracted, extractTrackMediaPathName);
 

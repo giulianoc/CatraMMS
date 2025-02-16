@@ -140,7 +140,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
 						);
 
-						FFMpeg ffmpeg(_configurationRoot, _logger);
+						FFMpeg ffmpeg(_configurationRoot);
 
 						ffmpeg.changeFileFormat(
 							ingestionJobKey, physicalPathKey, mmsSourceAssetPathName, videoTracks, audioTracks, stagingChangeFileFormatAssetPathName,
@@ -194,7 +194,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						);
 						int timeoutInSeconds = 20;
 						bool isMMSAssetPathName = true;
-						FFMpeg ffmpeg(_configurationRoot, _logger);
+						FFMpeg ffmpeg(_configurationRoot);
 						mediaInfoDetails = ffmpeg.getMediaInfo(
 							ingestionJobKey, isMMSAssetPathName, timeoutInSeconds, stagingChangeFileFormatAssetPathName, videoTracks, audioTracks
 						);

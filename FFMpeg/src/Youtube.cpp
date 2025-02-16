@@ -13,18 +13,8 @@
 #include "FFMpeg.h"
 #include "catralibraries/ProcessUtility.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
-/*
-#include "FFMpegEncodingParameters.h"
-#include "FFMpegFilters.h"
-#include "JSONUtils.h"
-#include "MMSCURL.h"
-#include "spdlog/fmt/fmt.h"
-#include <filesystem>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 pair<string, string> FFMpeg::retrieveStreamingYouTubeURL(int64_t ingestionJobKey, string youTubeURL)
 {
@@ -188,10 +178,15 @@ format code  extension  resolution note
 		int bestFormatCode = -1;
 		while (getline(detailsFile, line))
 		{
-			_logger->info(
-				__FILEREF__ + "retrieveStreamingYouTubeURL, Details youTube profiles" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath + ", formatCodeLabelFound: " + to_string(formatCodeLabelFound) +
-				", lastFormatCode: " + to_string(lastFormatCode) + ", bestFormatCode: " + to_string(bestFormatCode) + ", line: " + line
+			SPDLOG_INFO(
+				"retrieveStreamingYouTubeURL, Details youTube profiles"
+				", ingestionJobKey: {}"
+				", detailsYouTubeProfilesPath: {}"
+				", formatCodeLabelFound: {}"
+				", lastFormatCode: {}"
+				", bestFormatCode: {}"
+				", line: {}",
+				ingestionJobKey, detailsYouTubeProfilesPath, formatCodeLabelFound, lastFormatCode, bestFormatCode, line
 			);
 
 			if (formatCodeLabelFound)
@@ -221,16 +216,23 @@ format code  extension  resolution note
 				formatCodeLabelFound = true;
 		}
 
-		_logger->info(
-			__FILEREF__ + "retrieveStreamingYouTubeURL, Details youTube profiles, final info" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath + ", formatCodeLabelFound: " + to_string(formatCodeLabelFound) +
-			", lastFormatCode: " + to_string(lastFormatCode) + ", bestFormatCode: " + to_string(bestFormatCode) + ", line: " + line
+		SPDLOG_INFO(
+			"retrieveStreamingYouTubeURL, Details youTube profiles, final info"
+			", ingestionJobKey: {}"
+			", detailsYouTubeProfilesPath: {}"
+			", formatCodeLabelFound: {}"
+			", lastFormatCode: {}"
+			", bestFormatCode: {}"
+			", line: {}",
+			ingestionJobKey, detailsYouTubeProfilesPath, formatCodeLabelFound, lastFormatCode, bestFormatCode, line
 		);
 
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", detailsYouTubeProfilesPath: {}",
+				ingestionJobKey, detailsYouTubeProfilesPath
 			);
 			fs::remove_all(detailsYouTubeProfilesPath);
 		}
@@ -241,8 +243,11 @@ format code  extension  resolution note
 			selectedFormatCode = lastFormatCode;
 		else
 		{
-			string errorMessage =
-				__FILEREF__ + "retrieveStreamingYouTubeURL: no format code found" + ", ingestionJobKey: " + to_string(ingestionJobKey);
+			string errorMessage = std::format(
+				"retrieveStreamingYouTubeURL: no format code found"
+				", ingestionJobKey: {}",
+				ingestionJobKey
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -250,13 +255,21 @@ format code  extension  resolution note
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profile error processing or format code not found" +
-							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-		SPDLOG_ERROR(errorMessage);
+		SPDLOG_ERROR(
+			"retrieveStreamingYouTubeURL: profile error processing or format code not found"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
 
 		if (fs::exists(detailsYouTubeProfilesPath))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", detailsYouTubeProfilesPath: {}",
+				ingestionJobKey, detailsYouTubeProfilesPath
+			);
 			fs::remove_all(detailsYouTubeProfilesPath);
 		}
 
@@ -264,13 +277,21 @@ format code  extension  resolution note
 	}
 	catch (exception &e)
 	{
-		string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: profiles error processing" +
-							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-		SPDLOG_ERROR(errorMessage);
+		SPDLOG_ERROR(
+			"retrieveStreamingYouTubeURL: profile error processing or format code not found"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
 
 		if (fs::exists(detailsYouTubeProfilesPath))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeProfilesPath: " + detailsYouTubeProfilesPath);
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", detailsYouTubeProfilesPath: {}",
+				ingestionJobKey, detailsYouTubeProfilesPath
+			);
 			fs::remove_all(detailsYouTubeProfilesPath);
 		}
 
@@ -286,9 +307,11 @@ format code  extension  resolution note
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "retrieveStreamingYouTubeURL: Executing youtube command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", youTubeExecuteCommand: " + youTubeExecuteCommand
+			SPDLOG_INFO(
+				"retrieveStreamingYouTubeURL: Executing youtube command"
+				", ingestionJobKey: {}"
+				", youTubeExecuteCommand: {}",
+				ingestionJobKey, youTubeExecuteCommand
 			);
 
 			chrono::system_clock::time_point startYouTubeCommand = chrono::system_clock::now();
@@ -296,35 +319,49 @@ format code  extension  resolution note
 			int executeCommandStatus = ProcessUtility::execute(youTubeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
-				string errorMessage =
-					__FILEREF__ + "retrieveStreamingYouTubeURL: youTube command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", executeCommandStatus: " + to_string(executeCommandStatus) + ", youTubeExecuteCommand: " + youTubeExecuteCommand;
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_ERROR(
+					"retrieveStreamingYouTubeURL: youTube command failed"
+					", ingestionJobKey: {}"
+					", executeCommandStatus: {}"
+					", youTubeExecuteCommand: {}",
+					ingestionJobKey, executeCommandStatus, youTubeExecuteCommand
+				);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format(
+					"retrieveStreamingYouTubeURL: command failed"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 			else if (!fs::exists(detailsYouTubeURLPath))
 			{
-				string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: youTube command failed. no URL file created" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", executeCommandStatus: " + to_string(executeCommandStatus) +
-									  ", youTubeExecuteCommand: " + youTubeExecuteCommand;
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_ERROR(
+					"retrieveStreamingYouTubeURL: youTube command failed. no URL file created"
+					", ingestionJobKey: {}"
+					", executeCommandStatus: {}"
+					", youTubeExecuteCommand: {}",
+					ingestionJobKey, executeCommandStatus, youTubeExecuteCommand
+				);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL: command failed. no URL file created" +
-							   ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format(
+					"retrieveStreamingYouTubeURL: command failed. no URL file created"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 
 			chrono::system_clock::time_point endYouTubeCommand = chrono::system_clock::now();
 
-			_logger->info(
-				__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", youTubeExecuteCommand: " + youTubeExecuteCommand + ", @FFMPEG statistics@ - duration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()) + "@"
+			SPDLOG_INFO(
+				"retrieveStreamingYouTubeURL: Executed youtube command"
+				", ingestionJobKey: {}"
+				", youTubeExecuteCommand: {}"
+				", @FFMPEG statistics@ - duration (secs): @{}@",
+				ingestionJobKey, youTubeExecuteCommand, chrono::duration_cast<chrono::seconds>(endYouTubeCommand - startYouTubeCommand).count()
 			);
 
 			{
@@ -335,26 +372,42 @@ format code  extension  resolution note
 				streamingYouTubeURL = buffer.str();
 				streamingYouTubeURL = StringUtils::trimNewLineToo(streamingYouTubeURL);
 
-				_logger->info(
-					__FILEREF__ + "retrieveStreamingYouTubeURL: Executed youTube command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", youTubeExecuteCommand: " + youTubeExecuteCommand + ", streamingYouTubeURL: " + streamingYouTubeURL
+				SPDLOG_INFO(
+					"retrieveStreamingYouTubeURL: Executed youTube command"
+					", ingestionJobKey: {}"
+					", youTubeExecuteCommand: {}"
+					", streamingYouTubeURL: {}",
+					ingestionJobKey, youTubeExecuteCommand, streamingYouTubeURL
 				);
 			}
 
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", detailsYouTubeURLPath: {}",
+					ingestionJobKey, detailsYouTubeURLPath
+				);
 				fs::remove_all(detailsYouTubeProfilesPath);
 			}
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
+			SPDLOG_ERROR(
+				"retrieveStreamingYouTubeURL, youTube command failed"
+				", ingestionJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, e.what()
+			);
 
 			if (fs::exists(detailsYouTubeURLPath))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", detailsYouTubeURLPath: {}",
+					ingestionJobKey, detailsYouTubeURLPath
+				);
 				fs::remove_all(detailsYouTubeURLPath);
 			}
 
@@ -362,14 +415,22 @@ format code  extension  resolution note
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + "retrieveStreamingYouTubeURL, youTube command failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
+			SPDLOG_ERROR(
+				"retrieveStreamingYouTubeURL, youTube command failed"
+				", ingestionJobKey: {}"
+				", e.what(): {}",
+				ingestionJobKey, e.what()
+			);
 
 			if (fs::exists(detailsYouTubeURLPath))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", detailsYouTubeURLPath: " + detailsYouTubeURLPath);
-				fs::remove_all(detailsYouTubeProfilesPath);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", detailsYouTubeURLPath: {}",
+					ingestionJobKey, detailsYouTubeURLPath
+				);
+				fs::remove_all(detailsYouTubeURLPath);
 			}
 
 			throw e;

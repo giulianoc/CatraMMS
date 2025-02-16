@@ -125,7 +125,7 @@ class MMSStorage
 		int64_t ingestionJobKey, string tarBinaryPathName, string workspaceIngestionRepository, string sourcePathName
 	);
 
-	static int64_t move(int64_t ingestionJobKey, fs::path source, fs::path dest, shared_ptr<spdlog::logger> logger);
+	static int64_t move(int64_t ingestionJobKey, fs::path source, fs::path dest);
 
   private:
 	bool _noFileSystemAccess;

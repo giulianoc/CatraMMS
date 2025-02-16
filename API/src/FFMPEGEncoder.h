@@ -50,9 +50,7 @@ class FFMPEGEncoder : public FastCGIAPI
 		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap,
 		chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
-		mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
-
-		shared_ptr<spdlog::logger> logger
+		mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset
 	);
 
 	~FFMPEGEncoder();
@@ -70,7 +68,6 @@ class FFMPEGEncoder : public FastCGIAPI
 	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
 
   private:
-	shared_ptr<spdlog::logger> _logger;
 	json _configurationRoot;
 
 	mutex *_cpuUsageMutex;

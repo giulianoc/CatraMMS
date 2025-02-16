@@ -155,9 +155,11 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 	chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "getMediaInfo: Executing ffprobe command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+		SPDLOG_INFO(
+			"getMediaInfo: Executing ffprobe command"
+			", ingestionJobKey: {}"
+			", ffprobeExecuteCommand: {}",
+			ingestionJobKey, ffprobeExecuteCommand
 		);
 
 		// The check/retries below was done to manage the scenario where the file was created
@@ -187,10 +189,12 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "getMediaInfo: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffprobeExecuteCommand: @" + ffprobeExecuteCommand + "@" + ", @FFMPEG statistics@ - duration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"getMediaInfo: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffprobeExecuteCommand: @{}@"
+			", @FFMPEG statistics@ - duration (secs): @{}@",
+			ingestionJobKey, ffprobeExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -204,7 +208,12 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 							  ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 
 		throw e;
@@ -326,9 +335,12 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 		stringstream buffer;
 		buffer << detailsFile.rdbuf();
 
-		_logger->info(
-			__FILEREF__ + "Details found" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-			", details: " + buffer.str()
+		SPDLOG_INFO(
+			"Details found"
+			", ingestionJobKey: {}"
+			", mediaSource: {}"
+			", details: {}",
+			ingestionJobKey, mediaSource, buffer.str()
 		);
 
 		string mediaDetails = buffer.str();
@@ -341,13 +353,16 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 		string field = "streams";
 		if (!JSONUtils::isMetadataPresent(detailsRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", mediaSource: " + mediaSource + ", Field: " + field + ", mediaInfo: " + JSONUtils::toString(detailsRoot);
+			string errorMessage = std::format(
+				"ffmpeg: Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", mediaSource: {}"
+				", Field: {}"
+				", mediaInfo: {}",
+				ingestionJobKey, mediaSource, field, JSONUtils::toString(detailsRoot)
+			);
 			SPDLOG_ERROR(errorMessage);
 
-			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", mediaSource: " + mediaSource + ", Field: " + field + ", mediaInfo: " + JSONUtils::toString(detailsRoot);
 			throw runtime_error(errorMessage);
 		}
 		json streamsRoot = detailsRoot[field];
@@ -361,13 +376,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 			field = "codec_type";
 			if (!JSONUtils::isMetadataPresent(streamRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+				string errorMessage = std::format(
+					"ffmpeg: Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", mediaSource: {}"
+					", Field: {}",
+					ingestionJobKey, mediaSource, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
-				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							   ", mediaSource: " + mediaSource + ", Field: " + field;
 				throw runtime_error(errorMessage);
 			}
 			string codecType = JSONUtils::asString(streamRoot, field, "");
@@ -388,13 +405,16 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "index";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}"
+						", mediaInfo: {}",
+						ingestionJobKey, mediaSource, field, JSONUtils::toString(detailsRoot)
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				trackIndex = JSONUtils::asInt(streamRoot, field, 0);
@@ -405,14 +425,16 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 					field = "codec_tag_string";
 					if (!JSONUtils::isMetadataPresent(streamRoot, field))
 					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-											  ", Field: " + field;
+						string errorMessage = std::format(
+							"ffmpeg: Field is not present or it is null"
+							", ingestionJobKey: {}"
+							", mediaSource: {}"
+							", Field: {}"
+							", mediaInfo: {}",
+							ingestionJobKey, mediaSource, field, JSONUtils::toString(detailsRoot)
+						);
 						SPDLOG_ERROR(errorMessage);
 
-						// to hide the ffmpeg staff
-						errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", mediaSource: " + mediaSource + ", Field: " + field;
 						throw runtime_error(errorMessage);
 					}
 				}
@@ -442,13 +464,16 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "width";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}"
+						", mediaInfo: {}",
+						ingestionJobKey, mediaSource, field, JSONUtils::toString(detailsRoot)
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				videoWidth = JSONUtils::asInt(streamRoot, field, 0);
@@ -456,13 +481,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "height";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				videoHeight = JSONUtils::asInt(streamRoot, field, 0);
@@ -470,13 +497,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "avg_frame_rate";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				videoAvgFrameRate = JSONUtils::asString(streamRoot, field, "");
@@ -488,10 +517,13 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 					{
 						// I didn't find bit_rate also in a ts file, let's set it as a warning
 
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-											  ", Field: " + field;
-						_logger->warn(errorMessage);
+						SPDLOG_WARN(
+							"ffmpeg: Field is not present or it is null"
+							", ingestionJobKey: {}"
+							", mediaSource: {}"
+							", Field: {}",
+							ingestionJobKey, mediaSource, field
+						);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -506,10 +538,13 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 					// let's log it as a warning
 					if (videoCodecName != "" && videoCodecName != "mjpeg")
 					{
-						string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-											  ", Field: " + field;
-						_logger->warn(errorMessage);
+						SPDLOG_WARN(
+							"ffmpeg: Field is not present or it is null"
+							", ingestionJobKey: {}"
+							", mediaSource: {}"
+							", Field: {}",
+							ingestionJobKey, mediaSource, field
+						);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -543,13 +578,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "index";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				trackIndex = JSONUtils::asInt(streamRoot, field, 0);
@@ -557,13 +594,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "codec_name";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				audioCodecName = JSONUtils::asString(streamRoot, field, "");
@@ -571,13 +610,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "sample_rate";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				audioSampleRate = stol(JSONUtils::asString(streamRoot, field, ""));
@@ -585,13 +626,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				field = "channels";
 				if (!JSONUtils::isMetadataPresent(streamRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
-					// to hide the ffmpeg staff
-					errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								   ", mediaSource: " + mediaSource + ", Field: " + field;
 					throw runtime_error(errorMessage);
 				}
 				audioChannels = JSONUtils::asInt(streamRoot, field, 0);
@@ -601,9 +644,14 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 				{
 					// I didn't find bit_rate in a webm file, let's set it as a warning
 
-					string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
-					_logger->warn(errorMessage);
+					string errorMessage = std::format(
+						"ffmpeg: Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", mediaSource: {}"
+						", Field: {}",
+						ingestionJobKey, mediaSource, field
+					);
+					SPDLOG_WARN(errorMessage);
 
 					// throw runtime_error(errorMessage);
 				}
@@ -642,13 +690,15 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 		field = "format";
 		if (!JSONUtils::isMetadataPresent(detailsRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", mediaSource: " + mediaSource + ", Field: " + field;
+			string errorMessage = std::format(
+				"ffmpeg: Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", mediaSource: {}"
+				", Field: {}",
+				ingestionJobKey, mediaSource, field
+			);
 			SPDLOG_ERROR(errorMessage);
 
-			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", mediaSource: " + mediaSource + ", Field: " + field;
 			throw runtime_error(errorMessage);
 		}
 		json formatRoot = detailsRoot[field];
@@ -660,9 +710,14 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 			// let's log it as a warning
 			if (firstVideoCodecName != "" && firstVideoCodecName != "mjpeg")
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"ffmpeg: Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", mediaSource: {}"
+					", Field: {}",
+					ingestionJobKey, mediaSource, field
+				);
+				SPDLOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -714,27 +769,51 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 		if (JSONUtils::isMetadataPresent(formatRoot, field))
 			metadataRoot = formatRoot[field];
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage =
-			__FILEREF__ + "ffmpeg: error processing ffprobe output" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"ffmpeg: error processing ffprobe output"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage =
-			__FILEREF__ + "ffmpeg: error processing ffprobe output" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"ffmpeg: error processing ffprobe output"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
+
 		fs::remove_all(detailsPathFileName);
 
 		throw e;
@@ -764,7 +843,7 @@ tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 	 */
 
 	/*
-	_logger->info(__FILEREF__ + "FFMpeg::getMediaInfo"
+	info(__FILEREF__ + "FFMpeg::getMediaInfo"
 		+ ", durationInMilliSeconds: " + to_string(durationInMilliSeconds)
 		+ ", bitRate: " + to_string(bitRate)
 		+ ", videoCodecName: " + videoCodecName
@@ -802,14 +881,23 @@ string FFMpeg::getNearestKeyFrameTime(
 {
 	_currentApiName = APIName::NearestKeyFrameTime;
 
-	_logger->info(
-		__FILEREF__ + "getNearestKeyFrameTime" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-		", readIntervals: " + readIntervals + ", keyFrameTime: " + to_string(keyFrameTime)
+	SPDLOG_INFO(
+		"getNearestKeyFrameTime"
+		", ingestionJobKey: {}"
+		", mediaSource: {}"
+		", readIntervals: {}"
+		", keyFrameTime: {}",
+		ingestionJobKey, mediaSource, readIntervals, keyFrameTime
 	);
 
 	if (mediaSource == "")
 	{
-		string errorMessage = string("Media Source is wrong") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource;
+		string errorMessage = std::format(
+			"Media Source is wrong"
+			", ingestionJobKey: {}"
+			", mediaSource: {}",
+			ingestionJobKey, mediaSource
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -833,8 +921,12 @@ string FFMpeg::getNearestKeyFrameTime(
 		}
 		if (!exists)
 		{
-			string errorMessage =
-				string("Source asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource;
+			string errorMessage = std::format(
+				"Source asset path name not existing"
+				", ingestionJobKey: {}"
+				", mediaSource: {}",
+				ingestionJobKey, mediaSource
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -865,9 +957,11 @@ string FFMpeg::getNearestKeyFrameTime(
 	chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "getNearestKeyFrameTime: Executing ffprobe command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffprobeExecuteCommand: " + ffprobeExecuteCommand
+		SPDLOG_INFO(
+			"getNearestKeyFrameTime: Executing ffprobe command"
+			", ingestionJobKey: {}"
+			", ffprobeExecuteCommand: {}",
+			ingestionJobKey, ffprobeExecuteCommand
 		);
 
 		// The check/retries below was done to manage the scenario where the file was created
@@ -880,13 +974,21 @@ string FFMpeg::getNearestKeyFrameTime(
 			int executeCommandStatus = ProcessUtility::execute(ffprobeExecuteCommand);
 			if (executeCommandStatus != 0)
 			{
-				string errorMessage =
-					__FILEREF__ + "getNearestKeyFrameTime: ffmpeg: ffprobe command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", executeCommandStatus: " + to_string(executeCommandStatus) + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand;
+				string errorMessage = std::format(
+					"getNearestKeyFrameTime: ffmpeg: ffprobe command failed"
+					", ingestionJobKey: {}"
+					", executeCommandStatus: {}"
+					", ffprobeExecuteCommand: {}",
+					ingestionJobKey, executeCommandStatus, ffprobeExecuteCommand
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "getNearestKeyFrameTime command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey);
+				errorMessage = std::format(
+					"getNearestKeyFrameTime command failed"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 			else
@@ -897,10 +999,12 @@ string FFMpeg::getNearestKeyFrameTime(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "getNearestKeyFrameTime: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ffprobeExecuteCommand: @" + ffprobeExecuteCommand + "@" + ", @FFMPEG statistics@ - duration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"getNearestKeyFrameTime: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", ffprobeExecuteCommand: @{}@"
+			", @FFMPEG statistics@ - duration (secs): @{}@",
+			ingestionJobKey, ffprobeExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
@@ -908,14 +1012,24 @@ string FFMpeg::getNearestKeyFrameTime(
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(detailsPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		string errorMessage = __FILEREF__ + "getNearestKeyFrameTime: Executed ffmpeg command failed" +
-							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffprobeExecuteCommand: " + ffprobeExecuteCommand +
-							  ", @FFMPEG statistics@ - duration (secs): @" +
-							  to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@" +
-							  ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"getNearestKeyFrameTime: Executed ffmpeg command failed"
+			", ingestionJobKey: {}"
+			", ffprobeExecuteCommand: {}"
+			", @FFMPEG statistics@ - duration (secs): @{}@"
+			", lastPartOfFfmpegOutputFile: {}"
+			", e.what(): {}",
+			ingestionJobKey, ffprobeExecuteCommand, chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count(),
+			lastPartOfFfmpegOutputFile, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 
 		throw e;
@@ -976,9 +1090,12 @@ string FFMpeg::getNearestKeyFrameTime(
 		stringstream buffer;
 		buffer << detailsFile.rdbuf();
 
-		_logger->info(
-			__FILEREF__ + "Details found" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-			", details: " + buffer.str()
+		SPDLOG_INFO(
+			"Details found"
+			", ingestionJobKey: {}"
+			", mediaSource: {}"
+			", details: {}",
+			ingestionJobKey, mediaSource, buffer.str()
 		);
 
 		string mediaDetails = buffer.str();
@@ -991,13 +1108,16 @@ string FFMpeg::getNearestKeyFrameTime(
 		string field = "packets";
 		if (!JSONUtils::isMetadataPresent(detailsRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", mediaSource: " + mediaSource + ", Field: " + field + ", mediaInfo: " + JSONUtils::toString(detailsRoot);
+			string errorMessage = std::format(
+				"ffmpeg: Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", mediaSource: {}"
+				", Field: {}"
+				", mediaInfo: {}",
+				ingestionJobKey, mediaSource, field, JSONUtils::toString(detailsRoot)
+			);
 			SPDLOG_ERROR(errorMessage);
 
-			// to hide the ffmpeg staff
-			errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						   ", mediaSource: " + mediaSource + ", Field: " + field + ", mediaInfo: " + JSONUtils::toString(detailsRoot);
 			throw runtime_error(errorMessage);
 		}
 		json packetsRoot = detailsRoot[field];
@@ -1008,13 +1128,15 @@ string FFMpeg::getNearestKeyFrameTime(
 			field = "pts_time";
 			if (!JSONUtils::isMetadataPresent(packetRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+				string errorMessage = std::format(
+					"ffmpeg: Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", mediaSource: {}"
+					", Field: {}",
+					ingestionJobKey, mediaSource, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
-				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							   ", mediaSource: " + mediaSource + ", Field: " + field;
 				throw runtime_error(errorMessage);
 			}
 			string pts_time = JSONUtils::asString(packetRoot, field, "");
@@ -1022,13 +1144,15 @@ string FFMpeg::getNearestKeyFrameTime(
 			field = "flags";
 			if (!JSONUtils::isMetadataPresent(packetRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: Field is not present or it is null" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource + ", Field: " + field;
+				string errorMessage = std::format(
+					"ffmpeg: Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", mediaSource: {}"
+					", Field: {}",
+					ingestionJobKey, mediaSource, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
-				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							   ", mediaSource: " + mediaSource + ", Field: " + field;
 				throw runtime_error(errorMessage);
 			}
 			string flags = JSONUtils::asString(packetRoot, field, "");
@@ -1058,33 +1182,60 @@ string FFMpeg::getNearestKeyFrameTime(
 
 		if (nearestDistance == -1.0)
 		{
-			string errorMessage = __FILEREF__ + "getNearestKeyFrameTime failed to look for a key frame" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSource: " + mediaSource +
-								  ", readIntervals: " + readIntervals + ", keyFrameTime: " + to_string(keyFrameTime);
-			SPDLOG_ERROR(errorMessage);
+			SPDLOG_ERROR(
+				"getNearestKeyFrameTime failed to look for a key frame"
+				", ingestionJobKey: {}"
+				", mediaSource: {}"
+				", readIntervals: {}"
+				", keyFrameTime: {}",
+				ingestionJobKey, mediaSource, readIntervals, keyFrameTime
+			);
 		}
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage =
-			__FILEREF__ + "ffmpeg: error processing ffprobe output" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"ffmpeg: error processing ffprobe output"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage =
-			__FILEREF__ + "ffmpeg: error processing ffprobe output" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"ffmpeg: error processing ffprobe output"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", detailsPathFileName: " + detailsPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", detailsPathFileName: {}",
+			ingestionJobKey, detailsPathFileName
+		);
 		fs::remove_all(detailsPathFileName);
 
 		throw e;
@@ -1097,9 +1248,14 @@ int FFMpeg::probeChannel(int64_t ingestionJobKey, string url)
 {
 	_currentApiName = APIName::ProbeChannel;
 
-	string outputProbePathFileName = _ffmpegTempDir + "/" + to_string(ingestionJobKey) + ".probeChannel.log";
+	string outputProbePathFileName = std::format("{}/{}.probeChannel.log", _ffmpegTempDir, ingestionJobKey);
 
-	_logger->info(__FILEREF__ + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", url: " + url);
+	SPDLOG_INFO(
+		"{}"
+		", ingestionJobKey: {}"
+		", url: {}",
+		toString(_currentApiName), ingestionJobKey, url
+	);
 
 	// 2021-09-18: l'idea sarebbe che se il comando ritorna 124 (timeout), vuol dire
 	//	che il play ha strimmato per i secondi indicati ed è stato fermato dal comando
@@ -1111,9 +1267,11 @@ int FFMpeg::probeChannel(int64_t ingestionJobKey, string url)
 	int executeCommandStatus = 0;
 	try
 	{
-		_logger->info(
-			__FILEREF__ + toString(_currentApiName) + ": Executing ffplay command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", probeExecuteCommand: " + probeExecuteCommand
+		SPDLOG_INFO(
+			"{}: Executing ffplay command"
+			", ingestionJobKey: {}"
+			", probeExecuteCommand: {}",
+			toString(_currentApiName), ingestionJobKey, probeExecuteCommand
 		);
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
@@ -1121,9 +1279,13 @@ int FFMpeg::probeChannel(int64_t ingestionJobKey, string url)
 		executeCommandStatus = ProcessUtility::execute(probeExecuteCommand);
 		if (executeCommandStatus != 124)
 		{
-			string errorMessage = __FILEREF__ + toString(_currentApiName) + ": ffmpeg: probe command failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", executeCommandStatus: " + to_string(executeCommandStatus) +
-								  ", probeExecuteCommand: " + probeExecuteCommand;
+			string errorMessage = std::format(
+				"{}: ffmpeg: probe command failed"
+				", ingestionJobKey: {}"
+				", executeCommandStatus: {}"
+				", probeExecuteCommand: {}",
+				toString(_currentApiName), ingestionJobKey, executeCommandStatus, probeExecuteCommand
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
@@ -1133,22 +1295,33 @@ int FFMpeg::probeChannel(int64_t ingestionJobKey, string url)
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + toString(_currentApiName) + ": Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", probeExecuteCommand: " + probeExecuteCommand + ", @FFMPEG statistics@ - duration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"{}: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", probeExecuteCommand: {}"
+			", @FFMPEG statistics@ - duration (secs): @{}@",
+			toString(_currentApiName), ingestionJobKey, probeExecuteCommand,
+			chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
 	{
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(outputProbePathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		string errorMessage = __FILEREF__ + "ffmpeg: probe command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", probeExecuteCommand: " + probeExecuteCommand + ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile +
-							  ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"ffmpeg: probe command failed"
+			", ingestionJobKey: {}"
+			", probeExecuteCommand: {}"
+			", lastPartOfFfmpegOutputFile: {}"
+			", e.what(): {}",
+			ingestionJobKey, probeExecuteCommand, lastPartOfFfmpegOutputFile, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(
-			__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", outputProbePathFileName: " + outputProbePathFileName
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", outputProbePathFileName: {}",
+			ingestionJobKey, outputProbePathFileName
 		);
 		fs::remove_all(outputProbePathFileName);
 
@@ -1165,9 +1338,13 @@ void FFMpeg::getLiveStreamingInfo(
 )
 {
 
-	_logger->info(
-		__FILEREF__ + "getLiveStreamingInfo" + ", liveURL: " + liveURL + ", userAgent: " + userAgent +
-		", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey)
+	SPDLOG_INFO(
+		"getLiveStreamingInfo"
+		", liveURL: {}"
+		", userAgent: {}"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}",
+		liveURL, userAgent, ingestionJobKey, encodingJobKey
 	);
 
 	string outputFfmpegPathFileName;
@@ -1190,9 +1367,12 @@ void FFMpeg::getLiveStreamingInfo(
 			}
 			else
 			{
-				_logger->warn(
-					__FILEREF__ + "getLiveStreamingInfo: user agent cannot be used if not http" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", liveURL: " + liveURL
+				SPDLOG_WARN(
+					"getLiveStreamingInfo: user agent cannot be used if not http"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", liveURL: {}",
+					ingestionJobKey, encodingJobKey, liveURL
 				);
 			}
 		}
@@ -1207,16 +1387,24 @@ void FFMpeg::getLiveStreamingInfo(
 
 		chrono::system_clock::time_point startFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "getLiveStreamingInfo: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand
+		SPDLOG_INFO(
+			"getLiveStreamingInfo: Executing ffmpeg command"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", ffmpegExecuteCommand: {}",
+			ingestionJobKey, encodingJobKey, ffmpegExecuteCommand
 		);
 		int executeCommandStatus = ProcessUtility::execute(ffmpegExecuteCommand);
 		if (executeCommandStatus != 0)
 		{
-			string errorMessage = __FILEREF__ + "getLiveStreamingInfo failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", executeCommandStatus: " + to_string(executeCommandStatus) +
-								  ", ffmpegExecuteCommand: " + ffmpegExecuteCommand;
+			string errorMessage = std::format(
+				"getLiveStreamingInfo failed"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", executeCommandStatus: {}"
+				", ffmpegExecuteCommand: {}",
+				ingestionJobKey, encodingJobKey, executeCommandStatus, ffmpegExecuteCommand
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			// to hide the ffmpeg staff
@@ -1227,24 +1415,39 @@ void FFMpeg::getLiveStreamingInfo(
 
 		chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "getLiveStreamingInfo: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand +
-			", @FFMPEG statistics@ - duration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+		SPDLOG_INFO(
+			"getLiveStreamingInfo: Executed ffmpeg command"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", @FFMPEG statistics@ - duration (secs): @{}@",
+			ingestionJobKey, encodingJobKey, ffmpegExecuteCommand,
+			chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 		);
 	}
 	catch (runtime_error &e)
 	{
 		string lastPartOfFfmpegOutputFile = getLastPartOfFile(outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
-		string errorMessage = __FILEREF__ + "getLiveStreamingInfo failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegExecuteCommand: " + ffmpegExecuteCommand +
-							  ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"getLiveStreamingInfo failed"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", ffmpegExecuteCommand: {}"
+			", lastPartOfFfmpegOutputFile: {}"
+			", e.what(): {}",
+			ingestionJobKey, encodingJobKey, ffmpegExecuteCommand, lastPartOfFfmpegOutputFile, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		if (fs::exists(outputFfmpegPathFileName.c_str()))
 		{
-			_logger->info(__FILEREF__ + "Remove" + ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputFfmpegPathFileName: {}",
+				ingestionJobKey, encodingJobKey, outputFfmpegPathFileName
+			);
 			fs::remove_all(outputFfmpegPathFileName);
 		}
 
@@ -1255,9 +1458,12 @@ void FFMpeg::getLiveStreamingInfo(
 	{
 		if (!fs::exists(outputFfmpegPathFileName.c_str()))
 		{
-			_logger->info(
-				__FILEREF__ + "ffmpeg: ffmpeg status not available" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", outputFfmpegPathFileName: " + outputFfmpegPathFileName
+			SPDLOG_INFO(
+				"ffmpeg: ffmpeg status not available"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputFfmpegPathFileName: {}",
+				ingestionJobKey, encodingJobKey, outputFfmpegPathFileName
 			);
 
 			throw FFMpegEncodingStatusNotAvailable();
@@ -1337,7 +1543,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 			string program;
 			{
 				/*
-				_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Looking Program"
+				info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Looking Program"
 					+ ", programId: " + to_string(programId)
 					+ ", startToLookForProgram: " + to_string(startToLookForProgram)
 				);
@@ -1358,7 +1564,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 					if (programEndIndex == string::npos)
 					{
 						/*
-						_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. This is the last Program"
+						info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. This is the last Program"
 							+ ", programId: " + to_string(programId)
 							+ ", startToLookForProgram: " + to_string(startToLookForProgram)
 						);
@@ -1373,7 +1579,7 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 				program = firstPartOfFile.substr(programBeginIndex, programEndIndex - programBeginIndex);
 
 				/*
-				_logger->info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Program"
+				info(__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Program"
 					+ ", programId: " + to_string(programId)
 					+ ", programBeginIndex: " + to_string(programBeginIndex)
 					+ ", programEndIndex: " + to_string(programEndIndex)
@@ -1481,10 +1687,16 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								}
 								catch (exception &e)
 								{
-									string errorMessage =
-										__FILEREF__ + "getLiveStreamingInfo error" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", encodingJobKey: " + to_string(encodingJobKey) + ", line: " + line +
-										", yuvEndIndex: " + to_string(yuvEndIndex) + ", sWidth: " + sWidth + ", e.what(): " + e.what();
+									string errorMessage = std::format(
+										"getLiveStreamingInfo error"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", line: {}"
+										", yuvEndIndex: {}"
+										", sWidth: {}"
+										", e.what(): {}",
+										ingestionJobKey, encodingJobKey, line, yuvEndIndex, sWidth, e.what()
+									);
 									SPDLOG_ERROR(errorMessage);
 								}
 							}
@@ -1500,10 +1712,15 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								}
 								catch (exception &e)
 								{
-									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error" +
-														  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-														  ", encodingJobKey: " + to_string(encodingJobKey) + ", line: " + line +
-														  ", sHeight: " + sHeight + ", e.what(): " + e.what();
+									string errorMessage = std::format(
+										"getLiveStreamingInfo error"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", line: {}"
+										", sHeight: {}"
+										", e.what(): {}",
+										ingestionJobKey, encodingJobKey, line, sHeight, e.what()
+									);
 									SPDLOG_ERROR(errorMessage);
 								}
 							}
@@ -1514,11 +1731,19 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								make_tuple(programId, videoStreamId, videoStreamDescription, videoCodec, videoYUV, videoWidth, videoHeight)
 							);
 
-							_logger->info(
-								__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Video track" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								", encodingJobKey: " + to_string(encodingJobKey) + ", programId: " + to_string(programId) + ", videoStreamId: " +
-								videoStreamId + ", videoStreamDescription: " + videoStreamDescription + ", videoCodec: " + videoCodec +
-								", videoYUV: " + videoYUV + ", videoWidth: " + to_string(videoWidth) + ", videoHeight: " + to_string(videoHeight)
+							SPDLOG_INFO(
+								"FFMpeg::getLiveStreamingInfo. Video track"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", programId: {}"
+								", videoStreamId: {}"
+								", videoStreamDescription: {}"
+								", videoCodec: {}"
+								", videoYUV: {}"
+								", videoWidth: {}"
+								", videoHeight: {}",
+								ingestionJobKey, encodingJobKey, programId, videoStreamId, videoStreamDescription, videoCodec, videoYUV, videoWidth,
+								videoHeight
 							);
 						}
 					}
@@ -1589,10 +1814,15 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								}
 								catch (exception &e)
 								{
-									string errorMessage = __FILEREF__ + "getLiveStreamingInfo error" +
-														  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-														  ", encodingJobKey: " + to_string(encodingJobKey) + ", line: " + line +
-														  ", sSamplingRate: " + sSamplingRate + ", e.what(): " + e.what();
+									string errorMessage = std::format(
+										"getLiveStreamingInfo error"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", line: {}"
+										", sSamplingRate: {}"
+										", e.what(): {}",
+										ingestionJobKey, encodingJobKey, line, sSamplingRate, e.what()
+									);
 									SPDLOG_ERROR(errorMessage);
 								}
 							}
@@ -1611,11 +1841,18 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 								make_tuple(programId, audioStreamId, audioStreamDescription, audioCodec, audioSamplingRate, audioStereo)
 							);
 
-							_logger->info(
-								__FILEREF__ + "FFMpeg::getLiveStreamingInfo. Audio track" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								", encodingJobKey: " + to_string(encodingJobKey) + ", programId: " + to_string(programId) + ", audioStreamId: " +
-								audioStreamId + ", audioStreamDescription: " + audioStreamDescription + ", audioCodec: " + audioCodec +
-								", audioSamplingRate: " + to_string(audioSamplingRate) + ", audioStereo: " + to_string(audioStereo)
+							SPDLOG_INFO(
+								"FFMpeg::getLiveStreamingInfo. Audio track"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", programId: {}"
+								", audioStreamId: {}"
+								", audioStreamDescription: {}"
+								", audioCodec: {}"
+								", audioSamplingRate: {}"
+								", audioStereo: {}",
+								ingestionJobKey, encodingJobKey, programId, audioStreamId, audioStreamDescription, audioCodec, audioSamplingRate,
+								audioStereo
 							);
 						}
 					}
@@ -1625,30 +1862,55 @@ Output #0, flv, to 'rtmp://prg-1.s.cdn77.com:1936/static/1620280677?password=DMG
 			programId++;
 		}
 
-		_logger->info(
-			__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", outputFfmpegPathFileName: " + outputFfmpegPathFileName
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputFfmpegPathFileName: {}",
+			ingestionJobKey, encodingJobKey, outputFfmpegPathFileName
 		);
 		fs::remove_all(outputFfmpegPathFileName);
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = __FILEREF__ + "getLiveStreamingInfo error" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"getLiveStreamingInfo error"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, encodingJobKey, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputFfmpegPathFileName: {}",
+			ingestionJobKey, encodingJobKey, outputFfmpegPathFileName
+		);
 		fs::remove_all(outputFfmpegPathFileName);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = __FILEREF__ + "getLiveStreamingInfo error" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"getLiveStreamingInfo error"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", e.what(): {}",
+			ingestionJobKey, encodingJobKey, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
-		_logger->info(__FILEREF__ + "Remove" + ", outputFfmpegPathFileName: " + outputFfmpegPathFileName);
+		SPDLOG_INFO(
+			"remove"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputFfmpegPathFileName: {}",
+			ingestionJobKey, encodingJobKey, outputFfmpegPathFileName
+		);
 		fs::remove_all(outputFfmpegPathFileName);
 
 		throw e;

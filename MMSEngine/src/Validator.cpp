@@ -17,13 +17,16 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
-Validator::Validator(shared_ptr<spdlog::logger> logger, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
+Validator::Validator(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
 {
-	_logger = logger;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 
 	_storagePath = JSONUtils::asString(configuration["storage"], "path", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", storage->path: " + _storagePath);
+	SPDLOG_INFO(
+		"Configuration item"
+		", storage->path: {}",
+		_storagePath
+	);
 }
 
 Validator::Validator(const Validator &orig) {}
@@ -37,8 +40,13 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 	{
 		string sRoot = JSONUtils::toString(root);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + +", sRoot: " + sRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sRoot: {}",
+			field, sRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -46,7 +54,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 	if (type != "Workflow")
 	{
 		string errorMessage = __FILEREF__ + "Type field is wrong" + ", Type: " + type;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -56,8 +64,13 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 	{
 		string sRoot = JSONUtils::toString(root);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sRoot: " + sRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sRoot: {}",
+			field, sRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -68,8 +81,13 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 	{
 		string sRoot = JSONUtils::toString(root);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sRoot: " + sRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sRoot: {}",
+			field, sRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -96,8 +114,13 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfT
 	{
 		string sGroupOfTasksRoot = JSONUtils::toString(groupOfTasksRoot);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sGroupOfTasksRoot: " + sGroupOfTasksRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sGroupOfTasksRoot: {}",
+			field, sGroupOfTasksRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -110,8 +133,13 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfT
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}",
+			field, sParametersRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -122,7 +150,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfT
 	if (tasksRoot.size() == 0)
 	{
 		string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -137,8 +165,13 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfT
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}",
+				field, sParametersRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -164,8 +197,13 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json paramete
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}",
+			field, sParametersRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -174,7 +212,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json paramete
 	if (executionType != "parallel" && executionType != "sequential")
 	{
 		string errorMessage = __FILEREF__ + "executionType field is wrong" + ", executionType: " + executionType;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -192,9 +230,13 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskOrGroupOfTasksRoot: {}",
+				field, sTaskOrGroupOfTasksRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -205,9 +247,13 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskOrGroupOfTasksRoot: {}",
+				field, sTaskOrGroupOfTasksRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -233,9 +279,13 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskOrGroupOfTasksRoot: {}",
+				field, sTaskOrGroupOfTasksRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -246,9 +296,13 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskOrGroupOfTasksRoot: {}",
+				field, sTaskOrGroupOfTasksRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -274,9 +328,13 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskOrGroupOfTasksRoot: {}",
+				field, sTaskOrGroupOfTasksRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -287,9 +345,13 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskOrGroupOfTasksRoot: " + sTaskOrGroupOfTasksRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskOrGroupOfTasksRoot: {}",
+				field, sTaskOrGroupOfTasksRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -317,8 +379,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 	{
 		string sTaskRoot = JSONUtils::toString(taskRoot);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sTaskRoot: {}",
+			field, sTaskRoot
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -337,8 +404,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -355,8 +427,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -373,8 +450,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -391,8 +473,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -409,8 +496,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -427,8 +519,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -445,8 +542,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -463,8 +565,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -481,8 +588,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -499,8 +611,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -517,8 +634,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -535,8 +657,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -553,8 +680,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -571,8 +703,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -589,8 +726,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -607,8 +749,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -625,8 +772,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -643,8 +795,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -661,8 +818,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -679,8 +841,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -697,8 +864,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -715,8 +887,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -733,8 +910,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -751,8 +933,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -769,8 +956,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -787,8 +979,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -805,8 +1002,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -823,8 +1025,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -841,8 +1048,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -859,8 +1071,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -877,8 +1094,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -895,8 +1117,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -913,8 +1140,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -931,8 +1163,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -949,8 +1186,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -967,8 +1209,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -985,8 +1232,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1003,8 +1255,13 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTaskRoot: " + sTaskRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1015,7 +1272,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 	else
 	{
 		string errorMessage = __FILEREF__ + "Field 'Type' is wrong" + ", Type: " + type;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1184,7 +1441,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, MMSEngineDBFacade::I
 	else
 	{
 		string errorMessage = __FILEREF__ + "Unknown IngestionType" + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1203,9 +1460,14 @@ void Validator::validateAddContentMetadata(string label, json parametersRoot)
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1216,7 +1478,7 @@ void Validator::validateAddContentMetadata(string label, json parametersRoot)
 	if (!isVideoAudioFileFormat(fileFormat) && !isImageFileFormat(fileFormat))
 	{
 		string errorMessage = string("Unknown fileFormat") + ", fileFormat: " + fileFormat + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1237,7 +1499,7 @@ void Validator::validateAddContentMetadata(string label, json parametersRoot)
 				{
 					string errorMessage = __FILEREF__ + "'SourceURL' cannot be within the dedicated storage managed by MMS" + ", Field: " + field +
 										  ", sourceURL: " + sourceURL + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1299,7 +1561,7 @@ void Validator::validateAddSilentAudioMetadata(
 	if (!isAddSilentTypeValid(addType))
 	{
 		string errorMessage = string("Unknown addType") + ", addType: " + addType + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1311,9 +1573,14 @@ void Validator::validateAddSilentAudioMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1338,7 +1605,7 @@ void Validator::validateAddSilentAudioMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1392,7 +1659,7 @@ void Validator::validateRemoveContentMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1439,7 +1706,7 @@ void Validator::validateEncodeMetadata(
 		catch (exception &e)
 		{
 			string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong" + ", EncodingPriority: " + encodingPriority + ", label: " + label;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1457,7 +1724,7 @@ void Validator::validateEncodeMetadata(
 		string errorMessage = __FILEREF__ + "Neither of the following fields are present" + ", Field: " + encodingProfilesSetKeyField +
 							  ", Field: " + encodingProfilesSetLabelField + ", Field: " + encodingProfileLabelField +
 							  ", Field: " + encodingProfileKeyField + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1483,7 +1750,7 @@ void Validator::validateEncodeMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1543,7 +1810,7 @@ void Validator::validateFrameMetadata(
 					+ ", dependencies.size: " + to_string(dependencies.size())
 					+ ", parametersRoot: " + JSONUtils::toString(parametersRoot)
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1572,7 +1839,7 @@ void Validator::validateFrameMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1610,9 +1877,14 @@ void Validator::validatePeriodicalFramesMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1637,7 +1909,7 @@ void Validator::validatePeriodicalFramesMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1666,7 +1938,7 @@ void Validator::validatePeriodicalFramesMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1716,7 +1988,7 @@ void Validator::validateIFramesMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1745,7 +2017,7 @@ void Validator::validateIFramesMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1793,7 +2065,7 @@ void Validator::validateSlideshowMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1829,7 +2101,7 @@ void Validator::validateSlideshowMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1839,7 +2111,7 @@ void Validator::validateSlideshowMetadata(
 			{
 				string errorMessage = __FILEREF__ + "Reference does not refer an image content" + ", picturesNumber: " + to_string(picturesNumber) +
 									  ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1888,7 +2160,7 @@ void Validator::validateConcatDemuxerMetadata(
 					+ ", Field: " + field
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1909,7 +2181,7 @@ void Validator::validateConcatDemuxerMetadata(
 			{
 				string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (1)" + ", Field: " + field +
 									  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1933,7 +2205,7 @@ void Validator::validateConcatDemuxerMetadata(
 											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 											  ", referenceMediaItemKey: " + to_string(key) +
 											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1947,7 +2219,7 @@ void Validator::validateConcatDemuxerMetadata(
 											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 											  ", referenceMediaItemKey: " + to_string(key) +
 											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1989,7 +2261,7 @@ void Validator::validateCutMetadata(
 
 		string errorMessage =
 			__FILEREF__ + "field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2000,7 +2272,7 @@ void Validator::validateCutMetadata(
 	{
 		string errorMessage = __FILEREF__ + "Both fields are not present or it is null" + ", Field: " + endTimeField +
 							  ", Field: " + framesNumberField + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2013,7 +2285,7 @@ void Validator::validateCutMetadata(
 		if (!isCutTypeValid(cutType))
 		{
 			string errorMessage = string("Unknown cutType") + ", cutType: " + cutType + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2027,7 +2299,7 @@ void Validator::validateCutMetadata(
 
 				string errorMessage = __FILEREF__ + "field is not present or it is null" + ", Field: " + field +
 									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2039,7 +2311,7 @@ void Validator::validateCutMetadata(
 
 				string errorMessage = __FILEREF__ + "field is not present or it is null" + ", Field: " + field +
 									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2063,7 +2335,7 @@ void Validator::validateCutMetadata(
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size());
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2081,7 +2353,7 @@ void Validator::validateCutMetadata(
 			{
 				string errorMessage = __FILEREF__ + "No correct number of Media to be cut" +
 									  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2100,7 +2372,7 @@ void Validator::validateCutMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2153,7 +2425,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2199,7 +2471,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 						", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1) +
 						", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2)) + ", referenceMediaItemKey_2: " + to_string(key_2) +
 						", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2237,9 +2509,14 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2255,9 +2532,14 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			{
 				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2271,7 +2553,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			if (!isFontTypeValid(fontType))
 			{
 				string errorMessage = string("Unknown fontType") + ", fontType: " + fontType + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2285,7 +2567,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			if (!isColorValid(fontColor))
 			{
 				string errorMessage = string("Unknown fontColor") + ", fontColor: " + fontColor + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2300,7 +2582,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			{
 				string errorMessage =
 					string("Wrong textPercentageOpacity") + ", textPercentageOpacity: " + to_string(textPercentageOpacity) + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2321,7 +2603,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			{
 				string errorMessage =
 					string("Wrong boxPercentageOpacity") + ", boxPercentageOpacity: " + to_string(boxPercentageOpacity) + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2339,7 +2621,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		catch (exception &e)
 		{
 			string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong" + ", EncodingPriority: " + encodingPriority + ", label: " + label;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2353,7 +2635,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		if (!isColorValid(boxColor))
 		{
 			string errorMessage = string("Unknown boxColor") + ", boxColor: " + boxColor + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2378,7 +2660,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2407,7 +2689,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2445,9 +2727,14 @@ void Validator::validateEmailNotificationMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2473,7 +2760,7 @@ void Validator::validateEmailNotificationMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2507,7 +2794,7 @@ void Validator::validateEmailNotificationMetadata(
 								+ ", sParametersRoot: " + sParametersRoot
 								+ ", label: " + label
 								;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2559,9 +2846,14 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2578,9 +2870,14 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2595,9 +2892,14 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2609,7 +2911,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 
 		string errorMessage = __FILEREF__ + "inputType Field is wrong, it is neither Stream nor URL" + ", inputType: " + inputType +
 							  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2666,7 +2968,7 @@ void Validator::validateMediaCrossReferenceMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2684,7 +2986,7 @@ void Validator::validateMediaCrossReferenceMetadata(
 			{
 				string errorMessage = __FILEREF__ + "Field is present but it has a wrong number of elements" + ", Field: " + field +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2721,9 +3023,14 @@ void Validator::validateFTPDeliveryMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2749,7 +3056,7 @@ void Validator::validateFTPDeliveryMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2796,9 +3103,14 @@ void Validator::validateHTTPCallbackMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2812,7 +3124,7 @@ void Validator::validateHTTPCallbackMetadata(
 		if (method != "GET" && method != "POST" && method != "PUT")
 		{
 			string errorMessage = string("Unknown Method") + ", method: " + method + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2831,7 +3143,7 @@ void Validator::validateHTTPCallbackMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2844,7 +3156,7 @@ void Validator::validateHTTPCallbackMetadata(
 						+ ", Field: " + field
 					+ ", label: " + label
 						;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2872,7 +3184,7 @@ void Validator::validateHTTPCallbackMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2919,9 +3231,14 @@ void Validator::validateLocalCopyMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2933,7 +3250,7 @@ void Validator::validateLocalCopyMetadata(
 	{
 		string errorMessage = __FILEREF__ + "'LocalPath' cannot be within the dedicated storage managed by MMS" + ", Field: " + field +
 							  ", localPath: " + localPath + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2958,7 +3275,7 @@ void Validator::validateLocalCopyMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3003,9 +3320,14 @@ void Validator::validateExtractTracksMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3017,7 +3339,7 @@ void Validator::validateExtractTracksMetadata(
 	{
 		string errorMessage =
 			__FILEREF__ + "No correct number of Tracks" + ", tracksRoot.size: " + to_string(tracksRoot.size()) + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3030,9 +3352,14 @@ void Validator::validateExtractTracksMetadata(
 		{
 			string sTrackRoot = JSONUtils::toString(trackRoot);
 
-			string errorMessage =
-				__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sTrackRoot: " + sTrackRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTrackRoot: {}"
+				", label: {}",
+				field, sTrackRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3041,7 +3368,7 @@ void Validator::validateExtractTracksMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'" + ", Field: " + field +
 								  ", trackType: " + trackType + ", label: " + label;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3053,7 +3380,7 @@ void Validator::validateExtractTracksMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'" + ", Field: " + field +
 							  ", outputFileFormat: " + outputFileFormat + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3077,7 +3404,7 @@ void Validator::validateExtractTracksMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3107,7 +3434,7 @@ void Validator::validateExtractTracksMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3146,9 +3473,14 @@ void Validator::validatePostOnFacebookMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3162,7 +3494,7 @@ void Validator::validatePostOnFacebookMetadata(
 			", label: {}",
 			JSONUtils::toString(parametersRoot), label
 		);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3186,7 +3518,7 @@ void Validator::validatePostOnFacebookMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3216,7 +3548,7 @@ void Validator::validatePostOnFacebookMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3252,9 +3584,14 @@ void Validator::validatePostOnYouTubeMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3269,7 +3606,7 @@ void Validator::validatePostOnYouTubeMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'private', 'public' or unlisted" + ", Field: " + field +
 								  ", youTubePrivacyStatus: " + youTubePrivacyStatus + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3294,7 +3631,7 @@ void Validator::validatePostOnYouTubeMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3324,7 +3661,7 @@ void Validator::validatePostOnYouTubeMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3361,9 +3698,14 @@ void Validator::validateFaceRecognitionMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3376,7 +3718,7 @@ void Validator::validateFaceRecognitionMetadata(
 		string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, " +
 							  "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default" + ")" + ", Field: " + field +
 							  ", cascadeName: " + faceRecognitionCascadeName + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3388,7 +3730,7 @@ void Validator::validateFaceRecognitionMetadata(
 		string errorMessage = __FILEREF__ + field + " is wrong (it could be only " +
 							  "VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace" + ")" + ", Field: " + field +
 							  ", Output: " + faceRecognitionOutput + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3412,7 +3754,7 @@ void Validator::validateFaceRecognitionMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3431,7 +3773,7 @@ void Validator::validateFaceRecognitionMetadata(
 			{
 				string errorMessage =
 					__FILEREF__ + "No dependencies found" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3452,7 +3794,7 @@ void Validator::validateFaceRecognitionMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3489,9 +3831,14 @@ void Validator::validateFaceIdentificationMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3504,7 +3851,7 @@ void Validator::validateFaceIdentificationMetadata(
 		string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, " +
 							  "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default" + ")" + ", Field: " + field +
 							  ", cascadeName: " + faceIdentificationCascadeName + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3513,7 +3860,7 @@ void Validator::validateFaceIdentificationMetadata(
 	if (parametersRoot[field].type() != json::value_t::array || parametersRoot[field].size() == 0)
 	{
 		string errorMessage = __FILEREF__ + field + " is not an array or the array is empty" + ", Field: " + field + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3537,7 +3884,7 @@ void Validator::validateFaceIdentificationMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3556,7 +3903,7 @@ void Validator::validateFaceIdentificationMetadata(
 			{
 				string errorMessage =
 					__FILEREF__ + "No Dependencies found" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3577,7 +3924,7 @@ void Validator::validateFaceIdentificationMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3615,9 +3962,14 @@ void Validator::validateLiveRecorderMetadata(
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3632,7 +3984,7 @@ void Validator::validateLiveRecorderMetadata(
 
 		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even or slower than 10)" + ", Field: " + field +
 							  ", value: " + to_string(segmentDuration) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3644,7 +3996,7 @@ void Validator::validateLiveRecorderMetadata(
 
 		string errorMessage = __FILEREF__ + "Field cannot be present in this Task" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot +
 							  ", label: " + label;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3656,9 +4008,14 @@ void Validator::validateLiveRecorderMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3671,9 +4028,14 @@ void Validator::validateLiveRecorderMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3689,7 +4051,7 @@ void Validator::validateLiveRecorderMetadata(
 							  ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart) +
 							  ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) + ", sParametersRoot: " + sParametersRoot +
 							  ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3702,7 +4064,7 @@ void Validator::validateLiveRecorderMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "ts" + ")" + ", Field: " + field +
 								  ", liveRecorderOutputFormat: " + liveRecorderOutputFormat + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3752,9 +4114,14 @@ void Validator::validateLiveProxyMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3771,9 +4138,14 @@ void Validator::validateLiveProxyMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot +
-								  ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				field, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3806,7 +4178,7 @@ void Validator::validateLiveProxyMetadata(
 			string errorMessage =
 				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
 				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3817,9 +4189,14 @@ void Validator::validateLiveProxyMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3833,9 +4210,14 @@ void Validator::validateLiveProxyMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3878,7 +4260,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		if (!isYouTubeLiveBroadcastSourceTypeValid(sourceType))
 		{
 			string errorMessage = string("Unknown sourceType") + ", sourceType: " + sourceType + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3893,7 +4275,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'private', 'public' or unlisted" + ", Field: " + field +
 								  ", youTubePrivacyStatus: " + youTubePrivacyStatus + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3906,9 +4288,14 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot +
-								  ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				field, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3932,7 +4319,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 			{
 				string errorMessage = __FILEREF__ + "No correct number of References"
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3950,7 +4337,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 				{
 					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast" +
 										  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3972,7 +4359,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 								__FILEREF__ + "Reference... does not refer a video-audio content" +
 								", dependencyType: " + to_string(static_cast<int>(dependencyType)) + ", referenceMediaItemKey: " + to_string(key) +
 								", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -3987,9 +4374,14 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4021,7 +4413,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 			string errorMessage =
 				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
 				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4060,9 +4452,14 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4075,7 +4472,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			", label: {}",
 			JSONUtils::toString(parametersRoot), label
 		);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4087,7 +4484,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			", label: {}",
 			JSONUtils::toString(parametersRoot), label
 		);
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4101,7 +4498,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		if (!isFacebookLiveBroadcastSourceTypeValid(sourceType))
 		{
 			string errorMessage = string("Unknown sourceType") + ", sourceType: " + sourceType + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4114,9 +4511,14 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot +
-								  ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				field, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4140,7 +4542,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			{
 				string errorMessage = __FILEREF__ + "No correct number of References"
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size());
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4156,9 +4558,13 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			{
 				if (dependencies.size() == 0)
 				{
-					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast" +
-										  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"No correct number of Media to be broadcast"
+						", dependencies.size: {}"
+						", label: {}",
+						dependencies.size(), label
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4176,11 +4582,15 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 						if (referenceContentType != MMSEngineDBFacade::ContentType::Video &&
 							referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 						{
-							string errorMessage =
-								__FILEREF__ + "reference... does not refer a video-audio content" +
-								", dependencyType: " + to_string(static_cast<int>(dependencyType)) + ", referenceMediaItemKey: " + to_string(key) +
-								", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"reference... does not refer a video-audio content"
+								", dependencyType: {}"
+								", referenceMediaItemKey: {}"
+								", referenceContentType: {}"
+								", label: {}",
+								static_cast<int>(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -4195,9 +4605,14 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4226,10 +4641,15 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage =
-				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
-				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
+				", utcProxyPeriodStart: {}"
+				", utcProxyPeriodEnd: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				utcProxyPeriodStart, utcProxyPeriodEnd, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4277,9 +4697,14 @@ void Validator::validateVODProxyMetadata(
 			// a log of media items in case the IngestionJob generates a log of media contents
 			if (dependencies.size() < 1)
 			{
-				string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (1)" + ", Field: " + field +
-									  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is present but it does not refer enough elements (1)"
+					", Field: {}"
+					", dependencies.size: {}"
+					", label: {}",
+					field, dependencies.size(), label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4306,9 +4731,14 @@ void Validator::validateVODProxyMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot +
-								  ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				field, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4338,10 +4768,15 @@ void Validator::validateVODProxyMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage =
-				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
-				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"ProxyPeriodStart cannot be bigger than ProxyPeriodEnd"
+				", utcProxyPeriodStart: {}"
+				", utcProxyPeriodEnd: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				utcProxyPeriodStart, utcProxyPeriodEnd, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4352,9 +4787,14 @@ void Validator::validateVODProxyMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4368,9 +4808,14 @@ void Validator::validateVODProxyMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4388,9 +4833,13 @@ void Validator::validateVODProxyMetadata(
 			{
 				string sParametersRoot = JSONUtils::toString(outputRoot);
 
-				string errorMessage = __FILEREF__ + "In case of Image, the EncodingProfile is mandatory" + ", sParametersRoot: " + sParametersRoot +
-									  ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"In case of Image, the EncodingProfile is mandatory"
+					", sParametersRoot: {}"
+					", label: {}",
+					sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4440,7 +4889,7 @@ void Validator::validateCountdownMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4466,11 +4915,15 @@ void Validator::validateCountdownMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						static_cast<int>(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4483,9 +4936,14 @@ void Validator::validateCountdownMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4516,7 +4974,7 @@ void Validator::validateCountdownMetadata(
 			string errorMessage =
 				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
 				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4527,9 +4985,14 @@ void Validator::validateCountdownMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4543,9 +5006,14 @@ void Validator::validateCountdownMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4585,9 +5053,14 @@ void Validator::validateWorkflowAsLibraryMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4599,7 +5072,7 @@ void Validator::validateWorkflowAsLibraryMetadata(
 	if (!isWorkflowAsLibraryTypeValid(workflowAsLibraryType))
 	{
 		string errorMessage = string("Unknown workflowAsLibraryType") + ", workflowAsLibraryType: " + workflowAsLibraryType + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4632,9 +5105,14 @@ void Validator::validateChangeFileFormatMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4653,7 +5131,7 @@ void Validator::validateChangeFileFormatMetadata(
 	{
 		string errorMessage =
 			__FILEREF__ + field + " is wrong" + ", Field: " + field + ", outputFileFormat: " + outputFileFormat + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4677,7 +5155,7 @@ void Validator::validateChangeFileFormatMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4709,7 +5187,7 @@ void Validator::validateChangeFileFormatMetadata(
 											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 											  ", referenceMediaItemKey: " + to_string(key) +
 											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -4723,7 +5201,7 @@ void Validator::validateChangeFileFormatMetadata(
 											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 											  ", referenceMediaItemKey: " + to_string(key) +
 											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -4769,7 +5247,7 @@ void Validator::validateVideoSpeedMetadata(
 					+ ", sParametersRoot: " + sParametersRoot
 					+ ", label: " + label
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4784,7 +5262,7 @@ void Validator::validateVideoSpeedMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "SlowDown, or SpeedUp" + ")" + ", Field: " + field +
 								  ", speedType " + speedType + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4798,7 +5276,7 @@ void Validator::validateVideoSpeedMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be between 1 and 10)" + ", Field: " + field +
 								  ", speedSize: " + to_string(speedSize) + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4823,7 +5301,7 @@ void Validator::validateVideoSpeedMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4842,7 +5320,7 @@ void Validator::validateVideoSpeedMetadata(
 			{
 				string errorMessage =
 					__FILEREF__ + "Dependencies were not found" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4863,7 +5341,7 @@ void Validator::validateVideoSpeedMetadata(
 										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
 										  ", referenceMediaItemKey: " + to_string(key) +
 										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4919,7 +5397,7 @@ void Validator::validatePictureInPictureMetadata(
 					+ ", label: " + label
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4958,7 +5436,7 @@ void Validator::validatePictureInPictureMetadata(
 						", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1) +
 						", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2)) + ", referenceMediaItemKey_2: " + to_string(key_2) +
 						", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -5015,7 +5493,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 					+ ", label: " + label
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5033,7 +5511,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 			{
 				string errorMessage =
 					__FILEREF__ + "Wrong dependencies number" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5073,7 +5551,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 						", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) +
 						", dependencyType_3: " + to_string(static_cast<int>(dependencyType_3)) + ", referenceMediaItemKey_3: " + to_string(key_3) +
 						", referenceContentType_3: " + MMSEngineDBFacade::toString(referenceContentType_3) + ", label: " + label;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -5086,7 +5564,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	if (!JSONUtils::isMetadataPresent(parametersRoot, keyField) && !JSONUtils::isMetadataPresent(parametersRoot, labelField))
 	{
 		string errorMessage = __FILEREF__ + "Both fields are not present or it is null" + ", Field: " + keyField + ", Field: " + labelField;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5098,9 +5576,14 @@ void Validator::validateIntroOutroOverlayMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5112,7 +5595,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", introOverlayDurationInSeconds: " + to_string(introOverlayDurationInSeconds) + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5123,7 +5606,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", outroOverlayDurationInSeconds: " + to_string(outroOverlayDurationInSeconds) + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5142,9 +5625,14 @@ void Validator::validateLiveGridMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5156,7 +5644,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong, it should contains at least 2 configuration labels" + ", Field: " + field +
 							  ", inputConfigurationLabelsRoot.size: " + to_string(inputConfigurationLabelsRoot.size()) + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5167,7 +5655,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", columns: " + to_string(columns) + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5178,7 +5666,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", gridWidth: " + to_string(gridWidth) + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5189,7 +5677,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", gridHeight: " + to_string(gridHeight) + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5199,9 +5687,14 @@ void Validator::validateLiveGridMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5213,9 +5706,14 @@ void Validator::validateLiveGridMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5257,9 +5755,14 @@ void Validator::validateLiveCutMetadata(
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5270,9 +5773,14 @@ void Validator::validateLiveCutMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5282,9 +5790,14 @@ void Validator::validateLiveCutMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5294,9 +5807,14 @@ void Validator::validateLiveCutMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5309,9 +5827,14 @@ void Validator::validateLiveCutMetadata(
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage =
-			__FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}"
+			", label: {}",
+			field, sParametersRoot, label
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5326,7 +5849,7 @@ void Validator::validateLiveCutMetadata(
 		string errorMessage = __FILEREF__ + "CutPeriodStart cannot be bigger than CutPeriodEnd" +
 							  ", utcCutPeriodStart: " + to_string(utcCutPeriodStart) + ", utcCutPeriodEnd: " + to_string(utcCutPeriodEnd) +
 							  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		_logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5386,9 +5909,14 @@ void Validator::fillDependencies(
 						{
 							string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-							string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + "Reference..." +
-												  ", sParametersRoot: " + sParametersRoot;
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"Field is not present or it is null"
+								", Field: "
+								"Reference..."
+								", sParametersRoot: {}",
+								sParametersRoot
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -5420,11 +5948,15 @@ void Validator::fillDependencies(
 		MMSEngineDBFacade::ContentType referenceContentType;
 		try
 		{
-			_logger->debug(
-				__FILEREF__ + "fillDependencies" + ", label: " + label + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey) +
-				", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey) +
-				", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) + ", referenceUniqueName: " + referenceUniqueName +
-				", referenceLabel: " + to_string(referenceLabel)
+			SPDLOG_DEBUG(
+				"fillDependencies"
+				", label: {}"
+				", referenceMediaItemKey: {}"
+				", referencePhysicalPathKey: {}"
+				", referenceIngestionJobKey: {}"
+				", referenceUniqueName: {}"
+				", referenceLabel: {}",
+				label, referenceMediaItemKey, referencePhysicalPathKey, referenceIngestionJobKey, referenceUniqueName, referenceLabel
 			);
 
 			bool warningIfMissing = true;
@@ -5491,7 +6023,7 @@ void Validator::fillDependencies(
 					string errorMessage = __FILEREF__ + "No media items found" +
 										  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
 										  ", sParametersRoot: " + sParametersRoot;
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				}
 				else
 				{
@@ -5524,10 +6056,13 @@ void Validator::fillDependencies(
 
 							if (referencePhysicalPathKey != -1)
 							{
-								_logger->debug(
-									__FILEREF__ + "fillDependencies" + ", label: " + label +
-									", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey) + ", referenceContentType: " +
-									MMSEngineDBFacade::toString(referenceContentType) + ", DependencyType::PhysicalPathKey"
+								SPDLOG_DEBUG(
+									"fillDependencies"
+									", label: {}"
+									", referencePhysicalPathKey: {}"
+									", referenceContentType: {}"
+									", DependencyType::PhysicalPathKey",
+									label, referencePhysicalPathKey, MMSEngineDBFacade::toString(referenceContentType)
 								);
 
 								dependencies.push_back(make_tuple(
@@ -5536,10 +6071,13 @@ void Validator::fillDependencies(
 							}
 							else if (referenceMediaItemKey != -1)
 							{
-								_logger->debug(
-									__FILEREF__ + "fillDependencies" + ", label: " + label +
-									", referenceMediaItemKey: " + to_string(referenceMediaItemKey) +
-									", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", DependencyType::MediaItemKey"
+								SPDLOG_DEBUG(
+									"fillDependencies"
+									", label: {}"
+									", referenceMediaItemKey: {}"
+									", referenceContentType: {}"
+									", DependencyType::MediaItemKey",
+									label, referenceMediaItemKey, MMSEngineDBFacade::toString(referenceContentType)
 								);
 
 								dependencies.push_back(make_tuple(
@@ -5563,10 +6101,13 @@ void Validator::fillDependencies(
 							*/
 							if (referenceMediaItemKey != -1)
 							{
-								_logger->debug(
-									__FILEREF__ + "fillDependencies" + ", label: " + label +
-									", referenceMediaItemKey: " + to_string(referenceMediaItemKey) +
-									", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", DependencyType::MediaItemKey"
+								SPDLOG_DEBUG(
+									"fillDependencies"
+									", label: {}"
+									", referenceMediaItemKey: {}"
+									", referenceContentType: {}"
+									", DependencyType::MediaItemKey",
+									label, referenceMediaItemKey, MMSEngineDBFacade::toString(referenceContentType)
 								);
 
 								dependencies.push_back(make_tuple(
@@ -5627,13 +6168,13 @@ void Validator::fillDependencies(
 								  ", e.what: " + e.what();
 			if (stopIfReferenceProcessingError)
 			{
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			else
 			{
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(errorMessage);
 
 				continue;
 			}
@@ -5646,7 +6187,7 @@ void Validator::fillDependencies(
 								  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
 								  ", referenceUniqueName: " + referenceUniqueName + ", referenceLabel: " + to_string(referenceLabel) +
 								  ", e.what: " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5657,7 +6198,7 @@ void Validator::fillDependencies(
 								  ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey) +
 								  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
 								  ", referenceUniqueName: " + referenceUniqueName + ", referenceLabel: " + to_string(referenceLabel);
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5704,9 +6245,13 @@ void Validator::fillDependencies(
 
 			if (referencePhysicalPathKey != -1)
 			{
-				_logger->debug(
-					__FILEREF__ + "fillDependencies" + ", label: " + label + ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey) +
-					", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", DependencyType::PhysicalPathKey"
+				SPDLOG_DEBUG(
+					"fillDependencies"
+					", label: {}"
+					", referencePhysicalPathKey: {}"
+					", referenceContentType: {}"
+					", DependencyType::PhysicalPathKey",
+					label, referencePhysicalPathKey, MMSEngineDBFacade::toString(referenceContentType)
 				);
 
 				dependencies.push_back(
@@ -5715,9 +6260,13 @@ void Validator::fillDependencies(
 			}
 			else if (referenceMediaItemKey != -1)
 			{
-				_logger->debug(
-					__FILEREF__ + "fillDependencies" + ", label: " + label + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey) +
-					", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", DependencyType::MediaItemKey"
+				SPDLOG_DEBUG(
+					"fillDependencies"
+					", label: {}"
+					", referenceMediaItemKey: {}"
+					", referenceContentType: {}"
+					", DependencyType::MediaItemKey",
+					label, referenceMediaItemKey, MMSEngineDBFacade::toString(referenceContentType)
 				);
 				dependencies.push_back(
 					make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey, stopIfReferenceProcessingError)
@@ -5728,9 +6277,12 @@ void Validator::fillDependencies(
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "fillDependencies" + ", label: " + label + ", references: " + JSONUtils::toString(referencesRoot) +
-		", dependencies.size: " + to_string(dependencies.size())
+	SPDLOG_INFO(
+		"fillDependencies"
+		", label: {}"
+		", references: {}"
+		", dependencies.size: {}",
+		label, JSONUtils::toString(referencesRoot), dependencies.size()
 	);
 }
 
@@ -5742,8 +6294,13 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot;
-		_logger->warn(errorMessage);
+		string errorMessage = std::format(
+			"Field is not present or it is null"
+			", Field: {}"
+			", sParametersRoot: {}",
+			field, sParametersRoot
+		);
+		SPDLOG_WARN(errorMessage);
 
 		return;
 	}
@@ -5772,9 +6329,14 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 					{
 						string sParametersRoot = JSONUtils::toString(parametersRoot);
 
-						string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + "Reference..." +
-											  ", sParametersRoot: " + sParametersRoot;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"Field is not present or it is null"
+							", Field: "
+							"Reference..."
+							", sParametersRoot: {}",
+							sParametersRoot
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -5816,9 +6378,11 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					_logger->warn(
-						__FILEREF__ + "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed" +
-						", workspaceKey: " + to_string(workspaceKey) + ", referenceMediaItemKey: " + to_string(referenceMediaItemKey)
+					SPDLOG_WARN(
+						"fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						", workspaceKey: {}"
+						", referenceMediaItemKey: {}",
+						workspaceKey, referenceMediaItemKey
 					);
 				}
 			}
@@ -5843,9 +6407,11 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					_logger->warn(
-						__FILEREF__ + "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed" +
-						", workspaceKey: " + to_string(workspaceKey) + ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey)
+					SPDLOG_WARN(
+						"fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						", workspaceKey: {}"
+						", referencePhysicalPathKey: {}",
+						workspaceKey, referencePhysicalPathKey
 					);
 				}
 			}
@@ -5908,9 +6474,11 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					_logger->warn(
-						__FILEREF__ + "fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed" +
-						", workspaceKey: " + to_string(workspaceKey) + ", referenceUniqueName: " + referenceUniqueName
+					SPDLOG_WARN(
+						"fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
+						", workspaceKey: {}"
+						", referenceUniqueName: {}",
+						workspaceKey, referenceUniqueName
 					);
 				}
 			}
@@ -5920,7 +6488,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__ + "fillReferencesOutput failed" + ", sParametersRoot: " + sParametersRoot + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw e;
 		}
@@ -5929,7 +6497,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__ + "fillReferencesOutput failed" + ", sParametersRoot: " + sParametersRoot + ", e.what(): " + e.what();
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6230,9 +6798,14 @@ void Validator::validateCrossReference(string label, json crossReferenceRoot, bo
 			{
 				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sCrossReferenceRoot: " + sCrossReferenceRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sCrossReferenceRoot: {}"
+					", label: {}",
+					mandatoryField, sCrossReferenceRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6249,9 +6822,14 @@ void Validator::validateCrossReference(string label, json crossReferenceRoot, bo
 			{
 				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sCrossReferenceRoot: " + sCrossReferenceRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sCrossReferenceRoot: {}"
+					", label: {}",
+					mandatoryField, sCrossReferenceRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6271,7 +6849,7 @@ void Validator::validateCrossReference(string label, json crossReferenceRoot, bo
 
 		string errorMessage = __FILEREF__ + "Field 'CrossReferenceType' is wrong" + ", CrossReferenceType: " + sCrossReferenceType +
 							  ", label: " + label + ", sCrossReferenceRoot: " + sCrossReferenceRoot;
-		_logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -6286,7 +6864,7 @@ void Validator::validateCrossReference(string label, json crossReferenceRoot, bo
 
 			string errorMessage =
 				__FILEREF__ + "Field 'CrossReference->Parameters' is missing" + ", label: " + label + ", sCrossReferenceRoot: " + sCrossReferenceRoot;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6299,9 +6877,14 @@ void Validator::validateCrossReference(string label, json crossReferenceRoot, bo
 			{
 				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sCrossReferenceRoot: " + sCrossReferenceRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sCrossReferenceRoot: {}"
+					", label: {}",
+					mandatoryField, sCrossReferenceRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6318,9 +6901,13 @@ void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::Conte
 		{
 			string sEncodingProfilesSetRoot = JSONUtils::toString(encodingProfilesSetRoot);
 
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-								  ", sEncodingProfilesSetRoot: " + sEncodingProfilesSetRoot;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sEncodingProfilesSetRoot: {}",
+				mandatoryField, sEncodingProfilesSetRoot
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6362,9 +6949,13 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6378,7 +6969,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 		if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)
 		{
 			string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved" + ", Label: " + label;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6396,9 +6987,13 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6414,7 +7009,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No video bit rates are present" + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6430,9 +7025,13 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 				{
 					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-										  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}"
+						", sEncodingProfileRoot: {}",
+						mandatoryField, sEncodingProfileRoot
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6452,9 +7051,13 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6470,7 +7073,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No audio bit rates are present" + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6486,9 +7089,13 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 				{
 					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-										  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}"
+						", sEncodingProfileRoot: {}",
+						mandatoryField, sEncodingProfileRoot
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6507,9 +7114,13 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6523,7 +7134,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 		if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)
 		{
 			string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved" + ", Label: " + label;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6541,9 +7152,13 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6559,7 +7174,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No audio bit rates are present" + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6575,9 +7190,13 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 				{
 					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-										  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}"
+						", sEncodingProfileRoot: {}",
+						mandatoryField, sEncodingProfileRoot
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6596,9 +7215,13 @@ void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6612,7 +7235,7 @@ void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoo
 		if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)
 		{
 			string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved" + ", Label: " + label;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6629,9 +7252,13 @@ void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoo
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sEncodingProfileRoot: {}",
+					mandatoryField, sEncodingProfileRoot
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6651,7 +7278,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Channel, CDN_AWS, CDN_CDN77, UDP_Stream or HLS_Channel)" +
 								  ", Field: " + field + ", liveProxyOutputType: " + liveProxyOutputType + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6678,9 +7305,14 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 			{
 				string sParametersRoot = JSONUtils::toString(outputRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6698,9 +7330,14 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 			{
 				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
 
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + mandatoryField +
-									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6713,8 +7350,13 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 
 			if (!isFontTypeValid(fontType))
 			{
-				string errorMessage = string("Unknown fontType") + ", fontType: " + fontType + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Unknown fontType"
+					", fontType: {}"
+					", label: {}",
+					fontType, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6727,8 +7369,13 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 
 			if (!isColorValid(fontColor))
 			{
-				string errorMessage = string("Unknown fontColor") + ", fontColor: " + fontColor + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Unknown fontColor"
+					", fontColor: {}"
+					", label: {}",
+					fontColor, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6743,7 +7390,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 			{
 				string errorMessage =
 					string("Wrong textPercentageOpacity") + ", textPercentageOpacity: " + to_string(textPercentageOpacity) + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6764,7 +7411,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 			{
 				string errorMessage =
 					string("Wrong boxPercentageOpacity") + ", boxPercentageOpacity: " + to_string(boxPercentageOpacity) + ", label: " + label;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6776,7 +7423,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 		if (!JSONUtils::isMetadataPresent(outputRoot, "encodingProfileKey") && !JSONUtils::isMetadataPresent(outputRoot, "encodingProfileLabel"))
 		{
 			string errorMessage = string("encodingProfile is missing") + ", label: " + label;
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}

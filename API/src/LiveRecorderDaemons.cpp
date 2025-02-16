@@ -15,10 +15,9 @@
 #include <sstream>
 
 LiveRecorderDaemons::LiveRecorderDaemons(
-	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
-	shared_ptr<spdlog::logger> logger
+	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability
 )
-	: FFMPEGEncoderBase(configurationRoot, logger)
+	: FFMPEGEncoderBase(configurationRoot)
 {
 	try
 	{
@@ -1522,9 +1521,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			);
 
 			chrono::system_clock::time_point startMoving = chrono::system_clock::now();
-			MMSStorage::move(
-				ingestionJobKey, chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath, _logger
-			);
+			MMSStorage::move(ingestionJobKey, chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, chunksNFSStagingContentsPath);
 			chrono::system_clock::time_point endMoving = chrono::system_clock::now();
 
 			SPDLOG_INFO(

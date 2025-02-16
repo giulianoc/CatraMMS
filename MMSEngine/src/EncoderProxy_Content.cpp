@@ -387,7 +387,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			", fileFormatLowerCase: " + fileFormatLowerCase + ", encodedNFSStagingAssetPathName: " + encodedNFSStagingAssetPathName
 		);
 		bool isMMSAssetPathName = true;
-		FFMpeg ffmpeg(_configuration, _logger);
+		FFMpeg ffmpeg(_configuration);
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(

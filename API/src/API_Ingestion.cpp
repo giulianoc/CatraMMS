@@ -77,7 +77,7 @@ void API::ingestion(
 			// used when ReferenceLabel is used.
 			unordered_map<string, vector<int64_t>> mapLabelAndIngestionJobKey;
 
-			Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+			Validator validator(_mmsEngineDBFacade, _configurationRoot);
 			// it starts from the root and validate recursively the entire body
 			validator.validateIngestedRootMetadata(workspace->_workspaceKey, requestBodyRoot);
 
@@ -3043,7 +3043,7 @@ void API::uploadedBinary(
 					ingestionJobKey, sourceBinaryPathFile, destBinaryPathName
 				);
 
-				MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
+				MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
 			}
 			catch (runtime_error &e)
 			{
@@ -3255,7 +3255,7 @@ void API::uploadedBinary(
 						ingestionJobKey, sourceBinaryPathFile, destBinaryPathName
 					);
 
-					MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, _logger);
+					MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
 				}
 				catch (exception &e)
 				{

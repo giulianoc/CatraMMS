@@ -29,11 +29,9 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 
 	bool &twoPasses, // out
 
-	string ffmpegTempDir, string ffmpegTtfFontDir, shared_ptr<spdlog::logger> logger
+	string ffmpegTempDir, string ffmpegTtfFontDir
 )
 {
-	_logger = logger;
-
 	_ffmpegTempDir = ffmpegTempDir;
 	_ffmpegTtfFontDir = ffmpegTtfFontDir;
 
@@ -75,7 +73,7 @@ FFMpegEncodingParameters::FFMpegEncodingParameters(
 		_audioBitRatesInfo.clear();
 
 		FFMpegEncodingParameters::settingFfmpegParameters(
-			_logger, encodingProfileDetailsRoot, _isVideo,
+			encodingProfileDetailsRoot, _isVideo,
 
 			_httpStreamingFileFormat, _ffmpegHttpStreamingParameter,
 
@@ -1495,7 +1493,7 @@ string FFMpegEncodingParameters::getManifestFileName()
 }
 
 void FFMpegEncodingParameters::settingFfmpegParameters(
-	shared_ptr<spdlog::logger> logger, json encodingProfileDetailsRoot,
+	json encodingProfileDetailsRoot,
 	bool isVideo, // if false it means is audio
 
 	string &httpStreamingFileFormat, string &ffmpegHttpStreamingParameter,
@@ -1543,7 +1541,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 		fileFormatLowerCase.resize(fileFormat.size());
 		transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(), [](unsigned char c) { return tolower(c); });
 
-		FFMpegEncodingParameters::encodingFileFormatValidation(fileFormat, logger);
+		FFMpegEncodingParameters::encodingFileFormatValidation(fileFormat);
 
 		if (fileFormatLowerCase == "hls")
 		{
@@ -1661,7 +1659,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 
 					if (codec == "libx264" || codec == "libvpx" || codec == "mpeg4" || codec == "xvid")
 					{
-						FFMpegEncodingParameters::encodingVideoProfileValidation(codec, profile, logger);
+						FFMpegEncodingParameters::encodingVideoProfileValidation(codec, profile);
 						if (codec == "libx264" && profile != "")
 						{
 							ffmpegVideoProfileParameter = "-profile:v " + profile + " ";
@@ -1948,7 +1946,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 			}
 			string codec = JSONUtils::asString(audioRoot, field, "");
 
-			FFMpegEncodingParameters::encodingAudioCodecValidation(codec, logger);
+			FFMpegEncodingParameters::encodingAudioCodecValidation(codec);
 
 			ffmpegAudioCodecParameter = "-acodec " + codec + " ";
 		}
@@ -2066,7 +2064,7 @@ void FFMpegEncodingParameters::addToArguments(string parameter, vector<string> &
 	}
 }
 
-void FFMpegEncodingParameters::encodingFileFormatValidation(string fileFormat, shared_ptr<spdlog::logger> logger)
+void FFMpegEncodingParameters::encodingFileFormatValidation(string fileFormat)
 {
 	string fileFormatLowerCase;
 	fileFormatLowerCase.resize(fileFormat.size());
@@ -2089,7 +2087,7 @@ void FFMpegEncodingParameters::encodingFileFormatValidation(string fileFormat, s
 	}
 }
 
-void FFMpegEncodingParameters::encodingAudioCodecValidation(string codec, shared_ptr<spdlog::logger> logger)
+void FFMpegEncodingParameters::encodingAudioCodecValidation(string codec)
 {
 	if (codec != "aac" && codec != "libfdk_aac" && codec != "libvo_aacenc" && codec != "libvorbis" && codec != "pcm_s16le" && codec != "pcm_s32le")
 	{
@@ -2104,7 +2102,7 @@ void FFMpegEncodingParameters::encodingAudioCodecValidation(string codec, shared
 	}
 }
 
-void FFMpegEncodingParameters::encodingVideoProfileValidation(string codec, string profile, shared_ptr<spdlog::logger> logger)
+void FFMpegEncodingParameters::encodingVideoProfileValidation(string codec, string profile)
 {
 	if (codec == "libx264")
 	{

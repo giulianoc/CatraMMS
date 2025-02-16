@@ -217,7 +217,7 @@ void FFMpeg::slideShow(
 			vector<string> audioBitRatesInfo;
 
 			FFMpegEncodingParameters::settingFfmpegParameters(
-				_logger, encodingProfileDetailsRoot, encodingProfileIsVideo,
+				encodingProfileDetailsRoot, encodingProfileIsVideo,
 
 				httpStreamingFileFormat, ffmpegHttpStreamingParameter,
 

@@ -15,6 +15,7 @@
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 #include <regex>
 
@@ -34,8 +35,13 @@ void FFMpeg::overlayImageOnVideo(
 	{
 		if (!fs::exists(mmsSourceVideoAssetPathName))
 		{
-			string errorMessage = string("Source video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
+			string errorMessage = std::format(
+				"Source video asset path name not existing"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", mmsSourceVideoAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, mmsSourceVideoAssetPathName
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -45,9 +51,13 @@ void FFMpeg::overlayImageOnVideo(
 		{
 			if (!fs::exists(mmsSourceImageAssetPathName))
 			{
-				string errorMessage = string("Source image asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName;
+				string errorMessage = std::format(
+					"Source image asset path name not existing"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", mmsSourceImageAssetPathName: {}",
+					ingestionJobKey, encodingJobKey, mmsSourceImageAssetPathName
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -86,7 +96,7 @@ void FFMpeg::overlayImageOnVideo(
 				vector<string> audioBitRatesInfo;
 
 				FFMpegEncodingParameters::settingFfmpegParameters(
-					_logger, encodingProfileDetailsRoot, encodingProfileIsVideo,
+					encodingProfileDetailsRoot, encodingProfileIsVideo,
 
 					httpStreamingFileFormat, ffmpegHttpStreamingParameter,
 
@@ -132,11 +142,13 @@ void FFMpeg::overlayImageOnVideo(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ +
-										  "in case of overlayImageOnVideo it is not possible to have a two passes encoding. Change it to false" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-										  ", twoPasses: " + to_string(twoPasses);
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(
+						"in case of overlayImageOnVideo it is not possible to have a two passes encoding. Change it to false"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", twoPasses: {}",
+						ingestionJobKey, encodingJobKey, twoPasses
+					);
 				}
 
 				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -162,14 +174,14 @@ void FFMpeg::overlayImageOnVideo(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_ERROR(
+					"ffmpeg: encodingProfileParameter retrieving failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 
-				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							   ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
 				throw e;
 			}
 		}
@@ -238,9 +250,12 @@ void FFMpeg::overlayImageOnVideo(
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-					_logger->info(
-						__FILEREF__ + "overlayImageOnVideo: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					SPDLOG_INFO(
+						"overlayImageOnVideo: Executing ffmpeg command"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: ",
+						encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
 					);
 
 					bool redirectionStdOutput = true;
@@ -253,25 +268,36 @@ void FFMpeg::overlayImageOnVideo(
 					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
-						string errorMessage = __FILEREF__ + "overlayImageOnVideo: ffmpeg command failed" +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", iReturnedStatus: " + to_string(iReturnedStatus) +
-											  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						SPDLOG_ERROR(errorMessage);
+						SPDLOG_ERROR(
+							"overlayImageOnVideo: ffmpeg command failed"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", iReturnedStatus: {}"
+							", ffmpegArgumentList: {}",
+							encodingJobKey, ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+						);
 
 						// to hide the ffmpeg staff
-						errorMessage = __FILEREF__ + "overlayImageOnVideo command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-									   ", ingestionJobKey: " + to_string(ingestionJobKey);
+						string errorMessage = std::format(
+							"overlayImageOnVideo command failed"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}",
+							encodingJobKey, ingestionJobKey
+						);
+
 						throw runtime_error(errorMessage);
 					}
 
 					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-					_logger->info(
-						__FILEREF__ + "overlayImageOnVideo: Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					SPDLOG_INFO(
+						"overlayImageOnVideo: Executed ffmpeg command"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}"
+						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+						encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(),
+						chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 					);
 				}
 				catch (runtime_error &e)
@@ -281,19 +307,38 @@ void FFMpeg::overlayImageOnVideo(
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
 					if (iReturnedStatus == 9) // 9 means: SIGKILL
-						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-									   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+						errorMessage = std::format(
+							"ffmpeg: ffmpeg command failed because killed by the user"
+							", _outputFfmpegPathFileName: {}"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", ffmpegArgumentList: {}"
+							", lastPartOfFfmpegOutputFile: {}"
+							", e.what(): {}",
+							_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+							e.what()
+						);
 					else
-						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+						errorMessage = std::format(
+							"ffmpeg: ffmpeg command failed"
+							", _outputFfmpegPathFileName: {}"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", ffmpegArgumentList: {}"
+							", lastPartOfFfmpegOutputFile: {}"
+							", e.what(): {}",
+							_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+							e.what()
+						);
 					SPDLOG_ERROR(errorMessage);
 
-					_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					SPDLOG_INFO(
+						"remove"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}",
+						ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName
+					);
 					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9) // 9 means: SIGKILL
@@ -302,99 +347,125 @@ void FFMpeg::overlayImageOnVideo(
 						throw e;
 				}
 
-				_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}",
+					ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName
+				);
 				fs::remove_all(_outputFfmpegPathFileName);
 			}
 
-			_logger->info(
-				__FILEREF__ + "Overlayed file generated" + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"Overlayed file generated"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName
 			);
 
 			unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
 			if (ulFileSize == 0)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0" +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_ERROR(
+					"ffmpeg: ffmpeg command failed, encoded file size is 0"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}"
+					", ffmpegArgumentList: {}",
+					encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
+				);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "command failed, encoded file size is 0" + ", encodingJobKey: " + to_string(encodingJobKey) +
-							   ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format(
+					"command failed, encoded file size is 0"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}",
+					encodingJobKey, ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 		}
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg overlay failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
-			", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg overlay failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", mmsSourceVideoAssetPathName: {}"
+			", mmsSourceImageAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, mmsSourceVideoAssetPathName, mmsSourceImageAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
 			);
-
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg overlay failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
-			", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg overlay failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", mmsSourceVideoAssetPathName: {}"
+			", mmsSourceImageAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, mmsSourceVideoAssetPathName, mmsSourceImageAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg overlay failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
-			", mmsSourceImageAssetPathName: " + mmsSourceImageAssetPathName + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg overlay failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", mmsSourceVideoAssetPathName: {}"
+			", mmsSourceImageAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, mmsSourceVideoAssetPathName, mmsSourceImageAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
 			);
-
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
@@ -419,8 +490,13 @@ void FFMpeg::overlayTextOnVideo(
 	{
 		if (!fs::exists(mmsSourceVideoAssetPathName))
 		{
-			string errorMessage = string("Source video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
+			string errorMessage = std::format(
+				"Source video asset path name not existing"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", mmsSourceVideoAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, mmsSourceVideoAssetPathName
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -458,7 +534,7 @@ void FFMpeg::overlayTextOnVideo(
 				vector<string> audioBitRatesInfo;
 
 				FFMpegEncodingParameters::settingFfmpegParameters(
-					_logger, encodingProfileDetailsRoot, encodingProfileIsVideo,
+					encodingProfileDetailsRoot, encodingProfileIsVideo,
 
 					httpStreamingFileFormat, ffmpegHttpStreamingParameter,
 
@@ -504,11 +580,13 @@ void FFMpeg::overlayTextOnVideo(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ +
-										  "in case of overlayTextOnVideo it is not possible to have a two passes encoding. Change it to false" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-										  ", twoPasses: " + to_string(twoPasses);
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(
+						"in case of overlayTextOnVideo it is not possible to have a two passes encoding. Change it to false"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", twoPasses: {}",
+						ingestionJobKey, encodingJobKey, twoPasses
+					);
 				}
 
 				FFMpegEncodingParameters::addToArguments(ffmpegVideoCodecParameter, ffmpegEncodingProfileArgumentList);
@@ -534,14 +612,14 @@ void FFMpeg::overlayTextOnVideo(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: encodingProfileParameter retrieving failed" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_ERROR(
+					"ffmpeg: encodingProfileParameter retrieving failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 
-				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							   ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
 				throw e;
 			}
 		}
@@ -579,9 +657,12 @@ void FFMpeg::overlayTextOnVideo(
 				of.flush();
 			}
 
-			_logger->info(
-				__FILEREF__ + "overlayTextOnVideo: added text into a temporary file" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", textTemporaryFileName: " + textTemporaryFileName
+			SPDLOG_INFO(
+				"overlayTextOnVideo: added text into a temporary file"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", textTemporaryFileName: {}",
+				ingestionJobKey, encodingJobKey, textTemporaryFileName
 			);
 
 			string ffmpegDrawTextFilter;
@@ -631,9 +712,12 @@ void FFMpeg::overlayTextOnVideo(
 					if (!ffmpegArgumentList.empty())
 						copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-					_logger->info(
-						__FILEREF__ + "overlayTextOnVideo: Executing ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+					SPDLOG_INFO(
+						"overlayTextOnVideo: Executing ffmpeg command"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}",
+						encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
 					);
 
 					bool redirectionStdOutput = true;
@@ -646,25 +730,35 @@ void FFMpeg::overlayTextOnVideo(
 					*pChildPid = 0;
 					if (iReturnedStatus != 0)
 					{
-						string errorMessage = __FILEREF__ + "overlayTextOnVideo: ffmpeg command failed" +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", iReturnedStatus: " + to_string(iReturnedStatus) +
-											  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-						SPDLOG_ERROR(errorMessage);
+						SPDLOG_ERROR(
+							"overlayTextOnVideo: ffmpeg command failed"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", iReturnedStatus: {}"
+							", ffmpegArgumentList: {}",
+							encodingJobKey, ingestionJobKey, iReturnedStatus, ffmpegArgumentListStream.str()
+						);
 
 						// to hide the ffmpeg staff
-						errorMessage = __FILEREF__ + "overlayTextOnVideo command failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-									   ", ingestionJobKey: " + to_string(ingestionJobKey);
+						string errorMessage = std::format(
+							"overlayTextOnVideo command failed"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}",
+							encodingJobKey, ingestionJobKey
+						);
 						throw runtime_error(errorMessage);
 					}
 
 					chrono::system_clock::time_point endFfmpegCommand = chrono::system_clock::now();
 
-					_logger->info(
-						__FILEREF__ + "overlayTextOnVideo: Executed ffmpeg command" + ", encodingJobKey: " + to_string(encodingJobKey) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+					SPDLOG_INFO(
+						"overlayTextOnVideo: Executed ffmpeg command"
+						", encodingJobKey: {}"
+						", ingestionJobKey: {}"
+						", ffmpegArgumentList: {}"
+						", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+						encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(),
+						chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 					);
 				}
 				catch (runtime_error &e)
@@ -674,22 +768,47 @@ void FFMpeg::overlayTextOnVideo(
 					string lastPartOfFfmpegOutputFile = getLastPartOfFile(_outputFfmpegPathFileName, _charsToBeReadFromFfmpegErrorOutput);
 					string errorMessage;
 					if (iReturnedStatus == 9) // 9 means: SIGKILL
-						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed because killed by the user" +
-									   ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+						errorMessage = std::format(
+							"ffmpeg: ffmpeg command failed because killed by the user"
+							", _outputFfmpegPathFileName: {}"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", ffmpegArgumentList: {}"
+							", lastPartOfFfmpegOutputFile: {}"
+							", e.what(): {}",
+							_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+							e.what()
+						);
 					else
-						errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									   ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									   ", ffmpegArgumentList: " + ffmpegArgumentListStream.str() +
-									   ", lastPartOfFfmpegOutputFile: " + lastPartOfFfmpegOutputFile + ", e.what(): " + e.what();
+						errorMessage = std::format(
+							"ffmpeg: ffmpeg command failed"
+							", _outputFfmpegPathFileName: {}"
+							", encodingJobKey: {}"
+							", ingestionJobKey: {}"
+							", ffmpegArgumentList: {}"
+							", lastPartOfFfmpegOutputFile: {}"
+							", e.what(): {}",
+							_outputFfmpegPathFileName, encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str(), lastPartOfFfmpegOutputFile,
+							e.what()
+						);
 					SPDLOG_ERROR(errorMessage);
 
-					_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
+					SPDLOG_INFO(
+						"remove"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", :textTemporaryFileName {}",
+						ingestionJobKey, encodingJobKey, textTemporaryFileName
+					);
 					fs::remove_all(textTemporaryFileName);
 
-					_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+					SPDLOG_INFO(
+						"remove"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", _outputFfmpegPathFileName: {}",
+						ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName
+					);
 					fs::remove_all(_outputFfmpegPathFileName);
 
 					if (iReturnedStatus == 9) // 9 means: SIGKILL
@@ -698,102 +817,133 @@ void FFMpeg::overlayTextOnVideo(
 						throw e;
 				}
 
-				_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", :textTemporaryFileName {}",
+					ingestionJobKey, encodingJobKey, textTemporaryFileName
+				);
 				fs::remove_all(textTemporaryFileName);
 
-				_logger->info(__FILEREF__ + "Remove" + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName);
+				SPDLOG_INFO(
+					"remove"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", _outputFfmpegPathFileName: {}",
+					ingestionJobKey, encodingJobKey, _outputFfmpegPathFileName
+				);
 				fs::remove_all(_outputFfmpegPathFileName);
 			}
 
-			_logger->info(
-				__FILEREF__ + "Drawtext file generated" + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_INFO(
+				"Drawtext file generated"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				encodingJobKey, ingestionJobKey, stagingEncodedAssetPathName
 			);
 
 			unsigned long ulFileSize = fs::file_size(stagingEncodedAssetPathName);
 
 			if (ulFileSize == 0)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: ffmpeg command failed, encoded file size is 0" +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
-				SPDLOG_ERROR(errorMessage);
+				SPDLOG_ERROR(
+					"ffmpeg: ffmpeg command failed, encoded file size is 0"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}"
+					", ffmpegArgumentList: {}",
+					encodingJobKey, ingestionJobKey, ffmpegArgumentListStream.str()
+				);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "command failed, encoded file size is 0" + ", encodingJobKey: " + to_string(encodingJobKey) +
-							   ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format(
+					"command failed, encoded file size is 0"
+					", encodingJobKey: {}"
+					", ingestionJobKey: {}",
+					encodingJobKey, ingestionJobKey
+				);
 				throw runtime_error(errorMessage);
 			}
 		}
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg drawtext failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg drawtext failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", mmsSourceVideoAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, mmsSourceVideoAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg drawtext failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg drawtext failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", mmsSourceVideoAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, mmsSourceVideoAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "ffmpeg: ffmpeg drawtext failed" + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+		SPDLOG_ERROR(
+			"ffmpeg: ffmpeg drawtext failed"
+			", encodingJobKey: {}"
+			", ingestionJobKey: {}"
+			", mmsSourceVideoAssetPathName: {}"
+			", stagingEncodedAssetPathName: {}"
+			", e.what(): {}",
+			encodingJobKey, ingestionJobKey, mmsSourceVideoAssetPathName, stagingEncodedAssetPathName, e.what()
 		);
 
 		if (fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Remove" + ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
 			// file in case of .3gp content OR directory in case of IPhone content
-			{
-				_logger->info(__FILEREF__ + "Remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
+			SPDLOG_INFO(
+				"remove"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, stagingEncodedAssetPathName
+			);
+			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
 		throw e;

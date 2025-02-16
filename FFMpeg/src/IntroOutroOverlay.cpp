@@ -125,7 +125,7 @@ void FFMpeg::introOutroOverlay(
 
 			_twoPasses, // out
 
-			_ffmpegTempDir, _ffmpegTtfFontDir, _logger
+			_ffmpegTempDir, _ffmpegTtfFontDir
 		);
 
 		/*
@@ -704,7 +704,7 @@ void FFMpeg::introOverlay(
 
 			_twoPasses, // out
 
-			_ffmpegTempDir, _ffmpegTtfFontDir, _logger
+			_ffmpegTempDir, _ffmpegTtfFontDir
 		);
 
 		{
@@ -1146,7 +1146,7 @@ void FFMpeg::outroOverlay(
 
 			_twoPasses, // out
 
-			_ffmpegTempDir, _ffmpegTtfFontDir, _logger
+			_ffmpegTempDir, _ffmpegTtfFontDir
 		);
 
 		{

@@ -8,9 +8,9 @@
 
 LiveGrid::LiveGrid(
 	shared_ptr<LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
-	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap, shared_ptr<spdlog::logger> logger
+	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
 )
-	: FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex, encodingCompletedMap, logger)
+	: FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex, encodingCompletedMap)
 {
 	_liveProxyData = liveProxyData;
 };

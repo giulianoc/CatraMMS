@@ -156,7 +156,7 @@ void API::saveWorkflowAsLibrary(
 			{
 				json requestBodyRoot = manageWorkflowVariables(requestBody, nullptr);
 
-				Validator validator(_logger, _mmsEngineDBFacade, _configurationRoot);
+				Validator validator(_mmsEngineDBFacade, _configurationRoot);
 				// it starts from the root and validate recursively the entire body
 				validator.validateIngestedRootMetadata(workspace->_workspaceKey, requestBodyRoot);
 

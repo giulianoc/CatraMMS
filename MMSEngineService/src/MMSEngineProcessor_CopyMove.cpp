@@ -346,7 +346,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 			", sourcePathName: " + sourcePathName + ", destBinaryPathName: " + destBinaryPathName
 		);
 
-		int64_t elapsedInSeconds = MMSStorage::move(ingestionJobKey, sourcePathName, destBinaryPathName, _logger);
+		int64_t elapsedInSeconds = MMSStorage::move(ingestionJobKey, sourcePathName, destBinaryPathName);
 
 		// 0: no m3u8
 		// 1: m3u8 by .tar.gz

@@ -18,6 +18,7 @@
 #include "catralibraries/ProcessUtility.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 #include <regex>
 
@@ -28,9 +29,12 @@ void FFMpeg::liveProxy2(
 {
 	_currentApiName = APIName::LiveProxy;
 
-	_logger->info(
-		__FILEREF__ + "Received " + toString(_currentApiName) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", encodingJobKey: " + to_string(encodingJobKey) + ", inputsRoot->size: " + to_string(inputsRoot->size())
+	SPDLOG_INFO(
+		"Received {}"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", inputsRoot->size: {}",
+		toString(_currentApiName), ingestionJobKey, encodingJobKey, inputsRoot->size()
 	);
 
 	setStatus(
@@ -59,14 +63,19 @@ void FFMpeg::liveProxy2(
 
 	if (outputsRoot.size() == 0)
 	{
-		string errorMessage = __FILEREF__ + "liveProxy. No output parameters" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", encodingJobKey: " + to_string(encodingJobKey) + ", outputsRoot.size: " + to_string(outputsRoot.size());
+		string errorMessage = std::format(
+			"liveProxy. No output parameters"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", outputsRoot.size: {}",
+			ingestionJobKey, encodingJobKey, outputsRoot.size()
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 
-	// _logger->info(__FILEREF__ + "Calculating timedInput"
+	// info(__FILEREF__ + "Calculating timedInput"
 	// 	+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 	// 	+ ", encodingJobKey: " + to_string(encodingJobKey)
 	// 	+ ", inputsRoot->size: " + to_string(inputsRoot->size())
@@ -111,9 +120,13 @@ void FFMpeg::liveProxy2(
 			}
 		}
 	}
-	_logger->info(
-		__FILEREF__ + "Calculated timedInput" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-		to_string(encodingJobKey) + ", inputsRoot->size: " + to_string(inputsRoot->size()) + ", timedInput: " + to_string(timedInput)
+	SPDLOG_INFO(
+		"Calculated timedInput"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", inputsRoot->size: {}"
+		", timedInput: {}",
+		ingestionJobKey, encodingJobKey, inputsRoot->size(), timedInput
 	);
 
 	if (timedInput)
@@ -159,10 +172,14 @@ void FFMpeg::liveProxy2(
 			{
 				time_t sleepTime = utcFirstProxyPeriodStart - utcNow;
 
-				_logger->info(
-					__FILEREF__ + "LiveProxy timing. " + "Too early to start the LiveProxy, just sleep " + to_string(sleepTime) + " seconds" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", utcNow: " + to_string(utcNow) + ", utcFirstProxyPeriodStart: " + to_string(utcFirstProxyPeriodStart)
+				SPDLOG_INFO(
+					"LiveProxy timing. "
+					"Too early to start the LiveProxy, just sleep {} seconds"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", utcNow: {}"
+					", utcFirstProxyPeriodStart: {}",
+					sleepTime, ingestionJobKey, encodingJobKey, utcNow, utcFirstProxyPeriodStart
 				);
 
 				this_thread::sleep_for(chrono::seconds(sleepTime));
@@ -177,10 +194,15 @@ void FFMpeg::liveProxy2(
 		{
 			time_t tooLateTime = utcNow - utcLastProxyPeriodEnd;
 
-			string errorMessage = __FILEREF__ + "LiveProxy timing. " + "Too late to start the LiveProxy" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", utcNow: " + to_string(utcNow) + ", utcLastProxyPeriodEnd: " + to_string(utcLastProxyPeriodEnd) +
-								  ", tooLateTime: " + to_string(tooLateTime);
+			string errorMessage = std::format(
+				"LiveProxy timing. Too late to start the LiveProxy"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", utcNow: {}"
+				", utcLastProxyPeriodEnd: {}"
+				", tooLateTime: {}",
+				ingestionJobKey, encodingJobKey, utcNow, utcLastProxyPeriodEnd, tooLateTime
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -248,10 +270,14 @@ void FFMpeg::liveProxy2(
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "liveProxyInput..." + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", inputsRoot->size: " + to_string(inputsRoot->size()) +
-				", timedInput: " + to_string(timedInput) + ", currentInputIndex: " + to_string(currentInputIndex)
+			SPDLOG_INFO(
+				"liveProxyInput..."
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", inputsRoot->size: {}"
+				", timedInput: {}"
+				", currentInputIndex: {}",
+				ingestionJobKey, encodingJobKey, inputsRoot->size(), timedInput, currentInputIndex
 			);
 			tuple<long, string, string, int, int64_t, json> inputDetails = liveProxyInput(
 				ingestionJobKey, encodingJobKey, externalEncoder, currentInputRoot, maxStreamingDurationInMinutes, ffmpegInputArgumentList
@@ -265,27 +291,43 @@ void FFMpeg::liveProxy2(
 					copy(
 						ffmpegInputArgumentList.begin(), ffmpegInputArgumentList.end(), ostream_iterator<string>(ffmpegInputArgumentListStream, " ")
 					);
-				_logger->info(
-					__FILEREF__ + "liveProxy: ffmpegInputArgumentList" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", externalEncoder: " + to_string(externalEncoder) + ", currentInputRoot: " +
-					JSONUtils::toString(currentInputRoot) + ", ffmpegInputArgumentList: " + ffmpegInputArgumentListStream.str()
+				SPDLOG_INFO(
+					"liveProxy: ffmpegInputArgumentList"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", externalEncoder: {}"
+					", currentInputRoot: {}"
+					", ffmpegInputArgumentList: {}",
+					ingestionJobKey, encodingJobKey, externalEncoder, JSONUtils::toString(currentInputRoot), ffmpegInputArgumentListStream.str()
 				);
 			}
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "liveProxy. Wrong input parameters" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-								  ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) + ", exception: " + e.what();
+			string errorMessage = std::format(
+				"liveProxy. Wrong input parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", currentNumberOfRepeatingSameInput: {}"
+				", exception: {}",
+				ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + "liveProxy. Wrong input parameters" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-								  ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) + ", exception: " + e.what();
+			string errorMessage = std::format(
+				"liveProxy. Wrong input parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", currentNumberOfRepeatingSameInput: {}"
+				", exception: {}",
+				ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -294,9 +336,12 @@ void FFMpeg::liveProxy2(
 		vector<string> ffmpegOutputArgumentList;
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "outputsRootToFfmpeg..." + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", outputsRoot.size: " + to_string(outputsRoot.size())
+			SPDLOG_INFO(
+				"outputsRootToFfmpeg..."
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputsRoot.size: {}",
+				ingestionJobKey, encodingJobKey, outputsRoot.size()
 			);
 			outputsRootToFfmpeg(
 				ingestionJobKey, encodingJobKey, externalEncoder, otherOutputOptionsBecauseOfMaxWidth, inputFiltersRoot,
@@ -311,26 +356,41 @@ void FFMpeg::liveProxy2(
 						ffmpegOutputArgumentList.begin(), ffmpegOutputArgumentList.end(),
 						ostream_iterator<string>(ffmpegOutputArgumentListStream, " ")
 					);
-				_logger->info(
-					__FILEREF__ + "liveProxy: ffmpegOutputArgumentList" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegOutputArgumentList: " + ffmpegOutputArgumentListStream.str()
+				SPDLOG_INFO(
+					"liveProxy: ffmpegOutputArgumentList"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", ffmpegOutputArgumentList: {}",
+					ingestionJobKey, encodingJobKey, ffmpegOutputArgumentListStream.str()
 				);
 			}
 		}
 		catch (runtime_error &e)
 		{
-			string errorMessage = __FILEREF__ + "liveProxy. Wrong output parameters" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-								  ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) + ", exception: " + e.what();
+			string errorMessage = std::format(
+				"liveProxy. Wrong output parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", currentNumberOfRepeatingSameInput: {}"
+				", exception: {}",
+				ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		catch (exception &e)
 		{
-			string errorMessage = __FILEREF__ + "liveProxy. Wrong output parameters" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-								  ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) + ", exception: " + e.what();
+			string errorMessage = std::format(
+				"liveProxy. Wrong output parameters"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", currentNumberOfRepeatingSameInput: {}"
+				", exception: {}",
+				ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, e.what()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -384,11 +444,16 @@ void FFMpeg::liveProxy2(
 			if (!ffmpegArgumentList.empty())
 				copy(ffmpegArgumentList.begin(), ffmpegArgumentList.end(), ostream_iterator<string>(ffmpegArgumentListStream, " "));
 
-			_logger->info(
-				__FILEREF__ + "liveProxy: Executing ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-				", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-				", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName + ", ffmpegArgumentList: " + ffmpegArgumentListStream.str()
+			SPDLOG_INFO(
+				"liveProxy: Executing ffmpeg command"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", currentNumberOfRepeatingSameInput: {}"
+				", _outputFfmpegPathFileName: {}"
+				", ffmpegArgumentList: {}",
+				ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, _outputFfmpegPathFileName,
+				ffmpegArgumentListStream.str()
 			);
 
 			startFfmpegCommand = chrono::system_clock::now();
@@ -406,27 +471,42 @@ void FFMpeg::liveProxy2(
 
 			if (iReturnedStatus != 0)
 			{
-				string errorMessage = __FILEREF__ + "liveProxy: Executed ffmpeg command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-									  ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-									  ", iReturnedStatus: " + to_string(iReturnedStatus) +
-									  ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName +
-									  ", ffmpegArgumentList: " + ffmpegArgumentListStream.str();
+				string errorMessage = std::format(
+					"liveProxy: Executed ffmpeg command failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", currentInputIndex: {}"
+					", currentNumberOfRepeatingSameInput: {}"
+					", iReturnedStatus: {}"
+					", _outputFfmpegPathFileName: {}"
+					", ffmpegArgumentList: {}",
+					ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, iReturnedStatus, _outputFfmpegPathFileName,
+					ffmpegArgumentListStream.str()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// to hide the ffmpeg staff
-				errorMessage = __FILEREF__ + "liveProxy: command failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							   ", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-							   ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput);
+				errorMessage = std::format(
+					"liveProxy: command failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", currentInputIndex: {}"
+					", currentNumberOfRepeatingSameInput: {}",
+					ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput
+				);
 				throw runtime_error(errorMessage);
 			}
 
-			_logger->info(
-				__FILEREF__ + "liveProxy: Executed ffmpeg command" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-				", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-				", ffmpegArgumentList: " + ffmpegArgumentListStream.str() + ", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()) + "@"
+			SPDLOG_INFO(
+				"liveProxy: Executed ffmpeg command"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", currentNumberOfRepeatingSameInput: {}"
+				", ffmpegArgumentList: {}"
+				", @FFMPEG statistics@ - ffmpegCommandDuration (secs): @{}@",
+				ingestionJobKey, encodingJobKey, currentInputIndex, currentNumberOfRepeatingSameInput, ffmpegArgumentListStream.str(),
+				chrono::duration_cast<chrono::seconds>(endFfmpegCommand - startFfmpegCommand).count()
 			);
 
 			if (endlessPlaylistListPathName != "" && fs::exists(endlessPlaylistListPathName))
@@ -459,9 +539,12 @@ void FFMpeg::liveProxy2(
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", endlessPlaylistListPathName: " + endlessPlaylistListPathName
+				SPDLOG_INFO(
+					"Remove"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", endlessPlaylistListPathName: {}",
+					ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
 				);
 				fs::remove_all(endlessPlaylistListPathName);
 				endlessPlaylistListPathName = "";
@@ -473,16 +556,26 @@ void FFMpeg::liveProxy2(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"outputsRootToFfmpeg_clean failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// throw e;
 			}
 			catch (exception &e)
 			{
-				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"outputsRootToFfmpeg_clean failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// throw e;
@@ -574,7 +667,7 @@ void FFMpeg::liveProxy2(
 			SPDLOG_ERROR(errorMessage);
 
 			/*
-			_logger->info(__FILEREF__ + "Remove"
+			info(__FILEREF__ + "Remove"
 				+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -616,9 +709,12 @@ void FFMpeg::liveProxy2(
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "Remove" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", endlessPlaylistListPathName: " + endlessPlaylistListPathName
+				SPDLOG_INFO(
+					"Remove"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", endlessPlaylistListPathName: {}",
+					ingestionJobKey, encodingJobKey, endlessPlaylistListPathName
 				);
 				fs::remove_all(endlessPlaylistListPathName);
 				endlessPlaylistListPathName = "";
@@ -630,16 +726,26 @@ void FFMpeg::liveProxy2(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"outputsRootToFfmpeg_clean failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// throw e;
 			}
 			catch (exception &e)
 			{
-				string errorMessage = __FILEREF__ + "outputsRootToFfmpeg_clean failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"outputsRootToFfmpeg_clean failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// throw e;
@@ -666,12 +772,17 @@ void FFMpeg::liveProxy2(
 					&& endFfmpegCommand - startFfmpegCommand > chrono::seconds(5 * 60)
 				)
 				{
-					_logger->info(
-						__FILEREF__ + "Command has to be executed again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey) + ", ffmpegCommandDuration (secs): @" +
-						to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startFfmpegCommand).count()) + "@" +
-						", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-						", currentInputIndex: " + to_string(currentInputIndex) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+					SPDLOG_INFO(
+						"Command has to be executed again"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", ffmpegCommandDuration (secs): @{}@"
+						", currentNumberOfRepeatingSameInput: {}"
+						", currentInputIndex: {}"
+						", _outputFfmpegPathFileName: {}",
+						ingestionJobKey, encodingJobKey,
+						chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startFfmpegCommand).count(),
+						currentNumberOfRepeatingSameInput, currentInputIndex, _outputFfmpegPathFileName
 					);
 
 					// in case of IP_PUSH the monitor thread, in case the client does not
@@ -696,23 +807,31 @@ void FFMpeg::liveProxy2(
 					currentNumberOfRepeatingSameInput++;
 					if (currentNumberOfRepeatingSameInput >= maxTimesRepeatingSameInput)
 					{
-						_logger->info(
-							__FILEREF__ + "Command is NOT executed anymore, reached max number of repeating" +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-							", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-							", maxTimesRepeatingSameInput: " + to_string(maxTimesRepeatingSameInput) +
-							", sleepInSecondsInCaseOfRepeating: " + to_string(sleepInSecondsInCaseOfRepeating) +
-							", currentInputIndex: " + to_string(currentInputIndex) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						SPDLOG_INFO(
+							"Command is NOT executed anymore, reached max number of repeating"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", currentNumberOfRepeatingSameInput: {}"
+							", maxTimesRepeatingSameInput: {}"
+							", currentInputIndex: {}"
+							", _outputFfmpegPathFileName: {}",
+							ingestionJobKey, encodingJobKey, currentNumberOfRepeatingSameInput, maxTimesRepeatingSameInput, currentInputIndex,
+							_outputFfmpegPathFileName
 						);
 						throw e;
 					}
 					else
 					{
-						_logger->info(
-							__FILEREF__ + "Command is executed again" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-							to_string(encodingJobKey) + ", currentNumberOfRepeatingSameInput: " + to_string(currentNumberOfRepeatingSameInput) +
-							", sleepInSecondsInCaseOfRepeating: " + to_string(sleepInSecondsInCaseOfRepeating) +
-							", currentInputIndex: " + to_string(currentInputIndex) + ", _outputFfmpegPathFileName: " + _outputFfmpegPathFileName
+						SPDLOG_INFO(
+							"Command is executed again"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", currentNumberOfRepeatingSameInput: {}"
+							", sleepInSecondsInCaseOfRepeating: {}"
+							", currentInputIndex: {}"
+							", _outputFfmpegPathFileName: {}",
+							ingestionJobKey, encodingJobKey, currentNumberOfRepeatingSameInput, sleepInSecondsInCaseOfRepeating, currentInputIndex,
+							_outputFfmpegPathFileName
 						);
 
 						// in case of IP_PUSH the monitor thread, in case the client does not
@@ -779,7 +898,7 @@ void FFMpeg::liveProxy2(
 		}
 
 		/*
-		_logger->info(__FILEREF__ + "Remove"
+		info(__FILEREF__ + "Remove"
 			+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 			+ ", encodingJobKey: " + to_string(encodingJobKey)
 			+ ", currentInputIndex: " + to_string(currentInputIndex)
@@ -833,11 +952,17 @@ int FFMpeg::getNextLiveProxyInput(
 			// 	utcProxyPeriodEnd = JSONUtils::asInt64(inputRoot, field, -1);
 			// }
 
-			_logger->info(
-				__FILEREF__ + "getNextLiveProxyInput" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-				to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) + ", timedInput: " + to_string(timedInput) +
-				", inputIndex: " + to_string(inputIndex) + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
-				", utcNow: " + to_string(utcNow) + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd)
+			SPDLOG_INFO(
+				"getNextLiveProxyInput"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", currentInputIndex: {}"
+				", timedInput: {}"
+				", inputIndex: {}"
+				", utcProxyPeriodStart: {}"
+				", utcNow: {}"
+				", utcProxyPeriodEnd: {}",
+				ingestionJobKey, encodingJobKey, currentInputIndex, timedInput, inputIndex, utcProxyPeriodStart, utcNow, utcProxyPeriodEnd
 			);
 
 			if (utcProxyPeriodStart <= utcNow && utcNow < utcProxyPeriodEnd)
@@ -859,10 +984,14 @@ int FFMpeg::getNextLiveProxyInput(
 			newInputIndex = -1;
 	}
 
-	_logger->info(
-		__FILEREF__ + "getNextLiveProxyInput" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", encodingJobKey: " + to_string(encodingJobKey) + ", currentInputIndex: " + to_string(currentInputIndex) +
-		", timedInput: " + to_string(timedInput) + ", newInputIndex: " + to_string(newInputIndex)
+	SPDLOG_INFO(
+		"getNextLiveProxyInput"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", currentInputIndex: {}"
+		", timedInput: {}"
+		", newInputIndex: {}",
+		ingestionJobKey, encodingJobKey, currentInputIndex, timedInput, newInputIndex
 	);
 
 	return newInputIndex;
@@ -984,8 +1113,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		field = "streamSourceType";
 		if (!JSONUtils::isMetadataPresent(streamInputRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", Field: " + field;
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", Field: {}",
+				ingestionJobKey, encodingJobKey, field
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1045,10 +1179,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		field = "captureAudioDeviceNumber";
 		captureLive_audioDeviceNumber = JSONUtils::asInt(streamInputRoot, field, -1);
 
-		_logger->info(
-			__FILEREF__ + "liveProxy: setting dynamic -map option" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " +
-			to_string(encodingJobKey) + ", timePeriod: " + to_string(timePeriod) + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
-			", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", streamSourceType: " + streamSourceType
+		SPDLOG_INFO(
+			"liveProxy: setting dynamic -map option"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", timePeriod: {}"
+			", utcProxyPeriodStart: {}"
+			", utcProxyPeriodEnd: {}"
+			", streamSourceType: {}",
+			ingestionJobKey, encodingJobKey, timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd, streamSourceType
 		);
 
 		/* 2023-03-26: vedi commento sopra in questo metodo
@@ -1084,9 +1223,12 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 
 				getLiveStreamingInfo(url, userAgent, ingestionJobKey, encodingJobKey, liveVideoTracks, liveAudioTracks);
 
-				_logger->info(
-					__FILEREF__ + "liveProxy: setting dynamic -map option" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", maxWidth: " + to_string(maxWidth)
+				SPDLOG_INFO(
+					"liveProxy: setting dynamic -map option"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", maxWidth: {}",
+					ingestionJobKey, encodingJobKey, maxWidth
 				);
 
 				int currentVideoWidth = -1;
@@ -1121,10 +1263,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 
 							if (audioStreamDescription.find("eng") != string::npos || audioStreamDescription.find("des") != string::npos)
 							{
-								_logger->info(
-									__FILEREF__ + "liveProxy: audio track discarded" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									", encodingJobKey: " + to_string(encodingJobKey) + ", audioStreamId: " + audioStreamId +
-									", audioStreamDescription: " + audioStreamDescription
+								SPDLOG_INFO(
+									"liveProxy: audio track discarded"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", audioStreamId: {}"
+									", audioStreamDescription: {}",
+									ingestionJobKey, encodingJobKey, audioStreamId, audioStreamDescription
 								);
 
 								continue;
@@ -1148,17 +1293,24 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					otherOutputOptionsBecauseOfMaxWidth = string(" -map ") + selectedVideoStreamId + " -map " + selectedAudioStreamId;
 				}
 
-				_logger->info(
-					__FILEREF__ + "liveProxy: new other output options" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", maxWidth: " + to_string(maxWidth) +
-					", otherOutputOptionsBecauseOfMaxWidth: " + otherOutputOptionsBecauseOfMaxWidth
+				SPDLOG_INFO(
+					"liveProxy: new other output options"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", maxWidth: {}"
+					", otherOutputOptionsBecauseOfMaxWidth: {}",
+					ingestionJobKey, encodingJobKey, maxWidth, otherOutputOptionsBecauseOfMaxWidth
 				);
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "ffmpeg: getLiveStreamingInfo or associate processing failed" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"ffmpeg: getLiveStreamingInfo or associate processing failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				// throw e;
@@ -1183,11 +1335,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					streamingDurationInSeconds = utcProxyPeriodEnd - utcNow > maxStreamingDurationInMinutes * 60 ? maxStreamingDurationInMinutes * 60
 																												 : utcProxyPeriodEnd - utcNow;
 
-				_logger->info(
-					__FILEREF__ + "LiveProxy timing. " + "Streaming duration" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", utcNow: " + to_string(utcNow) +
-					", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) +
-					", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
+				SPDLOG_INFO(
+					"LiveProxy timing. Streaming duration"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", utcNow: {}"
+					", utcProxyPeriodStart: {}"
+					", utcProxyPeriodEnd: {}"
+					", streamingDurationInSeconds: {}",
+					ingestionJobKey, encodingJobKey, utcNow, utcProxyPeriodStart, utcProxyPeriodEnd, streamingDurationInSeconds
 				);
 
 				if (streamSourceType == "IP_PUSH" || streamSourceType == "TV")
@@ -1199,13 +1355,18 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 						//	timeout: 3600 seconds
 						//	The result is that the process will finish after 3600 seconds, not after 25 seconds
 						//	To avoid that, in this scenario, we will set the timeout equals to streamingDurationInSeconds
-						_logger->info(
-							__FILEREF__ + "LiveProxy timing. " +
-							"Listen timeout in seconds is reduced because max after 'streamingDurationInSeconds' the process has to finish" +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-							", utcNow: " + to_string(utcNow) + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) + ", utcProxyPeriodEnd: " +
-							to_string(utcProxyPeriodEnd) + ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds) +
-							", pushListenTimeout: " + to_string(pushListenTimeout)
+						SPDLOG_INFO(
+							"LiveProxy timing. Listen timeout in seconds is reduced because max after 'streamingDurationInSeconds' the process has "
+							"to finish"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", utcNow: {}"
+							", utcProxyPeriodStart: {}"
+							", utcProxyPeriodEnd: {}"
+							", streamingDurationInSeconds: {}"
+							", pushListenTimeout: {}",
+							ingestionJobKey, encodingJobKey, utcNow, utcProxyPeriodStart, utcProxyPeriodEnd, streamingDurationInSeconds,
+							pushListenTimeout
 						);
 
 						pushListenTimeout = streamingDurationInSeconds;
@@ -1224,9 +1385,12 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				}
 				else
 				{
-					_logger->warn(
-						__FILEREF__ + "user agent cannot be used if not http" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey) + ", url: " + url
+					SPDLOG_WARN(
+						"user agent cannot be used if not http"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", url: {}",
+						ingestionJobKey, encodingJobKey, url
 					);
 				}
 			}
@@ -1315,9 +1479,12 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 				}
 				else
 				{
-					_logger->error(
-						__FILEREF__ + "listen/timeout not managed yet for the current protocol" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", encodingJobKey: " + to_string(encodingJobKey) + ", url: " + url
+					SPDLOG_ERROR(
+						"listen/timeout not managed yet for the current protocol"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", url: {}",
+						ingestionJobKey, encodingJobKey, url
 					);
 				}
 
@@ -1507,10 +1674,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		field = "url";
 		url = JSONUtils::asString(directURLInputRoot, field, "");
 
-		_logger->info(
-			__FILEREF__ + "liveProxy, url" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-			", timePeriod: " + to_string(timePeriod) + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
-			", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", url: " + url
+		SPDLOG_INFO(
+			"liveProxy, url"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", timePeriod: {}"
+			", utcProxyPeriodStart: {}"
+			", utcProxyPeriodEnd: {}"
+			", url: {}",
+			ingestionJobKey, encodingJobKey, timePeriod, utcProxyPeriodStart, utcProxyPeriodEnd, url
 		);
 
 		/* 2023-03-26: vedi commento sopra in questo metodo
@@ -1545,11 +1717,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			{
 				streamingDurationInSeconds = utcProxyPeriodEnd - utcNow;
 
-				_logger->info(
-					__FILEREF__ + "LiveProxy timing. " + "Streaming duration" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", utcNow: " + to_string(utcNow) +
-					", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) +
-					", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
+				SPDLOG_INFO(
+					"LiveProxy timing. Streaming duration"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", utcNow: {}"
+					", utcProxyPeriodStart: {}"
+					", utcProxyPeriodEnd: {}"
+					", streamingDurationInSeconds: {}",
+					ingestionJobKey, encodingJobKey, utcNow, utcProxyPeriodStart, utcProxyPeriodEnd, streamingDurationInSeconds
 				);
 			}
 
@@ -1649,8 +1825,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		field = "vodContentType";
 		if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", Field: " + field;
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", Field: {}",
+				ingestionJobKey, encodingJobKey, field
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1663,8 +1844,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			field = "sources";
 			if (!JSONUtils::isMetadataPresent(vodInputRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", Field: " + field;
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", Field: {}",
+					ingestionJobKey, encodingJobKey, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1681,9 +1867,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 					field = "sourcePhysicalPathName";
 				if (!JSONUtils::isMetadataPresent(sourceRoot, field))
 				{
-					string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", Field: " + field +
-										  ", externalEncoder: " + to_string(externalEncoder) + ", sourceRoot: " + JSONUtils::toString(sourceRoot);
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", Field: {}"
+						", externalEncoder: {}"
+						", sourceRoot: {}",
+						ingestionJobKey, encodingJobKey, field, externalEncoder, JSONUtils::toString(sourceRoot)
+					);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -1710,11 +1902,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			{
 				streamingDurationInSeconds = utcProxyPeriodEnd - utcNow;
 
-				_logger->info(
-					__FILEREF__ + "VODProxy timing. " + "Streaming duration" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", utcNow: " + to_string(utcNow) +
-					", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) + ", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) +
-					", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds)
+				SPDLOG_INFO(
+					"VODProxy timing. Streaming duration"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", utcNow: {}"
+					", utcProxyPeriodStart: {}"
+					", utcProxyPeriodEnd: {}"
+					", streamingDurationInSeconds: {}",
+					ingestionJobKey, encodingJobKey, utcNow, utcProxyPeriodStart, utcProxyPeriodEnd, streamingDurationInSeconds
 				);
 			}
 
@@ -2001,8 +2197,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 			field = "mmsSourceVideoAssetPathName";
 		if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", Field: " + field;
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", Field: {}",
+				ingestionJobKey, encodingJobKey, field
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2012,8 +2213,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		field = "videoDurationInMilliSeconds";
 		if (!JSONUtils::isMetadataPresent(countdownInputRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", Field: " + field;
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", Field: {}",
+				ingestionJobKey, encodingJobKey, field
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2022,8 +2228,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 
 		if (!externalEncoder && !fs::exists(mmsSourceVideoAssetPathName))
 		{
-			string errorMessage = string("Source video asset path name not existing") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", mmsSourceVideoAssetPathName: " + mmsSourceVideoAssetPathName;
+			string errorMessage = std::format(
+				"Source video asset path name not existing"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", mmsSourceVideoAssetPathName: {}",
+				ingestionJobKey, encodingJobKey, mmsSourceVideoAssetPathName
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2041,9 +2252,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		{
 			time_t tooLateTime = utcNow - utcCountDownEnd;
 
-			string errorMessage = __FILEREF__ + "Countdown timing. " + "Too late to start" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", utcNow: " + to_string(utcNow) +
-								  ", utcCountDownEnd: " + to_string(utcCountDownEnd) + ", tooLateTime: " + to_string(tooLateTime);
+			string errorMessage = std::format(
+				"Countdown timing. Too late to start"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", utcNow: {}"
+				", utcCountDownEnd: {}"
+				", tooLateTime: {}",
+				ingestionJobKey, encodingJobKey, utcNow, utcCountDownEnd, tooLateTime
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2053,11 +2270,15 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		{
 			streamingDurationInSeconds = utcCountDownEnd - utcNow;
 
-			_logger->info(
-				__FILEREF__ + "Countdown timing. " + "Streaming duration" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", utcNow: " + to_string(utcNow) +
-				", utcCountDownEnd: " + to_string(utcCountDownEnd) + ", streamingDurationInSeconds: " + to_string(streamingDurationInSeconds) +
-				", videoDurationInMilliSeconds: " + to_string(videoDurationInMilliSeconds)
+			SPDLOG_INFO(
+				"Countdown timing. Streaming duration"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", utcNow: {}"
+				", utcCountDownEnd: {}"
+				", streamingDurationInSeconds: {}"
+				", videoDurationInMilliSeconds: {}",
+				ingestionJobKey, encodingJobKey, utcNow, utcCountDownEnd, streamingDurationInSeconds, videoDurationInMilliSeconds
 			);
 
 			float fVideoDurationInMilliSeconds = videoDurationInMilliSeconds;
@@ -2155,9 +2376,13 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 		}
 		if (!isDrawTextFilterPresent)
 		{
-			string errorMessage = __FILEREF__ + "Countdown has to have the drawText filter" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) +
-								  ", countdownInputRoot: " + JSONUtils::toString(countdownInputRoot);
+			string errorMessage = std::format(
+				"Countdown has to have the drawText filter"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", countdownInputRoot: {}",
+				ingestionJobKey, encodingJobKey, JSONUtils::toString(countdownInputRoot)
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2165,8 +2390,12 @@ tuple<long, string, string, int, int64_t, json> FFMpeg::liveProxyInput(
 	}
 	else
 	{
-		string errorMessage = __FILEREF__ + "streamInput or vodInput or countdownInput is not present" +
-							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey);
+		string errorMessage = std::format(
+			"streamInput or vodInput or countdownInput is not present"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}",
+			ingestionJobKey, encodingJobKey
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -2236,7 +2465,7 @@ void FFMpeg::outputsRootToFfmpeg(
 				of.flush();
 			}
 
-			_logger->info(
+			info(
 				__FILEREF__ + "outputsRootToFfmpeg (inputRoot): added text into a temporary file" + ", ingestionJobKey: " +
 				to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) + ", textTemporaryFileName: " +
 	textTemporaryFileName
@@ -2381,7 +2610,7 @@ void FFMpeg::outputsRootToFfmpeg(
 			try
 			{
 				FFMpegEncodingParameters::settingFfmpegParameters(
-					_logger, encodingProfileDetailsRoot, isVideo,
+					encodingProfileDetailsRoot, isVideo,
 
 					httpStreamingFileFormat, ffmpegHttpStreamingParameter,
 
@@ -2425,17 +2654,25 @@ void FFMpeg::outputsRootToFfmpeg(
 					*/
 					twoPasses = false;
 
-					string errorMessage = __FILEREF__ + "in case of proxy it is not possible to have a two passes encoding. Change it to false" +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-										  ", twoPasses: " + to_string(twoPasses);
-					_logger->warn(errorMessage);
+					string errorMessage = std::format(
+						"in case of proxy it is not possible to have a two passes encoding. Change it to false"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", twoPasses: {}",
+						ingestionJobKey, encodingJobKey, twoPasses
+					);
+					SPDLOG_WARN(errorMessage);
 				}
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "encodingProfileParameter retrieving failed" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingJobKey: " + to_string(encodingJobKey) +
-									  ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"encodingProfileParameter retrieving failed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, encodingJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw e;
@@ -2603,8 +2840,13 @@ void FFMpeg::outputsRootToFfmpeg(
 			string rtmpUrl = JSONUtils::asString(outputRoot, "rtmpUrl", "");
 			if (rtmpUrl == "")
 			{
-				string errorMessage = __FILEREF__ + "rtmpUrl cannot be empty" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rtmpUrl: " + rtmpUrl;
+				string errorMessage = std::format(
+					"rtmpUrl cannot be empty"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", rtmpUrl: {}",
+					ingestionJobKey, encodingJobKey, rtmpUrl
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2652,7 +2894,7 @@ void FFMpeg::outputsRootToFfmpeg(
 					)
 						aacFilterToBeAdded = false;
 
-					_logger->info(__FILEREF__ + "aac check"
+					info(__FILEREF__ + "aac check"
 						+ ", audioCodecName: " + audioCodecName
 						+ ", aacFilterToBeAdded: " + to_string(aacFilterToBeAdded)
 					);
@@ -2684,9 +2926,12 @@ void FFMpeg::outputsRootToFfmpeg(
 
 			string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 
-			_logger->info(
-				__FILEREF__ + "Checking manifestDirectoryPath directory" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", encodingJobKey: " + to_string(encodingJobKey) + ", manifestDirectoryPath: " + manifestDirectoryPath
+			SPDLOG_INFO(
+				"Checking manifestDirectoryPath directory"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", manifestDirectoryPath: {}",
+				ingestionJobKey, encodingJobKey, manifestDirectoryPath
 			);
 
 			// directory is created by EncoderVideoAudioProxy using MMSStorage::getStagingAssetPathName
@@ -2697,12 +2942,19 @@ void FFMpeg::outputsRootToFfmpeg(
 			// So, for this reason, the below check is done
 			if (!fs::exists(manifestDirectoryPath))
 			{
-				_logger->warn(
-					__FILEREF__ + "manifestDirectoryPath does not exist!!! It will be created" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", encodingJobKey: " + to_string(encodingJobKey) + ", manifestDirectoryPath: " + manifestDirectoryPath
+				SPDLOG_WARN(
+					"manifestDirectoryPath does not exist!!! It will be created"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", manifestDirectoryPath: {}",
+					ingestionJobKey, encodingJobKey, manifestDirectoryPath
 				);
 
-				_logger->info(__FILEREF__ + "Create directory" + ", manifestDirectoryPath: " + manifestDirectoryPath);
+				SPDLOG_INFO(
+					"Create directory"
+					", manifestDirectoryPath: {}",
+					manifestDirectoryPath
+				);
 				fs::create_directories(manifestDirectoryPath);
 				fs::permissions(
 					manifestDirectoryPath,
@@ -2792,8 +3044,13 @@ void FFMpeg::outputsRootToFfmpeg(
 
 			if (udpUrl == "")
 			{
-				string errorMessage = __FILEREF__ + "udpUrl cannot be empty" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", udpUrl: " + udpUrl;
+				string errorMessage = std::format(
+					"udpUrl cannot be empty"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", udpUrl: {}",
+					ingestionJobKey, encodingJobKey, udpUrl
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2852,8 +3109,13 @@ void FFMpeg::outputsRootToFfmpeg(
 		}
 		else
 		{
-			string errorMessage = __FILEREF__ + "liveProxy. Wrong output type" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", encodingJobKey: " + to_string(encodingJobKey) + ", outputType: " + outputType;
+			string errorMessage = std::format(
+				"liveProxy. Wrong output type"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", outputType: {}",
+				ingestionJobKey, encodingJobKey, outputType
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2884,23 +3146,39 @@ void FFMpeg::outputsRootToFfmpeg_clean(int64_t ingestionJobKey, int64_t encoding
 				{
 					try
 					{
-						_logger->info(__FILEREF__ + "removeDirectory" + ", manifestDirectoryPath: " + manifestDirectoryPath);
+						SPDLOG_INFO(
+							"removeDirectory"
+							", manifestDirectoryPath: {}",
+							manifestDirectoryPath
+						);
 						fs::remove_all(manifestDirectoryPath);
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", outputIndex: " + to_string(outputIndex) +
-											  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
+						string errorMessage = std::format(
+							"remove directory failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", outputIndex: {}"
+							", manifestDirectoryPath: {}"
+							", e.what(): {}",
+							ingestionJobKey, encodingJobKey, outputIndex, manifestDirectoryPath, e.what()
+						);
 						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
 					catch (exception &e)
 					{
-						string errorMessage = __FILEREF__ + "remove directory failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", outputIndex: " + to_string(outputIndex) +
-											  ", manifestDirectoryPath: " + manifestDirectoryPath + ", e.what(): " + e.what();
+						string errorMessage = std::format(
+							"remove directory failed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", outputIndex: {}"
+							", manifestDirectoryPath: {}"
+							", e.what(): {}",
+							ingestionJobKey, encodingJobKey, outputIndex, manifestDirectoryPath, e.what()
+						);
 						SPDLOG_ERROR(errorMessage);
 
 						throw e;
@@ -2919,7 +3197,11 @@ void FFMpeg::outputsRootToFfmpeg_clean(int64_t ingestionJobKey, int64_t encoding
 
 			if (fs::exists(textTemporaryFileName))
 			{
-				_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
+				SPDLOG_INFO(
+					"Remove"
+					", textTemporaryFileName: {}",
+					textTemporaryFileName
+				);
 				fs::remove_all(textTemporaryFileName);
 			}
 		}
@@ -2940,7 +3222,11 @@ void FFMpeg::outputsRootToFfmpeg_clean(int64_t ingestionJobKey, int64_t encoding
 							std::format("{}/{}_{}_{}.overlayText", _ffmpegTempDir, ingestionJobKey, encodingJobKey, outputIndex);
 						if (fs::exists(textTemporaryFileName))
 						{
-							_logger->info(__FILEREF__ + "Remove" + ", textTemporaryFileName: " + textTemporaryFileName);
+							SPDLOG_INFO(
+								"Remove"
+								", textTemporaryFileName: {}",
+								textTemporaryFileName
+							);
 							fs::remove_all(textTemporaryFileName);
 						}
 					}
