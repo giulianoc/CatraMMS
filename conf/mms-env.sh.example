@@ -1,0 +1,19 @@
+export MMS_ENV=test
+export MMS_DB_MASTER=10.0.1.10
+export MMS_DB_SLAVES=10.0.0.14
+export MMS_DB_LOCALHOST=
+export MMS_SHAREDENCODER_1=test-transcoder-1
+export MMS_SHAREDENCODER_2=
+export MMS_SHAREDENCODER_3=
+export MMS_GUI_HOSTNAME=mms-gui-test.catramms-cloud.com
+export MMS_API_HOSTNAME=mms-api-test.catramms-cloud.com
+export MMS_BINARY_HOSTNAME=mms-binary-test.catramms-cloud.com
+export MMS_DELIVERY_HOSTNAME=mms-delivery-test.catramms-cloud.com
+export MMS_DELIVERYPATH_HOSTNAME=mms-delivery-path-test.catramms-cloud.com
+export MMS_VODCLOUDFRONT_HOSTNAME=d1vlvzskbbqfjx.cloudfront.net
+export MMS_VODDELIVERYCLOUDFRONT_HOSTNAME=d1vlvzskbbqfjx.cloudfront.net
+export MMS_VODDELIVERYPATHCLOUDFRONT_HOSTNAME=d1m2m0csz845h6.cloudfront.net
+export MMS_FACEBOOK_REDIRECTURL=https://mms-gui-test.catramms-cloud.com/catramms/rest/api/facebookCallback
+export MMS_YOUTUB_E_CLIENTID=
+export MMS_YOUTUB_E_CLIENTSECRET=
+
