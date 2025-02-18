@@ -1357,7 +1357,7 @@ json FastCGIAPI::loadConfigurationFile(const char *configurationPathName)
 }
 */
 
-// #define BOOTSERVICE_DEBUG_LOG
+#define BOOTSERVICE_DEBUG_LOG
 
 json FastCGIAPI::loadConfigurationFile(string configurationPathName, string environmentPrefix)
 {
