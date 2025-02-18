@@ -52,6 +52,7 @@ else
 fi
 
 CatraMMS_PATH=/opt/catramms
+source ~/mms/conf/mms-env.sh
 
 #used by ImageMagick to look for the configuration files
 export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick/etc/ImageMagick-7

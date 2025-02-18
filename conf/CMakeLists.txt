@@ -31,6 +31,7 @@ SET (CONFs
 	catrammsDelivery-fServer.nginx
 	catrammsBinaryServer.nginx
 	catrammsEncoderServer.nginx
+	mms-env.sh.example
 	mms.cfg
 	crontab.txt
 	3_terrestrial_2022_09_07.channel.dvbv5.conf
