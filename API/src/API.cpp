@@ -125,6 +125,11 @@ API::API(
 		);
 
 		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
+		SPDLOG_INFO(
+			"Configuration item"
+			", api->sharedEncodersPool->encodersLabel: {}",
+			JSONUtils::toString(_sharedEncodersLabel)
+		);
 	}
 
 	_defaultSharedHLSChannelsNumber = JSONUtils::asInt(configurationRoot["api"], "defaultSharedHLSChannelsNumber", 1);
