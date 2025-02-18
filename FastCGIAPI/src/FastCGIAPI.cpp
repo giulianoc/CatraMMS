@@ -1415,7 +1415,7 @@ string FastCGIAPI::applyEnvironmentToConfiguration(string configuration, string 
 			string envLabel = std::format("\\$\\{{{}\\}}", envVariable.substr(0, endOfVarName));
 			string envValue = envVariable.substr(endOfVarName + 1);
 #ifdef BOOTSERVICE_DEBUG_LOG
-			of << "ENV " << zoracEnvLabel << ": " << zoracEnvValue << endl;
+			of << "ENV " << envLabel << ": " << envValue << endl;
 #endif
 			configuration = regex_replace(configuration, regex(envLabel), envValue);
 		}
