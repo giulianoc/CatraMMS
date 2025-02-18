@@ -39,7 +39,9 @@ class FastCGIAPI
 
 	virtual void stopFastcgi();
 
-	static json loadConfigurationFile(const char *configurationPathName);
+	// static json loadConfigurationFile(const char *configurationPathName);
+	static json loadConfigurationFile(string configurationPathName, string environmentPrefix);
+	static string applyEnvironmentToConfiguration(string configuration, string environmentPrefix);
 
   protected:
 	bool _shutdown;

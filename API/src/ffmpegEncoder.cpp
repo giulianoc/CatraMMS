@@ -134,7 +134,7 @@ int main(int argc, char **argv)
 
 		CurlWrapper::globalInitialize();
 
-		json configurationRoot = FastCGIAPI::loadConfigurationFile(configurationPathName);
+		json configurationRoot = FastCGIAPI::loadConfigurationFile(configurationPathName, "MMS_");
 
 		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
 

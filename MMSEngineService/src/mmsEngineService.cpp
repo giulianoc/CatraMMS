@@ -2,6 +2,7 @@
 #include <csignal>
 #include <fstream>
 #include <memory>
+#include <regex>
 #include <thread>
 
 #include "CurlWrapper.h"
@@ -33,7 +34,7 @@
 #include <aws/medialive/model/StartChannelRequest.h>
 #include <aws/medialive/model/StopChannelRequest.h>
 
-json loadConfigurationFile(string configurationPathName);
+// json loadConfigurationFile(string configurationPathName);
 
 chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
 void signalHandler(int signal)
@@ -182,6 +183,9 @@ void registerSlowQueryLogger(json configurationRoot)
 	logger->set_pattern(pattern);
 }
 
+json loadConfigurationFile(string configurationPathName, string environmentPrefix);
+string applyEnvironmentToConfiguration(string configuration, string environmentPrefix);
+
 int main(int iArgc, char *pArgv[])
 {
 
@@ -234,7 +238,7 @@ int main(int iArgc, char *pArgv[])
 
 	Magick::InitializeMagick(*pArgv);
 
-	json configurationRoot = loadConfigurationFile(configPathName);
+	json configurationRoot = loadConfigurationFile(configPathName, "MMS_");
 
 	shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
 	registerSlowQueryLogger(configurationRoot);
@@ -447,26 +451,69 @@ int main(int iArgc, char *pArgv[])
 	return 0;
 }
 
-json loadConfigurationFile(string configurationPathName)
-{
-	try
-	{
-		ifstream configurationFile(configurationPathName.c_str(), std::ifstream::binary);
-		return json::parse(
-			configurationFile,
-			nullptr, // callback
-			true,	 // allow exceptions
-			true	 // ignore_comments
-		);
-	}
-	catch (...)
-	{
-		string errorMessage = std::format(
-			"wrong json configuration format"
-			", configurationPathName: {}",
-			configurationPathName
-		);
+// #define BOOTSERVICE_DEBUG_LOG
 
-		throw runtime_error(errorMessage);
+json loadConfigurationFile(string configurationPathName, string environmentPrefix)
+{
+
+#ifdef BOOTSERVICE_DEBUG_LOG
+	ofstream of("/tmp/bootservice.log", ofstream::app);
+	of << "loadConfigurationFile..." << endl;
+#endif
+
+	string sConfigurationFile;
+	{
+		ifstream configurationFile(configurationPathName, ifstream::binary);
+		stringstream buffer;
+		buffer << configurationFile.rdbuf();
+		if (environmentPrefix == "")
+			sConfigurationFile = buffer.str();
+		else
+			sConfigurationFile = applyEnvironmentToConfiguration(buffer.str(), environmentPrefix);
 	}
+
+	json configurationRoot = json::parse(
+		sConfigurationFile,
+		nullptr, // callback
+		true,	 // allow exceptions
+		true	 // ignore_comments
+	);
+
+	return configurationRoot;
+}
+
+string applyEnvironmentToConfiguration(string configuration, string environmentPrefix)
+{
+	char **s = environ;
+
+#ifdef BOOTSERVICE_DEBUG_LOG
+	ofstream of("/tmp/bootservice.log", ofstream::app);
+#endif
+
+	int envNumber = 0;
+	for (; *s; s++)
+	{
+		string envVariable = *s;
+#ifdef BOOTSERVICE_DEBUG_LOG
+//					of << "ENV " << *s << endl;
+#endif
+		if (envVariable.starts_with(environmentPrefix))
+		{
+			size_t endOfVarName = envVariable.find("=");
+			if (endOfVarName == string::npos)
+				continue;
+
+			envNumber++;
+
+			// sarebbe \$\{ZORAC_SOLR_PWD\}
+			string envLabel = std::format("\\$\\{{{}\\}}", envVariable.substr(0, endOfVarName));
+			string envValue = envVariable.substr(endOfVarName + 1);
+#ifdef BOOTSERVICE_DEBUG_LOG
+			of << "ENV " << envLabel << ": " << envValue << endl;
+#endif
+			configuration = regex_replace(configuration, regex(envLabel), envValue);
+		}
+	}
+
+	return configuration;
 }

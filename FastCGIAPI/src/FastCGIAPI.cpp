@@ -107,10 +107,10 @@ int FastCGIAPI::operator()()
 	FCGX_Request request;
 
 	// 0 is file number for STDIN by default
-	// The fastcgi process is launched by spawn-fcgi (see scripts/mmsApi.sh scripts/mmsEncoder.sh)
-	// specifying the port to be used to listen to nginx calls
-	// The nginx process is configured to proxy the requests to 127.0.0.1:<port>
-	// specified by spawn-fcgi
+	// The fastcgi process is launched by spawn-fcgi (see scripts/mmsApi.sh
+	// scripts/mmsEncoder.sh) specifying the port to be used to listen to nginx
+	// calls The nginx process is configured to proxy the requests to
+	// 127.0.0.1:<port> specified by spawn-fcgi
 	int sock_fd = 0;
 	SPDLOG_TRACE(
 		"FastCGIAPI::FCGX_OpenSocket"
@@ -490,18 +490,18 @@ bool FastCGIAPI::basicAuthenticationRequired(string requestURI, unordered_map<st
 	auto methodIt = queryParameters.find("method");
 	if (methodIt == queryParameters.end())
 	{
-		string errorMessage = string("The 'method' parameter is not found");
-		SPDLOG_ERROR(errorMessage);
+	  string errorMessage = string("The 'method' parameter is not found");
+	  SPDLOG_ERROR(errorMessage);
 
-		// throw runtime_error(errorMessage);
-		return basicAuthenticationRequired;
+	  // throw runtime_error(errorMessage);
+	  return basicAuthenticationRequired;
 	}
 	string method = methodIt->second;
 
 	if (method == "status"	// often used as healthy check
 	)
 	{
-		basicAuthenticationRequired = false;
+	  basicAuthenticationRequired = false;
 	}
 	*/
 
@@ -516,10 +516,11 @@ void FastCGIAPI::sendSuccess(
 {
 	if (_fcgxFinishDone)
 	{
-		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
-		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
-		// request.out è stato resettato nella prima chiamata
-		// Questo controllo è una protezione rispetto al segmentation fault
+		// se viene chiamato due volte
+		// sendSuccess/sendRedirect/sendHeadSuccess/sendError la seconda volta
+		// provocherebbe un segmentation fault perchè probabilmente request.out è
+		// stato resettato nella prima chiamata Questo controllo è una protezione
+		// rispetto al segmentation fault
 		SPDLOG_ERROR(
 			"response was already done"
 			", requestIdentifier: {}"
@@ -568,7 +569,9 @@ void FastCGIAPI::sendSuccess(
 			"Access-Control-Allow-Origin: {}{}"
 			"Access-Control-Allow-Methods: GET, POST, OPTIONS{}"
 			"Access-Control-Allow-Credentials: true{}"
-			"Access-Control-Allow-Headers: DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range{}"
+			"Access-Control-Allow-Headers: "
+			"DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,"
+			"Content-Type,Range{}"
 			"Access-Control-Expose-Headers: Content-Length,Content-Range{}",
 			origin, endLine, endLine, endLine, endLine, endLine
 		);
@@ -612,8 +615,9 @@ void FastCGIAPI::sendSuccess(
 	{
 		string completeHttpResponse;
 
-		// 2020-02-08: content length has to be calculated before the substitution from % to %%
-		// because for FCGX_FPrintF (below used) %% is just one character
+		// 2020-02-08: content length has to be calculated before the substitution
+		// from % to %% because for FCGX_FPrintF (below used) %% is just one
+		// character
 		long contentLength = responseBody.length();
 
 		// responseBody cannot have the '%' char because FCGX_FPrintF will not work
@@ -674,10 +678,11 @@ void FastCGIAPI::sendRedirect(FCGX_Request &request, string locationURL)
 {
 	if (_fcgxFinishDone)
 	{
-		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
-		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
-		// request.out è stato resettato nella prima chiamata
-		// Questo controllo è una protezione rispetto al segmentation fault
+		// se viene chiamato due volte
+		// sendSuccess/sendRedirect/sendHeadSuccess/sendError la seconda volta
+		// provocherebbe un segmentation fault perchè probabilmente request.out è
+		// stato resettato nella prima chiamata Questo controllo è una protezione
+		// rispetto al segmentation fault
 		SPDLOG_ERROR("response was already done");
 
 		return;
@@ -709,10 +714,11 @@ void FastCGIAPI::sendHeadSuccess(FCGX_Request &request, int htmlResponseCode, un
 {
 	if (_fcgxFinishDone)
 	{
-		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
-		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
-		// request.out è stato resettato nella prima chiamata
-		// Questo controllo è una protezione rispetto al segmentation fault
+		// se viene chiamato due volte
+		// sendSuccess/sendRedirect/sendHeadSuccess/sendError la seconda volta
+		// provocherebbe un segmentation fault perchè probabilmente request.out è
+		// stato resettato nella prima chiamata Questo controllo è una protezione
+		// rispetto al segmentation fault
 		SPDLOG_ERROR("response was already done");
 
 		return;
@@ -764,10 +770,11 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string r
 {
 	if (_fcgxFinishDone)
 	{
-		// se viene chiamato due volte sendSuccess/sendRedirect/sendHeadSuccess/sendError
-		// la seconda volta provocherebbe un segmentation fault perchè probabilmente
-		// request.out è stato resettato nella prima chiamata
-		// Questo controllo è una protezione rispetto al segmentation fault
+		// se viene chiamato due volte
+		// sendSuccess/sendRedirect/sendHeadSuccess/sendError la seconda volta
+		// provocherebbe un segmentation fault perchè probabilmente request.out è
+		// stato resettato nella prima chiamata Questo controllo è una protezione
+		// rispetto al segmentation fault
 		SPDLOG_ERROR("response was already done");
 
 		return;
@@ -785,10 +792,12 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string r
 		// temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
 		// temporaryResponseBodyRoot["error"] = errorMessage;
 
-		// string temporaryResponseBody = JSONUtils::toString(temporaryResponseBodyRoot);
+		// string temporaryResponseBody =
+		// JSONUtils::toString(temporaryResponseBodyRoot);
 
-		// 2020-02-08: content length has to be calculated before the substitution from % to %%
-		// because for FCGX_FPrintF (below used) %% is just one character
+		// 2020-02-08: content length has to be calculated before the substitution
+		// from % to %% because for FCGX_FPrintF (below used) %% is just one
+		// character
 		contentLength = responseBody.length();
 
 		string toBeSearched = "%";
@@ -803,8 +812,9 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string r
 
 		// responseBody = JSONUtils::toString(responseBodyRoot);
 
-		// 2020-02-08: content length has to be calculated before the substitution from % to %%
-		// because for FCGX_FPrintF (below used) %% is just one character
+		// 2020-02-08: content length has to be calculated before the substitution
+		// from % to %% because for FCGX_FPrintF (below used) %% is just one
+		// character
 		contentLength = responseBody.length();
 	}
 
@@ -834,57 +844,62 @@ void FastCGIAPI::sendError(FCGX_Request &request, int htmlResponseCode, string r
 /*
 void FastCGIAPI::sendError(int htmlResponseCode, string errorMessage)
 {
-	string endLine = "\r\n";
+  string endLine = "\r\n";
 
-	long contentLength;
+  long contentLength;
 
-	string responseBody;
-	// errorMessage cannot have the '%' char because FCGX_FPrintF will not work
-	if (errorMessage.find("%") != string::npos)
-	{
-		json temporaryResponseBodyRoot;
-		temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
-		temporaryResponseBodyRoot["error"] = errorMessage;
+  string responseBody;
+  // errorMessage cannot have the '%' char because FCGX_FPrintF will not work
+  if (errorMessage.find("%") != string::npos)
+  {
+	json temporaryResponseBodyRoot;
+	temporaryResponseBodyRoot["status"] = to_string(htmlResponseCode);
+	temporaryResponseBodyRoot["error"] = errorMessage;
 
-		string temporaryResponseBody = JSONUtils::toString(temporaryResponseBodyRoot);
+	string temporaryResponseBody =
+JSONUtils::toString(temporaryResponseBodyRoot);
 
-		// 2020-02-08: content length has to be calculated before the substitution from % to %%
-		// because for FCGX_FPrintF (below used) %% is just one character
-		contentLength = temporaryResponseBody.length();
+	// 2020-02-08: content length has to be calculated before the substitution
+from % to %%
+	// because for FCGX_FPrintF (below used) %% is just one character
+	contentLength = temporaryResponseBody.length();
 
-		string toBeSearched = "%";
-		string replacedWith = "%%";
-		responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched), replacedWith);
-	}
-	else
-	{
-		json responseBodyRoot;
-		responseBodyRoot["status"] = to_string(htmlResponseCode);
-		responseBodyRoot["error"] = errorMessage;
+	string toBeSearched = "%";
+	string replacedWith = "%%";
+	responseBody = regex_replace(temporaryResponseBody, regex(toBeSearched),
+replacedWith);
+  }
+  else
+  {
+	json responseBodyRoot;
+	responseBodyRoot["status"] = to_string(htmlResponseCode);
+	responseBodyRoot["error"] = errorMessage;
 
-		responseBody = JSONUtils::toString(responseBodyRoot);
+	responseBody = JSONUtils::toString(responseBodyRoot);
 
-		// 2020-02-08: content length has to be calculated before the substitution from % to %%
-		// because for FCGX_FPrintF (below used) %% is just one character
-		contentLength = responseBody.length();
-	}
+	// 2020-02-08: content length has to be calculated before the substitution
+from % to %%
+	// because for FCGX_FPrintF (below used) %% is just one character
+	contentLength = responseBody.length();
+  }
 
-	string httpStatus = std::format("Status: {} {}{}", htmlResponseCode, getHtmlStandardMessage(htmlResponseCode), endLine);
+  string httpStatus = std::format("Status: {} {}{}", htmlResponseCode,
+getHtmlStandardMessage(htmlResponseCode), endLine);
 
-	string completeHttpResponse = std::format(
-		"{}"
-		"Content-Type: application/json; charset=utf-8{}"
-		"Content-Length: {}{}"
-		"{}"
-		"{}",
-		httpStatus, endLine, contentLength, endLine, endLine, responseBody
-	);
+  string completeHttpResponse = std::format(
+	"{}"
+	"Content-Type: application/json; charset=utf-8{}"
+	"Content-Length: {}{}"
+	"{}"
+	"{}",
+	httpStatus, endLine, contentLength, endLine, endLine, responseBody
+  );
 
-	SPDLOG_INFO(
-		"HTTP Error"
-		", response: {}",
-		completeHttpResponse
-	);
+  SPDLOG_INFO(
+	"HTTP Error"
+	", response: {}",
+	completeHttpResponse
+  );
 }
 */
 
@@ -1050,9 +1065,11 @@ string FastCGIAPI::getQueryParameter(
 			*isParamPresent = true;
 		parameterValue = it->second;
 
-		// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-		//	That  because if we have really a + char (%2B into the string), and we do the replace
-		//	after unescape, this char will be changed to space and we do not want it
+		// 2021-01-07: Remark: we have FIRST to replace + in space and then apply
+		// unescape
+		//	That  because if we have really a + char (%2B into the string), and we
+		// do the replace 	after unescape, this char will be changed to space and we
+		// do not want it
 		string plus = "\\+";
 		string plusDecoded = " ";
 		string firstDecoding = regex_replace(parameterValue, regex(plus), plusDecoded);
@@ -1313,6 +1330,7 @@ void FastCGIAPI::fillQueryString(string queryString, unordered_map<string, strin
 	}
 }
 
+/*
 json FastCGIAPI::loadConfigurationFile(const char *configurationPathName)
 {
 	try
@@ -1336,6 +1354,74 @@ json FastCGIAPI::loadConfigurationFile(const char *configurationPathName)
 
 		throw runtime_error(errorMessage);
 	}
+}
+*/
+
+// #define BOOTSERVICE_DEBUG_LOG
+
+json FastCGIAPI::loadConfigurationFile(string configurationPathName, string environmentPrefix)
+{
+
+#ifdef BOOTSERVICE_DEBUG_LOG
+	ofstream of("/tmp/bootservice.log", ofstream::app);
+	of << "loadConfigurationFile..." << endl;
+#endif
+
+	string sConfigurationFile;
+	{
+		ifstream configurationFile(configurationPathName, ifstream::binary);
+		stringstream buffer;
+		buffer << configurationFile.rdbuf();
+		if (environmentPrefix == "")
+			sConfigurationFile = buffer.str();
+		else
+			sConfigurationFile = FastCGIAPI::applyEnvironmentToConfiguration(buffer.str(), environmentPrefix);
+	}
+
+	json configurationRoot = json::parse(
+		sConfigurationFile,
+		nullptr, // callback
+		true,	 // allow exceptions
+		true	 // ignore_comments
+	);
+
+	return configurationRoot;
+}
+
+string FastCGIAPI::applyEnvironmentToConfiguration(string configuration, string environmentPrefix)
+{
+	char **s = environ;
+
+#ifdef BOOTSERVICE_DEBUG_LOG
+	ofstream of("/tmp/bootservice.log", ofstream::app);
+#endif
+
+	int envNumber = 0;
+	for (; *s; s++)
+	{
+		string envVariable = *s;
+#ifdef BOOTSERVICE_DEBUG_LOG
+//					of << "ENV " << *s << endl;
+#endif
+		if (envVariable.starts_with(environmentPrefix))
+		{
+			size_t endOfVarName = envVariable.find("=");
+			if (endOfVarName == string::npos)
+				continue;
+
+			envNumber++;
+
+			// sarebbe \$\{ZORAC_SOLR_PWD\}
+			string envLabel = std::format("\\$\\{{{}\\}}", envVariable.substr(0, endOfVarName));
+			string envValue = envVariable.substr(endOfVarName + 1);
+#ifdef BOOTSERVICE_DEBUG_LOG
+			of << "ENV " << zoracEnvLabel << ": " << zoracEnvValue << endl;
+#endif
+			configuration = regex_replace(configuration, regex(envLabel), envValue);
+		}
+	}
+
+	return configuration;
 }
 
 string FastCGIAPI::base64_encode(const string &in)
