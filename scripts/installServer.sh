@@ -248,13 +248,19 @@ install-packages()
 		apt install -y openjdk-21-jdk
 	fi
 
-	#in realtà hcloud serve sono sul server di development
-	#if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
-		#echo ""
-		#read -n 1 -s -r -p "install hetzner cloud..."
-		#echo ""
-		#apt install -y hcloud-cli
-	#fi
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
+		echo ""
+		read -n 1 -s -r -p "install hetzner cloud..."
+		echo ""
+		apt install -y hcloud-cli
+
+		mkdir -p ~/.config/hcloud
+		echo "active_context = 'MMS'" > ~/.config/hcloud/cli.toml
+		echo "" >> ~/.config/hcloud/cli.toml
+		echo "[[contexts]]" >> ~/.config/hcloud/cli.toml
+		echo "name = 'MMS'" >> ~/.config/hcloud/cli.toml
+		echo "token = '6zXnVEIpq78LbftKopCJYaRq8QNmrA7gSMsHDuG0comi75B95Ch0GEjH9Z7Gkrnk'" >> ~/.config/hcloud/cli.toml
+	fi
 
 	if [ "$moduleType" == "engine" ]; then
 
@@ -344,8 +350,8 @@ install-packages()
 			read
 			echo "seguire il paragrafo 'Nodo slave' o 'Nodo master' rispettivamente se sei uno slave o un master"
 			read
-			echo "sudo vi /etc/hosts inizializzare postgres-master, postgres-slaves e postgres-localhost (usato da servicesStatusLibrary.sh)"
-			read
+			#echo "sudo vi /etc/hosts inizializzare postgres-master, postgres-slaves e postgres-localhost (usato da servicesStatusLibrary.sh)"
+			#read
 			echo "se serve eseguire il comando sotto"
 			echo "create table if not exists MMS_TestConnection (testConnectionKey integer)"
 			read
@@ -776,12 +782,26 @@ adds-to-bashrc()
 	echo "export EDITOR=/usr/bin/vi" >> /home/mms/.bashrc
 
 	if [[ "$serverName" == *"engine"* ]]; then
-		echo "masterIP=\$(cat /etc/hosts | grep postgres-master | cut -d' ' -f1)" >> /home/mms/.bashrc
+		echo "masterIP=\$(cat ~/mms/conf/mms-env.sh | grep MMS_DB_MASTER | cut -d'=' -f2)" >> /home/mms/.bashrc
 		echo "if [ \"\$(ifconfig | grep \"inet \$masterIP\")\" != \"\" ]; then" >> /home/mms/.bashrc
 		echo "	PS1=\${PS1//\\\\h/\\\\h-master-}" >> /home/mms/.bashrc
 		echo "else" >> /home/mms/.bashrc
 		echo "	PS1=\${PS1//\\\\h/\\\\h-slave-}" >> /home/mms/.bashrc
 		echo "fi" >> /home/mms/.bashrc
+		echo ""
+		echo "alias tm='tail -f logs/mmsEngineService/mmsEngineService.log'" >> /home/mms/.bashrc
+		echo "alias tme='tail -f logs/mmsEngineService/mmsEngineService-error.log'" >> /home/mms/.bashrc
+		echo "alias tms='tail -f logs/mmsEngineService/mmsEngineService-slowquery.log'" >> /home/mms/.bashrc
+	elif [[ "$serverName" == *"encoder"* ]]; then
+		echo "alias tm='tail -f logs/mmsEncoder/mmsEncoder.log'" >> /home/mms/.bashrc
+		echo "alias tme='tail -f logs/mmsEncoder/mmsEncoder-error.log'" >> /home/mms/.bashrc
+
+		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
+	elif [[ "$serverName" == *"api"* || "$serverName" == *"delivery"* ]]; then
+		echo "alias tm='tail -f logs/mmsAPI/mmsAPI.log'" >> /home/mms/.bashrc
+		echo "alias tme='tail -f logs/mmsAPI/mmsAPI-error.log'" >> /home/mms/.bashrc
+
+		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
 	else
 		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
 	fi
@@ -1029,7 +1049,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6241
+	catraMMSVersion=1.0.6255
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1414,11 +1434,11 @@ else
 fi
 firewall-rules $moduleType
 
-read -n 1 -s -r -p "verificare ~/mms/conf/* e attivare il crontab -u mms ~/mms/conf/crontab.txt"
+read -n 1 -s -r -p "verificare ~/mms/conf/* (in particolare mms-env.sh) e attivare il crontab -u mms ~/mms/conf/crontab.txt"
 echo ""
 echo ""
 
-read -n 1 -s -r -p "verificare /etc/hosts"
+read -n 1 -s -r -p "verificare ~/mms/conf/mms-env.sh"
 echo ""
 echo ""
 
@@ -1449,8 +1469,8 @@ if [ "$moduleType" == "storage" ]; then
 	echo "- exportfs -ra"
 else
 	echo ""
-	echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add db-master e db-slaves)"
-	echo ""
+	#echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add db-master e db-slaves)"
+	#echo ""
 	echo "- run the commands as mms user <sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001> for the others repositories"
 	echo ""
 	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mnt/mmsStorage): mkdir /mnt/mmsIngestionRepository; mkdir /mnt/mmsStorage/MMSGUI; mkdir /mnt/mmsStorage/MMSWorkingAreaRepository; mkdir /mnt/mmsStorage/MMSRepository-free; mkdir /mnt/mmsStorage/MMSLive; mkdir /mnt/mmsStorage/dbDump; mkdir /mnt/mmsStorage/commonConfiguration; chown -R mms:mms /mnt/mmsStorage/*"

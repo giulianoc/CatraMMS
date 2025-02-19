@@ -53,7 +53,7 @@ CatraMMS_PATH=/opt/catramms
 
 export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/libpqxx/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/curlpp/lib:$CatraMMS_PATH/curlpp/lib64:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib:$CatraMMS_PATH/aws-sdk-cpp/lib
 source ~/mms/conf/mms-env.sh
-export MMS_CONFIGPATHNAME=~/mms/conf/mms.cfg
+export MMS_CONFIGPATHNAME=/opt/catramms/CatraMMS/conf/mms.cfg
 
 PIDFILE=/var/catramms/pids/api.pid
 #port used by nginx (see conf/*.nginx files)
@@ -62,12 +62,34 @@ PORT=8010
 if [ "$command" == "start" ]
 then
 	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/api.fcgi
+
+	if [ "$MMS_ENV" == "prod" ]; then
+		privateIPAddress=$(ifconfig | grep "inet 10.0" | grep -Eo '([0-9]*\.){3}[0-9]*' | head -n 1)
+		if [ "$privateIPAddress" == "" ]; then
+			echo "It is not possible to add server to the load balancer because the Private IP Address is not found"
+		else
+			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod"
+			hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod
+			echo "Waiting load balancer command..."
+			sleep 5
+		fi
+	fi
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep "api.fcgi" | grep -v grep | grep -v status
 elif [ "$command" == "stop" ]
 then
-	#sleepIfNeeded
+	if [ "$MMS_ENV" == "prod" ]; then
+		privateIPAddress=$(ifconfig | grep "inet 10.0" | grep -Eo '([0-9]*\.){3}[0-9]*' | head -n 1)
+		if [ "$privateIPAddress" == "" ]; then
+			echo "It is not possible to remove server from load balancer because the Private IP Address is not found"
+		else
+				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-api-prod"
+				hcloud load-balancer remove-target --ip $privateIPAddress mms-api-prod
+				echo "Waiting load balancer command..."
+				sleep 5
+		fi
+	fi
 
 	#PIDFILE is not created in case of nodaemon
 	kill -9 `cat $PIDFILE`

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export CatraMMS_PATH=/opt/catramms
+source ~/mms/conf/mms-env.sh
 
 #Retention (3 days: 4320 mins, 1 day: 1440 mins, 12 ore: 720 mins)
 oneHourInMinutes=60
@@ -270,7 +271,7 @@ else
 			#dbUser deve avere i diritti per eseguire SHOW REPLICA STATUS
 			if [ "$dbName" == "mms" ];then
 				#mysqldump --no-tablespaces --dump-replica --apply-replica-statements --include-source-host-port -u $dbUser -p$dbPwd -h db-slaves $dbName | gzip > $dumpDirectory$dumpFileName.gz # && gzip -f $dumpDirectory$dumpFileName
-				pg_dump "postgresql://$dbUser:$dbPwd@postgres-slaves:5432/$dbName" --clean --if-exists > $dumpDirectory$dumpFileName
+				pg_dump "postgresql://$dbUser:$dbPwd@$MMS_DB_SLAVES:5432/$dbName" --clean --if-exists > $dumpDirectory$dumpFileName
 				pgDumpReturn=$?
 				if [ $pgDumpReturn -eq 0 ];then
 					gzip -f $dumpDirectory$dumpFileName

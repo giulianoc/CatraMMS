@@ -88,7 +88,6 @@ if [ "$deploy" == "y" ]; then
 			continue
 		fi
 
-		#hcloud load-balancer add-target --ip 10.0.1.4 mms-api-prod
 		deploy $serverName $serverAddress $serverPort $serverKey $serverType
 
 		index=$((index+1))
@@ -125,23 +124,23 @@ if [ "$deploy" == "y" ]; then
 			continue
 		fi
 
-		if [ "$serverType" = "api" ]; then
-			echo ""
-			echo ""
-			echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod"
-			hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod
-			echo "Waiting load balancer command..."
-			sleep 5
-		fi
+		#if [ "$serverType" = "api" ]; then
+		#	echo ""
+		#	echo ""
+		#	echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod"
+		#	hcloud load-balancer remove-target --ip $serverPrivateIP mms-api-prod
+		#	echo "Waiting load balancer command..."
+		#	sleep 5
+		#fi
 		deploy $serverName $serverAddress $serverPort $serverKey $serverType
-		if [ "$serverType" = "api" ]; then
-			echo ""
-			echo ""
-			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod"
-			hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod
-			echo "Waiting load balancer command..."
-			sleep 5
-		fi
+		#if [ "$serverType" = "api" ]; then
+		#	echo ""
+		#	echo ""
+		#	echo "Add server to the load balancer: hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod"
+		#	hcloud load-balancer add-target --ip $serverPrivateIP mms-api-prod
+		#	echo "Waiting load balancer command..."
+		#	sleep 5
+		#fi
 
 		index=$((index+1))
 	done
