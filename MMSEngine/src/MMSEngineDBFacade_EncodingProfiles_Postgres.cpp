@@ -1,6 +1,7 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/spdlog.h"
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 	transaction_base *trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey, MMSEngineDBFacade::ContentType contentType, string label,
@@ -276,9 +277,13 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage =
-						__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -349,11 +354,15 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 							int64_t localWorkspaceKey = res[0]["workspaceKey"].as<int64_t>();
 							if (localWorkspaceKey != workspaceKey)
 							{
-								string errorMessage = __FILEREF__ + "It is not possible to use an EncodingProfilesSet if you are not the owner" +
-													  ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey) +
-													  ", workspaceKey: " + to_string(workspaceKey) +
-													  ", localWorkspaceKey: " + to_string(localWorkspaceKey) + ", sqlStatement: " + sqlStatement;
-								_logger->error(errorMessage);
+								string errorMessage = std::format(
+									"It is not possible to use an EncodingProfilesSet if you are not the owner"
+									", encodingProfilesSetKey: {}"
+									", workspaceKey: {}"
+									", localWorkspaceKey: {}"
+									", sqlStatement: {}",
+									encodingProfilesSetKey, workspaceKey, localWorkspaceKey, sqlStatement
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -452,10 +461,15 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 			);
 			if (rowsUpdated == 0)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", encodingProfileKey: " + to_string(encodingProfileKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", encodingProfileKey: {}"
+					", workspaceKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encodingProfileKey, workspaceKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -586,10 +600,14 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 			}
 			else
 			{
-				string errorMessage = string("Encoding profile label was not found") + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", contentType: " + MMSEngineDBFacade::toString(contentType) + ", label: " + label;
-
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Encoding profile label was not found"
+					", workspaceKey: {}"
+					", contentType: {}"
+					", label: {}",
+					workspaceKey, toString(contentType), label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -637,11 +655,15 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 							int64_t localWorkspaceKey = res[0]["workspaceKey"].as<int64_t>();
 							if (localWorkspaceKey != workspaceKey)
 							{
-								string errorMessage = __FILEREF__ + "It is not possible to use an EncodingProfilesSet if you are not the owner" +
-													  ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey) +
-													  ", workspaceKey: " + to_string(workspaceKey) +
-													  ", localWorkspaceKey: " + to_string(localWorkspaceKey) + ", sqlStatement: " + sqlStatement;
-								_logger->error(errorMessage);
+								string errorMessage = std::format(
+									"It is not possible to use an EncodingProfilesSet if you are not the owner"
+									", encodingProfilesSetKey: {}"
+									", workspaceKey: {}"
+									", localWorkspaceKey: {}"
+									", sqlStatement: {}",
+									encodingProfilesSetKey, workspaceKey, localWorkspaceKey, sqlStatement
+								);
+								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -740,10 +762,15 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 			);
 			if (rowsUpdated == 0)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", encodingProfilesSetKey: {}"
+					", workspaceKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encodingProfilesSetKey, workspaceKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -861,10 +888,13 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getEncodingProfilesSetList" + ", workspaceKey: " + to_string(workspaceKey) +
-			", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey) + ", contentTypePresent: " + to_string(contentTypePresent) +
-			", contentType: " + (contentTypePresent ? toString(contentType) : "")
+		SPDLOG_INFO(
+			"getEncodingProfilesSetList"
+			", workspaceKey: {}"
+			", encodingProfilesSetKey: {}"
+			", contentTypePresent: {}"
+			", contentType: {}",
+			workspaceKey, encodingProfilesSetKey, contentTypePresent, (contentTypePresent ? toString(contentType) : "")
 		);
 
 		{
@@ -970,12 +1000,12 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 							}
 							catch (exception &e)
 							{
-								string errorMessage = string(
+								string errorMessage = std::format(
 									"Json metadata failed during the parsing"
-									", json data: " +
+									", json data: {}",
 									jsonProfile
 								);
-								_logger->error(__FILEREF__ + errorMessage);
+								SPDLOG_ERROR(errorMessage);
 
 								continue;
 							}
@@ -1124,10 +1154,14 @@ json MMSEngineDBFacade::getEncodingProfileList(
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getEncodingProfileList" + ", workspaceKey: " + to_string(workspaceKey) +
-			", encodingProfileKey: " + to_string(encodingProfileKey) + ", contentTypePresent: " + to_string(contentTypePresent) +
-			", contentType: " + (contentTypePresent ? toString(contentType) : "") + ", label: " + label
+		SPDLOG_INFO(
+			"getEncodingProfileList"
+			", workspaceKey: {}"
+			", encodingProfileKey: {}"
+			", contentTypePresent: {}"
+			", contentType: {}"
+			", label: {}",
+			workspaceKey, encodingProfileKey, contentTypePresent, (contentTypePresent ? toString(contentType) : ""), label
 		);
 
 		{
@@ -1221,12 +1255,12 @@ json MMSEngineDBFacade::getEncodingProfileList(
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string(
+						string errorMessage = std::format(
 							"Json metadata failed during the parsing"
-							", json data: " +
+							", json data: {}",
 							jsonProfile
 						);
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						continue;
 					}
@@ -1383,20 +1417,28 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 				int64_t localWorkspaceKey = res[0]["workspaceKey"].as<int64_t>();
 				if (localWorkspaceKey != workspaceKey)
 				{
-					string errorMessage = __FILEREF__ + "WorkspaceKey does not match " +
-										  ", encodingProfilesSetKey: " + to_string(encodingProfilesSetKey) +
-										  ", workspaceKey: " + to_string(workspaceKey) + ", localWorkspaceKey: " + to_string(localWorkspaceKey) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"WorkspaceKey does not match "
+						", encodingProfilesSetKey: {}"
+						", workspaceKey: {}"
+						", localWorkspaceKey: {}"
+						", sqlStatement: {}",
+						encodingProfilesSetKey, workspaceKey, localWorkspaceKey, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "WorkspaceKey was not found " + ", workspaceKey: " + to_string(workspaceKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"WorkspaceKey was not found"
+					", workspaceKey: {}"
+					", sqlStatement: {}",
+					workspaceKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1553,11 +1595,13 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "WorkspaceKey/encodingProfilesSetLabel was not found " +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label
-					// + ", sqlStatement: " + sqlStatement    It will be added in catch
-					;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"WorkspaceKey/encodingProfilesSetLabel was not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1725,22 +1769,32 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 				encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
 				if (!contentTypeToBeUsed && res.size() > 1)
 				{
-					string errorMessage =
-						__FILEREF__ + "contentType has to be used because the label is not unique" + ", workspaceKey: " + to_string(workspaceKey) +
-						", contentType: " + MMSEngineDBFacade::toString(contentType) + ", contentTypeToBeUsed: " + to_string(contentTypeToBeUsed) +
-						", encodingProfileLabel: " + encodingProfileLabel + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"contentType has to be used because the label is not unique"
+						", workspaceKey: {}"
+						", contentType: {}"
+						", contentTypeToBeUsed: {}"
+						", encodingProfileLabel: {}"
+						", sqlStatement: {}",
+						workspaceKey, toString(contentType), contentTypeToBeUsed, encodingProfileLabel, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "encodingProfileKey not found " + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", contentType: " + MMSEngineDBFacade::toString(contentType) +
-									  ", contentTypeToBeUsed: " + to_string(contentTypeToBeUsed) + ", encodingProfileLabel: " + encodingProfileLabel +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"encodingProfileKey not found "
+					", workspaceKey: {}"
+					", contentType: {}"
+					", contentTypeToBeUsed: {}"
+					", encodingProfileLabel: {}"
+					", sqlStatement: {}",
+					workspaceKey, toString(contentType), contentTypeToBeUsed, encodingProfileLabel, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1886,9 +1940,14 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "encodingProfileKey not found " + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"encodingProfileKey not found "
+					", workspaceKey: {}"
+					", encodingProfileKey: {}"
+					", sqlStatement: {}",
+					workspaceKey, encodingProfileKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

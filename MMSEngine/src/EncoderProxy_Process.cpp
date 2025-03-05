@@ -16,6 +16,7 @@
 #include "JSONUtils.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
+#include "spdlog/spdlog.h"
 
 void EncoderProxy::processLiveGrid(bool killedByUser)
 {
@@ -28,20 +29,28 @@ void EncoderProxy::processLiveGrid(bool killedByUser)
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processLiveGrid failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processLiveGrid failed"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, _encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processLiveGrid failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processLiveGrid failed"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, _encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -52,13 +61,13 @@ void EncoderProxy::processSlideShow()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processSlideShow has nothing to "
-			"do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processSlideShow has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -70,11 +79,15 @@ void EncoderProxy::processSlideShow()
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -82,11 +95,15 @@ void EncoderProxy::processSlideShow()
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -95,11 +112,15 @@ void EncoderProxy::processSlideShow()
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -144,30 +165,44 @@ void EncoderProxy::processSlideShow()
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processOverlayedImageOnVideo failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processOverlayedImageOnVideo failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processOverlayedImageOnVideo failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processOverlayedImageOnVideo failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -178,13 +213,13 @@ void EncoderProxy::processIntroOutroOverlay()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processIntroOutroOverlay has "
-			"nothing to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processIntroOutroOverlay has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -196,11 +231,15 @@ void EncoderProxy::processIntroOutroOverlay()
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -208,11 +247,15 @@ void EncoderProxy::processIntroOutroOverlay()
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -221,11 +264,15 @@ void EncoderProxy::processIntroOutroOverlay()
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -257,30 +304,44 @@ void EncoderProxy::processIntroOutroOverlay()
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processIntroOutroOverlay failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processIntroOutroOverlay failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processIntroOutroOverlay failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processIntroOutroOverlay failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -291,13 +352,13 @@ void EncoderProxy::processCutFrameAccurate()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processCutFrameAccurate has "
-			"nothing to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processCutFrameAccurate has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -309,11 +370,15 @@ void EncoderProxy::processCutFrameAccurate()
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -321,11 +386,15 @@ void EncoderProxy::processCutFrameAccurate()
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -334,11 +403,15 @@ void EncoderProxy::processCutFrameAccurate()
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -409,30 +482,44 @@ void EncoderProxy::processCutFrameAccurate()
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processIntroOutroOverlay failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processIntroOutroOverlay failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processIntroOutroOverlay failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processIntroOutroOverlay failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -450,9 +537,13 @@ void EncoderProxy::processGeneratedFrames(bool killedByUser)
 			string processorMMS;
 			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", IngestionStatus: " +
-				MMSEngineDBFacade::toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				_encodingItem->_ingestionJobKey, MMSEngineDBFacade::toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -481,9 +572,13 @@ void EncoderProxy::processGeneratedFrames(bool killedByUser)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(multiLocalAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 }
@@ -492,13 +587,13 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processVideoSpeed has nothing "
-			"to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processVideoSpeed has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -516,12 +611,15 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 			stagingEncodedAssetPathName = JSONUtils::asString(sourceRoot, "encodedNFSStagingAssetPathName", "");
 			if (stagingEncodedAssetPathName == "")
 			{
-				string errorMessage = __FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" +
-									  ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-									  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"encodedNFSStagingAssetPathName cannot be empty"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", stagingEncodedAssetPathName: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -529,12 +627,15 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 			size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 			if (extensionIndex == string::npos)
 			{
-				string errorMessage = __FILEREF__ + "No extention find in the asset file name" +
-									  ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-									  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No extention found in the asset file name"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", stagingEncodedAssetPathName: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -543,11 +644,15 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 			size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 			if (fileNameIndex == string::npos)
 			{
-				string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-									  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No fileName found in the asset file name"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", stagingEncodedAssetPathName: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -555,12 +660,15 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 
 			if (!fs::exists(stagingEncodedAssetPathName))
 			{
-				string errorMessage = __FILEREF__ + "stagingEncodedAssetPathName is not found" +
-									  ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-									  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"stagingEncodedAssetPathName is not found"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", stagingEncodedAssetPathName: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				continue;
 			}
@@ -591,32 +699,45 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 			shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 			_multiEventsSet->addEvent(event);
 
-			_logger->info(
-				__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-				", getEventKey().first: " + to_string(event->getEventKey().first) +
-				", getEventKey().second: " + to_string(event->getEventKey().second)
+			SPDLOG_INFO(
+				"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+				", _proxyIdentifier: {}"
+				", ingestionJobKey: {}"
+				", sourceFileName: {}"
+				", getEventKey().first: {}"
+				", getEventKey().second: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 			);
 		}
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processVideoSpeed failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processVideoSpeed failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processVideoSpeed failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processVideoSpeed failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -627,13 +748,13 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processPictureInPicture has "
-			"nothing to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processPictureInPicture has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -645,11 +766,15 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -657,11 +782,15 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -670,11 +799,15 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -706,30 +839,44 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processPictureInPicture failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processPictureInPicture failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processPictureInPicture failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processPictureInPicture failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -740,13 +887,13 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processOverlayedTextOnVideo has "
-			"nothing to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processOverlayedTextOnVideo has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -758,11 +905,15 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -770,11 +921,15 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -783,11 +938,15 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -819,30 +978,44 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processOverlayedImageOnVideo failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processOverlayedImageOnVideo failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processOverlayedImageOnVideo failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processOverlayedImageOnVideo failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -853,13 +1026,13 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processVideoSpeed has nothing "
-			"to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processVideoSpeed has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -871,11 +1044,15 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -883,11 +1060,15 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -896,11 +1077,15 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -932,30 +1117,44 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processVideoSpeed failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processVideoSpeed failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processVideoSpeed failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processVideoSpeed failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
@@ -966,13 +1165,13 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		_logger->info(
-			__FILEREF__ +
-			"The encoder selected is external, processOverlayedImageOnVideo "
-			"has nothing to do" +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", _currentUsedFFMpegExternalEncoder: " + to_string(_currentUsedFFMpegExternalEncoder)
+		SPDLOG_INFO(
+			"The encoder selected is external, processOverlayedImageOnVideo has nothing to do"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _currentUsedFFMpegExternalEncoder: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegExternalEncoder
 		);
 
 		return;
@@ -984,11 +1183,15 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
-			string errorMessage =
-				__FILEREF__ + "encodedNFSStagingAssetPathName cannot be empty" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"encodedNFSStagingAssetPathName cannot be empty"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -996,11 +1199,15 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1009,11 +1216,15 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName found in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1045,30 +1256,44 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processOverlayedImageOnVideo failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processOverlayedImageOnVideo failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processOverlayedImageOnVideo failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processOverlayedImageOnVideo failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;

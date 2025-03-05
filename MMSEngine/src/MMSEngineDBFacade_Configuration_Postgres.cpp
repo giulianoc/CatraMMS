@@ -182,7 +182,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -315,9 +315,14 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -434,7 +439,11 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getFTPConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getFTPConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		{
 			json requestParametersRoot;
@@ -628,7 +637,12 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 
 	try
 	{
-		_logger->info(__FILEREF__ + "getFTPByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
+		SPDLOG_INFO(
+			"getFTPByConfigurationLabel"
+			", workspaceKey: {}"
+			", label: {}",
+			workspaceKey, label
+		);
 
 		{
 			string sqlStatement = std::format(
@@ -649,10 +663,13 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 			);
 			if (empty(res))
 			{
-				string errorMessage =
-					__FILEREF__ + "select from MMS_Conf_FTP failed" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Configuration not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -931,7 +948,7 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1064,9 +1081,14 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1183,7 +1205,11 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getEMailConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getEMailConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		{
 			json requestParametersRoot;
@@ -1370,7 +1396,12 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 
 	try
 	{
-		_logger->info(__FILEREF__ + "getEMailByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
+		SPDLOG_INFO(
+			"getEMailByConfigurationLabel"
+			", workspaceKey: {}"
+			", label: {}",
+			workspaceKey, label
+		);
 
 		{
 			string sqlStatement = std::format(
@@ -1391,10 +1422,13 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 			);
 			if (empty(res))
 			{
-				string errorMessage =
-					__FILEREF__ + "select from MMS_Conf_EMail failed" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Configuration not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1891,13 +1925,21 @@ json MMSEngineDBFacade::getVodInputRoot(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "getVodInputRoot failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"getVodInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "getVodInputRoot failed");
+		SPDLOG_ERROR(
+			"getVodInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
 		throw e;
 	}
@@ -1932,13 +1974,21 @@ json MMSEngineDBFacade::getCountdownInputRoot(
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "getCountdownInputRoot failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"getCountdownInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "getCountdownInputRoot failed");
+		SPDLOG_ERROR(
+			"getCountdownInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
 		throw e;
 	}
@@ -1961,13 +2011,21 @@ json MMSEngineDBFacade::getDirectURLInputRoot(string url, json filtersRoot)
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(__FILEREF__ + "getDirectURLInputRoot failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"getDirectURLInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "getDirectURLInputRoot failed");
+		SPDLOG_ERROR(
+			"getDirectURLInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
 		throw e;
 	}

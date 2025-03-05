@@ -15,9 +15,8 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
-EncodersLoadBalancer::EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration, shared_ptr<spdlog::logger> logger)
+EncodersLoadBalancer::EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
 {
-	_logger = logger;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 
 	/*
@@ -25,7 +24,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngi
 
 	for (auto const& encodersPoolName : encodersPools.getMemberNames())
 	{
-		_logger->info(__FILEREF__ + "encodersPools"
+		info(__FILEREF__ + "encodersPools"
 			+ ", encodersPoolName: " + encodersPoolName
 		);
 
@@ -40,7 +39,7 @@ EncodersLoadBalancer::EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngi
 		{
 			string encoderHostName = encodersPool[encoderPoolIndex].asString();
 
-			_logger->info(__FILEREF__ + "encodersPool"
+			info(__FILEREF__ + "encodersPool"
 				+ ", encoderHostName: " + encoderHostName
 			);
 
@@ -74,7 +73,7 @@ string EncodersLoadBalancer::getEncoderHost(string encodersPool, shared_ptr<Work
 	if (it == _encodersPools.end())
 	{
 		string errorMessage = "No encoders pools found";
-		_logger->error(__FILEREF__ + errorMessage);
+		error(__FILEREF__ + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

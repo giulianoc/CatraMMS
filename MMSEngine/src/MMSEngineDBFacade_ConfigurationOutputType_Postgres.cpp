@@ -178,7 +178,7 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -311,9 +311,14 @@ void MMSEngineDBFacade::removeAWSChannelConf(int64_t workspaceKey, int64_t confK
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -433,7 +438,11 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getAWSChannelConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getAWSChannelConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		{
 			json requestParametersRoot;
@@ -663,9 +672,13 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "reserveAWSChannel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label +
-			", outputIndex: " + to_string(outputIndex) + ", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"reserveAWSChannel"
+			", workspaceKey: {}"
+			", label: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, label, outputIndex, ingestionJobKey
 		);
 
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_AWSChannel
@@ -705,12 +718,12 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 
 			if (ingestionJobKeyList != "")
 			{
-				{
-					string errorMessage = __FILEREF__ + "reserveAWSChannel. " +
-										  "The following AWS channels are reserved but the relative ingestionJobKey is finished," +
-										  "so they will be reset" + ", ingestionJobKeyList: " + ingestionJobKeyList;
-					_logger->error(errorMessage);
-				}
+				SPDLOG_ERROR(
+					"reserveAWSChannel. "
+					"The following AWS channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
+					", ingestionJobKeyList: {}",
+					ingestionJobKeyList
+				);
 
 				{
 					string sqlStatement = std::format(
@@ -731,9 +744,12 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 					);
 					if (rowsUpdated == 0)
 					{
-						string errorMessage =
-							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"no update was done"
+							", rowsUpdated: {}"
+							", sqlStatement: {}",
+							rowsUpdated, sqlStatement
+						);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -799,9 +815,14 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "No AWS Channel found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No AWS Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}"
+					", label: {}",
+					ingestionJobKey, workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -834,10 +855,15 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", confKey: " + to_string(reservedConfKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", sqlStatement: "
+					", rowsUpdated: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -960,9 +986,12 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "releaseAWSChannel" + ", workspaceKey: " + to_string(workspaceKey) + ", outputIndex: " + to_string(outputIndex) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"releaseAWSChannel"
+			", workspaceKey: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, outputIndex, ingestionJobKey
 		);
 
 		int64_t reservedConfKey;
@@ -987,9 +1016,13 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 			);
 			if (empty(res))
 			{
-				string errorMessage = string("No AWS Channel found") + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No AWS Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}",
+					ingestionJobKey, workspaceKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1017,9 +1050,15 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", confKey: " + to_string(reservedConfKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", sqlStatement: "
+					", rowsUpdated: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1297,7 +1336,7 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1430,9 +1469,14 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(int64_t workspaceKey, int64_t con
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1552,7 +1596,11 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getCDN77ChannelConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getCDN77ChannelConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		{
 			json requestParametersRoot;
@@ -1789,7 +1837,11 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t 
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getCDN77ChannelDetails" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getCDN77ChannelDetails"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		string resourceURL;
 		string filePath;
@@ -1814,9 +1866,13 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t 
 			);
 			if (empty(res))
 			{
-				string errorMessage =
-					__FILEREF__ + "Configuration label is not found" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Configuration label is not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -1967,9 +2023,13 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "reserveCDN77Channel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label +
-			", outputIndex: " + to_string(outputIndex) + ", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"reserveCDN77Channel"
+			", workspaceKey: {}"
+			", label: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, label, outputIndex, ingestionJobKey
 		);
 
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_CDN77Channel
@@ -2011,12 +2071,12 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 			if (ingestionJobKeyList != "")
 			{
-				{
-					string errorMessage = __FILEREF__ + "reserveCDN77Channel. " +
-										  "The following CDN77 channels are reserved but the relative ingestionJobKey is finished," +
-										  "so they will be reset" + ", ingestionJobKeyList: " + ingestionJobKeyList;
-					_logger->error(errorMessage);
-				}
+				SPDLOG_ERROR(
+					"reserveCDN77Channel. "
+					"The following CDN77 channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
+					", ingestionJobKeyList: {}",
+					ingestionJobKeyList
+				);
 
 				{
 					string sqlStatement = std::format(
@@ -2111,9 +2171,14 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "No CDN77 Channel found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No CDN77 Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}"
+					", label: {}",
+					ingestionJobKey, workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2149,10 +2214,15 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", confKey: " + to_string(reservedConfKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2275,9 +2345,12 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "releaseCDN77Channel" + ", workspaceKey: " + to_string(workspaceKey) + ", outputIndex: " + to_string(outputIndex) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"releaseCDN77Channel"
+			", workspaceKey: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, outputIndex, ingestionJobKey
 		);
 
 		int64_t reservedConfKey;
@@ -2302,9 +2375,13 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 			);
 			if (empty(res))
 			{
-				string errorMessage = string("No CDN77 Channel found") + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No CDN77 Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}",
+					ingestionJobKey, workspaceKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2331,9 +2408,15 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", confKey: " + to_string(reservedConfKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2612,7 +2695,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2745,9 +2828,14 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2867,7 +2955,11 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getRTMPChannelConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getRTMPChannelConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		{
 			json requestParametersRoot;
@@ -3116,7 +3208,11 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getRTMPChannelDetails" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getRTMPChannelDetails"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		int64_t confKey;
 		string rtmpURL;
@@ -3144,12 +3240,16 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 			);
 			if (empty(res))
 			{
-				string errorMessage =
-					__FILEREF__ + "Configuration label is not found" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
+				string errorMessage = std::format(
+					"Configuration label is not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -3306,9 +3406,13 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "reserveRTMPChannel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label +
-			", outputIndex: " + to_string(outputIndex) + ", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"reserveRTMPChannel"
+			", workspaceKey: {}"
+			", label: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, label, outputIndex, ingestionJobKey
 		);
 
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_RTMPChannel
@@ -3350,12 +3454,12 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 
 			if (ingestionJobKeyList != "")
 			{
-				{
-					string errorMessage = __FILEREF__ + "reserveRTMPChannel. " +
-										  "The following RTMP channels are reserved but the relative ingestionJobKey is finished," +
-										  "so they will be reset" + ", ingestionJobKeyList: " + ingestionJobKeyList;
-					_logger->error(errorMessage);
-				}
+				SPDLOG_ERROR(
+					"reserveRTMPChannel. "
+					"The following RTMP channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
+					", ingestionJobKeyList: {}",
+					ingestionJobKeyList
+				);
 
 				{
 					string sqlStatement = std::format(
@@ -3379,7 +3483,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 					{
 						string errorMessage =
 							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -3448,9 +3552,14 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "No RTMP Channel found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No RTMP Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}"
+					", label: {}",
+					ingestionJobKey, workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3490,10 +3599,15 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", confKey: " + to_string(reservedConfKey) + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " +
-									  sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3618,9 +3732,12 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "releaseRTMPChannel" + ", workspaceKey: " + to_string(workspaceKey) + ", outputIndex: " + to_string(outputIndex) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"releaseRTMPChannel"
+			", workspaceKey: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, outputIndex, ingestionJobKey
 		);
 
 		int64_t reservedConfKey;
@@ -3645,9 +3762,13 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 			);
 			if (empty(res))
 			{
-				string errorMessage = string("No RTMP Channel found") + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No RTMP Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}",
+					ingestionJobKey, workspaceKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3674,9 +3795,15 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", confKey: " + to_string(reservedConfKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3952,7 +4079,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4085,9 +4212,14 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4207,7 +4339,11 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getHLSChannelConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getHLSChannelConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		{
 			json requestParametersRoot;
@@ -4443,7 +4579,11 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getHLSChannelDetails" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getHLSChannelDetails"
+			", workspaceKey: {}",
+			workspaceKey
+		);
 
 		int64_t confKey;
 		int64_t deliveryCode;
@@ -4469,12 +4609,16 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 			);
 			if (empty(res))
 			{
-				string errorMessage =
-					__FILEREF__ + "Configuration label is not found" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
+				string errorMessage = std::format(
+					"Configuration label is not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -4627,9 +4771,13 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "reserveHLSChannel" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label +
-			", outputIndex: " + to_string(outputIndex) + ", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"reserveHLSChannel"
+			", workspaceKey: {}"
+			", label: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, label, outputIndex, ingestionJobKey
 		);
 
 		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_RTMPChannel
@@ -4671,12 +4819,12 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 
 			if (ingestionJobKeyList != "")
 			{
-				{
-					string errorMessage = __FILEREF__ + "reserveHLSChannel. " +
-										  "The following HLS channels are reserved but the relative ingestionJobKey is finished," +
-										  "so they will be reset" + ", ingestionJobKeyList: " + ingestionJobKeyList;
-					_logger->error(errorMessage);
-				}
+				SPDLOG_ERROR(
+					"reserveHLSChannel. "
+					"The following HLS channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
+					", ingestionJobKeyList: {}",
+					ingestionJobKeyList
+				);
 
 				{
 					string sqlStatement = std::format(
@@ -4700,7 +4848,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 					{
 						string errorMessage =
 							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(errorMessage);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -4767,9 +4915,14 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "No HLS Channel found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No HLS Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}"
+					", label: {}",
+					ingestionJobKey, workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4805,10 +4958,15 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", confKey: " + to_string(reservedConfKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4931,9 +5089,12 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "releaseHLSChannel" + ", workspaceKey: " + to_string(workspaceKey) + ", outputIndex: " + to_string(outputIndex) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"releaseHLSChannel"
+			", workspaceKey: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, outputIndex, ingestionJobKey
 		);
 
 		int64_t reservedConfKey;
@@ -4958,9 +5119,13 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 			);
 			if (empty(res))
 			{
-				string errorMessage = string("No HLS Channel found") + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No HLS Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}",
+					ingestionJobKey, workspaceKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4987,9 +5152,15 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", confKey: " + to_string(reservedConfKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

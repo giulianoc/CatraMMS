@@ -13,6 +13,7 @@
 
 #include "AWSSigner.h"
 #include "EncoderProxy.h"
+#include "spdlog/spdlog.h"
 
 #include <aws/core/Aws.h>
 #include <aws/medialive/MediaLiveClient.h>
@@ -28,9 +29,11 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 	Aws::MediaLive::Model::StartChannelRequest startChannelRequest;
 	startChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-	_logger->info(
-		__FILEREF__ + "mediaLive.StartChannel" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+	SPDLOG_INFO(
+		"mediaLive.StartChannel"
+		", ingestionJobKey: {}"
+		", awsChannelIdToBeStarted: {}",
+		ingestionJobKey, awsChannelIdToBeStarted
 	);
 
 	chrono::system_clock::time_point commandTime = chrono::system_clock::now();
@@ -38,11 +41,16 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 	auto startChannelOutcome = mediaLiveClient.StartChannel(startChannelRequest);
 	if (!startChannelOutcome.IsSuccess())
 	{
-		string errorMessage = __FILEREF__ + "AWS Start Channel failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted +
-							  ", errorType: " + to_string((long)startChannelOutcome.GetError().GetErrorType()) +
-							  ", errorMessage: " + startChannelOutcome.GetError().GetMessage();
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"AWS Start Channel failed"
+			", ingestionJobKey: {}"
+			", awsChannelIdToBeStarted: {}"
+			", errorType: {}"
+			", errorMessage: {}",
+			ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(startChannelOutcome.GetError().GetErrorType()),
+			startChannelOutcome.GetError().GetMessage()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// liveproxy is not stopped in case of error
 		// throw runtime_error(errorMessage);
@@ -57,19 +65,26 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
 		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-		_logger->info(
-			__FILEREF__ + "mediaLive.DescribeChannel" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+		SPDLOG_INFO(
+			"mediaLive.DescribeChannel"
+			", ingestionJobKey: {}"
+			", awsChannelIdToBeStarted: {}",
+			ingestionJobKey, awsChannelIdToBeStarted
 		);
 
 		auto describeChannelOutcome = mediaLiveClient.DescribeChannel(describeChannelRequest);
 		if (!describeChannelOutcome.IsSuccess())
 		{
-			string errorMessage = __FILEREF__ + "AWS Describe Channel failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted +
-								  ", errorType: " + to_string((long)describeChannelOutcome.GetError().GetErrorType()) +
-								  ", errorMessage: " + describeChannelOutcome.GetError().GetMessage();
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"AWS Describe Channel failed"
+				", ingestionJobKey: {}"
+				", awsChannelIdToBeStarted: {}"
+				", errorType: {}"
+				", errorMessage: {}",
+				ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(describeChannelOutcome.GetError().GetErrorType()),
+				describeChannelOutcome.GetError().GetMessage()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
 		}
@@ -84,11 +99,15 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "mediaLive.StartChannel finished" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted + ", lastChannelState: " + to_string((long)lastChannelState) +
-		", maxCommandDuration: " + to_string(maxCommandDuration) +
-		", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - commandTime).count())
+	SPDLOG_INFO(
+		"mediaLive.StartChannel finished"
+		", ingestionJobKey: {}"
+		", awsChannelIdToBeStarted: {}"
+		", lastChannelState: {}"
+		", maxCommandDuration: {}"
+		", elapsed (secs): {}",
+		ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(lastChannelState), maxCommandDuration,
+		chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - commandTime).count()
 	);
 }
 
@@ -101,9 +120,11 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 	Aws::MediaLive::Model::StopChannelRequest stopChannelRequest;
 	stopChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-	_logger->info(
-		__FILEREF__ + "mediaLive.StopChannel" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+	SPDLOG_INFO(
+		"mediaLive.StopChannel"
+		", ingestionJobKey: {}"
+		", awsChannelIdToBeStarted: {}",
+		ingestionJobKey, awsChannelIdToBeStarted
 	);
 
 	chrono::system_clock::time_point commandTime = chrono::system_clock::now();
@@ -111,11 +132,16 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 	auto stopChannelOutcome = mediaLiveClient.StopChannel(stopChannelRequest);
 	if (!stopChannelOutcome.IsSuccess())
 	{
-		string errorMessage = __FILEREF__ + "AWS Stop Channel failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							  ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted +
-							  ", errorType: " + to_string((long)stopChannelOutcome.GetError().GetErrorType()) +
-							  ", errorMessage: " + stopChannelOutcome.GetError().GetMessage();
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"AWS Stop Channel failed"
+			", ingestionJobKey: {}"
+			", awsChannelIdToBeStarted: {}"
+			", errorType: {}"
+			", errorMessage: {}",
+			ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(stopChannelOutcome.GetError().GetErrorType()),
+			stopChannelOutcome.GetError().GetMessage()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		// liveproxy is not stopped in case of error
 		// throw runtime_error(errorMessage);
@@ -130,19 +156,26 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
 		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-		_logger->info(
-			__FILEREF__ + "mediaLive.DescribeChannel" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted
+		SPDLOG_INFO(
+			"mediaLive.DescribeChannel"
+			", ingestionJobKey: {}"
+			", awsChannelIdToBeStarted: {}",
+			ingestionJobKey, awsChannelIdToBeStarted
 		);
 
 		auto describeChannelOutcome = mediaLiveClient.DescribeChannel(describeChannelRequest);
 		if (!describeChannelOutcome.IsSuccess())
 		{
-			string errorMessage = __FILEREF__ + "AWS Describe Channel failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted +
-								  ", errorType: " + to_string((long)describeChannelOutcome.GetError().GetErrorType()) +
-								  ", errorMessage: " + describeChannelOutcome.GetError().GetMessage();
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"AWS Describe Channel failed"
+				", ingestionJobKey: {}"
+				", awsChannelIdToBeStarted: {}"
+				", errorType: {}"
+				", errorMessage: {}",
+				ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(describeChannelOutcome.GetError().GetErrorType()),
+				describeChannelOutcome.GetError().GetMessage()
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
 		}
@@ -157,11 +190,15 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "mediaLive.StopChannel finished" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", awsChannelIdToBeStarted: " + awsChannelIdToBeStarted + ", lastChannelState: " + to_string((long)lastChannelState) +
-		", maxCommandDuration: " + to_string(maxCommandDuration) +
-		", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - commandTime).count())
+	SPDLOG_INFO(
+		"mediaLive.StopChannel finished"
+		", ingestionJobKey: {}"
+		", awsChannelIdToBeStarted: {}"
+		", lastChannelState: {}"
+		", maxCommandDuration: {}"
+		", elapsed (secs): {}",
+		ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(lastChannelState), maxCommandDuration,
+		chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - commandTime).count()
 	);
 }
 
@@ -179,9 +216,13 @@ string EncoderProxy::getAWSSignedURL(string playURL, int expirationInMinutes)
 		string prefix("https://");
 		if (!(playURL.size() >= prefix.size() && 0 == playURL.compare(0, prefix.size(), prefix) && playURL.find("/", prefix.size()) != string::npos))
 		{
-			string errorMessage =
-				__FILEREF__ + "awsSignedURL. playURL wrong format" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", playURL: " + playURL;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"awsSignedURL. playURL wrong format"
+				", _proxyIdentifier: {}"
+				", playURL: {}",
+				_proxyIdentifier, playURL
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -189,33 +230,43 @@ string EncoderProxy::getAWSSignedURL(string playURL, int expirationInMinutes)
 		string cloudFrontHostName = playURL.substr(prefix.size(), uriStartIndex - prefix.size());
 		string uriPath = playURL.substr(uriStartIndex + 1);
 
-		AWSSigner awsSigner(_logger);
+		AWSSigner awsSigner;
 		string signedPlayURL =
 			awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationInMinutes * 60);
 
 		if (signedPlayURL == "")
 		{
-			string errorMessage = __FILEREF__ + "awsSignedURL. no signedPlayURL found" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", signedPlayURL: " + signedPlayURL;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"awsSignedURL. no signedPlayURL found"
+				", _proxyIdentifier: {}"
+				", signedPlayURL: {}",
+				_proxyIdentifier, signedPlayURL
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "awsSigner failed (exception)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"awsSigner failed"
+			", _proxyIdentifier: {}"
+			", encodingJobKey: {}"
+			", exception: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "awsSigner failed (exception)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", exception: " + e.what()
+		SPDLOG_ERROR(
+			"awsSigner failed"
+			", _proxyIdentifier: {}"
+			", encodingJobKey: {}"
+			", exception: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, e.what()
 		);
 
 		throw e;

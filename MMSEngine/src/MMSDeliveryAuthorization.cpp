@@ -22,6 +22,7 @@
 #include "catralibraries/StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
+#include "spdlog/spdlog.h"
 // #include <openssl/md5.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
@@ -31,37 +32,43 @@
 #define AWSCLOUDFRONT
 
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
-	json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<spdlog::logger> logger
+	json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
 )
 {
 	_configuration = configuration;
 	_mmsStorage = mmsStorage;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
-	_logger = logger;
 
 	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->keyPairId: " + _keyPairId);
+	SPDLOG_INFO("Configuration item" 
+						 ", aws->keyPairId: {}", _keyPairId);
 	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName);
+	SPDLOG_INFO("Configuration item" 
+						 ", aws->privateKeyPEMPathName: {}", _privateKeyPEMPathName);
 	_vodCloudFrontHostName = _configuration["aws"]["vodCloudFrontHostName"];
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodCloudFrontHostName: " + _vodCloudFrontHostName);
+	SPDLOG_INFO("Configuration item" 
+						 ", aws->vodCloudFrontHostName: {}", _vodCloudFrontHostName);
 	_vodDeliveryCloudFrontHostName = _configuration["aws"]["vodDeliveryCloudFrontHostName"];
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodDeliveryCloudFrontHostName: " + _vodDeliveryCloudFrontHostName);
+	SPDLOG_INFO("Configuration item" 
+						 ", aws->vodDeliveryCloudFrontHostName: {}", _vodDeliveryCloudFrontHostName);
 	_vodDeliveryPathCloudFrontHostName = _configuration["aws"]["vodDeliveryPathCloudFrontHostName"];
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->vodDeliveryPathCloudFrontHostName: " + _vodDeliveryPathCloudFrontHostName);
+	SPDLOG_INFO("Configuration item" 
+						 ", aws->vodDeliveryPathCloudFrontHostName: {}", _vodDeliveryPathCloudFrontHostName);
 
 	json api = _configuration["api"];
 
 	_deliveryProtocol = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
+	SPDLOG_INFO("Configuration item" 
+						 ", api->delivery->deliveryProtocol: {}", _deliveryProtocol);
 	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", api->delivery->deliveryHost_authorizationThroughParameter: " + _deliveryHost_authorizationThroughParameter
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->delivery->deliveryHost_authorizationThroughParameter: {}", _deliveryHost_authorizationThroughParameter
 	);
 	_deliveryHost_authorizationThroughPath = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", api->delivery->deliveryHost_authorizationThroughPath: " + _deliveryHost_authorizationThroughPath
+	SPDLOG_INFO(
+		"Configuration item" 
+		", api->delivery->deliveryHost_authorizationThroughPath: {}", _deliveryHost_authorizationThroughPath
 	);
 }
 
@@ -156,7 +163,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (beginURIIndex == string::npos)
 			{
 				string errorMessage = string("wrong deliveryURI") + ", deliveryURI: " + deliveryURI;
-				_logger->error(__FILEREF__ + errorMessage);
+				error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -166,16 +173,16 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				string errorMessage = string("no CloudFrontHostName available") + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
 									  ", _vodCloudFrontHostNamesRoot.size: " + to_string(_vodCloudFrontHostNamesRoot.size());
-				_logger->error(__FILEREF__ + errorMessage);
+				error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
 
-			AWSSigner awsSigner(_logger);
+			AWSSigner awsSigner;
 			string signedPlayURL = awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationTime);
 			*/
-			AWSSigner awsSigner(_logger);
+			AWSSigner awsSigner;
 			string signedPlayURL =
 				awsSigner.calculateSignedURL(_vodCloudFrontHostName, deliveryURI, _keyPairId, _privateKeyPEMPathName, expirationTime);
 
@@ -189,7 +196,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (beginURIIndex == string::npos)
 			{
 				string errorMessage = string("wrong deliveryURI") + ", deliveryURI: " + deliveryURI;
-				_logger->error(__FILEREF__ + errorMessage);
+				error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -199,7 +206,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				string errorMessage = string("no CloudFrontHostName available") + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
 									  ", _vodCloudFrontHostNamesRoot.size: " + to_string(_vodCloudFrontHostNamesRoot.size());
-				_logger->error(__FILEREF__ + errorMessage);
+				error(__FILEREF__ + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -291,7 +298,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string errorMessage = string("wrong vodDeliveryType")
 				+ ", deliveryType: " + deliveryType
 			;
-			_logger->error(__FILEREF__ + errorMessage);
+			error(__FILEREF__ + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -309,14 +316,18 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = string("mmsEngineDBFacade->addRequestStatistic failed") + ", e.what: " + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format("mmsEngineDBFacade->addRequestStatistic failed" 
+																			", e.what: {}", e.what());
+				SPDLOG_ERROR(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "createDeliveryAuthorization info" + ", title: " + title + ", deliveryURI: " + deliveryURI +
-			", deliveryType: " + deliveryType + ", deliveryURL (authorized): " + deliveryURL
+		SPDLOG_INFO(
+			"createDeliveryAuthorization info" 
+			", title: {}"
+			", deliveryURI: {}"
+			", deliveryType: {}"
+			", deliveryURL (authorized): {}", title, deliveryURI, deliveryType, deliveryURL
 		);
 	}
 	else
@@ -333,8 +344,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid && ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder &&
 			ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
 		{
-			string errorMessage = string("ingestionJob is not a LiveProxy") + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format("ingestionJob is not a LiveProxy" 
+																		 ", ingestionType: {}", MMSEngineDBFacade::toString(ingestionType));
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -346,8 +358,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				string errorMessage =
-					string("A Proxy/Countdown/Recorder without outputs cannot be delivered") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(__FILEREF__ + errorMessage);
+					std::format("A Proxy/Countdown/Recorder without outputs cannot be delivered"
+								 ", ingestionJobKey: {}", ingestionJobKey);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -403,16 +416,18 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				if (outputDeliveryOptions.size() == 0)
 				{
 					string errorMessage =
-						string("No outputDeliveryOptions, it cannot be delivered") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-					_logger->error(__FILEREF__ + errorMessage);
+						std::format("No outputDeliveryOptions, it cannot be delivered" 
+									", ingestionJobKey: {}", ingestionJobKey);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 				else if (outputDeliveryOptions.size() > 1)
 				{
 					string errorMessage =
-						string("Live authorization with several option. Just get the first") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-					_logger->warn(__FILEREF__ + errorMessage);
+						std::format("Live authorization with several option. Just get the first" 
+									", ingestionJobKey: {}", ingestionJobKey);
+					SPDLOG_WARN(errorMessage);
 
 					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
 				}
@@ -442,8 +457,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				if (!deliveryCodeFound)
 				{
 					string errorMessage =
-						string("DeliveryCode received does not exist for the ingestionJob") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-					_logger->error(__FILEREF__ + errorMessage);
+						std::format("DeliveryCode received does not exist for the ingestionJob" 
+									", ingestionJobKey: {}", ingestionJobKey);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -540,7 +556,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string errorMessage = string("wrong deliveryType")
 						+ ", deliveryType: " + deliveryType
 					;
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -633,7 +649,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string errorMessage = string("wrong deliveryType")
 						+ ", deliveryType: " + deliveryType
 					;
-					_logger->error(__FILEREF__ + errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -645,8 +661,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				{
-					string errorMessage = field + " field missing" + ", ingestionJobKey: " + to_string(ingestionJobKey);
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format("{} field missing" 
+																			 ", ingestionJobKey: {}", field, ingestionJobKey);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -692,8 +709,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
 				string errorMessage =
-					string("A LiveGrid without DeliveryCode cannot be delivered") + ", ingestionJobKey: " + to_string(ingestionJobKey);
-				_logger->error(__FILEREF__ + errorMessage);
+					std::format("A LiveGrid without DeliveryCode cannot be delivered" 
+								 ", ingestionJobKey: {}", ingestionJobKey);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -747,15 +765,17 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string errorMessage = string("wrong deliveryType")
 					+ ", deliveryType: " + deliveryType
 				;
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			*/
 
-			_logger->info(
-				__FILEREF__ + "createDeliveryAuthorization for LiveGrid" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", deliveryCode: " + to_string(deliveryCode) + ", deliveryURL: " + deliveryURL
+			SPDLOG_INFO(
+				"createDeliveryAuthorization for LiveGrid" 
+				", ingestionJobKey: {}"
+				", deliveryCode: {}"
+				", deliveryURL: {}", ingestionJobKey, deliveryCode, deliveryURL
 			);
 		}
 	}
@@ -986,14 +1006,14 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("Not authorized");
+		string errorMessage = "Not authorized";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("Not authorized: exception managing token");
+		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
@@ -1070,14 +1090,14 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("Not authorized");
+		string errorMessage = "Not authorized";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("Not authorized: exception managing token");
+		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
@@ -1236,14 +1256,14 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("Not authorized");
+		string errorMessage = "Not authorized";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("Not authorized: exception managing token");
+		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
@@ -1463,14 +1483,14 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("Not authorized");
+		string errorMessage = "Not authorized";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("Not authorized: exception managing token");
+		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
 		throw e;
@@ -1540,12 +1560,16 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 string MMSDeliveryAuthorization::getSignedCDN77URL(
 	string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 	string filePath,	// /file/playlist/d.m3u8
-	string secureToken, long expirationInMinutes, shared_ptr<spdlog::logger> logger
+	string secureToken, long expirationInMinutes
 )
 {
-	logger->info(
-		__FILEREF__ + "getSignedCDN77URL" + ", resourceURL: " + resourceURL + ", filePath: " + filePath + ", secureToken: " + secureToken +
-		", expirationInMinutes: " + to_string(expirationInMinutes)
+	SPDLOG_INFO(
+		"getSignedCDN77URL"
+		", resourceURL: {}"
+		", filePath: {}"
+		", secureToken: {}"
+		", expirationInMinutes: {}",
+		resourceURL, filePath, secureToken, expirationInMinutes
 	);
 
 	try
@@ -1565,8 +1589,12 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 				size_t fileNameStart = filePath.find_last_of("/");
 				if (fileNameStart == string::npos)
 				{
-					string errorMessage = string("filePath format is wrong") + ", filePath: " + filePath;
-					logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"filePath format is wrong"
+						", filePath: {}",
+						filePath
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1596,11 +1624,14 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			// 	$expiryTimestamp = ',' . $expiryTimestamp;
 			// }
 			hashStr = to_string(expiryTimestamp) + hashStr;
-			string sExpiryTimestamp = string(",") + to_string(expiryTimestamp);
+			string sExpiryTimestamp = std::format(",{}", expiryTimestamp);
 
-			logger->info(
-				__FILEREF__ + "getSignedCDN77URL" + ", strippedPath: " + strippedPath + ", hashStr: " + hashStr +
-				", sExpiryTimestamp: " + sExpiryTimestamp
+			SPDLOG_INFO(
+				"getSignedCDN77URL"
+				", strippedPath: {}"
+				", hashStr: {}"
+				", sExpiryTimestamp: {}",
+				strippedPath, hashStr, sExpiryTimestamp
 			);
 
 			// the URL is however, intensionaly returned with the previously stripped parts (eg. playlist/{chunk}..)
@@ -1634,7 +1665,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					{
 						string md5 = string((char *) md5_digest, md5_digest_len);
 
-						logger->info(__FILEREF__ + "getSignedCDN77URL"
+						info(__FILEREF__ + "getSignedCDN77URL"
 							+ ", hashStr: " + hashStr
 							+ ", md5_digest_len: " + to_string(md5_digest_len)
 							+ ", md5: " + md5
@@ -1647,34 +1678,36 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 						BIO *bio, *b64;
 						BUF_MEM *bufferPtr;
 
-						logger->debug(__FILEREF__ + "BIO_new...");
+						SPDLOG_DEBUG("BIO_new...");
 						b64 = BIO_new(BIO_f_base64());
 						// By default there must be a newline at the end of input.
 						// Next flag remove new line at the end
 						BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
 						bio = BIO_new(BIO_s_mem());
 
-						logger->debug(__FILEREF__ + "BIO_push...");
+						SPDLOG_DEBUG("BIO_push...");
 						bio = BIO_push(b64, bio);
 
-						logger->debug(__FILEREF__ + "BIO_write...");
+						SPDLOG_DEBUG("BIO_write...");
 						BIO_write(bio, md5_digest, md5_digest_len);
 						BIO_flush(bio);
 						BIO_get_mem_ptr(bio, &bufferPtr);
 
-						logger->debug(__FILEREF__ + "BIO_set_close...");
+						SPDLOG_DEBUG("BIO_set_close...");
 						BIO_set_close(bio, BIO_NOCLOSE);
-						logger->debug(__FILEREF__ + "BIO_free_all...");
+						SPDLOG_DEBUG("BIO_free_all...");
 						BIO_free_all(bio);
-						// _logger->info(__FILEREF__ + "BIO_free...");
+						// info(__FILEREF__ + "BIO_free...");
 						// BIO_free(b64);	// useless because of BIO_free_all
 
-						logger->debug(__FILEREF__ + "base64Text set...");
+						SPDLOG_DEBUG("base64Text set...");
 						// char* base64Text=(*bufferPtr).data;
 
-						logger->info(
-							__FILEREF__ + "getSignedCDN77URL" + ", (*bufferPtr).length: " + to_string((*bufferPtr).length) +
-							", (*bufferPtr).data: " + (*bufferPtr).data
+						SPDLOG_INFO(
+							"getSignedCDN77URL"
+							", (*bufferPtr).length: {}"
+							", (*bufferPtr).data: {}",
+							(*bufferPtr).length, (*bufferPtr).data
 						);
 
 						md5Base64 = string((*bufferPtr).data, (*bufferPtr).length);
@@ -1687,7 +1720,11 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					EVP_MD_CTX_free(mdctx);
 				}
 
-				logger->info(__FILEREF__ + "getSignedCDN77URL" + ", md5Base64: " + md5Base64);
+				SPDLOG_INFO(
+					"getSignedCDN77URL"
+					", md5Base64: {}",
+					md5Base64
+				);
 
 				// $invalidChars = ['+','/'];
 				// $validChars = ['-','_'];
@@ -1705,27 +1742,40 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 				);
 			}
 
-			signedURL = "https://" + resourceURL + "/" + md5Base64 + sExpiryTimestamp + filePath;
+			signedURL = std::format("https://{}/{}}}}}", resourceURL, md5Base64, sExpiryTimestamp, filePath);
 		}
 
-		logger->info(
-			__FILEREF__ + "end getSignedCDN77URL" + ", resourceURL: " + resourceURL + ", filePath: " + filePath + ", secureToken: " + secureToken +
-			", expirationInMinutes: " + to_string(expirationInMinutes) + ", signedURL: " + signedURL
+		SPDLOG_INFO(
+			"end getSignedCDN77URL"
+			", resourceURL: {}"
+			", filePath: {}"
+			", secureToken: {}"
+			", expirationInMinutes: {}"
+			", signedURL: {}",
+			resourceURL, filePath, secureToken, expirationInMinutes, signedURL
 		);
 
 		return signedURL;
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = string("getSignedCDN77URL failed") + ", e.what(): " + e.what();
-		logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"getSignedCDN77URL failed"
+			", e.what(): {}",
+			e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("getSignedCDN77URL failed") + ", e.what(): " + e.what();
-		logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"getSignedCDN77URL failed"
+			", e.what(): {}",
+			e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

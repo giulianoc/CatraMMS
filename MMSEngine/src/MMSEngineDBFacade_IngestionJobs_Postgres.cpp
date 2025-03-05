@@ -537,7 +537,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				{
 					string sStatus = res[0]["status"].as<string>();
 
-					// _logger->info(__FILEREF__ + "Dependency for the IngestionJob"
+					// info(__FILEREF__ + "Dependency for the IngestionJob"
 					// + ", ingestionJobKey: " + to_string(ingestionJobKey)
 					// + ", dependOnIngestionJobKey: " + to_string(dependOnIngestionJobKey)
 					// + ", dependOnSuccess: " + to_string(dependOnSuccess)
@@ -630,10 +630,13 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 			// this is not possible, even an ingestionJob without dependency has a row
 			// (with dependOnIngestionJobKey NULL)
 
-			_logger->error(
-				__FILEREF__ + "No dependency Row for the IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", workspaceKey: " + to_string(workspaceKey) + ", ingestionStatus: " + to_string(static_cast<int>(ingestionStatus)) +
-				", ingestionType: " + to_string(static_cast<int>(ingestionType))
+			SPDLOG_ERROR(
+				"No dependency Row for the IngestionJob"
+				", ingestionJobKey: {}"
+				", workspaceKey: {}"
+				", ingestionStatus: {}"
+				", ingestionType: {}",
+				ingestionJobKey, workspaceKey, static_cast<int>(ingestionStatus), static_cast<int>(ingestionType)
 			);
 			ingestionJobToBeManaged = false;
 		}
@@ -705,9 +708,13 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 
 				if (!enabled)
 				{
-					string errorMessage =
-						__FILEREF__ + "Workspace is not enabled" + ", workspaceKey: " + to_string(workspaceKey) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Workspace is not enabled"
+						", workspaceKey: {}"
+						", sqlStatement: {}",
+						workspaceKey, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -728,17 +735,16 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "Workspace is not present/configured" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Workspace is not present/configured"
+					", workspaceKey: {}"
+					", sqlStatement: {}",
+					workspaceKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			_logger->info(
-				__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", workspaceKey: " + to_string(workspaceKey) +
-				", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
 
 		IngestionStatus ingestionStatus;
@@ -902,11 +908,6 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 				else
 					localOrderNumber = res[0]["maxOrderNumber"].as<int>() + 1;
 			}
-			_logger->info(
-				__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
 		else
 		{
@@ -1007,16 +1008,18 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 				string errorMessage = __FILEREF__ + "no update was done" + ", newDependOnIngestionJobKey: " + to_string(newDependOnIngestionJobKey) +
 									  ", previousDependOnIngestionJobKey: " + to_string(previousDependOnIngestionJobKey) +
 									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
 			*/
 		}
 
-		_logger->info(
-			__FILEREF__ + "MMS_IngestionJobDependency updated successful" + ", newDependOnIngestionJobKey: " + to_string(newDependOnIngestionJobKey) +
-			", previousDependOnIngestionJobKey: " + to_string(previousDependOnIngestionJobKey)
+		SPDLOG_INFO(
+			"MMS_IngestionJobDependency updated successful"
+			", newDependOnIngestionJobKey: {}"
+			", previousDependOnIngestionJobKey: {}",
+			newDependOnIngestionJobKey, previousDependOnIngestionJobKey
 		);
 
 		trans.commit();
@@ -1250,16 +1253,18 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(
 				string errorMessage = __FILEREF__ + "no update was done" + ", metadataContent: " + metadataContent +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
 			*/
 		}
 
-		_logger->info(
-			__FILEREF__ + "IngestionJob updated successful" + ", metadataContent: " + metadataContent +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"IngestionJob updated successful"
+			", metadataContent: {}"
+			", ingestionJobKey: {}",
+			metadataContent, ingestionJobKey
 		);
 	}
 	catch (sql_error const &e)
@@ -1322,19 +1327,25 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" +
-									  ", parentGroupOfTasksIngestionJobKey: " + to_string(parentGroupOfTasksIngestionJobKey) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", parentGroupOfTasksIngestionJobKey: {}"
+					", ingestionJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					parentGroupOfTasksIngestionJobKey, ingestionJobKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "IngestionJob updated successful" + ", parentGroupOfTasksIngestionJobKey: " + to_string(parentGroupOfTasksIngestionJobKey) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"IngestionJob updated successful"
+			", parentGroupOfTasksIngestionJobKey: {}"
+			", ingestionJobKey: {}",
+			parentGroupOfTasksIngestionJobKey, ingestionJobKey
 		);
 	}
 	catch (sql_error const &e)
@@ -1560,7 +1571,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
 										  ", errorMessageForSQL: " + errorMessageForSQL + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// it is not so important to block the continuation of this method
 					// Also the exception caused a crash of the process
@@ -1612,7 +1623,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
 										  ", errorMessageForSQL: " + errorMessageForSQL + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					// it is not so important to block the continuation of this method
 					// Also the exception caused a crash of the process
@@ -1624,9 +1635,12 @@ void MMSEngineDBFacade::updateIngestionJob(
 			bool updateIngestionRootStatus = true;
 			manageIngestionJobStatusUpdate(ingestionJobKey, newIngestionStatus, updateIngestionRootStatus, conn, trans);
 
-			_logger->info(
-				__FILEREF__ + "IngestionJob updated successful" + ", newIngestionStatus: " + MMSEngineDBFacade::toString(newIngestionStatus) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"IngestionJob updated successful"
+				", newIngestionStatus: {}"
+				", ingestionJobKey: {}"
+				", processorMMS: {}",
+				toString(newIngestionStatus), ingestionJobKey, processorMMS
 			);
 
 			updateToBeTriedAgain = false;
@@ -1638,10 +1652,15 @@ void MMSEngineDBFacade::updateIngestionJob(
 			// if (exceptionMessage.find("Deadlock") != string::npos
 			// 	&& retriesNumber < maxRetriesNumber)
 			{
-				_logger->warn(
-					__FILEREF__ + "SQL exception (Deadlock), waiting before to try again" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sqlStatement: " + e.query() + ", exceptionMessage: " + e.what() + ", retriesNumber: " + to_string(retriesNumber) +
-					", maxRetriesNumber: " + to_string(maxRetriesNumber) + ", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+				SPDLOG_WARN(
+					"SQL exception (Deadlock), waiting before to try again"
+					", ingestionJobKey: {}"
+					", sqlStatement: {}"
+					", exceptionMessage: {}"
+					", retriesNumber: {}"
+					", maxRetriesNumber: {}"
+					", secondsBetweenRetries: {}",
+					ingestionJobKey, e.query(), e.what(), retriesNumber, maxRetriesNumber, secondsBetweenRetries
 				);
 
 				this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
@@ -1738,13 +1757,13 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 				string errorMessage = __FILEREF__ + "no update was done" + ", errorMessageForSQL: " + errorMessageForSQL +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_exception(errorMessage);
 			}
 			else
 			{
-				_logger->info(__FILEREF__ + "IngestionJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey));
+				info(__FILEREF__ + "IngestionJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey));
 			}
 			*/
 		}
@@ -1890,7 +1909,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 					// Starting from the second select, we have to set End_NotToBeExecuted for all the other
 					// tasks, because we have that the father is End_NotToBeExecuted, so all the subtree
 					// has to be set as End_NotToBeExecuted
-					// _logger->error(__FILEREF__ + "select"
+					// error(__FILEREF__ + "select"
 					// 	+ ", ingestionJobKeysToFindDependencies: " + ingestionJobKeysToFindDependencies
 					// );
 					// 2019-09-23: we have to exclude the IngestionJobKey of the GroupOfTasks. This is because:
@@ -1954,7 +1973,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 						sqlStatement, conn->getConnectionId(), elapsed
 					);
 
-					// _logger->info(__FILEREF__ + "select result"
+					// info(__FILEREF__ + "select result"
 					// 	+ ", hierarchicalLevelIndex: " + to_string(hierarchicalLevelIndex)
 					// 	+ ", hierarchicalIngestionJobKeysDependencies: " + hierarchicalIngestionJobKeysDependencies
 					// );
@@ -2207,9 +2226,13 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected(in
 	{
 		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-		_logger->info(
-			__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " +
-			toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected) + ", errorMessage: " + "" + ", processorMMS: " + ""
+		SPDLOG_INFO(
+			"Update IngestionJob"
+			", ingestionJobKey: {}"
+			", IngestionStatus: {}"
+			", errorMessage: "
+			", processorMMS: ",
+			ingestionJobKey, toString(MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected)
 		);
 		updateIngestionJob(
 			conn, &trans, ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_NotToBeExecuted_ChunkNotSelected,
@@ -2229,9 +2252,10 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected(in
 		conn = nullptr;
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "setNotToBeExecutedStartingFrom statistics" +
-			", elapsed (millisecs): " + to_string(chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count())
+		SPDLOG_INFO(
+			"setNotToBeExecutedStartingFrom statistics"
+			", elapsed (millisecs): {}",
+			chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()
 		);
 	}
 	catch (sql_error const &e)
@@ -2364,7 +2388,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 				string errorMessage = __FILEREF__ + "no update was done" + ", downloadingPercentage: " + to_string(downloadingPercentage) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -2393,17 +2417,16 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "IngestionJob is not found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"IngestionJob is not found"
+					", ingestionJobKey: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			_logger->info(
-				__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
 
 		trans.commit();
@@ -2542,7 +2565,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 				string errorMessage = __FILEREF__ + "no update was done" + ", uploadingPercentage: " + to_string(uploadingPercentage) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -2571,17 +2594,16 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "IngestionJob is not found" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"IngestionJob is not found"
+					", ingestionJobKey: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			_logger->info(
-				__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
 
 		trans.commit();
@@ -2727,7 +2749,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 				string errorMessage = __FILEREF__ + "no update was done" + ", sourceBinaryTransferred: " + to_string(sourceBinaryTransferred) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -4905,17 +4927,16 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "Workspace is not present/configured" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Workspace is not present/configured"
+					", workspaceKey: {}"
+					", sqlStatement: {}",
+					workspaceKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			_logger->info(
-				__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement + ", workspaceKey: " + to_string(workspaceKey) +
-				", res.size: " + to_string(res.size()) + ", elapsed (millisecs): @" +
-				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
-			);
 		}
 
 		// check maxStorage first
@@ -4929,10 +4950,14 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 			int64_t totalSizeInMB = workSpaceUsageInBytes / 1000000;
 			if (totalSizeInMB >= maxStorageInMB)
 			{
-				string errorMessage = __FILEREF__ + "Reached the max storage dedicated for your Workspace" +
-									  ", maxStorageInMB: " + to_string(maxStorageInMB) + ", totalSizeInMB: " + to_string(totalSizeInMB) +
-									  ". It is needed to increase Workspace capacity.";
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Reached the max storage dedicated for your Workspace"
+					", maxStorageInMB: {}"
+					", totalSizeInMB: {}"
+					". It is needed to increase Workspace capacity.",
+					maxStorageInMB, totalSizeInMB
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5204,10 +5229,16 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", newPeriodUtcStartDateTime: " + newPeriodUtcStartDateTime +
-									  ", newPeriodUtcEndDateTime: " + newPeriodUtcEndDateTime + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", newPeriodUtcStartDateTime: {}"
+					", newPeriodUtcEndDateTime: {}"
+					", workspaceKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					newPeriodUtcStartDateTime, newPeriodUtcEndDateTime, workspaceKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5215,10 +5246,14 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 
 		if (!ingestionsAllowed)
 		{
-			string errorMessage = __FILEREF__ + "Reached the max number of Ingestions in your period" +
-								  ", maxIngestionsNumber: " + to_string(maxIngestionsNumber) + ", encodingPeriod: " + toString(encodingPeriod) +
-								  ". It is needed to increase Workspace capacity.";
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Reached the max number of Ingestions in your period"
+				", maxIngestionsNumber: {}"
+				", encodingPeriod: {}"
+				". It is needed to increase Workspace capacity.",
+				maxIngestionsNumber, toString(encodingPeriod)
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5318,7 +5353,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 
 void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 {
-	_logger->info(__FILEREF__ + "fixIngestionJobsHavingWrongStatus");
+	SPDLOG_INFO("fixIngestionJobsHavingWrongStatus");
 
 	shared_ptr<PostgresConnection> conn = nullptr;
 
@@ -5367,10 +5402,15 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 					string encodingJobStatus = row["encodingJobStatus"].as<string>();
 
 					{
-						string errorMessage = string("Found IngestionJob having wrong status") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobStatus: " + ingestionJobStatus +
-											  ", encodingJobStatus: " + encodingJobStatus;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"Found IngestionJob having wrong status"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", ingestionJobStatus: {}"
+							", encodingJobStatus: {}",
+							ingestionJobKey, encodingJobKey, ingestionJobStatus, encodingJobStatus
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						updateIngestionJob(conn, &trans, ingestionJobKey, IngestionStatus::End_CanceledByMMS, errorMessage);
 
@@ -5406,17 +5446,23 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 
 				{
 					int secondsBetweenRetries = 15;
-					_logger->info(
-						__FILEREF__ + "fixIngestionJobsHavingWrongStatus failed, " + "waiting before to try again" +
-						", currentRetriesOnError: " + to_string(currentRetriesOnError) + ", maxRetriesOnError: " + to_string(maxRetriesOnError) +
-						", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+					SPDLOG_INFO(
+						"fixIngestionJobsHavingWrongStatus failed, waiting before to try again"
+						", currentRetriesOnError: {}"
+						", maxRetriesOnError: {}"
+						", secondsBetweenRetries: {}",
+						currentRetriesOnError, maxRetriesOnError, secondsBetweenRetries
 					);
 					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
 				}
 			}
 		}
 
-		_logger->info(__FILEREF__ + "fixIngestionJobsHavingWrongStatus " + ", totalRowsUpdated: " + to_string(totalRowsUpdated));
+		SPDLOG_INFO(
+			"fixIngestionJobsHavingWrongStatus "
+			", totalRowsUpdated: {}",
+			totalRowsUpdated
+		);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
@@ -5629,7 +5675,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -5666,7 +5712,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}

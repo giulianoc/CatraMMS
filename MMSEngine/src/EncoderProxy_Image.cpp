@@ -13,6 +13,7 @@
 
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
+#include "spdlog/spdlog.h"
 #include <tuple>
 
 void EncoderProxy::encodeContentImage()
@@ -42,8 +43,12 @@ void EncoderProxy::encodeContentImage()
 				size_t extensionIndex = sourceFileName.find_last_of(".");
 				if (extensionIndex == string::npos)
 				{
-					string errorMessage = __FILEREF__ + "No extension find in the asset file name" + ", sourceFileName: " + sourceFileName;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"No extension find in the asset file name"
+						", sourceFileName: {}",
+						sourceFileName
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -61,7 +66,7 @@ void EncoderProxy::encodeContentImage()
 						", mmsSourceAssetPathName: {}",
 						mmsSourceAssetPathName
 					);
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -284,16 +289,23 @@ void EncoderProxy::encodeContentImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -303,9 +315,12 @@ void EncoderProxy::encodeContentImage()
 		}
 		catch (exception e)
 		{
-			_logger->info(
-				__FILEREF__ + "ImageMagick exception" + ", e.what(): " + e.what() + ", encodingItem->_encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey)
+			SPDLOG_INFO(
+				"ImageMagick exception"
+				", e.what(): {}"
+				", encodingJobKey: {}"
+				", ingestionJobKey: {}",
+				e.what(), _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey
 			);
 
 			if (sourcesToBeEncodedRoot.size() == 1 || stopIfReferenceProcessingError)
@@ -320,16 +335,23 @@ void EncoderProxy::encodeContentImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -399,9 +421,11 @@ void EncoderProxy::processEncodedImage()
 			int imageQuality = -1;
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Processing through Magick" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				SPDLOG_INFO(
+					"Processing through Magick"
+					", ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}",
+					_encodingItem->_ingestionJobKey, stagingEncodedAssetPathName
 				);
 				Magick::Image imageToEncode;
 
@@ -419,10 +443,13 @@ void EncoderProxy::processEncodedImage()
 				// If a warning is produced while loading an image, the image
 				// can normally still be used (but not if the warning was about
 				// something important!)
-				_logger->error(
-					__FILEREF__ + "ImageMagick failed to retrieve width and height" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"ImageMagick failed to retrieve width and height"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -435,16 +462,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -453,10 +487,13 @@ void EncoderProxy::processEncodedImage()
 			}
 			catch (Magick::Warning &e)
 			{
-				_logger->error(
-					__FILEREF__ + "ImageMagick failed to retrieve width and height" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"ImageMagick failed to retrieve width and height"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -469,16 +506,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -487,10 +531,13 @@ void EncoderProxy::processEncodedImage()
 			}
 			catch (Magick::ErrorFileOpen &e)
 			{
-				_logger->error(
-					__FILEREF__ + "ImageMagick failed to retrieve width and height" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"ImageMagick failed to retrieve width and height"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -503,16 +550,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -521,10 +575,13 @@ void EncoderProxy::processEncodedImage()
 			}
 			catch (Magick::Error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "ImageMagick failed to retrieve width and height" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"ImageMagick failed to retrieve width and height"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -537,16 +594,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -555,10 +619,13 @@ void EncoderProxy::processEncodedImage()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "ImageMagick failed to retrieve width and height" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"ImageMagick failed to retrieve width and height"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -571,16 +638,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -596,9 +670,12 @@ void EncoderProxy::processEncodedImage()
 				size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 				if (fileNameIndex == string::npos)
 				{
-					string errorMessage =
-						__FILEREF__ + "No fileName find in the asset path name" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"No fileName find in the asset path name"
+						", stagingEncodedAssetPathName: {}",
+						stagingEncodedAssetPathName
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -619,10 +696,13 @@ void EncoderProxy::processEncodedImage()
 			}
 			catch (runtime_error &e)
 			{
-				_logger->error(
-					__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"_mmsStorage->moveAssetInMMSRepository failed"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -635,16 +715,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -653,10 +740,13 @@ void EncoderProxy::processEncodedImage()
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "_mmsStorage->moveAssetInMMSRepository failed" + ", encodingItem->_encodingJobKey: " +
-					to_string(_encodingItem->_encodingJobKey) + ", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				SPDLOG_ERROR(
+					"_mmsStorage->moveAssetInMMSRepository failed"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", stagingEncodedAssetPathName: {}"
+					", e.what(): {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, e.what()
 				);
 
 				if (stagingEncodedAssetPathName != "")
@@ -669,16 +759,23 @@ void EncoderProxy::processEncodedImage()
 						{
 							directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-							_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+							SPDLOG_INFO(
+								"removeDirectory"
+								", directoryPathName: {}",
+								directoryPathName
+							);
 							fs::remove_all(directoryPathName);
 						}
 					}
 					catch (runtime_error &e)
 					{
-						_logger->error(
-							__FILEREF__ + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", directoryPathName: " + directoryPathName +
-							", exception: " + e.what()
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", directoryPathName: {}"
+							", exception: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 						);
 					}
 				}
@@ -696,16 +793,23 @@ void EncoderProxy::processEncodedImage()
 					{
 						directoryPathName = stagingEncodedAssetPathName.substr(0, endOfDirectoryIndex);
 
-						_logger->info(__FILEREF__ + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+						SPDLOG_INFO(
+							"removeDirectory"
+							", directoryPathName: {}",
+							directoryPathName
+						);
 						fs::remove_all(directoryPathName);
 					}
 				}
 				catch (runtime_error &e)
 				{
-					_logger->error(
-						__FILEREF__ + "removeDirectory failed" + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-						", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", stagingEncodedAssetPathName: " +
-						stagingEncodedAssetPathName + ", directoryPathName: " + directoryPathName + ", exception: " + e.what()
+					SPDLOG_ERROR(
+						"removeDirectory failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", directoryPathName: {}"
+						", exception: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, directoryPathName, e.what()
 					);
 				}
 			}
@@ -749,21 +853,29 @@ void EncoderProxy::processEncodedImage()
 				sourcesToBeEncodedRoot[sourceIndex] = sourceToBeEncodedRoot;
 				_encodingItem->_encodingParametersRoot["sourcesToBeEncoded"] = sourcesToBeEncodedRoot;
 
-				_logger->info(
-					__FILEREF__ + "Saved the Encoded content" + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", encodedPhysicalPathKey: " + to_string(encodedPhysicalPathKey)
+				SPDLOG_INFO(
+					"Saved the Encoded content"
+					", encodingItem->_encodingJobKey: {}"
+					", encodingItem->_ingestionJobKey: {}"
+					", encodedPhysicalPathKey: {}",
+					_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, encodedPhysicalPathKey
 				);
 			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "_mmsEngineDBFacade->saveVariantContentMetadata failed" + ", encodingItem->_ingestionJobKey: " +
-					to_string(_encodingItem->_ingestionJobKey) + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+				SPDLOG_ERROR(
+					"_mmsEngineDBFacade->saveVariantContentMetadata failed"
+					", encodingItem->_ingestionJobKey: {}"
+					", encodingItem->_encodingJobKey: {}"
+					", stagingEncodedAssetPathName: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 				);
 
-				_logger->info(__FILEREF__ + "Remove" + ", mmsAssetPathName: " + mmsAssetPathName);
+				SPDLOG_INFO(
+					"Remove"
+					", mmsAssetPathName: {}" +
+					mmsAssetPathName
+				);
 				fs::remove_all(mmsAssetPathName);
 
 				throw e;
@@ -771,9 +883,12 @@ void EncoderProxy::processEncodedImage()
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(
-				__FILEREF__ + "process media input failed" + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-				", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", exception: " + e.what()
+			SPDLOG_ERROR(
+				"process media input failed"
+				", encodingItem->_encodingJobKey: {}"
+				", encodingItem->_ingestionJobKey: {}"
+				", exception: {}",
+				_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, e.what()
 			);
 
 			if (sourcesToBeEncodedRoot.size() == 1)
@@ -781,9 +896,12 @@ void EncoderProxy::processEncodedImage()
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "process media input failed" + ", encodingItem->_encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-				", encodingItem->_ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", exception: " + e.what()
+			SPDLOG_ERROR(
+				"process media input failed"
+				", encodingItem->_encodingJobKey: {}"
+				", encodingItem->_ingestionJobKey: {}"
+				", exception: {}",
+				_encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, e.what()
 			);
 
 			if (sourcesToBeEncodedRoot.size() == 1)
@@ -812,8 +930,8 @@ tuple<string, int, int, bool, int, int, Magick::InterlaceType> EncoderProxy::rea
 	{
 		if (!JSONUtils::isMetadataPresent(encodingProfileRoot, "Image"))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: Image";
-			_logger->error(errorMessage);
+			string errorMessage = "Field is not present or it is null, Field: Image";
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}

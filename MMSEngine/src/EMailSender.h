@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   Validator.h
  * Author: giuliano
  *
@@ -17,51 +17,40 @@
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "spdlog/spdlog.h"
 #include "nlohmann/json.hpp"
-#include <string>
+#include "spdlog/spdlog.h"
 #include <memory>
+#include <string>
 #include <vector>
 
 using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
 
-
 #ifndef __FILEREF__
-    #ifdef __APPLE__
-        #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
-    #else
-        #define __FILEREF__ string("[") + basename((char *) __FILE__) + ":" + to_string(__LINE__) + "] "
-    #endif
+#ifdef __APPLE__
+#define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+#else
+#define __FILEREF__ string("[") + basename((char *)__FILE__) + ":" + to_string(__LINE__) + "] "
+#endif
 #endif
 
 using namespace std;
 
-class EMailSender {
-public:
-    
-public:
-    EMailSender(            
-            shared_ptr<spdlog::logger> logger, 
-            json configuration
-    );
-    
-    virtual ~EMailSender();
-    
-    void sendEmail(
-		string tosCommaSeparated,
-		string subject,
-		vector<string>& emailBody,
-		bool useMMSCCToo
-	);
-  
-private:
-    shared_ptr<spdlog::logger>          _logger;
-    json                         _configuration;
+class EMailSender
+{
+  public:
+  public:
+	EMailSender(json configuration);
 
-    static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
+	virtual ~EMailSender();
+
+	void sendEmail(string tosCommaSeparated, string subject, vector<string> &emailBody, bool useMMSCCToo);
+
+  private:
+	json _configuration;
+
+	static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 };
 
 #endif
-

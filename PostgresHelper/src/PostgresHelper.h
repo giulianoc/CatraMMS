@@ -62,7 +62,7 @@ class PostgresHelper
 		shared_ptr<Base> value;
 
 	  public:
-		SqlValue(){};
+		SqlValue() {};
 
 		void setValue(shared_ptr<Base> value) { this->value = value; };
 
@@ -232,8 +232,20 @@ class PostgresHelper
 	{
 		auto it = _sqlTablesColumnsSchema.find(tableName);
 		if (it == _sqlTablesColumnsSchema.end())
-			throw runtime_error("table not found");
+			throw runtime_error(std::format("table {} not found", tableName));
 		return it->second;
+	}
+
+	string getSqlColumnType(string tableName, string columnName)
+	{
+		map<string, shared_ptr<SqlColumnSchema>> sqlTableSchema = getSqlTableSchema(tableName);
+		auto it = sqlTableSchema.find(columnName);
+		if (it == sqlTableSchema.end())
+			throw runtime_error(std::format("column {}.{} not found", tableName, columnName));
+
+		shared_ptr<SqlColumnSchema> sqlColumnSchema = it->second;
+
+		return sqlColumnSchema->dataType;
 	}
 
 	string buildQueryColumns(vector<string> &requestedColumns);

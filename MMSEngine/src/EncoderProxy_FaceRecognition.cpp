@@ -21,27 +21,8 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/objdetect.hpp"
-/*
-#include "AWSSigner.h"
-#include "MMSCURL.h"
-#include "MMSDeliveryAuthorization.h"
-#include "MultiLocalAssetIngestionEvent.h"
-#include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/System.h"
-#include <fstream>
-#include <regex>
-
-#include <aws/core/Aws.h>
-#include <aws/medialive/MediaLiveClient.h>
-#include <aws/medialive/model/DescribeChannelRequest.h>
-#include <aws/medialive/model/DescribeChannelResult.h>
-#include <aws/medialive/model/StartChannelRequest.h>
-#include <aws/medialive/model/StopChannelRequest.h>
-*/
+#include "spdlog/spdlog.h"
+#include <format>
 
 string EncoderProxy::faceRecognition()
 {
@@ -55,12 +36,16 @@ string EncoderProxy::faceRecognition()
 
 	if (_faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
 	{
-		string errorMessage = string("MaxConcurrentJobsReached") + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-							  ", _faceRecognitionNumber.use_count: " + to_string(_faceRecognitionNumber.use_count()) +
-							  ", _maxFaceRecognitionNumber: " + to_string(_maxFaceRecognitionNumber);
-		_logger->warn(__FILEREF__ + errorMessage);
+		SPDLOG_WARN(
+			"MaxConcurrentJobsReached"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _faceRecognitionNumber.use_count: {}"
+			", _maxFaceRecognitionNumber: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _faceRecognitionNumber.use_count(),
+			_maxFaceRecognitionNumber
+		);
 
 		throw MaxConcurrentJobsReached();
 	}
@@ -95,19 +80,28 @@ string EncoderProxy::faceRecognition()
 
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
 
-	_logger->info(
-		__FILEREF__ + "faceRecognition" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceRecognitionCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath
+	SPDLOG_INFO(
+		"faceRecognition"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceRecognitionCascadeName, sourcePhysicalPath
 	);
 
 	cv::CascadeClassifier cascade;
 	if (!cascade.load(cascadePathName))
 	{
-		string errorMessage = __FILEREF__ + "cascadeName could not be loaded" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", cascadePathName: " + cascadePathName;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"cascadeName could not be loaded"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", cascadePathName: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, cascadePathName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -132,10 +126,15 @@ string EncoderProxy::faceRecognition()
 
 	if (!fileExists)
 	{
-		string errorMessage = __FILEREF__ + "Media Source file does not exist" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Media Source file does not exist"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", sourcePhysicalPath: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -144,10 +143,15 @@ string EncoderProxy::faceRecognition()
 	capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
 	if (!capture.isOpened())
 	{
-		string errorMessage = __FILEREF__ + "Capture could not be opened" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Capture could not be opened"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", sourcePhysicalPath: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -172,11 +176,16 @@ string EncoderProxy::faceRecognition()
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "faceRecognition started" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceRecognitionCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-		", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName
+	SPDLOG_INFO(
+		"faceRecognition started"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}"
+		", faceRecognitionMediaPathName: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceRecognitionCascadeName, sourcePhysicalPath,
+		faceRecognitionMediaPathName
 	);
 
 	cv::VideoWriter writer;
@@ -193,11 +202,18 @@ string EncoderProxy::faceRecognition()
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "generating Face Recognition start" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceRecognitionCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath + ", faceRecognitionMediaPathName: " +
-		faceRecognitionMediaPathName + ", totalFramesNumber: " + to_string(totalFramesNumber) + ", fps: " + to_string(fps)
+	SPDLOG_INFO(
+		"generating Face Recognition start"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}"
+		", faceRecognitionMediaPathName: {}"
+		", totalFramesNumber: {}"
+		", fps: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceRecognitionCascadeName, sourcePhysicalPath,
+		faceRecognitionMediaPathName, totalFramesNumber, fps
 	);
 
 	cv::Mat bgrFrame;
@@ -233,34 +249,37 @@ string EncoderProxy::faceRecognition()
 
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "updateEncodingJobProgress" + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-						", encodingProgress: " + to_string(_localEncodingProgress)
+					SPDLOG_INFO(
+						"updateEncodingJobProgress"
+						", encodingJobKey: {}"
+						", encodingProgress: {}",
+						_encodingItem->_encodingJobKey, _localEncodingProgress
 					);
 					_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, _localEncodingProgress);
 				}
-				catch (runtime_error &e)
-				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-					);
-				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_ERROR(
+						"updateEncodingJobProgress failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 					);
 				}
 
-				_logger->info(
-					__FILEREF__ + "generating Face Recognition progress" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", cascadeName: " + faceRecognitionCascadeName +
-					", sourcePhysicalPath: " + sourcePhysicalPath + ", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName +
-					", currentFrameIndex: " + to_string(currentFrameIndex) + ", totalFramesNumber: " + to_string(totalFramesNumber) +
-					", _localEncodingProgress: " + to_string(_localEncodingProgress)
+				SPDLOG_INFO(
+					"generating Face Recognition progress"
+					", _proxyIdentifier: {}"
+					", _encodingJobKey: {}"
+					", _ingestionJobKey: {}"
+					", cascadeName: {}"
+					", sourcePhysicalPath: {}"
+					", faceRecognitionMediaPathName: {}"
+					", currentFrameIndex: {}"
+					", totalFramesNumber: {}"
+					", _localEncodingProgress: {}",
+					_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceRecognitionCascadeName, sourcePhysicalPath,
+					faceRecognitionMediaPathName, currentFrameIndex, totalFramesNumber, _localEncodingProgress
 				);
 			}
 
@@ -293,33 +312,37 @@ string EncoderProxy::faceRecognition()
 
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "updateEncodingJobProgress" + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", encodingProgress: " + to_string(_localEncodingProgress)
+				SPDLOG_INFO(
+					"updateEncodingJobProgress"
+					", encodingJobKey: {}"
+					", encodingProgress: {}",
+					_encodingItem->_encodingJobKey, _localEncodingProgress
 				);
 				_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, _localEncodingProgress);
 			}
-			catch (runtime_error &e)
-			{
-				_logger->error(
-					__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-				);
-			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				SPDLOG_ERROR(
+					"updateEncodingJobProgress failed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 				);
 			}
 
-			_logger->info(
-				__FILEREF__ + "generating Face Recognition progress" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", cascadeName: " + faceRecognitionCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-				", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName + ", currentFrameIndex: " + to_string(currentFrameIndex) +
-				", totalFramesNumber: " + to_string(totalFramesNumber) + ", _localEncodingProgress: " + to_string(_localEncodingProgress)
+			SPDLOG_INFO(
+				"generating Face Recognition progress"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", cascadeName: {}"
+				", sourcePhysicalPath: {}"
+				", faceRecognitionMediaPathName: {}"
+				", currentFrameIndex: {}"
+				", totalFramesNumber: {}"
+				", _localEncodingProgress: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceRecognitionCascadeName, sourcePhysicalPath,
+				faceRecognitionMediaPathName, currentFrameIndex, totalFramesNumber, _localEncodingProgress
 			);
 		}
 
@@ -473,11 +496,15 @@ string EncoderProxy::faceRecognition()
 						shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 						_multiEventsSet->addEvent(event);
 
-						_logger->info(
-							__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + lastImageSourceFileName +
-							", getEventKey().first: " + to_string(event->getEventKey().first) +
-							", getEventKey().second: " + to_string(event->getEventKey().second)
+						SPDLOG_INFO(
+							"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+							", _proxyIdentifier: {}"
+							", ingestionJobKey: {}"
+							", sourceFileName: {}"
+							", getEventKey().first: {}"
+							", getEventKey().second: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, lastImageSourceFileName, event->getEventKey().first,
+							event->getEventKey().second
 						);
 
 						lastImageSourceFileName = sourceFileName;
@@ -536,13 +563,14 @@ string EncoderProxy::faceRecognition()
 
 				frameContainingFaceFound = true;
 
-				_logger->info(
-					__FILEREF__ +
-					"addEvent: EVENT_TYPE (INGESTASSETEVENT) - "
-					"FrameContainingFace" +
-					", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", sourceFileName: " + sourceFileName + ", getEventKey().first: " + to_string(event->getEventKey().first) +
-					", getEventKey().second: " + to_string(event->getEventKey().second)
+				SPDLOG_INFO(
+					"addEvent: EVENT_TYPE (INGESTASSETEVENT) - FrameContainingFace"
+					", _proxyIdentifier: {}"
+					", ingestionJobKey: {}"
+					", sourceFileName: {}"
+					", getEventKey().first: {}"
+					", getEventKey().second: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 				);
 
 				break;
@@ -583,11 +611,14 @@ string EncoderProxy::faceRecognition()
 			shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 			_multiEventsSet->addEvent(event);
 
-			_logger->info(
-				__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + lastImageSourceFileName +
-				", getEventKey().first: " + to_string(event->getEventKey().first) +
-				", getEventKey().second: " + to_string(event->getEventKey().second)
+			SPDLOG_INFO(
+				"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+				", _proxyIdentifier: {}"
+				", ingestionJobKey: {}"
+				", sourceFileName: {}"
+				", getEventKey().first: {}"
+				", getEventKey().second: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, lastImageSourceFileName, event->getEventKey().first, event->getEventKey().second
 			);
 		}
 		else
@@ -597,9 +628,13 @@ string EncoderProxy::faceRecognition()
 
 			string errorMessage = "No faces recognized";
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", IngestionStatus: " +
-				MMSEngineDBFacade::toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				_encodingItem->_ingestionJobKey, MMSEngineDBFacade::toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -613,32 +648,49 @@ string EncoderProxy::faceRecognition()
 
 			string errorMessage = "No face recognized";
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", IngestionStatus: " +
-				MMSEngineDBFacade::toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				_encodingItem->_ingestionJobKey, MMSEngineDBFacade::toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus, errorMessage);
 		}
 		else
 		{
-			_logger->info(
-				__FILEREF__ + "faceRecognition media done" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " +
-				to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-				", cascadeName: " + faceRecognitionCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-				", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName + ", currentFrameIndex: " + to_string(currentFrameIndex) +
-				", framesContainingFaces: " + to_string(framesContainingFaces) + ", frameContainingFaceFound: " + to_string(frameContainingFaceFound)
+			SPDLOG_INFO(
+				"faceRecognition media done"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", cascadeName: {}"
+				", sourcePhysicalPath: {}"
+				", faceRecognitionMediaPathName: {}"
+				", currentFrameIndex: {}"
+				", framesContainingFaces: {}"
+				", frameContainingFaceFound: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, faceRecognitionCascadeName, sourcePhysicalPath,
+				faceRecognitionMediaPathName, currentFrameIndex, framesContainingFaces, frameContainingFaceFound
 			);
 		}
 	}
 
 	capture.release();
 
-	_logger->info(
-		__FILEREF__ + "faceRecognition media done" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceRecognitionCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-		", faceRecognitionMediaPathName: " + faceRecognitionMediaPathName + ", currentFrameIndex: " + to_string(currentFrameIndex) +
-		", framesContainingFaces: " + to_string(framesContainingFaces)
+	SPDLOG_INFO(
+		"faceRecognition media done"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}"
+		", faceRecognitionMediaPathName: {}"
+		", currentFrameIndex: {}"
+		", framesContainingFaces: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceRecognitionCascadeName, sourcePhysicalPath,
+		faceRecognitionMediaPathName, currentFrameIndex, framesContainingFaces
 	);
 
 	return faceRecognitionMediaPathName;
@@ -667,11 +719,15 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention find in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -680,11 +736,15 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName find in the asset path name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -718,30 +778,44 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processFaceRecognition failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processFaceRecognition failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processFaceRecognition failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processFaceRecognition failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;

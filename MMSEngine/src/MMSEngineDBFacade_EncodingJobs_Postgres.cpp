@@ -34,16 +34,19 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 
 		int initialGetEncodingJobsCurrentIndex = _getEncodingJobsCurrentIndex;
 
-		_logger->info(
-			__FILEREF__ + "getToBeProcessedEncodingJobs" + ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex)
+		SPDLOG_INFO(
+			"getToBeProcessedEncodingJobs"
+			", initialGetEncodingJobsCurrentIndex: {}",
+			initialGetEncodingJobsCurrentIndex
 		);
 
 		bool stillRows = true;
 		while (encodingItems.size() < maxEncodingsNumber && stillRows)
 		{
-			_logger->info(
-				__FILEREF__ + "getToBeProcessedEncodingJobs (before select)" +
-				", _getEncodingJobsCurrentIndex: " + to_string(_getEncodingJobsCurrentIndex)
+			SPDLOG_INFO(
+				"getToBeProcessedEncodingJobs (before select)"
+				", _getEncodingJobsCurrentIndex: {}",
+				_getEncodingJobsCurrentIndex
 			);
 			// 2022-01-06: I wanted to have this select running in parallel among all the engines.
 			//		For this reason, I have to use 'select for update'.
@@ -70,7 +73,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				"order by ej.typePriority asc, ej.utcScheduleStart_virtual asc, "
 				"ej.encodingPriority desc, ej.creationDate asc, ej.failuresNumber asc "
 				"limit {} offset {} for update skip locked",
-				trans.quote(MMSEngineDBFacade::toString(EncodingStatus::ToBeProcessed)), timeBeforeToPrepareResourcesInMinutes, maxEncodingsNumber,
+				trans.quote(toString(EncodingStatus::ToBeProcessed)), timeBeforeToPrepareResourcesInMinutes, maxEncodingsNumber,
 				_getEncodingJobsCurrentIndex
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -80,9 +83,11 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 			if (res.size() != maxEncodingsNumber)
 				stillRows = false;
 
-			_logger->info(
-				__FILEREF__ + "getToBeProcessedEncodingJobs (after select)" + ", _getEncodingJobsCurrentIndex: " +
-				to_string(_getEncodingJobsCurrentIndex) + ", encodingResultSet->rowsCount: " + to_string(res.size())
+			SPDLOG_INFO(
+				"getToBeProcessedEncodingJobs (after select)"
+				", _getEncodingJobsCurrentIndex: {}"
+				", encodingResultSet->rowsCount: {}",
+				_getEncodingJobsCurrentIndex, res.size()
 			);
 			int resultSetIndex = 0;
 			for (auto row : res)
@@ -107,10 +112,13 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 
 				string encodingParameters = row["parameters"].as<string>();
 
-				_logger->info(
-					__FILEREF__ + "getToBeProcessedEncodingJobs (resultSet loop)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", encodingType: " + encodingType + ", initialGetEncodingJobsCurrentIndex: " + to_string(initialGetEncodingJobsCurrentIndex) +
-					", resultSetIndex: " + to_string(resultSetIndex) + "/" + to_string(res.size())
+				SPDLOG_INFO(
+					"getToBeProcessedEncodingJobs (resultSet loop)"
+					", encodingJobKey: {}"
+					", encodingType: {}"
+					", initialGetEncodingJobsCurrentIndex: {}"
+					", resultSetIndex: {}/{}",
+					encodingJobKey, encodingType, initialGetEncodingJobsCurrentIndex, resultSetIndex, res.size()
 				);
 				resultSetIndex++;
 
@@ -137,16 +145,21 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						encodingItem->_workspace = getWorkspace(res[0]["workspaceKey"].as<int64_t>());
 					else
 					{
-						string errorMessage = __FILEREF__ + "select failed, no row returned" +
-											  ", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey) + ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"select failed, no row returned"
+							", ingestionJobKey: {}"
+							", sqlStatement: {}",
+							encodingItem->_ingestionJobKey, sqlStatement
+						);
 
 						// in case an encoding job row generate an error, we have to make it to Failed
 						// otherwise we will indefinitely get this error
 						{
-							_logger->info(
-								__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-								", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							SPDLOG_INFO(
+								"EncodingJob update"
+								", encodingJobKey: {}"
+								", status: {}",
+								encodingItem->_encodingJobKey, toString(EncodingStatus::End_Failed)
 							);
 							string sqlStatement = std::format(
 								"update MMS_EncodingJob set status = {}, "
@@ -171,9 +184,11 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "getToBeProcessedEncodingJobs (after workspaceKey)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", encodingType: " + encodingType
+				SPDLOG_INFO(
+					"getToBeProcessedEncodingJobs (after workspaceKey)"
+					", encodingJobKey: {}"
+					", encodingType: {}",
+					encodingJobKey, encodingType
 				);
 
 				{
@@ -203,9 +218,11 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// 	errorMessage
 						// );
 						{
-							_logger->info(
-								__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-								", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_CanceledByMMS)
+							SPDLOG_INFO(
+								"EncodingJob update"
+								", encodingJobKey: {}"
+								", status: {}",
+								encodingItem->_encodingJobKey, toString(EncodingStatus::End_CanceledByMMS)
 							);
 							string sqlStatement = std::format(
 								"update MMS_EncodingJob set status = {}, "
@@ -251,7 +268,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 							"EncodingJob update"
 							", encodingJobKey: {}"
 							", status: {}",
-							encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							encodingItem->_encodingJobKey, toString(EncodingStatus::End_Failed)
 						);
 						string sqlStatement = std::format(
 							"update MMS_EncodingJob set status = {} "
@@ -307,14 +324,16 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						}
 						catch (runtime_error &e)
 						{
-							_logger->error(e.what());
+							SPDLOG_ERROR(e.what());
 
 							// in case an encoding job row generate an error, we have to make it to Failed
 							// otherwise we will indefinitely get this error
 							{
-								_logger->info(
-									__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-									", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+								SPDLOG_INFO(
+									"EncodingJob update"
+									", encodingJobKey: {}"
+									", status: {}",
+									encodingItem->_encodingJobKey, toString(EncodingStatus::End_Failed)
 								);
 								string sqlStatement = std::format(
 									"update MMS_EncodingJob set status = {} "
@@ -340,17 +359,21 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "select failed, no row returned" +
-											  ", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey) +
-											  ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						SPDLOG_ERROR(
+							"select failed, no row returned"
+							", ingestionJobKey: {}"
+							", sqlStatement: {}",
+							encodingItem->_ingestionJobKey, sqlStatement
+						);
 
 						// in case an encoding job row generate an error, we have to make it to Failed
 						// otherwise we will indefinitely get this error
 						{
-							_logger->info(
-								__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-								", status: " + MMSEngineDBFacade::toString(EncodingStatus::End_Failed)
+							SPDLOG_INFO(
+								"EncodingJob update"
+								", encodingJobKey: {}"
+								", status: {}",
+								encodingItem->_encodingJobKey, toString(EncodingStatus::End_Failed)
 							);
 							string sqlStatement = std::format(
 								"update MMS_EncodingJob set status = {} "
@@ -374,19 +397,24 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "getToBeProcessedEncodingJobs" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", encodingType: " + encodingType
+				SPDLOG_INFO(
+					"getToBeProcessedEncodingJobs"
+					", encodingJobKey: {}"
+					", encodingType: {}",
+					encodingJobKey, encodingType
 				);
 
 				encodingItems.push_back(encodingItem);
 				othersToBeEncoded++;
 
 				{
-					_logger->info(
-						__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-						", status: " + MMSEngineDBFacade::toString(EncodingStatus::Processing) + ", processorMMS: " +
-						processorMMS
+					SPDLOG_INFO(
+						"EncodingJob update"
+						", encodingJobKey: {}"
+						", status: {}"
+						", processorMMS: {}"
+						", encodingJobStart: NOW() at time zone 'utc'",
+						encodingItem->_encodingJobKey, toString(EncodingStatus::Processing), processorMMS
 						// 2021-08-22: scenario:
 						//	1. the encoding is selected here to be run
 						//	2. we have a long queue of encodings and it will not be run
@@ -403,7 +431,6 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						//		it will not be run because of the queue, the encoding will continue
 						//		to be retrieved from the above select because the condition
 						//		ej.encodingJobStart <= NOW() continue to be true
-						+ ", encodingJobStart: " + "NOW() at time zone 'utc'"
 					);
 					string sqlStatement;
 					if (!row["utcScheduleStart_virtual"].is_null())
@@ -434,17 +461,24 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					);
 					if (rowsUpdated != 1)
 					{
-						string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
-											  ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-											  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"no update was done"
+							", processorMMS: {}"
+							", encodingJobKey: {}"
+							", rowsUpdated: {}"
+							", sqlStatement: {}",
+							processorMMS, encodingItem->_encodingJobKey, rowsUpdated, sqlStatement
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
-				_logger->info(
-					__FILEREF__ + "getToBeProcessedEncodingJobs (after encodingJob update)" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", encodingType: " + encodingType
+				SPDLOG_INFO(
+					"getToBeProcessedEncodingJobs (after encodingJob update)"
+					", encodingJobKey: {}"
+					", encodingType: {}",
+					encodingJobKey, encodingType
 				);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -466,11 +500,16 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 		conn = nullptr;
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "getToBeProcessedEncodingJobs statistics" + ", encodingItems.size: " + to_string(encodingItems.size()) +
-			", maxEncodingsNumber: " + to_string(maxEncodingsNumber) + ", liveProxyToBeEncoded: " + to_string(liveProxyToBeEncoded) +
-			", liveRecorderToBeEncoded: " + to_string(liveRecorderToBeEncoded) + ", othersToBeEncoded: " + to_string(othersToBeEncoded) +
-			", elapsed (secs): " + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count())
+		SPDLOG_INFO(
+			"getToBeProcessedEncodingJobs statistics"
+			", encodingItems.size: {}"
+			", maxEncodingsNumber: {}"
+			", liveProxyToBeEncoded: {}"
+			", liveRecorderToBeEncoded: {}"
+			", othersToBeEncoded: {}"
+			", elapsed (secs): {}",
+			encodingItems.size(), maxEncodingsNumber, liveProxyToBeEncoded, liveRecorderToBeEncoded, othersToBeEncoded,
+			chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 		);
 	}
 	catch (sql_error const &e)
@@ -628,8 +667,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 				"from MMS_IngestionJob ij, MMS_EncodingJob ej "
 				"where ij.ingestionJobKey = ej.ingestionJobKey "
 				"and ej.processorMMS = {} and ij.status = {} and ej.status = {} ",
-				trans.quote(processorMMS), trans.quote(MMSEngineDBFacade::toString(IngestionStatus::EncodingQueued)),
-				trans.quote(MMSEngineDBFacade::toString(EncodingStatus::Processing))
+				trans.quote(processorMMS), trans.quote(toString(IngestionStatus::EncodingQueued)), trans.quote(toString(EncodingStatus::Processing))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.exec(sqlStatement);
@@ -906,9 +944,13 @@ int MMSEngineDBFacade::updateEncodingJob(
 					}
 					else
 					{
-						string errorMessage = __FILEREF__ + "EncodingJob not found" + ", EncodingJobKey: " + to_string(encodingJobKey) +
-											  ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"EncodingJob not found"
+							", EncodingJobKey: {}"
+							", sqlStatement: {}",
+							encodingJobKey, sqlStatement
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -922,9 +964,12 @@ int MMSEngineDBFacade::updateEncodingJob(
 					{
 						newEncodingStatus = EncodingStatus::End_Failed;
 
-						_logger->info(
-							__FILEREF__ + "update EncodingJob" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-							", encodingFailureNumber: " + to_string(encodingFailureNumber) + ", encodingJobKey: " + to_string(encodingJobKey)
+						SPDLOG_INFO(
+							"update EncodingJob"
+							", newEncodingStatus: {}"
+							", encodingFailureNumber: {}"
+							", encodingJobKey: {}",
+							toString(newEncodingStatus), encodingFailureNumber, encodingJobKey
 						);
 						sqlStatement = std::format(
 							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, failuresNumber = {}, "
@@ -960,29 +1005,40 @@ int MMSEngineDBFacade::updateEncodingJob(
 					);
 					if (rowsUpdated != 1)
 					{
-						string errorMessage = __FILEREF__ + "no update was done" +
-											  ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-											  ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"no update was done"
+							", newEncodingStatus: {}"
+							", encodingJobKey: {}"
+							", rowsUpdated: {}"
+							", sqlStatement: {}",
+							toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-					", encodingFailureNumber: " + to_string(encodingFailureNumber) + ", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"EncodingJob updated successful"
+					", newEncodingStatus: {}"
+					", encodingFailureNumber: {}"
+					", encodingJobKey: {}",
+					toString(newEncodingStatus), encodingFailureNumber, encodingJobKey
 				);
 			}
 			else if (encodingError == EncodingError::MaxCapacityReached || encodingError == EncodingError::ErrorBeforeEncoding)
 			{
 				newEncodingStatus = EncodingStatus::ToBeProcessed;
 
-				_logger->info(
-					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", status: " + MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encoderKey = NULL" +
-					", encodingProgress: " + "NULL"
+				SPDLOG_INFO(
+					"EncodingJob update"
+					", encodingJobKey: {}"
+					", status: {}"
+					", processorMMS: NULL"
+					", encoderKey = NULL"
+					", encodingProgress: NULL",
+					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
@@ -1003,26 +1059,36 @@ int MMSEngineDBFacade::updateEncodingJob(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" +
-										  ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus) +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", newEncodingStatus: {}"
+						", encodingJobKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				_logger->info(
-					__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-					", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"EncodingJob updated successful"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}",
+					toString(newEncodingStatus), encodingJobKey
 				);
 			}
 			else if (encodingError == EncodingError::KilledByUser)
 			{
 				newEncodingStatus = EncodingStatus::End_KilledByUser;
 
-				_logger->info(
-					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", status: " +
-					MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encodingJobEnd: " + "NOW() at time zone 'utc'"
+				SPDLOG_INFO(
+					"EncodingJob update"
+					", encodingJobKey: {}"
+					", status: {}"
+					", processorMMS: NULL"
+					", encodingJobEnd: NOW() at time zone 'utc'",
+					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
@@ -1043,26 +1109,36 @@ int MMSEngineDBFacade::updateEncodingJob(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" +
-										  ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus) +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", newEncodingStatus: {}"
+						", encodingJobKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				_logger->info(
-					__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-					", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"EncodingJob updated successful"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}",
+					toString(newEncodingStatus), encodingJobKey
 				);
 			}
 			else if (encodingError == EncodingError::CanceledByUser)
 			{
 				newEncodingStatus = EncodingStatus::End_CanceledByUser;
 
-				_logger->info(
-					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", status: " +
-					MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encodingJobEnd: " + "NOW() at time zone 'utc'"
+				SPDLOG_INFO(
+					"EncodingJob update"
+					", encodingJobKey: {}"
+					", status: {}"
+					", processorMMS: NULL"
+					", encodingJobEnd: NOW() at time zone 'utc'",
+					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
@@ -1083,26 +1159,36 @@ int MMSEngineDBFacade::updateEncodingJob(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" +
-										  ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus) +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", newEncodingStatus: {}"
+						", encodingJobKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				_logger->info(
-					__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-					", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"EncodingJob updated successful"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}",
+					toString(newEncodingStatus), encodingJobKey
 				);
 			}
 			else if (encodingError == EncodingError::CanceledByMMS)
 			{
 				newEncodingStatus = EncodingStatus::End_CanceledByMMS;
 
-				_logger->info(
-					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", status: " +
-					MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" + ", encodingJobEnd: " + "NOW() at time zone 'utc'"
+				SPDLOG_INFO(
+					"EncodingJob update"
+					", encodingJobKey: {}"
+					", status: {}"
+					", processorMMS: NULL"
+					", encodingJobEnd: NOW() at time zone 'utc'",
+					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
@@ -1123,27 +1209,37 @@ int MMSEngineDBFacade::updateEncodingJob(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" +
-										  ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus) +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", newEncodingStatus: {}"
+						", encodingJobKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				_logger->info(
-					__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-					", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"EncodingJob updated successful"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}",
+					toString(newEncodingStatus), encodingJobKey
 				);
 			}
 			else // success
 			{
 				newEncodingStatus = EncodingStatus::End_Success;
 
-				_logger->info(
-					__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
-					", status: " + MMSEngineDBFacade::toString(newEncodingStatus) + ", processorMMS: " + "NULL" +
-					", encodingJobEnd: " + "NOW() at time zone 'utc'" + ", encodingProgress: " + "100"
+				SPDLOG_INFO(
+					"EncodingJob update"
+					", encodingJobKey: {}"
+					", status: {}"
+					", processorMMS: NULL"
+					", encodingJobEnd: NOW() at time zone 'utc'"
+					", encodingProgress: 100",
+					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
@@ -1164,17 +1260,23 @@ int MMSEngineDBFacade::updateEncodingJob(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" +
-										  ", MMSEngineDBFacade::toString(newEncodingStatus): " + MMSEngineDBFacade::toString(newEncodingStatus) +
-										  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", newEncodingStatus: {}"
+						", encodingJobKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				_logger->info(
-					__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + MMSEngineDBFacade::toString(newEncodingStatus) +
-					", encodingJobKey: " + to_string(encodingJobKey)
+				SPDLOG_INFO(
+					"EncodingJob updated successful"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}",
+					toString(newEncodingStatus), encodingJobKey
 				);
 			}
 
@@ -1194,9 +1296,13 @@ int MMSEngineDBFacade::updateEncodingJob(
 
 					string errorMessage;
 					string processorMMS;
-					_logger->info(
-						__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-						", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+					SPDLOG_INFO(
+						"Update IngestionJob"
+						", ingestionJobKey: {}"
+						", IngestionStatus: {}"
+						", errorMessage: {}"
+						", processorMMS: {}",
+						ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 					);
 					updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 				}
@@ -1208,10 +1314,14 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(ingestionStatus) + ", physicalPathKey: " + to_string(physicalPathKey) +
-					", errorMessage: " + ingestionErrorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", physicalPathKey: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(ingestionStatus), physicalPathKey, ingestionErrorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, ingestionStatus, ingestionErrorMessage);
 			}
@@ -1222,10 +1332,14 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(ingestionStatus) + ", physicalPathKey: " + to_string(physicalPathKey) +
-					", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", physicalPathKey: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(ingestionStatus), physicalPathKey, errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, ingestionStatus, errorMessage);
 			}
@@ -1236,10 +1350,14 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(ingestionStatus) + ", physicalPathKey: " + to_string(physicalPathKey) +
-					", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", physicalPathKey: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(ingestionStatus), physicalPathKey, errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, ingestionStatus, errorMessage);
 			}
@@ -1250,10 +1368,14 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(ingestionStatus) + ", physicalPathKey: " + to_string(physicalPathKey) +
-					", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", physicalPathKey: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(ingestionStatus), physicalPathKey, errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, ingestionStatus, errorMessage);
 			}
@@ -1464,7 +1586,7 @@ void MMSEngineDBFacade::updateIngestionAndEncodingLiveRecordingPeriod(
 					", sqlStatement: {}",
 					utcRecordingPeriodStart, utcRecordingPeriodEnd, encodingJobKey, rowsUpdated, sqlStatement
 				);
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1604,49 +1726,68 @@ void MMSEngineDBFacade::updateEncodingJobPriority(shared_ptr<Workspace> workspac
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "EncodingJob not found" + ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob not found"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					encodingJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			if (currentEncodingStatus != EncodingStatus::ToBeProcessed)
 			{
-				string errorMessage = __FILEREF__ + "EncodingJob cannot change EncodingPriority because of his status" +
-									  ", currentEncodingStatus: " + toString(currentEncodingStatus) +
-									  ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob cannot change EncodingPriority because of his status"
+					", currentEncodingStatus: {}"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					toString(currentEncodingStatus), encodingJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			if (currentEncodingPriority == newEncodingPriority)
 			{
-				string errorMessage = __FILEREF__ + "EncodingJob has already the same status" +
-									  ", currentEncodingStatus: " + toString(currentEncodingStatus) +
-									  ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob has already the same status"
+					", currentEncodingStatus: {}"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					toString(currentEncodingStatus), encodingJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			if (static_cast<int>(currentEncodingPriority) > workspace->_maxEncodingPriority)
 			{
-				string errorMessage = __FILEREF__ + "EncodingJob cannot be changed to an higher priority" +
-									  ", currentEncodingPriority: " + toString(currentEncodingPriority) +
-									  ", maxEncodingPriority: " + toString(static_cast<EncodingPriority>(workspace->_maxEncodingPriority)) +
-									  ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob cannot be changed to an higher priority"
+					", currentEncodingPriority: {}"
+					", maxEncodingPriority: {}"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					toString(currentEncodingPriority), toString(static_cast<EncodingPriority>(workspace->_maxEncodingPriority)), encodingJobKey,
+					sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
 		{
-			_logger->info(
-				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", encodingPriority: " + to_string(static_cast<int>(newEncodingPriority))
+			SPDLOG_INFO(
+				"EncodingJob update"
+				", encodingJobKey: {}"
+				", encodingPriority: {}",
+				encodingJobKey, static_cast<int>(newEncodingPriority)
 			);
 			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set encodingPriority = {} "
@@ -1666,18 +1807,25 @@ void MMSEngineDBFacade::updateEncodingJobPriority(shared_ptr<Workspace> workspac
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", newEncodingPriority: " + toString(newEncodingPriority) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", newEncodingPriority: {}"
+					", encodingJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					toString(newEncodingPriority), encodingJobKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncodingJob updated successful" + ", newEncodingPriority: " + toString(newEncodingPriority) +
-			", encodingJobKey: " + to_string(encodingJobKey)
+		SPDLOG_INFO(
+			"EncodingJob updated successful"
+			", newEncodingPriority: {}"
+			", encodingJobKey: {}",
+			static_cast<int>(newEncodingPriority), encodingJobKey
 		);
 
 		trans.commit();
@@ -1814,19 +1962,27 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "EncodingJob not found" + ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob not found"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					encodingJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			if (currentEncodingStatus != EncodingStatus::End_Failed)
 			{
-				string errorMessage = __FILEREF__ + "EncodingJob cannot be encoded again because of his status" +
-									  ", currentEncodingStatus: " + toString(currentEncodingStatus) +
-									  ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob cannot be encoded again because of his status"
+					", currentEncodingStatus: {}"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					toString(currentEncodingStatus), encodingJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1834,9 +1990,11 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 
 		EncodingStatus newEncodingStatus = EncodingStatus::ToBeProcessed;
 		{
-			_logger->info(
-				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", status: " + MMSEngineDBFacade::toString(newEncodingStatus)
+			SPDLOG_INFO(
+				"EncodingJob update"
+				", encodingJobKey: {}"
+				", status: {}",
+				encodingJobKey, toString(newEncodingStatus)
 			);
 			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_EncodingJob set status = {} "
@@ -1856,17 +2014,24 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", newEncodingStatus: " + toString(newEncodingStatus) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
-		_logger->info(
-			__FILEREF__ + "EncodingJob updated successful" + ", newEncodingStatus: " + toString(newEncodingStatus) +
-			", encodingJobKey: " + to_string(encodingJobKey)
+		SPDLOG_INFO(
+			"EncodingJob updated successful"
+			", newEncodingStatus: {}"
+			", encodingJobKey: {}",
+			toString(newEncodingStatus), encodingJobKey
 		);
 
 		IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
@@ -1889,17 +2054,24 @@ void MMSEngineDBFacade::updateEncodingJobTryAgain(shared_ptr<Workspace> workspac
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", newEncodingStatus: " + toString(newEncodingStatus) +
-									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", newEncodingStatus: {}"
+					", encodingJobKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
-		_logger->info(
-			__FILEREF__ + "IngestionJob updated successful" + ", newIngestionStatus: " + toString(newIngestionStatus) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_INFO(
+			"IngestionJob updated successful"
+			", newIngestionStatus: {}"
+			", ingestionJobKey: {}",
+			toString(newIngestionStatus), ingestionJobKey
 		);
 
 		trans.commit();
@@ -2037,7 +2209,7 @@ void MMSEngineDBFacade::forceCancelEncodingJob(int64_t ingestionJobKey)
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -2153,7 +2325,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double
 	{
 		{
 			/* 2020-05-24: commented because already logged by the calling method
-			_logger->info(__FILEREF__ + "EncodingJob update"
+			info(__FILEREF__ + "EncodingJob update"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", encodingProgress: " + to_string(encodingPercentage)
 				);
@@ -2185,7 +2357,7 @@ void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -2303,7 +2475,7 @@ void MMSEngineDBFacade::updateEncodingRealTimeInfo(
 	{
 		{
 			/* 2020-05-24: commented because already logged by the calling method
-			_logger->info(__FILEREF__ + "EncodingJob update"
+			info(__FILEREF__ + "EncodingJob update"
 				+ ", encodingJobKey: " + to_string(encodingJobKey)
 				+ ", encodingProgress: " + to_string(encodingPercentage)
 				);
@@ -2337,7 +2509,7 @@ void MMSEngineDBFacade::updateEncodingRealTimeInfo(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			// throw runtime_error(errorMessage);
 		}
@@ -2477,18 +2649,24 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber(int64_t encodingJobKey, 
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "EncodingJob not found" + ", EncodingJobKey: " + to_string(encodingJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"EncodingJob not found"
+					", EncodingJobKey: {}"
+					", sqlStatement: {}",
+					encodingJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
 		{
-			_logger->info(
-				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) +
-				", failuresNumber: " + to_string(failuresNumber)
+			SPDLOG_INFO(
+				"EncodingJob update"
+				", encodingJobKey: {}"
+				", failuresNumber: {}",
+				encodingJobKey, failuresNumber
 			);
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set failuresNumber = {} "
@@ -2516,7 +2694,7 @@ bool MMSEngineDBFacade::updateEncodingJobFailuresNumber(int64_t encodingJobKey, 
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			// throw runtime_error(errorMessage);
 		}
@@ -2633,8 +2811,11 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled(int64_t encodingJobKey, bool i
 	try
 	{
 		{
-			_logger->info(
-				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", isKilled: " + to_string(isKilled)
+			SPDLOG_INFO(
+				"EncodingJob update"
+				", encodingJobKey: {}"
+				", isKilled: {}",
+				encodingJobKey, isKilled
 			);
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set isKilled = {} "
@@ -2662,7 +2843,7 @@ void MMSEngineDBFacade::updateEncodingJobIsKilled(int64_t encodingJobKey, bool i
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			// throw runtime_error(errorMessage);
 		}
@@ -2777,8 +2958,11 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder(int64_t encodingJobKey, int6
 	try
 	{
 		{
-			_logger->info(
-				__FILEREF__ + "EncodingJob update" + ", encodingJobKey: " + to_string(encodingJobKey) + ", encoderKey: " + to_string(encoderKey)
+			SPDLOG_INFO(
+				"EncodingJob update"
+				", encodingJobKey: {}"
+				", encoderKey: {}",
+				encodingJobKey, encoderKey
 			);
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set encoderKey = {}, "
@@ -2803,7 +2987,7 @@ void MMSEngineDBFacade::updateEncodingJobTranscoder(int64_t encodingJobKey, int6
 				string errorMessage = __FILEREF__ + "no update was done" + ", encoderKey: " + to_string(encoderKey) +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -2940,15 +3124,18 @@ void MMSEngineDBFacade::updateEncodingJobParameters(int64_t encodingJobKey, stri
 				string errorMessage = __FILEREF__ + "no update was done" + ", parameters: " + parameters +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
 			*/
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncodingJob updated successful" + ", parameters: " + parameters + ", encodingJobKey: " + to_string(encodingJobKey)
+		SPDLOG_INFO(
+			"EncodingJob updated successful"
+			", parameters: {}"
+			", encodingJobKey: {}",
+			parameters, encodingJobKey
 		);
 
 		trans.commit();
@@ -3084,7 +3271,7 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64
 				string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -3120,16 +3307,20 @@ void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64
 				string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL + ", rtmpURL: " + rtmpURL +
 									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
 									  ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
 			*/
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncodingJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", playURL: " + playURL + ", rtmpURL: " + rtmpURL
+		SPDLOG_INFO(
+			"EncodingJob updated successful"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", playURL: {}"
+			", rtmpURL: {}",
+			ingestionJobKey, encodingJobKey, playURL, rtmpURL
 		);
 
 		trans.commit();
@@ -3274,7 +3465,7 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 			{
 				string errorMessage = __FILEREF__ + "no update was done" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -3335,19 +3526,25 @@ void MMSEngineDBFacade::updateOutputHLSDetails(
 									  ", manifestDirectoryPath: " + manifestDirectoryPath + ", manifestFileName: " + manifestFileName +
 									  ", otherOutputOptions: " + otherOutputOptions + ", encodingJobKey: " + to_string(encodingJobKey) +
 									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
 			*/
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncodingJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", encodingJobKey: " + to_string(encodingJobKey) + ", deliveryCode: " + to_string(deliveryCode) +
-			", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds) + ", playlistEntriesNumber: " + to_string(playlistEntriesNumber) +
-			", manifestDirectoryPath: " + manifestDirectoryPath + ", manifestFileName: " + manifestFileName +
-			", otherOutputOptions: " + otherOutputOptions
+		SPDLOG_INFO(
+			"EncodingJob updated successful"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", deliveryCode: {}"
+			", segmentDurationInSeconds: {}"
+			", playlistEntriesNumber: {}"
+			", manifestDirectoryPath: {}"
+			", manifestFileName: {}"
+			", otherOutputOptions: {}",
+			ingestionJobKey, encodingJobKey, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber, manifestDirectoryPath, manifestFileName,
+			otherOutputOptions
 		);
 
 		trans.commit();
@@ -4473,10 +4670,15 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 					string encodingJobStatus = row["encodingJobStatus"].as<string>();
 
 					{
-						string errorMessage = string("Found EncodingJob with wrong status") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", encodingJobKey: " + to_string(encodingJobKey) + ", ingestionJobStatus: " + ingestionJobStatus +
-											  ", encodingJobStatus: " + encodingJobStatus;
-						_logger->error(__FILEREF__ + errorMessage);
+						string errorMessage = std::format(
+							"Found EncodingJob with wrong status"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", ingestionJobStatus: {}"
+							", encodingJobStatus: {}",
+							ingestionJobKey, encodingJobKey, ingestionJobStatus, encodingJobStatus
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						updateEncodingJob(
 							encodingJobKey, EncodingError::CanceledByMMS,
@@ -4516,17 +4718,23 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 
 				{
 					int secondsBetweenRetries = 15;
-					_logger->info(
-						__FILEREF__ + "fixEncodingJobsHavingWrongStatus failed, " + "waiting before to try again" +
-						", currentRetriesOnError: " + to_string(currentRetriesOnError) + ", maxRetriesOnError: " + to_string(maxRetriesOnError) +
-						", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+					SPDLOG_INFO(
+						"fixEncodingJobsHavingWrongStatus failed, waiting before to try again"
+						", currentRetriesOnError: {}"
+						", maxRetriesOnError: {}"
+						", secondsBetweenRetries: {}",
+						currentRetriesOnError, maxRetriesOnError, secondsBetweenRetries
 					);
 					this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
 				}
 			}
 		}
 
-		_logger->info(__FILEREF__ + "fixEncodingJobsHavingWrongStatus " + ", totalRowsUpdated: " + to_string(totalRowsUpdated));
+		SPDLOG_INFO(
+			"fixEncodingJobsHavingWrongStatus "
+			", totalRowsUpdated: {}",
+			totalRowsUpdated
+		);
 
 		trans.commit();
 		connectionPool->unborrow(conn);
@@ -4653,7 +4861,7 @@ void MMSEngineDBFacade::addEncodingJob(
 			json parametersRoot;
 
 			string field = "contentType";
-			parametersRoot[field] = MMSEngineDBFacade::toString(contentType);
+			parametersRoot[field] = toString(contentType);
 
 			field = "encodingProfileKey";
 			parametersRoot[field] = encodingProfileKey;
@@ -4680,10 +4888,11 @@ void MMSEngineDBFacade::addEncodingJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -4719,9 +4928,13 @@ void MMSEngineDBFacade::addEncodingJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -4907,10 +5120,11 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -4945,9 +5159,13 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -5116,10 +5334,11 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -5154,9 +5373,13 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -5348,10 +5571,11 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -5386,9 +5610,13 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -5551,10 +5779,11 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding priority: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -5590,9 +5819,13 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -5721,10 +5954,11 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding priority: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -5759,9 +5993,13 @@ void MMSEngineDBFacade::addEncoding_FaceRecognitionJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -5886,10 +6124,11 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding priority: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -5924,9 +6163,13 @@ void MMSEngineDBFacade::addEncoding_FaceIdentificationJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -6053,12 +6296,20 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "addEncoding_LiveRecorderJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ingestionJobLabel: " + ingestionJobLabel + ", streamSourceType: " + streamSourceType + ", configurationLabel: " + configurationLabel +
-			", confKey: " + to_string(confKey) + ", liveURL: " + liveURL + ", encodingPriority: " + toString(encodingPriority) +
-			", monitorHLS: " + to_string(monitorHLS) + ", liveRecorderVirtualVOD: " + to_string(liveRecorderVirtualVOD) +
-			", outputsRoot.size: " + (outputsRoot != nullptr ? to_string(outputsRoot.size()) : to_string(0))
+		SPDLOG_INFO(
+			"addEncoding_LiveRecorderJob"
+			", ingestionJobKey: {}"
+			", ingestionJobLabel: {}"
+			", streamSourceType: {}"
+			", configurationLabel: {}"
+			", confKey: {}"
+			", liveURL: {}"
+			", encodingPriority: {}"
+			", monitorHLS: {}"
+			", liveRecorderVirtualVOD: {}"
+			", outputsRoot.size: {}",
+			ingestionJobKey, ingestionJobLabel, streamSourceType, configurationLabel, confKey, liveURL, toString(encodingPriority), monitorHLS,
+			liveRecorderVirtualVOD, (outputsRoot != nullptr ? to_string(outputsRoot.size()) : to_string(0))
 		);
 
 		{
@@ -6152,7 +6403,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 				int savedEncodingPriority = static_cast<int>(encodingPriority);
 				if (savedEncodingPriority > workspace->_maxEncodingPriority)
 				{
-					_logger->warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
+					warn(__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer"
 						+ ", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority)
 						+ ", requested encoding priority: " + to_string(static_cast<int>(encodingPriority))
 					);
@@ -6194,9 +6445,13 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 
 				string errorMessage;
 				string processorMMS;
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
@@ -6315,10 +6570,13 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "addEncoding_LiveProxyJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", streamSourceType: " +
-			streamSourceType + ", waitingSecondsBetweenAttemptsInCaseOfErrors: " + to_string(waitingSecondsBetweenAttemptsInCaseOfErrors) +
-			", outputsRoot.size: " + to_string(outputsRoot.size())
+		SPDLOG_INFO(
+			"addEncoding_LiveProxyJob"
+			", ingestionJobKey: {}"
+			", streamSourceType: {}"
+			", waitingSecondsBetweenAttemptsInCaseOfErrors: {}"
+			", outputsRoot.size: {}",
+			ingestionJobKey, streamSourceType, waitingSecondsBetweenAttemptsInCaseOfErrors, outputsRoot.size()
 		);
 
 		{
@@ -6391,9 +6649,13 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 
 				string errorMessage;
 				string processorMMS;
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
@@ -6509,9 +6771,11 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "addEncoding_VODProxyJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", outputsRoot.size: " + to_string(outputsRoot.size())
+		SPDLOG_INFO(
+			"addEncoding_VODProxyJob"
+			", ingestionJobKey: {}"
+			", outputsRoot.size: {}",
+			ingestionJobKey, outputsRoot.size()
 		);
 
 		{
@@ -6581,9 +6845,13 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 
 				string errorMessage;
 				string processorMMS;
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
@@ -6766,9 +7034,13 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 
 				string errorMessage;
 				string processorMMS;
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
@@ -6881,7 +7153,11 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob(shared_ptr<Workspace> workspace,
 
 	try
 	{
-		_logger->info(__FILEREF__ + "addEncoding_LiveGridJob" + ", ingestionJobKey: " + to_string(ingestionJobKey));
+		SPDLOG_INFO(
+			"addEncoding_LiveGridJob"
+			", ingestionJobKey: {}",
+			ingestionJobKey
+		);
 
 		{
 			EncodingType encodingType = EncodingType::LiveGrid;
@@ -6938,9 +7214,13 @@ void MMSEngineDBFacade::addEncoding_LiveGridJob(shared_ptr<Workspace> workspace,
 
 				string errorMessage;
 				string processorMMS;
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
@@ -7115,10 +7395,11 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -7153,9 +7434,13 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -7303,10 +7588,11 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -7341,9 +7627,13 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -7544,10 +7834,11 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -7582,9 +7873,13 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -7801,10 +8096,11 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -7840,9 +8136,13 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}
@@ -8029,10 +8329,11 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				_logger->warn(
-					__FILEREF__ + "EncodingPriority was decreased because overcome the max allowed by this customer" +
-					", workspace->_maxEncodingPriority: " + to_string(workspace->_maxEncodingPriority) +
-					", requested encoding profile key: " + to_string(static_cast<int>(encodingPriority))
+				SPDLOG_WARN(
+					"EncodingPriority was decreased because overcome the max allowed by this customer"
+					", workspace->_maxEncodingPriority: {}"
+					", requested encoding profile key: {}",
+					workspace->_maxEncodingPriority, static_cast<int>(encodingPriority)
 				);
 
 				savedEncodingPriority = workspace->_maxEncodingPriority;
@@ -8068,9 +8369,13 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 
 			string errorMessage;
 			string processorMMS;
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 		}

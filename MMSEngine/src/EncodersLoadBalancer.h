@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-/* 
+/*
  * File:   EncodersLoadBalancer.h
  * Author: giuliano
  *
@@ -14,17 +14,16 @@
 #ifndef EncodersLoadBalancer_h
 #define EncodersLoadBalancer_h
 
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "spdlog/spdlog.h"
-#include "nlohmann/json.hpp"
-#include "Workspace.h"
 #include "MMSEngineDBFacade.h"
-
+#include "Workspace.h"
+#include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 using namespace std;
 
@@ -33,43 +32,38 @@ using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
 
 #ifndef __FILEREF__
-    #ifdef __APPLE__
-        #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
-    #else
-        #define __FILEREF__ string("[") + basename((char *) __FILE__) + ":" + to_string(__LINE__) + "] "
-    #endif
+#ifdef __APPLE__
+#define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+#else
+#define __FILEREF__ string("[") + basename((char *)__FILE__) + ":" + to_string(__LINE__) + "] "
+#endif
 #endif
 
-class EncodersLoadBalancer {
-public:
-    EncodersLoadBalancer(
-			shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-            json configuration,
-            shared_ptr<spdlog::logger> logger);
+class EncodersLoadBalancer
+{
+  public:
+	EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration);
 
-    virtual ~EncodersLoadBalancer();
+	virtual ~EncodersLoadBalancer();
 
-    string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace,
-		string encoderToSkip);
-    
+	string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string encoderToSkip);
+
 	tuple<int64_t, string, bool> getEncoderURL(
-		int64_t ingestionJobKey, string encodersPoolLabel, shared_ptr<Workspace> workspace,
-		int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
+		int64_t ingestionJobKey, string encodersPoolLabel, shared_ptr<Workspace> workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+	);
 
-private:
+  private:
 	/*
-    struct EncodersPoolDetails {
-        vector<string>          _encoders;
-        int                     _lastEncoderUsed;
-    };
-    
-    map<string, EncodersPoolDetails>    _encodersPools;
+	struct EncodersPoolDetails {
+		vector<string>          _encoders;
+		int                     _lastEncoderUsed;
+	};
+
+	map<string, EncodersPoolDetails>    _encodersPools;
 	*/
-    shared_ptr<spdlog::logger>          _logger;
-	shared_ptr<MMSEngineDBFacade>		_mmsEngineDBFacade;
+	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
 	void init();
 };
 
 #endif
-

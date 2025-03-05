@@ -2,6 +2,7 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/spdlog.h"
 
 json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, string tokenType, string refreshToken, string accessToken)
 {
@@ -238,7 +239,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -266,9 +267,14 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "No YouTube conf found" + ", confKey: " + to_string(confKey) +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No YouTube conf found"
+					", confKey: {}"
+					", workspaceKey: {}"
+					", sqlStatement: {}",
+					confKey, workspaceKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -425,9 +431,14 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -544,7 +555,12 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getYouTubeConfList" + ", workspaceKey: " + to_string(workspaceKey));
+		SPDLOG_INFO(
+			"getYouTubeConfList"
+			", workspaceKey: {}"
+			", label: {}",
+			workspaceKey, label
+		);
 
 		{
 			json requestParametersRoot;
@@ -751,9 +767,11 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 		string youTubeRefreshToken;
 		string youTubeAccessToken;
 
-		_logger->info(
-			__FILEREF__ + "getYouTubeDetailsByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) +
-			", youTubeConfigurationLabel: " + youTubeConfigurationLabel
+		SPDLOG_INFO(
+			"getYouTubeDetailsByConfigurationLabel"
+			", workspaceKey: {}"
+			", youTubeConfigurationLabel: {}",
+			workspaceKey, youTubeConfigurationLabel
 		);
 
 		{
@@ -776,10 +794,13 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "select from MMS_Conf_YouTube failed" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", youTubeConfigurationLabel: " + youTubeConfigurationLabel;
-
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Configuration label not found"
+					", workspaceKey: {}"
+					", youTubeConfigurationLabel: {}",
+					workspaceKey, youTubeConfigurationLabel
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1056,7 +1077,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1189,9 +1210,14 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1308,9 +1334,12 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getFacebookConfList" + ", workspaceKey: " + to_string(workspaceKey) + ", confKey: " + to_string(confKey) +
-			", label: " + label
+		SPDLOG_INFO(
+			"getFacebookConfList"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", label: {}",
+			workspaceKey, confKey, label
 		);
 
 		{
@@ -1514,9 +1543,11 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "getFacebookUserAccessTokenByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) +
-			", facebookConfigurationLabel: " + facebookConfigurationLabel
+		SPDLOG_INFO(
+			"getFacebookUserAccessTokenByConfigurationLabel"
+			", workspaceKey: {}"
+			", facebookConfigurationLabel: {}",
+			workspaceKey, facebookConfigurationLabel
 		);
 
 		{
@@ -1537,10 +1568,14 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "select from MMS_Conf_Facebook failed" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", facebookConfigurationLabel: " + facebookConfigurationLabel;
+				string errorMessage = std::format(
+					"Configuration label not found"
+					", workspaceKey: {}"
+					", facebookConfigurationLabel: {}",
+					workspaceKey, facebookConfigurationLabel
+				);
 
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1812,7 +1847,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1945,9 +1980,14 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2064,9 +2104,12 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getTwitchConfList" + ", workspaceKey: " + to_string(workspaceKey) + ", confKey: " + to_string(confKey) +
-			", label: " + label
+		SPDLOG_INFO(
+			"getTwitchConfList"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", label: {}",
+			workspaceKey, confKey, label
 		);
 
 		{
@@ -2270,9 +2313,11 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "getTwitchUserAccessTokenByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) +
-			", twitchConfigurationLabel: " + twitchConfigurationLabel
+		SPDLOG_INFO(
+			"getTwitchUserAccessTokenByConfigurationLabel"
+			", workspaceKey: {}"
+			", twitchConfigurationLabel: {}",
+			workspaceKey, twitchConfigurationLabel
 		);
 
 		{
@@ -2292,10 +2337,14 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "select from MMS_Conf_Twitch failed" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", twitchConfigurationLabel: " + twitchConfigurationLabel;
+				string errorMessage = std::format(
+					"Configuration label not found"
+					", workspaceKey: {}"
+					", twitchConfigurationLabel: {}",
+					workspaceKey, twitchConfigurationLabel
+				);
 
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2567,7 +2616,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2700,9 +2749,14 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2819,9 +2873,12 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getTiktokConfList" + ", workspaceKey: " + to_string(workspaceKey) + ", confKey: " + to_string(confKey) +
-			", label: " + label
+		SPDLOG_INFO(
+			"getTiktokConfList"
+			", workspaceKey: {}"
+			", confKey: {}"
+			", label: {}",
+			workspaceKey, confKey, label
 		);
 
 		{
@@ -3025,9 +3082,11 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "getTiktokTokenByConfigurationLabel" + ", workspaceKey: " + to_string(workspaceKey) +
-			", tiktokConfigurationLabel: " + tiktokConfigurationLabel
+		SPDLOG_INFO(
+			"getTiktokTokenByConfigurationLabel"
+			", workspaceKey: {}"
+			", tiktokConfigurationLabel: {}",
+			workspaceKey, tiktokConfigurationLabel
 		);
 
 		{
@@ -3047,10 +3106,14 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "select from MMS_Conf_Tiktok failed" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", tiktokConfigurationLabel: " + tiktokConfigurationLabel;
+				string errorMessage = std::format(
+					"Configuration label not found"
+					", workspaceKey: {}"
+					", tiktokConfigurationLabel: {}",
+					workspaceKey, tiktokConfigurationLabel
+				);
 
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

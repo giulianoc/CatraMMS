@@ -40,7 +40,7 @@ class ActiveEncodingsManager
   public:
 	ActiveEncodingsManager(
 		json configuration, string processorMMS, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		shared_ptr<MMSStorage> mmsStorage, shared_ptr<spdlog::logger> logger
+		shared_ptr<MMSStorage> mmsStorage
 	);
 
 	virtual ~ActiveEncodingsManager();
@@ -64,7 +64,6 @@ class ActiveEncodingsManager
 		EncodingJob() { _status = EncoderProxy::EncodingJobStatus::Free; }
 	};
 
-	shared_ptr<spdlog::logger> _logger;
 	json _configuration;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 	shared_ptr<MMSStorage> _mmsStorage;

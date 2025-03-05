@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, mmsEngineDBFacade, configuration, logger);
 
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
-			make_shared<MMSDeliveryAuthorization>(configuration, mmsStorage, mmsEngineDBFacade, logger);
+			make_shared<MMSDeliveryAuthorization>(configuration, mmsStorage, mmsEngineDBFacade);
 
 		FCGX_Init();
 

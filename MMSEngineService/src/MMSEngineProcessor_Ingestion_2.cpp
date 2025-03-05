@@ -3004,7 +3004,7 @@ int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow
 	if (dltotal != 0 &&
 		(dltotal == dlnow || now - progressData->_lastTimeProgressUpdate >= chrono::seconds(progressData->_progressUpdatePeriodInSeconds)))
 	{
-		double progress = dltotal == 0 ? 0 : (dlnow / dltotal) * 100;
+		double progress = dltotal == 0 ? 0 : (static_cast<double>(dlnow) / static_cast<double>(dltotal)) * 100;
 		// int downloadingPercentage = floorf(progress * 100) / 100;
 		// this is to have one decimal in the percentage
 		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;

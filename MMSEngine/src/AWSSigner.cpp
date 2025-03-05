@@ -1,14 +1,17 @@
 
 #include <chrono>
 
+#include <format>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
 
 #include "AWSSigner.h"
+#include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "spdlog/spdlog.h"
 
-AWSSigner::AWSSigner(shared_ptr<spdlog::logger> logger) { _logger = logger; }
+AWSSigner::AWSSigner(void) {}
 
 AWSSigner::~AWSSigner(void) {}
 
@@ -46,7 +49,11 @@ B. Write a method to create the signature for the signed URL that uses
 
 	if (!fs::exists(privateKeyPEMPathName))
 	{
-		_logger->error(__FILEREF__ + "PEM path name not existing" + ", privateKeyPEMPathName: " + privateKeyPEMPathName);
+		SPDLOG_ERROR(
+			"PEM path name not existing"
+			", privateKeyPEMPathName: {}",
+			privateKeyPEMPathName
+		);
 
 		return "";
 	}
@@ -74,10 +81,29 @@ B. Write a method to create the signature for the signed URL that uses
 		// 	]
 		// }
 
-		cannedPolicy = string("{\"Statement\":[{\"Resource\":\"") + resourceUrlOrPath +
-					   "\",\"Condition\":{\"DateLessThan\":{\"AWS:EpochTime\":" + to_string(utcExpirationTime) + "}}}]}";
+		json cannedPolicyRoot;
+		json statementsRoot = json::array();
 
-		_logger->info(__FILEREF__ + "cannedPolicy without space: " + cannedPolicy);
+		json statementRoot;
+		{
+			statementRoot["Resource"] = resourceUrlOrPath;
+			json conditionRoot;
+			{
+				json dateLessThanRoot;
+				dateLessThanRoot["AWS:EpochTime"] = utcExpirationTime;
+
+				conditionRoot["DateLessThan"] = dateLessThanRoot;
+			}
+			statementRoot["Condition"] = conditionRoot;
+		}
+
+		statementsRoot.push_back(statementRoot);
+
+		cannedPolicyRoot["Statement"] = statementsRoot;
+
+		cannedPolicy = JSONUtils::toString(cannedPolicyRoot);
+
+		SPDLOG_INFO("cannedPolicy without space: {}", cannedPolicy);
 	}
 
 	string signature = sign(privateKeyPEMPathName, cannedPolicy);
@@ -85,11 +111,22 @@ B. Write a method to create the signature for the signed URL that uses
 	if (signature == "")
 		return "";
 
-	string signedURL = resourceUrlOrPath + "?Expires=" + to_string(utcExpirationTime) + "&Signature=" + signature + "&Key-Pair-Id=" + keyPairId;
+	string signedURL = std::format(
+		"{}?Expires={}"
+		"&Signature={}"
+		"&Key-Pair-Id={}",
+		resourceUrlOrPath, utcExpirationTime, signature, keyPairId
+	);
 
-	_logger->info(
-		__FILEREF__ + "calculateSignedURL" + ", hostName: " + hostName + ", uriPath: " + uriPath + ", keyPairId: " + keyPairId +
-		", privateKeyPEMPathName: " + privateKeyPEMPathName + ", expirationInSeconds: " + to_string(expirationInSeconds) + ", signedURL: " + signedURL
+	SPDLOG_INFO(
+		"calculateSignedURL"
+		", hostName: {}"
+		", uriPath: {}"
+		", keyPairId: {}"
+		", privateKeyPEMPathName: {}"
+		", expirationInSeconds: {}"
+		", signedURL: {}",
+		hostName, uriPath, keyPairId, privateKeyPEMPathName, expirationInSeconds, signedURL
 	);
 
 	return signedURL;
@@ -99,9 +136,14 @@ string AWSSigner::sign(string pemPathName, string message)
 {
 	// initialize OpenSSL
 
-	_logger->info(__FILEREF__ + "sign" + ", pemPathName: " + pemPathName + ", message: " + message);
+	SPDLOG_INFO(
+		"sign"
+		", pemPathName: {}"
+		", message: {}",
+		pemPathName, message
+	);
 
-	_logger->debug(__FILEREF__ + "OpenSSL initialization");
+	SPDLOG_DEBUG("OpenSSL initialization");
 
 	{
 		OpenSSL_add_all_algorithms();
@@ -113,23 +155,23 @@ string AWSSigner::sign(string pemPathName, string message)
 		ERR_load_crypto_strings();
 	}
 
-	_logger->debug(__FILEREF__ + "createPrivateRSA...");
+	SPDLOG_DEBUG("createPrivateRSA...");
 	RSA *rsa = NULL;
 	BIO *certbio = NULL;
 	{
-		_logger->debug(__FILEREF__ + "Creating BIO");
+		SPDLOG_DEBUG("Creating BIO");
 		//  Create the Input/Output BIO's
 		certbio = BIO_new(BIO_s_file());
 
-		_logger->debug(__FILEREF__ + "Loading certificate");
+		SPDLOG_DEBUG("Loading certificate");
 		// Loading the certificate from file (PEM)
 		int ret = BIO_read_filename(certbio, pemPathName.c_str());
 
-		_logger->debug(__FILEREF__ + "PEM_read_bio_RSAPrivateKey...");
+		SPDLOG_DEBUG("PEM_read_bio_RSAPrivateKey...");
 		rsa = PEM_read_bio_RSAPrivateKey(certbio, &rsa, NULL, NULL);
 	}
 
-	_logger->debug(__FILEREF__ + "RSASign...");
+	SPDLOG_DEBUG("RSASign...");
 	size_t signedMessageLength;
 	unsigned char *signedMessage = NULL;
 	{
@@ -137,10 +179,10 @@ string AWSSigner::sign(string pemPathName, string message)
 		EVP_PKEY *priKey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(priKey, rsa);
 
-		_logger->debug(__FILEREF__ + "EVP_DigestSignInit...");
+		SPDLOG_DEBUG("EVP_DigestSignInit...");
 		if (EVP_DigestSignInit(m_RSASignCtx, NULL, EVP_sha1(), NULL, priKey) <= 0)
 		{
-			_logger->error(__FILEREF__ + "EVP_DigestSignInit failed");
+			SPDLOG_ERROR("EVP_DigestSignInit failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -149,10 +191,10 @@ string AWSSigner::sign(string pemPathName, string message)
 
 			return "";
 		}
-		_logger->debug(__FILEREF__ + "EVP_DigestSignUpdate...");
+		SPDLOG_DEBUG("EVP_DigestSignUpdate...");
 		if (EVP_DigestSignUpdate(m_RSASignCtx, message.c_str(), message.size()) <= 0)
 		{
-			_logger->error(__FILEREF__ + "EVP_DigestSignUpdate failed");
+			SPDLOG_ERROR("EVP_DigestSignUpdate failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -162,10 +204,10 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		_logger->debug(__FILEREF__ + "EVP_DigestSignFinal...");
+		SPDLOG_DEBUG("EVP_DigestSignFinal...");
 		if (EVP_DigestSignFinal(m_RSASignCtx, NULL, &signedMessageLength) <= 0)
 		{
-			_logger->error(__FILEREF__ + "EVP_DigestSignFinal failed");
+			SPDLOG_ERROR("EVP_DigestSignFinal failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -175,11 +217,11 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		_logger->debug(__FILEREF__ + "EVP_DigestSignFinal...");
+		SPDLOG_DEBUG("EVP_DigestSignFinal...");
 		signedMessage = (unsigned char *)malloc(signedMessageLength);
 		if (EVP_DigestSignFinal(m_RSASignCtx, signedMessage, &signedMessageLength) <= 0)
 		{
-			_logger->error(__FILEREF__ + "EVP_DigestSignFinal failed");
+			SPDLOG_ERROR("EVP_DigestSignFinal failed");
 
 			free(signedMessage);
 			EVP_PKEY_free(priKey);
@@ -190,9 +232,9 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		_logger->debug(__FILEREF__ + "EVP_PKEY_free...");
+		SPDLOG_DEBUG("EVP_PKEY_free...");
 		EVP_PKEY_free(priKey);
-		_logger->debug(__FILEREF__ + "EVP_MD_CTX_destroy...");
+		SPDLOG_DEBUG("EVP_MD_CTX_destroy...");
 		EVP_MD_CTX_destroy(m_RSASignCtx);
 		// EVP_MD_CTX_cleanup(m_RSASignCtx);
 	}
@@ -201,48 +243,52 @@ string AWSSigner::sign(string pemPathName, string message)
 	// call is transferred to the EVP_PKEY. When you free the EVP_PKEY it also frees
 	// the underlying RSA key. So, once you've successfully called EVP_PKEY_assign_RSA()
 	// you must not call RSA_free() on the underlying key or a double-free may result
-	// _logger->info(__FILEREF__ + "RSA_free...");
+	// info(__FILEREF__ + "RSA_free...");
 	// RSA_free(rsa);
-	_logger->debug(__FILEREF__ + "BIO_free...");
+	SPDLOG_DEBUG("BIO_free...");
 	BIO_free(certbio);
 
-	_logger->debug(__FILEREF__ + "base64Text..." + ", signedMessageLength: " + to_string(signedMessageLength));
+	SPDLOG_DEBUG(
+		"base64Text..."
+		", signedMessageLength: {}",
+		signedMessageLength
+	);
 	string signature;
 	{
 		BIO *bio, *b64;
 		BUF_MEM *bufferPtr;
 
-		_logger->debug(__FILEREF__ + "BIO_new...");
+		SPDLOG_DEBUG("BIO_new...");
 		b64 = BIO_new(BIO_f_base64());
 		bio = BIO_new(BIO_s_mem());
 
-		_logger->debug(__FILEREF__ + "BIO_push...");
+		SPDLOG_DEBUG("BIO_push...");
 		bio = BIO_push(b64, bio);
 
-		_logger->debug(__FILEREF__ + "BIO_write...");
+		SPDLOG_DEBUG("BIO_write...");
 		BIO_write(bio, signedMessage, signedMessageLength);
 		BIO_flush(bio);
 		BIO_get_mem_ptr(bio, &bufferPtr);
 
-		_logger->debug(__FILEREF__ + "BIO_set_close...");
+		SPDLOG_DEBUG("BIO_set_close...");
 		BIO_set_close(bio, BIO_NOCLOSE);
-		_logger->debug(__FILEREF__ + "BIO_free_all...");
+		SPDLOG_DEBUG("BIO_free_all...");
 		BIO_free_all(bio);
-		// _logger->info(__FILEREF__ + "BIO_free...");
+		// info(__FILEREF__ + "BIO_free...");
 		// BIO_free(b64);	// useless because of BIO_free_all
 
-		_logger->debug(__FILEREF__ + "base64Text set...");
+		SPDLOG_DEBUG("base64Text set...");
 		char *base64Text = (*bufferPtr).data;
 
 		signature = base64Text;
 
 		BUF_MEM_free(bufferPtr);
 
-		_logger->debug(__FILEREF__ + "signature: " + signature);
+		SPDLOG_DEBUG("signature: {}", signature);
 	}
 	free(signedMessage);
 
-	_logger->debug(__FILEREF__ + "signature before replace: " + signature);
+	SPDLOG_DEBUG("signature before replace: {}", signature);
 
 	::replace(signature.begin(), signature.end(), '+', '-');
 	::replace(signature.begin(), signature.end(), '=', '_');
@@ -250,14 +296,14 @@ string AWSSigner::sign(string pemPathName, string message)
 
 	signature.erase(remove_if(signature.begin(), signature.end(), ::isspace), signature.end());
 
-	_logger->debug(__FILEREF__ + "signature after replace: " + signature);
+	SPDLOG_DEBUG("signature after replace: {}", signature);
 
 	return signature;
 	/*
 	cert = PEM_read_bio_X509(certbio, NULL, 0, NULL);
 	if (NULL == cert)
 	{
-		_logger->error(__FILEREF__ + "BIO_read_filename failed");
+		error(__FILEREF__ + "BIO_read_filename failed");
 
 		return;
 	}
@@ -266,7 +312,7 @@ string AWSSigner::sign(string pemPathName, string message)
 	evpkey = X509_get_pubkey(cert);
 	if (NULL == evpkey)
 	{
-		_logger->error(__FILEREF__ + "X509_get_pubkey failed");
+		error(__FILEREF__ + "X509_get_pubkey failed");
 
 		return;
 	}
@@ -279,7 +325,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		struct stat			sb;
 		if ((stat(pemPathName.c_str(), &sb)) == -1)
 		{
-			_logger->error(__FILEREF__ + "stat failed");
+			error(__FILEREF__ + "stat failed");
 
 			return;
 		};
@@ -291,7 +337,7 @@ string AWSSigner::sign(string pemPathName, string message)
 	{
 		if (!(pemBuffer = malloc(pemFileLength)))
 		{
-			_logger->error(__FILEREF__ + "stat failed");
+			error(__FILEREF__ + "stat failed");
 
 			return;
 		};
@@ -300,7 +346,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		int			fd;
 		if ((fd = open(pemPathName.c_str(), O_RDONLY)) == -1)
 		{
-			_logger->error(__FILEREF__ + "open failed");
+			error(__FILEREF__ + "open failed");
 
 			free(pemBuffer);
 
@@ -310,7 +356,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		// reads file
 		if ((pemFileLength = read(fd, pemBuffer, pemFileLength)) == -1)
 		{
-			_logger->error(__FILEREF__ + "read failed");
+			error(__FILEREF__ + "read failed");
 
 			free(pemBuffer);
 			return;
@@ -335,7 +381,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		{
 			errmsg[1023] = '\0';
 			ERR_error_string_n(err, errmsg, 1023);
-			_logger->error(__FILEREF__ + "PEM_read_bio_X509 failed"
+			error(__FILEREF__ + "PEM_read_bio_X509 failed"
 				", errmsg: " + errmsg
 			);
 		};
@@ -347,7 +393,7 @@ string AWSSigner::sign(string pemPathName, string message)
 	};
 
 	// prints x509 info
-	_logger->error(__FILEREF__ + "X509 info"
+	error(__FILEREF__ + "X509 info"
 		", name: " + x509->name
 	);
 	*/
@@ -392,7 +438,7 @@ int AWSSigner::awsV4Signature2(
 	time(&rawtime);
 	t = localtime(&rawtime);
 	const time_t request_date = mktime(t);
-	_logger->info(__FILEREF__ + "request date : " + to_string(request_date));
+	info(__FILEREF__ + "request date : " + to_string(request_date));
 
 	const string region{"eu-west-1"};
 	const string service{"medialive"};
@@ -412,7 +458,7 @@ int AWSSigner::awsV4Signature2(
 	const auto canonical_headers_map = canonicalize_headers(headers);
 	if (canonical_headers_map.empty())
 	{
-		_logger->error(__FILEREF__ + "headers malformed");
+		error(__FILEREF__ + "headers malformed");
 
 		return 1;
 	}
@@ -439,7 +485,7 @@ int AWSSigner::awsV4Signature2(
 		canonicalize_request(POST, canonical_uri, canonical_querystring,
 							 headers_string, signed_headers, payload);
 
-	_logger->info(__FILEREF__ "--" + canonical_request + "--");
+	info(__FILEREF__ "--" + canonical_request + "--");
 
 	auto hashed_canonical_request = sha256_base16(canonical_request);
 	cout << hashed_canonical_request << endl;
@@ -448,21 +494,21 @@ int AWSSigner::awsV4Signature2(
 		stringToSign(STRING_TO_SIGN_ALGO, request_date, credential_scope_n,
 					   hashed_canonical_request);
 
-	_logger->info(__FILEREF__ "--" + string_to_sign + "----");
+	info(__FILEREF__ "--" + string_to_sign + "----");
 
 	auto signature = calculate_signature(request_date, secret_key, region,
 		service, string_to_sign);
 
-	_logger->info(__FILEREF__ + "signature: " + signature);
+	info(__FILEREF__ + "signature: " + signature);
 	canonical_querystring += "&X-Amz-Signature=" + (string)signature;
 
 	string request_url = base_uri + "?" + canonical_querystring;
 
-	_logger->info(__FILEREF__ + "request_url: " + request_url);
+	info(__FILEREF__ + "request_url: " + request_url);
 	ostringstream os;
 	os << ...::options::Url(request_url);
 	string asAskedInQuestion = os.str();
-	_logger->info(__FILEREF__ + "asAskedInQuestion: " + asAskedInQuestion);
+	info(__FILEREF__ + "asAskedInQuestion: " + asAskedInQuestion);
 
 	return 0;
 }
@@ -515,7 +561,7 @@ int AWSSigner::awsV4Signature(
 			tmDateTime. tm_mday);
 		date_stamp = strDateTime;
 	}
-	_logger->info(__FILEREF__ + "amz_date: " + amz_date
+	info(__FILEREF__ + "amz_date: " + amz_date
 		+ ", date_stamp: " + date_stamp
 	);
 
@@ -593,11 +639,11 @@ int AWSSigner::awsV4Signature(
 
 
 
-	// _logger->info(__FILEREF__ + "request_url: " + request_url);
+	// info(__FILEREF__ + "request_url: " + request_url);
 	// ostringstream os;
 	// os << ...::options::Url(request_url);
 	// string asAskedInQuestion = os.str();
-	// _logger->info(__FILEREF__ + "asAskedInQuestion: " + asAskedInQuestion);
+	// info(__FILEREF__ + "asAskedInQuestion: " + asAskedInQuestion);
 
 	return 0;
 }

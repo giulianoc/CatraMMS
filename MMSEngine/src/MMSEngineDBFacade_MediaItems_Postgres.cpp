@@ -23,10 +23,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	{
 		// 2021-09-23: I removed TRANSACTION and FOR UPDATE because I saw we may have deadlock when a MediaItem is added
 
-		_logger->info(
-			__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies (MediaItemKeys expired)" + ", processorMMS: " + processorMMS +
-			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: " + to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size()) +
-			", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		SPDLOG_INFO(
+			"getExpiredMediaItemKeysCheckingDependencies (MediaItemKeys expired)"
+			", processorMMS: {}"
+			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: {}"
+			", maxEntriesNumber: {}",
+			processorMMS, mediaItemKeyOrPhysicalPathKeyToBeRemoved.size(), maxEntriesNumber
 		);
 
 		// 1. MediaItemKeys expired
@@ -103,7 +105,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 									+ ", rowsUpdated: " + to_string(rowsUpdated)
 									+ ", sqlStatement: " + sqlStatement
 							;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 							*/
@@ -118,11 +120,15 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: " +
-						"ingestionJobKey: " + to_string(ingestionJobKey) + ", workspaceKey: " + to_string(workspaceKey) +
-						", mediaItemKey: " + to_string(mediaItemKey) + ", title: " + title + ", ingestionDate: " + ingestionDate +
-						", retentionInMinutes: " + to_string(retentionInMinutes)
+					SPDLOG_INFO(
+						"Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
+						"ingestionJobKey: {}"
+						", workspaceKey: {}"
+						", mediaItemKey: {}"
+						", title: {}"
+						", ingestionDate: {}"
+						", retentionInMinutes: {}",
+						ingestionJobKey, workspaceKey, mediaItemKey, title, ingestionDate, retentionInMinutes
 					);
 				}
 			}
@@ -138,10 +144,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			);
 		}
 
-		_logger->info(
-			__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies (PhysicalPathKeys expired)" + ", processorMMS: " + processorMMS +
-			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: " + to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size()) +
-			", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		SPDLOG_INFO(
+			"getExpiredMediaItemKeysCheckingDependencies (PhysicalPathKeys expired)"
+			", processorMMS: {}"
+			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: {}"
+			", maxEntriesNumber: {}",
+			processorMMS, mediaItemKeyOrPhysicalPathKeyToBeRemoved.size(), maxEntriesNumber
 		);
 
 		// 1. PhysicalPathKeys expired
@@ -219,7 +227,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 									+ ", rowsUpdated: " + to_string(rowsUpdated)
 									+ ", sqlStatement: " + sqlStatement
 							;
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 							*/
@@ -235,11 +243,15 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				}
 				else
 				{
-					_logger->info(
-						__FILEREF__ + "Content expired but not removed because there are still ingestion jobs depending on him. Content details: " +
-						"ingestionJobKey: " + to_string(ingestionJobKey) + ", workspaceKey: " + to_string(workspaceKey) +
-						", mediaItemKey: " + to_string(mediaItemKey) + ", title: " + title + ", ingestionDate: " + ingestionDate +
-						", physicalPathKeyRetentionInMinutes: " + to_string(physicalPathKeyRetentionInMinutes)
+					SPDLOG_INFO(
+						"Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
+						"ingestionJobKey: {}"
+						", workspaceKey: {}"
+						", mediaItemKey: {}"
+						", title: {}"
+						", ingestionDate: {}"
+						", physicalPathKeyRetentionInMinutes: {}",
+						ingestionJobKey, workspaceKey, mediaItemKey, title, ingestionDate, physicalPathKeyRetentionInMinutes
 					);
 				}
 			}
@@ -254,10 +266,12 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			);
 		}
 
-		_logger->info(
-			__FILEREF__ + "getExpiredMediaItemKeysCheckingDependencies" + ", processorMMS: " + processorMMS +
-			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: " + to_string(mediaItemKeyOrPhysicalPathKeyToBeRemoved.size()) +
-			", maxEntriesNumber: " + to_string(maxEntriesNumber)
+		SPDLOG_INFO(
+			"getExpiredMediaItemKeysCheckingDependencies"
+			", processorMMS: {}"
+			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: {}"
+			", maxEntriesNumber: {}",
+			processorMMS, mediaItemKeyOrPhysicalPathKeyToBeRemoved.size(), maxEntriesNumber
 		);
 
 		trans.commit();
@@ -627,7 +641,7 @@ json MMSEngineDBFacade::updateMediaItem(
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -817,7 +831,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -1696,10 +1710,13 @@ json MMSEngineDBFacade::getMediaItemsList(
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 							getVideoDetails(localMediaItemKey, physicalPathKey, fromMaster, videoTracks, audioTracks);
 							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
-							_logger->info(
-								__FILEREF__ + "getVideoDetails" + ", mediaItemKey: " + to_string(localMediaItemKey) +
-								", physicalPathKey: " + to_string(physicalPathKey) + ", videoTracks.size: " + to_string(videoTracks.size()) +
-								", audioTracks.size: " + to_string(audioTracks.size())
+							SPDLOG_INFO(
+								"getVideoDetails"
+								", mediaItemKey: {}"
+								", physicalPathKey: {}"
+								", videoTracks.size: {}"
+								", audioTracks.size: {}",
+								localMediaItemKey, physicalPathKey, videoTracks.size(), audioTracks.size()
 							);
 
 							{
@@ -1896,9 +1913,13 @@ json MMSEngineDBFacade::getMediaItemsList(
 						}
 						else
 						{
-							string errorMessage = __FILEREF__ + "ContentType unmanaged" + ", mediaItemKey: " + to_string(localMediaItemKey) +
-												  ", sqlStatement: " + sqlStatement;
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"ContentType unmanaged"
+								", mediaItemKey: {}"
+								", sqlStatement: {}",
+								localMediaItemKey, sqlStatement
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -2936,13 +2957,17 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 
 			if (physicalPathKey == -1)
 			{
-				string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found" +
-									  ", mediaItemKey: " + to_string(referenceMediaItemKey) +
-									  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"MediaItemKey/encodingProfileKey are not found"
+					", mediaItemKey: {}"
+					", encodingProfileKey: {}"
+					", sqlStatement: {}",
+					referenceMediaItemKey, encodingProfileKey, sqlStatement
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3131,10 +3156,15 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
 			else
 			{
-				string errorMessage = __FILEREF__ + "encodingProfileKey is not found" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", contentType: " + toString(contentType) + ", encodingProfileLabel: " + encodingProfileLabel +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"encodingProfileKey is not found"
+					", workspaceKey: {}"
+					", contentType: {}"
+					", encodingProfileLabel: {}"
+					", sqlStatement: {}",
+					workspaceKey, toString(contentType), encodingProfileLabel, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3161,12 +3191,17 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				physicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
 			else
 			{
-				string errorMessage = __FILEREF__ + "MediaItemKey/encodingProfileKey are not found" + ", mediaItemKey: " + to_string(mediaItemKey) +
-									  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"MediaItemKey/encodingProfileKey are not found"
+					", mediaItemKey: {}"
+					", encodingProfileKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, encodingProfileKey, sqlStatement
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3348,12 +3383,16 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "physicalPathKey is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
-									  ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"physicalPathKey is not found"
+					", physicalPathKey: {}"
+					", sqlStatement: {}",
+					physicalPathKey, sqlStatement
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3657,13 +3696,17 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 
 			if (maxSizeInBytesWithoutEncodingProfile == -1 && maxSizeInBytesWithEncodingProfile == -1)
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
 				// 2024-08-17: warn, sara' il chiamante che deciderà se loggare o no l'errore
 				// if (warningIfMissing)
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(errorMessage);
 				// else
-				// 	_logger->error(errorMessage);
+				// 	SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3881,12 +3924,16 @@ MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaIte
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -4097,12 +4144,16 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey,
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "MediaItemKey is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
-									  ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", physicalPathKey: {}"
+					", sqlStatement: {}",
+					physicalPathKey, sqlStatement
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -4283,9 +4334,13 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				ingestionType = MMSEngineDBFacade::toIngestionType(res[0]["ingestionType"].as<string>());
 			else
 			{
-				string errorMessage = __FILEREF__ + "IngestionJob is not found" +
-									  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"IngestionJob is not found"
+					", referenceIngestionJobKey: {}"
+					", sqlStatement: {}",
+					referenceIngestionJobKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -4361,18 +4416,22 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 						contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
 					else
 					{
-						string errorMessage = __FILEREF__ + "MediaItemKey is not found" +
-											  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
-											  ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
+						string errorMessage = std::format(
+							"MediaItemKey is not found"
+							", referenceIngestionJobKey: {}"
+							", mediaItemKey: {}"
+							", sqlStatement: {}",
+							referenceIngestionJobKey, mediaItemKey, sqlStatement
+						);
 						if (warningIfMissing)
 						{
-							_logger->warn(errorMessage);
+							SPDLOG_WARN(errorMessage);
 
 							continue;
 						}
 						else
 						{
-							_logger->error(errorMessage);
+							SPDLOG_ERROR(errorMessage);
 
 							throw MediaItemKeyNotFound(errorMessage);
 						}
@@ -4573,12 +4632,16 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", referenceUniqueName: " + referenceUniqueName + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", referenceUniqueName: {}"
+					", sqlStatement: {}",
+					referenceUniqueName, sqlStatement
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -4763,9 +4826,13 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 				IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(res[0]["status"].as<string>());
 				if (res[0]["durationInMilliSeconds"].is_null())
 				{
-					string errorMessage =
-						__FILEREF__ + "duration is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"duration is not found"
+						", mediaItemKey: {}"
+						", sqlStatement: {}",
+						mediaItemKey, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4774,9 +4841,13 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4804,9 +4875,13 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			{
 				if (res[0]["durationInMilliSeconds"].is_null())
 				{
-					string errorMessage = __FILEREF__ + "duration is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"duration is not found"
+						", physicalPathKey: {}"
+						", sqlStatement: {}",
+						physicalPathKey, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4815,9 +4890,13 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "physicalPathKey is not found" + ", physicalPathKey: " + to_string(physicalPathKey) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"physicalPathKey is not found"
+					", physicalPathKey: {}"
+					", sqlStatement: {}",
+					physicalPathKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4990,9 +5069,13 @@ void MMSEngineDBFacade::getVideoDetails(
 				localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5268,9 +5351,13 @@ void MMSEngineDBFacade::getAudioDetails(
 				localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5331,9 +5418,14 @@ void MMSEngineDBFacade::getAudioDetails(
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) +
-									  ", localPhysicalPathKey: " + to_string(localPhysicalPathKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", localPhysicalPathKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, localPhysicalPathKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -5500,9 +5592,13 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 				localPhysicalPathKey = res[0]["physicalPathKey"].as<int64_t>();
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5543,9 +5639,13 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "MediaItemKey is not found" + ", mediaItemKey: " + to_string(mediaItemKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"MediaItemKey is not found"
+					", mediaItemKey: {}"
+					", sqlStatement: {}",
+					mediaItemKey, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -5702,7 +5802,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	string title = "";
 	try
 	{
-		_logger->info(__FILEREF__ + "Insert into MMS_MediaItem");
+		SPDLOG_INFO("Insert into MMS_MediaItem");
 		int64_t mediaItemKey;
 		{
 			string ingester = "";
@@ -5970,9 +6070,13 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "Workspace is not present/configured" +
-										  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Workspace is not present/configured"
+						", workspace->_workspaceKey: {}"
+						", sqlStatement: {}",
+						workspace->_workspaceKey, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6026,12 +6130,17 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				);
 				if (rowsUpdated != 1)
 				{
-					string errorMessage = __FILEREF__ + "no update was done" + ", currentDirLevel1: " + to_string(currentDirLevel1) +
-										  ", currentDirLevel2: " + to_string(currentDirLevel2) +
-										  ", currentDirLevel3: " + to_string(currentDirLevel3) +
-										  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"no update was done"
+						", currentDirLevel1: {}"
+						", currentDirLevel2: {}"
+						", currentDirLevel3: {}"
+						", workspace->_workspaceKey: {}"
+						", rowsUpdated: {}"
+						", sqlStatement: {}",
+						currentDirLevel1, currentDirLevel2, currentDirLevel3, workspace->_workspaceKey, rowsUpdated, sqlStatement
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -6052,9 +6161,13 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 				string errorMessage;
 				string processorMMS;
-				_logger->info(
-					__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", IngestionStatus: " + toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+				SPDLOG_INFO(
+					"Update IngestionJob"
+					", ingestionJobKey: {}"
+					", IngestionStatus: {}"
+					", errorMessage: {}"
+					", processorMMS: {}",
+					ingestionJobKey, toString(newIngestionStatus), errorMessage, processorMMS
 				);
 				updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
 			}
@@ -6243,7 +6356,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			string errorMessage = __FILEREF__ + "uniqueName is empty"
 				+ ", uniqueName: " + uniqueName
 			;
-			_logger->error(errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 			*/
@@ -6680,8 +6793,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				contentType = MMSEngineDBFacade::toContentType(res[0]["contentType"].as<string>());
 			else
 			{
-				string errorMessage = __FILEREF__ + "no ContentType returned" + ", mediaItemKey: " + to_string(mediaItemKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no ContentType returned"
+					", mediaItemKey: {}",
+					mediaItemKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6715,10 +6832,15 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		{
 			int drm = 0;
 
-			_logger->info(
-				__FILEREF__ + "insert into MMS_PhysicalPath" + ", mediaItemKey: " + to_string(mediaItemKey) + ", relativePath: " + relativePath +
-				", encodedFileName: " + encodedFileName + ", encodingProfileKey: " + to_string(encodingProfileKey) +
-				", deliveryInfo: " + deliveryInfo + ", physicalItemRetentionPeriodInMinutes: " + to_string(physicalItemRetentionPeriodInMinutes)
+			SPDLOG_INFO(
+				"insert into MMS_PhysicalPath"
+				", mediaItemKey: {}"
+				", relativePath: {}"
+				", encodedFileName: {}"
+				", encodingProfileKey: {}"
+				", deliveryInfo: {}"
+				", physicalItemRetentionPeriodInMinutes: {}",
+				mediaItemKey, relativePath, encodedFileName, encodingProfileKey, deliveryInfo, physicalItemRetentionPeriodInMinutes
 			);
 			string sqlStatement = std::format(
 				"insert into MMS_PhysicalPath(physicalPathKey, mediaItemKey, drm, externalReadOnlyStorage, "
@@ -6842,8 +6964,12 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		}
 		else
 		{
-			string errorMessage = __FILEREF__ + "ContentType is wrong" + ", contentType: " + MMSEngineDBFacade::toString(contentType);
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"ContentType is wrong"
+				", contentType: {}",
+				toString(contentType)
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7329,7 +7455,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 				// probable because encodingPercentage was already the same in the table
 				string errorMessage = __FILEREF__ + "no delete was done" + ", physicalPathKey: " + to_string(physicalPathKey) +
 									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -7463,9 +7589,14 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", mediaItemKey: " + to_string(mediaItemKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", mediaItemKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					mediaItemKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7588,10 +7719,16 @@ json MMSEngineDBFacade::getTagsList(
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getTagsList" + ", workspaceKey: " + to_string(workspaceKey) + ", start: " + to_string(start) + ", rows: " +
-			to_string(rows) + ", liveRecordingChunk: " + to_string(liveRecordingChunk) + ", contentTypePresent: " + to_string(contentTypePresent) +
-			", contentType: " + (contentTypePresent ? toString(contentType) : "") + ", tagNameFilter: " + tagNameFilter
+		SPDLOG_INFO(
+			"getTagsList"
+			", workspaceKey: {}"
+			", start: {}"
+			", rows: {}"
+			", liveRecordingChunk: {}"
+			", contentTypePresent: {}"
+			", contentType: {}"
+			", tagNameFilter: {}",
+			workspaceKey, start, rows, liveRecordingChunk, contentTypePresent, (contentTypePresent ? toString(contentType) : ""), tagNameFilter
 		);
 
 		{
@@ -7799,8 +7936,11 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
 
-	_logger->info(
-		__FILEREF__ + "updateMediaItem" + ", mediaItemKey: " + to_string(mediaItemKey) + ", processorMMSForRetention: " + processorMMSForRetention
+	SPDLOG_INFO(
+		"updateMediaItem"
+		", mediaItemKey: {}"
+		", processorMMSForRetention: {}",
+		mediaItemKey, processorMMSForRetention
 	);
 	try
 	{
@@ -7824,10 +7964,15 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", mediaItemKey: " + to_string(mediaItemKey) +
-									  ", processorMMSForRetention: " + processorMMSForRetention + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"no update was done"
+					", mediaItemKey: {}"
+					", processorMMSForRetention: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					mediaItemKey, processorMMSForRetention, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

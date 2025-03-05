@@ -59,6 +59,8 @@ PIDFILE=/var/catramms/pids/api.pid
 #port used by nginx (see conf/*.nginx files)
 PORT=8010
 
+sleepWaitingLoadBalancer=10
+
 if [ "$command" == "start" ]
 then
 	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/api.fcgi NoFileSystem
@@ -70,8 +72,10 @@ then
 		else
 			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod"
 			hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod
-			echo "Waiting load balancer command..."
-			sleep 5
+			#il load balancer impiega un po piu di tempo prima di ridirigere le nuove richieste al server
+			sleepWaitingLoadBalancer_forAdd=$$(sleepWaitingLoadBalancer*3))
+			echo "Waiting load balancer command ($sleepWaitingLoadBalancer_forAdd secs) ..."
+			sleep $sleepWaitingLoadBalancer_forAdd
 		fi
 	fi
 elif [ "$command" == "status" ]
@@ -86,8 +90,8 @@ then
 		else
 				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-api-prod"
 				hcloud load-balancer remove-target --ip $privateIPAddress mms-api-prod
-				echo "Waiting load balancer command..."
-				sleep 5
+				echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
+				sleep $sleepWaitingLoadBalancer
 		fi
 	fi
 

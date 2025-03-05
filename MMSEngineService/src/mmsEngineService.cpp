@@ -298,7 +298,7 @@ int main(int iArgc, char *pArgv[])
 	multiEventsSet->addDestination(MMSENGINEPROCESSORNAME);
 
 	logger->info(__FILEREF__ + "Creating ActiveEncodingsManager");
-	ActiveEncodingsManager activeEncodingsManager(configurationRoot, processorMMS, multiEventsSet, mmsEngineDBFacade, mmsStorage, logger);
+	ActiveEncodingsManager activeEncodingsManager(configurationRoot, processorMMS, multiEventsSet, mmsEngineDBFacade, mmsStorage);
 
 	mutex cpuUsageMutex;
 	deque<int> cpuUsage;
@@ -311,7 +311,7 @@ int main(int iArgc, char *pArgv[])
 	shared_ptr<ThreadsStatistic> mmsThreadsStatistic = make_shared<ThreadsStatistic>(logger);
 
 	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
-		make_shared<MMSDeliveryAuthorization>(configurationRoot, mmsStorage, mmsEngineDBFacade, logger);
+		make_shared<MMSDeliveryAuthorization>(configurationRoot, mmsStorage, mmsEngineDBFacade);
 
 	vector<shared_ptr<MMSEngineProcessor>> mmsEngineProcessors;
 	{

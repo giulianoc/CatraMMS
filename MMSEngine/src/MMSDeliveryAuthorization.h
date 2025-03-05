@@ -28,7 +28,7 @@ class MMSDeliveryAuthorization
 
   public:
 	MMSDeliveryAuthorization(
-		json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<spdlog::logger> logger
+		json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
 	);
 
 	pair<string, string> createDeliveryAuthorization(
@@ -48,14 +48,13 @@ class MMSDeliveryAuthorization
 	static string getSignedCDN77URL(
 		string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 		string filePath,	// /file/playlist/d.m3u8
-		string secureToken, long expirationInMinutes, shared_ptr<spdlog::logger> logger
+		string secureToken, long expirationInMinutes
 	);
 
   private:
 	json _configuration;
 	shared_ptr<MMSStorage> _mmsStorage;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	shared_ptr<spdlog::logger> _logger;
 
 	string _keyPairId;
 	string _privateKeyPEMPathName;

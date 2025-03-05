@@ -28,18 +28,17 @@ EncoderProxy::~EncoderProxy() {}
 void EncoderProxy::init(
 	int proxyIdentifier, mutex *mtEncodingJobs, json configuration, shared_ptr<MultiEventsSet> multiEventsSet,
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage, shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
-	shared_ptr<long> faceRecognitionNumber, int maxFaceRecognitionNumber,
+	shared_ptr<long> faceRecognitionNumber,
+	int maxFaceRecognitionNumber
 #ifdef __LOCALENCODER__
 	int *pRunningEncodingsNumber,
 #endif
-	shared_ptr<spdlog::logger> logger
 )
 {
 	_proxyIdentifier = proxyIdentifier;
 
 	_mtEncodingJobs = mtEncodingJobs;
 
-	_logger = logger;
 	_configuration = configuration;
 
 	_multiEventsSet = multiEventsSet;
@@ -53,91 +52,203 @@ void EncoderProxy::init(
 	_hostName = System::getHostName();
 
 	_mp4Encoder = JSONUtils::asString(_configuration["encoding"], "mp4Encoder", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->mp4Encoder: " + _mp4Encoder);
+	SPDLOG_INFO(
+		"Configuration item"
+		", encoding->mp4Encoder: {}",
+		_mp4Encoder
+	);
 	_mpeg2TSEncoder = JSONUtils::asString(_configuration["encoding"], "mpeg2TSEncoder", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->mpeg2TSEncoder: " + _mpeg2TSEncoder);
+	SPDLOG_INFO(
+		"Configuration item"
+		", encoding->mpeg2TSEncoder: {}",
+		_mpeg2TSEncoder
+	);
 
 	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt(_configuration["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", encoding->intervalInSecondsToCheckEncodingFinished: " + to_string(_intervalInSecondsToCheckEncodingFinished)
+	SPDLOG_INFO(
+		"Configuration item"
+		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
+		_intervalInSecondsToCheckEncodingFinished
 	);
 	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 30);
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", encoding->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
+	SPDLOG_INFO(
+		"Configuration item"
+		", encoding->maxSecondsToWaitUpdateEncodingJobLock: {}",
+		_maxSecondsToWaitUpdateEncodingJobLock
 	);
 
 	_ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderUser: {}",
+		_ffmpegEncoderUser
+	);
 	_ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderPassword: " + "...");
+	SPDLOG_INFO("Configuration item"
+				", ffmpeg->encoderPassword: ...");
 	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderTimeoutInSeconds: " + to_string(_ffmpegEncoderTimeoutInSeconds));
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderTimeoutInSeconds: {}",
+		_ffmpegEncoderTimeoutInSeconds
+	);
 	_ffmpegEncoderProgressURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderProgressURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderProgressURI: " + _ffmpegEncoderProgressURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderProgressURI: {}",
+		_ffmpegEncoderProgressURI
+	);
 	_ffmpegEncoderStatusURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderStatusURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderStatusURI: {}",
+		_ffmpegEncoderStatusURI
+	);
 	_ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderKillEncodingURI: " + _ffmpegEncoderKillEncodingURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encoderKillEncodingURI: {}",
+		_ffmpegEncoderKillEncodingURI
+	);
 	_ffmpegEncodeURI = JSONUtils::asString(_configuration["ffmpeg"], "encodeURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encodeURI: " + _ffmpegEncodeURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->encodeURI: {}",
+		_ffmpegEncodeURI
+	);
 	_ffmpegOverlayImageOnVideoURI = JSONUtils::asString(_configuration["ffmpeg"], "overlayImageOnVideoURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->overlayImageOnVideoURI: " + _ffmpegOverlayImageOnVideoURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->overlayImageOnVideoURI: {}",
+		_ffmpegOverlayImageOnVideoURI
+	);
 	_ffmpegOverlayTextOnVideoURI = JSONUtils::asString(_configuration["ffmpeg"], "overlayTextOnVideoURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->overlayTextOnVideoURI: " + _ffmpegOverlayTextOnVideoURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->overlayTextOnVideoURI: {}",
+		_ffmpegOverlayTextOnVideoURI
+	);
 	_ffmpegGenerateFramesURI = JSONUtils::asString(_configuration["ffmpeg"], "generateFramesURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->generateFramesURI: " + _ffmpegGenerateFramesURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->generateFramesURI: {}",
+		_ffmpegGenerateFramesURI
+	);
 	_ffmpegSlideShowURI = JSONUtils::asString(_configuration["ffmpeg"], "slideShowURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->slideShowURI: " + _ffmpegSlideShowURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->slideShowURI: {}",
+		_ffmpegSlideShowURI
+	);
 	_ffmpegLiveRecorderURI = JSONUtils::asString(_configuration["ffmpeg"], "liveRecorderURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->liveRecorderURI: " + _ffmpegLiveRecorderURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->liveRecorderURI: {}",
+		_ffmpegLiveRecorderURI
+	);
 	_ffmpegLiveProxyURI = JSONUtils::asString(_configuration["ffmpeg"], "liveProxyURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->liveProxyURI: " + _ffmpegLiveProxyURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->liveProxyURI: {}",
+		_ffmpegLiveProxyURI
+	);
 	_ffmpegLiveGridURI = JSONUtils::asString(_configuration["ffmpeg"], "liveGridURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->liveGridURI: " + _ffmpegLiveGridURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->liveGridURI: {}",
+		_ffmpegLiveGridURI
+	);
 	_ffmpegVideoSpeedURI = JSONUtils::asString(_configuration["ffmpeg"], "videoSpeedURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->videoSpeedURI: " + _ffmpegVideoSpeedURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->videoSpeedURI: {}",
+		_ffmpegVideoSpeedURI
+	);
 	_ffmpegAddSilentAudioURI = JSONUtils::asString(_configuration["ffmpeg"], "addSilentAudioURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->addSilentAudioURI: " + _ffmpegAddSilentAudioURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->addSilentAudioURI: {}",
+		_ffmpegAddSilentAudioURI
+	);
 	_ffmpegPictureInPictureURI = JSONUtils::asString(_configuration["ffmpeg"], "pictureInPictureURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->pictureInPictureURI: " + _ffmpegPictureInPictureURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->pictureInPictureURI: {}",
+		_ffmpegPictureInPictureURI
+	);
 	_ffmpegIntroOutroOverlayURI = JSONUtils::asString(_configuration["ffmpeg"], "introOutroOverlayURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->ffmpegIntroOutroOverlayURI: " + _ffmpegIntroOutroOverlayURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->ffmpegIntroOutroOverlayURI: {}",
+		_ffmpegIntroOutroOverlayURI
+	);
 	_ffmpegCutFrameAccurateURI = JSONUtils::asString(_configuration["ffmpeg"], "cutFrameAccurateURI", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->ffmpegCutFrameAccurateURI: " + _ffmpegCutFrameAccurateURI);
+	SPDLOG_INFO(
+		"Configuration item"
+		", ffmpeg->ffmpegCutFrameAccurateURI: {}",
+		_ffmpegCutFrameAccurateURI
+	);
 
 	_computerVisionCascadePath = JSONUtils::asString(_configuration["computerVision"], "cascadePath", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", computerVision->cascadePath: " + _computerVisionCascadePath);
+	SPDLOG_INFO(
+		"Configuration item"
+		", computerVision->cascadePath: {}",
+		_computerVisionCascadePath
+	);
 	if (_computerVisionCascadePath.size() > 0 && _computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
 	_computerVisionDefaultScale = JSONUtils::asDouble(_configuration["computerVision"], "defaultScale", 1.1);
-	_logger->info(__FILEREF__ + "Configuration item" + ", computerVision->defaultScale: " + to_string(_computerVisionDefaultScale));
+	SPDLOG_INFO(
+		"Configuration item"
+		", computerVision->defaultScale: {}",
+		_computerVisionDefaultScale
+	);
 	_computerVisionDefaultMinNeighbors = JSONUtils::asInt(_configuration["computerVision"], "defaultMinNeighbors", 2);
-	_logger->info(__FILEREF__ + "Configuration item" + ", computerVision->defaultMinNeighbors: " + to_string(_computerVisionDefaultMinNeighbors));
+	SPDLOG_INFO(
+		"Configuration item"
+		", computerVision->defaultMinNeighbors: {}",
+		_computerVisionDefaultMinNeighbors
+	);
 	_computerVisionDefaultTryFlip = JSONUtils::asBool(_configuration["computerVision"], "defaultTryFlip", false);
-	_logger->info(__FILEREF__ + "Configuration item" + ", computerVision->defaultTryFlip: " + to_string(_computerVisionDefaultTryFlip));
+	SPDLOG_INFO(
+		"Configuration item"
+		", computerVision->defaultTryFlip: {}",
+		_computerVisionDefaultTryFlip
+	);
 
 	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt(_configuration["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: " + to_string(_timeBeforeToPrepareResourcesInMinutes)
+	SPDLOG_INFO(
+		"Configuration item"
+		", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: {}",
+		_timeBeforeToPrepareResourcesInMinutes
 	);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(_configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-	_logger->info(
-		__FILEREF__ + "Configuration item" + ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
+	SPDLOG_INFO(
+		"Configuration item"
+		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
+		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
 		JSONUtils::asInt(_configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: " + to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
+	SPDLOG_INFO(
+		"Configuration item"
+		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
+		_waitingNFSSync_milliSecondsWaitingBetweenChecks
 	);
 
 	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->keyPairId: " + _keyPairId);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->keyPairId: {}",
+		_keyPairId
+	);
 	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	_logger->info(__FILEREF__ + "Configuration item" + ", aws->privateKeyPEMPathName: " + _privateKeyPEMPathName);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->privateKeyPEMPathName: {}",
+		_privateKeyPEMPathName
+	);
 
 	_retrieveStreamingYouTubeURLPeriodInHours = 5; // 5 hours
 
@@ -162,12 +273,16 @@ void EncoderProxy::setEncodingData(EncodingJobStatus *status, shared_ptr<MMSEngi
 void EncoderProxy::operator()()
 {
 
-	_logger->info(
-		__FILEREF__ + "Running EncoderProxy..." + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-		", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-		", _encodingParametersRoot: " + JSONUtils::toString(_encodingItem->_encodingParametersRoot) +
-		", _ingestedParametersRoot: " + JSONUtils::toString(_encodingItem->_ingestedParametersRoot)
+	SPDLOG_INFO(
+		"Running EncoderProxy..."
+		", _proxyIdentifier: {}"
+		", _ingestionJobKey: {}"
+		", _encodingJobKey: {}"
+		", _encodingType: {}"
+		", _encodingParametersRoot: {}"
+		", _ingestedParametersRoot: {}",
+		_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType),
+		JSONUtils::toString(_encodingItem->_encodingParametersRoot), JSONUtils::toString(_encodingItem->_ingestedParametersRoot)
 	);
 
 	string stagingEncodedAssetPathName;
@@ -264,28 +379,36 @@ void EncoderProxy::operator()()
 		}
 		else
 		{
-			string errorMessage = string("Wrong EncodingType") + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", EncodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType);
-
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"Wrong EncodingType"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", EncodingType: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (MaxConcurrentJobsReached &e)
 	{
-		_logger->warn(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier)
+		SPDLOG_WARN(
+			"{}: {}"
+			", _proxyIdentifier: {}",
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier
 		);
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob MaxCapacityReached" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_INFO(
+				"updateEncodingJob MaxCapacityReached"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", _encodingType: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main
@@ -300,30 +423,17 @@ void EncoderProxy::operator()()
 			);
 			// main ? _encodingItem->_ingestionJobKey : -1);
 		}
-		catch (runtime_error &e)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob MaxCapacityReached FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ", e.what(): " + e.what()
-			);
-		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob MaxCapacityReached FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ", e.what(): " + e.what()
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob MaxCapacityReached FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_ERROR(
+				"updateEncodingJob MaxCapacityReached FAILED"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", _encodingType: {}"
+				", e.what(): {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what()
 			);
 		}
 
@@ -333,10 +443,14 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"EncoderProxy finished"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		// throw e;
@@ -344,10 +458,13 @@ void EncoderProxy::operator()()
 	}
 	catch (YouTubeURLNotRetrieved &e)
 	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		SPDLOG_ERROR(
+			"{}: {}"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey,
+			_encodingItem->_encodingJobKey
 		);
 
 		try
@@ -356,11 +473,15 @@ void EncoderProxy::operator()()
 			//	just a failure of the ingestion job
 			bool forceEncodingToBeFailed = true;
 
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
+			SPDLOG_INFO(
+				"updateEncodingJob PunctualError"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", _encodingType: {}"
+				", forceEncodingToBeFailed: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), forceEncodingToBeFailed
 			);
 
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
@@ -374,10 +495,14 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_ERROR(
+				"updateEncodingJob PunctualError FAILED"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", _encodingType: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 		}
 
@@ -387,142 +512,14 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-		);
-
-		// throw e;
-		return;
-	}
-	catch (EncoderError &e)
-	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-		);
-
-		try
-		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
-			);
-
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro 'no update is done'
-			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::PunctualError,
-				false, // isIngestionJobFinished: this field is not used by
-					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
-				forceEncodingToBeFailed
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			);
-		}
-
-		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
-
-			*_status = EncodingJobStatus::Free;
-		}
-
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-		);
-
-		// throw e;
-		return;
-	}
-	catch (EncoderNotFound &e)
-	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-		);
-
-		try
-		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
-			);
-
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro 'no update is done'
-			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::PunctualError,
-				false, // isIngestionJobFinished: this field is not used by
-					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
-				forceEncodingToBeFailed
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			);
-		}
-
-		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
-
-			*_status = EncodingJobStatus::Free;
-		}
-
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"EncoderProxy finished"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		// throw e;
@@ -530,18 +527,25 @@ void EncoderProxy::operator()()
 	}
 	catch (EncodingKilledByUser &e)
 	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		SPDLOG_ERROR(
+			"{}: {}"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey,
+			_encodingItem->_encodingJobKey
 		);
 
 		try
 		{
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob KilledByUser" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_INFO(
+				"updateEncodingJob KilledByUser"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", _encodingType: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main
@@ -558,10 +562,14 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob KilledByUser FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_ERROR(
+				"updateEncodingJob KilledByUser FAILED"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", _encodingType: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 		}
 
@@ -571,21 +579,28 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"EncoderProxy finished"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		// throw e;
 		return;
 	}
-	catch (FFMpegURLForbidden &e)
+	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		SPDLOG_ERROR(
+			"{}: {}"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey,
+			_encodingItem->_encodingJobKey
 		);
 
 		try
@@ -594,11 +609,6 @@ void EncoderProxy::operator()()
 			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy ||
 				_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
 			{
-				// 2020-05-26: channel cielo, the URL return FORBIDDEN and it
-				// has to be generated again
-				//		because it will have an expired timestamp. For this
-				// reason we have to stop this request 		in order the crontab
-				// script will generate a new URL
 				// 2020-05-26: in case of LiveRecorder there is no more retries
 				// since it already run up to the end of the recording
 				forceEncodingToBeFailed = true;
@@ -608,22 +618,24 @@ void EncoderProxy::operator()()
 				forceEncodingToBeFailed = false;
 			}
 
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
+			SPDLOG_INFO(
+				"updateEncodingJob PunctualError"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", _encodingType: {}"
+				", forceEncodingToBeFailed: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), forceEncodingToBeFailed
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main
 			// should update the ingestionJob status This because, if also the
 			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro PunctualError is used because, in case it always happens,
-			// the encoding will never reach a final state
+			// an erro 'no update is done'
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::EncodingError::PunctualError, // ErrorBeforeEncoding,
-				false,											 // isIngestionJobFinished: this field is not used by
+				_encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::PunctualError,
+				false, // isIngestionJobFinished: this field is not used by
 					   // updateEncodingJob
 				_encodingItem->_ingestionJobKey, e.what(),
 				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
@@ -632,10 +644,14 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_ERROR(
+				"updateEncodingJob PunctualError FAILED"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", _encodingType: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 		}
 
@@ -645,219 +661,14 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-		);
-
-		// throw e;
-		return;
-	}
-	catch (FFMpegURLNotFound &e)
-	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-		);
-
-		try
-		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder ||
-				_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				// 2020-10-25: Added also LiveProxy to be here, in case of
-				// LiveProxy and URL not found error
-				//	does not have sense to retry, we need the generation of a
-				// new URL (restream-auto case)
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
-			);
-
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro PunctualError is used because, in case it always happens,
-			// the encoding will never reach a final state
-			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::EncodingError::PunctualError, // ErrorBeforeEncoding,
-				false,											 // isIngestionJobFinished: this field is not used by
-					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
-				forceEncodingToBeFailed
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			);
-		}
-
-		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
-
-			*_status = EncodingJobStatus::Free;
-		}
-
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished (url not found)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-		);
-
-		// throw e;
-		return;
-	}
-	catch (runtime_error &e)
-	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-		);
-
-		try
-		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
-			);
-
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro PunctualError is used because, in case it always happens,
-			// the encoding will never reach a final state
-			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::EncodingError::PunctualError, // ErrorBeforeEncoding,
-				false,											 // isIngestionJobFinished: this field is not used by
-					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
-				forceEncodingToBeFailed
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			);
-		}
-
-		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
-
-			*_status = EncodingJobStatus::Free;
-		}
-
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-		);
-
-		// throw e;
-		return;
-	}
-	catch (exception &e)
-	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-		);
-
-		try
-		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
-			);
-
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro PunctualError is used because, in case it always happens,
-			// the encoding will never reach a final state
-			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::EncodingError::PunctualError, // ErrorBeforeEncoding,
-				false,											 // isIngestionJobFinished: this field is not used by
-					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
-				forceEncodingToBeFailed
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			);
-		}
-
-		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
-
-			*_status = EncodingJobStatus::Free;
-		}
-
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"EncoderProxy finished"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		// throw e;
@@ -1009,124 +820,45 @@ void EncoderProxy::operator()()
 		}
 		else
 		{
-			string errorMessage = string("Wrong EncodingType") + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", EncodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType);
-
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"Wrong EncodingType"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", EncodingType: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
-		);
-
-		if (stagingEncodedAssetPathName != "" && fs::exists(stagingEncodedAssetPathName))
-		{
-			_logger->error(
-				__FILEREF__ + "Remove" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
-			);
-
-			try
-			{
-				_logger->info(__FILEREF__ + "remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
-				fs::remove_all(stagingEncodedAssetPathName);
-			}
-			catch (runtime_error &er)
-			{
-				_logger->error(
-					__FILEREF__ + "remove FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " +
-					to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-					", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName + ", er.what(): " + er.what()
-				);
-			}
-		}
-
-		try
-		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
-			);
-
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro PunctualError is used because, in case it always happens,
-			// the encoding will never reach a final state
-			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::EncodingError::PunctualError, // ErrorBeforeEncoding,
-				false,											 // isIngestionJobFinished: this field is not used by
-					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
-				forceEncodingToBeFailed
-			);
-		}
-		catch (...)
-		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-			);
-		}
-
-		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
-
-			*_status = EncodingJobStatus::Free;
-		}
-
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
-		);
-
-		// throw e;
-		return;
-	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + MMSEngineDBFacade::toString(_encodingItem->_encodingType) + ": " + e.what() +
-			", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		SPDLOG_ERROR(
+			"{}: {}"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey,
+			_encodingItem->_encodingJobKey
 		);
 
 		if (stagingEncodedAssetPathName != "" && fs::exists(stagingEncodedAssetPathName))
 		{
-			_logger->error(
-				__FILEREF__ + "Remove" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName
+			SPDLOG_ERROR(
+				"Remove"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
 
-			_logger->info(__FILEREF__ + "remove" + ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName);
+			SPDLOG_INFO(
+				"remove"
+				", stagingEncodedAssetPathName: {}",
+				stagingEncodedAssetPathName
+			);
 			fs::remove_all(stagingEncodedAssetPathName);
 		}
 
@@ -1144,11 +876,15 @@ void EncoderProxy::operator()()
 				forceEncodingToBeFailed = false;
 			}
 
-			_logger->info(
-				__FILEREF__ + "updateEncodingJob PunctualError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-				", forceEncodingToBeFailed: " + to_string(forceEncodingToBeFailed)
+			SPDLOG_INFO(
+				"updateEncodingJob PunctualError"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", _encodingType: {}"
+				", forceEncodingToBeFailed: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), forceEncodingToBeFailed
 			);
 
 			// in case of HighAvailability of the liveRecording, only the main
@@ -1168,10 +904,14 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			_logger->error(
-				__FILEREF__ + "updateEncodingJob PunctualError FAILED" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+			SPDLOG_ERROR(
+				"updateEncodingJob PunctualError FAILED"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", _encodingType: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 		}
 
@@ -1181,10 +921,14 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"EncoderProxy finished"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		// throw e;
@@ -1193,11 +937,15 @@ void EncoderProxy::operator()()
 
 	try
 	{
-		_logger->info(
-			__FILEREF__ + "updateEncodingJob NoError" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", isIngestionJobCompleted: " + to_string(isIngestionJobCompleted) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"updateEncodingJob NoError"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", isIngestionJobCompleted: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, isIngestionJobCompleted,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		_mmsEngineDBFacade->updateEncodingJob(
@@ -1206,9 +954,12 @@ void EncoderProxy::operator()()
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "updateEncodingJob failed: " + e.what() + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+		SPDLOG_ERROR(
+			"updateEncodingJob failed: {}"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 		);
 
 		{
@@ -1217,10 +968,14 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		_logger->info(
-			__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"EncoderProxy finished"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _encodingType: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey,
+			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
 		// throw e;
@@ -1233,11 +988,15 @@ void EncoderProxy::operator()()
 		*_status = EncodingJobStatus::Free;
 	}
 
-	_logger->info(
-		__FILEREF__ + "EncoderProxy finished" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", _encodingType: " + MMSEngineDBFacade::toString(_encodingItem->_encodingType) +
-		", _ingestedParametersRoot: " + JSONUtils::toString(_encodingItem->_ingestedParametersRoot)
+	SPDLOG_INFO(
+		"EncoderProxy finished"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", _encodingType: {}"
+		", _ingestedParametersRoot: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType),
+		JSONUtils::toString(_encodingItem->_ingestedParametersRoot)
 	);
 }
 
@@ -1332,33 +1091,39 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 	}
 	catch (ServerNotReachable e)
 	{
-		_logger->error(
-			__FILEREF__ + "Encoder is not reachable, is it down?" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() :
-			// "")
+		SPDLOG_ERROR(
+			"Encoder is not reachable, is it down?"
+			", _proxyIdentifier: {}"
+			", encodingJobKey: {}"
+			", ffmpegEncoderURL: {}"
+			", exception: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
 		);
 
 		throw EncoderNotReachable();
 	}
 	catch (runtime_error e)
 	{
-		_logger->error(
-			__FILEREF__ + "Status URL failed (exception)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() :
-			// "")
+		SPDLOG_ERROR(
+			"Status URL failed"
+			", _proxyIdentifier: {}"
+			", encodingJobKey: {}"
+			", ffmpegEncoderURL: {}"
+			", exception: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception e)
 	{
-		_logger->error(
-			__FILEREF__ + "Status URL failed (exception)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", ffmpegEncoderURL: " + ffmpegEncoderURL + ", exception: " + e.what()
-			// + ", response.str(): " + (responseInitialized ? response.str() :
-			// "")
+		SPDLOG_ERROR(
+			"Status URL failed"
+			", _proxyIdentifier: {}"
+			", encodingJobKey: {}"
+			", ffmpegEncoderURL: {}"
+			", exception: {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
 		);
 
 		throw e;
@@ -1381,10 +1146,15 @@ string EncoderProxy::generateMediaMetadataToIngest(
 		string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
 		if (fileFormatSpecifiedByUser != fileFormat)
 		{
-			string errorMessage = string("Wrong fileFormat") + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", fileFormatSpecifiedByUser: " + fileFormatSpecifiedByUser +
-								  ", fileFormat: " + fileFormat;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"Wrong fileFormat"
+				", _proxyIdentifier: {}"
+				", ingestionJobKey: {}"
+				", fileFormatSpecifiedByUser: {}"
+				", fileFormat: {}",
+				_proxyIdentifier, ingestionJobKey, fileFormatSpecifiedByUser, fileFormat
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1483,13 +1253,13 @@ string EncoderProxy::generateMediaMetadataToIngest(
 		parametersRoot[field] = crossReferencesRoot;
 	}
 
-	string mediaMetadata;
-	{
-		mediaMetadata = JSONUtils::toString(parametersRoot);
-	}
+	string mediaMetadata = JSONUtils::toString(parametersRoot);
 
-	_logger->info(
-		__FILEREF__ + "Media metadata generated" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaMetadata: " + mediaMetadata
+	SPDLOG_INFO(
+		"Media metadata generated"
+		", ingestionJobKey: {}"
+		", mediaMetadata: {}",
+		ingestionJobKey, mediaMetadata
 	);
 
 	return mediaMetadata;
@@ -1497,12 +1267,11 @@ string EncoderProxy::generateMediaMetadataToIngest(
 
 void EncoderProxy::encodingImageFormatValidation(string newFormat)
 {
-	auto logger = spdlog::get("mmsEngineService");
 	if (newFormat != "JPG" && newFormat != "GIF" && newFormat != "PNG")
 	{
 		string errorMessage = __FILEREF__ + "newFormat is wrong" + ", newFormat: " + newFormat;
 
-		logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1510,7 +1279,6 @@ void EncoderProxy::encodingImageFormatValidation(string newFormat)
 
 Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(string sNewInterlaceType)
 {
-	auto logger = spdlog::get("mmsEngineService");
 	Magick::InterlaceType interlaceType;
 
 	if (sNewInterlaceType == "NoInterlace")
@@ -1525,7 +1293,7 @@ Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(string 
 	{
 		string errorMessage = __FILEREF__ + "sNewInterlaceType is wrong" + ", sNewInterlaceType: " + sNewInterlaceType;
 
-		logger->error(errorMessage);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1581,30 +1349,29 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 				}
-				catch (runtime_error &e)
-				{
-					_logger->error(
-						__FILEREF__ + "appendIngestionJobErrorMessage failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-					);
-				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "appendIngestionJobErrorMessage failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_ERROR(
+						"appendIngestionJobErrorMessage failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 					);
 				}
 			}
 
 			if (completedWithError)
 			{
-				string errorMessage = __FILEREF__ + "Encoding failed (look the Transcoder logs)" +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-									  ", _currentUsedFFMpegEncoderHost: " + _currentUsedFFMpegEncoderHost +
-									  ", encodingErrorMessage: " + regex_replace(encodingErrorMessage, regex("\n"), " ");
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Encoding failed (look the Transcoder logs)"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", _currentUsedFFMpegEncoderHost: {}"
+					", encodingErrorMessage: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost,
+					regex_replace(encodingErrorMessage, regex("\n"), " ")
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1613,24 +1380,22 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			{
 				try
 				{
-					_logger->info(
-						__FILEREF__ + "updateEncodingJobProgress" + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-						", encodingProgress: " + to_string(encodingProgress)
+					SPDLOG_INFO(
+						"updateEncodingJobProgress"
+						", encodingJobKey: {}"
+						", encodingProgress: {}",
+						_encodingItem->_encodingJobKey, encodingProgress
 					);
 					_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
 				}
-				catch (runtime_error &e)
-				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-					);
-				}
 				catch (exception &e)
 				{
-					_logger->error(
-						__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-						", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+					SPDLOG_ERROR(
+						"updateEncodingJobProgress failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 
@@ -1710,21 +1475,29 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 		{
 			encodingStatusFailures++;
 
-			_logger->error(
-				__FILEREF__ + "getEncodingStatus failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", encodingStatusFailures: " + to_string(encodingStatusFailures) +
-				", maxConsecutiveEncodingStatusFailures: " + to_string(maxConsecutiveEncodingStatusFailures)
+			SPDLOG_ERROR(
+				"getEncodingStatus failed"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", encodingStatusFailures: {}"
+				", maxConsecutiveEncodingStatusFailures: {}",
+				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingStatusFailures, maxConsecutiveEncodingStatusFailures
 			);
 
 			if (encodingStatusFailures >= maxConsecutiveEncodingStatusFailures)
 			{
-				string errorMessage = string("getEncodingStatus too many failures") + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-									  ", encodingFinished: " + to_string(encodingFinished) +
-									  ", encodingStatusFailures: " + to_string(encodingStatusFailures) +
-									  ", maxConsecutiveEncodingStatusFailures: " + to_string(maxConsecutiveEncodingStatusFailures);
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"getEncodingStatus too many failures"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", encodingFinished: {}"
+					", encodingStatusFailures: {}"
+					", maxConsecutiveEncodingStatusFailures: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingFinished, encodingStatusFailures,
+					maxConsecutiveEncodingStatusFailures
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}

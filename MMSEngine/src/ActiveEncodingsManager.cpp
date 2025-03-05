@@ -15,32 +15,37 @@
 #include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "catralibraries/System.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 
 ActiveEncodingsManager::ActiveEncodingsManager(
 	json configuration, string processorMMS, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-	shared_ptr<MMSStorage> mmsStorage, shared_ptr<spdlog::logger> logger
+	shared_ptr<MMSStorage> mmsStorage
 )
 {
-	_logger = logger;
 	_configuration = configuration;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 	_mmsStorage = mmsStorage;
 
-	_encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_mmsEngineDBFacade, _configuration, _logger);
+	_encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_mmsEngineDBFacade, _configuration);
 
 	_hostName = System::getHostName();
 
 	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 0);
-	_logger->info(
-		__FILEREF__ + "Configuration item" +
-		", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
+	SPDLOG_INFO(
+		"Configuration item"
+		", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: {}",
+		_maxSecondsToWaitUpdateEncodingJobLock
 	);
 
 	{
 		shared_ptr<long> faceRecognitionNumber = make_shared<long>(0);
 		int maxFaceRecognitionNumber = JSONUtils::asInt(_configuration["mms"], "maxFaceRecognitionNumber", 0);
-		_logger->info(__FILEREF__ + "Configuration item" + ", mms->maxFaceRecognitionNumber: " + to_string(maxFaceRecognitionNumber));
+		SPDLOG_INFO(
+			"Configuration item"
+			", mms->maxFaceRecognitionNumber: {}",
+			maxFaceRecognitionNumber
+		);
 		maxFaceRecognitionNumber += (MAXHIGHENCODINGSTOBEMANAGED + MAXMEDIUMENCODINGSTOBEMANAGED + MAXLOWENCODINGSTOBEMANAGED);
 
 		int lastProxyIdentifier = 0;
@@ -49,7 +54,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		{
 			encodingJob._encoderProxy.init(
 				lastProxyIdentifier++, &_mtEncodingJobs, _configuration, multiEventsSet, _mmsEngineDBFacade, _mmsStorage, _encodersLoadBalancer,
-				faceRecognitionNumber, maxFaceRecognitionNumber, _logger
+				faceRecognitionNumber, maxFaceRecognitionNumber
 			);
 		}
 
@@ -57,7 +62,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		{
 			encodingJob._encoderProxy.init(
 				lastProxyIdentifier++, &_mtEncodingJobs, _configuration, multiEventsSet, _mmsEngineDBFacade, _mmsStorage, _encodersLoadBalancer,
-				faceRecognitionNumber, maxFaceRecognitionNumber, _logger
+				faceRecognitionNumber, maxFaceRecognitionNumber
 			);
 		}
 
@@ -65,7 +70,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 		{
 			encodingJob._encoderProxy.init(
 				lastProxyIdentifier++, &_mtEncodingJobs, _configuration, multiEventsSet, _mmsEngineDBFacade, _mmsStorage, _encodersLoadBalancer,
-				faceRecognitionNumber, maxFaceRecognitionNumber, _logger
+				faceRecognitionNumber, maxFaceRecognitionNumber
 			);
 		}
 	}
@@ -149,7 +154,7 @@ void ActiveEncodingsManager::operator()()
 		{
 			if (isProcessorShutdown())
 			{
-				_logger->info(__FILEREF__ + "ActiveEncodingsManager was shutdown");
+				SPDLOG_INFO("ActiveEncodingsManager was shutdown");
 
 				shutdown = true;
 
@@ -158,7 +163,7 @@ void ActiveEncodingsManager::operator()()
 
 			unique_lock<mutex> locker(_mtEncodingJobs);
 
-			// _logger->info("Reviewing current Encoding Jobs...");
+			// info("Reviewing current Encoding Jobs...");
 
 			_cvAddedEncodingJob.wait_for(locker, secondsToBlock);
 			/*
@@ -173,7 +178,7 @@ void ActiveEncodingsManager::operator()()
 
 			chrono::system_clock::time_point startEvent = chrono::system_clock::now();
 
-			_logger->info(__FILEREF__ + "Begin checking encodingJobs");
+			SPDLOG_INFO("Begin checking encodingJobs");
 
 			for (MMSEngineDBFacade::EncodingPriority encodingPriority : sortedEncodingPriorities)
 			{
@@ -182,14 +187,14 @@ void ActiveEncodingsManager::operator()()
 
 				if (encodingPriority == MMSEngineDBFacade::EncodingPriority::High)
 				{
-					// _logger->info(__FILEREF__ + "Processing the high encodings...");
+					// info(__FILEREF__ + "Processing the high encodings...");
 
 					encodingJobs = _highPriorityEncodingJobs;
 					maxEncodingsToBeManaged = MAXHIGHENCODINGSTOBEMANAGED;
 				}
 				else if (encodingPriority == MMSEngineDBFacade::EncodingPriority::Medium)
 				{
-					// _logger->info(__FILEREF__ + "Processing the default
+					// info(__FILEREF__ + "Processing the default
 					// encodings...");
 
 					encodingJobs = _mediumPriorityEncodingJobs;
@@ -198,7 +203,7 @@ void ActiveEncodingsManager::operator()()
 				else // if (encodingPriority ==
 					 // MMSEngineDBFacade::EncodingPriority::Low)
 				{
-					// _logger->info(__FILEREF__ + "Processing the low encodings...");
+					// info(__FILEREF__ + "Processing the low encodings...");
 
 					encodingJobs = _lowPriorityEncodingJobs;
 					maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
@@ -252,7 +257,7 @@ void ActiveEncodingsManager::operator()()
 									encodingJob->_encoderProxy
 									.getEncodingProgress();
 
-								_logger->info(__FILEREF__ + "updateEncodingJobProgress"
+								info(__FILEREF__ + "updateEncodingJobProgress"
 										+ ", encodingJobKey: "
 											+
 						to_string(encodingJob->_encodingItem->_encodingJobKey)
@@ -268,13 +273,13 @@ void ActiveEncodingsManager::operator()()
 							}
 							catch(runtime_error& e)
 							{
-								_logger->error(__FILEREF__ + "getEncodingProgress failed"
+								error(__FILEREF__ + "getEncodingProgress failed"
 									+ ", runtime_error: " + e.what()
 								);
 							}
 							catch(exception& e)
 							{
-								_logger->error(__FILEREF__ + "getEncodingProgress failed");
+								error(__FILEREF__ + "getEncodingProgress failed");
 							}
 						}
 						*/
@@ -284,30 +289,36 @@ void ActiveEncodingsManager::operator()()
 							encodingJob->_encodingItem->_encodingType != MMSEngineDBFacade::EncodingType::VODProxy &&
 							chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart) > chrono::hours(24))
 						{
-							_logger->error(
-								__FILEREF__ + "EncodingJob is not finishing" + ", @MMS statistics@ - elapsed (hours): @" +
-								to_string(chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count()
-								) +
-								"@" + ", workspace: " + encodingJob->_encodingItem->_workspace->_name +
-								", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-								", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority)) +
-								", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType) +
-								", encodingJob->_status: " + EncoderProxy::toString(encodingJob->_status)
+							SPDLOG_ERROR(
+								"EncodingJob is not finishing"
+								", @MMS statistics@ - elapsed (hours): @{}@"
+								", workspace: {}"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", _encodingPriority: {}"
+								", _encodingType: {}"
+								", encodingJob->_status: {}",
+								chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count(),
+								encodingJob->_encodingItem->_workspace->_name, encodingJob->_encodingItem->_ingestionJobKey,
+								encodingJob->_encodingItem->_encodingJobKey, static_cast<int>(encodingJob->_encodingItem->_encodingPriority),
+								MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType), EncoderProxy::toString(encodingJob->_status)
 							);
 						}
 						else
 						{
-							_logger->info(
-								__FILEREF__ + "EncodingJob still running" + ", elapsed (minutes): " +
-								to_string(chrono::duration_cast<chrono::minutes>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count()
-								) +
-								", workspace: " + encodingJob->_encodingItem->_workspace->_name +
-								", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-								", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority)) +
-								", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType) +
-								", encodingJob->_status: " + EncoderProxy::toString(encodingJob->_status)
+							SPDLOG_INFO(
+								"EncodingJob still running"
+								", @MMS statistics@ - elapsed (hours): @{}@"
+								", workspace: {}"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", _encodingPriority: {}"
+								", _encodingType: {}"
+								", encodingJob->_status: {}",
+								chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart).count(),
+								encodingJob->_encodingItem->_workspace->_name, encodingJob->_encodingItem->_ingestionJobKey,
+								encodingJob->_encodingItem->_encodingJobKey, static_cast<int>(encodingJob->_encodingItem->_encodingPriority),
+								MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType), EncoderProxy::toString(encodingJob->_status)
 							);
 						}
 					}
@@ -318,83 +329,92 @@ void ActiveEncodingsManager::operator()()
 
 						chrono::system_clock::time_point processingItemStart = chrono::system_clock::now();
 
-						_logger->info(
-							__FILEREF__ + "processEncodingJob begin" + ", workspace: " + encodingJob->_encodingItem->_workspace->_name +
-							", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey) +
-							", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-							", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority)) +
-							", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+						SPDLOG_INFO(
+							"processEncodingJob begin"
+							", workspace: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", _encodingPriority: {}"
+							", _encodingType: {}",
+							encodingJob->_encodingItem->_workspace->_name, encodingJob->_encodingItem->_ingestionJobKey,
+							encodingJob->_encodingItem->_encodingJobKey, static_cast<int>(encodingJob->_encodingItem->_encodingPriority),
+							MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
 						);
 
 						try
 						{
 							processEncodingJob(encodingJob);
 
-							_logger->info(
-								__FILEREF__ + "processEncodingJob done" + ", @MMS statistics@ - elapsed (seconds): @" +
-								to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@" +
-								", workspace: " + encodingJob->_encodingItem->_workspace->_name +
-								", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-								", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority)) +
-								", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
-							);
-						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "processEncodingJob failed" + ", @MMS statistics@ - elapsed (seconds): @" +
-								to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@" +
-								", workspace: " + encodingJob->_encodingItem->_workspace->_name +
-								", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-								", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority)) +
-								", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType) +
-								", runtime_error: " + e.what()
+							SPDLOG_INFO(
+								"processEncodingJob done"
+								", @MMS statistics@ - elapsed (seconds): @{}@"
+								", workspace: {}"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", _encodingPriority: {}"
+								", _encodingType: {}",
+								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count(),
+								encodingJob->_encodingItem->_workspace->_name, encodingJob->_encodingItem->_ingestionJobKey,
+								encodingJob->_encodingItem->_encodingJobKey, static_cast<int>(encodingJob->_encodingItem->_encodingPriority),
+								MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
 							);
 						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "processEncodingJob failed" + ", @MMS statistics@ - elapsed (seconds): @" +
-								to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count()) + "@" +
-								", workspace: " + encodingJob->_encodingItem->_workspace->_name +
-								", _ingestionJobKey: " + to_string(encodingJob->_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-								", _encodingPriority: " + to_string(static_cast<int>(encodingJob->_encodingItem->_encodingPriority)) +
-								", _encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+							SPDLOG_ERROR(
+								"processEncodingJob failed"
+								", @MMS statistics@ - elapsed (seconds): @{}@"
+								", workspace: {}"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", _encodingPriority: {}"
+								", _encodingType: {}",
+								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - processingItemStart).count(),
+								encodingJob->_encodingItem->_workspace->_name, encodingJob->_encodingItem->_ingestionJobKey,
+								encodingJob->_encodingItem->_encodingJobKey, static_cast<int>(encodingJob->_encodingItem->_encodingPriority),
+								MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
 							);
 						}
 					}
 				}
 
-				_logger->info(
-					__FILEREF__ + "Processing encoding jobs statistics" + ", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority) +
-					", maxEncodingsToBeManaged: " + to_string(maxEncodingsToBeManaged) + ", freeEncodingJobsNumber: " +
-					to_string(freeEncodingJobsNumber) + ", runningEncodingJobsNumber: " + to_string(runningEncodingJobsNumber) +
-					", goingToRunEncodingJobsNumber: " + to_string(goingToRunEncodingJobsNumber) +
-					", toBeRunEncodingJobsNumber: " + to_string(toBeRunEncodingJobsNumber)
+				SPDLOG_INFO(
+					"Processing encoding jobs statistics"
+					", encodingPriority: {}"
+					", maxEncodingsToBeManaged: {}"
+					", freeEncodingJobsNumber: {}"
+					", runningEncodingJobsNumber: {}"
+					", goingToRunEncodingJobsNumber: {}"
+					", toBeRunEncodingJobsNumber: {}",
+					MMSEngineDBFacade::toString(encodingPriority), maxEncodingsToBeManaged, freeEncodingJobsNumber, runningEncodingJobsNumber,
+					goingToRunEncodingJobsNumber, toBeRunEncodingJobsNumber
 				);
 
 				if (freeEncodingJobsNumber == 0)
-					_logger->warn(
-						__FILEREF__ + "maxEncodingsToBeManaged should to be increased" + ", encodingPriority: " +
-						MMSEngineDBFacade::toString(encodingPriority) + ", maxEncodingsToBeManaged: " + to_string(maxEncodingsToBeManaged) +
-						", freeEncodingJobsNumber: " + to_string(freeEncodingJobsNumber) + ", runningEncodingJobsNumber: " +
-						to_string(runningEncodingJobsNumber) + ", goingToRunEncodingJobsNumber: " + to_string(goingToRunEncodingJobsNumber) +
-						", toBeRunEncodingJobsNumber: " + to_string(toBeRunEncodingJobsNumber)
+					SPDLOG_WARN(
+						"maxEncodingsToBeManaged should to be increased"
+						", encodingPriority: {}"
+						", maxEncodingsToBeManaged: {}"
+						", freeEncodingJobsNumber: {}"
+						", runningEncodingJobsNumber: {}"
+						", goingToRunEncodingJobsNumber: {}"
+						", toBeRunEncodingJobsNumber: {}",
+						MMSEngineDBFacade::toString(encodingPriority), maxEncodingsToBeManaged, freeEncodingJobsNumber, runningEncodingJobsNumber,
+						goingToRunEncodingJobsNumber, toBeRunEncodingJobsNumber
 					);
 			}
 
 			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
-			_logger->info(
-				__FILEREF__ + "End checking encodingJobs" + ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+			SPDLOG_INFO(
+				"End checking encodingJobs"
+				", @MMS statistics@ - elapsed in seconds: @{}@",
+				elapsedInSeconds
 			);
 		}
 		catch (exception &e)
 		{
-			_logger->info(__FILEREF__ + "ActiveEncodingsManager loop failed");
+			SPDLOG_INFO("ActiveEncodingsManager loop failed");
 		}
 	}
 }
@@ -426,10 +446,11 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 	{
 		encodingJob->_encoderProxy.setEncodingData(&(encodingJob->_status), encodingJob->_encodingItem);
 
-		_logger->info(
-			__FILEREF__ + "Creating encoderVideoAudioProxy thread" +
-			", encodingJob->_encodingItem->_encodingJobKey: " + to_string(encodingJob->_encodingItem->_encodingJobKey) +
-			", encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"Creating encoderVideoAudioProxy thread"
+			", encodingJob->_encodingItem->_encodingJobKey: {}"
+			", encodingType: {}",
+			encodingJob->_encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
 		);
 		thread encoderVideoAudioProxyThread(ref(encodingJob->_encoderProxy));
 		encoderVideoAudioProxyThread.detach();
@@ -443,9 +464,12 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 	}
 	default:
 	{
-		string errorMessage = __FILEREF__ + "Encoding not managed for the EncodingType" + ", encodingJob->_encodingItem->_encodingType: " +
-							  MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType);
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Encoding not managed for the EncodingType"
+			", encodingJob->_encodingItem->_encodingType: {}",
+			MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -453,10 +477,11 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 
 	chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 	long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
-	_logger->warn(
-		__FILEREF__ + "processEncodingJob" +
-		", encodingJob->_encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType) +
-		", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+	SPDLOG_WARN(
+		"processEncodingJob"
+		", encodingJob->_encodingItem->_encodingType: {}"
+		", @MMS statistics@ - elapsed in seconds: @{}@",
+		MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType), elapsedInSeconds
 	);
 }
 
@@ -500,20 +525,26 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 
 	if (encodingJobIndex == maxEncodingsToBeManaged)
 	{
-		_logger->warn(
-			__FILEREF__ + "Max Encodings Manager capacity reached" + ", workspace->_name: " + encodingItem->_workspace->_name +
-			", ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-			", encodingPriority: " + MMSEngineDBFacade::toString(encodingItem->_encodingPriority) +
-			", maxEncodingsToBeManaged: " + to_string(maxEncodingsToBeManaged)
+		SPDLOG_WARN(
+			"Max Encodings Manager capacity reached"
+			", workspace->_name: {}"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", encodingPriority: {}"
+			", maxEncodingsToBeManaged: {}",
+			encodingItem->_workspace->_name, encodingItem->_ingestionJobKey, encodingItem->_encodingJobKey,
+			MMSEngineDBFacade::toString(encodingItem->_encodingPriority), maxEncodingsToBeManaged
 		);
 
 		throw MaxEncodingsManagerCapacityReached();
 	}
 
-	_logger->info(
-		__FILEREF__ + "Encoding Job Key added" + ", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name +
-		", encodingItem->_ingestionJobKey: " + to_string(encodingItem->_ingestionJobKey) +
-		", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey)
+	SPDLOG_INFO(
+		"Encoding Job Key added"
+		", encodingItem->_workspace->_name: {}"
+		", encodingItem->_ingestionJobKey: {}"
+		", encodingItem->_encodingJobKey: {}",
+		encodingItem->_workspace->_name, encodingItem->_ingestionJobKey, encodingItem->_encodingJobKey
 	);
 }
 
@@ -526,12 +557,15 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 	int encodingItemsNumber = vEncodingItems.size();
 	for (shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem : vEncodingItems)
 	{
-		_logger->info(
-			__FILEREF__ + "Adding Encoding Item " + to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber) +
-			", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name + ", encodingItem->_ingestionJobKey: " +
-			to_string(encodingItem->_ingestionJobKey) + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-			", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority)) +
-			", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
+		SPDLOG_INFO(
+			"Adding Encoding Item {}/{}"
+			", encodingItem->_workspace->_name: {}"
+			", encodingItem->_ingestionJobKey: {}"
+			", encodingItem->_encodingJobKey: {}"
+			", encodingItem->_encodingPriority: {}"
+			", encodingItem->_encodingType: {}",
+			encodingItemIndex, encodingItemsNumber, encodingItem->_workspace->_name, encodingItem->_ingestionJobKey, encodingItem->_encodingJobKey,
+			static_cast<int>(encodingItem->_encodingPriority), MMSEngineDBFacade::toString(encodingItem->_encodingType)
 		);
 
 		try
@@ -541,12 +575,16 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 		}
 		catch (MaxEncodingsManagerCapacityReached &e)
 		{
-			_logger->info(
-				__FILEREF__ + "Max Encodings Manager Capacity reached " + to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber) +
-				", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name + ", encodingItem->_ingestionJobKey: " +
-				to_string(encodingItem->_ingestionJobKey) + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-				", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority)) +
-				", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
+			SPDLOG_INFO(
+				"Max Encodings Manager Capacity reached {}/{}"
+				", encodingItem->_workspace->_name: {}"
+				", encodingItem->_ingestionJobKey: {}"
+				", encodingItem->_encodingJobKey: {}"
+				", encodingItem->_encodingPriority: {}"
+				", encodingItem->_encodingType: {}",
+				encodingItemIndex, encodingItemsNumber, encodingItem->_workspace->_name, encodingItem->_ingestionJobKey,
+				encodingItem->_encodingJobKey, static_cast<int>(encodingItem->_encodingPriority),
+				MMSEngineDBFacade::toString(encodingItem->_encodingType)
 			);
 
 			_mmsEngineDBFacade->updateEncodingJob(
@@ -558,12 +596,16 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 		}
 		catch (exception &e)
 		{
-			_logger->error(
-				__FILEREF__ + "addEncodingItem failed " + to_string(encodingItemIndex) + "/" + to_string(encodingItemsNumber) +
-				", encodingItem->_workspace->_name: " + encodingItem->_workspace->_name + ", encodingItem->_ingestionJobKey: " +
-				to_string(encodingItem->_ingestionJobKey) + ", encodingItem->_encodingJobKey: " + to_string(encodingItem->_encodingJobKey) +
-				", encodingItem->_encodingPriority: " + to_string(static_cast<int>(encodingItem->_encodingPriority)) +
-				", encodingItem->_encodingType: " + MMSEngineDBFacade::toString(encodingItem->_encodingType)
+			SPDLOG_ERROR(
+				"addEncodingItem failed {}/{}"
+				", encodingItem->_workspace->_name: {}"
+				", encodingItem->_ingestionJobKey: {}"
+				", encodingItem->_encodingJobKey: {}"
+				", encodingItem->_encodingPriority: {}"
+				", encodingItem->_encodingType: {}",
+				encodingItemIndex, encodingItemsNumber, encodingItem->_workspace->_name, encodingItem->_ingestionJobKey,
+				encodingItem->_encodingJobKey, static_cast<int>(encodingItem->_encodingPriority),
+				MMSEngineDBFacade::toString(encodingItem->_encodingType)
 			);
 			_mmsEngineDBFacade->updateEncodingJob(
 				encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,

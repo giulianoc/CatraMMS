@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/StringUtils.h"
+#include "spdlog/spdlog.h"
 #include <fstream>
 #include <sstream>
 
@@ -1126,9 +1127,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				}
 				else
 				{
-					string errorMessage =
-						__FILEREF__ + "Wrong predefinedProfileDirectoryPath" + ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"Wrong predefinedProfileDirectoryPath"
+						", predefinedProfileDirectoryPath: {}",
+						predefinedProfileDirectoryPath
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					continue;
 				}
@@ -1142,9 +1146,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						if (entry.path().filename().string().find(".json") == string::npos)
 						{
-							string errorMessage = __FILEREF__ + "Wrong filename (encoding profile) extention" +
-												  ", entry.path().filename(): " + entry.path().filename().string();
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"Wrong filename (encoding profile) extention"
+								", entry.path().filename(): {}",
+								entry.path().filename().string()
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							continue;
 						}
@@ -1157,8 +1164,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonProfile = buffer.str();
 
-							_logger->info(
-								__FILEREF__ + "Reading profile" + ", profile pathname: " + entry.path().string() + ", profile: " + jsonProfile
+							SPDLOG_INFO(
+								"Reading profile"
+								", profile pathname: {}"
+								", profile: {}",
+								entry.path().string(), jsonProfile
 							);
 						}
 
@@ -1169,12 +1179,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 
-						_logger->info(
-							__FILEREF__ + "Encoding technology" + ", predefinedProfileDirectoryPath: " + predefinedProfileDirectoryPath +
-							", label: " + label + ", fileFormat: " +
-							fileFormat
-							// + ", fileFormatLowerCase: " + fileFormatLowerCase
-							+ ", deliveryTechnology: " + toString(deliveryTechnology)
+						SPDLOG_INFO(
+							"Encoding technology"
+							", predefinedProfileDirectoryPath: {}"
+							", label: {}"
+							", fileFormat: {}"
+							", deliveryTechnology: {}",
+							predefinedProfileDirectoryPath, label, fileFormat, toString(deliveryTechnology)
 						);
 
 						{
@@ -1217,9 +1228,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								);
 								if (rowsUpdated != 1)
 								{
-									string errorMessage = __FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) +
-														  ", sqlStatement: " + sqlStatement;
-									_logger->error(errorMessage);
+									string errorMessage = std::format(
+										"no update was done"
+										", rowsUpdated: {}"
+										", sqlStatement: {}",
+										rowsUpdated, sqlStatement
+									);
+									SPDLOG_ERROR(errorMessage);
 
 									throw runtime_error(errorMessage);
 								}
@@ -1261,15 +1276,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"listing directory failed"
+							", e.what(): {}",
+							e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
 					catch (exception &e)
 					{
-						string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"listing directory failed"
+							", e.what(): {}",
+							e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
@@ -1841,9 +1864,12 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						if (entry.path().filename().string().find(".json") == string::npos)
 						{
-							string errorMessage = __FILEREF__ + "Wrong filename (workflow) extention" +
-												  ", entry.path().filename(): " + entry.path().filename().string();
-							_logger->error(errorMessage);
+							string errorMessage = std::format(
+								"Wrong filename (workflow) extention"
+								", entry.path().filename(): {}",
+								entry.path().filename().string()
+							);
+							SPDLOG_ERROR(errorMessage);
 
 							continue;
 						}
@@ -1856,8 +1882,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonWorkflow = buffer.str();
 
-							_logger->info(
-								__FILEREF__ + "Reading workflow" + ", workflow pathname: " + entry.path().string() + ", workflow: " + jsonWorkflow
+							SPDLOG_ERROR(
+								"Reading workflow"
+								", workflow pathname: {}"
+								", workflow: {}",
+								entry.path().string(), jsonWorkflow
 							);
 						}
 
@@ -1870,15 +1899,23 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"listing directory failed"
+							", e.what(): {}",
+							e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
 					catch (exception &e)
 					{
-						string errorMessage = __FILEREF__ + "listing directory failed" + ", e.what(): " + e.what();
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"listing directory failed"
+							", e.what(): {}",
+							e.what()
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw e;
 					}
@@ -1887,13 +1924,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 		catch (runtime_error &e)
 		{
-			_logger->error(__FILEREF__ + "runtime_error" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(", e.what(): {}", e.what());
 
 			throw e;
 		}
 		catch (exception &e)
 		{
-			_logger->error(__FILEREF__ + "exception" + ", e.what(): " + e.what());
+			SPDLOG_ERROR(", e.what(): {}", e.what());
 
 			throw e;
 		}

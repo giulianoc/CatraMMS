@@ -16,6 +16,7 @@
 #include "JSONUtils.h"
 #include "MMSDeliveryAuthorization.h"
 #include "catralibraries/DateTime.h"
+#include "spdlog/spdlog.h"
 
 bool EncoderProxy::liveRecorder()
 {
@@ -29,10 +30,15 @@ bool EncoderProxy::liveRecorder()
 		field = "start";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", Field: " + field;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", Field: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -42,10 +48,15 @@ bool EncoderProxy::liveRecorder()
 		field = "end";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", Field: " + field;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", Field: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -76,11 +87,15 @@ bool EncoderProxy::liveRecorder()
 	{
 		if (utcRecordingPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)
 		{
-			_logger->info(
-				__FILEREF__ + "Too early to allocate a thread for recording" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", utcRecordingPeriodStart - utcNow: " + to_string(utcRecordingPeriodStart - utcNow) +
-				", _timeBeforeToPrepareResourcesInSeconds: " + to_string(_timeBeforeToPrepareResourcesInMinutes * 60)
+			SPDLOG_INFO(
+				"Too early to allocate a thread for recording"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", utcRecordingPeriodStart - utcNow: {}"
+				", _timeBeforeToPrepareResourcesInSeconds: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcRecordingPeriodStart - utcNow,
+				_timeBeforeToPrepareResourcesInMinutes * 60
 			);
 
 			// it is simulated a MaxConcurrentJobsReached to avoid to increase
@@ -93,11 +108,16 @@ bool EncoderProxy::liveRecorder()
 	{
 		if (utcRecordingPeriodEnd <= utcNow)
 		{
-			string errorMessage = __FILEREF__ + "Too late to activate the recording" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) + ", utcNow: " + to_string(utcNow);
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Too late to activate the recording"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", utcRecordingPeriodEnd: {}"
+				", utcNow: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcRecordingPeriodEnd, utcNow
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -158,9 +178,12 @@ bool EncoderProxy::liveRecorder()
 						}
 						catch (exception &ex)
 						{
-							_logger->error(
-								__FILEREF__ + "getAWSSignedURL failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", playURL: " + playURL
+							SPDLOG_ERROR(
+								"getAWSSignedURL failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", playURL: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, playURL
 							);
 
 							// throw e;
@@ -188,14 +211,19 @@ bool EncoderProxy::liveRecorder()
 							// string encodingParameters = JSONUtils::toString(
 							// 	_encodingItem->_encodingParametersRoot);
 
-							_logger->info(
-								__FILEREF__ + "updateOutputRtmpAndPlaURL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", awsChannelConfigurationLabel: " + awsChannelConfigurationLabel + ", awsChannelId: " + awsChannelId +
-								", rtmpURL: " + rtmpURL + ", playURL: " + playURL + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
-								// + ", encodingParameters: " +
-								// encodingParameters
+							SPDLOG_INFO(
+								"updateOutputRtmpAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", awsChannelConfigurationLabel: {}"
+								", awsChannelId: {}"
+								", rtmpURL: {}"
+								", playURL: {}"
+								", channelAlreadyReserved: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, awsChannelConfigurationLabel, awsChannelId, rtmpURL, playURL, channelAlreadyReserved
 							);
 
 							// update sia IngestionJob che EncodingJob
@@ -206,21 +234,14 @@ bool EncoderProxy::liveRecorder()
 							// 	_encodingItem->_encodingJobKey,
 							// 	encodingParameters);
 						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-							);
-
-							// throw e;
-						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -273,14 +294,15 @@ bool EncoderProxy::liveRecorder()
 					{
 						try
 						{
-							playURL =
-								MMSDeliveryAuthorization::getSignedCDN77URL(resourceURL, filePath, secureToken, cdn77ExpirationInMinutes, _logger);
+							playURL = MMSDeliveryAuthorization::getSignedCDN77URL(resourceURL, filePath, secureToken, cdn77ExpirationInMinutes);
 						}
 						catch (exception &ex)
 						{
-							_logger->error(
-								__FILEREF__ + "getSignedCDN77URL failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"getSignedCDN77URL failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 							);
 
 							// throw e;
@@ -306,34 +328,37 @@ bool EncoderProxy::liveRecorder()
 
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "updateOutputRtmpAndPlaURL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", cdn77ChannelConfigurationLabel: " + cdn77ChannelConfigurationLabel + ", reservedLabel: " + reservedLabel +
-								", rtmpURL: " + rtmpURL + ", resourceURL: " + resourceURL + ", filePath: " + filePath + ", secureToken: " +
-								secureToken + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved) + ", playURL: " + playURL
+							SPDLOG_INFO(
+								"updateOutputRtmpAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", cdn77ChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", rtmpURL: {}"
+								", resourceURL: {}"
+								", filePath: {}"
+								", secureToken: {}"
+								", channelAlreadyReserved: {}"
+								", playURL: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, cdn77ChannelConfigurationLabel, reservedLabel, rtmpURL, resourceURL, filePath,
+								secureToken, channelAlreadyReserved, playURL
 							);
 
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
 							);
 						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-							);
-
-							// throw e;
-						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -400,33 +425,33 @@ bool EncoderProxy::liveRecorder()
 
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "updateOutputRtmpAndPlaURL" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", rtmpChannelConfigurationLabel: " + rtmpChannelConfigurationLabel + ", reservedLabel: " + reservedLabel +
-								", rtmpURL: " + rtmpURL + ", channelAlreadyReserved: " + to_string(channelAlreadyReserved) + ", playURL: " + playURL
+							SPDLOG_INFO(
+								"updateOutputRtmpAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", rtmpChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", rtmpURL: {}"
+								", channelAlreadyReserved: {}"
+								", playURL: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
 							);
 
 							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
 							);
 						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-							);
-
-							// throw e;
-						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -567,17 +592,27 @@ bool EncoderProxy::liveRecorder()
 
 						try
 						{
-							_logger->info(
-								__FILEREF__ + "updateOutputHLSDetails" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								", workspaceKey: " + to_string(_encodingItem->_workspace->_workspaceKey) + ", ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								", hlsChannelConfigurationLabel: " + hlsChannelConfigurationLabel + ", reservedLabel: " + reservedLabel +
-								", outputIndex: " + to_string(outputIndex) +
-								", monitorVirtualVODOutputRootIndex: " + to_string(monitorVirtualVODOutputRootIndex) +
-								", deliveryCode: " + to_string(deliveryCode) + ", segmentDurationInSeconds: " + to_string(segmentDurationInSeconds) +
-								", playlistEntriesNumber: " + to_string(playlistEntriesNumber) + ", manifestDirectoryPath: " + manifestDirectoryPath +
-								", manifestFileName: " + manifestFileName + ", otherOutputOptions: " + otherOutputOptions +
-								", channelAlreadyReserved: " + to_string(channelAlreadyReserved)
+							SPDLOG_INFO(
+								"updateOutputHLSDetails"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", hlsChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", outputIndex: {}"
+								", monitorVirtualVODOutputRootIndex: {}"
+								", deliveryCode: {}"
+								", segmentDurationInSeconds: {}"
+								", playlistEntriesNumber: {}"
+								", manifestDirectoryPath: {}"
+								", manifestFileName: {}"
+								", otherOutputOptions: {}"
+								", channelAlreadyReserved: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, hlsChannelConfigurationLabel, reservedLabel, outputIndex,
+								monitorVirtualVODOutputRootIndex, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber,
+								manifestDirectoryPath, manifestFileName, otherOutputOptions, channelAlreadyReserved
 							);
 
 							_mmsEngineDBFacade->updateOutputHLSDetails(
@@ -585,21 +620,14 @@ bool EncoderProxy::liveRecorder()
 								playlistEntriesNumber, manifestDirectoryPath, manifestFileName, otherOutputOptions
 							);
 						}
-						catch (runtime_error &e)
-						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" +
-								", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-							);
-
-							// throw e;
-						}
 						catch (exception &e)
 						{
-							_logger->error(
-								__FILEREF__ + "updateEncodingJobParameters failed" + ", _ingestionJobKey: " +
-								to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
 							// throw e;
@@ -612,10 +640,13 @@ bool EncoderProxy::liveRecorder()
 
 			if (killedByUser)
 			{
-				string errorMessage = __FILEREF__ + "Encoding killed by the User" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-									  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-									  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-				_logger->warn(errorMessage);
+				SPDLOG_WARN(
+					"Encoding killed by the User"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+				);
 
 				// the catch will releaseXXXChannel
 				throw EncodingKilledByUser();
@@ -640,10 +671,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseAWSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseAWSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "CDN_CDN77")
@@ -657,10 +692,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseCDN77Channel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "RTMP_Channel")
@@ -674,10 +713,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseRTMPChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "HLS_Channel")
@@ -689,10 +732,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseHLSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseHLSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 			}
@@ -718,10 +765,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseAWSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseAWSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "CDN_CDN77")
@@ -735,10 +786,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseCDN77Channel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseCDN77Channel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "RTMP_Channel")
@@ -752,10 +807,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseRTMPChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseRTMPChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "HLS_Channel")
@@ -767,10 +826,14 @@ bool EncoderProxy::liveRecorder()
 					}
 					catch (...)
 					{
-						string errorMessage = __FILEREF__ + "releaseHLSChannel failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-											  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-											  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"releaseHLSChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+						SPDLOG_ERROR(errorMessage);
 					}
 				}
 			}
@@ -807,10 +870,15 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 		field = "start";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", Field: " + field;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", Field: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -820,10 +888,15 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 		field = "end";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 		{
-			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", Field: " + field;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", Field: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -853,29 +926,41 @@ void EncoderProxy::processLiveRecorder(bool killedByUser)
 			string processorMMS;
 			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			_logger->info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", IngestionStatus: " +
-				MMSEngineDBFacade::toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+			SPDLOG_INFO(
+				"Update IngestionJob"
+				", ingestionJobKey: {}"
+				", IngestionStatus: {}"
+				", errorMessage: {}"
+				", processorMMS: {}",
+				_encodingItem->_ingestionJobKey, MMSEngineDBFacade::toString(newIngestionStatus), errorMessage, processorMMS
 			);
 			_mmsEngineDBFacade->updateIngestionJob(_encodingItem->_ingestionJobKey, newIngestionStatus, errorMessage);
 		}
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processLiveRecorder failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processLiveRecorder failed"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, _encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processLiveRecorder failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processLiveRecorder failed"
+			", _proxyIdentifier: {}"
+			", _encodingJobKey: {}"
+			", _ingestionJobKey: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, _encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;

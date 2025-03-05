@@ -1,6 +1,15 @@
 #!/bin/bash
 
-debugFilename=/tmp/servicesStatus.log
+if [ $# -ne 1 ];
+then
+	echo "Usage $0 <env (prod or test)>"
+
+	exit 1
+fi
+
+env=$1
+
+debugFilename=/tmp/mmsCloudLoop.log
 
 debug=1
 
@@ -16,50 +25,54 @@ do
 
 
 	#PROD
-	index=0
-	while [ $index -lt $prodServersNumber ]
-	do
-		serverName=${prodServers[$((index*6+0))]}
-		serverAddress=${prodServers[$((index*6+1))]}
-		#serverKey=${prodServers[$((index*4+2))]}
-		serverPort=${prodServers[$((index*6+3))]}
+	if [ "$env" == "prod" ];
+	then
+		index=0
+		while [ $index -lt $prodServersNumber ]
+		do
+			serverName=${prodServers[$((index*6+0))]}
+			serverAddress=${prodServers[$((index*6+1))]}
+			#serverKey=${prodServers[$((index*4+2))]}
+			serverPort=${prodServers[$((index*6+3))]}
 
-		echo "server_reachable serverName" >> $debugFilename
-		server_reachable $serverAddress $serverPort $serverName
+			echo "server_reachable serverName" >> $debugFilename
+			server_reachable $serverAddress $serverPort $serverName
 
-		index=$((index+1))
-	done
+			index=$((index+1))
+		done
 
-	after=$(date +%s)
+		after=$(date +%s)
 
-	elapsed=$((after-before))
+		elapsed=$((after-before))
 
-	echo "" >> $debugFilename
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): prod elapsed: $elapsed secs" >> $debugFilename
+		echo "" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): prod elapsed: $elapsed secs" >> $debugFilename
+	elif [ "$env" == "test" ];
+	then
+		#TEST
+		index=0
+		while [ $index -lt $testServersNumber ]
+		do
+			serverName=${testServers[$((index*6+0))]}
+			serverAddress=${testServers[$((index*6+1))]}
+			#serverKey=${testServers[$((index*4+2))]}
+			serverPort=${testServers[$((index*6+3))]}
 
+			echo "server_reachable serverName" >> $debugFilename
+			server_reachable $serverAddress $serverPort $serverName
 
-	#TEST
-	index=0
-	while [ $index -lt $testServersNumber ]
-	do
-		serverName=${testServers[$((index*6+0))]}
-		serverAddress=${testServers[$((index*6+1))]}
-		#serverKey=${testServers[$((index*4+2))]}
-		serverPort=${testServers[$((index*6+3))]}
+			index=$((index+1))
+		done
 
-		echo "server_reachable serverName" >> $debugFilename
-		server_reachable $serverAddress $serverPort $serverName
+		after=$(date +%s)
 
-		index=$((index+1))
-	done
+		elapsed=$((after-before))
 
-	after=$(date +%s)
-
-	elapsed=$((after-before))
-
-	echo "" >> $debugFilename
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): test elapsed: $elapsed secs" >> $debugFilename
-
+		echo "" >> $debugFilename
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): test elapsed: $elapsed secs" >> $debugFilename
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): wrong env: $env" >> $debugFilename
+	fi
 
 	secondsToSleep=60
 	echo "" >> $debugFilename

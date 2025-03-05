@@ -199,9 +199,14 @@ int FastCGIAPI::operator()()
 							contentLength = stol(it->second);
 							if (contentLength > _maxAPIContentLength)
 							{
-								string errorMessage = string("ContentLength too long") + ", _requestIdentifier: " + to_string(_requestIdentifier) +
-													  ", threadId: " + sThreadId + ", contentLength: " + to_string(contentLength) +
-													  ", _maxAPIContentLength: " + to_string(_maxAPIContentLength);
+								string errorMessage = std::format(
+									"ContentLength too long"
+									", _requestIdentifier: {}"
+									", threadId: {}"
+									", contentLength: {}"
+									", _maxAPIContentLength: {}",
+									_requestIdentifier, sThreadId, contentLength, _maxAPIContentLength
+								);
 
 								SPDLOG_ERROR(errorMessage);
 
@@ -245,7 +250,7 @@ int FastCGIAPI::operator()()
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("Internal server error");
+			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
 
 			sendError(request, 500, errorMessage);
@@ -370,7 +375,7 @@ int FastCGIAPI::operator()()
 					_requestIdentifier, sThreadId, e.what()
 				);
 
-				string errorMessage = string("Internal server error");
+				string errorMessage = "Internal server error";
 				SPDLOG_ERROR(errorMessage);
 
 				sendError(request, 500, errorMessage);

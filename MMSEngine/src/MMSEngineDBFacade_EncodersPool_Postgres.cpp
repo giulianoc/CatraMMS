@@ -221,8 +221,12 @@ void MMSEngineDBFacade::modifyEncoder(
 
 			if (!oneParameterPresent)
 			{
-				string errorMessage = __FILEREF__ + "Wrong input, no parameters to be updated" + ", encoderKey: " + to_string(encoderKey) +
-									  ", oneParameterPresent: " + to_string(oneParameterPresent);
+				string errorMessage = std::format(
+					"Wrong input, no parameters to be updated"
+					", encoderKey: {}"
+					", oneParameterPresent: {}",
+					encoderKey, oneParameterPresent
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -252,7 +256,7 @@ void MMSEngineDBFacade::modifyEncoder(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", lastSQLCommand: " + lastSQLCommand
 			;
-			_logger->warn(errorMessage);
+			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -385,8 +389,13 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", encoderKey: " + to_string(encoderKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"no delete was done"
+					", encoderKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encoderKey, rowsUpdated, sqlStatement
+				);
 				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1234,7 +1243,11 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 				encoderKeys.push_back(res[0]["encoderKey"].as<int64_t>());
 			else
 			{
-				string errorMessage = string("No encoder label found") + ", encoderLabel: " + encoderLabel;
+				string errorMessage = std::format(
+					"No encoder label found"
+					", encoderLabel: {}",
+					encoderLabel
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -1394,8 +1407,13 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", encoderKey: " + to_string(encoderKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format(
+					"no delete was done"
+					", encoderKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encoderKey, rowsUpdated, sqlStatement
+				);
 				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2209,7 +2227,11 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey)
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "EncodersPool was not found" + ", encodersPoolKey: " + to_string(encodersPoolKey);
+				string errorMessage = std::format(
+					"EncodersPool was not found"
+					", encodersPoolKey: {}",
+					encodersPoolKey
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2471,7 +2493,11 @@ json MMSEngineDBFacade::getEncodersPoolList(
 							}
 							else
 							{
-								string errorMessage = string("No encoderKey found") + ", encoderKey: " + to_string(encoderKey);
+								string errorMessage = std::format(
+									"No encoderKey found"
+									", encoderKey: {}",
+									encoderKey
+								);
 								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
@@ -2634,8 +2660,12 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, string label, v
 			);
 			if (count == 0)
 			{
-				string errorMessage = __FILEREF__ + "Encoder is not already associated to the workspace" +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", encoderKey: " + to_string(encoderKey);
+				string errorMessage = std::format(
+					"Encoder is not already associated to the workspace"
+					", workspaceKey: {}"
+					", encoderKey: {}",
+					workspaceKey, encoderKey
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -2822,9 +2852,13 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 			);
 			if (count == 0)
 			{
-				string errorMessage = __FILEREF__ + "Encoder is not already associated to the workspace" +
-									  ", workspaceKey: " + to_string(workspaceKey) + ", encoderKey: " + to_string(encoderKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Encoder is not already associated to the workspace"
+					", workspaceKey: {}"
+					", encoderKey: {}",
+					workspaceKey, encoderKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2871,10 +2905,15 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 					);
 					if (rowsUpdated != 1)
 					{
-						string errorMessage = __FILEREF__ + "no update was done" + ", newLabel: " + newLabel +
-											  ", encodersPoolKey: " + to_string(encodersPoolKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-											  ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"no update was done"
+							", newLabel: {}"
+							", encodersPoolKey: {}"
+							", rowsUpdated: {}"
+							", sqlStatement: {}",
+							newLabel, encodersPoolKey, rowsUpdated, sqlStatement
+						);
+						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2955,10 +2994,15 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 						);
 						if (rowsUpdated != 1)
 						{
-							string errorMessage = __FILEREF__ + "no delete was done" + ", encodersPoolKey: " + to_string(encodersPoolKey) +
-												  ", savedEncoderKey: " + to_string(savedEncoderKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-												  ", sqlStatement: " + sqlStatement;
-							_logger->warn(errorMessage);
+							string errorMessage = std::format(
+								"no delete was done"
+								", encodersPoolKey: {}"
+								", savedEncoderKey: {}"
+								", rowsUpdated: {}"
+								", sqlStatement: {}",
+								encodersPoolKey, savedEncoderKey, rowsUpdated, sqlStatement
+							);
+							SPDLOG_WARN(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -2967,8 +3011,12 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "No encodersPool found" + ", encodersPoolKey: " + to_string(encodersPoolKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"No encodersPool found"
+					", encodersPoolKey: {}",
+					encodersPoolKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3102,9 +3150,14 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", encodersPoolKey: " + to_string(encodersPoolKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", encodersPoolKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encodersPoolKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3625,9 +3678,11 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getEncodersNumberByEncodersPool" + ", workspaceKey: " + to_string(workspaceKey) +
-			", encodersPoolLabel: " + encodersPoolLabel
+		SPDLOG_INFO(
+			"getEncodersNumberByEncodersPool"
+			", workspaceKey: {}"
+			", encodersPoolLabel: {}",
+			workspaceKey, encodersPoolLabel
 		);
 
 		int encodersNumber;
@@ -3654,9 +3709,13 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 				);
 				if (empty(res))
 				{
-					string errorMessage = string("lastEncoderIndexUsed was not found") + ", workspaceKey: " + to_string(workspaceKey) +
-										  ", encodersPoolLabel: " + encodersPoolLabel;
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"lastEncoderIndexUsed was not found"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}",
+						workspaceKey, encodersPoolLabel
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3816,7 +3875,12 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 	{
 		string field;
 
-		_logger->info(__FILEREF__ + "getEncoderURL" + ", encoderKey: " + to_string(encoderKey) + ", serverName: " + serverName);
+		SPDLOG_INFO(
+			"getEncoderURL"
+			", encoderKey: {}"
+			", serverName: {}",
+			encoderKey, serverName
+		);
 
 		bool external;
 		string protocol;
@@ -3858,14 +3922,17 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 			}
 			else
 			{
-				string errorMessage = string("Encoder details not found or not enabled") + ", encoderKey: " + to_string(encoderKey);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Encoder details not found or not enabled"
+					", encoderKey: {}",
+					encoderKey
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		_logger->debug(__FILEREF__ + "DB connection unborrow" + ", getConnectionId: " + to_string(conn->getConnectionId()));
 		connectionPool->unborrow(conn);
 		conn = nullptr;
 
@@ -3880,8 +3947,12 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 				encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
 		}
 
-		_logger->info(
-			__FILEREF__ + "getEncoderURL" + ", encoderKey: " + to_string(encoderKey) + ", serverName: " + serverName + ", encoderURL: " + encoderURL
+		SPDLOG_INFO(
+			"getEncoderURL"
+			", encoderKey: {}"
+			", serverName: {}"
+			", encoderURL: {}",
+			encoderKey, serverName, encoderURL
 		);
 
 		return make_pair(encoderURL, external);

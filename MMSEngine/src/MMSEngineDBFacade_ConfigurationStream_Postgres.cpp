@@ -92,8 +92,12 @@ json MMSEngineDBFacade::addStream(
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -102,8 +106,12 @@ json MMSEngineDBFacade::addStream(
 			field = "streams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -111,8 +119,8 @@ json MMSEngineDBFacade::addStream(
 
 			if (streamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong streams";
-				_logger->error(errorMessage);
+				string errorMessage = "Wrong streams";
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -462,9 +470,13 @@ json MMSEngineDBFacade::modifyStream(
 
 			if (!oneParameterPresent)
 			{
-				string errorMessage = __FILEREF__ + "Wrong input, no parameters to be updated" + ", confKey: " + to_string(confKey) +
-									  ", oneParameterPresent: " + to_string(oneParameterPresent);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Wrong input, no parameters to be updated"
+					", confKey: {}"
+					", oneParameterPresent: {}",
+					confKey, oneParameterPresent
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -493,7 +505,7 @@ json MMSEngineDBFacade::modifyStream(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -521,8 +533,12 @@ json MMSEngineDBFacade::modifyStream(
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -531,8 +547,12 @@ json MMSEngineDBFacade::modifyStream(
 			field = "streams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -540,8 +560,8 @@ json MMSEngineDBFacade::modifyStream(
 
 			if (streamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong streams";
-				_logger->error(errorMessage);
+				string errorMessage = "Wrong streams";
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -658,8 +678,13 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 	{
 		if (confKey == -1 && label == "")
 		{
-			string errorMessage = __FILEREF__ + "Wrong input" + ", confKey: " + to_string(confKey) + ", label: " + label;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"Wrong input"
+				", confKey: {}"
+				", label: {}",
+				confKey, label
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -691,9 +716,15 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) + ", label: " + label +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", label: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, label, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1571,7 +1602,11 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 				}
 				catch (exception &e)
 				{
-					_logger->error(__FILEREF__ + "getEncodersPoolDetails failed" + ", encodersPoolKey: " + to_string(encodersPoolKey));
+					SPDLOG_ERROR(
+						"getEncodersPoolDetails failed"
+						", encodersPoolKey: {}",
+						encodersPoolKey
+					);
 				}
 			}
 		}
@@ -2428,7 +2463,7 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 
 	try
 	{
-		_logger->info(__FILEREF__ + "getStreamDetails" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
+		info(__FILEREF__ + "getStreamDetails" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
 
 		int64_t confKey;
 		string sourceType;
@@ -2476,9 +2511,9 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 				string errorMessage =
 					__FILEREF__ + "Configuration label is not found" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					warn(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw ConfKeyNotFound(errorMessage);
 			}
@@ -2497,7 +2532,7 @@ MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool war
 					}
 					catch (exception &e)
 					{
-						_logger->error(__FILEREF__ + "getEncodersPoolDetails failed" + ", encodersPoolKey: " + to_string(encodersPoolKey));
+						error(__FILEREF__ + "getEncodersPoolDetails failed" + ", encodersPoolKey: " + to_string(encodersPoolKey));
 					}
 				}
 			}
@@ -2683,7 +2718,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(int64_t worksp
 
 	try
 	{
-		_logger->info(__FILEREF__ + "getStreamDetails" + ", workspaceKey: " + to_string(workspaceKey) + ", confKey: " + to_string(confKey));
+		info(__FILEREF__ + "getStreamDetails" + ", workspaceKey: " + to_string(workspaceKey) + ", confKey: " + to_string(confKey));
 
 		string url;
 		string channelName;
@@ -2708,7 +2743,7 @@ tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(int64_t worksp
 				string errorMessage = __FILEREF__ + "select from MMS_Conf_Stream failed" + ", workspaceKey: " + to_string(workspaceKey) +
 									  ", confKey: " + to_string(confKey);
 
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2884,8 +2919,12 @@ json MMSEngineDBFacade::addSourceTVStream(
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(sourceTVStreamRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2894,8 +2933,12 @@ json MMSEngineDBFacade::addSourceTVStream(
 			field = "sourceTVStreams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2909,7 +2952,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 					", sourceTVStreamsRoot.size: {}",
 					confKey, sourceTVStreamsRoot.size()
 				);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3192,9 +3235,13 @@ json MMSEngineDBFacade::modifySourceTVStream(
 
 			if (!oneParameterPresent)
 			{
-				string errorMessage = __FILEREF__ + "Wrong input, no parameters to be updated" + ", confKey: " + to_string(confKey) +
-									  ", oneParameterPresent: " + to_string(oneParameterPresent);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Wrong input, no parameters to be updated"
+					", confKey: {}"
+					", oneParameterPresent: {}",
+					confKey, oneParameterPresent
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3223,7 +3270,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			_logger->warn(errorMessage);
+			warn(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3248,8 +3295,12 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(sourceTVStreamRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3258,8 +3309,12 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			field = "sourceTVStreams";
 			if (!JSONUtils::isMetadataPresent(responseRoot, field))
 			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3267,8 +3322,8 @@ json MMSEngineDBFacade::modifySourceTVStream(
 
 			if (sourceTVStreamsRoot.size() != 1)
 			{
-				string errorMessage = __FILEREF__ + "Wrong streams";
-				_logger->error(errorMessage);
+				string errorMessage = "Wrong streams";
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3402,9 +3457,14 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no delete was done" + ", confKey: " + to_string(confKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				_logger->warn(errorMessage);
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3528,10 +3588,20 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 	{
 		string field;
 
-		_logger->info(
-			__FILEREF__ + "getSourceTVStreamList" + ", confKey: " + to_string(confKey) + ", start: " + to_string(start) + ", rows: " +
-			to_string(rows) + ", type: " + type + ", frequency: " + to_string(frequency) + ", lnb: " + lnb + ", serviceId: " + to_string(serviceId) +
-			", name: " + name + ", videoPid: " + to_string(videoPid) + ", audioPids: " + audioPids + ", nameOrder: " + nameOrder
+		SPDLOG_INFO(
+			"getSourceTVStreamList"
+			", confKey: {}"
+			", start: {}"
+			", rows: {}"
+			", type: {}"
+			", frequency: {}"
+			", lnb: {}"
+			", serviceId: {}"
+			", name: {}"
+			", videoPid: {}"
+			", audioPids: {}"
+			", nameOrder: {}",
+			confKey, start, rows, type, frequency, lnb, serviceId, name, videoPid, audioPids, nameOrder
 		);
 
 		{
@@ -3941,7 +4011,11 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 
 	try
 	{
-		_logger->info(__FILEREF__ + "getTVStreamDetails" + ", confKey: " + to_string(confKey));
+		SPDLOG_INFO(
+			"getTVStreamDetails"
+			", confKey: {}",
+			confKey
+		);
 
 		string type;
 		int64_t serviceId;
@@ -3972,11 +4046,15 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 			);
 			if (empty(res))
 			{
-				string errorMessage = __FILEREF__ + "Configuration is not found" + ", confKey: " + to_string(confKey);
+				string errorMessage = std::format(
+					"Configuration is not found"
+					", confKey: {}",
+					confKey
+				);
 				if (warningIfMissing)
-					_logger->warn(errorMessage);
+					SPDLOG_WARN(errorMessage);
 				else
-					_logger->error(errorMessage);
+					SPDLOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -4145,20 +4223,27 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 		long retrieveStreamingYouTubeURLPeriodInHours = 5; // 5 hours
 
-		_logger->info(
-			__FILEREF__ + "check youTubeURLCalculate" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", confKey: " + to_string(confKey) +
-			", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL) +
-			", retrieveStreamingYouTubeURLPeriodInHours: " + to_string(retrieveStreamingYouTubeURLPeriodInHours)
+		SPDLOG_INFO(
+			"check youTubeURLCalculate"
+			", ingestionJobKey: {}"
+			", confKey: {}"
+			", hoursFromLastCalculatedURL: {}"
+			", retrieveStreamingYouTubeURLPeriodInHours: {}",
+			ingestionJobKey, confKey, hoursFromLastCalculatedURL, retrieveStreamingYouTubeURLPeriodInHours
 		);
 		if (hoursFromLastCalculatedURL < retrieveStreamingYouTubeURLPeriodInHours)
 			streamingYouTubeLiveURL = lastCalculatedURL;
 	}
 	catch (runtime_error &e)
 	{
-		string errorMessage = __FILEREF__ + "youTubeURLCalculate. getLastYouTubeURLDetails failed" +
-							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", confKey: " + to_string(confKey) +
-							  ", YouTube URL: " + streamingYouTubeLiveURL;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"youTubeURLCalculate. getLastYouTubeURLDetails failed"
+			", ingestionJobKey: {}"
+			", confKey: {}"
+			", YouTube URL: {}",
+			ingestionJobKey, confKey, streamingYouTubeLiveURL
+		);
+		SPDLOG_ERROR(errorMessage);
 	}
 
 	if (streamingYouTubeLiveURL == "")
@@ -4170,10 +4255,14 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 			tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
 
-			_logger->info(
-				__FILEREF__ + "youTubeURLCalculate. Retrieve streaming YouTube URL" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", confKey: " + to_string(confKey) + ", initial YouTube URL: " + liveURL +
-				", streaming YouTube Live URL: " + streamingYouTubeLiveURL + ", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+			SPDLOG_INFO(
+				"youTubeURLCalculate. Retrieve streaming YouTube URL"
+				", ingestionJobKey: {}"
+				", confKey: {}"
+				", initial YouTube URL: {}"
+				", streaming YouTube Live URL: {}"
+				", hoursFromLastCalculatedURL: {}",
+				ingestionJobKey, confKey, liveURL, streamingYouTubeLiveURL, hoursFromLastCalculatedURL
 			);
 		}
 		catch (runtime_error &e)
@@ -4182,10 +4271,14 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 			// we will use the last saved URL
 			tie(ignore, streamingYouTubeLiveURL) = lastYouTubeURLDetails;
 
-			string errorMessage = __FILEREF__ + "youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed" +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", confKey: " + to_string(confKey) +
-								  ", YouTube URL: " + streamingYouTubeLiveURL;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"youTubeURLCalculate. ffmpeg.retrieveStreamingYouTubeURL failed"
+				", ingestionJobKey: {}"
+				", confKey: {}"
+				", YouTube URL: {}",
+				ingestionJobKey, confKey, streamingYouTubeLiveURL
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			try
 			{
@@ -4201,17 +4294,13 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 				appendIngestionJobErrorMessage(ingestionJobKey, firstLineOfErrorMessage);
 			}
-			catch (runtime_error &e)
-			{
-				_logger->error(
-					__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", e.what(): " + e.what()
-				);
-			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "youTubeURLCalculate. appendIngestionJobErrorMessage failed" + ", ingestionJobKey: " + to_string(ingestionJobKey)
+				SPDLOG_ERROR(
+					"youTubeURLCalculate. appendIngestionJobErrorMessage failed"
+					", ingestionJobKey: {}"
+					", e.what(): {}",
+					ingestionJobKey, e.what()
 				);
 			}
 
@@ -4233,19 +4322,27 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = __FILEREF__ + "youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed" +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", confKey: " + to_string(confKey) +
-									  ", YouTube URL: " + streamingYouTubeLiveURL;
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"youTubeURLCalculate. updateChannelDataWithNewYouTubeURL failed"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", YouTube URL: {}",
+					ingestionJobKey, confKey, streamingYouTubeLiveURL
+				);
+				SPDLOG_ERROR(errorMessage);
 			}
 		}
 	}
 	else
 	{
-		_logger->info(
-			__FILEREF__ + "youTubeURLCalculate. Reuse a previous streaming YouTube URL" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", confKey: " + to_string(confKey) + ", initial YouTube URL: " + liveURL + ", streaming YouTube Live URL: " + streamingYouTubeLiveURL +
-			", hoursFromLastCalculatedURL: " + to_string(hoursFromLastCalculatedURL)
+		SPDLOG_INFO(
+			"youTubeURLCalculate. Reuse a previous streaming YouTube URL"
+			", ingestionJobKey: {}"
+			", confKey: {}"
+			", initial YouTube URL: {}"
+			", streaming YouTube Live URL: {}"
+			", hoursFromLastCalculatedURL: {}",
+			ingestionJobKey, confKey, liveURL, streamingYouTubeLiveURL, hoursFromLastCalculatedURL
 		);
 	}
 
@@ -4277,9 +4374,12 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 			field = "mmsData";
 			if (!JSONUtils::isMetadataPresent(channelDataRoot, field))
 			{
-				_logger->info(
-					__FILEREF__ + "no mmsData present" + ", ingestionKey: " + to_string(ingestionKey) +
-					", workspaceKey: " + to_string(workspace->_workspaceKey) + ", confKey: " + to_string(confKey)
+				SPDLOG_INFO(
+					"no mmsData present"
+					", ingestionKey: {}"
+					", workspaceKey: {}"
+					", confKey: {}",
+					ingestionKey, workspace->_workspaceKey, confKey
 				);
 
 				return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
@@ -4293,9 +4393,12 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 			field = "youTubeURLs";
 			if (!JSONUtils::isMetadataPresent(mmsDataRoot, field))
 			{
-				_logger->info(
-					__FILEREF__ + "no youTubeURLs present" + ", ingestionKey: " + to_string(ingestionKey) +
-					", workspaceKey: " + to_string(workspace->_workspaceKey) + ", confKey: " + to_string(confKey)
+				SPDLOG_INFO(
+					"no youTubeURLs present"
+					", ingestionKey: {}"
+					", workspaceKey: {}"
+					", confKey: {}",
+					ingestionKey, workspace->_workspaceKey, confKey
 				);
 
 				return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
@@ -4306,9 +4409,12 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 
 		if (youTubeURLsRoot.size() == 0)
 		{
-			_logger->info(
-				__FILEREF__ + "no youTubeURL present" + ", ingestionKey: " + to_string(ingestionKey) +
-				", workspaceKey: " + to_string(workspace->_workspaceKey) + ", confKey: " + to_string(confKey)
+			SPDLOG_INFO(
+				"no youTubeURL present"
+				", ingestionKey: {}"
+				", workspaceKey: {}"
+				", confKey: {}",
+				ingestionKey, workspace->_workspaceKey, confKey
 			);
 
 			return make_pair(hoursFromLastCalculatedURL, lastCalculatedURL);
@@ -4342,10 +4448,15 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 				if ((sscanfReturn =
 						 sscanf(timestamp.c_str(), "%4lu-%2lu-%2lu %2lu:%2lu:%2lu", &ulYear, &ulMonth, &ulDay, &ulHour, &ulMinutes, &ulSeconds)) != 6)
 				{
-					string errorMessage = __FILEREF__ + "timestamp has a wrong format (sscanf failed)" +
-										  ", ingestionKey: " + to_string(ingestionKey) + ", workspaceKey: " + to_string(workspace->_workspaceKey) +
-										  ", confKey: " + to_string(confKey) + ", sscanfReturn: " + to_string(sscanfReturn);
-					_logger->error(errorMessage);
+					string errorMessage = std::format(
+						"timestamp has a wrong format (sscanf failed)"
+						", ingestionKey: {}"
+						", workspaceKey: {}"
+						", confKey: {}"
+						", sscanfReturn: {}",
+						ingestionKey, workspace->_workspaceKey, confKey, sscanfReturn
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}

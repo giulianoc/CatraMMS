@@ -88,12 +88,12 @@ class EncoderProxy
 	void init(
 		int proxyIdentifier, mutex *mtEncodingJobs, json configuration, shared_ptr<MultiEventsSet> multiEventsSet,
 		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage, shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
-		shared_ptr<long> faceRecognitionNumber, int maxFaceRecognitionNumber,
+		shared_ptr<long> faceRecognitionNumber,
+		int maxFaceRecognitionNumber
 #ifdef __LOCALENCODER__
 		int *pRunningEncodingsNumber,
 #else
 #endif
-		shared_ptr<spdlog::logger> logger
 	);
 
 	void setEncodingData(EncodingJobStatus *status, shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
@@ -103,7 +103,6 @@ class EncoderProxy
 	// int getEncodingProgress();
 
   private:
-	shared_ptr<spdlog::logger> _logger;
 	int _proxyIdentifier;
 	json _configuration;
 	mutex *_mtEncodingJobs;

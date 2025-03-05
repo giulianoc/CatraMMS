@@ -26,7 +26,7 @@ testServers[$((serverIndex*6+4))]=engine
 testServers[$((serverIndex*6+5))]=10.0.1.11
 
 serverIndex=$((serverIndex+1))
-testServers[$((serverIndex*6+0))]=hetzner-test-transcoder-1
+testServers[$((serverIndex*6+0))]=hetzner-test-encoder-1
 testServers[$((serverIndex*6+1))]=148.251.187.41
 testServers[$((serverIndex*6+2))]=hetzner-mms-key
 testServers[$((serverIndex*6+3))]=9255
@@ -92,16 +92,16 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=engine
 prodServers[$((serverIndex*6+5))]=10.0.1.5
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=cibortv-transcoder-4
-prodServers[$((serverIndex*6+1))]=93.58.249.102
-prodServers[$((serverIndex*6+2))]=cibortv-transcoder-4
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=externalEncoder
-prodServers[$((serverIndex*6+5))]=
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=cibortv-encoder-4
+#prodServers[$((serverIndex*6+1))]=93.58.249.102
+#prodServers[$((serverIndex*6+2))]=cibortv-transcoder-4
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=externalEncoder
+#prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-transcoder-3
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-3
 prodServers[$((serverIndex*6+1))]=23.88.12.230
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
@@ -109,7 +109,7 @@ prodServers[$((serverIndex*6+4))]=encoder
 prodServers[$((serverIndex*6+5))]=10.0.1.2
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-transcoder-4
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-4
 prodServers[$((serverIndex*6+1))]=23.88.12.229
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
@@ -117,7 +117,7 @@ prodServers[$((serverIndex*6+4))]=encoder
 prodServers[$((serverIndex*6+5))]=10.0.1.9
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-transcoder-6
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-6
 prodServers[$((serverIndex*6+1))]=23.88.13.17
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
@@ -141,7 +141,7 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=aruba-mms-transcoder-4
+prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-4
 prodServers[$((serverIndex*6+1))]=ru002553.arubabiz.net
 prodServers[$((serverIndex*6+2))]=cibortv-aruba
 prodServers[$((serverIndex*6+3))]=9255
@@ -149,7 +149,7 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=aruba-mms-transcoder-5
+prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-5
 prodServers[$((serverIndex*6+1))]=ru002554.arubabiz.net
 prodServers[$((serverIndex*6+2))]=cibortv-aruba
 prodServers[$((serverIndex*6+3))]=9255
@@ -157,7 +157,7 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=serverplan-mms-transcoder-3
+prodServers[$((serverIndex*6+0))]=serverplan-mms-encoder-3
 prodServers[$((serverIndex*6+1))]=d02c0q-hdea3.sphostserver.com
 prodServers[$((serverIndex*6+2))]=cibortv-serverplan
 prodServers[$((serverIndex*6+3))]=9255
@@ -165,7 +165,7 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=serverplan-mms-transcoder-4
+prodServers[$((serverIndex*6+0))]=serverplan-mms-encoder-4
 prodServers[$((serverIndex*6+1))]=d02c0q-hdea4.sphostserver.com
 prodServers[$((serverIndex*6+2))]=cibortv-serverplan
 prodServers[$((serverIndex*6+3))]=9255

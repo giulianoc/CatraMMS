@@ -20,6 +20,7 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/objdetect.hpp"
+#include "spdlog/spdlog.h"
 
 string EncoderProxy::faceIdentification()
 {
@@ -106,10 +107,13 @@ string EncoderProxy::faceIdentification()
 			else
 				start += rows;
 
-			_logger->info(
-				__FILEREF__ + "Called getMediaItemsList" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) + ", _encodingJobKey: " +
-				to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-				", mediaItemsArrayRoot.size(): " + to_string(mediaItemsArrayRoot.size())
+			SPDLOG_INFO(
+				"Called getMediaItemsList"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", mediaItemsArrayRoot.size(): {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, mediaItemsArrayRoot.size()
 			);
 
 			for (int imageIndex = 0; imageIndex < mediaItemsArrayRoot.size(); imageIndex++)
@@ -169,17 +173,24 @@ string EncoderProxy::faceIdentification()
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "Deep learned model built" + ", images.size: " + to_string(images.size()) + ", idImages.size: " + to_string(idImages.size()) +
-		", idTagMap.size: " + to_string(idTagMap.size())
+	SPDLOG_INFO(
+		"Deep learned model built"
+		", images.size: {}"
+		", idImages.size: {}"
+		", idTagMap.size: {}",
+		images.size(), idImages.size(), idTagMap.size()
 	);
 
 	if (images.size() == 0)
 	{
-		string errorMessage =
-			__FILEREF__ + "The Deep Learned Model is empty, no deepLearnedModelTags found" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey);
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"The Deep Learned Model is empty, no deepLearnedModelTags found"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -199,10 +210,15 @@ string EncoderProxy::faceIdentification()
 	cv::CascadeClassifier cascade;
 	if (!cascade.load(cascadePathName))
 	{
-		string errorMessage = __FILEREF__ + "cascadeName could not be loaded" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", cascadePathName: " + cascadePathName;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"cascadeName could not be loaded"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", cascadePathName: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, cascadePathName
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -252,10 +268,15 @@ string EncoderProxy::faceIdentification()
 
 	if (!fileExists)
 	{
-		string errorMessage = __FILEREF__ + "Media Source file does not exist" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Media Source file does not exist"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", sourcePhysicalPath: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -264,10 +285,15 @@ string EncoderProxy::faceIdentification()
 	capture.open(sourcePhysicalPath, cv::CAP_FFMPEG);
 	if (!capture.isOpened())
 	{
-		string errorMessage = __FILEREF__ + "Capture could not be opened" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-							  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-							  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", sourcePhysicalPath: " + sourcePhysicalPath;
-		_logger->error(errorMessage);
+		string errorMessage = std::format(
+			"Capture could not be opened"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", sourcePhysicalPath: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -286,11 +312,16 @@ string EncoderProxy::faceIdentification()
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "faceIdentification started" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceIdentificationCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-		", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+	SPDLOG_ERROR(
+		"faceIdentification started"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}"
+		", faceIdentificationMediaPathName: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceIdentificationCascadeName, sourcePhysicalPath,
+		faceIdentificationMediaPathName
 	);
 
 	cv::VideoWriter writer;
@@ -305,11 +336,16 @@ string EncoderProxy::faceIdentification()
 		}
 	}
 
-	_logger->info(
-		__FILEREF__ + "generating Face Identification" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceIdentificationCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-		", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+	SPDLOG_INFO(
+		"generating Face Identification"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}"
+		", faceIdentificationMediaPathName: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceIdentificationCascadeName, sourcePhysicalPath,
+		faceIdentificationMediaPathName
 	);
 
 	int progressNotificationPeriodInSeconds = 2;
@@ -338,33 +374,36 @@ string EncoderProxy::faceIdentification()
 
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "updateEncodingJobProgress" + ", encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", encodingProgress: " + to_string(_localEncodingProgress)
+				SPDLOG_INFO(
+					"updateEncodingJobProgress"
+					", encodingJobKey: {}"
+					", encodingProgress: {}",
+					_encodingItem->_encodingJobKey, _localEncodingProgress
 				);
 				_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, _localEncodingProgress);
 			}
-			catch (runtime_error &e)
-			{
-				_logger->error(
-					__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", e.what(): " + e.what()
-				);
-			}
 			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "updateEncodingJobProgress failed" + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey)
+				SPDLOG_ERROR(
+					"updateEncodingJobProgress failed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 				);
 			}
 
-			_logger->info(
-				__FILEREF__ + "generating Face Recognition" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-				", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-				", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", cascadeName: " + faceIdentificationCascadeName +
-				", sourcePhysicalPath: " + sourcePhysicalPath + ", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName +
-				", currentFrameIndex: " + to_string(currentFrameIndex) + ", totalFramesNumber: " + to_string(totalFramesNumber)
+			SPDLOG_INFO(
+				"generating Face Recognition"
+				", _proxyIdentifier: {}"
+				", _encodingJobKey: {}"
+				", _ingestionJobKey: {}"
+				", cascadeName: {}"
+				", sourcePhysicalPath: {}"
+				", faceIdentificationMediaPathName: {}"
+				", currentFrameIndex: {}"
+				", totalFramesNumber: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceIdentificationCascadeName, sourcePhysicalPath,
+				faceIdentificationMediaPathName, currentFrameIndex, totalFramesNumber
 			);
 		}
 
@@ -425,11 +464,15 @@ string EncoderProxy::faceIdentification()
 						predictedTags = (*idTagIterator).second;
 				}
 
-				_logger->info(
-					__FILEREF__ + "recognizerModel->predict" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-					", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-					", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", predictedIdImage: " + to_string(predictedIdImage) +
-					", confidence: " + to_string(confidence) + ", predictedTags: " + predictedTags
+				SPDLOG_INFO(
+					"recognizerModel->predict"
+					", _proxyIdentifier: {}"
+					", _encodingJobKey: {}"
+					", _ingestionJobKey: {}"
+					", predictedIdImage: {}"
+					", confidence: {}"
+					", predictedTags: {}",
+					_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, predictedIdImage, confidence, predictedTags
 				);
 			}
 
@@ -476,11 +519,16 @@ string EncoderProxy::faceIdentification()
 
 	capture.release();
 
-	_logger->info(
-		__FILEREF__ + "faceIdentification media done" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-		", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) + ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-		", cascadeName: " + faceIdentificationCascadeName + ", sourcePhysicalPath: " + sourcePhysicalPath +
-		", faceIdentificationMediaPathName: " + faceIdentificationMediaPathName
+	SPDLOG_INFO(
+		"faceIdentification media done"
+		", _proxyIdentifier: {}"
+		", _encodingJobKey: {}"
+		", _ingestionJobKey: {}"
+		", cascadeName: {}"
+		", sourcePhysicalPath: {}"
+		", faceIdentificationMediaPathName: {}",
+		_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, faceIdentificationCascadeName, sourcePhysicalPath,
+		faceIdentificationMediaPathName
 	);
 
 	return faceIdentificationMediaPathName;
@@ -493,11 +541,15 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 		size_t extensionIndex = stagingEncodedAssetPathName.find_last_of(".");
 		if (extensionIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No extention find in the asset file name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No extention find in the asset file name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -506,11 +558,15 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 		size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
 		if (fileNameIndex == string::npos)
 		{
-			string errorMessage = __FILEREF__ + "No fileName find in the asset path name" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-								  ", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) +
-								  ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-								  ", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName;
-			_logger->error(errorMessage);
+			string errorMessage = std::format(
+				"No fileName find in the asset path name"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", stagingEncodedAssetPathName: {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -544,30 +600,44 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		_logger->info(
-			__FILEREF__ + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", sourceFileName: " + sourceFileName +
-			", getEventKey().first: " + to_string(event->getEventKey().first) + ", getEventKey().second: " + to_string(event->getEventKey().second)
+		SPDLOG_INFO(
+			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+			", _proxyIdentifier: {}"
+			", ingestionJobKey: {}"
+			", sourceFileName: {}"
+			", getEventKey().first: {}"
+			", getEventKey().second: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, sourceFileName, event->getEventKey().first, event->getEventKey().second
 		);
 	}
 	catch (runtime_error &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processFaceIdentification failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName + ", e.what(): " + e.what()
+		SPDLOG_ERROR(
+			"processFaceIdentification failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		_logger->error(
-			__FILEREF__ + "processFaceIdentification failed" + ", _proxyIdentifier: " + to_string(_proxyIdentifier) +
-			", _ingestionJobKey: " + to_string(_encodingItem->_ingestionJobKey) + ", _encodingJobKey: " + to_string(_encodingItem->_encodingJobKey) +
-			", stagingEncodedAssetPathName: " + stagingEncodedAssetPathName +
-			", _workspace->_directoryName: " + _encodingItem->_workspace->_directoryName
+		SPDLOG_ERROR(
+			"processFaceIdentification failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", stagingEncodedAssetPathName: {}"
+			", _workspace->_directoryName: {}"
+			", e.what(): {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName,
+			_encodingItem->_workspace->_directoryName, e.what()
 		);
 
 		throw e;
