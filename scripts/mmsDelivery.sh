@@ -70,8 +70,12 @@ then
 		if [ "$privateIPAddress" == "" ]; then
 			echo "It is not possible to add server to the load balancer because the Private IP Address is not found"
 		else
-			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod"
-			hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod
+			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-prod"
+			hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-prod
+			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-path-prod"
+			hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-path-prod
+			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-f-prod"
+			hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-f-prod
 			#il load balancer impiega un po piu di tempo prima di ridirigere le nuove richieste al server
 			sleepWaitingLoadBalancer_forAdd=$$(sleepWaitingLoadBalancer*3))
 			echo "Waiting load balancer command ($sleepWaitingLoadBalancer_forAdd secs) ..."
@@ -88,8 +92,12 @@ then
 		if [ "$privateIPAddress" == "" ]; then
 			echo "It is not possible to remove server from load balancer because the Private IP Address is not found"
 		else
-				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-api-prod"
-				hcloud load-balancer remove-target --ip $privateIPAddress mms-api-prod
+				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-prod"
+				hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-prod
+				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-path-prod"
+				hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-path-prod
+				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-f-prod"
+				hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-f-prod
 				echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
 				sleep $sleepWaitingLoadBalancer
 		fi
