@@ -805,9 +805,13 @@ int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
 {
 	lock_guard<mutex> locker(*_cpuUsageMutex);
 
-	// int maxAdditionalProcessorThreads = VECTOR_MAX_CAPACITY;	// it could be
-	// done
-	int maxAdditionalProcessorThreads = 20; // it could be done
+	// indicano additional threads rispetto al numero di processorThreads che in genere nel file di conf. sono 4
+	// Scenario: abbiamo 100 download FTP da fare.
+	// Se mettiamo maxAdditionalProcessorThreads a 20, poichè i threads di download FTP non occupano CPU,
+	// questo metodo ritornerebbe 20 e si crerebbero 20 threads di download FTP che creerebbero problemi al processo ed alla banda.
+	// Una volta si è bloccato tutto ed ho dovuto fare un restart del server.
+	// Per cui teniamo un valore 'safe'
+	int maxAdditionalProcessorThreads = 5;
 
 	for (int cpuUsage : *_cpuUsage)
 	{
