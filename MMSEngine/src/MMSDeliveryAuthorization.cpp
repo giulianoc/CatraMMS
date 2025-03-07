@@ -40,35 +40,55 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 
 	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	SPDLOG_INFO("Configuration item" 
-						 ", aws->keyPairId: {}", _keyPairId);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->keyPairId: {}",
+		_keyPairId
+	);
 	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	SPDLOG_INFO("Configuration item" 
-						 ", aws->privateKeyPEMPathName: {}", _privateKeyPEMPathName);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->privateKeyPEMPathName: {}",
+		_privateKeyPEMPathName
+	);
 	_vodCloudFrontHostName = _configuration["aws"]["vodCloudFrontHostName"];
-	SPDLOG_INFO("Configuration item" 
-						 ", aws->vodCloudFrontHostName: {}", _vodCloudFrontHostName);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->vodCloudFrontHostName: {}",
+		_vodCloudFrontHostName
+	);
 	_vodDeliveryCloudFrontHostName = _configuration["aws"]["vodDeliveryCloudFrontHostName"];
-	SPDLOG_INFO("Configuration item" 
-						 ", aws->vodDeliveryCloudFrontHostName: {}", _vodDeliveryCloudFrontHostName);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->vodDeliveryCloudFrontHostName: {}",
+		_vodDeliveryCloudFrontHostName
+	);
 	_vodDeliveryPathCloudFrontHostName = _configuration["aws"]["vodDeliveryPathCloudFrontHostName"];
-	SPDLOG_INFO("Configuration item" 
-						 ", aws->vodDeliveryPathCloudFrontHostName: {}", _vodDeliveryPathCloudFrontHostName);
+	SPDLOG_INFO(
+		"Configuration item"
+		", aws->vodDeliveryPathCloudFrontHostName: {}",
+		_vodDeliveryPathCloudFrontHostName
+	);
 
 	json api = _configuration["api"];
 
 	_deliveryProtocol = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
-	SPDLOG_INFO("Configuration item" 
-						 ", api->delivery->deliveryProtocol: {}", _deliveryProtocol);
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->delivery->deliveryProtocol: {}",
+		_deliveryProtocol
+	);
 	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
 	SPDLOG_INFO(
 		"Configuration item"
-		", api->delivery->deliveryHost_authorizationThroughParameter: {}", _deliveryHost_authorizationThroughParameter
+		", api->delivery->deliveryHost_authorizationThroughParameter: {}",
+		_deliveryHost_authorizationThroughParameter
 	);
 	_deliveryHost_authorizationThroughPath = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
 	SPDLOG_INFO(
-		"Configuration item" 
-		", api->delivery->deliveryHost_authorizationThroughPath: {}", _deliveryHost_authorizationThroughPath
+		"Configuration item"
+		", api->delivery->deliveryHost_authorizationThroughPath: {}",
+		_deliveryHost_authorizationThroughPath
 	);
 }
 
@@ -316,18 +336,22 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			catch (runtime_error &e)
 			{
-				string errorMessage = std::format("mmsEngineDBFacade->addRequestStatistic failed" 
-																			", e.what: {}", e.what());
+				string errorMessage = std::format(
+					"mmsEngineDBFacade->addRequestStatistic failed"
+					", e.what: {}",
+					e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 			}
 		}
 
 		SPDLOG_INFO(
-			"createDeliveryAuthorization info" 
+			"createDeliveryAuthorization info"
 			", title: {}"
 			", deliveryURI: {}"
 			", deliveryType: {}"
-			", deliveryURL (authorized): {}", title, deliveryURI, deliveryType, deliveryURL
+			", deliveryURL (authorized): {}",
+			title, deliveryURI, deliveryType, deliveryURL
 		);
 	}
 	else
@@ -344,8 +368,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid && ingestionType != MMSEngineDBFacade::IngestionType::LiveRecorder &&
 			ingestionType != MMSEngineDBFacade::IngestionType::Countdown)
 		{
-			string errorMessage = std::format("ingestionJob is not a LiveProxy" 
-																		 ", ingestionType: {}", MMSEngineDBFacade::toString(ingestionType));
+			string errorMessage = std::format(
+				"ingestionJob is not a LiveProxy"
+				", ingestionType: {}",
+				MMSEngineDBFacade::toString(ingestionType)
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -357,9 +384,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string field = "outputs";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
-				string errorMessage =
-					std::format("A Proxy/Countdown/Recorder without outputs cannot be delivered"
-								 ", ingestionJobKey: {}", ingestionJobKey);
+				string errorMessage = std::format(
+					"A Proxy/Countdown/Recorder without outputs cannot be delivered"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -415,18 +444,22 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				if (outputDeliveryOptions.size() == 0)
 				{
-					string errorMessage =
-						std::format("No outputDeliveryOptions, it cannot be delivered" 
-									", ingestionJobKey: {}", ingestionJobKey);
+					string errorMessage = std::format(
+						"No outputDeliveryOptions, it cannot be delivered"
+						", ingestionJobKey: {}",
+						ingestionJobKey
+					);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 				else if (outputDeliveryOptions.size() > 1)
 				{
-					string errorMessage =
-						std::format("Live authorization with several option. Just get the first" 
-									", ingestionJobKey: {}", ingestionJobKey);
+					string errorMessage = std::format(
+						"Live authorization with several option. Just get the first"
+						", ingestionJobKey: {}",
+						ingestionJobKey
+					);
 					SPDLOG_WARN(errorMessage);
 
 					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
@@ -456,9 +489,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				if (!deliveryCodeFound)
 				{
-					string errorMessage =
-						std::format("DeliveryCode received does not exist for the ingestionJob" 
-									", ingestionJobKey: {}", ingestionJobKey);
+					string errorMessage = std::format(
+						"DeliveryCode received does not exist for the ingestionJob"
+						", ingestionJobKey: {}",
+						ingestionJobKey
+					);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -661,8 +696,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 				{
-					string errorMessage = std::format("{} field missing" 
-																			 ", ingestionJobKey: {}", field, ingestionJobKey);
+					string errorMessage = std::format(
+						"{} field missing"
+						", ingestionJobKey: {}",
+						field, ingestionJobKey
+					);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -708,9 +746,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string field = "DeliveryCode";
 			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
 			{
-				string errorMessage =
-					std::format("A LiveGrid without DeliveryCode cannot be delivered" 
-								 ", ingestionJobKey: {}", ingestionJobKey);
+				string errorMessage = std::format(
+					"A LiveGrid without DeliveryCode cannot be delivered"
+					", ingestionJobKey: {}",
+					ingestionJobKey
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -772,10 +812,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			*/
 
 			SPDLOG_INFO(
-				"createDeliveryAuthorization for LiveGrid" 
+				"createDeliveryAuthorization for LiveGrid"
 				", ingestionJobKey: {}"
 				", deliveryCode: {}"
-				", deliveryURL: {}", ingestionJobKey, deliveryCode, deliveryURL
+				", deliveryURL: {}",
+				ingestionJobKey, deliveryCode, deliveryURL
 			);
 		}
 	}
@@ -1742,7 +1783,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 				);
 			}
 
-			signedURL = std::format("https://{}/{}}}}}", resourceURL, md5Base64, sExpiryTimestamp, filePath);
+			signedURL = std::format("https://{}/{}{}{}", resourceURL, md5Base64, sExpiryTimestamp, filePath);
 		}
 
 		SPDLOG_INFO(
