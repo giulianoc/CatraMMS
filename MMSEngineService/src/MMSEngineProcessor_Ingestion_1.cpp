@@ -2,6 +2,7 @@
 #include "CheckIngestionTimes.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
+#include "spdlog/spdlog.h"
 
 void MMSEngineProcessor::handleCheckIngestionEvent()
 {
@@ -32,16 +33,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			// case we reached the max number of threads 	in MMS Engine
 			bool onlyTasksNotInvolvingMMSEngineThreads = false;
 
-			int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-			if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+			if (!newThreadPermission(_processorsThreadsNumber))
 			{
-				_logger->warn(
-					string() +
-					"Not enough available threads to manage Tasks involving "
-					"more threads" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count()) +
-					", _processorThreads + maxAdditionalProcessorThreads: " + to_string(_processorThreads + maxAdditionalProcessorThreads)
+				SPDLOG_WARN(
+					"Not enough available threads to manage Tasks involving more threads"
+					", _processorIdentifier: {}"
+					", _processorsThreadsNumber.use_count(): {}",
+					_processorIdentifier, _processorsThreadsNumber.use_count()
 				);
 
 				onlyTasksNotInvolvingMMSEngineThreads = true;
@@ -445,35 +443,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
 										 * 		events, we have still to postpone all the events overcoming the thread limit
 										 */
-										int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-										if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+										if (!newThreadPermission(_processorsThreadsNumber))
 										{
-											_logger->warn(
-												string() +
-												"Not enough available threads "
-												"to manage "
-												"downloadMediaSourceFileThread,"
-												" activity is postponed" +
-												", _processorIdentifier: " + to_string(_processorIdentifier) +
-												", ingestionJobKey: " + to_string(ingestionJobKey) +
-												", "
-												"_processorsThreadsNumber.use_"
-												"count(): " +
-												to_string(_processorsThreadsNumber.use_count()) +
-												", _processorThreads + "
-												"maxAdditionalProcessorThreads:"
-												" " +
-												to_string(_processorThreads + maxAdditionalProcessorThreads)
+											SPDLOG_WARN(
+												"Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
+												", _processorIdentifier: {}"
+												", ingestionJobKey: {}"
+												", _processorsThreadsNumber.use_count(): {}",
+												_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 											);
 
 											string errorMessage = "";
 											string processorMMS = "";
 
 											SPDLOG_INFO(
-												string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-												", ingestionJobKey: " + to_string(ingestionJobKey) +
-												", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) +
-												", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+												"Update IngestionJob"
+												", _processorIdentifier: {}"
+												", ingestionJobKey: {}"
+												", IngestionStatus: {}"
+												", errorMessage: {}"
+												", processorMMS: {}",
+												_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+												processorMMS
 											);
 											_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 										}
@@ -512,35 +503,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
 										 * 		events, we have still to postpone all the events overcoming the thread limit
 										 */
-										int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-										if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+										if (!newThreadPermission(_processorsThreadsNumber))
 										{
-											_logger->warn(
-												string() +
-												"Not enough available threads "
-												"to manage "
-												"moveMediaSourceFileThread, "
-												"activity is postponed" +
-												", _processorIdentifier: " + to_string(_processorIdentifier) +
-												", ingestionJobKey: " + to_string(ingestionJobKey) +
-												", "
-												"_processorsThreadsNumber.use_"
-												"count(): " +
-												to_string(_processorsThreadsNumber.use_count()) +
-												", _processorThreads + "
-												"maxAdditionalProcessorThreads:"
-												" " +
-												to_string(_processorThreads + maxAdditionalProcessorThreads)
+											SPDLOG_WARN(
+												"Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
+												", _processorIdentifier: {}"
+												", ingestionJobKey: {}"
+												", _processorsThreadsNumber.use_count(): {}",
+												_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 											);
 
 											string errorMessage = "";
 											string processorMMS = "";
 
 											SPDLOG_INFO(
-												string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-												", ingestionJobKey: " + to_string(ingestionJobKey) +
-												", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) +
-												", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+												"Update IngestionJob"
+												", _processorIdentifier: {}"
+												", ingestionJobKey: {}"
+												", IngestionStatus: {}"
+												", errorMessage: {}"
+												", processorMMS: {}",
+												_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+												processorMMS
 											);
 											_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 										}
@@ -570,35 +554,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
 										 * 		events, we have still to postpone all the events overcoming the thread limit
 										 */
-										int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-										if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+										if (!newThreadPermission(_processorsThreadsNumber))
 										{
-											_logger->warn(
-												string() +
-												"Not enough available threads "
-												"to manage "
-												"copyMediaSourceFileThread, "
-												"activity is postponed" +
-												", _processorIdentifier: " + to_string(_processorIdentifier) +
-												", ingestionJobKey: " + to_string(ingestionJobKey) +
-												", "
-												"_processorsThreadsNumber.use_"
-												"count(): " +
-												to_string(_processorsThreadsNumber.use_count()) +
-												", _processorThreads + "
-												"maxAdditionalProcessorThreads:"
-												" " +
-												to_string(_processorThreads + maxAdditionalProcessorThreads)
+											SPDLOG_WARN(
+												"Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
+												", _processorIdentifier: {}"
+												", ingestionJobKey: {}"
+												", _processorsThreadsNumber.use_count(): {}",
+												_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 											);
 
 											string errorMessage = "";
 											string processorMMS = "";
 
 											SPDLOG_INFO(
-												string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-												", ingestionJobKey: " + to_string(ingestionJobKey) +
-												", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) +
-												", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+												"Update IngestionJob"
+												", _processorIdentifier: {}"
+												", ingestionJobKey: {}"
+												", IngestionStatus: {}"
+												", errorMessage: {}"
+												", processorMMS: {}",
+												_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+												processorMMS
 											);
 											_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 										}
@@ -660,33 +637,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 still have to check the thread limit because, in case handleCheckIngestionEvent gets
 								 20 events, we have still to postpone all the events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage removeContentThread, activity "
-										"is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage removeContentThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -757,33 +729,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage ftpDeliveryContentThread, "
-										"activity is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage ftpDeliveryContentThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										"_processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -874,33 +841,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage localCopyContent, activity is "
-										"postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage localCopyContent, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -980,33 +942,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage http callback, activity is "
-										"postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage http callback, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -1322,33 +1279,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									 *		we have still to postpone all the
 									 *events overcoming the thread limit
 									 */
-									int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-									if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+									if (!newThreadPermission(_processorsThreadsNumber))
 									{
-										_logger->warn(
-											string() +
-											"Not enough available threads to "
-											"manage changeFileFormatThread, "
-											"activity is postponed" +
-											", _processorIdentifier: " + to_string(_processorIdentifier) +
-											", ingestionJobKey: " + to_string(ingestionJobKey) +
-											", "
-											"_processorsThreadsNumber.use_"
-											"count(): " +
-											to_string(_processorsThreadsNumber.use_count()) +
-											", _processorThreads + "
-											"maxAdditionalProcessorThreads: " +
-											to_string(_processorThreads + maxAdditionalProcessorThreads)
+										SPDLOG_WARN(
+											"Not enough available threads to manage changeFileFormatThread, activity is postponed"
+											", _processorIdentifier: {}"
+											", ingestionJobKey: {}"
+											", _processorsThreadsNumber.use_count(): {}",
+											_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 										);
 
 										string errorMessage = "";
 										string processorMMS = "";
 
 										SPDLOG_INFO(
-											string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-											", ingestionJobKey: " + to_string(ingestionJobKey) +
-											", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-											", processorMMS: " + processorMMS
+											"Update IngestionJob"
+											", _processorIdentifier: {}"
+											", ingestionJobKey: {}"
+											", IngestionStatus: {}"
+											", errorMessage: {}"
+											", processorMMS: {}",
+											_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+											processorMMS
 										);
 										_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 									}
@@ -1477,33 +1429,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage manageConcatThread, activity "
-										"is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage manageConcatThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -1575,33 +1522,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage manageCutMediaThread, activity "
-										"is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage manageCutMediaThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -1669,33 +1611,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage extractTracksContentThread, "
-										"activity is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage extractTracksContentThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -1864,33 +1801,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage email notification, activity "
-										"is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage email notification, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -1965,33 +1897,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage check streaming, activity is "
-										"postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage check streaming, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -2107,33 +2034,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage post on facebook, activity is "
-										"postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage post on facebook, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -2212,33 +2134,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage post on youtube, activity is "
-										"postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage post on youtube, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -2642,33 +2559,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage manageLiveCutThread, activity "
-										"is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage manageLiveCutThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -2746,33 +2658,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *have still to postpone all the events
 								 *overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage YouTubeLiveBroadcast, activity "
-										"is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage YouTubeLiveBroadcast, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -2837,33 +2744,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *have still to postpone all the events
 								 *overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage facebookLiveBroadcastThread, "
-										"activity is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage facebookLiveBroadcastThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}
@@ -2927,33 +2829,28 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 *20 events, we have still to postpone all the
 								 *events overcoming the thread limit
 								 */
-								int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-								if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									_logger->warn(
-										string() +
-										"Not enough available threads to "
-										"manage changeFileFormatThread, "
-										"activity is postponed" +
-										", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", "
-										"_processorsThreadsNumber.use_count():"
-										" " +
-										to_string(_processorsThreadsNumber.use_count()) +
-										", _processorThreads + "
-										"maxAdditionalProcessorThreads: " +
-										to_string(_processorThreads + maxAdditionalProcessorThreads)
+									SPDLOG_WARN(
+										"Not enough available threads to manage changeFileFormatThread, activity is postponed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", _processorsThreadsNumber.use_count(): {}",
+										_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 									);
 
 									string errorMessage = "";
 									string processorMMS = "";
 
 									SPDLOG_INFO(
-										string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										", ingestionJobKey: " + to_string(ingestionJobKey) +
-										", IngestionStatus: " + MMSEngineDBFacade::toString(ingestionStatus) + ", errorMessage: " + errorMessage +
-										", processorMMS: " + processorMMS
+										"Update IngestionJob"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: {}"
+										", errorMessage: {}"
+										", processorMMS: {}",
+										_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus), errorMessage,
+										processorMMS
 									);
 									_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, ingestionStatus, errorMessage, processorMMS);
 								}

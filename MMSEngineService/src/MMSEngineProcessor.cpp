@@ -450,22 +450,16 @@ void MMSEngineProcessor::operator()()
 
 			try
 			{
-				int maxAdditionalProcessorThreads = getMaxAdditionalProcessorThreads();
-				if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+				if (!newThreadPermission(_processorsThreadsNumber))
 				{
 					// content retention is a periodical event, we will wait the
 					// next one
 
-					_logger->warn(
-						string() +
-						"Not enough available threads to manage "
-						"handleContentRetentionEventThread, activity is "
-						"postponed" +
-						", _processorIdentifier: " + to_string(_processorIdentifier) +
-						", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count()) +
-						", _processorThreads + "
-						"maxAdditionalProcessorThreads: " +
-						to_string(_processorThreads + maxAdditionalProcessorThreads)
+					SPDLOG_WARN(
+						"Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
+						", _processorIdentifier: {}"
+						", _processorsThreadsNumber.use_count(): {}",
+						_processorIdentifier, _processorsThreadsNumber.use_count()
 					);
 				}
 				else
@@ -801,7 +795,7 @@ void MMSEngineProcessor::operator()()
 	SPDLOG_INFO(string() + "MMSEngineProcessor thread terminated" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 }
 
-int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
+bool MMSEngineProcessor::newThreadPermission(shared_ptr<long> processorsThreadsNumber)
 {
 	lock_guard<mutex> locker(*_cpuUsageMutex);
 
@@ -812,6 +806,10 @@ int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
 	// Una volta si è bloccato tutto ed ho dovuto fare un restart del server.
 	// Per cui teniamo un valore 'safe'
 	int maxAdditionalProcessorThreads = 5;
+
+	// se il numero di threads ha già raggiunto il massimo, è inutile verificare la CPU
+	if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+		return false;
 
 	for (int cpuUsage : *_cpuUsage)
 	{
@@ -825,13 +823,22 @@ int MMSEngineProcessor::getMaxAdditionalProcessorThreads()
 
 	string lastCPUUsage;
 	for (int cpuUsage : *_cpuUsage)
-		lastCPUUsage += (to_string(cpuUsage) + " ");
+		lastCPUUsage += std::format("{} ", cpuUsage);
 	SPDLOG_INFO(
-		string() + "getMaxAdditionalProcessorThreads" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-		", lastCPUUsage: " + lastCPUUsage + ", maxAdditionalProcessorThreads: " + to_string(maxAdditionalProcessorThreads)
+		"getMaxAdditionalProcessorThreads"
+		", _processorIdentifier: {}"
+		", lastCPUUsage: {}"
+		", maxAdditionalProcessorThreads: {}",
+		_processorIdentifier, lastCPUUsage, maxAdditionalProcessorThreads
 	);
 
-	return maxAdditionalProcessorThreads;
+	// è importante che il controllo venga fatto all'interno di una regione con mutex in modo che per ogni thread
+	// venga verificato se possa essere eseguito.
+	// Se venisse fatto fuori di una regione critica, se arrivassero 20 tasks contemporaneamente, passerebbero tutti
+	if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)
+		return false;
+	else
+		return true;
 }
 
 void MMSEngineProcessor::cpuUsageThread()

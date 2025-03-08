@@ -159,7 +159,7 @@ class MMSEngineProcessor
 
 	json getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
 
-	int getMaxAdditionalProcessorThreads();
+	bool newThreadPermission(shared_ptr<long> processorsThreadsNumber);
 
 	bool isMaintenanceMode();
 	bool isProcessorShutdown();
