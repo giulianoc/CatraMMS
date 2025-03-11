@@ -51,6 +51,7 @@ set(PROFILEs
     MMS_MTS_H264_2500Kb_medium_1080p25_1_Main_AAC_160.json
     MMS_MTS_H264_2500Kb_medium_1080p25_high422_AAC_160.json
     MMS_TS_H264_2500Kb_medium_720p25_high422_AAC_160.json
+    MMS_TS_H264_2000Kb_medium_720p25_high422_AAC_160.json
     MMS_AVI_RAWVIDEO_2500Kb_1080p25_PCM_S32LE_160.json
     MMS_MP4_H264_1500Kb_veryslow_720p25_high422_AAC_160.json
     MMS_HLS_H264_1500Kb_veryslow_720p25_high422_AAC_160.json

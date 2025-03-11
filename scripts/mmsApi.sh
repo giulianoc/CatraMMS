@@ -73,7 +73,7 @@ then
 			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod"
 			hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod
 			#il load balancer impiega un po piu di tempo prima di ridirigere le nuove richieste al server
-			sleepWaitingLoadBalancer_forAdd=$((sleepWaitingLoadBalancer*3))
+			sleepWaitingLoadBalancer_forAdd=$((sleepWaitingLoadBalancer*6))
 			echo "Waiting load balancer command ($sleepWaitingLoadBalancer_forAdd secs) ..."
 			sleep $sleepWaitingLoadBalancer_forAdd
 		fi
