@@ -1876,7 +1876,7 @@ void FFMpegEncodingParameters::settingFfmpegParameters(
 					// maxRate
 					string ffmpegVideoMaxRate;
 					{
-						field = "KMaxRate";
+						field = "kMaxRate";
 						if (JSONUtils::isMetadataPresent(bitRateInfo, field))
 						{
 							int maxRate = JSONUtils::asInt(bitRateInfo, field, 0);

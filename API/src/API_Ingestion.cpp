@@ -203,40 +203,6 @@ void API::ingestion(
 				responseBodyRoot["tasks"] = responseBodyTasksRoot;
 			}
 		}
-		catch (AlreadyLocked &e)
-		{
-			bool commit = false;
-#ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
-#else
-			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-#endif
-
-			SPDLOG_ERROR(
-				"Ingestion locked"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (runtime_error &e)
-		{
-			bool commit = false;
-#ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
-#else
-			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-#endif
-
-			SPDLOG_ERROR(
-				"request body parsing failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			bool commit = false;
@@ -252,7 +218,7 @@ void API::ingestion(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
@@ -266,40 +232,6 @@ void API::ingestion(
 			chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 		);
 	}
-	catch (AlreadyLocked &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -310,12 +242,12 @@ void API::ingestion(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = "Internal server error";
+		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
-		throw runtime_error(errorMessage);
+		throw;
 	}
 }
 

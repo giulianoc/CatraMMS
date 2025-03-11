@@ -248,13 +248,16 @@ class PostgresHelper
 		return sqlColumnSchema->dataType;
 	}
 
-	string buildQueryColumns(vector<string> &requestedColumns);
+	string buildQueryColumns(vector<string> &requestedColumns, bool convertDateFieldsToUtc = false);
 	shared_ptr<PostgresHelper::SqlResultSet> buildResult(result result);
 
   private:
 	map<string, map<string, shared_ptr<SqlColumnSchema>>> _sqlTablesColumnsSchema;
 
-	string getQueryColumn(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias, string requestedColumnName = "");
+	string getQueryColumn(
+		shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias, string requestedColumnName = "",
+		bool convertDateFieldsToUtc = false
+	);
 	string getColumnName(shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias, string requestedColumnName);
 	bool isDataTypeManaged(string dataType, string arrayDataType);
 };

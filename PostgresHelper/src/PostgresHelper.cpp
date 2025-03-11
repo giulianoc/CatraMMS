@@ -20,7 +20,7 @@ PostgresHelper::~PostgresHelper() = default;
 //    "#EXTRACT(EPOCH FROM <timestamp column> AT TIME ZONE 'UTC') * 1000 as ..."
 //    or
 //    "#to_char(<timestamp column>, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as ...", // output: 2018-11-01T15:21:24Z
-string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns)
+string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns, bool convertDateFieldsToUtc)
 {
 	string queryColumns;
 
@@ -94,7 +94,7 @@ string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns)
 					if (!queryColumns.empty())
 						queryColumns += ", ";
 
-					queryColumns += getQueryColumn(sqlColumnSchema.second, requestedTableNameAlias);
+					queryColumns += getQueryColumn(sqlColumnSchema.second, requestedTableNameAlias, "", convertDateFieldsToUtc);
 				}
 			}
 			else
@@ -119,7 +119,7 @@ string PostgresHelper::buildQueryColumns(vector<string> &requestedColumns)
 				if (!queryColumns.empty())
 					queryColumns += ", ";
 
-				queryColumns += getQueryColumn(itColumn->second, requestedTableNameAlias, requestedColumnName);
+				queryColumns += getQueryColumn(itColumn->second, requestedTableNameAlias, requestedColumnName, convertDateFieldsToUtc);
 			}
 		}
 	}
@@ -321,7 +321,8 @@ shared_ptr<PostgresHelper::SqlResultSet> PostgresHelper::buildResult(result resu
 
 string PostgresHelper::getQueryColumn(
 	shared_ptr<SqlColumnSchema> sqlColumnSchema, string requestedTableNameAlias,
-	string requestedColumnName // serve solamente se identifica un elemento di un array
+	string requestedColumnName, // serve solamente se identifica un elemento di un array
+	bool convertDateFieldsToUtc
 )
 {
 	string queryColumn;
@@ -351,9 +352,9 @@ string PostgresHelper::getQueryColumn(
 		// EPOCH ritorna un float (seconds.milliseconds)
 		if (requestedTableNameAlias.empty())
 			queryColumn = std::format(
-				"EXTRACT(EPOCH FROM {0} AT TIME ZONE 'UTC') * 1000 as {1}, "
-				"to_char({0}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{1}:iso\"", // output: 2018-11-01T15:21:24.000Z
-				sqlColumnSchema->columnName, columnName
+				"EXTRACT(EPOCH FROM {0} {2}) * 1000 as {1}, "
+				"to_char({0} {2}, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as \"{1}:iso\"", // output: 2018-11-01T15:21:24.000Z
+				sqlColumnSchema->columnName, columnName, convertDateFieldsToUtc ? "AT TIME ZONE 'UTC'" : ""
 			);
 		else
 			queryColumn = std::format(

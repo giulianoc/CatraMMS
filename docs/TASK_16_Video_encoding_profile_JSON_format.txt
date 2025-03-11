@@ -30,7 +30,7 @@
 		"otherOutputParameters": "",
 
 		// optional (kbps)
-		"KMaxRate": 1984,
+		"kMaxRate": 1984,
 
 		// optional (kbps)
 		"KBufSize": 3968,

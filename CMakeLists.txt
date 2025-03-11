@@ -29,6 +29,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
 
 set(CMAKE_CXX_FLAGS "-std=c++20")
 
+add_compile_definitions(COMPRESSOR)
+
 # this is to generate a compilation database (for the YCM vim plugin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
