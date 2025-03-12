@@ -3113,7 +3113,8 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 
 			string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
 				mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(liveRecorderUserKey), liveRecorderApiKey),
-				tarGzStagingLiveRecorderVirtualVODPathName, chunkFileSize, std::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
+				tarGzStagingLiveRecorderVirtualVODPathName, [](int, int) { return true; },
+				std::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey),
 				3 // maxRetryNumber
 			);
 

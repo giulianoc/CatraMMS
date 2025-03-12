@@ -14,6 +14,8 @@
 #ifndef CURL_h
 #define CURL_h
 
+#include <cstdint>
+#include <stdexcept>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -38,9 +40,23 @@ using namespace nlohmann::literals;
 #endif
 #endif
 
-struct ServerNotReachable : public exception
+struct CurlException : public runtime_error
 {
-	char const *what() const throw() { return "Server not reachable"; };
+	CurlException(string message) : runtime_error(message) {};
+	virtual string type() { return "CurlException"; };
+};
+
+struct ServerNotReachable : public CurlException
+{
+	ServerNotReachable(string message) : CurlException(message) {};
+	virtual string type() { return "ServerNotReachable"; }
+};
+
+struct HTTPError : public CurlException
+{
+	int16_t httpErrorCode;
+	HTTPError(int httpErrorCode, string message) : CurlException(message), httpErrorCode(httpErrorCode) {};
+	virtual string type() { return "HTTPError"; }
 };
 
 class CurlWrapper
@@ -94,43 +110,58 @@ class CurlWrapper
 	static string basicAuthorization(const string &user, const string &password);
 	static string bearerAuthorization(const string &bearerToken);
 
+	static void httpGetBinary(
+		string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog, int maxRetryNumber,
+		int secondsToWaitBeforeToRetry, vector<uint8_t> &binary
+	);
+
 	static string httpGet(
-		string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0,
-		int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization = "", vector<string> otherHeaders = vector<string>(), string referenceToLog = "",
+		int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
 	);
 
 	static json httpGetJson(
-		string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0,
-		int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization = "", vector<string> otherHeaders = vector<string>(), string referenceToLog = "",
+		int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15, bool outputCompressed = false
 	);
 
 	static string httpDelete(
-		string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0,
-		int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization, vector<string> otherHeaders = vector<string>(), string referenceToLog = "",
+		int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+	);
+
+	static string httpPostString(
+		string url, long timeoutInSeconds, string authorization, string body,
+		string contentType, // i.e.: application/json
+		vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, bool outputCompressed
+	);
+
+	static string httpPutString(
+		string url, long timeoutInSeconds, string authorization, string body,
+		string contentType, // i.e.: application/json
+		vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, bool outputCompressed
 	);
 
 	static pair<string, string> httpPostString(
-		string url, long timeoutInSeconds, string authorization, string body,
-		string contentType, // i.e.: application/json
-		vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization, string body, string contentType = "application/json",
+		vector<string> otherHeaders = vector<string>(), string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
 	);
 
 	static pair<string, string> httpPutString(
-		string url, long timeoutInSeconds, string authorization, string body,
-		string contentType, // i.e.: application/json
-		vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization, string body, string contentType = "application/json",
+		vector<string> otherHeaders = vector<string>(), string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
 	);
 
 	static json httpPostStringAndGetJson(
-		string url, long timeoutInSeconds, string authorization, string body,
-		string contentType, // i.e.: application/json
-		vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization, string body, string contentType = "application/json",
+		vector<string> otherHeaders = vector<string>(), string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15,
+		bool outputCompressed = false
 	);
 
 	static json httpPutStringAndGetJson(
-		string url, long timeoutInSeconds, string authorization, string body,
-		string contentType, // i.e.: application/json
-		vector<string> otherHeaders, string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization, string body, string contentType = "application/json",
+		vector<string> otherHeaders = vector<string>(), string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15,
+		bool outputCompressed = false
 	);
 
 	static string httpPostFile(
@@ -156,8 +187,8 @@ class CurlWrapper
 	);
 
 	static string httpPostFileSplittingInChunks(
-		string url, long timeoutInSeconds, string authorization, string pathFileName, int64_t fileSizeInBytes, string referenceToLog = "",
-		int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
+		string url, long timeoutInSeconds, string authorization, string pathFileName, function<bool(int, int)> chunkCompleted,
+		string referenceToLog = "", int maxRetryNumber = 0, int secondsToWaitBeforeToRetry = 15
 	);
 
 	static string httpPostFormData(
@@ -228,6 +259,14 @@ class CurlWrapper
 		long timeoutInSeconds, string authorization, string body,
 		string contentType, // i.e.: application/json
 		vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry
+	);
+
+	static void httpPostPutBinary(
+		string url,
+		string requestType, // POST or PUT
+		long timeoutInSeconds, string authorization, string body,
+		string contentType, // i.e.: application/json
+		vector<string> otherHeaders, string referenceToLog, int maxRetryNumber, int secondsToWaitBeforeToRetry, vector<uint8_t> &binary
 	);
 
 	static string httpPostPutFile(

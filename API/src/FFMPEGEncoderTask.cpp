@@ -607,7 +607,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 
 		string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
 			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), localBinaryPathFileName,
-			localBinaryFileSizeInBytes, std::format(", ingestionJobKey: {}", ingestionJobKey),
+			[](int, int) { return true; }, std::format(", ingestionJobKey: {}", ingestionJobKey),
 			3 // maxRetryNumber
 		);
 
