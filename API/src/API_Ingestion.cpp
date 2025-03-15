@@ -44,19 +44,22 @@ void API::ingestion(
 		api, workspace->_workspaceKey, requestBody
 	);
 
+	json responseBodyRoot;
+	chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 	try
 	{
-		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
 		json requestBodyRoot = manageWorkflowVariables(requestBody, nullptr);
 
 		// string responseBody;
-		json responseBodyRoot;
 		json responseBodyTasksRoot = json::array();
 
 #ifdef __POSTGRES__
+		PostgresConnTrans trans(_mmsEngineDBFacade->masterPostgresConnectionPool(), true);
+		/*
 		shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginWorkflow();
 		work trans{*(conn->_sqlConnection)};
+		*/
 #else
 		shared_ptr<MySQLConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
 #endif
@@ -96,7 +99,7 @@ void API::ingestion(
 
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
-				_mmsEngineDBFacade->addWorkflow(conn, trans, workspace->_workspaceKey, userKey, rootType, rootLabel, rootHidden, requestBody.c_str());
+				_mmsEngineDBFacade->addWorkflow(trans, workspace->_workspaceKey, userKey, rootType, rootLabel, rootHidden, requestBody.c_str());
 #else
 			int64_t ingestionRootKey =
 				_mmsEngineDBFacade->addIngestionRoot(conn, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
@@ -139,7 +142,7 @@ void API::ingestion(
 				int localDependOnSuccess = 1;
 #ifdef __POSTGRES__
 				ingestionGroupOfTasks(
-					conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
@@ -158,7 +161,7 @@ void API::ingestion(
 											  // dependOnIngestionJobKey is -1
 #ifdef __POSTGRES__
 				ingestionSingleTask(
-					conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
@@ -178,7 +181,7 @@ void API::ingestion(
 
 			bool commit = true;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, ingestionRootKey, processedMetadataContent);
+			_mmsEngineDBFacade->endWorkflow(trans, commit, ingestionRootKey, processedMetadataContent);
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, ingestionRootKey, processedMetadataContent);
 #endif
@@ -207,7 +210,7 @@ void API::ingestion(
 		{
 			bool commit = false;
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
+			_mmsEngineDBFacade->endWorkflow(trans, commit, -1, string());
 #else
 			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
 #endif
@@ -220,7 +223,27 @@ void API::ingestion(
 
 			throw;
 		}
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
 
+		string errorMessage = std::format("Internal server error: {}", e.what());
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw;
+	}
+
+	try
+	{
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
@@ -938,8 +961,7 @@ void API::manageReferencesInput(
 // return: ingestionJobKey associated to this task
 #ifdef __POSTGRES__
 vector<int64_t> API::ingestionSingleTask(
-	shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-	json &taskRoot,
+	PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &taskRoot,
 
 	// dependOnSuccess == 0 -> OnError
 	// dependOnSuccess == 1 -> OnSuccess
@@ -1263,7 +1285,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 #ifdef __POSTGRES__
 			return ingestionGroupOfTasks(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
@@ -1362,7 +1384,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 #ifdef __POSTGRES__
 			return ingestionGroupOfTasks(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
@@ -1676,7 +1698,7 @@ json internalMMSRoot;
 
 #ifdef __POSTGRES__
 		return ingestionGroupOfTasks(
-			conn, trans, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
+			trans, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
 			dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 			/* responseBody, */ responseBodyTasksRoot
 		);
@@ -1797,8 +1819,8 @@ JSONUtils::toString(parametersRoot)
 
 #ifdef __POSTGRES__
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(
-		conn, trans, workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type),
-		processingStartingFrom, dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys
+		trans, workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
+		dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys
 	);
 #else
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(
@@ -1878,7 +1900,7 @@ JSONUtils::toString(parametersRoot)
 	vector<int64_t> referencesOutputIngestionJobKeys;
 #ifdef __POSTGRES__
 	ingestionEvents(
-		conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, localDependOnIngestionJobKeysForStarting,
+		trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, localDependOnIngestionJobKeysForStarting,
 		localDependOnIngestionJobKeysOverallInput,
 
 		dependOnIngestionJobKeysOverallInputOnError,
@@ -1905,9 +1927,9 @@ JSONUtils::toString(parametersRoot)
 
 #ifdef __POSTGRES__
 vector<int64_t> API::ingestionGroupOfTasks(
-	shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-	json &groupOfTasksRoot, vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
-	vector<int64_t> dependOnIngestionJobKeysOverallInput, unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
+	PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &groupOfTasksRoot,
+	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+	unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
 	/* string& responseBody, */ json &responseBodyTasksRoot
 )
 #else
@@ -2026,7 +2048,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 
 #ifdef __POSTGRES__
 				localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-					conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
@@ -2042,7 +2064,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 			{
 #ifdef __POSTGRES__
 				localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-					conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
+					trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
 					dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
@@ -2065,8 +2087,8 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 
 #ifdef __POSTGRES__
 					localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-						conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting,
-						localDependOnSuccess, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+						trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+						dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 						/* responseBody, */ responseBodyTasksRoot
 					);
 #else
@@ -2081,7 +2103,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 				{
 #ifdef __POSTGRES__
 					localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-						conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
+						trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
 						dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 						/* responseBody, */ responseBodyTasksRoot
 					);
@@ -2102,8 +2124,8 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 				{
 #ifdef __POSTGRES__
 					localIngestionTaskDependOnIngestionJobKeyExecution = ingestionGroupOfTasks(
-						conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, lastDependOnIngestionJobKeysForStarting,
-						localDependOnSuccess, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+						trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
+						dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 						/* responseBody, */ responseBodyTasksRoot
 					);
 #else
@@ -2118,8 +2140,8 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 				{
 #ifdef __POSTGRES__
 					localIngestionTaskDependOnIngestionJobKeyExecution = ingestionSingleTask(
-						conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, lastDependOnIngestionJobKeysForStarting,
-						localDependOnSuccess, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+						trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, lastDependOnIngestionJobKeysForStarting, localDependOnSuccess,
+						dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 						/* responseBody, */ responseBodyTasksRoot
 					);
 #else
@@ -2337,7 +2359,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 	vector<int64_t> waitForGlobalIngestionJobKeys;
 #ifdef __POSTGRES__
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(
-		conn, trans, workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type),
+		trans, workspace->_workspaceKey, ingestionRootKey, groupOfTaskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type),
 		processingStartingFrom,
 		referencesOutputPresent ? newDependOnIngestionJobKeysOverallInputBecauseOfReferencesOutput
 								: newDependOnIngestionJobKeysOverallInputBecauseOfTasks,
@@ -2362,7 +2384,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 		for (int64_t childIngestionJobKey : newDependOnIngestionJobKeysOverallInputBecauseOfTasks)
 		{
 #ifdef __POSTGRES__
-			_mmsEngineDBFacade->updateIngestionJobParentGroupOfTasks(conn, trans, childIngestionJobKey, parentGroupOfTasksIngestionJobKey);
+			_mmsEngineDBFacade->updateIngestionJobParentGroupOfTasks(trans, childIngestionJobKey, parentGroupOfTasksIngestionJobKey);
 #else
 			_mmsEngineDBFacade->updateIngestionJobParentGroupOfTasks(conn, childIngestionJobKey, parentGroupOfTasksIngestionJobKey);
 #endif
@@ -2469,7 +2491,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 
 #ifdef __POSTGRES__
 	ingestionEvents(
-		conn, trans, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, localDependOnIngestionJobKeysForStarting,
+		trans, userKey, apiKey, workspace, ingestionRootKey, groupOfTasksRoot, localDependOnIngestionJobKeysForStarting,
 		localDependOnIngestionJobKeysForStarting,
 
 		dependOnIngestionJobKeysOverallInputOnError,
@@ -2494,8 +2516,8 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 
 #ifdef __POSTGRES__
 void API::ingestionEvents(
-	shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-	json &taskOrGroupOfTasksRoot, vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+	PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &taskOrGroupOfTasksRoot,
+	vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
 	vector<int64_t> dependOnIngestionJobKeysOverallInputOnError, vector<int64_t> &referencesOutputIngestionJobKeys,
 	unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
 	/* string& responseBody, */ json &responseBodyTasksRoot
@@ -2545,7 +2567,7 @@ void API::ingestionEvents(
 			int localDependOnSuccess = 1;
 #ifdef __POSTGRES__
 			localIngestionJobKeys = ingestionGroupOfTasks(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
@@ -2584,7 +2606,7 @@ void API::ingestionEvents(
 			int localDependOnSuccess = 1;
 #ifdef __POSTGRES__
 			localIngestionJobKeys = ingestionSingleTask(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
@@ -2611,8 +2633,7 @@ void API::ingestionEvents(
 				{
 #ifdef __POSTGRES__
 					_mmsEngineDBFacade->addIngestionJobDependency(
-						conn, trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
-						referenceOutputDependency
+						trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber, referenceOutputDependency
 					);
 #else
 					_mmsEngineDBFacade->addIngestionJobDependency(
@@ -2658,7 +2679,7 @@ void API::ingestionEvents(
 			int localDependOnSuccess = 0;
 #ifdef __POSTGRES__
 			localIngestionJobKeys = ingestionGroupOfTasks(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 				// dependOnIngestionJobKeysOverallInput,
 				// mapLabelAndIngestionJobKey,
 				dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
@@ -2702,7 +2723,7 @@ void API::ingestionEvents(
 			int localDependOnSuccess = 0;
 #ifdef __POSTGRES__
 			localIngestionJobKeys = ingestionSingleTask(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 				// dependOnIngestionJobKeysOverallInput,
 				// mapLabelAndIngestionJobKey,
 				dependOnIngestionJobKeysOverallInputOnError, mapLabelAndIngestionJobKey,
@@ -2733,8 +2754,7 @@ void API::ingestionEvents(
 				{
 #ifdef __POSTGRES__
 					_mmsEngineDBFacade->addIngestionJobDependency(
-						conn, trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
-						referenceOutputDependency
+						trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber, referenceOutputDependency
 					);
 #else
 					_mmsEngineDBFacade->addIngestionJobDependency(
@@ -2777,7 +2797,7 @@ void API::ingestionEvents(
 			int localDependOnSuccess = -1;
 #ifdef __POSTGRES__
 			localIngestionJobKeys = ingestionGroupOfTasks(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
@@ -2794,7 +2814,7 @@ void API::ingestionEvents(
 			int localDependOnSuccess = -1;
 #ifdef __POSTGRES__
 			localIngestionJobKeys = ingestionSingleTask(
-				conn, trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+				trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
@@ -2821,8 +2841,7 @@ void API::ingestionEvents(
 				{
 #ifdef __POSTGRES__
 					_mmsEngineDBFacade->addIngestionJobDependency(
-						conn, trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber,
-						referenceOutputDependency
+						trans, localIngestionJobKey, dependOnSuccess, localReferenceOutputIngestionJobKey, orderNumber, referenceOutputDependency
 					);
 #else
 					_mmsEngineDBFacade->addIngestionJobDependency(

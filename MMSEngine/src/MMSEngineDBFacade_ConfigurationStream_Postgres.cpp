@@ -17,6 +17,7 @@ json MMSEngineDBFacade::addStream(
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -26,7 +27,9 @@ json MMSEngineDBFacade::addStream(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -42,25 +45,26 @@ json MMSEngineDBFacade::addStream(
 				"position, userData) values ("
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(sourceType), encodersPoolKey == -1 ? "null" : to_string(encodersPoolKey),
-				url == "" ? "null" : trans.quote(url), pushProtocol == "" ? "null" : trans.quote(pushProtocol),
-				pushEncoderKey == -1 ? "null" : to_string(pushEncoderKey), pushEncoderKey == -1 ? "null" : to_string(pushPublicEncoderName),
-				pushServerPort == -1 ? "null" : to_string(pushServerPort), pushUri == "" ? "null" : trans.quote(pushUri),
-				pushListenTimeout == -1 ? "null" : to_string(pushListenTimeout),
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(sourceType),
+				encodersPoolKey == -1 ? "null" : to_string(encodersPoolKey), url == "" ? "null" : trans.transaction->quote(url),
+				pushProtocol == "" ? "null" : trans.transaction->quote(pushProtocol), pushEncoderKey == -1 ? "null" : to_string(pushEncoderKey),
+				pushEncoderKey == -1 ? "null" : to_string(pushPublicEncoderName), pushServerPort == -1 ? "null" : to_string(pushServerPort),
+				pushUri == "" ? "null" : trans.transaction->quote(pushUri), pushListenTimeout == -1 ? "null" : to_string(pushListenTimeout),
 				captureLiveVideoDeviceNumber == -1 ? "null" : to_string(captureLiveVideoDeviceNumber),
-				captureLiveVideoInputFormat == "" ? "null" : trans.quote(captureLiveVideoInputFormat),
+				captureLiveVideoInputFormat == "" ? "null" : trans.transaction->quote(captureLiveVideoInputFormat),
 				captureLiveFrameRate == -1 ? "null" : to_string(captureLiveFrameRate), captureLiveWidth == -1 ? "null" : to_string(captureLiveWidth),
 				captureLiveHeight == -1 ? "null" : to_string(captureLiveHeight),
 				captureLiveAudioDeviceNumber == -1 ? "null" : to_string(captureLiveAudioDeviceNumber),
 				captureLiveChannelsNumber == -1 ? "null" : to_string(captureLiveChannelsNumber),
-				tvSourceTVConfKey == -1 ? "null" : to_string(tvSourceTVConfKey), type == "" ? "null" : trans.quote(type),
-				description == "" ? "null" : trans.quote(description), name == "" ? "null" : trans.quote(name),
-				region == "" ? "null" : trans.quote(region), country == "" ? "null" : trans.quote(country),
-				imageMediaItemKey == -1 ? "null" : to_string(imageMediaItemKey), imageUniqueName == "" ? "null" : trans.quote(imageUniqueName),
-				position == -1 ? "null" : to_string(position), userData == nullptr ? "null" : trans.quote(JSONUtils::toString(userData))
+				tvSourceTVConfKey == -1 ? "null" : to_string(tvSourceTVConfKey), type == "" ? "null" : trans.transaction->quote(type),
+				description == "" ? "null" : trans.transaction->quote(description), name == "" ? "null" : trans.transaction->quote(name),
+				region == "" ? "null" : trans.transaction->quote(region), country == "" ? "null" : trans.transaction->quote(country),
+				imageMediaItemKey == -1 ? "null" : to_string(imageMediaItemKey),
+				imageUniqueName == "" ? "null" : trans.transaction->quote(imageUniqueName), position == -1 ? "null" : to_string(position),
+				userData == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(userData))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -68,7 +72,7 @@ json MMSEngineDBFacade::addStream(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -85,9 +89,8 @@ json MMSEngineDBFacade::addStream(
 			string region;
 			string country;
 			string labelOrder;
-			json streamListRoot = getStreamList(
-				trans, conn, workspaceKey, confKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
-			);
+			json streamListRoot =
+				getStreamList(trans, workspaceKey, confKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
 			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
@@ -126,98 +129,30 @@ json MMSEngineDBFacade::addStream(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return streamsRoot[0];
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -238,6 +173,7 @@ json MMSEngineDBFacade::modifyStream(
 	bool positionToBeModified, int position, bool userDataToBeModified, json userData
 )
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -247,7 +183,9 @@ json MMSEngineDBFacade::modifyStream(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -258,7 +196,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("label = " + trans.quote(label));
+				setSQL += ("label = " + trans.transaction->quote(label));
 				oneParameterPresent = true;
 			}
 
@@ -266,7 +204,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("sourceType = " + trans.quote(sourceType));
+				setSQL += ("sourceType = " + trans.transaction->quote(sourceType));
 				oneParameterPresent = true;
 			}
 
@@ -282,7 +220,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("url = " + (url == "" ? "null" : trans.quote(url)));
+				setSQL += ("url = " + (url == "" ? "null" : trans.transaction->quote(url)));
 				oneParameterPresent = true;
 			}
 
@@ -290,7 +228,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushProtocol = " + (pushProtocol == "" ? "null" : trans.quote(pushProtocol)));
+				setSQL += ("pushProtocol = " + (pushProtocol == "" ? "null" : trans.transaction->quote(pushProtocol)));
 				oneParameterPresent = true;
 			}
 
@@ -322,7 +260,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushUri = " + (pushUri == "" ? "null" : trans.quote(pushUri)));
+				setSQL += ("pushUri = " + (pushUri == "" ? "null" : trans.transaction->quote(pushUri)));
 				oneParameterPresent = true;
 			}
 
@@ -348,7 +286,8 @@ json MMSEngineDBFacade::modifyStream(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL +=
-					("captureLiveVideoInputFormat = " + (captureLiveVideoInputFormat == "" ? "null" : trans.quote(captureLiveVideoInputFormat)));
+					("captureLiveVideoInputFormat = " +
+					 (captureLiveVideoInputFormat == "" ? "null" : trans.transaction->quote(captureLiveVideoInputFormat)));
 				oneParameterPresent = true;
 			}
 
@@ -405,7 +344,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("type = " + (type == "" ? "null" : trans.quote(type)));
+				setSQL += ("type = " + (type == "" ? "null" : trans.transaction->quote(type)));
 				oneParameterPresent = true;
 			}
 
@@ -413,7 +352,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("description = " + (description == "" ? "null" : trans.quote(description)));
+				setSQL += ("description = " + (description == "" ? "null" : trans.transaction->quote(description)));
 				oneParameterPresent = true;
 			}
 
@@ -421,7 +360,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("name = " + (name == "" ? "null" : trans.quote(name)));
+				setSQL += ("name = " + (name == "" ? "null" : trans.transaction->quote(name)));
 				oneParameterPresent = true;
 			}
 
@@ -429,7 +368,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("region = " + (region == "" ? "null" : trans.quote(region)));
+				setSQL += ("region = " + (region == "" ? "null" : trans.transaction->quote(region)));
 				oneParameterPresent = true;
 			}
 
@@ -437,7 +376,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("country = " + (country == "" ? "null" : trans.quote(country)));
+				setSQL += ("country = " + (country == "" ? "null" : trans.transaction->quote(country)));
 				oneParameterPresent = true;
 			}
 
@@ -446,7 +385,9 @@ json MMSEngineDBFacade::modifyStream(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				if (imageMediaItemKey == -1)
-					setSQL += ("imageMediaItemKey = null, imageUniqueName = " + (imageUniqueName == "" ? "null" : trans.quote(imageUniqueName)));
+					setSQL +=
+						("imageMediaItemKey = null, imageUniqueName = " + (imageUniqueName == "" ? "null" : trans.transaction->quote(imageUniqueName))
+						);
 				else
 					setSQL += ("imageMediaItemKey = " + to_string(imageMediaItemKey) + ", imageUniqueName = null");
 				oneParameterPresent = true;
@@ -464,7 +405,7 @@ json MMSEngineDBFacade::modifyStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("userData = " + (userData == nullptr ? "null" : trans.quote(JSONUtils::toString(userData))));
+				setSQL += ("userData = " + (userData == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(userData))));
 				oneParameterPresent = true;
 			}
 
@@ -484,10 +425,10 @@ json MMSEngineDBFacade::modifyStream(
 			string sqlStatement = std::format(
 				"update MMS_Conf_Stream {} "
 				"where {} = {} and workspaceKey = {} ",
-				setSQL, confKey != -1 ? "confKey" : "label", confKey != -1 ? to_string(confKey) : trans.quote(label), workspaceKey
+				setSQL, confKey != -1 ? "confKey" : "label", confKey != -1 ? to_string(confKey) : trans.transaction->quote(label), workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -495,7 +436,7 @@ json MMSEngineDBFacade::modifyStream(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -527,7 +468,7 @@ json MMSEngineDBFacade::modifyStream(
 			string country;
 			string labelOrder;
 			json streamListRoot = getStreamList(
-				trans, conn, workspaceKey, confKey, start, rows, labelKey, labelLike, url, sourceType, type, name, region, country, labelOrder
+				trans, workspaceKey, confKey, start, rows, labelKey, labelLike, url, sourceType, type, name, region, country, labelOrder
 			);
 
 			string field = "response";
@@ -567,103 +508,36 @@ json MMSEngineDBFacade::modifyStream(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return streamsRoot[0];
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, string label)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -673,7 +547,9 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		if (confKey == -1 && label == "")
@@ -701,10 +577,10 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 				sqlStatement = std::format(
 					"WITH rows AS (delete from MMS_Conf_Stream where label = {} and workspaceKey = {} "
 					"returning 1) select count(*) from rows",
-					trans.quote(label), workspaceKey
+					trans.transaction->quote(label), workspaceKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -712,7 +588,7 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -729,97 +605,29 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -832,124 +640,55 @@ json MMSEngineDBFacade::getStreamList(
 {
 	json streamListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
+	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
 
 	conn = connectionPool->borrow();
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
 		streamListRoot = MMSEngineDBFacade::getStreamList(
-			trans, conn, workspaceKey, liveURLKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
+			trans, workspaceKey, liveURLKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
 		);
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return streamListRoot;
 }
 
 json MMSEngineDBFacade::getStreamList(
-	nontransaction &trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label,
-	bool labelLike, string url, string sourceType, string type, string name, string region, string country,
+	PostgresConnTrans &trans, int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label, bool labelLike, string url,
+	string sourceType, string type, string name, string region, string country,
 	string labelOrder // "" or "asc" or "desc"
 )
 {
@@ -1064,29 +803,29 @@ json MMSEngineDBFacade::getStreamList(
 		if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
+				sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
 			else
-				sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
+				sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (url != "")
-			sqlWhere += std::format("and url like {} ", trans.quote("%" + url + "%"));
+			sqlWhere += std::format("and url like {} ", trans.transaction->quote("%" + url + "%"));
 		if (sourceType != "")
-			sqlWhere += std::format("and sourceType = {} ", trans.quote(sourceType));
+			sqlWhere += std::format("and sourceType = {} ", trans.transaction->quote(sourceType));
 		if (type != "")
-			sqlWhere += std::format("and type = {} ", trans.quote(type));
+			sqlWhere += std::format("and type = {} ", trans.transaction->quote(type));
 		if (name != "")
-			sqlWhere += std::format("and LOWER(name) like LOWER({}) ", trans.quote("%" + name + "%"));
+			sqlWhere += std::format("and LOWER(name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
 		if (region != "")
-			sqlWhere += std::format("and region like {} ", trans.quote("%" + region + "%"));
+			sqlWhere += std::format("and region like {} ", trans.transaction->quote("%" + region + "%"));
 		if (country != "")
-			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.quote("%" + country + "%"));
+			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.transaction->quote("%" + country + "%"));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Stream {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1094,7 +833,7 @@ json MMSEngineDBFacade::getStreamList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1119,7 +858,7 @@ json MMSEngineDBFacade::getStreamList(
 				sqlWhere, orderByCondition, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json streamRoot;
@@ -1376,7 +1115,7 @@ json MMSEngineDBFacade::getStreamList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@getStreamList@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1386,38 +1125,26 @@ json MMSEngineDBFacade::getStreamList(
 		field = "response";
 		streamListRoot[field] = responseRoot;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
+		throw;
 	}
 
 	return streamListRoot;
@@ -1427,6 +1154,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 {
 	json streamFreePushEncoderPortRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
@@ -1440,7 +1168,9 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
 		int freePushEncoderPort = 30000;
@@ -1451,10 +1181,10 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 				"select max(pushServerPort) as pushServerPort "
 				"from MMS_Conf_Stream "
 				"where sourceType = {} and pushEncoderKey = {}",
-				trans.quote("IP_PUSH"), encoderKey
+				trans.transaction->quote("IP_PUSH"), encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1462,7 +1192,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -1471,99 +1201,31 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		streamFreePushEncoderPortRoot["freePushEncoderPort"] = freePushEncoderPort;
 		return streamFreePushEncoderPortRoot;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -2220,6 +1882,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 	bool notFoundAsException
 )
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
@@ -2229,6 +1892,8 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
 		if (rows > _maxRows)
@@ -2270,7 +1935,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 			if (confKey != -1)
 				where += std::format("{} confkey = {} ", where.size() > 0 ? "and" : "", confKey);
 			if (label != "")
-				where += std::format("{} label = {} ", where.size() > 0 ? "and" : "", trans.quote(label));
+				where += std::format("{} label = {} ", where.size() > 0 ? "and" : "", trans.transaction->quote(label));
 
 			string limit;
 			string offset;
@@ -2291,7 +1956,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 				_postgresHelper.buildQueryColumns(requestedColumns), where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 
 			sqlResultSet = _postgresHelper.buildResult(res);
 
@@ -2304,7 +1969,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
+				sqlStatement, trans.connection->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
 			);
 
 			if (notFoundAsException && empty(res) && (confKey != -1 || label != ""))
@@ -2322,532 +1987,32 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return sqlResultSet;
 	}
-	catch (DBRecordNotFound &e)
+	catch (exception const &e)
 	{
-		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
-			"NotFound exception"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-}
-
-/*
-tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, string label, bool warningIfMissing)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-
-	try
-	{
-		info(__FILEREF__ + "getStreamDetails" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label);
-
-		int64_t confKey;
-		string sourceType;
-		string encodersPoolLabel;
-		string url;
-		string pushProtocol;
-		int64_t pushEncoderKey = -1;
-		bool pushPublicEncoderName = false;
-		int pushServerPort = -1;
-		string pushUri;
-		int pushListenTimeout = -1;
-		int captureLiveVideoDeviceNumber = -1;
-		string captureLiveVideoInputFormat;
-		int captureLiveFrameRate = -1;
-		int captureLiveWidth = -1;
-		int captureLiveHeight = -1;
-		int captureLiveAudioDeviceNumber = -1;
-		int captureLiveChannelsNumber = -1;
-		int64_t tvSourceTVConfKey = -1;
-		{
-			string sqlStatement = std::format(
-				"select confKey, sourceType, "
-				"encodersPoolKey, url, "
-				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
-				"pushListenTimeout, captureLiveVideoDeviceNumber, "
-				"captureLiveVideoInputFormat, "
-				"captureLiveFrameRate, captureLiveWidth, captureLiveHeight, "
-				"captureLiveAudioDeviceNumber, captureLiveChannelsNumber, "
-				"tvSourceTVConfKey "
-				"from MMS_Conf_Stream "
-				"where workspaceKey = {} and label = {}",
-				workspaceKey, trans.quote(label)
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (empty(res))
-			{
-				string errorMessage =
-					__FILEREF__ + "Configuration label is not found" + ", workspaceKey: " + to_string(workspaceKey) + ", label: " + label;
-				if (warningIfMissing)
-					warn(errorMessage);
-				else
-					SPDLOG_ERROR(errorMessage);
-
-				throw ConfKeyNotFound(errorMessage);
-			}
-
-			confKey = res[0]["confKey"].as<int64_t>();
-			sourceType = res[0]["sourceType"].as<string>();
-			if (!res[0]["encodersPoolKey"].is_null())
-			{
-				int64_t encodersPoolKey = res[0]["encodersPoolKey"].as<int64_t>();
-
-				if (encodersPoolKey >= 0)
-				{
-					try
-					{
-						encodersPoolLabel = getEncodersPoolDetails(encodersPoolKey);
-					}
-					catch (exception &e)
-					{
-						error(__FILEREF__ + "getEncodersPoolDetails failed" + ", encodersPoolKey: " + to_string(encodersPoolKey));
-					}
-				}
-			}
-			if (!res[0]["url"].is_null())
-				url = res[0]["url"].as<string>();
-			if (!res[0]["pushProtocol"].is_null())
-				pushProtocol = res[0]["pushProtocol"].as<string>();
-			if (!res[0]["pushEncoderKey"].is_null())
-				pushEncoderKey = res[0]["pushEncoderKey"].as<int64_t>();
-			if (!res[0]["pushPublicEncoderName"].is_null())
-				pushPublicEncoderName = res[0]["pushPublicEncoderName"].as<bool>();
-			if (!res[0]["pushServerPort"].is_null())
-				pushServerPort = res[0]["pushServerPort"].as<int>();
-			if (!res[0]["pushUri"].is_null())
-				pushUri = res[0]["pushUri"].as<string>();
-			if (!res[0]["pushListenTimeout"].is_null())
-				pushListenTimeout = res[0]["pushListenTimeout"].as<int>();
-			if (!res[0]["captureLiveVideoDeviceNumber"].is_null())
-				captureLiveVideoDeviceNumber = res[0]["captureLiveVideoDeviceNumber"].as<int>();
-			if (!res[0]["captureLiveVideoInputFormat"].is_null())
-				captureLiveVideoInputFormat = res[0]["captureLiveVideoInputFormat"].as<string>();
-			if (!res[0]["captureLiveFrameRate"].is_null())
-				captureLiveFrameRate = res[0]["captureLiveFrameRate"].as<int>();
-			if (!res[0]["captureLiveWidth"].is_null())
-				captureLiveWidth = res[0]["captureLiveWidth"].as<int>();
-			if (!res[0]["captureLiveHeight"].is_null())
-				captureLiveHeight = res[0]["captureLiveHeight"].as<int>();
-			if (!res[0]["captureLiveAudioDeviceNumber"].is_null())
-				captureLiveAudioDeviceNumber = res[0]["captureLiveAudioDeviceNumber"].as<int>();
-			if (!res[0]["captureLiveChannelsNumber"].is_null())
-				captureLiveChannelsNumber = res[0]["captureLiveChannelsNumber"].as<int>();
-			if (!res[0]["tvSourceTVConfKey"].is_null())
-				tvSourceTVConfKey = res[0]["tvSourceTVConfKey"].as<int64_t>();
-		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
-		return make_tuple(
-			confKey, sourceType, encodersPoolLabel, url, pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri,
-			pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, captureLiveHeight,
-			captureLiveAudioDeviceNumber, captureLiveChannelsNumber, tvSourceTVConfKey
-		);
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (ConfKeyNotFound &e)
-	{
-		if (warningIfMissing)
-			SPDLOG_WARN(
-				"ConfKeyNotFound SQL exception"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
 			SPDLOG_ERROR(
-				"ConfKeyNotFound SQL exception"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
+		trans.setAbort();
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
-*/
-
-/*
-tuple<string, string, string> MMSEngineDBFacade::getStreamDetails(int64_t workspaceKey, int64_t confKey)
-{
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-
-	try
-	{
-		info(__FILEREF__ + "getStreamDetails" + ", workspaceKey: " + to_string(workspaceKey) + ", confKey: " + to_string(confKey));
-
-		string url;
-		string channelName;
-		string userData;
-		{
-			string sqlStatement = std::format(
-				"select url, name, userData from MMS_Conf_Stream "
-				"where workspaceKey = {} and confKey = {}",
-				workspaceKey, confKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
-			SPDLOG_INFO(
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
-			);
-			if (empty(res))
-			{
-				string errorMessage = __FILEREF__ + "select from MMS_Conf_Stream failed" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", confKey: " + to_string(confKey);
-
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			url = res[0]["url"].as<string>();
-			channelName = res[0]["name"].as<string>();
-			userData = res[0]["userData"].as<string>();
-		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
-		return make_tuple(url, channelName, userData);
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-}
-*/
 
 json MMSEngineDBFacade::addSourceTVStream(
 	string type, int64_t serviceId, int64_t networkId, int64_t transportStreamId, string name, string satellite, int64_t frequency, string lnb,
@@ -2857,6 +2022,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -2866,7 +2032,9 @@ json MMSEngineDBFacade::addSourceTVStream(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -2879,17 +2047,18 @@ json MMSEngineDBFacade::addSourceTVStream(
 				"country, deliverySystem "
 				") values ({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, "
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
-				trans.quote(type), serviceId == -1 ? "null" : to_string(serviceId), networkId == -1 ? "null" : to_string(networkId),
-				transportStreamId == -1 ? "null" : to_string(transportStreamId), trans.quote(name), satellite == "" ? "null" : trans.quote(satellite),
-				frequency, lnb == "" ? "null" : trans.quote(lnb), videoPid == -1 ? "null" : to_string(videoPid),
-				audioPids == "" ? "null" : trans.quote(audioPids), audioItalianPid == -1 ? "null" : to_string(audioItalianPid),
-				audioEnglishPid == -1 ? "null" : to_string(audioEnglishPid), teletextPid == -1 ? "null" : to_string(teletextPid),
-				modulation == "" ? "null" : trans.quote(modulation), polarization == "" ? "null" : trans.quote(polarization),
-				symbolRate == -1 ? "null" : to_string(symbolRate), bandwidthInHz == -1 ? "null" : to_string(bandwidthInHz),
-				country == "" ? "null" : trans.quote(country), deliverySystem == "" ? "null" : trans.quote(deliverySystem)
+				trans.transaction->quote(type), serviceId == -1 ? "null" : to_string(serviceId), networkId == -1 ? "null" : to_string(networkId),
+				transportStreamId == -1 ? "null" : to_string(transportStreamId), trans.transaction->quote(name),
+				satellite == "" ? "null" : trans.transaction->quote(satellite), frequency, lnb == "" ? "null" : trans.transaction->quote(lnb),
+				videoPid == -1 ? "null" : to_string(videoPid), audioPids == "" ? "null" : trans.transaction->quote(audioPids),
+				audioItalianPid == -1 ? "null" : to_string(audioItalianPid), audioEnglishPid == -1 ? "null" : to_string(audioEnglishPid),
+				teletextPid == -1 ? "null" : to_string(teletextPid), modulation == "" ? "null" : trans.transaction->quote(modulation),
+				polarization == "" ? "null" : trans.transaction->quote(polarization), symbolRate == -1 ? "null" : to_string(symbolRate),
+				bandwidthInHz == -1 ? "null" : to_string(bandwidthInHz), country == "" ? "null" : trans.transaction->quote(country),
+				deliverySystem == "" ? "null" : trans.transaction->quote(deliverySystem)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2897,7 +2066,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -2958,98 +2127,30 @@ json MMSEngineDBFacade::addSourceTVStream(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return sourceTVStreamsRoot[0];
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -3065,6 +2166,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 	bool countryToBeModified, string country, bool deliverySystemToBeModified, string deliverySystem
 )
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -3074,7 +2176,9 @@ json MMSEngineDBFacade::modifySourceTVStream(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -3085,7 +2189,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("type = " + (type == "" ? "null" : trans.quote(type)));
+				setSQL += ("type = " + (type == "" ? "null" : trans.transaction->quote(type)));
 				oneParameterPresent = true;
 			}
 
@@ -3117,7 +2221,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("name = " + (name == "" ? "null" : trans.quote(name)));
+				setSQL += ("name = " + (name == "" ? "null" : trans.transaction->quote(name)));
 				oneParameterPresent = true;
 			}
 
@@ -3125,7 +2229,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("satellite = " + (satellite == "" ? "null" : trans.quote(satellite)));
+				setSQL += ("satellite = " + (satellite == "" ? "null" : trans.transaction->quote(satellite)));
 				oneParameterPresent = true;
 			}
 
@@ -3141,7 +2245,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("lnb = " + (lnb == "" ? "null" : trans.quote(lnb)));
+				setSQL += ("lnb = " + (lnb == "" ? "null" : trans.transaction->quote(lnb)));
 				oneParameterPresent = true;
 			}
 
@@ -3157,7 +2261,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("audioPids = " + (audioPids == "" ? "null" : trans.quote(audioPids)));
+				setSQL += ("audioPids = " + (audioPids == "" ? "null" : trans.transaction->quote(audioPids)));
 				oneParameterPresent = true;
 			}
 
@@ -3189,7 +2293,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("modulation = " + (modulation == "" ? "null" : trans.quote(modulation)));
+				setSQL += ("modulation = " + (modulation == "" ? "null" : trans.transaction->quote(modulation)));
 				oneParameterPresent = true;
 			}
 
@@ -3197,7 +2301,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("polarization = " + (polarization == "" ? "null" : trans.quote(polarization)));
+				setSQL += ("polarization = " + (polarization == "" ? "null" : trans.transaction->quote(polarization)));
 				oneParameterPresent = true;
 			}
 
@@ -3221,7 +2325,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("country = " + (country == "" ? "null" : trans.quote(country)));
+				setSQL += ("country = " + (country == "" ? "null" : trans.transaction->quote(country)));
 				oneParameterPresent = true;
 			}
 
@@ -3229,7 +2333,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("deliverySystem = " + (deliverySystem == "" ? "null" : trans.quote(deliverySystem)));
+				setSQL += ("deliverySystem = " + (deliverySystem == "" ? "null" : trans.transaction->quote(deliverySystem)));
 				oneParameterPresent = true;
 			}
 
@@ -3252,7 +2356,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 				setSQL, confKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3260,7 +2364,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -3329,103 +2433,36 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return sourceTVStreamsRoot[0];
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -3435,7 +2472,9 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -3445,7 +2484,7 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 				confKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3453,7 +2492,7 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -3469,97 +2508,29 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -3570,6 +2541,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 {
 	json streamListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
@@ -3583,7 +2555,9 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -3686,9 +2660,9 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 		if (type != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += std::format("sc.type = {} ", trans.quote(type));
+				sqlWhere += std::format("sc.type = {} ", trans.transaction->quote(type));
 			else
-				sqlWhere += std::format("and sc.type = {} ", trans.quote(type));
+				sqlWhere += std::format("and sc.type = {} ", trans.transaction->quote(type));
 		}
 		if (serviceId != -1)
 		{
@@ -3700,9 +2674,9 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 		if (name != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += std::format("LOWER(sc.name) like LOWER({}) ", trans.quote("%" + name + "%"));
+				sqlWhere += std::format("LOWER(sc.name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
 			else
-				sqlWhere += std::format("and LOWER(sc.name) like LOWER({}) ", trans.quote("%" + name + "%"));
+				sqlWhere += std::format("and LOWER(sc.name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
 		}
 		if (frequency != -1)
 		{
@@ -3714,9 +2688,9 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 		if (lnb != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += std::format("LOWER(sc.lnb) like LOWER({}) ", trans.quote("%" + lnb + "%"));
+				sqlWhere += std::format("LOWER(sc.lnb) like LOWER({}) ", trans.transaction->quote("%" + lnb + "%"));
 			else
-				sqlWhere += std::format("and LOWER(sc.lnb) like LOWER({}) ", trans.quote("%" + lnb + "%"));
+				sqlWhere += std::format("and LOWER(sc.lnb) like LOWER({}) ", trans.transaction->quote("%" + lnb + "%"));
 		}
 		if (videoPid != -1)
 		{
@@ -3728,9 +2702,9 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 		if (audioPids != "")
 		{
 			if (sqlWhere == "")
-				sqlWhere += std::format("sc.audioPids = {} ", trans.quote(audioPids));
+				sqlWhere += std::format("sc.audioPids = {} ", trans.transaction->quote(audioPids));
 			else
-				sqlWhere += std::format("and sc.audioPids = {} ", trans.quote(audioPids));
+				sqlWhere += std::format("and sc.audioPids = {} ", trans.transaction->quote(audioPids));
 		}
 		if (sqlWhere != "")
 			sqlWhere = std::format("where {}", sqlWhere);
@@ -3740,7 +2714,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 			string sqlStatement = std::format("select count(*) from MMS_Conf_SourceTVStream sc {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3748,7 +2722,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -3769,7 +2743,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 				sqlWhere, orderByCondition, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json streamRoot;
@@ -3891,7 +2865,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -3900,97 +2874,29 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 
 		field = "response";
 		streamListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return streamListRoot;
@@ -3999,6 +2905,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int>
 MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissing)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -4008,7 +2915,9 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		SPDLOG_INFO(
@@ -4034,7 +2943,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 				confKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -4042,7 +2951,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -4076,133 +2985,30 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 			audioItalianPid = res[0]["audioItalianPid"].as<int>();
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return make_tuple(type, serviceId, frequency, symbolRate, bandwidthInHz, modulation, videoPid, audioItalianPid);
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (DBRecordNotFound &e)
-	{
-		if (warningIfMissing)
-			SPDLOG_WARN(
-				"DBRecordNotFound SQL exception"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
 			SPDLOG_ERROR(
-				"DBRecordNotFound SQL exception"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
+		trans.setAbort();
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 

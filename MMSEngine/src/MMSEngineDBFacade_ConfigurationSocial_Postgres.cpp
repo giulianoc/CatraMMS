@@ -6,6 +6,7 @@
 
 json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, string tokenType, string refreshToken, string accessToken)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -15,7 +16,9 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		int64_t confKey;
@@ -24,10 +27,11 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 				"insert into MMS_Conf_YouTube(workspaceKey, label, tokenType, "
 				"refreshToken, accessToken) values ("
 				"{}, {}, {}, {}, {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(tokenType), trans.quote(refreshToken), trans.quote(accessToken)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(tokenType), trans.transaction->quote(refreshToken),
+				trans.transaction->quote(accessToken)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -35,7 +39,7 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -67,98 +71,30 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return youTubeConfRoot;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -167,6 +103,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 	bool refreshTokenModified, string accessToken, bool accessTokenModified
 )
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -176,7 +113,9 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -187,7 +126,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("label = " + trans.quote(label));
+				setSQL += ("label = " + trans.transaction->quote(label));
 				oneParameterPresent = true;
 			}
 
@@ -195,7 +134,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("tokenType = " + trans.quote(tokenType));
+				setSQL += ("tokenType = " + trans.transaction->quote(tokenType));
 				oneParameterPresent = true;
 			}
 
@@ -203,7 +142,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("refreshToken = " + (refreshToken == "" ? "null" : trans.quote(refreshToken)));
+				setSQL += ("refreshToken = " + (refreshToken == "" ? "null" : trans.transaction->quote(refreshToken)));
 				oneParameterPresent = true;
 			}
 
@@ -211,7 +150,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("accessToken = " + (accessToken == "" ? "null" : trans.quote(accessToken)));
+				setSQL += ("accessToken = " + (accessToken == "" ? "null" : trans.transaction->quote(accessToken)));
 				oneParameterPresent = true;
 			}
 
@@ -221,7 +160,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				setSQL, confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -229,7 +168,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -255,7 +194,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -263,7 +202,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -303,103 +242,36 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return youTubeConfRoot;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -409,7 +281,9 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -419,7 +293,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -427,7 +301,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -443,97 +317,29 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -541,6 +347,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 {
 	json youTubeConfListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -550,7 +357,9 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -582,14 +391,14 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 
 		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (label != "")
-			sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.quote(label));
+			sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.transaction->quote(label));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_YouTube {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -597,7 +406,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -609,7 +418,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 				sqlWhere
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json youTubeConfRoot;
@@ -644,7 +453,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -653,97 +462,29 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 
 		field = "response";
 		youTubeConfListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return youTubeConfListRoot;
@@ -751,6 +492,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 
 tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfigurationLabel(int64_t workspaceKey, string youTubeConfigurationLabel)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -760,7 +502,9 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string youTubeTokenType;
@@ -779,10 +523,10 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 				"select tokenType, refreshToken, accessToken "
 				"from MMS_Conf_YouTube "
 				"where workspaceKey = {} and label = {}",
-				workspaceKey, trans.quote(youTubeConfigurationLabel)
+				workspaceKey, trans.transaction->quote(youTubeConfigurationLabel)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -790,7 +534,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -812,98 +556,30 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 				youTubeAccessToken = res[0]["accessToken"].as<string>();
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return make_tuple(youTubeTokenType, youTubeRefreshToken, youTubeAccessToken);
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -911,6 +587,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -920,17 +597,19 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
 				"insert into MMS_Conf_Facebook(workspaceKey, label, modificationDate, userAccessToken) "
 				"values ({}, {}, now() at time zone 'utc', {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(userAccessToken)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(userAccessToken)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -938,100 +617,32 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return confKey;
@@ -1039,6 +650,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 
 void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey, string label, string userAccessToken)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1048,7 +660,9 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -1056,10 +670,10 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 				"update MMS_Conf_Facebook set label = {}, userAccessToken = {}, "
 				"modificationDate = now() at time zone 'utc' "
 				"where confKey = {} and workspaceKey = {} ",
-				trans.quote(label), trans.quote(userAccessToken), confKey, workspaceKey
+				trans.transaction->quote(label), trans.transaction->quote(userAccessToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1067,7 +681,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -1083,102 +697,35 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 		}
 			*/
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1188,7 +735,9 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -1198,7 +747,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1206,7 +755,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -1222,97 +771,29 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -1320,6 +801,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 {
 	json facebookConfListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1329,7 +811,9 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -1368,14 +852,14 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 		if (confKey != -1)
 			sqlWhere += std::format("and confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += std::format("and label = {} ", trans.quote(label));
+			sqlWhere += std::format("and label = {} ", trans.transaction->quote(label));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Facebook {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1383,7 +867,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1396,7 +880,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 				sqlWhere
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json facebookConfRoot;
@@ -1422,7 +906,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1431,97 +915,29 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 
 		field = "response";
 		facebookConfListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return facebookConfListRoot;
@@ -1531,6 +947,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 {
 	string facebookUserAccessToken;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1540,7 +957,9 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		SPDLOG_INFO(
@@ -1553,10 +972,10 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 		{
 			string sqlStatement = std::format(
 				"select userAccessToken from MMS_Conf_Facebook where workspaceKey = {} and label = {}", workspaceKey,
-				trans.quote(facebookConfigurationLabel)
+				trans.transaction->quote(facebookConfigurationLabel)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1564,7 +983,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -1581,97 +1000,29 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 			}
 			facebookUserAccessToken = res[0]["userAccessToken"].as<string>();
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return facebookUserAccessToken;
@@ -1681,6 +1032,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1690,17 +1042,19 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
 				"insert into MMS_Conf_Twitch(workspaceKey, label, modificationDate, refreshToken) "
 				"values ({}, {}, now() at time zone 'utc', {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(refreshToken)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(refreshToken)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1708,100 +1062,32 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return confKey;
@@ -1809,6 +1095,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 
 void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, string label, string refreshToken)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1818,7 +1105,9 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -1826,10 +1115,10 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 				"update MMS_Conf_Twitch set label = {}, refreshToken = {}, "
 				"modificationDate = now() at time zone 'utc' "
 				"where confKey = {} and workspaceKey = {} ",
-				trans.quote(label), trans.quote(refreshToken), confKey, workspaceKey
+				trans.transaction->quote(label), trans.transaction->quote(refreshToken), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1837,7 +1126,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -1853,102 +1142,35 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 		}
 			*/
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1958,7 +1180,9 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -1968,7 +1192,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1976,7 +1200,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -1992,97 +1216,29 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -2090,6 +1246,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 {
 	json twitchConfListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -2099,7 +1256,9 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -2138,14 +1297,14 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 		if (confKey != -1)
 			sqlWhere += std::format("and confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += std::format("and label = {} ", trans.quote(label));
+			sqlWhere += std::format("and label = {} ", trans.transaction->quote(label));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Twitch {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2153,7 +1312,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -2166,7 +1325,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 				sqlWhere
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json twitchConfRoot;
@@ -2192,7 +1351,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -2201,97 +1360,29 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 
 		field = "response";
 		twitchConfListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return twitchConfListRoot;
@@ -2301,6 +1392,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 {
 	string twitchRefreshToken;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -2310,7 +1402,9 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		SPDLOG_INFO(
@@ -2322,10 +1416,11 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 
 		{
 			string sqlStatement = std::format(
-				"select refreshToken from MMS_Conf_Twitch where workspaceKey = {} and label = {}", workspaceKey, trans.quote(twitchConfigurationLabel)
+				"select refreshToken from MMS_Conf_Twitch where workspaceKey = {} and label = {}", workspaceKey,
+				trans.transaction->quote(twitchConfigurationLabel)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2333,7 +1428,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -2350,97 +1445,29 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 			}
 			twitchRefreshToken = res[0]["refreshToken"].as<string>();
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return twitchRefreshToken;
@@ -2450,6 +1477,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -2459,17 +1487,19 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
 				"insert into MMS_Conf_Tiktok(workspaceKey, label, modificationDate, token) "
 				"values ({}, {}, now() at time zone 'utc', {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(token)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(token)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2477,100 +1507,32 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return confKey;
@@ -2578,6 +1540,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 
 void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, string label, string token)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -2587,7 +1550,9 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -2595,10 +1560,10 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 				"update MMS_Conf_Tiktok set label = {}, token = {}, "
 				"modificationDate = now() at time zone 'utc' "
 				"where confKey = {} and workspaceKey = {} ",
-				trans.quote(label), trans.quote(token), confKey, workspaceKey
+				trans.transaction->quote(label), trans.transaction->quote(token), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2606,7 +1571,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -2622,102 +1587,35 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 		}
 			*/
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -2727,7 +1625,9 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -2737,7 +1637,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2745,7 +1645,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -2761,97 +1661,29 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -2859,6 +1691,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 {
 	json tiktokConfListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -2868,7 +1701,9 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -2907,14 +1742,14 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 		if (confKey != -1)
 			sqlWhere += std::format("and confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += std::format("and label = {} ", trans.quote(label));
+			sqlWhere += std::format("and label = {} ", trans.transaction->quote(label));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Tiktok {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2922,7 +1757,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -2935,7 +1770,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 				sqlWhere
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json tiktokConfRoot;
@@ -2961,7 +1796,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -2970,97 +1805,29 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 
 		field = "response";
 		tiktokConfListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return tiktokConfListRoot;
@@ -3070,6 +1837,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 {
 	string tiktokToken;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -3079,7 +1847,9 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		SPDLOG_INFO(
@@ -3091,10 +1861,11 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 
 		{
 			string sqlStatement = std::format(
-				"select token from MMS_Conf_Tiktok where workspaceKey = {} and label = {}", workspaceKey, trans.quote(tiktokConfigurationLabel)
+				"select token from MMS_Conf_Tiktok where workspaceKey = {} and label = {}", workspaceKey,
+				trans.transaction->quote(tiktokConfigurationLabel)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3102,7 +1873,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -3119,97 +1890,29 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 			}
 			tiktokToken = res[0]["token"].as<string>();
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return tiktokToken;

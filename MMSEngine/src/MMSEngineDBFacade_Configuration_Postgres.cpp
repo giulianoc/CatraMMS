@@ -11,6 +11,7 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -20,7 +21,9 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -28,11 +31,11 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 				"insert into MMS_Conf_FTP(workspaceKey, label, server, port, userName, password, "
 				"remoteDirectory) values ("
 				"{}, {}, {}, {}, {}, {}, {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(server), port, trans.quote(userName), trans.quote(password),
-				trans.quote(remoteDirectory)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(server), port, trans.transaction->quote(userName),
+				trans.transaction->quote(password), trans.transaction->quote(remoteDirectory)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -40,100 +43,32 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return confKey;
@@ -143,6 +78,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 	int64_t confKey, int64_t workspaceKey, string label, string server, int port, string userName, string password, string remoteDirectory
 )
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -152,7 +88,9 @@ void MMSEngineDBFacade::modifyFTPConf(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -160,11 +98,11 @@ void MMSEngineDBFacade::modifyFTPConf(
 				"update MMS_Conf_FTP set label = {}, server = {}, port = {}, "
 				"userName = {}, password = {}, remoteDirectory = {} "
 				"where confKey = {} and workspaceKey = {} ",
-				trans.quote(label), trans.quote(server), port, trans.quote(userName), trans.quote(password), trans.quote(remoteDirectory), confKey,
-				workspaceKey
+				trans.transaction->quote(label), trans.transaction->quote(server), port, trans.transaction->quote(userName),
+				trans.transaction->quote(password), trans.transaction->quote(remoteDirectory), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -172,7 +110,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -188,102 +126,35 @@ void MMSEngineDBFacade::modifyFTPConf(
 		}
 			*/
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -293,7 +164,9 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -303,7 +176,7 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -311,7 +184,7 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -327,97 +200,29 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -425,6 +230,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 {
 	json ftpConfListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -434,7 +240,9 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -464,7 +272,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 			string sqlStatement = std::format("select count(*) from MMS_Conf_FTP {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -472,7 +280,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -481,7 +289,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 			string sqlStatement =
 				std::format("select confKey, label, server, port, userName, password, remoteDirectory from MMS_Conf_FTP {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json ftpConfRoot;
@@ -516,7 +324,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -525,97 +333,29 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 
 		field = "response";
 		ftpConfListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return ftpConfListRoot;
@@ -625,6 +365,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 {
 	tuple<string, int, string, string, string> ftp;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -634,7 +375,9 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		SPDLOG_INFO(
@@ -648,10 +391,10 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 			string sqlStatement = std::format(
 				"select server, port, userName, password, remoteDirectory from MMS_Conf_FTP "
 				"where workspaceKey = {} and label = {}",
-				workspaceKey, trans.quote(label)
+				workspaceKey, trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -659,7 +402,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -682,97 +425,29 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 
 			ftp = make_tuple(server, port, userName, password, remoteDirectory);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return ftp;
@@ -782,6 +457,7 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 {
 	int64_t confKey;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -791,17 +467,20 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
 				"insert into MMS_Conf_EMail(workspaceKey, label, addresses, subject, message) values ("
 				"{}, {}, {}, {}, {}) returning confKey",
-				workspaceKey, trans.quote(label), trans.quote(addresses), trans.quote(subject), trans.quote(message)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(addresses), trans.transaction->quote(subject),
+				trans.transaction->quote(message)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			confKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -809,100 +488,32 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return confKey;
@@ -910,6 +521,7 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 
 void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, string label, string addresses, string subject, string message)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -919,7 +531,9 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -927,10 +541,11 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 				"update MMS_Conf_EMail set label = {}, addresses = {}, subject = {}, "
 				"message = {} "
 				"where confKey = {} and workspaceKey = {} ",
-				trans.quote(label), trans.quote(addresses), trans.quote(subject), trans.quote(message), confKey, workspaceKey
+				trans.transaction->quote(label), trans.transaction->quote(addresses), trans.transaction->quote(subject),
+				trans.transaction->quote(message), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.exec0(sqlStatement);
+			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -938,7 +553,7 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			/*
 		if (rowsUpdated != 1)
@@ -954,102 +569,35 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 		}
 			*/
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -1059,7 +607,9 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -1069,7 +619,7 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 				confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1077,7 +627,7 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -1093,97 +643,29 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -1191,6 +673,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 {
 	json emailConfListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1200,7 +683,9 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -1230,7 +715,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 			string sqlStatement = std::format("select count(*) from MMS_Conf_EMail {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1238,7 +723,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1246,7 +731,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 		{
 			string sqlStatement = std::format("select confKey, label, addresses, subject, message from MMS_Conf_EMail {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json emailConfRoot;
@@ -1275,7 +760,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1284,97 +769,29 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 
 		field = "response";
 		emailConfListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return emailConfListRoot;
@@ -1384,6 +801,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 {
 	tuple<string, string, string> email;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1393,7 +811,9 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		SPDLOG_INFO(
@@ -1407,10 +827,10 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 			string sqlStatement = std::format(
 				"select addresses, subject, message from MMS_Conf_EMail "
 				"where workspaceKey = {} and label = {}",
-				workspaceKey, trans.quote(label)
+				workspaceKey, trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1418,7 +838,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (empty(res))
 			{
@@ -1439,97 +859,29 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 
 			email = make_tuple(addresses, subject, message);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return email;

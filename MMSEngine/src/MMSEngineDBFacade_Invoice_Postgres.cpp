@@ -5,6 +5,7 @@
 int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int amount, string expirationDate)
 {
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -14,17 +15,19 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		string sqlStatement = std::format(
 			"insert into MMS_Invoice_(userKey, creationDate, description, amount, "
 			"expirationDate, paid, paymentDate) values ("
 			"{}, now() at time zone 'utc', {}, {}, {}, false, null) returning invoiceKey",
-			userKey, trans.quote(description), amount, trans.quote(expirationDate)
+			userKey, trans.transaction->quote(description), amount, trans.transaction->quote(expirationDate)
 		);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
-		int64_t invoiceKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+		int64_t invoiceKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 		long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 		SQLQUERYLOG(
 			"default", elapsed,
@@ -32,128 +35,34 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 			", sqlStatement: @{}@"
 			", getConnectionId: @{}@"
 			", elapsed (millisecs): @{}@",
-			sqlStatement, conn->getConnectionId(), elapsed
+			sqlStatement, trans.connection->getConnectionId(), elapsed
 		);
-
-		/*
-		json invoiceRoot;
-		{
-			string field = "invoiceKey";
-			invoiceRoot[field] = invoiceKey;
-
-			field = "userKey";
-			invoiceRoot[field] = userKey;
-
-			field = "description";
-			invoiceRoot[field] = description;
-
-			field = "amount";
-			invoiceRoot[field] = amount;
-
-			field = "expirationDate";
-			invoiceRoot[field] = expirationDate;
-
-			field = "paid";
-			invoiceRoot[field] = false;
-
-			field = "paymentDate";
-			invoiceRoot[field] = nullptr;
-		}
-		*/
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 
 		// return invoiceRoot;
 		return invoiceKey;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -170,6 +79,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 
 	json invoiceListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -179,7 +89,9 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -219,7 +131,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Invoice {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int64_t count = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int64_t count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -227,7 +139,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 
 			field = "numFound";
@@ -251,7 +163,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 				sqlWhere, orderBy, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json invoiceRoot;
@@ -292,7 +204,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -301,97 +213,29 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 
 		field = "response";
 		invoiceListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return invoiceListRoot;

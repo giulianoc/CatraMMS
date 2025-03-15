@@ -1,25 +1,26 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "catralibraries/PostgresConnection.h"
 #include "spdlog/spdlog.h"
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
-	transaction_base *trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey, MMSEngineDBFacade::ContentType contentType, string label,
-	bool removeEncodingProfilesIfPresent
+	int64_t workspaceKey, MMSEngineDBFacade::ContentType contentType, string label, bool removeEncodingProfilesIfPresent
 )
 {
 	int64_t encodingProfilesSetKey;
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
 				"select encodingProfilesSetKey from MMS_EncodingProfilesSet "
 				"where workspaceKey = {} and contentType = {} and label = {}",
-				workspaceKey, trans->quote(toString(contentType)), trans->quote(label)
+				workspaceKey, trans.transaction->quote(toString(contentType)), trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans->exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -27,7 +28,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -41,7 +42,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 						encodingProfilesSetKey
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					trans->exec0(sqlStatement);
+					trans.transaction->exec0(sqlStatement);
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -49,7 +50,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
-						sqlStatement, conn->getConnectionId(), elapsed
+						sqlStatement, trans.connection->getConnectionId(), elapsed
 					);
 				}
 			}
@@ -58,10 +59,10 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 				string sqlStatement = std::format(
 					"insert into MMS_EncodingProfilesSet (encodingProfilesSetKey, workspaceKey, contentType, label) values ("
 					"DEFAULT, {}, {}, {}) returning encodingProfilesSetKey",
-					workspaceKey, trans->quote(toString(contentType)), trans->quote(label)
+					workspaceKey, trans.transaction->quote(toString(contentType)), trans.transaction->quote(label)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				encodingProfilesSetKey = trans->exec1(sqlStatement)[0].as<int64_t>();
+				encodingProfilesSetKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -69,43 +70,33 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), elapsed
+					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
 			}
 		}
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfilesSetKey;
@@ -116,6 +107,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 )
 {
 	int64_t encodingProfileKey;
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -125,112 +117,46 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		int64_t encodingProfilesSetKey = -1;
 
 		encodingProfileKey =
-			addEncodingProfile(trans, conn, workspaceKey, label, contentType, deliveryTechnology, jsonEncodingProfile, encodingProfilesSetKey);
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
+			addEncodingProfile(trans, workspaceKey, label, contentType, deliveryTechnology, jsonEncodingProfile, encodingProfilesSetKey);
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfileKey;
 }
 
 int64_t MMSEngineDBFacade::addEncodingProfile(
-	nontransaction &trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey, string label, MMSEngineDBFacade::ContentType contentType,
-	DeliveryTechnology deliveryTechnology, string jsonProfile,
+	PostgresConnTrans &trans, int64_t workspaceKey, string label, MMSEngineDBFacade::ContentType contentType, DeliveryTechnology deliveryTechnology,
+	string jsonProfile,
 	int64_t encodingProfilesSetKey // -1 if it is not associated to any Set
 )
 {
@@ -242,10 +168,10 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfile "
 				"where (workspaceKey = {} or workspaceKey is null) and contentType = {} and label = {}",
-				workspaceKey, trans.quote(toString(contentType)), trans.quote(label)
+				workspaceKey, trans.transaction->quote(toString(contentType)), trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -253,7 +179,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -262,10 +188,10 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				string sqlStatement = std::format(
 					"WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
 					"where encodingProfileKey = {} returning 1) select count(*) from rows",
-					trans.quote(toString(deliveryTechnology)), trans.quote(jsonProfile), encodingProfileKey
+					trans.transaction->quote(toString(deliveryTechnology)), trans.transaction->quote(jsonProfile), encodingProfileKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -273,7 +199,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), elapsed
+					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
 				if (rowsUpdated != 1)
 				{
@@ -294,11 +220,11 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					"insert into MMS_EncodingProfile ("
 					"encodingProfileKey, workspaceKey, label, contentType, deliveryTechnology, jsonProfile) values ("
 					"DEFAULT, {}, {}, {}, {}, {}) returning encodingProfileKey",
-					workspaceKey, trans.quote(label), trans.quote(toString(contentType)), trans.quote(toString(deliveryTechnology)),
-					trans.quote(jsonProfile)
+					workspaceKey, trans.transaction->quote(label), trans.transaction->quote(toString(contentType)),
+					trans.transaction->quote(toString(deliveryTechnology)), trans.transaction->quote(jsonProfile)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				encodingProfileKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+				encodingProfileKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -306,7 +232,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), elapsed
+					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
 			}
 		}
@@ -320,7 +246,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					encodingProfilesSetKey, encodingProfileKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				result res = trans.exec(sqlStatement);
+				result res = trans.transaction->exec(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -328,7 +254,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), elapsed
+					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
 				if (empty(res))
 				{
@@ -339,7 +265,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 							encodingProfilesSetKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						result res = trans.exec(sqlStatement);
+						result res = trans.transaction->exec(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -347,7 +273,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(), elapsed
+							sqlStatement, trans.connection->getConnectionId(), elapsed
 						);
 						if (!empty(res))
 						{
@@ -376,7 +302,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 							encodingProfilesSetKey, encodingProfileKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.exec0(sqlStatement);
+						trans.transaction->exec0(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -384,45 +310,33 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(), elapsed
+							sqlStatement, trans.connection->getConnectionId(), elapsed
 						);
 					}
 				}
 			}
 		}
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfileKey;
@@ -430,6 +344,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 
 void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t encodingProfileKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -439,7 +354,9 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -449,7 +366,7 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 				encodingProfileKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -457,7 +374,7 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated == 0)
 			{
@@ -474,117 +391,49 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
-	transaction_base *trans, shared_ptr<PostgresConnection> conn, int64_t workspaceKey, string label, MMSEngineDBFacade::ContentType contentType,
-	int64_t encodingProfilesSetKey
+	int64_t workspaceKey, string label, MMSEngineDBFacade::ContentType contentType, int64_t encodingProfilesSetKey
 )
 {
 	int64_t encodingProfileKey;
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
 				"select encodingProfileKey from MMS_EncodingProfile "
 				"where (workspaceKey = {} or workspaceKey is null) and contentType = {} and label = {}",
-				workspaceKey, trans->quote(toString(contentType)), trans->quote(label)
+				workspaceKey, trans.transaction->quote(toString(contentType)), trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans->exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -592,7 +441,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -621,7 +470,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 					encodingProfilesSetKey, encodingProfileKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				result res = trans->exec(sqlStatement);
+				result res = trans.transaction->exec(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -629,7 +478,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), elapsed
+					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
 				if (empty(res))
 				{
@@ -640,7 +489,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 							encodingProfilesSetKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						result res = trans->exec(sqlStatement);
+						result res = trans.transaction->exec(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -648,7 +497,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(), elapsed
+							sqlStatement, trans.connection->getConnectionId(), elapsed
 						);
 						if (!empty(res))
 						{
@@ -677,7 +526,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 							encodingProfilesSetKey, encodingProfileKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans->exec0(sqlStatement);
+						trans.transaction->exec0(sqlStatement);
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -685,45 +534,35 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 							", sqlStatement: @{}@"
 							", getConnectionId: @{}@"
 							", elapsed (millisecs): @{}@",
-							sqlStatement, conn->getConnectionId(), elapsed
+							sqlStatement, trans.connection->getConnectionId(), elapsed
 						);
 					}
 				}
 			}
 		}
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfileKey;
@@ -731,6 +570,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 
 void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t encodingProfilesSetKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -740,7 +580,9 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -750,7 +592,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 				encodingProfilesSetKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -758,7 +600,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated == 0)
 			{
@@ -775,97 +617,29 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -874,6 +648,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 )
 {
 	json contentListRoot;
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -883,7 +658,9 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -920,14 +697,14 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 		if (encodingProfilesSetKey != -1)
 			sqlWhere += std::format("and encodingProfilesSetKey = {} ", encodingProfilesSetKey);
 		if (contentTypePresent)
-			sqlWhere += std::format("and contentType = {} ", trans.quote(toString(contentType)));
+			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(contentType)));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_EncodingProfilesSet {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -935,7 +712,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -943,7 +720,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 		{
 			string sqlStatement = std::format("select encodingProfilesSetKey, contentType, label from MMS_EncodingProfilesSet {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json encodingProfilesSetRoot;
@@ -970,7 +747,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 						localEncodingProfilesSetKey
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.exec(sqlStatement);
+					result res = trans.transaction->exec(sqlStatement);
 					for (auto row : res)
 					{
 						json encodingProfileRoot;
@@ -1030,7 +807,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1039,97 +816,29 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 
 		field = "response";
 		contentListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return contentListRoot;
@@ -1140,6 +849,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 )
 {
 	json contentListRoot;
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1149,7 +859,9 @@ json MMSEngineDBFacade::getEncodingProfileList(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -1193,16 +905,16 @@ json MMSEngineDBFacade::getEncodingProfileList(
 		if (encodingProfileKey != -1)
 			sqlWhere += std::format("and encodingProfileKey = {} ", encodingProfileKey);
 		if (contentTypePresent)
-			sqlWhere += std::format("and contentType = {} ", trans.quote(toString(contentType)));
+			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(contentType)));
 		if (label != "")
-			sqlWhere += std::format("and lower(label) like lower({}) ", trans.quote("%" + label + "%"));
+			sqlWhere += std::format("and lower(label) like lower({}) ", trans.transaction->quote("%" + label + "%"));
 
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_EncodingProfile {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1210,7 +922,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1222,7 +934,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 				sqlWhere
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json encodingProfileRoot;
@@ -1278,7 +990,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -1287,97 +999,29 @@ json MMSEngineDBFacade::getEncodingProfileList(
 
 		field = "response";
 		contentListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return contentListRoot;
@@ -1386,6 +1030,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t workspaceKey, int64_t encodingProfilesSetKey)
 {
 	vector<int64_t> encodingProfilesSetKeys;
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1395,14 +1040,16 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement =
 				std::format("select workspaceKey from MMS_EncodingProfilesSet where encodingProfilesSetKey = {}", encodingProfilesSetKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1410,7 +1057,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -1449,7 +1096,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 				"select encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = {}", encodingProfilesSetKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 				encodingProfilesSetKeys.push_back(row["encodingProfileKey"].as<int64_t>());
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -1459,100 +1106,32 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfilesSetKeys;
@@ -1561,6 +1140,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t workspaceKey, string label)
 {
 	vector<int64_t> encodingProfilesSetKeys;
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1570,16 +1150,19 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		int64_t encodingProfilesSetKey;
 		{
 			string sqlStatement = std::format(
-				"select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = {} and label = {}", workspaceKey, trans.quote(label)
+				"select encodingProfilesSetKey from MMS_EncodingProfilesSet where workspaceKey = {} and label = {}", workspaceKey,
+				trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1587,7 +1170,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -1612,7 +1195,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 				"select encodingProfileKey from MMS_EncodingProfilesSetMapping where encodingProfilesSetKey = {}", encodingProfilesSetKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 				encodingProfilesSetKeys.push_back(row["encodingProfileKey"].as<int64_t>());
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -1622,100 +1205,32 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfilesSetKeys;
@@ -1727,6 +1242,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 {
 
 	int64_t encodingProfileKey;
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1736,7 +1252,9 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		{
@@ -1745,16 +1263,16 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 				sqlStatement = std::format(
 					"select encodingProfileKey from MMS_EncodingProfile where "
 					"(workspaceKey = {} or workspaceKey is null) and contentType = {} and label = {}",
-					workspaceKey, trans.quote(toString(contentType)), trans.quote(encodingProfileLabel)
+					workspaceKey, trans.transaction->quote(toString(contentType)), trans.transaction->quote(encodingProfileLabel)
 				);
 			else
 				sqlStatement = std::format(
 					"select encodingProfileKey from MMS_EncodingProfile where "
 					"(workspaceKey = {} or workspaceKey is null) and label = {}",
-					workspaceKey, trans.quote(encodingProfileLabel)
+					workspaceKey, trans.transaction->quote(encodingProfileLabel)
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1762,7 +1280,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -1799,97 +1317,29 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 				throw runtime_error(errorMessage);
 			}
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return encodingProfileKey;
@@ -1898,6 +1348,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string>
 MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t encodingProfileKey)
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
@@ -1907,7 +1358,9 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string label;
@@ -1921,7 +1374,7 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 				workspaceKey, encodingProfileKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1929,7 +1382,7 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (!empty(res))
 			{
@@ -1953,97 +1406,29 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return make_tuple(label, contentType, deliveryTechnology, jsonProfile);
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }

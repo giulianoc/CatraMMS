@@ -17,6 +17,7 @@
 #include "MMSEngineDBFacade.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
+#include "catralibraries/PostgresConnection.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <regex>
@@ -993,12 +994,6 @@ void API::addUpdateEncodingProfilesSet(
 		json encodingProfilesSetRoot = JSONUtils::toJson(requestBody);
 
 		string responseBody;
-#ifdef __POSTGRES__
-		shared_ptr<PostgresConnection> conn = _mmsEngineDBFacade->beginWorkflow();
-		work trans{*(conn->_sqlConnection)};
-#else
-		shared_ptr<MySQLConnection> conn = _mmsEngineDBFacade->beginIngestionJobs();
-#endif
 
 		try
 		{
@@ -1022,7 +1017,7 @@ void API::addUpdateEncodingProfilesSet(
 			bool removeEncodingProfilesIfPresent = true;
 #ifdef __POSTGRES__
 			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(
-				&trans, conn, workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent
+				workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent
 			);
 #else
 			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(
@@ -1039,7 +1034,7 @@ void API::addUpdateEncodingProfilesSet(
 
 #ifdef __POSTGRES__
 				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
-					&trans, conn, workspace->_workspaceKey, profileLabel, contentType, encodingProfilesSetKey
+					workspace->_workspaceKey, profileLabel, contentType, encodingProfilesSetKey
 				);
 #else
 				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
@@ -1053,52 +1048,21 @@ void API::addUpdateEncodingProfilesSet(
 					(string("{ ") + "\"encodingProfileKey\": " + to_string(encodingProfileKey) + ", \"label\": \"" + profileLabel + "\" " + "}");
 			}
 
-			bool commit = true;
-#ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
-#else
-			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-#endif
-
 			string beginOfResponseBody = string("{ ") + "\"encodingProfilesSet\": { " +
 										 "\"encodingProfilesSetKey\": " + to_string(encodingProfilesSetKey) + ", \"label\": \"" + label + "\" " +
 										 "}, " + "\"profiles\": [ ";
 			responseBody.insert(0, beginOfResponseBody);
 			responseBody += " ] }";
 		}
-		catch (runtime_error &e)
-		{
-			bool commit = false;
-#ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
-#else
-			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-#endif
-
-			SPDLOG_ERROR(
-				"request body parsing failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
-			bool commit = false;
-#ifdef __POSTGRES__
-			_mmsEngineDBFacade->endWorkflow(conn, trans, commit, -1, string());
-#else
-			_mmsEngineDBFacade->endIngestionJobs(conn, commit, -1, string());
-#endif
-
 			SPDLOG_ERROR(
 				"request body parsing failed"
 				", e.what(): {}",
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);

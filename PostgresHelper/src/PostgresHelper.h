@@ -7,7 +7,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#define DBCONNECTIONPOOL_LOG
+// #define DBCONNECTIONPOOL_LOG
+#define DBCONNECTIONPOOL_STATS_LOG
 #include <JSONUtils.h>
 #include <catralibraries/PostgresConnection.h>
 #include <string>
@@ -227,7 +228,7 @@ class PostgresHelper
   public:
 	PostgresHelper();
 	~PostgresHelper();
-	void loadSqlColumnsSchema(shared_ptr<PostgresConnection> conn, transaction_base *trans);
+	void loadSqlColumnsSchema(PostgresConnTrans &trans);
 	map<string, shared_ptr<SqlColumnSchema>> getSqlTableSchema(string tableName)
 	{
 		auto it = _sqlTablesColumnsSchema.find(tableName);

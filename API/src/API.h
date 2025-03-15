@@ -17,6 +17,7 @@
 #include "FastCGIAPI.h"
 #include "MMSDeliveryAuthorization.h"
 #include "MMSStorage.h"
+#include "catralibraries/PostgresConnection.h"
 
 class API : public FastCGIAPI
 {
@@ -320,9 +321,9 @@ class API : public FastCGIAPI
 
 #ifdef __POSTGRES__
 	vector<int64_t> ingestionSingleTask(
-		shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-		json &taskRoot, vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
-		vector<int64_t> dependOnIngestionJobKeysOverallInput, unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
+		PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &taskRoot,
+		vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+		unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
 		/* string& responseBody, */ json &responseBodyTasksRoot
 	);
 #else
@@ -336,9 +337,9 @@ class API : public FastCGIAPI
 
 #ifdef __POSTGRES__
 	vector<int64_t> ingestionGroupOfTasks(
-		shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
-		json &groupOfTasksRoot, vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess,
-		vector<int64_t> dependOnIngestionJobKeysOverallInput, unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
+		PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &groupOfTasksRoot,
+		vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess, vector<int64_t> dependOnIngestionJobKeysOverallInput,
+		unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
 		/* string& responseBody, */ json &responseBodyTasksRoot
 	);
 #else
@@ -352,7 +353,7 @@ class API : public FastCGIAPI
 
 #ifdef __POSTGRES__
 	void ingestionEvents(
-		shared_ptr<PostgresConnection> conn, work &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
+		PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey,
 		json &taskOrGroupOfTasksRoot, vector<int64_t> dependOnIngestionJobKeysForStarting, vector<int64_t> dependOnIngestionJobKeysOverallInput,
 		vector<int64_t> dependOnIngestionJobKeysOverallInputOnError, vector<int64_t> &referencesOutputIngestionJobKeys,
 		unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,

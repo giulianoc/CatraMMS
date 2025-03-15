@@ -1,5 +1,6 @@
 
 #include "PostgresHelper.h"
+#include "catralibraries/PostgresConnection.h"
 #include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <cstdint>
@@ -551,7 +552,7 @@ PostgresHelper::SqlResultSet::SqlValueType PostgresHelper::SqlResultSet::type(st
 		return it->second;
 }
 
-void PostgresHelper::loadSqlColumnsSchema(shared_ptr<PostgresConnection> conn, transaction_base *trans)
+void PostgresHelper::loadSqlColumnsSchema(PostgresConnTrans &trans)
 {
 	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
@@ -565,7 +566,7 @@ void PostgresHelper::loadSqlColumnsSchema(shared_ptr<PostgresConnection> conn, t
 								  "from information_schema.columns where table_schema = 'public' "
 								  "order by table_name, column_name ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result result = trans->exec(sqlStatement);
+			result result = trans.transaction->exec(sqlStatement);
 			SPDLOG_DEBUG(
 				"SQL statement"
 				", sqlStatement: @{}@"
@@ -636,37 +637,25 @@ void PostgresHelper::loadSqlColumnsSchema(shared_ptr<PostgresConnection> conn, t
 			}
 		}
 	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
-	}
-	catch (runtime_error const &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
-	}
 	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
 
-		throw e;
+		throw;
 	}
 }

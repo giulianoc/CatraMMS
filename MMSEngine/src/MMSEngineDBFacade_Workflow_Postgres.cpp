@@ -2,11 +2,13 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "catralibraries/PostgresConnection.h"
 #include "catralibraries/StringUtils.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 #include <ranges>
 
+/*
 shared_ptr<PostgresConnection> MMSEngineDBFacade::beginWorkflow()
 {
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -17,26 +19,27 @@ shared_ptr<PostgresConnection> MMSEngineDBFacade::beginWorkflow()
 
 	return conn;
 }
+*/
 
-void MMSEngineDBFacade::endWorkflow(
-	shared_ptr<PostgresConnection> conn, work &trans, bool commit, int64_t ingestionRootKey, string processedMetadataContent
-)
+void MMSEngineDBFacade::endWorkflow(PostgresConnTrans &trans, bool commit, int64_t ingestionRootKey, string processedMetadataContent)
 {
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
 
 	try
 	{
-		_logger->info(__FILEREF__ + "endWorkflow" + ", getConnectionId: " + to_string(conn->getConnectionId()) + ", commit: " + to_string(commit));
+		_logger->info(
+			__FILEREF__ + "endWorkflow" + ", getConnectionId: " + to_string(trans.connection->getConnectionId()) + ", commit: " + to_string(commit)
+		);
 
 		if (ingestionRootKey != -1)
 		{
 			string sqlStatement = std::format(
 				"WITH rows AS (update MMS_IngestionRoot set processedMetaDataContent = {} "
 				"where ingestionRootKey = {} returning 1) select count(*) from rows",
-				trans.quote(processedMetadataContent), ingestionRootKey
+				trans.transaction->quote(processedMetadataContent), ingestionRootKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -44,7 +47,7 @@ void MMSEngineDBFacade::endWorkflow(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 			if (rowsUpdated != 1)
 			{
@@ -57,106 +60,36 @@ void MMSEngineDBFacade::endWorkflow(
 			}
 		}
 
-		if (commit)
-			trans.commit();
+		if (!commit)
+			trans.setAbort();
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
 		else
-			trans.abort();
-
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
 int64_t MMSEngineDBFacade::addWorkflow(
-	shared_ptr<PostgresConnection> conn, work &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden,
-	string metaDataContent
+	PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden, string metaDataContent
 )
 {
 	int64_t ingestionRootKey;
@@ -169,11 +102,11 @@ int64_t MMSEngineDBFacade::addWorkflow(
 				"metaDataContent, ingestionDate, lastUpdate, status) "
 				"values (                       DEFAULT,          {},           {},      {},   {},     {}, "
 				"{},               NOW() at time zone 'utc',         NOW() at time zone 'utc',      {}) returning ingestionRootKey",
-				workspaceKey, userKey, trans.quote(rootType), trans.quote(rootLabel), rootHidden, trans.quote(metaDataContent),
-				trans.quote(toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted))
+				workspaceKey, userKey, trans.transaction->quote(rootType), trans.transaction->quote(rootLabel), rootHidden,
+				trans.transaction->quote(metaDataContent), trans.transaction->quote(toString(MMSEngineDBFacade::IngestionRootStatus::NotCompleted))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			ingestionRootKey = trans.exec1(sqlStatement)[0].as<int64_t>();
+			ingestionRootKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -181,42 +114,30 @@ int64_t MMSEngineDBFacade::addWorkflow(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		throw e;
+		throw;
 	}
 
 	return ingestionRootKey;
@@ -244,19 +165,7 @@ pair<int64_t, string> MMSEngineDBFacade::workflowQuery_WorkspaceKeyIngestionDate
 			ingestionRootKey, fromMaster, e.what()
 		);
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", ingestionRootKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			ingestionRootKey, fromMaster, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 	catch (exception &e)
 	{
@@ -267,7 +176,7 @@ pair<int64_t, string> MMSEngineDBFacade::workflowQuery_WorkspaceKeyIngestionDate
 			ingestionRootKey, fromMaster
 		);
 
-		throw e;
+		throw;
 	}
 }
 
@@ -280,6 +189,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 	int64_t workspaceKey, int64_t ingestionRootKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
 )
 {
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
@@ -289,6 +199,8 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
 		if (rows > _maxRows)
@@ -349,7 +261,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 
 			sqlResultSet = _postgresHelper.buildResult(res);
 
@@ -362,7 +274,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 
 			if (empty(res) && ingestionRootKey != -1 && notFoundAsException)
@@ -380,128 +292,38 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 			}
 		}
 
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
-
 		return sqlResultSet;
 	}
-	catch (DBRecordNotFound &e)
+	catch (exception const &e)
 	{
-		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
-			"NotFound exception"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (sql_error const &e)
-	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else if (de != nullptr)
+			SPDLOG_WARN(
+				"query failed"
+				", exceptionMessage: {}"
+				", conn: {}",
+				de->what(), trans.connection->getConnectionId()
+			);
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
 
@@ -514,6 +336,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 {
 	json statusListRoot;
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
@@ -527,7 +350,9 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
 		string field;
@@ -592,7 +417,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 					workspace->_workspaceKey, mediaItemKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				result res = trans.exec(sqlStatement);
+				result res = trans.transaction->exec(sqlStatement);
 				for (auto row : res)
 					ingestionRookKeys.push_back(row["ingestionRootKey"].as<int64_t>());
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -602,7 +427,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, conn->getConnectionId(), elapsed
+					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
 			}
 
@@ -624,18 +449,20 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				sqlWhere += std::format("and ingestionRootKey in ({}) ", ingestionRootKeysWhere);
 		}
 		if (startIngestionDate != "")
-			sqlWhere += std::format("and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(startIngestionDate));
+			sqlWhere +=
+				std::format("and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate));
 		if (endIngestionDate != "")
-			sqlWhere += std::format("and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.quote(endIngestionDate));
+			sqlWhere +=
+				std::format("and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate));
 		if (label != "")
-			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.quote("%" + label + "%"));
+			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
 		if (!hiddenToo)
 			sqlWhere += std::format("and hidden = {} ", false);
 		{
 			string allStatus = "all";
 			// compare case insensitive
 			if (!StringUtils::equalCaseInsensitive(status, allStatus))
-				sqlWhere += std::format("and status = {} ", trans.quote(status));
+				sqlWhere += std::format("and status = {} ", trans.transaction->quote(status));
 		}
 
 		json responseRoot;
@@ -643,7 +470,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
-			responseRoot[field] = trans.exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -651,7 +478,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, conn->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 
@@ -668,7 +495,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			chrono::milliseconds internalSqlDuration(0);
-			result res = trans.exec(sqlStatement);
+			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
 				json workflowRoot;
@@ -721,10 +548,10 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 					);
 					// "order by newStartProcessing asc, newEndProcessing asc";
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.exec(sqlStatement);
+					result res = trans.transaction->exec(sqlStatement);
 					for (auto row : res)
 					{
-						json ingestionJobRoot = getIngestionJobRoot(workspace, row, dependencyInfo, ingestionJobOutputs, conn, trans);
+						json ingestionJobRoot = getIngestionJobRoot(workspace, row, dependencyInfo, ingestionJobOutputs, trans);
 
 						ingestionJobsRoot.push_back(ingestionJobRoot);
 					}
@@ -749,7 +576,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@getIngestionRootsStatus@",
-				sqlStatement, conn->getConnectionId(),
+				sqlStatement, trans.connection->getConnectionId(),
 				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 			);
 		}
@@ -759,97 +586,29 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 
 		field = "response";
 		statusListRoot[field] = responseRoot;
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 
 	return statusListRoot;
@@ -859,6 +618,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 {
 	_logger->info(__FILEREF__ + "retentionOfIngestionData");
 
+	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
 
 	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
@@ -868,7 +628,9 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 	// Se questo non dovesse essere vero, unborrow non sarà chiamata
 	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
 	nontransaction trans{*(conn->_sqlConnection)};
+	*/
 
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
@@ -903,7 +665,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						_ingestionWorkflowRetentionInDays, maxToBeRemoved
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.exec1(sqlStatement)[0].as<int64_t>();
+					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -911,7 +673,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
-						sqlStatement, conn->getConnectionId(), elapsed
+						sqlStatement, trans.connection->getConnectionId(), elapsed
 					);
 					totalRowsRemoved += rowsUpdated;
 					if (rowsUpdated == 0)
@@ -927,7 +689,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", query: {}"
 						", exceptionMessage: {}"
 						", conn: {}",
-						e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+						e.query(), e.what(), trans.connection->getConnectionId()
 					);
 
 					currentRetriesOnError++;
@@ -969,13 +731,13 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						"select ingestionJobKey from MMS_IngestionJob "
 						"where status in ({}, {}, {}, {}) and sourceBinaryTransferred = false "
 						"and startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc'",
-						trans.quote(toString(IngestionStatus::SourceDownloadingInProgress)),
-						trans.quote(toString(IngestionStatus::SourceMovingInProgress)),
-						trans.quote(toString(IngestionStatus::SourceCopingInProgress)),
-						trans.quote(toString(IngestionStatus::SourceUploadingInProgress)), _contentNotTransferredRetentionInHours
+						trans.transaction->quote(toString(IngestionStatus::SourceDownloadingInProgress)),
+						trans.transaction->quote(toString(IngestionStatus::SourceMovingInProgress)),
+						trans.transaction->quote(toString(IngestionStatus::SourceCopingInProgress)),
+						trans.transaction->quote(toString(IngestionStatus::SourceUploadingInProgress)), _contentNotTransferredRetentionInHours
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.exec(sqlStatement);
+					result res = trans.transaction->exec(sqlStatement);
 					for (auto row : res)
 					{
 						int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
@@ -988,7 +750,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 								__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " +
 								toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
 							);
-							updateIngestionJob(conn, &trans, ingestionJobKey, newIngestionStatus, errorMessage);
+							updateIngestionJob(trans, ingestionJobKey, newIngestionStatus, errorMessage);
 							totalRowsUpdated++;
 						}
 					}
@@ -1001,7 +763,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", elapsed (millisecs): @{}@"
 						", res.size: {}"
 						", totalRowsUpdated: {}",
-						sqlStatement, conn->getConnectionId(), elapsed, res.size(), totalRowsUpdated
+						sqlStatement, trans.connection->getConnectionId(), elapsed, res.size(), totalRowsUpdated
 					);
 
 					toBeExecutedAgain = false;
@@ -1014,7 +776,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", query: {}"
 						", exceptionMessage: {}"
 						", conn: {}",
-						e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+						e.query(), e.what(), trans.connection->getConnectionId()
 					);
 
 					currentRetriesOnError++;
@@ -1061,12 +823,12 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					string sqlStatement = std::format(
 						"select ingestionJobKey from MMS_IngestionJob "
 						"where status = {} and NOW() at time zone 'utc' > processingStartingFrom + INTERVAL '{} days'",
-						trans.quote(toString(IngestionStatus::Start_TaskQueued)), _doNotManageIngestionsOlderThanDays
+						trans.transaction->quote(toString(IngestionStatus::Start_TaskQueued)), _doNotManageIngestionsOlderThanDays
 					);
 					// "where (processorMMS is NULL or processorMMS = ?) "
 					// "and status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.exec(sqlStatement);
+					result res = trans.transaction->exec(sqlStatement);
 					for (auto row : res)
 					{
 						int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
@@ -1087,7 +849,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", sqlStatement: @{}@"
 						", getConnectionId: @{}@"
 						", elapsed (millisecs): @{}@",
-						sqlStatement, conn->getConnectionId(), elapsed
+						sqlStatement, trans.connection->getConnectionId(), elapsed
 					);
 
 					toBeExecutedAgain = false;
@@ -1100,7 +862,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", query: {}"
 						", exceptionMessage: {}"
 						", conn: {}",
-						e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
+						e.query(), e.what(), trans.connection->getConnectionId()
 					);
 
 					currentRetriesOnError++;
@@ -1125,96 +887,28 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startRetention).count()) + "@"
 			);
 		}
-
-		trans.commit();
-		connectionPool->unborrow(conn);
-		conn = nullptr;
 	}
-	catch (sql_error const &e)
+	catch (exception const &e)
 	{
-		SPDLOG_ERROR(
-			"SQL exception"
-			", query: {}"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.query(), e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				se->query(), se->what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", exceptionMessage: {}"
-			", conn: {}",
-			e.what(), (conn != nullptr ? conn->getConnectionId() : -1)
-		);
-
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
+		else
 			SPDLOG_ERROR(
-				"abort failed"
+				"query failed"
+				", exception: {}"
 				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
+				e.what(), trans.connection->getConnectionId()
 			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
 
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", conn: {}",
-			(conn != nullptr ? conn->getConnectionId() : -1)
-		);
+		trans.setAbort();
 
-		try
-		{
-			trans.abort();
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"abort failed"
-				", conn: {}",
-				(conn != nullptr ? conn->getConnectionId() : -1)
-			);
-		}
-		if (conn != nullptr)
-		{
-			connectionPool->unborrow(conn);
-			conn = nullptr;
-		}
-
-		throw e;
+		throw;
 	}
 }
