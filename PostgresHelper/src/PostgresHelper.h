@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <memory>
 // #define DBCONNECTIONPOOL_LOG
-#define DBCONNECTIONPOOL_STATS_LOG
+// #define DBCONNECTIONPOOL_STATS_LOG
 #include <JSONUtils.h>
 #include <catralibraries/PostgresConnection.h>
 #include <string>
