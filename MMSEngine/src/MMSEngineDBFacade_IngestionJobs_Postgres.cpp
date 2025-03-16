@@ -3494,12 +3494,6 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				ingestionJobsRoot.push_back(ingestionJobRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SPDLOG_INFO(
-				"TEST"
-				", elapsed: {}"
-				", maxQueryElapsed: {}",
-				elapsed, maxQueryElapsed("getIngestionJobs")
-			);
 			SQLQUERYLOG(
 				"getIngestionJobs", elapsed,
 				"SQL statement"

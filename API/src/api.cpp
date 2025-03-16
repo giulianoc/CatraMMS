@@ -7,6 +7,7 @@
 
 #include "CurlWrapper.h"
 #include "spdlog/common.h"
+#include "spdlog/sinks/base_sink.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -39,7 +40,7 @@ void signalHandler(int signal)
 		);
 }
 
-shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
+shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, shared_ptr<spdlog::sinks::sink> slowQuerySink)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"], "pathName", "");
 	string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["api"], "errorPathName", "");
@@ -100,6 +101,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 			sinks.push_back(stdoutSink);
 			stdoutSink->set_level(spdlog::level::debug);
 		}
+		sinks.push_back(slowQuerySink);
 	}
 
 	auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
@@ -121,7 +123,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 	return logger;
 }
 
-void registerSlowQueryLogger(json configurationRoot)
+shared_ptr<spdlog::sinks::sink> registerSlowQueryLogger(json configurationRoot)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pathName", "");
 	SPDLOG_INFO(
@@ -137,26 +139,25 @@ void registerSlowQueryLogger(json configurationRoot)
 	);
 
 	SPDLOG_INFO("registerSlowQueryLogger");
-	std::vector<spdlog::sink_ptr> sinks;
+	vector<spdlog::sink_ptr> sinks;
+	shared_ptr<spdlog::sinks::sink> slowQuerySink;
 	{
 		if (logType == "daily")
 		{
 			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
 			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
 
-			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
-			sinks.push_back(dailySink);
-			dailySink->set_level(spdlog::level::warn);
+			slowQuerySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 		}
 		else if (logType == "rotating")
 		{
 			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
 			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
 
-			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-			sinks.push_back(rotatingSink);
-			rotatingSink->set_level(spdlog::level::warn);
+			slowQuerySink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 		}
+		sinks.push_back(slowQuerySink);
+		slowQuerySink->set_level(spdlog::level::warn);
 	}
 
 	auto logger = std::make_shared<spdlog::logger>("slow-query", begin(sinks), end(sinks));
@@ -177,6 +178,7 @@ void registerSlowQueryLogger(json configurationRoot)
 	logger->set_pattern(pattern);
 
 	// logger->warn("Test...");
+	return slowQuerySink;
 }
 
 int main(int argc, char **argv)
@@ -210,8 +212,8 @@ int main(int argc, char **argv)
 
 		json configuration = FastCGIAPI::loadConfigurationFile(configurationPathName, "MMS_");
 
-		shared_ptr<spdlog::logger> logger = setMainLogger(configuration);
-		registerSlowQueryLogger(configuration);
+		shared_ptr<spdlog::sinks::sink> slowQuerySink = registerSlowQueryLogger(configuration);
+		shared_ptr<spdlog::logger> logger = setMainLogger(configuration, slowQuerySink);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);
