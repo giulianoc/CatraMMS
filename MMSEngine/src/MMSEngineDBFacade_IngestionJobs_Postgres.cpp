@@ -3475,8 +3475,8 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				"to_char(ij.processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
 				"to_char(ij.startProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startProcessing, "
 				"to_char(ij.endProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endProcessing, "
-				"case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
-				"case when ij.endProcessing IS NULL then NOW() at time zone 'utc' else ij.endProcessing end as newEndProcessing, "
+				"case when ij.startProcessing IS NULL then ir.ingestionDate at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
+				"case when ij.endProcessing IS NULL then ir.ingestionDate at time zone 'utc' else ij.endProcessing end as newEndProcessing, "
 				"ij.downloadingProgress, ij.uploadingProgress, "
 				"ij.status, ij.errorMessage from MMS_IngestionRoot ir, MMS_IngestionJob ij {} "
 				"order by newStartProcessing {}, newEndProcessing "
@@ -3496,14 +3496,6 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"getIngestionJobs", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
-			);
-			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
