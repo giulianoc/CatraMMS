@@ -503,6 +503,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 						ingestionJobKey, dependOnIngestionJobKey, dependOnSuccess
 					);
 				}
+				/*
 				SPDLOG_INFO(
 					"@SQL statistics@"
 					", sqlStatement: {}"
@@ -512,6 +513,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 					sqlStatement, dependOnIngestionJobKey, res.size(),
 					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
+				*/
 			}
 			else
 			{
@@ -3494,6 +3496,14 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"getIngestionJobs", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+			);
+			SPDLOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
