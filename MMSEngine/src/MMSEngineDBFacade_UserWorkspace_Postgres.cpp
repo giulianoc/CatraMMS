@@ -2569,7 +2569,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 		field = "workspaceName";
 		workspaceDetailRoot[field] = row["name"].as<string>();
 
-		workspaceDetailRoot["notes"] = row["notes"].as<string>();
+		workspaceDetailRoot["notes"] = row["notes"].is_null() ? "" : row["notes"].as<string>();
 
 		field = "maxEncodingPriority";
 		workspaceDetailRoot[field] = row["maxEncodingPriority"].as<string>();
