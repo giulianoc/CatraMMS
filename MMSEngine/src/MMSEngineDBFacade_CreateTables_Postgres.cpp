@@ -164,15 +164,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "workspaceKey			bigint GENERATED ALWAYS AS IDENTITY,"
 								  "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
 								  "name					text NOT NULL,"
-								  "directoryName			text NOT NULL,"
-								  "workspaceType			smallint NOT NULL,"
+								  "directoryName		text NOT NULL,"
+								  "workspaceType		smallint NOT NULL,"
 								  "deliveryURL			text NULL,"
-								  "enabled				boolean NOT NULL,"
+								  "enabled					boolean NOT NULL,"
 								  "maxEncodingPriority	text NOT NULL,"
-								  "encodingPeriod			text NOT NULL,"
+								  "encodingPeriod		text NOT NULL,"
 								  "maxIngestionsNumber	integer NOT NULL,"
 								  "languageCode			text NOT NULL,"
-								  "timezone				text NOT NULL default 'CET',"
+								  "timezone					text NOT NULL default 'CET',"
+								  "notes						text NULL,"
 								  "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);

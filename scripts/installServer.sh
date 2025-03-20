@@ -687,6 +687,9 @@ create-directory()
 		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
 			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
 		fi
+		if [ ! -e /var/catramms/storage/IngestionRepository ]; then
+			ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+		fi
 		#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
 		#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
 		mkdir -p /mnt/local-data/cache/nginx

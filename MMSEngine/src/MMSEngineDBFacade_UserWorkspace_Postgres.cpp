@@ -25,7 +25,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 	try
 	{
 		string sqlStatement = std::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, "
+			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, w.notes, "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
@@ -56,6 +56,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 			workspace->_name = res[0]["name"].as<string>();
 			workspace->_directoryName = res[0]["directoryName"].as<string>();
 			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
+			workspace->_notes = res[0]["notes"].as<string>();
 
 			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
 			workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
@@ -107,25 +108,14 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 	}
 }
 
+/*
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		string sqlStatement = std::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority "
+			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, w.notes, "
 			"wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
@@ -156,6 +146,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 			workspace->_name = res[0]["name"].as<string>();
 			workspace->_directoryName = res[0]["directoryName"].as<string>();
 			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
+			workspace->_notes = res[0]["notes"].as<string>();
 
 			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
 			workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
@@ -206,9 +197,10 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
 		throw;
 	}
 }
+*/
 
 tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
-	string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName,
+	string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName, string notes,
 	WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber,
 	long maxStorageInMB, string languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -312,7 +304,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, trimWorkspaceName, workspaceType,
+				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, trimWorkspaceName, notes, workspaceType,
 				deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, workspaceTimezone,
 				userExpirationLocalDate
 			);
@@ -521,7 +513,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 }
 
 pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
-	int64_t userKey, string workspaceName, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
+	int64_t userKey, string workspaceName, string notes, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
 	EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone, bool admin,
 	chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -568,7 +560,7 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, trimWorkspaceName, workspaceType,
+				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, trimWorkspaceName, notes, workspaceType,
 				deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB, languageCode, workspaceTimezone,
 				userExpirationLocalDate
 			);
@@ -1042,7 +1034,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-	bool editEncodersPool, bool applicationRecorder, string workspaceName, WorkspaceType workspaceType, string deliveryURL,
+	bool editEncodersPool, bool applicationRecorder, string workspaceName, string notes, WorkspaceType workspaceType, string deliveryURL,
 	EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode,
 	string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -1062,13 +1054,13 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 
 			string sqlStatement = std::format(
 				"insert into MMS_Workspace ("
-				"creationDate,              name, directoryName, workspaceType, "
+				"creationDate,              name, directoryName, notes, workspaceType, "
 				"deliveryURL, enabled, maxEncodingPriority, encodingPeriod, "
 				"maxIngestionsNumber, languageCode, timezone) values ("
-				"NOW() at time zone 'utc',  {},   {},            {}, "
+				"NOW() at time zone 'utc',  {},   {},            {},    {}, "
 				"{},          {},     {},                   {}, "
 				"{},                  {},           {}) returning workspaceKey",
-				trans.transaction->quote(workspaceName), trans.transaction->quote(workspaceDirectoryName), static_cast<int>(workspaceType),
+				trans.transaction->quote(workspaceName), trans.transaction->quote(workspaceDirectoryName), notes, static_cast<int>(workspaceType),
 				deliveryURL == "" ? "null" : trans.transaction->quote(deliveryURL), enabled, trans.transaction->quote(toString(maxEncodingPriority)),
 				trans.transaction->quote(toString(encodingPeriod)), maxIngestionsNumber, trans.transaction->quote(languageCode),
 				trans.transaction->quote(workspaceTimezone)
@@ -2349,7 +2341,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 			string sqlStatement;
 			if (admin)
 				sqlStatement = std::format(
-					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
+					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
 					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
@@ -2363,7 +2355,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				);
 			else
 				sqlStatement = std::format(
-					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
+					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
 					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
@@ -2452,7 +2444,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			// if admin returns all the workspaces of the user (even the one not enabled)
 			// if NOT admin returns only the one having isEnabled = 1
 			string sqlStatement = std::format(
-				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
+				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
 				"w.languageCode, w.timezone, "
 				"a.apiKey, a.isOwner, a.isDefault, "
@@ -2490,7 +2482,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			else
 			{
 				string sqlStatement = std::format(
-					"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
+					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
@@ -2576,6 +2568,8 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 
 		field = "workspaceName";
 		workspaceDetailRoot[field] = row["name"].as<string>();
+
+		workspaceDetailRoot["notes"] = row["notes"].as<string>();
 
 		field = "maxEncodingPriority";
 		workspaceDetailRoot[field] = row["maxEncodingPriority"].as<string>();
@@ -2764,10 +2758,10 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 }
 
 json MMSEngineDBFacade::updateWorkspaceDetails(
-	int64_t userKey, int64_t workspaceKey, bool enabledChanged, bool newEnabled, bool nameChanged, string newName, bool maxEncodingPriorityChanged,
-	string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod, bool maxIngestionsNumberChanged,
-	int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged, string newTimezone,
-	bool expirationDateChanged, string newExpirationUtcDate,
+	int64_t userKey, int64_t workspaceKey, bool notesChanged, string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged, string newName,
+	bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
+	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
+	string newTimezone, bool expirationDateChanged, string newExpirationUtcDate,
 
 	bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 	bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -2851,6 +2845,14 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 		{
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
+
+			if (notesChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("notes = {}", trans.transaction->quote(newNotes));
+				oneParameterPresent = true;
+			}
 
 			if (enabledChanged)
 			{
@@ -3193,7 +3195,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 		{
 			string sqlStatement = std::format(
-				"select w.workspaceKey, w.enabled, w.name, w.maxEncodingPriority, "
+				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
 				"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "

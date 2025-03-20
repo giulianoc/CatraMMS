@@ -151,7 +151,7 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 
 #ifdef __POSTGRES__
 				tuple<int64_t, int64_t, string> workspaceKeyUserKeyAndConfirmationCode = _mmsEngineDBFacade->registerUserAndAddWorkspace(
-					name, email, password, country, timezone, workspaceName,
+					name, email, password, country, timezone, workspaceName, "" /* notes */,
 					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,	   // MMSEngineDBFacade::WorkspaceType workspaceType
 					"",														   // string deliveryURL,
 					encodingPriority,										   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
@@ -566,7 +566,7 @@ void API::createWorkspace(
 
 #ifdef __POSTGRES__
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = _mmsEngineDBFacade->createWorkspace(
-				userKey, workspaceName, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
+				userKey, workspaceName, "" /* notes */, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
 				"", // string deliveryURL,
 				encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				"",	   // string languageCode,
@@ -2546,6 +2546,8 @@ void API::updateWorkspace(
 		bool enabledChanged = false;
 		string newName;
 		bool nameChanged = false;
+		string newNotes;
+		bool notesChanged = false;
 		string newMaxEncodingPriority;
 		bool maxEncodingPriorityChanged = false;
 		string newEncodingPeriod;
@@ -2627,6 +2629,13 @@ void API::updateWorkspace(
 		{
 			nameChanged = true;
 			newName = JSONUtils::asString(metadataRoot, field, "");
+		}
+
+		field = "workspaceNotes";
+		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		{
+			notesChanged = true;
+			newNotes = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "maxEncodingPriority";
@@ -2827,9 +2836,10 @@ void API::updateWorkspace(
 
 #ifdef __POSTGRES__
 			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
-				userKey, workspace->_workspaceKey, enabledChanged, newEnabled, nameChanged, newName, maxEncodingPriorityChanged,
-				newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged, newMaxIngestionsNumber,
-				languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, expirationDateChanged, newExpirationUtcDate,
+				userKey, workspace->_workspaceKey, notesChanged, newNotes, enabledChanged, newEnabled, nameChanged, newName,
+				maxEncodingPriorityChanged, newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged,
+				newMaxIngestionsNumber, languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, expirationDateChanged,
+				newExpirationUtcDate,
 
 				maxStorageInGBChanged, maxStorageInGB, currentCostForStorageChanged, currentCostForStorage, dedicatedEncoder_power_1Changed,
 				dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,

@@ -46,13 +46,15 @@ using namespace nlohmann::literals;
 using namespace std;
 
 #define SQLQUERYLOG(queryLabel, elapsed, ...)                                                                                                        \
-	SPDLOG_DEBUG(__VA_ARGS__);                                                                                                                       \
 	if (elapsed > maxQueryElapsed(queryLabel))                                                                                                       \
 	{                                                                                                                                                \
+		SPDLOG_INFO(__VA_ARGS__);                                                                                                                    \
 		auto logger = spdlog::get("slow-query");                                                                                                     \
 		if (logger != nullptr)                                                                                                                       \
 			SPDLOG_LOGGER_WARN(logger, __VA_ARGS__);                                                                                                 \
-	}
+	}                                                                                                                                                \
+	else                                                                                                                                             \
+		SPDLOG_DEBUG(__VA_ARGS__);
 
 struct LoginFailed : public exception
 {
@@ -1213,7 +1215,7 @@ class MMSEngineDBFacade
 
 	shared_ptr<Workspace> getWorkspace(int64_t workspaceKey);
 
-	shared_ptr<Workspace> getWorkspace(string workspaceName);
+	// shared_ptr<Workspace> getWorkspace(string workspaceName);
 
 	json getWorkspaceList(int64_t userKey, bool admin, bool costDetails);
 
@@ -1231,7 +1233,7 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	tuple<int64_t, int64_t, string> registerUserAndAddWorkspace(
-		string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName,
+		string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName, string notes,
 		WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 		long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone,
 		chrono::system_clock::time_point userExpirationDate
@@ -1257,7 +1259,7 @@ class MMSEngineDBFacade
 #endif
 
 	pair<int64_t, string> createWorkspace(
-		int64_t userKey, string workspaceName, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
+		int64_t userKey, string workspaceName, string notes, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
 		EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone, bool admin,
 		chrono::system_clock::time_point userExpirationDate
 	);
@@ -1324,8 +1326,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	json updateWorkspaceDetails(
-		int64_t userKey, int64_t workspaceKey, bool enabledChanged, bool newEnabled, bool nameChanged, string newName,
-		bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
+		int64_t userKey, int64_t workspaceKey, bool notesChanged, string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged,
+		string newName, bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
 		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
 		string newTimezone, bool expirationDateChanged, string newExpirationDate,
 
@@ -2588,7 +2590,7 @@ class MMSEngineDBFacade
 	pair<int64_t, string> addWorkspace(
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, string workspaceName, WorkspaceType workspaceType, string deliveryURL,
+		bool editEncodersPool, bool applicationRecorder, string workspaceName, string notes, WorkspaceType workspaceType, string deliveryURL,
 		EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode,
 		string workspaceTimezone, chrono::system_clock::time_point userExpirationDate
 	);

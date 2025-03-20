@@ -31,9 +31,9 @@ void FFMpeg::slideShow(
 	//		- the duration of the slide show (sum of the duration of the images)
 	//		- shortest audio
 	//
-	//	So, if the duration of the picture is longest than the duration of the shortest audio
+	//	So, if the duration of the picture is longer than the duration of the shortest audio
 	//			we have to reduce the duration of the pictures (1)
-	//	    if the duration of the shortest audio is longest than the duration of the pictures
+	//	    if the duration of the shortest audio is longer than the duration of the pictures
 	//			we have to increase the duration of the last pictures (2)
 
 	// CAPIRE COME MAI LA PERCENTUALE E' SEMPRE ZERO. Eliminare videoDurationInSeconds se non serve
@@ -125,6 +125,7 @@ void FFMpeg::slideShow(
 			else
 				slideDurationInSeconds = durationOfEachSlideInSeconds;
 
+			// https://trac.ffmpeg.org/wiki/Slideshow
 			slideshowListFile << "file '" << sourcePhysicalPath << "'" << endl;
 			SPDLOG_INFO(
 				"slideShow"
