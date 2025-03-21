@@ -1215,12 +1215,13 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
 
 								string sqlStatement = std::format(
-									"WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
-									"where encodingProfileKey = {} returning 1) select count(*) from rows",
+									"update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
+									"where encodingProfileKey = {} ",
 									trans.transaction->quote(toString(deliveryTechnology)), trans.transaction->quote(jsonProfile), encodingProfileKey
 								);
 								chrono::system_clock::time_point startSql = chrono::system_clock::now();
-								int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+								result res = trans.transaction->exec(sqlStatement);
+								int rowsUpdated = res.affected_rows();
 								long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 								SQLQUERYLOG(
 									"default", elapsed,

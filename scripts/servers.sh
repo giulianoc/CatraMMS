@@ -36,7 +36,16 @@ testServers[$((serverIndex*6+5))]=10.0.1.13
 testServersNumber=$((serverIndex+1))
 
 declare -a prodServers
+
 serverIndex=0
+prodServers[$((serverIndex*6+0))]=hetzner-api-2
+prodServers[$((serverIndex*6+1))]=195.201.58.41
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=api
+prodServers[$((serverIndex*6+5))]=10.0.1.8
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-api-3
 prodServers[$((serverIndex*6+1))]=178.63.22.93
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key

@@ -76,13 +76,13 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				{
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
-							"where mediaItemKey = {} and processorMMSForRetention is null "
-							"returning 1) select count(*) from rows",
+							"update MMS_MediaItem set processorMMSForRetention = {} "
+							"where mediaItemKey = {} and processorMMSForRetention is null ",
 							trans.transaction->quote(processorMMS), mediaItemKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+						result res = trans.transaction->exec(sqlStatement);
+						int rowsUpdated = res.affected_rows();
 						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 						internalSqlDuration += sqlDuration;
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -200,13 +200,13 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				{
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
-							"where mediaItemKey = {} and processorMMSForRetention is null "
-							"returning 1) select count(*) from rows",
+							"update MMS_MediaItem set processorMMSForRetention = {} "
+							"where mediaItemKey = {} and processorMMSForRetention is null ",
 							trans.transaction->quote(processorMMS), mediaItemKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+						result res = trans.transaction->exec(sqlStatement);
+						int rowsUpdated = res.affected_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -4301,14 +4301,14 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_WorkspaceMoreInfo set currentDirLevel1 = {}, currentDirLevel2 = {}, "
+					"update MMS_WorkspaceMoreInfo set currentDirLevel1 = {}, currentDirLevel2 = {}, "
 					"currentDirLevel3 = {}, currentIngestionsNumber = currentIngestionsNumber + 1 "
-					"where workspaceKey = {} "
-					"returning 1) select count(*) from rows",
+					"where workspaceKey = {} ",
 					currentDirLevel1, currentDirLevel2, currentDirLevel3, workspace->_workspaceKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -5382,13 +5382,13 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_MediaItem "
-				"where mediaItemKey = {} "
-				"returning 1) select count(*) from rows",
+				"delete from MMS_MediaItem "
+				"where mediaItemKey = {} ",
 				mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -5627,13 +5627,13 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_MediaItem set processorMMSForRetention = {} "
-				"where mediaItemKey = {} "
-				"returning 1) select count(*) from rows",
+				"update MMS_MediaItem set processorMMSForRetention = {} "
+				"where mediaItemKey = {} ",
 				processorMMSForRetention == "" ? "null" : trans.transaction->quote(processorMMSForRetention), mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

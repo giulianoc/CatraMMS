@@ -803,6 +803,7 @@ adds-to-bashrc()
 	elif [[ "$serverName" == *"api"* || "$serverName" == *"delivery"* ]]; then
 		echo "alias tm='tail -f logs/mmsAPI/mmsAPI.log'" >> /home/mms/.bashrc
 		echo "alias tme='tail -f logs/mmsAPI/mmsAPI-error.log'" >> /home/mms/.bashrc
+		echo "alias tw='tail -f logs/catraMMSWEBServices/catraMMSWEBServices.log'" >> /home/mms/.bashrc
 
 		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
 	else
@@ -1052,7 +1053,7 @@ install-mms-packages()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6259
+	catraMMSVersion=1.0.6275
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1238,6 +1239,7 @@ firewall-rules()
 		ufw allow 30000:31000/udp
 	elif [ "$moduleType" == "externalEncoder" ]; then
 		#external encoder (api ..., engine ...
+		ufw allow from 195.201.58.41 to any port 8088 #api-2
 		ufw allow from 178.63.22.93 to any port 8088 #api-3
 		ufw allow from 78.46.101.27 to any port 8088 #api-4
 		ufw allow from 167.235.10.244 to any port 8088 #engine-db-1
@@ -1266,7 +1268,7 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8086		#mms-webapi
 		ufw allow from $internalNetwork to any port 8088		#mms-api
 
-		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
+		echo "bisogna aggiungere l'IP di API/ENGINE tra le regole del firewall di tutti gli external transcoder (i.e.: aws, aruba, serverplan, ...). THIS IS VERY IMPORTANT altrimenti questi encoder, quando chiamati da API/ENGINE appariranno come 'not running' e i canali non potranno essere configurati su questi encoder"
 		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
 	elif [ "$moduleType" == "delivery" ]; then
@@ -1446,6 +1448,14 @@ echo ""
 echo ""
 
 read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (serve per il download di EPG e APK)"
+echo ""
+echo ""
+
+read -n 1 -s -r -p "Aggiornare foglio su google Server List's"
+echo ""
+echo ""
+
+read -n 1 -s -r -p "Aggiornare scripts/servers.sh"
 echo ""
 echo ""
 

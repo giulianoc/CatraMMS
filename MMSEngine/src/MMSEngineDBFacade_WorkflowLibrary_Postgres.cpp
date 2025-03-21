@@ -201,8 +201,8 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(int64_t userKey, int64_t workspa
 			string sqlStatement;
 			if (workspaceKey == -1)
 				sqlStatement = std::format(
-					"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
-					"and workspaceKey is null returning 1) select count(*) from rows",
+					"delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
+					"and workspaceKey is null ",
 					workflowLibraryKey
 				);
 			else
@@ -211,19 +211,20 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(int64_t userKey, int64_t workspa
 				// for this reason the condition on creatorUserKey has to be removed
 				if (admin)
 					sqlStatement = std::format(
-						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
-						"and workspaceKey = {} returning 1) select count(*) from rows",
+						"delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
+						"and workspaceKey = {} ",
 						workflowLibraryKey, workspaceKey
 					);
 				else
 					sqlStatement = std::format(
-						"WITH rows AS (delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
-						"and creatorUserKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+						"delete from MMS_WorkflowLibrary where workflowLibraryKey = {} "
+						"and creatorUserKey = {} and workspaceKey = {} ",
 						workspaceKey, userKey, workspaceKey
 					);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

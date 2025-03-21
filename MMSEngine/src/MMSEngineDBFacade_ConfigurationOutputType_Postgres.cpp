@@ -92,7 +92,6 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 	try
 	{
 		{
-			// elimino WITH rows AS se non serve perchè influenza le performance
 			string sqlStatement = std::format(
 				"update MMS_Conf_AWSChannel set label = {}, channelId = {}, rtmpURL = {}, "
 				"playURL = {}, type = {} "
@@ -169,13 +168,10 @@ void MMSEngineDBFacade::removeAWSChannelConf(int64_t workspaceKey, int64_t confK
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_AWSChannel where confKey = {} and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_AWSChannel where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -473,12 +469,13 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 
 				{
 					string sqlStatement = std::format(
-						"WITH rows AS (update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-						"where reservedByIngestionJobKey in ({}) returning 1) select count(*) from rows",
+						"update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in ({}) ",
 						ingestionJobKeyList
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+					result res = trans.transaction->exec(sqlStatement);
+					int rowsUpdated = res.affected_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -584,12 +581,13 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 		if (reservedByIngestionJobKey == -1)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_AWSChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_AWSChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
+				"where confKey = {} ",
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -714,12 +712,13 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_AWSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+				"where confKey = {} ",
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -938,13 +937,10 @@ void MMSEngineDBFacade::removeCDN77ChannelConf(int64_t workspaceKey, int64_t con
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_CDN77Channel where confKey = {} and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_CDN77Channel where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1461,12 +1457,13 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 		if (reservedByIngestionJobKey == -1)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_CDN77Channel set outputIndex = {}, reservedByIngestionJobKey = {} "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_CDN77Channel set outputIndex = {}, reservedByIngestionJobKey = {} "
+				"where confKey = {} ",
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1590,12 +1587,13 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_CDN77Channel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+				"where confKey = {} ",
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1815,13 +1813,10 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_RTMPChannel where confKey = {} and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_RTMPChannel where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2364,12 +2359,13 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 		if (reservedByIngestionJobKey == -1)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_RTMPChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_RTMPChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
+				"where confKey = {} ",
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2495,12 +2491,13 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+				"where confKey = {} ",
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2717,13 +2714,10 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_HLSChannel where confKey = {} and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_HLSChannel where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3241,12 +3235,13 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 		if (reservedByIngestionJobKey == -1)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_HLSChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_HLSChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
+				"where confKey = {} ",
 				outputIndex, ingestionJobKey, reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3370,12 +3365,13 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
-				"where confKey = {} returning 1) select count(*) from rows",
+				"update MMS_Conf_HLSChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+				"where confKey = {} ",
 				reservedConfKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

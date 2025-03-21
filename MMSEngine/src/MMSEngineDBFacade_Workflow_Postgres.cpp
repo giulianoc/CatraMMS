@@ -34,12 +34,13 @@ void MMSEngineDBFacade::endWorkflow(PostgresConnTrans &trans, bool commit, int64
 		if (ingestionRootKey != -1)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionRoot set processedMetaDataContent = {} "
-				"where ingestionRootKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionRoot set processedMetaDataContent = {} "
+				"where ingestionRootKey = {} ",
 				trans.transaction->quote(processedMetadataContent), ingestionRootKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -657,15 +658,15 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					//	- ingestion is in a final state but encoding is not: we already have the
 					//		fixEncodingJobsHavingWrongStatus method
 					string sqlStatement = std::format(
-						"WITH rows AS (delete from MMS_IngestionRoot where ingestionRootKey in "
+						"delete from MMS_IngestionRoot where ingestionRootKey in "
 						"(select ingestionRootKey from MMS_IngestionRoot "
 						"where ingestionDate < NOW() at time zone 'utc' - INTERVAL '{} days' "
-						"and status like 'Completed%' limit {}) "
-						"returning 1) select count(*) from rows",
+						"and status like 'Completed%' limit {}) ",
 						_ingestionWorkflowRetentionInDays, maxToBeRemoved
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+					result res = trans.transaction->exec(sqlStatement);
+					int rowsUpdated = res.affected_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,

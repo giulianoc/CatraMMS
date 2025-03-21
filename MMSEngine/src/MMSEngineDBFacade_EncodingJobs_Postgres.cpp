@@ -438,23 +438,22 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					string sqlStatement;
 					if (!row["utcScheduleStart_virtual"].is_null())
 						sqlStatement = std::format(
-							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = {} "
-							"where encodingJobKey = {} and processorMMS is null "
-							"returning 1) select count(*) from rows",
+							"update MMS_EncodingJob set status = {}, processorMMS = {} "
+							"where encodingJobKey = {} and processorMMS is null ",
 							trans.transaction->quote(toString(EncodingStatus::Processing)), trans.transaction->quote(processorMMS),
 							encodingItem->_encodingJobKey
 						);
 					else
 						sqlStatement = std::format(
-							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = {}"
+							"update MMS_EncodingJob set status = {}, processorMMS = {}"
 							", encodingJobStart = NOW() at time zone 'utc' "
-							"where encodingJobKey = {} and processorMMS is null "
-							"returning 1) select count(*) from rows",
+							"where encodingJobKey = {} and processorMMS is null ",
 							trans.transaction->quote(toString(EncodingStatus::Processing)), trans.transaction->quote(processorMMS),
 							encodingItem->_encodingJobKey
 						);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+					result res = trans.transaction->exec(sqlStatement);
+					int rowsUpdated = res.affected_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -790,9 +789,8 @@ int MMSEngineDBFacade::updateEncodingJob(
 							toString(newEncodingStatus), encodingFailureNumber, encodingJobKey
 						);
 						sqlStatement = std::format(
-							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, failuresNumber = {}, "
-							"encodingProgress = NULL where encodingJobKey = {} and status = {} "
-							"returning 1) select count(*) from rows",
+							"update MMS_EncodingJob set status = {}, processorMMS = NULL, failuresNumber = {}, "
+							"encodingProgress = NULL where encodingJobKey = {} and status = {} ",
 							trans.transaction->quote(toString(newEncodingStatus)), encodingFailureNumber, encodingJobKey,
 							trans.transaction->quote(toString(EncodingStatus::Processing))
 						);
@@ -803,15 +801,16 @@ int MMSEngineDBFacade::updateEncodingJob(
 						encodingFailureNumber++;
 
 						sqlStatement = std::format(
-							"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, encoderKey = NULL, "
+							"update MMS_EncodingJob set status = {}, processorMMS = NULL, encoderKey = NULL, "
 							"failuresNumber = {}, encodingProgress = NULL where encodingJobKey = {} "
-							"and status = {} returning 1) select count(*) from rows",
+							"and status = {} ",
 							trans.transaction->quote(toString(newEncodingStatus)), encodingFailureNumber, encodingJobKey,
 							trans.transaction->quote(toString(EncodingStatus::Processing))
 						);
 					}
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+					result res = trans.transaction->exec(sqlStatement);
+					int rowsUpdated = res.affected_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -859,14 +858,15 @@ int MMSEngineDBFacade::updateEncodingJob(
 					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
+					"update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encoderKey = NULL, encodingProgress = NULL "
-					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
+					"where encodingJobKey = {} and status = {} ",
 					trans.transaction->quote(toString(newEncodingStatus)), encodingJobKey,
 					trans.transaction->quote(toString(EncodingStatus::Processing))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -910,14 +910,15 @@ int MMSEngineDBFacade::updateEncodingJob(
 					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
+					"update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc' "
-					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
+					"where encodingJobKey = {} and status = {} ",
 					trans.transaction->quote(toString(newEncodingStatus)), encodingJobKey,
 					trans.transaction->quote(toString(EncodingStatus::Processing))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -961,14 +962,15 @@ int MMSEngineDBFacade::updateEncodingJob(
 					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
+					"update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc' "
-					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
+					"where encodingJobKey = {} and status = {} ",
 					trans.transaction->quote(toString(newEncodingStatus)), encodingJobKey,
 					trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1012,13 +1014,14 @@ int MMSEngineDBFacade::updateEncodingJob(
 					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
+					"update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc' "
-					"where encodingJobKey = {} returning 1) select count(*) from rows",
+					"where encodingJobKey = {} ",
 					trans.transaction->quote(toString(newEncodingStatus)), encodingJobKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1063,14 +1066,15 @@ int MMSEngineDBFacade::updateEncodingJob(
 					encodingJobKey, toString(newEncodingStatus)
 				);
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_EncodingJob set status = {}, processorMMS = NULL, "
+					"update MMS_EncodingJob set status = {}, processorMMS = NULL, "
 					"encodingJobEnd = NOW() at time zone 'utc', encodingProgress = 100 "
-					"where encodingJobKey = {} and status = {} returning 1) select count(*) from rows",
+					"where encodingJobKey = {} and status = {} ",
 					trans.transaction->quote(toString(newEncodingStatus)), encodingJobKey,
 					trans.transaction->quote(toString(EncodingStatus::Processing))
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1311,15 +1315,16 @@ nontransaction trans{*(conn->_sqlConnection)};
 				encodingJobKey, utcRecordingPeriodStart, utcRecordingPeriodEnd
 			);
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_EncodingJob set encodingJobStart = NOW() at time zone 'utc', "
+				"update MMS_EncodingJob set encodingJobStart = NOW() at time zone 'utc', "
 				"parameters = jsonb_set("
 				"jsonb_set(parameters, '{{utcScheduleStart}}', jsonb '{}'), "
 				"'{{utcScheduleEnd}}', jsonb '{}') "
-				"where encodingJobKey = {} returning 1) select count(*) from rows",
+				"where encodingJobKey = {} ",
 				utcRecordingPeriodStart, utcRecordingPeriodEnd, encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1479,12 +1484,13 @@ nontransaction trans{*(conn->_sqlConnection)};
 				encodingJobKey, static_cast<int>(newEncodingPriority)
 			);
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_EncodingJob set encodingPriority = {} "
-				"where encodingJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_EncodingJob set encodingPriority = {} "
+				"where encodingJobKey = {} ",
 				static_cast<int>(newEncodingPriority), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1621,12 +1627,13 @@ nontransaction trans{*(conn->_sqlConnection)};
 				encodingJobKey, toString(newEncodingStatus)
 			);
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_EncodingJob set status = {} "
-				"where encodingJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_EncodingJob set status = {} "
+				"where encodingJobKey = {} ",
 				trans.transaction->quote(toString(newEncodingStatus)), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1661,12 +1668,13 @@ nontransaction trans{*(conn->_sqlConnection)};
 		IngestionStatus newIngestionStatus = IngestionStatus::EncodingQueued;
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set status = {} "
-				"where ingestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJob set status = {} "
+				"where ingestionJobKey = {} ",
 				trans.transaction->quote(toString(newIngestionStatus)), ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

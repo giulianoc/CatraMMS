@@ -246,13 +246,10 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Encoder where encoderKey = {} "
-				"returning 1) select count(*) from rows",
-				encoderKey
-			);
+			string sqlStatement = std::format("delete from MMS_Encoder where encoderKey = {} ", encoderKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -896,12 +893,13 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_EncoderWorkspaceMapping "
-				"where workspaceKey = {} and encoderKey = {} returning 1) select count(*) from rows",
+				"delete from MMS_EncoderWorkspaceMapping "
+				"where workspaceKey = {} and encoderKey = {} ",
 				workspaceKey, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1997,13 +1995,14 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				if (savedLabel != newLabel)
 				{
 					string sqlStatement = std::format(
-						"WITH rows AS (update MMS_EncodersPool "
+						"update MMS_EncodersPool "
 						"set label = {} "
-						"where encodersPoolKey = {} returning 1) select count(*) from rows",
+						"where encodersPoolKey = {} ",
 						trans.transaction->quote(newLabel), encodersPoolKey
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+					result res = trans.transaction->exec(sqlStatement);
+					int rowsUpdated = res.affected_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -2086,13 +2085,13 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 					if (find(newEncoderKeys.begin(), newEncoderKeys.end(), savedEncoderKey) == newEncoderKeys.end())
 					{
 						string sqlStatement = std::format(
-							"WITH rows AS (delete from MMS_EncoderEncodersPoolMapping "
-							"where encodersPoolKey = {} and encoderKey = {} "
-							"returning 1) select count(*) from rows",
+							"delete from MMS_EncoderEncodersPoolMapping "
+							"where encodersPoolKey = {} and encoderKey = {} ",
 							encodersPoolKey, savedEncoderKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+						result res = trans.transaction->exec(sqlStatement);
+						int rowsUpdated = res.affected_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,
@@ -2177,13 +2176,10 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_EncodersPool where encodersPoolKey = {} "
-				"returning 1) select count(*) from rows",
-				encodersPoolKey
-			);
+			string sqlStatement = std::format("delete from MMS_EncodersPool where encodersPoolKey = {} ", encodersPoolKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

@@ -170,13 +170,10 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_FTP where confKey = {} and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_FTP where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -613,13 +610,10 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_EMail where confKey = {} and workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey, workspaceKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_EMail where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

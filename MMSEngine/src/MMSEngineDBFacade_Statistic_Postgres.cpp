@@ -81,13 +81,14 @@ json MMSEngineDBFacade::addRequestStatistic(
 
 					{
 						sqlStatement = std::format(
-							"WITH rows AS (update MMS_RequestStatistic "
+							"update MMS_RequestStatistic "
 							"set upToNextRequestInSeconds = EXTRACT(EPOCH FROM (now() at time zone 'utc' - requestTimestamp)) "
-							"where requestStatisticKey = {} returning 1) SELECT count(*) FROM rows",
+							"where requestStatisticKey = {} ",
 							previoudRequestStatisticKey
 						);
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+						result res = trans.transaction->exec(sqlStatement);
+						int rowsUpdated = res.affected_rows();
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
 							"default", elapsed,

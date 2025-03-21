@@ -568,19 +568,13 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 		{
 			string sqlStatement;
 			if (confKey != -1)
-				sqlStatement = std::format(
-					"WITH rows AS (delete from MMS_Conf_Stream where confKey = {} and workspaceKey = {} "
-					"returning 1) select count(*) from rows",
-					confKey, workspaceKey
-				);
+				sqlStatement = std::format("delete from MMS_Conf_Stream where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
 			else
-				sqlStatement = std::format(
-					"WITH rows AS (delete from MMS_Conf_Stream where label = {} and workspaceKey = {} "
-					"returning 1) select count(*) from rows",
-					trans.transaction->quote(label), workspaceKey
-				);
+				sqlStatement =
+					std::format("delete from MMS_Conf_Stream where label = {} and workspaceKey = {} ", trans.transaction->quote(label), workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2478,13 +2472,10 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_Conf_SourceTVStream where confKey = {} "
-				"returning 1) select count(*) from rows",
-				confKey
-			);
+			string sqlStatement = std::format("delete from MMS_Conf_SourceTVStream where confKey = {} ", confKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

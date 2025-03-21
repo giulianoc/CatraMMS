@@ -1582,14 +1582,14 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 				try
 				{
 					string sqlStatement = std::format(
-						"WITH rows AS (delete from MMS_DeliveryAuthorization where deliveryAuthorizationKey in "
+						"delete from MMS_DeliveryAuthorization where deliveryAuthorizationKey in "
 						"(select deliveryAuthorizationKey from MMS_DeliveryAuthorization "
-						"where (authorizationTimestamp + INTERVAL '1 second' * (ttlInSeconds + {})) < NOW() at time zone 'utc' limit {}) "
-						"returning 1) select count(*) from rows",
+						"where (authorizationTimestamp + INTERVAL '1 second' * (ttlInSeconds + {})) < NOW() at time zone 'utc' limit {}) ",
 						retention, maxToBeRemoved
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+					result res = trans.transaction->exec(sqlStatement);
+					int rowsUpdated = res.affected_rows();
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
 						"default", elapsed,
@@ -1703,12 +1703,13 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_OncePerDayExecution set lastExecutionTime = {0} "
-				"where type = {1} and lastExecutionTime is distinct from {0} returning 1) select count(*) from rows",
+				"update MMS_OncePerDayExecution set lastExecutionTime = {0} "
+				"where type = {1} and lastExecutionTime is distinct from {0} ",
 				trans.transaction->quote(now), trans.transaction->quote(toString(onceType))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

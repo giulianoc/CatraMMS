@@ -311,21 +311,22 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// the last one is the sum of all the other contents
 
 				sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionJob set processorMMS = {} "
-					"where ingestionJobKey = {} returning 1) select count(*) from rows",
+					"update MMS_IngestionJob set processorMMS = {} "
+					"where ingestionJobKey = {} ",
 					trans.transaction->quote(processorMMS), ingestionJobKey
 				);
 			}
 			else
 			{
 				sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionJob set startProcessing = NOW() at time zone 'utc', "
-					"processorMMS = {} where ingestionJobKey = {} returning 1) select count(*) from rows",
+					"update MMS_IngestionJob set startProcessing = NOW() at time zone 'utc', "
+					"processorMMS = {} where ingestionJobKey = {} ",
 					trans.transaction->quote(processorMMS), ingestionJobKey
 				);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1041,12 +1042,13 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_IngestionJob set parentGroupOfTasksIngestionJobKey = {} "
-				"where ingestionJobKey = {} returning 1) select count(*) from rows",
+				"update MMS_IngestionJob set parentGroupOfTasksIngestionJobKey = {} "
+				"where ingestionJobKey = {} ",
 				parentGroupOfTasksIngestionJobKey, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1712,12 +1714,13 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 			if (newIngestionRootStatus != currentIngestionRootStatus)
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_IngestionRoot set lastUpdate = NOW() at time zone 'utc', status = {} "
-					"where ingestionRootKey = {} returning 1) select count(*) from rows",
+					"update MMS_IngestionRoot set lastUpdate = NOW() at time zone 'utc', status = {} "
+					"where ingestionRootKey = {} ",
 					trans.transaction->quote(toString(newIngestionRootStatus)), ingestionRootKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -4210,14 +4213,15 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 		if (periodExpired)
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_WorkspaceMoreInfo set currentIngestionsNumber = 0, "
+				"update MMS_WorkspaceMoreInfo set currentIngestionsNumber = 0, "
 				"startDateTime = to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS'), "
 				"endDateTime = to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS') "
-				"where workspaceKey = {} returning 1) select count(*) from rows",
+				"where workspaceKey = {} ",
 				trans.transaction->quote(newPeriodUtcStartDateTime), trans.transaction->quote(newPeriodUtcEndDateTime), workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,

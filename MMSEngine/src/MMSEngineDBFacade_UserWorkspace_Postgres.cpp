@@ -454,13 +454,14 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 
 			{
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_Code set userKey = {}, type = {} "
-					"where code = {} returning 1) select count(*) from rows",
+					"update MMS_Code set userKey = {}, type = {} "
+					"where code = {} ",
 					userKey, trans.transaction->quote(toString(CodeType::UserRegistrationComingFromShareWorkspace)),
 					trans.transaction->quote(shareWorkspaceCode)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1080,12 +1081,12 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (update MMS_Workspace set directoryName = {} where workspaceKey = {} "
-				"returning 1) select count(*) from rows",
-				trans.transaction->quote(to_string(workspaceKey)), workspaceKey
+				"update MMS_Workspace set directoryName = {} where workspaceKey = {} ", trans.transaction->quote(to_string(workspaceKey)),
+				workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1313,13 +1314,10 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 			{
 				bool enabled = true;
 
-				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_Workspace set enabled = {} where workspaceKey = {} "
-					"returning 1) select count(*) from rows",
-					enabled, workspaceKey
-				);
+				string sqlStatement = std::format("update MMS_Workspace set enabled = {} where workspaceKey = {} ", enabled, workspaceKey);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,

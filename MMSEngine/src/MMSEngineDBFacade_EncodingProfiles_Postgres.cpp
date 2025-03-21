@@ -186,12 +186,13 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				encodingProfileKey = res[0]["encodingProfileKey"].as<int64_t>();
 
 				string sqlStatement = std::format(
-					"WITH rows AS (update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
-					"where encodingProfileKey = {} returning 1) select count(*) from rows",
+					"update MMS_EncodingProfile set deliveryTechnology = {}, jsonProfile = {} "
+					"where encodingProfileKey = {} ",
 					trans.transaction->quote(toString(deliveryTechnology)), trans.transaction->quote(jsonProfile), encodingProfileKey
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				result res = trans.transaction->exec(sqlStatement);
+				int rowsUpdated = res.affected_rows();
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -361,12 +362,13 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_EncodingProfile "
-				"where encodingProfileKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"delete from MMS_EncodingProfile "
+				"where encodingProfileKey = {} and workspaceKey = {} ",
 				encodingProfileKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -587,12 +589,13 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 	{
 		{
 			string sqlStatement = std::format(
-				"WITH rows AS (delete from MMS_EncodingProfilesSet "
-				"where encodingProfilesSetKey = {} and workspaceKey = {} returning 1) select count(*) from rows",
+				"delete from MMS_EncodingProfilesSet "
+				"where encodingProfilesSetKey = {} and workspaceKey = {} ",
 				encodingProfilesSetKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			int rowsUpdated = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
