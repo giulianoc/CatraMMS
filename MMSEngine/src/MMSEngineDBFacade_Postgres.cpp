@@ -1726,9 +1726,9 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 		{
 			string sqlStatement = std::format(
 				"update MMS_OnceExecution set lastExecutionTime = {} "
-				"where type = {} and lastExecutionTime is null OR "
-				"(lastExecutionTime >= to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS') "
-				"and lastExecutionTime <= to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS')) ",
+				"where type = {} and (lastExecutionTime is null OR "
+				"lastExecutionTime < to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS') "
+				"or lastExecutionTime > to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS')) ",
 				trans.transaction->quote(sNow), trans.transaction->quote(toString(onceType)), trans.transaction->quote(sStart),
 				trans.transaction->quote(sEnd)
 			);
@@ -1745,7 +1745,7 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 
-			alreadyExecuted = (rowsUpdated != 0 ? true : false);
+			alreadyExecuted = (rowsUpdated == 0 ? true : false);
 		}
 
 		return alreadyExecuted;
