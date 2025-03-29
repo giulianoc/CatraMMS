@@ -1705,7 +1705,7 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 
 		{
 			string sqlStatement = std::format(
-				"update MMS_OncePerDayExecution set lastExecutionTime = {0} "
+				"update MMS_OnceExecution set lastExecutionTime = {0} "
 				"where type = {1} and lastExecutionTime is distinct from {0} ",
 				trans.transaction->quote(now), trans.transaction->quote(toString(onceType))
 			);
