@@ -1874,7 +1874,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonWorkflow = buffer.str();
 
-							SPDLOG_ERROR(
+							SPDLOG_INFO(
 								"Reading workflow"
 								", workflow pathname: {}"
 								", workflow: {}",

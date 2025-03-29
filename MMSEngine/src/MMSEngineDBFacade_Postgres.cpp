@@ -53,17 +53,18 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_maxEncodingFailures = JSONUtils::asInt(configuration["encoding"], "maxEncodingFailures", 3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures));
 
-	_confirmationCodeRetentionInDays = JSONUtils::asInt(configuration["mms"], "confirmationCodeRetentionInDays", 3);
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays));
+	_confirmationCodeExpirationInDays = JSONUtils::asInt(configuration["mms"], "confirmationCodeExpirationInDays", 3);
+	_logger->info(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays));
 
 	_contentRetentionInMinutesDefaultValue = JSONUtils::asInt(configuration["mms"], "contentRetentionInMinutesDefaultValue", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
 	);
-	_contentNotTransferredRetentionInHours = JSONUtils::asInt(configuration["mms"], "contentNotTransferredRetentionInDays", 1);
-	_contentNotTransferredRetentionInHours *= 24;
+	_addContentIngestionJobsNotCompletedRetentionInDays =
+		JSONUtils::asInt(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
 	_logger->info(
-		__FILEREF__ + "Configuration item" + ", mms->contentNotTransferredRetentionInDays*24: " + to_string(_contentNotTransferredRetentionInHours)
+		__FILEREF__ + "Configuration item" +
+		", mms->addContentIngestionJobsNotCompletedRetentionInDays: " + to_string(_addContentIngestionJobsNotCompletedRetentionInDays)
 	);
 
 	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
@@ -129,9 +130,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		__FILEREF__ + "Configuration item" +
 		", postgres->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
 	);
-	_ingestionWorkflowRetentionInDays = JSONUtils::asInt(configuration["postgres"], "ingestionWorkflowRetentionInDays", 30);
+	_ingestionWorkflowCompletedRetentionInDays = JSONUtils::asInt(configuration["postgres"], "ingestionWorkflowCompletedRetentionInDays", 30);
 	_logger->info(
-		__FILEREF__ + "Configuration item" + ", postgres->ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays)
+		__FILEREF__ + "Configuration item" +
+		", postgres->ingestionWorkflowCompletedRetentionInDays: " + to_string(_ingestionWorkflowCompletedRetentionInDays)
 	);
 	_statisticRetentionInMonths = JSONUtils::asInt(configuration["postgres"], "statisticRetentionInMonths", 12);
 	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths));

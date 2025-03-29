@@ -2,7 +2,7 @@
 
 if [ $# -ne 1 -a $# -ne 2 ]
 then
-        echo "Usage $0 micro-service-name (i.e.: cibortv, catrammswebservices) conf in case of catrammswebservices (<empty>, prod, test)"
+        echo "Usage $0 micro-service-name (i.e.: cibortv, catrammswebservices, icml) conf in case of catrammswebservices (<empty>, prod, test)"
 
         exit
 fi

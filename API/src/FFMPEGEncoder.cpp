@@ -2229,6 +2229,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	if (chrono::system_clock::now() - *_lastEncodingCompletedCheck >= chrono::seconds(_encodingCompletedRetentionInSeconds))
 	{
 		*_lastEncodingCompletedCheck = chrono::system_clock::now();
+		// gli encoding completati vengono eliminati dalla mappa _encodingCompletedMap dopo _encodingCompletedRetentionInSeconds
 		encodingCompletedRetention();
 	}
 

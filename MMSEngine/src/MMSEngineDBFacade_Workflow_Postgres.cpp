@@ -657,12 +657,13 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					//		fixIngestionJobsHavingWrongStatus method
 					//	- ingestion is in a final state but encoding is not: we already have the
 					//		fixEncodingJobsHavingWrongStatus method
+					//	In postgres non esiste la delete con il limit, per questo motivo bisogna fare la select nested
 					string sqlStatement = std::format(
 						"delete from MMS_IngestionRoot where ingestionRootKey in "
 						"(select ingestionRootKey from MMS_IngestionRoot "
 						"where ingestionDate < NOW() at time zone 'utc' - INTERVAL '{} days' "
 						"and status like 'Completed%' limit {}) ",
-						_ingestionWorkflowRetentionInDays, maxToBeRemoved
+						_ingestionWorkflowCompletedRetentionInDays, maxToBeRemoved
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.transaction->exec(sqlStatement);
@@ -728,14 +729,20 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			{
 				try
 				{
+					// 2025-03-29: scenario: il file è stato trasferito nella directory per l'ingestion (quindi sourceBinaryTransferred è true),
+					// 	Per qualche motivo l'ingestion fallisce (ad es. è arrivato il retention dei file in quella directory e l'engine fallisce
+					// 	perchè non riesce a copiare il file in MMSRepository), l'IngestionJob (AddContent) rimane per sempre non completato
+					// 	Per questo motivo ho eliminato il controllo sourceBinaryTransferred = false, cioé tutti gli AddContent Jobs, anche quelli
+					//  trasferiti, avranno un retention
 					string sqlStatement = std::format(
 						"select ingestionJobKey from MMS_IngestionJob "
-						"where status in ({}, {}, {}, {}) and sourceBinaryTransferred = false "
+						"where status in ({}, {}, {}, {}) " // and sourceBinaryTransferred = false "
 						"and startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc'",
 						trans.transaction->quote(toString(IngestionStatus::SourceDownloadingInProgress)),
 						trans.transaction->quote(toString(IngestionStatus::SourceMovingInProgress)),
 						trans.transaction->quote(toString(IngestionStatus::SourceCopingInProgress)),
-						trans.transaction->quote(toString(IngestionStatus::SourceUploadingInProgress)), _contentNotTransferredRetentionInHours
+						trans.transaction->quote(toString(IngestionStatus::SourceUploadingInProgress)),
+						_addContentIngestionJobsNotCompletedRetentionInDays * 24
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.transaction->exec(sqlStatement);

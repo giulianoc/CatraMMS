@@ -2433,9 +2433,9 @@ class MMSEngineDBFacade
 	// string                          _defaultTerritoryName;
 	int _ingestionJobsSelectPageSize;
 	int _maxEncodingFailures;
-	int _confirmationCodeRetentionInDays;
+	int _confirmationCodeExpirationInDays;
 	int _contentRetentionInMinutesDefaultValue;
-	int _contentNotTransferredRetentionInHours;
+	int _addContentIngestionJobsNotCompletedRetentionInDays;
 
 	int _maxSecondsToWaitUpdateIngestionJobLock;
 	int _maxSecondsToWaitUpdateEncodingJobLock;
@@ -2445,7 +2445,7 @@ class MMSEngineDBFacade
 	int _maxSecondsToWaitSetNotToBeExecutedLock;
 
 	int _doNotManageIngestionsOlderThanDays;
-	int _ingestionWorkflowRetentionInDays;
+	int _ingestionWorkflowCompletedRetentionInDays;
 	int _statisticRetentionInMonths;
 
 	string _ffmpegEncoderUser;

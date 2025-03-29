@@ -1251,7 +1251,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 				"where code = {} and type in ({}, {}) and "
 				"creationDate + INTERVAL '{} DAY' >= NOW() at time zone 'utc'",
 				trans.transaction->quote(confirmationCode), trans.transaction->quote(toString(CodeType::UserRegistration)),
-				trans.transaction->quote(toString(CodeType::UserRegistrationComingFromShareWorkspace)), _confirmationCodeRetentionInDays
+				trans.transaction->quote(toString(CodeType::UserRegistrationComingFromShareWorkspace)), _confirmationCodeExpirationInDays
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
@@ -1275,7 +1275,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 			{
 				string errorMessage = __FILEREF__ + "Confirmation Code not found or expired" + ", confirmationCode: " + confirmationCode +
 									  ", type: " + toString(codeType) +
-									  ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays) +
+									  ", _confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays) +
 									  ", sqlStatement: " + sqlStatement;
 				_logger->error(errorMessage);
 

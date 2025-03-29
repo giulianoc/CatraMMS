@@ -5621,14 +5621,14 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 					shared_ptr<sql::PreparedStatement> preparedStatement(conn->_sqlConnection->prepareStatement(lastSQLCommand));
 					int queryParameterIndex = 1;
-					preparedStatement->setInt(queryParameterIndex++, _ingestionWorkflowRetentionInDays);
+					preparedStatement->setInt(queryParameterIndex++, _ingestionWorkflowCompletedRetentionInDays);
 					preparedStatement->setInt(queryParameterIndex++, maxToBeRemoved);
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					int rowsUpdated = preparedStatement->executeUpdate();
 					_logger->info(
 						__FILEREF__ + "@SQL statistics@ (retentionOfIngestionData)" + ", lastSQLCommand: " + lastSQLCommand +
-						", _ingestionWorkflowRetentionInDays: " + to_string(_ingestionWorkflowRetentionInDays) +
+						", _ingestionWorkflowCompletedRetentionInDays: " + to_string(_ingestionWorkflowCompletedRetentionInDays) +
 						", rowsUpdated: " + to_string(rowsUpdated) + ", elapsed (millisecs): @" +
 						to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
 					);
@@ -5690,7 +5690,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress));
 					preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress));
 					preparedStatement->setString(queryParameterIndex++, MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress));
-					preparedStatement->setInt(queryParameterIndex++, _contentNotTransferredRetentionInHours);
+					preparedStatement->setInt(queryParameterIndex++, _addContentIngestionJobsNotCompletedRetentionInDays * 24);
 
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					shared_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
@@ -5701,7 +5701,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						", IngestionStatus::SourceMovingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceMovingInProgress) +
 						", IngestionStatus::SourceCopingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceCopingInProgress) +
 						", IngestionStatus::SourceUploadingInProgress: " + MMSEngineDBFacade::toString(IngestionStatus::SourceUploadingInProgress) +
-						", _contentNotTransferredRetentionInHours: " + to_string(_contentNotTransferredRetentionInHours) +
+						", _addContentIngestionJobsNotCompletedRetentionInDays: " + to_string(_addContentIngestionJobsNotCompletedRetentionInDays) +
 						", resultSet->rowsCount: " + to_string(resultSet->rowsCount()) + ", elapsed (millisecs): @" +
 						to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()) + "@"
 					);

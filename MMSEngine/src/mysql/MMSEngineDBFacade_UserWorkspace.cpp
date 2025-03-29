@@ -1922,14 +1922,14 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 			preparedStatement->setString(queryParameterIndex++, confirmationCode);
 			preparedStatement->setString(queryParameterIndex++, toString(CodeType::UserRegistration));
 			preparedStatement->setString(queryParameterIndex++, toString(CodeType::UserRegistrationComingFromShareWorkspace));
-			preparedStatement->setInt(queryParameterIndex++, _confirmationCodeRetentionInDays);
+			preparedStatement->setInt(queryParameterIndex++, _confirmationCodeExpirationInDays);
 
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<sql::ResultSet> resultSet(preparedStatement->executeQuery());
 			_logger->info(
 				__FILEREF__ + "@SQL statistics@" + ", lastSQLCommand: " + lastSQLCommand + ", confirmationCode: " + confirmationCode +
 				", type: " + toString(CodeType::UserRegistration) + ", type: " + toString(CodeType::UserRegistrationComingFromShareWorkspace) +
-				", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays) +
+				", _confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays) +
 				", resultSet->rowsCount: " + to_string(resultSet->rowsCount()) + ", elapsed (secs): @" +
 				to_string(chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startSql).count()) + "@"
 			);
@@ -1944,7 +1944,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 			{
 				string errorMessage = __FILEREF__ + "Confirmation Code not found or expired" + ", confirmationCode: " + confirmationCode +
 									  ", type: " + toString(codeType) +
-									  ", _confirmationCodeRetentionInDays: " + to_string(_confirmationCodeRetentionInDays) +
+									  ", _confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays) +
 									  ", lastSQLCommand: " + lastSQLCommand;
 				_logger->error(errorMessage);
 
