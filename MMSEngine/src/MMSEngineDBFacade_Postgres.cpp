@@ -1745,7 +1745,7 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 
-			alreadyExecuted = (rowsUpdated == 0 ? true : false);
+			alreadyExecuted = (rowsUpdated != 0 ? true : false);
 		}
 
 		return alreadyExecuted;
