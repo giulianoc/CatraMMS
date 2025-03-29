@@ -639,7 +639,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			// we will remove by steps to avoid error because of transaction log overflow
-			int maxToBeRemoved = 100;
+			int sqlLimit = 1000;
 			int totalRowsRemoved = 0;
 			bool moreRowsToBeRemoved = true;
 			int maxRetriesOnError = 2;
@@ -663,7 +663,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						"(select ingestionRootKey from MMS_IngestionRoot "
 						"where ingestionDate < NOW() at time zone 'utc' - INTERVAL '{} days' "
 						"and status like 'Completed%' limit {}) ",
-						_ingestionWorkflowCompletedRetentionInDays, maxToBeRemoved
+						_ingestionWorkflowCompletedRetentionInDays, sqlLimit
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.transaction->exec(sqlStatement);
@@ -721,11 +721,12 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			);
 			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
+			int sqlLimit = 1000;
 			long totalRowsUpdated = 0;
+			bool moreRowsToBeUpdated = true;
 			int maxRetriesOnError = 2;
 			int currentRetriesOnError = 0;
-			bool toBeExecutedAgain = true;
-			while (toBeExecutedAgain)
+			while (moreRowsToBeUpdated && currentRetriesOnError < maxRetriesOnError)
 			{
 				try
 				{
@@ -737,12 +738,13 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					string sqlStatement = std::format(
 						"select ingestionJobKey from MMS_IngestionJob "
 						"where status in ({}, {}, {}, {}) " // and sourceBinaryTransferred = false "
-						"and startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc'",
+						"and startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc' "
+						"limit {}",
 						trans.transaction->quote(toString(IngestionStatus::SourceDownloadingInProgress)),
 						trans.transaction->quote(toString(IngestionStatus::SourceMovingInProgress)),
 						trans.transaction->quote(toString(IngestionStatus::SourceCopingInProgress)),
 						trans.transaction->quote(toString(IngestionStatus::SourceUploadingInProgress)),
-						_addContentIngestionJobsNotCompletedRetentionInDays * 24
+						_addContentIngestionJobsNotCompletedRetentionInDays * 24, sqlLimit
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.transaction->exec(sqlStatement);
@@ -774,7 +776,9 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						sqlStatement, trans.connection->getConnectionId(), elapsed, res.size(), totalRowsUpdated
 					);
 
-					toBeExecutedAgain = false;
+					if (res.size() == 0)
+						moreRowsToBeUpdated = false;
+					currentRetriesOnError = 0;
 				}
 				catch (sql_error const &e)
 				{
@@ -788,9 +792,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					);
 
 					currentRetriesOnError++;
-					if (currentRetriesOnError >= maxRetriesOnError)
-						toBeExecutedAgain = false;
-					else
+
 					{
 						int secondsBetweenRetries = 15;
 						_logger->info(
@@ -819,19 +821,21 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			);
 			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
+			int sqlLimit = 1000;
 			long totalRowsUpdated = 0;
+			bool moreRowsToBeUpdated;
 			int maxRetriesOnError = 2;
 			int currentRetriesOnError = 0;
-			bool toBeExecutedAgain = true;
-			while (toBeExecutedAgain)
+			while (moreRowsToBeUpdated && currentRetriesOnError < maxRetriesOnError)
 			{
 				try
 				{
 					// 2021-07-17: In this scenario the IngestionJobs would remain infinite time:
 					string sqlStatement = std::format(
 						"select ingestionJobKey from MMS_IngestionJob "
-						"where status = {} and NOW() at time zone 'utc' > processingStartingFrom + INTERVAL '{} days'",
-						trans.transaction->quote(toString(IngestionStatus::Start_TaskQueued)), _doNotManageIngestionsOlderThanDays
+						"where status = {} and NOW() at time zone 'utc' > processingStartingFrom + INTERVAL '{} days' "
+						"limit {}",
+						trans.transaction->quote(toString(IngestionStatus::Start_TaskQueued)), _doNotManageIngestionsOlderThanDays, sqlLimit
 					);
 					// "where (processorMMS is NULL or processorMMS = ?) "
 					// "and status = ? and NOW() > DATE_ADD(processingStartingFrom, INTERVAL ? DAY)";
@@ -860,7 +864,9 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 						sqlStatement, trans.connection->getConnectionId(), elapsed
 					);
 
-					toBeExecutedAgain = false;
+					if (res.size() == 0)
+						moreRowsToBeUpdated = false;
+					currentRetriesOnError = 0;
 				}
 				catch (sql_error const &e)
 				{
@@ -874,9 +880,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					);
 
 					currentRetriesOnError++;
-					if (currentRetriesOnError >= maxRetriesOnError)
-						toBeExecutedAgain = false;
-					else
+
 					{
 						int secondsBetweenRetries = 15;
 						_logger->info(

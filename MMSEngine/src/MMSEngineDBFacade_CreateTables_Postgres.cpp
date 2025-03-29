@@ -1521,6 +1521,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			// utile per MMSEngineDBFacade::retentionOfIngestionData
+			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx3 on MMS_IngestionRoot ((status like 'Completed%') desc)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
 			// 2024-08-15: ho pensato di partizionare MMS_IngestionJob in base al campo status (partizione not_completed e completed)
 			// Il vantaggio sarebbe:
 			// 1. avere migliori performance in quanto la maggioranza delle query solo sul not_completed che sarebbe molto piccolo
