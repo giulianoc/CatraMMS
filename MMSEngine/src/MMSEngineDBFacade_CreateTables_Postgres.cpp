@@ -704,8 +704,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement = "create table if not exists MMS_OnceExecution ("
-								  "type						text NOT NULL,"
-								  "lastExecutionTime			text NULL,"
+								  "type										text NOT NULL,"
+								  "lastExecutionTime			timestamp without time zone NOT NULL,"
 								  "constraint MMS_OnceExecution_PK PRIMARY KEY (type))";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);

@@ -18,6 +18,7 @@
 #include "PersistenceLock.h"
 #include "catralibraries/PostgresConnection.h"
 #include "spdlog/spdlog.h"
+#include <chrono>
 #include <fstream>
 #include <sstream>
 
@@ -1687,27 +1688,49 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 					and has to be executed
 		*/
 
-		string now;
+		// Poichè l'engine potrebbe essere molto occupato e quindi potrebbe chiamare questo metodo anche
+		// con 5 minuti di differenza rispetto all'orario pianificato, verifichiamo se sia stato fatto l'update
+		// usando un range di 15 min
+		int rangeInMinutes = 15;
+		chrono::system_clock::time_point now = chrono::system_clock::now();
+		chrono::system_clock::time_point start = now - chrono::minutes(rangeInMinutes);
+		chrono::system_clock::time_point end = now + chrono::minutes(rangeInMinutes);
+		string sNow;
+		string sStart;
+		string sEnd;
 		{
 			tm tmDateTime;
-			// char strDateTime[64];
-			time_t utcTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
+			time_t utcTime = chrono::system_clock::to_time_t(now);
 			localtime_r(&utcTime, &tmDateTime);
+			sNow = std::format(
+				"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
+				tmDateTime.tm_min, tmDateTime.tm_sec
+			);
 
-			// sprintf(strDateTime, "%04d-%02d-%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday);
-			// today_yyyy_mm_dd = strDateTime;
-			now = std::format(
-				"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
-				tmDateTime.tm_min
+			utcTime = chrono::system_clock::to_time_t(start);
+			localtime_r(&utcTime, &tmDateTime);
+			sStart = std::format(
+				"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
+				tmDateTime.tm_min, tmDateTime.tm_sec
+			);
+
+			utcTime = chrono::system_clock::to_time_t(end);
+			localtime_r(&utcTime, &tmDateTime);
+			sEnd = std::format(
+				"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
+				tmDateTime.tm_min, tmDateTime.tm_sec
 			);
 		}
 
 		{
 			string sqlStatement = std::format(
-				"update MMS_OnceExecution set lastExecutionTime = {0} "
-				"where type = {1} and lastExecutionTime is distinct from {0} ",
-				trans.transaction->quote(now), trans.transaction->quote(toString(onceType))
+				"update MMS_OnceExecution set lastExecutionTime = {} "
+				"where type = {} and lastExecutionTime is null OR "
+				"(lastExecutionTime >= to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS') "
+				"and lastExecutionTime <= to_timestamp({}, 'YYYY-MM-DD HH24:MI:SS')) ",
+				trans.transaction->quote(sNow), trans.transaction->quote(toString(onceType)), trans.transaction->quote(sStart),
+				trans.transaction->quote(sEnd)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
