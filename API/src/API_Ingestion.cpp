@@ -5746,7 +5746,7 @@ void API::changeLiveProxyPlaylist(
 								sourceRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 
 								// sourcesRoot[sourceIndex] = sourceRoot;
-								newSourcesRoot.push_back(sourcesRoot);
+								newSourcesRoot.push_back(sourceRoot);
 							}
 
 							// vodInputRoot["sources"] = sourcesRoot;
