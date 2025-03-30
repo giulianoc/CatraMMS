@@ -5624,7 +5624,8 @@ void API::changeLiveProxyPlaylist(
 
 							MMSEngineDBFacade::ContentType vodContentType;
 
-							// viene creato uno nuovo perchè in caso di errori qualche item di sourcesRoot potrebbe essere eliminato
+							// viene creato uno nuovo perchè in caso di errori (es physicalPath che non esiste) qualche item di sourcesRoot potrebbe
+							// essere eliminato
 							json newSourcesRoot = json::array();
 
 							int64_t firstMediaEncodingProfileKey = -2;
