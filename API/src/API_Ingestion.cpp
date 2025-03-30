@@ -5650,6 +5650,7 @@ void API::changeLiveProxyPlaylist(
 								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, "physicalPathKey", -1);
 
 								// controllo che tutti i media usano lo stesso encoding profile
+								try
 								{
 									int64_t currentEncodingProfileKey =
 										_mmsEngineDBFacade->physicalPath_columnAsInt64("encodingprofilekey", physicalPathKey, nullptr, false);
@@ -5657,17 +5658,27 @@ void API::changeLiveProxyPlaylist(
 										firstMediaEncodingProfileKey = currentEncodingProfileKey;
 									else if (firstMediaEncodingProfileKey != currentEncodingProfileKey)
 									{
-										string errorMessage = std::format(
-											"Media are not using the same encoding profile"
+										SPDLOG_ERROR(
+											"PhysicalPath not using the same encoding profile, just skip it"
 											", broadcasterIngestionJobKey: {}"
+											", physicalPathKey: {}"
 											", firstMediaEncodingProfileKey: {}"
 											", currentEncodingProfileKey: {}",
-											broadcasterIngestionJobKey, firstMediaEncodingProfileKey, currentEncodingProfileKey
+											broadcasterIngestionJobKey, physicalPathKey, firstMediaEncodingProfileKey, currentEncodingProfileKey
 										);
-										SPDLOG_ERROR(errorMessage);
-
-										throw runtime_error(errorMessage);
+										continue;
 									}
+								}
+								catch (DBRecordNotFound &e)
+								{
+									SPDLOG_ERROR(
+										"PhysicalPath not found, just skip it"
+										", broadcasterIngestionJobKey: {}"
+										", physicalPathKey: {}"
+										", e.what(): {}",
+										api, broadcasterIngestionJobKey, physicalPathKey, e.what()
+									);
+									continue;
 								}
 
 								string sourcePhysicalPathName;
