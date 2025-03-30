@@ -35,6 +35,7 @@ if(DEFINED __POSTGRES__)
       MMSEngineDBFacade_Invoice_Postgres.cpp
       MMSEngineDBFacade_MediaItems_Postgres.cpp
       MMSEngineDBFacade_PartitionInfo_Postgres.cpp
+      MMSEngineDBFacade_Retention_Postgres.cpp
       MMSEngineDBFacade_Statistic_Postgres.cpp
       MMSEngineDBFacade_UserWorkspace_Postgres.cpp
       MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp

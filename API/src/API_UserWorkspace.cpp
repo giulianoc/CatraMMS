@@ -887,8 +887,19 @@ void API::shareWorkspace_(
 		}
 
 		vector<string> mandatoryFields = {
-			"email",	 "createRemoveWorkspace", "ingestWorkflow", "createProfiles",	  "deliveryAuthorization", "shareWorkspace",
-			"editMedia", "editConfiguration",	  "killEncoding",	"cancelIngestionJob", "editEncodersPool",	   "applicationRecorder"
+			"email",
+			"createRemoveWorkspace",
+			"ingestWorkflow",
+			"createProfiles",
+			"deliveryAuthorization",
+			"shareWorkspace",
+			"editMedia",
+			"editConfiguration",
+			"killEncoding",
+			"cancelIngestionJob",
+			"editEncodersPool",
+			"applicationRecorder",
+			"createRemoveLiveChannel"
 		};
 		for (string field : mandatoryFields)
 		{
@@ -974,6 +985,7 @@ void API::shareWorkspace_(
 		bool cancelIngestionJob = JSONUtils::asBool(metadataRoot, "cancelIngestionJob", false);
 		bool editEncodersPool = JSONUtils::asBool(metadataRoot, "editEncodersPool", false);
 		bool applicationRecorder = JSONUtils::asBool(metadataRoot, "applicationRecorder", false);
+		bool createRemoveLiveChannel = JSONUtils::asBool(metadataRoot, "createRemoveLiveChannel", false);
 
 		try
 		{
@@ -1001,7 +1013,7 @@ void API::shareWorkspace_(
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
 					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder
+					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
@@ -1071,7 +1083,7 @@ void API::shareWorkspace_(
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
 					workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace, admin, createRemoveWorkspace, ingestWorkflow,
 					createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob,
-					editEncodersPool, applicationRecorder
+					editEncodersPool, applicationRecorder, createRemoveLiveChannel
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
@@ -1688,12 +1700,14 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 						bool cancelIngestionJob = true;
 						bool editEncodersPool = true;
 						bool applicationRecorder = true;
+						bool createRemoveLiveChannel = true;
 						pair<int64_t, string> userKeyAndEmail = _mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName, email,
 							string(""), // userCountry,
 							string("CET"), createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, _ldapDefaultWorkspaceKeys,
-							_expirationInDaysWorkspaceDefaultValue, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
+							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
+							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 							// chrono::system_clock::time_point userExpirationDate
 						);
 
@@ -2597,6 +2611,7 @@ void API::updateWorkspace(
 		bool newCancelIngestionJob;
 		bool newEditEncodersPool;
 		bool newApplicationRecorder;
+		bool newCreateRemoveLiveChannel;
 
 		json metadataRoot;
 		try
@@ -2763,9 +2778,9 @@ void API::updateWorkspace(
 			json userAPIKeyRoot = metadataRoot[field];
 
 			{
-				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",	 "deliveryAuthorization",
-												  "shareWorkspace",		   "editMedia",		   "editConfiguration",	 "killEncoding",
-												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder"};
+				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",	  "deliveryAuthorization",
+												  "shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
+												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder", "createRemoveLiveChannel"};
 				for (string field : mandatoryFields)
 				{
 					if (!JSONUtils::isMetadataPresent(userAPIKeyRoot, field))
@@ -2823,6 +2838,8 @@ void API::updateWorkspace(
 
 			field = "applicationRecorder";
 			newApplicationRecorder = JSONUtils::asBool(userAPIKeyRoot, field, false);
+
+			newCreateRemoveLiveChannel = JSONUtils::asBool(userAPIKeyRoot, "createRemoveLiveChannel", false);
 		}
 
 		try
@@ -2850,7 +2867,7 @@ void API::updateWorkspace(
 				currentCostForSupport_type_1,
 
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
-				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder
+				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder, newCreateRemoveLiveChannel
 			);
 #else
 			bool maxStorageInMBChanged = false;

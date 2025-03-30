@@ -449,11 +449,13 @@ void API::manageRequestAndResponse(
 	bool cancelIngestionJob_;
 	bool editEncodersPool;
 	bool applicationRecorder;
+	bool createRemoveLiveChannel;
 
 	if (authorizationPresent)
 	{
 		tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-			editConfiguration, killEncoding, cancelIngestionJob_, editEncodersPool, applicationRecorder) = _userKeyWorkspaceAndFlags;
+			editConfiguration, killEncoding, cancelIngestionJob_, editEncodersPool, applicationRecorder, createRemoveLiveChannel) =
+			_userKeyWorkspaceAndFlags;
 
 		SPDLOG_INFO(
 			"Received manageRequestAndResponse"
@@ -474,10 +476,11 @@ void API::manageRequestAndResponse(
 			", killEncoding: {}"
 			", cancelIngestionJob: {}"
 			", editEncodersPool: {}"
-			", applicationRecorder: {}",
+			", applicationRecorder: {}"
+			", createRemoveLiveChannel: {}",
 			requestURI, requestMethod, contentLength, userKey, workspace->_name, requestBody, admin, createRemoveWorkspace, ingestWorkflow,
 			createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob_, editEncodersPool,
-			applicationRecorder
+			applicationRecorder, createRemoveLiveChannel
 		);
 	}
 

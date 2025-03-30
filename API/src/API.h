@@ -65,7 +65,7 @@ class API : public FastCGIAPI
   private:
 	json _configurationRoot;
 
-	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool> _userKeyWorkspaceAndFlags;
+	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool> _userKeyWorkspaceAndFlags;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 	bool _noFileSystemAccess;
 	shared_ptr<MMSStorage> _mmsStorage;

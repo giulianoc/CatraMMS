@@ -1228,7 +1228,7 @@ class MMSEngineDBFacade
 	string createCode(
 		int64_t workspaceKey, int64_t userKey, string userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace, bool ingestWorkflow,
 		bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder
+		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel
 	);
 
 #ifdef __POSTGRES__
@@ -1275,7 +1275,7 @@ class MMSEngineDBFacade
 	pair<int64_t, string> registerActiveDirectoryUser(
 		string userName, string userEmailAddress, string userCountry, string userTimezone, bool createRemoveWorkspace, bool ingestWorkflow,
 		bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, string defaultWorkspaceKeys,
+		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, string defaultWorkspaceKeys,
 		int expirationInDaysWorkspaceDefaultValue, chrono::system_clock::time_point userExpirationDate
 	);
 #else
@@ -1290,7 +1290,7 @@ class MMSEngineDBFacade
 	string createAPIKeyForActiveDirectoryUser(
 		int64_t userKey, string userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
-		bool applicationRecorder, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+		bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 	);
 
 	pair<string, string> getUserDetails(int64_t userKey);
@@ -1300,7 +1300,7 @@ class MMSEngineDBFacade
 	pair<int64_t, string> getUserDetailsByEmail(string email);
 #endif
 
-	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 	checkAPIKey(string apiKey, bool fromMaster);
 
 	json login(string eMailAddress, string password);
@@ -1341,7 +1341,7 @@ class MMSEngineDBFacade
 
 		bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles, bool newDeliveryAuthorization, bool newShareWorkspace,
 		bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob, bool newEditEncodersPool,
-		bool newApplicationRecorder
+		bool newApplicationRecorder, bool newCreateRemoveLiveChannel
 	);
 #else
 	json updateWorkspaceDetails(
@@ -2499,7 +2499,7 @@ class MMSEngineDBFacade
 	string createAPIKeyForActiveDirectoryUser(
 		PostgresConnTrans &trans, int64_t userKey, string userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 	);
 #else
 	string createAPIKeyForActiveDirectoryUser(
@@ -2519,7 +2519,7 @@ class MMSEngineDBFacade
 	string createCode(
 		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
 		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
-		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder
+		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel
 	);
 #else
 	string createCode(
@@ -2590,9 +2590,10 @@ class MMSEngineDBFacade
 	pair<int64_t, string> addWorkspace(
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, string workspaceName, string notes, WorkspaceType workspaceType, string deliveryURL,
-		EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode,
-		string workspaceTimezone, chrono::system_clock::time_point userExpirationDate
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, string workspaceName, string notes,
+		WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
+		long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone,
+		chrono::system_clock::time_point userExpirationDate
 	);
 #else
 	pair<int64_t, string> addWorkspace(
