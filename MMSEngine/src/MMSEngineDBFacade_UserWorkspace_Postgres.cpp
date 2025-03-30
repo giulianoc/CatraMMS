@@ -2347,7 +2347,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -2361,7 +2361,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -2450,7 +2450,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, w.timezone, "
+				"w.languageCode, w.timezone, w.preferences, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
@@ -2487,7 +2487,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			{
 				string sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, w.preferences, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -2611,6 +2611,8 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 		field = "creationDate";
 		workspaceDetailRoot[field] = row["creationDate"].as<string>();
 
+		workspaceDetailRoot["preferences"] = row["preferences"].as<string>();
+
 		if (userAPIKeyInfo)
 		{
 			json userAPIKeyRoot;
@@ -2710,7 +2712,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 	int64_t userKey, int64_t workspaceKey, bool notesChanged, string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged, string newName,
 	bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
 	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
-	string newTimezone, bool expirationDateChanged, string newExpirationUtcDate,
+	string newTimezone, bool preferencesChanged, string newPreferences, bool expirationDateChanged, string newExpirationUtcDate,
 
 	bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 	bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -2931,6 +2933,14 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				oneParameterPresent = true;
 			}
 
+			if (preferencesChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("preferences = {}", trans.transaction->quote(newPreferences));
+				oneParameterPresent = true;
+			}
+
 			if (oneParameterPresent)
 			{
 				string sqlStatement = std::format(
@@ -3147,7 +3157,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, w.timezone, a.apiKey, a.isOwner, a.isDefault, "
+				"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
 				"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "

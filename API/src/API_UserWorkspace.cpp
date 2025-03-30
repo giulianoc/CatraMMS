@@ -2572,6 +2572,8 @@ void API::updateWorkspace(
 		bool languageCodeChanged = false;
 		string newTimezone;
 		bool timezoneChanged = false;
+		string newPreferences;
+		bool preferencesChanged = false;
 		string newExpirationUtcDate;
 		bool expirationDateChanged = false;
 
@@ -2686,6 +2688,12 @@ void API::updateWorkspace(
 		{
 			timezoneChanged = true;
 			newTimezone = JSONUtils::asString(metadataRoot, field, "CET");
+		}
+
+		if (JSONUtils::isMetadataPresent(metadataRoot, "preferences"))
+		{
+			preferencesChanged = true;
+			newPreferences = JSONUtils::asString(metadataRoot, "preferences", "");
 		}
 
 		field = "maxStorageInGB";
@@ -2855,8 +2863,8 @@ void API::updateWorkspace(
 			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
 				userKey, workspace->_workspaceKey, notesChanged, newNotes, enabledChanged, newEnabled, nameChanged, newName,
 				maxEncodingPriorityChanged, newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged,
-				newMaxIngestionsNumber, languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, expirationDateChanged,
-				newExpirationUtcDate,
+				newMaxIngestionsNumber, languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, preferencesChanged, newPreferences,
+				expirationDateChanged, newExpirationUtcDate,
 
 				maxStorageInGBChanged, maxStorageInGB, currentCostForStorageChanged, currentCostForStorage, dedicatedEncoder_power_1Changed,
 				dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,
