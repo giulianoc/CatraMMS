@@ -5608,16 +5608,6 @@ void API::changeLiveProxyPlaylist(
 
 							// field = "sources";
 							json sourcesRoot = JSONUtils::asJson(vodInputRoot, "sources", json(), true);
-							/*
-							if (!JSONUtils::isMetadataPresent(vodInputRoot, "sources"))
-							{
-								string errorMessage = std::format("sources is missing, json data: {}", requestBody);
-								SPDLOG_ERROR(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-							json sourcesRoot = vodInputRoot["sources"];
-							*/
 
 							if (sourcesRoot.size() == 0)
 							{
@@ -5633,6 +5623,9 @@ void API::changeLiveProxyPlaylist(
 							}
 
 							MMSEngineDBFacade::ContentType vodContentType;
+
+							// viene creato uno nuovo perchè in caso di errori qualche item di sourcesRoot potrebbe essere eliminato
+							json newSourcesRoot = json::array();
 
 							int64_t firstMediaEncodingProfileKey = -2;
 							for (int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
@@ -5751,11 +5744,12 @@ void API::changeLiveProxyPlaylist(
 								// field = "sourcePhysicalDeliveryURL";
 								sourceRoot["sourcePhysicalDeliveryURL"] = sourcePhysicalDeliveryURL;
 
-								sourcesRoot[sourceIndex] = sourceRoot;
+								// sourcesRoot[sourceIndex] = sourceRoot;
+								newSourcesRoot.push_back(sourcesRoot);
 							}
 
-							// field = "sources";
-							vodInputRoot["sources"] = sourcesRoot;
+							// vodInputRoot["sources"] = sourcesRoot;
+							vodInputRoot["sources"] = newSourcesRoot;
 
 							// field = "vodContentType";
 							vodInputRoot["vodContentType"] = MMSEngineDBFacade::toString(vodContentType);
