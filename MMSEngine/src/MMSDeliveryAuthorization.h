@@ -27,9 +27,7 @@ class MMSDeliveryAuthorization
 {
 
   public:
-	MMSDeliveryAuthorization(
-		json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
-	);
+	MMSDeliveryAuthorization(json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade);
 
 	pair<string, string> createDeliveryAuthorization(
 		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string clientIPAddress, int64_t mediaItemKey, string uniqueName,
@@ -48,7 +46,7 @@ class MMSDeliveryAuthorization
 	static string getSignedCDN77URL(
 		string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 		string filePath,	// /file/playlist/d.m3u8
-		string secureToken, long expirationInMinutes
+		string secureToken, long expirationInSeconds
 	);
 
   private:

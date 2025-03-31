@@ -2188,6 +2188,7 @@ class MMSEngineDBFacade
 
 	tuple<string, string, string, string, string, bool>
 	reserveCDN77Channel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
+	tuple<string, string, string> cdn77_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
 	void releaseCDN77Channel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 

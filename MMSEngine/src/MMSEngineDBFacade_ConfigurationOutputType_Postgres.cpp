@@ -1263,6 +1263,87 @@ tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t 
 	}
 }
 
+tuple<string, string, string> MMSEngineDBFacade::cdn77_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex)
+{
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"cdn77_reservationDetails"
+			", reservedIngestionJobKey: {}"
+			", outputIndex: {}",
+			reservedIngestionJobKey, outputIndex
+		);
+
+		string resourceURL;
+		string filePath;
+		string secureToken;
+		{
+			string sqlStatement = std::format(
+				"select resourceURL, filePath, secureToken "
+				"from MMS_Conf_CDN77Channel "
+				"where reservedByIngestionJobKey = {} and outputIndex = {}",
+				reservedIngestionJobKey, outputIndex
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"reservedIngestionJob is not found"
+					", reservedIngestionJobKey: {}"
+					", outputIndex: {}",
+					reservedIngestionJobKey, outputIndex
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+
+			resourceURL = res[0]["resourceURL"].as<string>();
+			filePath = res[0]["filePath"].as<string>();
+			if (!res[0]["secureToken"].is_null())
+				secureToken = res[0]["secureToken"].as<string>();
+		}
+
+		return make_tuple(resourceURL, filePath, secureToken);
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
 tuple<string, string, string, string, string, bool>
 MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
 {
@@ -1292,8 +1373,8 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 			workspaceKey, label, outputIndex, ingestionJobKey
 		);
 
-		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_CDN77Channel
-		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
+		// 2023-02-01: se ci sono CDN77 reserved da IngestionJobs che sono in stato End*, queste devono essere "resettate".
+		//	E' uno scenario che non dovrebbe mai capitare ma,
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
 		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
 		// outputIndex (stesso ingestion con ad esempio 2 CDN77)

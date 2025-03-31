@@ -109,13 +109,13 @@ prodServers[$((serverIndex*6+5))]=10.0.1.5
 #prodServers[$((serverIndex*6+4))]=externalEncoder
 #prodServers[$((serverIndex*6+5))]=
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-encoder-1
-prodServers[$((serverIndex*6+1))]=157.90.129.10
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=encoder
-prodServers[$((serverIndex*6+5))]=10.0.1.16
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-encoder-1
+#prodServers[$((serverIndex*6+1))]=157.90.129.10
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=encoder
+#prodServers[$((serverIndex*6+5))]=10.0.1.16
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-encoder-3

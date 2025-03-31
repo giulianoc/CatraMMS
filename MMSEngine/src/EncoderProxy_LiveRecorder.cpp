@@ -294,7 +294,7 @@ bool EncoderProxy::liveRecorder()
 					{
 						try
 						{
-							playURL = MMSDeliveryAuthorization::getSignedCDN77URL(resourceURL, filePath, secureToken, cdn77ExpirationInMinutes);
+							playURL = MMSDeliveryAuthorization::getSignedCDN77URL(resourceURL, filePath, secureToken, cdn77ExpirationInMinutes * 60);
 						}
 						catch (exception &ex)
 						{

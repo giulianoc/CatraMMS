@@ -438,7 +438,6 @@ install-ftpserver()
 	echo "add user (europa_tv) to /etc/vsftpd_user_list"
 }
 
-
 create-directory()
 {
 	moduleType=$1
@@ -1454,6 +1453,11 @@ echo ""
 read -n 1 -s -r -p "Aggiornare foglio su google Server List's"
 echo ""
 echo ""
+
+read -n 1 -s -r -p "Inserire alias in myBashProfile.sh"
+echo ""
+echo ""
+
 
 read -n 1 -s -r -p "Aggiornare scripts/servers.sh"
 echo ""

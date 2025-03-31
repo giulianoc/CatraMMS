@@ -393,11 +393,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				throw runtime_error(errorMessage);
 			}
-			json outputsRoot;
-			if (JSONUtils::isMetadataPresent(ingestionJobRoot, "outputs"))
-				outputsRoot = ingestionJobRoot["outputs"];
-			else // if (JSONUtils::isMetadataPresent(ingestionJobRoot, "Outputs"))
-				outputsRoot = ingestionJobRoot["Outputs"];
+			json outputsRoot = JSONUtils::asJson(ingestionJobRoot, "outputs", json::array());
+			// if (JSONUtils::isMetadataPresent(ingestionJobRoot, "outputs"))
+			// 	outputsRoot = ingestionJobRoot["outputs"];
+			// else // if (JSONUtils::isMetadataPresent(ingestionJobRoot, "Outputs"))
+			// 	outputsRoot = ingestionJobRoot["Outputs"];
 
 			// Option 1: OutputType HLS with deliveryCode
 			// Option 2: OutputType RTMP_Channel/CDN_AWS/CDN_CDN77 with playURL
@@ -421,7 +421,44 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
 				}
 				else */
-				if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
+				if (outputType == "CDN_CDN77")
+				{
+					auto [resourceURL, filePath, secureToken] = _mmsEngineDBFacade->cdn77_reservationDetails(ingestionJobKey, outputIndex);
+
+					if (filePath.size() > 0 && filePath.front() != '/')
+						filePath = "/" + filePath;
+
+					string playURL;
+					if (secureToken != "")
+					{
+						try
+						{
+							playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds);
+						}
+						catch (exception &ex)
+						{
+							SPDLOG_ERROR(
+								"getSignedCDN77URL failed"
+								", ingestionJobKey: {}"
+								", resourceURL: {}"
+								", filePath: {}"
+								", secureToken: {}"
+								", ttlInSeconds: {}"
+								", exception: {}",
+								ingestionJobKey, resourceURL, filePath, secureToken, ttlInSeconds, ex.what()
+							);
+
+							// throw e;
+						}
+					}
+					else
+						playURL = std::format("https://{}{}", resourceURL, filePath);
+					SPDLOG_INFO("AAAAAAAAA: {}", playURL);
+
+					if (playURL == "")
+						continue;
+				}
+				else if (outputType == "RTMP_Channel" || outputType == "CDN_AWS")
 				{
 					field = "playUrl";
 					playURL = JSONUtils::asString(outputRoot, field, "");
@@ -1601,7 +1638,7 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 string MMSDeliveryAuthorization::getSignedCDN77URL(
 	string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 	string filePath,	// /file/playlist/d.m3u8
-	string secureToken, long expirationInMinutes
+	string secureToken, long expirationInSeconds
 )
 {
 	SPDLOG_INFO(
@@ -1609,8 +1646,8 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 		", resourceURL: {}"
 		", filePath: {}"
 		", secureToken: {}"
-		", expirationInMinutes: {}",
-		resourceURL, filePath, secureToken, expirationInMinutes
+		", expirationInSeconds: {}",
+		resourceURL, filePath, secureToken, expirationInSeconds
 	);
 
 	try
@@ -1618,7 +1655,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 		//  It's smart to set the expiration time as current time plus 5 minutes { time() + 300}.
 		//  This way the link will be available only for the time needed to start the download.
 
-		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + (expirationInMinutes * 60);
+		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + expirationInSeconds;
 
 		string signedURL;
 		{
@@ -1791,9 +1828,9 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			", resourceURL: {}"
 			", filePath: {}"
 			", secureToken: {}"
-			", expirationInMinutes: {}"
+			", expirationInSeconds: {}"
 			", signedURL: {}",
-			resourceURL, filePath, secureToken, expirationInMinutes, signedURL
+			resourceURL, filePath, secureToken, expirationInSeconds, signedURL
 		);
 
 		return signedURL;
