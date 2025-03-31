@@ -646,6 +646,83 @@ tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t
 	}
 }
 
+string MMSEngineDBFacade::cdnaws_reservationDetails(int64_t reservedIngestionJobKey, int outputIndex)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"cdnaws_reservationDetails"
+			", reservedIngestionJobKey: {}"
+			", outputIndex: {}",
+			reservedIngestionJobKey, outputIndex
+		);
+
+		string playURL;
+		{
+			string sqlStatement = std::format(
+				"select playURL "
+				"from MMS_Conf_AWSChannel "
+				"where reservedByIngestionJobKey = {} and outputIndex = {} ",
+				reservedIngestionJobKey, outputIndex
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"No AWS Channel found"
+					", reservedIngestionJobKey: {}"
+					", outputIndex: {}",
+					reservedIngestionJobKey, outputIndex
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			if (!res[0]["playURL"].is_null())
+				playURL = res[0]["playURL"].as<string>();
+		}
+
+		return playURL;
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
 string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
 	/*
@@ -2218,6 +2295,83 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 		}
 
 		return make_tuple(confKey, rtmpURL, streamName, userName, password, playURL);
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+string MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex)
+{
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"rtmp_reservedDetails"
+			", reservedIngestionJobKey: {}"
+			", outputIndex: {}",
+			reservedIngestionJobKey, outputIndex
+		);
+
+		string playURL;
+		{
+			string sqlStatement = std::format(
+				"select playURL "
+				"from MMS_Conf_RTMPChannel "
+				"where reservedByIngestionJobKey = {} and outputIndex = {}",
+				reservedIngestionJobKey, outputIndex
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"Configuration label is not found"
+					", reservedIngestionJobKey: {}"
+					", outputIndex: {}",
+					reservedIngestionJobKey, outputIndex
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+
+			if (!res[0]["playURL"].is_null())
+				playURL = res[0]["playURL"].as<string>();
+		}
+
+		return playURL;
 	}
 	catch (exception const &e)
 	{

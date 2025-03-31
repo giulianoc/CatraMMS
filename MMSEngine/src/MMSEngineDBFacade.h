@@ -2171,6 +2171,7 @@ class MMSEngineDBFacade
 	tuple<string, string, string, bool> reserveAWSChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
 
 	string releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
+	string cdnaws_reservationDetails(int64_t reservedIngestionJobKey, int outputIndex);
 
 	int64_t
 	addCDN77ChannelConf(int64_t workspaceKey, string label, string rtmpURL, string resourceURL, string filePath, string secureToken, string type);
@@ -2210,6 +2211,7 @@ class MMSEngineDBFacade
 
 	tuple<string, string, string, string, string, string, bool>
 	reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
+	string rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
 	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 

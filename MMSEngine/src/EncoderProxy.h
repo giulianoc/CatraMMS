@@ -232,8 +232,6 @@ class EncoderProxy
 
 	void awsStopChannel(int64_t ingestionJobKey, string awsChannelIdToBeStarted);
 
-	string getAWSSignedURL(string playURL, int expirationInMinutes);
-
 	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
 	bool waitingLiveProxyOrLiveRecorder(
 		MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,

@@ -174,7 +174,8 @@ bool EncoderProxy::liveRecorder()
 					{
 						try
 						{
-							playURL = getAWSSignedURL(playURL, awsExpirationInMinutes);
+							MMSDeliveryAuthorization mmsDeliveryAuthorization(_configuration, _mmsStorage, _mmsEngineDBFacade);
+							playURL = mmsDeliveryAuthorization.getAWSSignedURL(playURL, awsExpirationInMinutes * 60);
 						}
 						catch (exception &ex)
 						{

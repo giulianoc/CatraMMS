@@ -48,6 +48,7 @@ class MMSDeliveryAuthorization
 		string filePath,	// /file/playlist/d.m3u8
 		string secureToken, long expirationInSeconds
 	);
+	string getAWSSignedURL(string playURL, int expirationInSeconds);
 
   private:
 	json _configuration;

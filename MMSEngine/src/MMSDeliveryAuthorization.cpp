@@ -415,12 +415,14 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
 
 				/*
-				if (outputType == "HLS" || outputType == "DASH")
+				if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
 				{
-					field = "DeliveryCode";
-					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
+					field = "playUrl";
+					playURL = JSONUtils::asString(outputRoot, field, "");
+					if (playURL == "")
+						continue;
 				}
-				else */
+				*/
 				if (outputType == "CDN_CDN77")
 				{
 					auto [resourceURL, filePath, secureToken] = _mmsEngineDBFacade->cdn77_reservationDetails(ingestionJobKey, outputIndex);
@@ -453,22 +455,47 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					else
 						playURL = std::format("https://{}{}", resourceURL, filePath);
-					SPDLOG_INFO("AAAAAAAAA: {}", playURL);
 
 					if (playURL == "")
 						continue;
 				}
-				else if (outputType == "RTMP_Channel" || outputType == "CDN_AWS")
+				else if (outputType == "CDN_AWS")
 				{
-					field = "playUrl";
-					playURL = JSONUtils::asString(outputRoot, field, "");
+					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
+					playURL = _mmsEngineDBFacade->cdnaws_reservationDetails(ingestionJobKey, outputIndex);
+
+					if (awsSignedURL)
+					{
+						try
+						{
+							playURL = getAWSSignedURL(playURL, ttlInSeconds);
+						}
+						catch (exception &ex)
+						{
+							SPDLOG_ERROR(
+								"getAWSSignedURL failed"
+								", ingestionJobKey: {}"
+								", playURL: {}",
+								ingestionJobKey, playURL
+							);
+
+							// throw e;
+						}
+					}
+
+					if (playURL == "")
+						continue;
+				}
+				else if (outputType == "RTMP_Channel")
+				{
+					playURL = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+
 					if (playURL == "")
 						continue;
 				}
 				else if (outputType == "HLS_Channel")
 				{
-					field = "deliveryCode";
-					localDeliveryCode = JSONUtils::asInt64(outputRoot, field, -1);
+					localDeliveryCode = JSONUtils::asInt64(outputRoot, "deliveryCode", -1);
 				}
 
 				outputDeliveryOptions.push_back(make_tuple(outputType, localDeliveryCode, playURL));
@@ -1857,6 +1884,72 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 
 		throw runtime_error(errorMessage);
 	}
+}
+
+string MMSDeliveryAuthorization::getAWSSignedURL(string playURL, int expirationInSeconds)
+{
+	string signedPlayURL;
+
+	// string mmsGUIURL;
+	// ostringstream response;
+	// bool responseInitialized = false;
+	try
+	{
+		// playURL is like:
+		// https://d1nue3l1x0sz90.cloudfront.net/out/v1/ca8fd629f9204ca38daf18f04187c694/index.m3u8
+		string prefix("https://");
+		if (!(playURL.size() >= prefix.size() && 0 == playURL.compare(0, prefix.size(), prefix) && playURL.find("/", prefix.size()) != string::npos))
+		{
+			string errorMessage = std::format(
+				"awsSignedURL. playURL wrong format"
+				", playURL: {}",
+				playURL
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		size_t uriStartIndex = playURL.find("/", prefix.size());
+		string cloudFrontHostName = playURL.substr(prefix.size(), uriStartIndex - prefix.size());
+		string uriPath = playURL.substr(uriStartIndex + 1);
+
+		AWSSigner awsSigner;
+		string signedPlayURL = awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationInSeconds);
+
+		if (signedPlayURL == "")
+		{
+			string errorMessage = std::format(
+				"awsSignedURL. no signedPlayURL found"
+				", signedPlayURL: {}",
+				signedPlayURL
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	catch (runtime_error e)
+	{
+		SPDLOG_ERROR(
+			"awsSigner failed"
+			", exception: {}",
+			e.what()
+		);
+
+		throw e;
+	}
+	catch (exception e)
+	{
+		SPDLOG_ERROR(
+			"awsSigner failed"
+			", exception: {}",
+			e.what()
+		);
+
+		throw e;
+	}
+
+	return signedPlayURL;
 }
 
 time_t MMSDeliveryAuthorization::getReusableExpirationTime(int ttlInSeconds)
