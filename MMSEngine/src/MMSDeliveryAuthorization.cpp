@@ -430,7 +430,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (filePath.size() > 0 && filePath.front() != '/')
 						filePath = "/" + filePath;
 
-					string playURL;
 					if (secureToken != "")
 					{
 						try
