@@ -498,6 +498,15 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, "deliveryCode", -1);
 				}
 
+				SPDLOG_INFO(
+					"createDeliveryAuthorization"
+					", ingestionJobKey: {}"
+					", outputIndex: {}"
+					", outputType: {}"
+					", playURL: {}"
+					", localDeliveryCode: {}",
+					ingestionJobKey, outputIndex, outputType, playURL, localDeliveryCode
+				);
 				outputDeliveryOptions.push_back(make_tuple(outputType, localDeliveryCode, playURL));
 			}
 
