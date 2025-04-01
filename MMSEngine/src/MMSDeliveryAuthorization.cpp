@@ -24,6 +24,7 @@
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 // #include <openssl/md5.h>
+#include <exception>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -411,8 +412,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				int64_t localDeliveryCode = -1;
 				string playURL;
 
-				field = "outputType";
-				outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
+				outputType = JSONUtils::asString(outputRoot, "outputType", "HLS_Channel");
 
 				/*
 				if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
@@ -425,61 +425,75 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				*/
 				if (outputType == "CDN_CDN77")
 				{
-					auto [resourceURL, filePath, secureToken] = _mmsEngineDBFacade->cdn77_reservationDetails(ingestionJobKey, outputIndex);
-
-					if (filePath.size() > 0 && filePath.front() != '/')
-						filePath = "/" + filePath;
-
-					if (secureToken != "")
+					try
 					{
-						try
-						{
-							playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds);
-						}
-						catch (exception &ex)
-						{
-							SPDLOG_ERROR(
-								"getSignedCDN77URL failed"
-								", ingestionJobKey: {}"
-								", resourceURL: {}"
-								", filePath: {}"
-								", secureToken: {}"
-								", ttlInSeconds: {}"
-								", exception: {}",
-								ingestionJobKey, resourceURL, filePath, secureToken, ttlInSeconds, ex.what()
-							);
+						auto [resourceURL, filePath, secureToken] = _mmsEngineDBFacade->cdn77_reservationDetails(ingestionJobKey, outputIndex);
 
-							// throw e;
-						}
+						if (filePath.size() > 0 && filePath.front() != '/')
+							filePath = "/" + filePath;
+
+						if (secureToken != "")
+							playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds);
+						else
+							playURL = std::format("https://{}{}", resourceURL, filePath);
 					}
-					else
-						playURL = std::format("https://{}{}", resourceURL, filePath);
+					catch (DBRecordNotFound &e)
+					{
+						SPDLOG_ERROR(
+							"ingestionJobKey/outputIndex not found failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
+					catch (exception &e)
+					{
+						SPDLOG_ERROR(
+							"getSignedCDN77URL failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
 
 					if (playURL == "")
 						continue;
 				}
 				else if (outputType == "CDN_AWS")
 				{
-					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
-					playURL = _mmsEngineDBFacade->cdnaws_reservationDetails(ingestionJobKey, outputIndex);
-
-					if (awsSignedURL)
+					try
 					{
-						try
-						{
-							playURL = getAWSSignedURL(playURL, ttlInSeconds);
-						}
-						catch (exception &ex)
-						{
-							SPDLOG_ERROR(
-								"getAWSSignedURL failed"
-								", ingestionJobKey: {}"
-								", playURL: {}",
-								ingestionJobKey, playURL
-							);
+						bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
+						playURL = _mmsEngineDBFacade->cdnaws_reservationDetails(ingestionJobKey, outputIndex);
 
-							// throw e;
-						}
+						if (awsSignedURL)
+							playURL = getAWSSignedURL(playURL, ttlInSeconds);
+					}
+					catch (DBRecordNotFound &e)
+					{
+						SPDLOG_ERROR(
+							"ingestionJobKey/outputIndex not found failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
+					catch (exception &e)
+					{
+						SPDLOG_ERROR(
+							"getSignedCDN77URL failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
 					}
 
 					if (playURL == "")
@@ -487,7 +501,32 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				else if (outputType == "RTMP_Channel")
 				{
-					playURL = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+					try
+					{
+						playURL = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+					}
+					catch (DBRecordNotFound &e)
+					{
+						SPDLOG_ERROR(
+							"ingestionJobKey/outputIndex not found failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
+					catch (exception &e)
+					{
+						SPDLOG_ERROR(
+							"rtmp_reservationDetails failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
 
 					if (playURL == "")
 						continue;
@@ -794,14 +833,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					requestWorkspace->_workspaceKey, clientIPAddress, userId,
 					-1, // localPhysicalPathKey,
 					streamConfKey, configurationLabel
-				);
-			}
-			catch (DBRecordNotFound &e)
-			{
-				SPDLOG_ERROR(
-					"mmsEngineDBFacade->addRequestStatistic failed"
-					", e.what: {}",
-					e.what()
 				);
 			}
 			catch (runtime_error &e)
