@@ -144,8 +144,8 @@ bool EncoderProxy::liveRecorder()
 					// RtmpUrl and PlayUrl fields have to be initialized
 
 					string awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, "awsChannelConfigurationLabel", "");
-					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
-					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
+					// bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
+					// int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
 
 					/*
 					string awsChannelType;
@@ -160,16 +160,19 @@ bool EncoderProxy::liveRecorder()
 					// ripartenza di mmsEngine, nel caso di richiesta già
 					// attiva, ritornerebbe le stesse info associate a
 					// ingestionJobKey (senza exception)
-					tuple<string, string, string, bool> awsChannelDetails = _mmsEngineDBFacade->reserveAWSChannel(
+					auto [awsChannelId, rtmpURL, playURL, channelAlreadyReserved] = _mmsEngineDBFacade->reserveAWSChannel(
 						_encodingItem->_workspace->_workspaceKey, awsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 					);
 
+					/*
 					string awsChannelId;
 					string rtmpURL;
 					string playURL;
 					bool channelAlreadyReserved;
 					tie(awsChannelId, rtmpURL, playURL, channelAlreadyReserved) = awsChannelDetails;
+					*/
 
+					/*
 					if (awsSignedURL)
 					{
 						try
@@ -190,6 +193,7 @@ bool EncoderProxy::liveRecorder()
 							// throw e;
 						}
 					}
+					*/
 
 					// update outputsRoot with the new details
 					{
@@ -199,8 +203,8 @@ bool EncoderProxy::liveRecorder()
 						field = "rtmpUrl";
 						outputRoot[field] = rtmpURL;
 
-						field = "playUrl";
-						outputRoot[field] = playURL;
+						// field = "playUrl";
+						// outputRoot[field] = playURL;
 
 						outputsRoot[outputIndex] = outputRoot;
 
@@ -228,8 +232,8 @@ bool EncoderProxy::liveRecorder()
 							);
 
 							// update sia IngestionJob che EncodingJob
-							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
+							_mmsEngineDBFacade->updateOutputRtmp(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
 							// _mmsEngineDBFacade->updateEncodingJobParameters(
 							// 	_encodingItem->_encodingJobKey,
@@ -260,7 +264,7 @@ bool EncoderProxy::liveRecorder()
 					// RtmpUrl and PlayUrl fields have to be initialized
 
 					string cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot, "cdn77ChannelConfigurationLabel", "");
-					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, "cdn77ExpirationInMinutes", 1440);
+					// int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, "cdn77ExpirationInMinutes", 1440);
 
 					/*
 					string cdn77ChannelType;
@@ -275,10 +279,12 @@ bool EncoderProxy::liveRecorder()
 					// ripartenza di mmsEngine, nel caso di richiesta già
 					// attiva, ritornerebbe le stesse info associate a
 					// ingestionJobKey (senza exception)
-					tuple<string, string, string, string, string, bool> cdn77ChannelDetails = _mmsEngineDBFacade->reserveCDN77Channel(
-						_encodingItem->_workspace->_workspaceKey, cdn77ChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
-					);
+					auto [reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved] =
+						_mmsEngineDBFacade->reserveCDN77Channel(
+							_encodingItem->_workspace->_workspaceKey, cdn77ChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+						);
 
+					/*
 					string reservedLabel;
 					string rtmpURL;
 					string resourceURL;
@@ -286,7 +292,9 @@ bool EncoderProxy::liveRecorder()
 					string secureToken;
 					bool channelAlreadyReserved;
 					tie(reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved) = cdn77ChannelDetails;
+					*/
 
+					/*
 					if (filePath.size() > 0 && filePath.front() != '/')
 						filePath = "/" + filePath;
 
@@ -313,14 +321,15 @@ bool EncoderProxy::liveRecorder()
 					{
 						playURL = "https://" + resourceURL + filePath;
 					}
+					*/
 
 					// update outputsRoot with the new details
 					{
 						field = "rtmpUrl";
 						outputRoot[field] = rtmpURL;
 
-						field = "playUrl";
-						outputRoot[field] = playURL;
+						// field = "playUrl";
+						// outputRoot[field] = playURL;
 
 						outputsRoot[outputIndex] = outputRoot;
 
@@ -341,15 +350,14 @@ bool EncoderProxy::liveRecorder()
 								", resourceURL: {}"
 								", filePath: {}"
 								", secureToken: {}"
-								", channelAlreadyReserved: {}"
-								", playURL: {}",
+								", channelAlreadyReserved: {}",
 								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey, cdn77ChannelConfigurationLabel, reservedLabel, rtmpURL, resourceURL, filePath,
-								secureToken, channelAlreadyReserved, playURL
+								secureToken, channelAlreadyReserved
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
+							_mmsEngineDBFacade->updateOutputRtmp(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
 						}
 						catch (exception &e)
@@ -385,10 +393,12 @@ bool EncoderProxy::liveRecorder()
 					// ripartenza di mmsEngine, nel caso di richiesta già
 					// attiva, ritornerebbe le stesse info associate a
 					// ingestionJobKey (senza exception)
-					tuple<string, string, string, string, string, string, bool> rtmpChannelDetails = _mmsEngineDBFacade->reserveRTMPChannel(
-						_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
-					);
+					auto [reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved] =
+						_mmsEngineDBFacade->reserveRTMPChannel(
+							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+						);
 
+					/*
 					string reservedLabel;
 					string rtmpURL;
 					string streamName;
@@ -397,6 +407,7 @@ bool EncoderProxy::liveRecorder()
 					string playURL;
 					bool channelAlreadyReserved;
 					tie(reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved) = rtmpChannelDetails;
+					*/
 
 					if (streamName != "")
 					{
@@ -416,8 +427,8 @@ bool EncoderProxy::liveRecorder()
 						field = "rtmpUrl";
 						outputRoot[field] = rtmpURL;
 
-						field = "playUrl";
-						outputRoot[field] = playURL;
+						// field = "playUrl";
+						// outputRoot[field] = playURL;
 
 						outputsRoot[outputIndex] = outputRoot;
 
@@ -441,8 +452,8 @@ bool EncoderProxy::liveRecorder()
 								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
+							_mmsEngineDBFacade->updateOutputRtmp(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
 						}
 						catch (exception &e)
@@ -478,16 +489,19 @@ bool EncoderProxy::liveRecorder()
 					// ripartenza di mmsEngine, nel caso di richiesta già
 					// attiva, ritornerebbe le stesse info associate a
 					// ingestionJobKey (senza exception)
-					tuple<string, int64_t, int, int, bool> hlsChannelDetails = _mmsEngineDBFacade->reserveHLSChannel(
-						_encodingItem->_workspace->_workspaceKey, hlsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
-					);
+					auto [reservedLabel, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber, channelAlreadyReserved] =
+						_mmsEngineDBFacade->reserveHLSChannel(
+							_encodingItem->_workspace->_workspaceKey, hlsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+						);
 
+					/*
 					string reservedLabel;
 					int64_t deliveryCode;
 					int segmentDurationInSeconds;
 					int playlistEntriesNumber;
 					bool channelAlreadyReserved;
 					tie(reservedLabel, deliveryCode, segmentDurationInSeconds, playlistEntriesNumber, channelAlreadyReserved) = hlsChannelDetails;
+					*/
 
 					// update outputsRoot with the new details
 					{

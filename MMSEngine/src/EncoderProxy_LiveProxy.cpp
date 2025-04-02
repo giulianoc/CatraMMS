@@ -19,6 +19,7 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <cstdint>
+#include <exception>
 #include <regex>
 
 bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
@@ -120,15 +121,16 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// RtmpUrl and PlayUrl fields have to be initialized
 
 					string awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, "awsChannelConfigurationLabel", "");
-					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
-					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
-
 					// reserveAWSChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
 					// associate a ingestionJobKey (senza exception)
 					auto [awsChannelId, rtmpURL, playURL, channelAlreadyReserved] = _mmsEngineDBFacade->reserveAWSChannel(
 						_encodingItem->_workspace->_workspaceKey, awsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 					);
+
+					/*
+					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
+					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
 
 					if (awsSignedURL)
 					{
@@ -150,12 +152,13 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 							// throw e;
 						}
 					}
+					*/
 
 					// update outputsRoot with the new details
 					{
 						outputRoot["awsChannelConfigurationLabel"] = awsChannelConfigurationLabel;
 						outputRoot["rtmpUrl"] = rtmpURL;
-						outputRoot["playUrl"] = playURL;
+						// outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
 						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
@@ -176,11 +179,11 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_encodingJobKey, awsChannelConfigurationLabel, awsChannelId, rtmpURL, playURL, channelAlreadyReserved
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
+							_mmsEngineDBFacade->updateOutputRtmp(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
 						}
-						catch (runtime_error &e)
+						catch (exception &e)
 						{
 							SPDLOG_ERROR(
 								"updateEncodingJobParameters failed"
@@ -190,18 +193,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							throw e;
-						}
-						catch (exception &e)
-						{
-							SPDLOG_ERROR(
-								"updateEncodingJobParameters failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
-							);
-
-							throw e;
+							throw;
 						}
 					}
 
@@ -215,7 +207,6 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// RtmpUrl and PlayUrl fields have to be initialized
 
 					string cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot, "cdn77ChannelConfigurationLabel", "");
-					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, "cdn77ExpirationInMinutes", 1440);
 
 					// reserveCDN77Channel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
@@ -224,6 +215,9 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						_mmsEngineDBFacade->reserveCDN77Channel(
 							_encodingItem->_workspace->_workspaceKey, cdn77ChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
+
+					/*
+					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, "cdn77ExpirationInMinutes", 1440);
 
 					if (filePath.size() > 0 && filePath.front() != '/')
 						filePath = "/" + filePath;
@@ -249,11 +243,12 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					else
 						playURL = "https://" + resourceURL + filePath;
+					*/
 
 					// update outputsRoot with the new details
 					{
 						outputRoot["rtmpUrl"] = rtmpURL;
-						outputRoot["playUrl"] = playURL;
+						// outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
 						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
@@ -271,15 +266,14 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								", resourceURL: {}"
 								", filePath: {}"
 								", secureToken: {}"
-								", channelAlreadyReserved: {}"
-								", playURL: {}",
+								", channelAlreadyReserved: {}",
 								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
 								_encodingItem->_encodingJobKey, cdn77ChannelConfigurationLabel, reservedLabel, rtmpURL, resourceURL, filePath,
-								secureToken, channelAlreadyReserved, playURL
+								secureToken, channelAlreadyReserved
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
+							_mmsEngineDBFacade->updateOutputRtmp(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
 						}
 						catch (runtime_error &e)
@@ -344,7 +338,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// update outputsRoot with the new details
 					{
 						outputRoot["rtmpUrl"] = rtmpURL;
-						outputRoot["playUrl"] = playURL;
+						// outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
 						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
@@ -365,21 +359,9 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmpAndPlaURL(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL, playURL
+							_mmsEngineDBFacade->updateOutputRtmp(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
-						}
-						catch (runtime_error &e)
-						{
-							SPDLOG_ERROR(
-								"updateEncodingJobParameters failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", e.what(): {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-							);
-
-							throw e;
 						}
 						catch (exception &e)
 						{
@@ -391,7 +373,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							throw e;
+							throw;
 						}
 					}
 				}
@@ -458,18 +440,6 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								playlistEntriesNumber, manifestDirectoryPath, manifestFileName, otherOutputOptions
 							);
 						}
-						catch (runtime_error &e)
-						{
-							SPDLOG_ERROR(
-								"updateEncodingJobParameters failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", e.what(): {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-							);
-
-							throw e;
-						}
 						catch (exception &e)
 						{
 							SPDLOG_ERROR(
@@ -480,7 +450,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 							);
 
-							throw e;
+							throw;
 						}
 					}
 				}

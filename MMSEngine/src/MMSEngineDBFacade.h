@@ -1930,7 +1930,7 @@ class MMSEngineDBFacade
 
 	void updateEncodingJobParameters(int64_t encodingJobKey, string parameters);
 
-	void updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL, string playURL);
+	void updateOutputRtmp(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL);
 
 	void updateOutputHLSDetails(
 		int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds,

@@ -2340,7 +2340,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	}
 }
 
-void MMSEngineDBFacade::updateOutputRtmpAndPlaURL(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL, string playURL)
+void MMSEngineDBFacade::updateOutputRtmp(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL)
 {
 	/*
 shared_ptr<PostgresConnection> conn = nullptr;
@@ -2358,6 +2358,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	try
 	{
 		// PlayUrl in MMS_IngestionJob per il play del canale
+		/*
 		{
 			string path_playUrl = std::format("{{outputs,{},playUrl}}", outputIndex);
 			string sqlStatement = std::format(
@@ -2377,30 +2378,29 @@ nontransaction trans{*(conn->_sqlConnection)};
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			/*
-			if (rowsUpdated != 1)
-			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				warn(errorMessage);
+			// if (rowsUpdated != 1)
+			// {
+			// 	string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL +
+			// 						  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
+			// 						  ", sqlStatement: " + sqlStatement;
+			// 	warn(errorMessage);
 
 				// throw runtime_error(errorMessage);
-			}
-			*/
+			// }
 		}
+		*/
 
 		{
-			string path_playUrl = std::format("{{outputsRoot,{},playUrl}}", outputIndex);
+			// string path_playUrl = std::format("{{outputsRoot,{},playUrl}}", outputIndex);
 			string path_rtmpUrl = std::format("{{outputsRoot,{},rtmpUrl}}", outputIndex);
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set "
-				"parameters = jsonb_set("
+				"parameters = " // jsonb_set("
 				"jsonb_set(parameters, {}, jsonb {}), "
-				"{}, jsonb {}) "
+				// "{}, jsonb {}) "
 				"where encodingJobKey = {} ",
-				trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""), trans.transaction->quote(path_rtmpUrl),
-				trans.transaction->quote("\"" + rtmpURL + "\""), encodingJobKey
+				// trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""),
+				trans.transaction->quote(path_rtmpUrl), trans.transaction->quote("\"" + rtmpURL + "\""), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -2430,9 +2430,8 @@ nontransaction trans{*(conn->_sqlConnection)};
 			"EncodingJob updated successful"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
-			", playURL: {}"
 			", rtmpURL: {}",
-			ingestionJobKey, encodingJobKey, playURL, rtmpURL
+			ingestionJobKey, encodingJobKey, rtmpURL
 		);
 	}
 	catch (exception const &e)
