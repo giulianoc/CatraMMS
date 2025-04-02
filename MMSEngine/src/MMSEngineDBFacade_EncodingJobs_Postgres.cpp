@@ -2396,7 +2396,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set "
 				"parameters = " // jsonb_set("
-				"jsonb_set(parameters, {}, jsonb {}), "
+				"jsonb_set(parameters, {}, jsonb {}) "
 				// "{}, jsonb {}) "
 				"where encodingJobKey = {} ",
 				// trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""),
