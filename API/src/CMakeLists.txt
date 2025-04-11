@@ -87,6 +87,7 @@ execute_process(
   OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
 include_directories("${PROJECT_SOURCE_DIR}/FastCGIAPI/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
@@ -119,6 +120,7 @@ link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
 add_executable(api.fcgi ${SOURCES_API} ${HEADERS})
 
+target_link_libraries(api.fcgi StringUtils)
 target_link_libraries(api.fcgi fastCGIAPI)
 target_link_libraries(api.fcgi MMSUtility)
 target_link_libraries(api.fcgi MMSEngine)
@@ -200,6 +202,7 @@ list(APPEND TARGETS api.fcgi)
 # FFMPEGEncoder add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER}
 # ${COMMON_SOURCES} ${HEADERS})
 add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${HEADERS})
+target_link_libraries(ffmpegEncoder.fcgi StringUtils)
 target_link_libraries(ffmpegEncoder.fcgi fastCGIAPI)
 target_link_libraries(ffmpegEncoder.fcgi MMSUtility)
 target_link_libraries(ffmpegEncoder.fcgi MMSEngine)

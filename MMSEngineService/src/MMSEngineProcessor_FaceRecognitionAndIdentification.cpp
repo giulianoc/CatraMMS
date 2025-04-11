@@ -1,43 +1,6 @@
 
-#include "MMSEngineProcessor.h"
 #include "JSONUtils.h"
-/*
-#include <stdio.h>
-
-#include "CheckEncodingTimes.h"
-#include "CheckIngestionTimes.h"
-#include "CheckRefreshPartitionFreeSizeTimes.h"
-#include "ContentRetentionTimes.h"
-#include "DBDataRetentionTimes.h"
-#include "FFMpeg.h"
-#include "GEOInfoTimes.h"
-#include "MMSCURL.h"
-#include "PersistenceLock.h"
-#include "ThreadsStatisticTimes.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/StringUtils.h"
-#include "catralibraries/ProcessUtility.h"
-#include "catralibraries/System.h"
-#include <curlpp/Easy.hpp>
-#include <curlpp/Exception.hpp>
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
-#include <curlpp/cURLpp.hpp>
-#include <fstream>
-#include <iomanip>
-#include <regex>
-#include <sstream>
-// #include "EMailSender.h"
-#include "Magick++.h"
-// #include <openssl/md5.h>
-#include "spdlog/spdlog.h"
-#include <openssl/evp.h>
-
-#define MD5BUFFERSIZE 16384
-*/
-
+#include "MMSEngineProcessor.h"
 
 // this is to generate one Frame
 void MMSEngineProcessor::manageFaceRecognitionMediaTask(
@@ -362,4 +325,3 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		throw e;
 	}
 }
-

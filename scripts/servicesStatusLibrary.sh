@@ -699,7 +699,9 @@ mms_webservices_timing_check_service()
 			maxDuration = maxAPIDuration;	\
 			// custom max duration
 			if (method == "startChannels"	\
-				|| method == "checkChannels"	\
+			)	\
+				maxDuration = 300000;	\ #anche a causa di brow
+			else if (method == "checkChannels"	\
 			)	\
 				maxDuration = 25000;	\
 			else if (method == "epgUpdate"	\

@@ -16,12 +16,12 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "StringUtils.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
 #include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
@@ -5000,26 +5000,7 @@ void API::changeLiveProxyPlaylist(
 	try
 	{
 		int64_t broadcasterIngestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", -1, true, nullptr);
-		/*
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
-		{
-			string errorMessage = "'ingestionJobKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
-		*/
 		bool interruptPlaylist = getQueryParameter(queryParameters, "interruptPlaylist", false, false, nullptr);
-		/*
-		bool interruptPlaylist = false;
-		auto interruptPlaylistIt = queryParameters.find("interruptPlaylist");
-		if (interruptPlaylistIt != queryParameters.end())
-			interruptPlaylist = interruptPlaylistIt->second == "true";
-		*/
 
 		SPDLOG_INFO(
 			"Received {}"
@@ -5029,8 +5010,7 @@ void API::changeLiveProxyPlaylist(
 			api, broadcasterIngestionJobKey, interruptPlaylist, requestBody
 		);
 
-		// next try/catch initialize the belows parameters using the broadcaster
-		// info
+		// next try/catch initialize the belows parameters using the broadcaster info
 
 		// check of ingestion job and retrieve some fields
 		int64_t utcBroadcasterStart;
@@ -5093,71 +5073,18 @@ void API::changeLiveProxyPlaylist(
 
 			string field = "internalMMS";
 			json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
-			/*
-			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", broadcasterIngestionJobKey: {}"
-					", Field: {}",
-					broadcasterIngestionJobKey, field
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			json internalMMSRoot = metadataContentRoot[field];
-			*/
 
 			field = "broadcaster";
 			json broadcasterRoot = JSONUtils::asJson(internalMMSRoot, field, json(), true);
-			/*
-			if (!JSONUtils::isMetadataPresent(internalMMSRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", broadcasterIngestionJobKey: {}"
-					", Field: {}",
-					broadcasterIngestionJobKey, field
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			json broadcasterRoot = internalMMSRoot[field];
-			*/
 
 			field = "broadcastIngestionJobKey";
 			broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, field, 0, true);
 
 			field = "schedule";
 			json proxyPeriodRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
-			/*
-			if (!JSONUtils::isMetadataPresent(metadataContentRoot, field))
-			{
-				string errorMessage = __FILEREF__ + "Field is not present or it is null" +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			json proxyPeriodRoot = metadataContentRoot[field];
-			*/
 
 			field = "timePeriod";
 			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false, true);
-			/*
-			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false);
-			if (!timePeriod)
-			{
-				string errorMessage = __FILEREF__ + "The LiveProxy IngestionJob has to have timePeriod" +
-									  ", broadcasterIngestionJobKey: " + to_string(broadcasterIngestionJobKey) +
-									  ", timePeriod: " + to_string(timePeriod);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			*/
 
 			field = "start";
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
@@ -5441,10 +5368,6 @@ void API::changeLiveProxyPlaylist(
 
 						field = "filters";
 						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, field, json());
-						/*
-						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
-							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
-						*/
 
 						broadcastDefaultDirectURLInputRoot = _mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL, filtersRoot);
 					}
@@ -5485,54 +5408,6 @@ void API::changeLiveProxyPlaylist(
 				throw runtime_error(errorMessage);
 			}
 		}
-		catch (JsonFieldNotFound &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (DBRecordNotFound &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -5547,7 +5422,7 @@ void API::changeLiveProxyPlaylist(
 
 			sendError(request, 500, errorMessage);
 
-			throw runtime_error(errorMessage);
+			throw;
 		}
 
 		// check/build the new playlist
@@ -6274,38 +6149,6 @@ void API::changeLiveProxyPlaylist(
 				}
 			}
 		}
-		catch (DBRecordNotFound &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -6320,7 +6163,7 @@ void API::changeLiveProxyPlaylist(
 
 			sendError(request, 500, errorMessage);
 
-			throw runtime_error(errorMessage);
+			throw;
 		}
 
 		// 2021-12-22: For sure we will have the BroadcastIngestionJob.
@@ -6375,17 +6218,11 @@ void API::changeLiveProxyPlaylist(
 						true
 					);
 			}
-			catch (DBRecordNotFound &e)
+			catch (exception &e)
 			{
 				SPDLOG_WARN(e.what());
 
-				// throw runtime_error(errorMessage);
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_WARN(e.what());
-
-				// throw runtime_error(errorMessage);
+				// throw;
 			}
 
 			// we may have the scenario where the encodingJob is not present
@@ -6460,7 +6297,7 @@ void API::changeLiveProxyPlaylist(
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (DBRecordNotFound e)
+		catch (exception &e)
 		{
 			SPDLOG_ERROR(
 				"{} failed"
@@ -6476,55 +6313,8 @@ void API::changeLiveProxyPlaylist(
 
 			sendError(request, 500, errorMessage);
 
-			throw runtime_error(errorMessage);
+			throw;
 		}
-		catch (runtime_error e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", ffmpegEncoderURL: {}"
-				", response.str: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, ffmpegEncoderURL, response.str(), e.what()
-			);
-
-			string errorMessage = "Internal server error";
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (exception e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", broadcasterIngestionJobKey: {}"
-				", ffmpegEncoderURL: {}"
-				", response.str: {}"
-				", e.what(): {}",
-				api, broadcasterIngestionJobKey, ffmpegEncoderURL, response.str(), e.what()
-			);
-
-			string errorMessage = "Internal server error";
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"{} failed"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
@@ -6535,12 +6325,7 @@ void API::changeLiveProxyPlaylist(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		// sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw;
 	}
 }
 

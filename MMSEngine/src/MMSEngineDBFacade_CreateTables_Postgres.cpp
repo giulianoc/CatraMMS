@@ -1,7 +1,7 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/StringUtils.h"
+#include "StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <fstream>
 #include <sstream>

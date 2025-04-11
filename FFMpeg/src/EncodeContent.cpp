@@ -13,8 +13,8 @@
 #include "FFMpeg.h"
 #include "FFMpegEncodingParameters.h"
 #include "JSONUtils.h"
+#include "StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
 
 void FFMpeg::encodeContent(

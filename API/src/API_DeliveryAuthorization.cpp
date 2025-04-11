@@ -3,7 +3,7 @@
 #include "JSONUtils.h"
 // #include "catralibraries/Encrypt.h"
 #include "CurlWrapper.h"
-#include "catralibraries/StringUtils.h"
+#include "StringUtils.h"
 #include <format>
 #include <regex>
 

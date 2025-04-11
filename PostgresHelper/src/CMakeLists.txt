@@ -20,6 +20,7 @@
 set(SOURCES PostgresHelper.cpp)
 set(HEADERS PostgresHelper.h)
 
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")

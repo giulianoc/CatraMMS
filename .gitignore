@@ -1,5 +1,5 @@
 # Ignore all
-*
+#*
 
 # Unignore all with extensions
 !*.*
@@ -16,6 +16,12 @@ install_manifest.txt
 compile_commands.json
 nbproject
 .DS_Store
+
+#ignora i seguenti eseguibili
+MMSEngineService/src/mmsEngineService
+utilities/awsSigner/src/awsSigner
+utilities/sendEmail/src/sendEmail
+utilities/updateGEOInfo/src/updateGEOInfo
 
 *.cgi
 *.fcgi

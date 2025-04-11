@@ -2,9 +2,9 @@
 #include "FFMPEGEncoderTask.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "StringUtils.h"
 #include "catralibraries/Encrypt.h"
 #include "catralibraries/ProcessUtility.h"
-#include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>

@@ -11,7 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 #include "FFMpeg.h"
-#include "catralibraries/StringUtils.h"
+#include "StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <exception>
 #include <fstream>

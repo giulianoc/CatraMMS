@@ -52,7 +52,8 @@ set(SCRIPTs
     loopServicesStatus.sh
     startRecorder.sh
     switchTranscoderInternalExternal.sh
-    backupStorageLoop.sh)
+    backupStorageLoop.sh
+    cibortvStartChannelsLoop.sh)
 
 install(
   FILES ${SCRIPTs}

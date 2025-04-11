@@ -107,6 +107,7 @@ execute_process(
   OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")

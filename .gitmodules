@@ -1,0 +1,3 @@
+[submodule "CatraLibraries/StringUtils"]
+	path = CatraLibraries/StringUtils
+	url = https://github.com/giulianoc/StringUtils.git

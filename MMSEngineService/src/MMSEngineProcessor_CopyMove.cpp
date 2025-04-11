@@ -1,7 +1,7 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/StringUtils.h"
+#include "StringUtils.h"
 
 void MMSEngineProcessor::localCopyContentThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,

@@ -14,18 +14,6 @@
 #include "JSONUtils.h"
 #include "catralibraries/ProcessUtility.h"
 #include <fstream>
-/*
-#include "FFMpegEncodingParameters.h"
-#include "FFMpegFilters.h"
-#include "MMSCURL.h"
-#include "catralibraries/StringUtils.h"
-#include "spdlog/fmt/bundled/format.h"
-#include "spdlog/spdlog.h"
-#include <filesystem>
-#include <regex>
-#include <sstream>
-#include <string>
-*/
 
 tuple<int64_t, long, json> FFMpeg::getMediaInfo(
 	int64_t ingestionJobKey,

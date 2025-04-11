@@ -73,6 +73,7 @@ execute_process(
   OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
@@ -118,6 +119,7 @@ target_link_libraries(mmsEngineService MMSUtility)
 target_link_libraries(mmsEngineService MMSEngine)
 target_link_libraries(mmsEngineService postgresHelper)
 target_link_libraries(mmsEngineService FFMpeg)
+target_link_libraries(mmsEngineService StringUtils)
 target_link_libraries(mmsEngineService mysqlcppconn)
 target_link_libraries(mmsEngineService pqxx)
 target_link_libraries(mmsEngineService pq)

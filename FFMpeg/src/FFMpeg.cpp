@@ -12,7 +12,7 @@
  */
 #include "FFMpeg.h"
 #include "JSONUtils.h"
-#include "catralibraries/StringUtils.h"
+#include "StringUtils.h"
 #include "spdlog/spdlog.h"
 
 FFMpeg::FFMpeg(json configuration)

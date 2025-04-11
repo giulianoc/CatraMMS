@@ -14,6 +14,7 @@
 #include "FFMpegEncodingParameters.h"
 #include "FFMpegFilters.h"
 #include "JSONUtils.h"
+#include "StringUtils.h"
 #include "catralibraries/ProcessUtility.h"
 #include "spdlog/spdlog.h"
 

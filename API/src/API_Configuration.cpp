@@ -14,8 +14,8 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "StringUtils.h"
 #include "Validator.h"
-#include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <format>
 #include <regex>

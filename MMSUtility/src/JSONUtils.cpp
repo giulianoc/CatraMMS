@@ -95,7 +95,16 @@ int JSONUtils::asInt(json root, string field, int defaultValue, bool notFoundAsE
 		if (field == "")
 		{
 			if (root.type() == json::value_t::string)
-				return strtol(asString(root, "", "0").c_str(), nullptr, 10);
+			{
+				try
+				{
+					return strtol(asString(root, "", "0").c_str(), nullptr, 10);
+				}
+				catch (exception &e)
+				{
+					return defaultValue;
+				}
+			}
 			else
 				return root.template get<int>();
 		}
@@ -104,7 +113,16 @@ int JSONUtils::asInt(json root, string field, int defaultValue, bool notFoundAsE
 			if (!JSONUtils::isMetadataPresent(root, field) || JSONUtils::isNull(root, field))
 				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
-				return strtol(asString(root, field, "0").c_str(), nullptr, 10);
+			{
+				try
+				{
+					return strtol(asString(root, field, "0").c_str(), nullptr, 10);
+				}
+				catch (exception &e)
+				{
+					return defaultValue;
+				}
+			}
 			else
 				return root.at(field);
 		}
@@ -136,7 +154,16 @@ int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue, bool n
 		if (field == "")
 		{
 			if (root.type() == json::value_t::string)
-				return strtoll(asString(root, "", "0").c_str(), nullptr, 10);
+			{
+				try
+				{
+					return strtoll(asString(root, "", "0").c_str(), nullptr, 10);
+				}
+				catch (exception &e)
+				{
+					return defaultValue;
+				}
+			}
 			else
 				return root.template get<int64_t>();
 		}
@@ -145,7 +172,16 @@ int64_t JSONUtils::asInt64(json root, string field, int64_t defaultValue, bool n
 			if (!JSONUtils::isMetadataPresent(root, field) || JSONUtils::isNull(root, field))
 				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
-				return strtoll(asString(root, field, "0").c_str(), nullptr, 10);
+			{
+				try
+				{
+					return strtoll(asString(root, field, "0").c_str(), nullptr, 10);
+				}
+				catch (exception &e)
+				{
+					return defaultValue;
+				}
+			}
 			else
 				return root.at(field);
 		}
@@ -177,7 +213,16 @@ double JSONUtils::asDouble(json root, string field, double defaultValue, bool no
 		if (field == "")
 		{
 			if (root.type() == json::value_t::string)
-				return stod(asString(root, "", "0"), nullptr);
+			{
+				try
+				{
+					return stod(asString(root, "", "0"), nullptr);
+				}
+				catch (exception &e)
+				{
+					return defaultValue;
+				}
+			}
 			else
 				return root.template get<double>();
 		}
@@ -186,7 +231,16 @@ double JSONUtils::asDouble(json root, string field, double defaultValue, bool no
 			if (!JSONUtils::isMetadataPresent(root, field) || JSONUtils::isNull(root, field))
 				return defaultValue;
 			if (root.at(field).type() == json::value_t::string)
-				return stod(asString(root, field, "0"), nullptr);
+			{
+				try
+				{
+					return stod(asString(root, field, "0"), nullptr);
+				}
+				catch (exception &e)
+				{
+					return defaultValue;
+				}
+			}
 			else
 				return root.at(field);
 		}

@@ -2,8 +2,8 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
+#include "StringUtils.h"
 #include "catralibraries/DateTime.h"
-#include "catralibraries/StringUtils.h"
 
 void MMSEngineProcessor::manageLiveRecorder(
 	int64_t ingestionJobKey, string ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace,

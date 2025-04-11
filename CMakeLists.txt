@@ -57,6 +57,8 @@ add_compile_options(-D_FILE_OFFSET_BITS=64)
 add_compile_options(-DMAGICKCORE_HDRI_ENABLE=0)
 add_compile_options(-DMAGICKCORE_QUANTUM_DEPTH=16)
 
+add_subdirectory(CatraLibraries/StringUtils/src)
+
 add_subdirectory(API/src)
 
 add_subdirectory(FastCGIAPI/src)

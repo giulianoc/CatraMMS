@@ -1,7 +1,7 @@
 
 #include "PostgresHelper.h"
+#include "StringUtils.h"
 #include "catralibraries/PostgresConnection.h"
-#include "catralibraries/StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <cstdint>
 #include <string>
