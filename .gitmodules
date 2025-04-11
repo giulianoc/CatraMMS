@@ -1,3 +1,6 @@
 [submodule "CatraLibraries/StringUtils"]
 	path = CatraLibraries/StringUtils
 	url = https://github.com/giulianoc/StringUtils.git
+[submodule "CatraLibraries/DBConnectionsPool"]
+	path = CatraLibraries/DBConnectionsPool
+	url = https://github.com/giulianoc/DBConnectionsPool.git
