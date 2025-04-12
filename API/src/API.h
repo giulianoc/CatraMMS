@@ -17,7 +17,7 @@
 #include "FastCGIAPI.h"
 #include "MMSDeliveryAuthorization.h"
 #include "MMSStorage.h"
-#include "catralibraries/PostgresConnection.h"
+#include "PostgresConnection.h"
 
 class API : public FastCGIAPI
 {

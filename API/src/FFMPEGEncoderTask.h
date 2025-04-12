@@ -7,7 +7,7 @@
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
 #include <string>
@@ -82,8 +82,8 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	);
 
 	string downloadMediaFromMMS(
-		int64_t ingestionJobKey, int64_t encodingJobKey, shared_ptr<FFMpeg> ffmpeg, string sourceFileExtension, string sourcePhysicalDeliveryURL,
-		string destAssetPathName
+		int64_t ingestionJobKey, int64_t encodingJobKey, shared_ptr<FFMpegWrapper> ffmpeg, string sourceFileExtension,
+		string sourcePhysicalDeliveryURL, string destAssetPathName
 	);
 
 	long getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset);

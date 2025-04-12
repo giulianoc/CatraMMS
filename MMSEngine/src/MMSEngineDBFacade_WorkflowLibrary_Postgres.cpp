@@ -1,7 +1,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/PostgresConnection.h"
 #include <random>
 
 int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(

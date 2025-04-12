@@ -16,7 +16,6 @@
 
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
-#include "catralibraries/PostgresConnection.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
 #include <fstream>

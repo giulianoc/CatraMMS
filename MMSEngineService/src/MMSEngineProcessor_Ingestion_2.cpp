@@ -1,6 +1,6 @@
 
 #include "CurlWrapper.h"
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
 #include "spdlog/fmt/bundled/format.h"
@@ -547,7 +547,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			if ((mediaSourceURL.size() >= youTubePrefix1.size() && 0 == mediaSourceURL.compare(0, youTubePrefix1.size(), youTubePrefix1)) ||
 				(mediaSourceURL.size() >= youTubePrefix2.size() && 0 == mediaSourceURL.compare(0, youTubePrefix2.size(), youTubePrefix2)))
 			{
-				FFMpeg ffmpeg(_configurationRoot);
+				FFMpegWrapper ffmpeg(_configurationRoot);
 				pair<string, string> streamingURLDetails =
 					ffmpeg.retrieveStreamingYouTubeURL(localAssetIngestionEvent.getIngestionJobKey(), mediaSourceURL);
 
@@ -1216,7 +1216,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	{
 		try
 		{
-			FFMpeg ffmpeg(_configurationRoot);
+			FFMpegWrapper ffmpeg(_configurationRoot);
 			// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 			// mediaInfo;
 
@@ -3087,7 +3087,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			try
 			{
-				FFMpeg ffmpeg(_configurationRoot);
+				FFMpegWrapper ffmpeg(_configurationRoot);
 				pair<string, string> streamingURLDetails = ffmpeg.retrieveStreamingYouTubeURL(ingestionJobKey, sourceReferenceURL);
 
 				string streamingYouTubeURL;
@@ -3171,7 +3171,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			);
 
 			// regenerateTimestamps (see docs/TASK_01_Add_Content_JSON_Format.txt)
-			FFMpeg ffmpeg(_configurationRoot);
+			FFMpegWrapper ffmpeg(_configurationRoot);
 			ffmpeg.streamingToFile(ingestionJobKey, regenerateTimestamps, sourceReferenceURL, destBinaryPathName);
 
 			bool downloadingCompleted = true;

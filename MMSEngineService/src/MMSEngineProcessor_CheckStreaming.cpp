@@ -1,5 +1,5 @@
 
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
@@ -109,7 +109,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			tuple<int64_t, long, json> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
-			FFMpeg ffmpeg(_configurationRoot);
+			FFMpegWrapper ffmpeg(_configurationRoot);
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey, isMMSAssetPathName, timeoutInSeconds, streamingUrl, videoTracks, audioTracks);
 			SPDLOG_INFO(
 				"Called ffmpeg.getMediaInfo"

@@ -12,12 +12,12 @@
  */
 
 #include "EncoderProxy.h"
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSDeliveryAuthorization.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <FFMpegWrapper.h>
 #include <cstdint>
 #include <exception>
 #include <regex>

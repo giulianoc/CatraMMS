@@ -108,7 +108,11 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
-include_directories("${PROJECT_SOURCE_DIR}/MMSUtility/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/JSONUtils/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/PostgresHelper/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/DBConnectionsPool/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/CurlWrapper/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/FFMpegWrapper/src")
 include_directories("${PROJECT_SOURCE_DIR}/FFMpeg/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
 include_directories("${PROJECT_SOURCE_DIR}/PostgresHelper/src")

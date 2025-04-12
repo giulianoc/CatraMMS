@@ -1,9 +1,10 @@
 
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <FFMpegWrapper.h>
 #include <cstdint>
 
 json MMSEngineDBFacade::addStream(
@@ -3047,7 +3048,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 	{
 		try
 		{
-			FFMpeg ffmpeg(_configuration);
+			FFMpegWrapper ffmpeg(_configuration);
 			pair<string, string> streamingLiveURLDetails = ffmpeg.retrieveStreamingYouTubeURL(ingestionJobKey, liveURL);
 
 			tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;

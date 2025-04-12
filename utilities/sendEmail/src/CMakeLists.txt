@@ -33,7 +33,8 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/MMSUtility/src")
+include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/CurlWrapper/src")
+include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/JSONUtils/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
@@ -61,9 +62,10 @@ endif()
 
 add_executable(sendEmail ${SOURCES} ${HEADERS})
 
+target_link_libraries (sendEmail CurlWrapper)
+target_link_libraries (sendEmail JSONUtils)
 target_link_libraries (sendEmail MMSEngine)
-target_link_libraries (sendEmail FFMpeg)
-target_link_libraries (sendEmail MMSUtility)
+target_link_libraries (sendEmail FFMpegWrapper)
 target_link_libraries (sendEmail curl)
 target_link_libraries (sendEmail mysqlcppconn)
 if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")

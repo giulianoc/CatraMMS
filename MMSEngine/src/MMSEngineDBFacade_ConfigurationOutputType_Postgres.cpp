@@ -1,8 +1,6 @@
 
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/PostgresConnection.h"
 #include "spdlog/spdlog.h"
 
 int64_t MMSEngineDBFacade::addAWSChannelConf(int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type)

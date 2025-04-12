@@ -12,11 +12,11 @@
  */
 
 #include "EncoderProxy.h"
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "MMSDeliveryAuthorization.h"
 #include "catralibraries/DateTime.h"
 #include "spdlog/spdlog.h"
+#include <FFMpegWrapper.h>
 
 bool EncoderProxy::liveRecorder()
 {

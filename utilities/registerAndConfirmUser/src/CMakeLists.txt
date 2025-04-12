@@ -71,7 +71,6 @@ add_executable(registerAndConfirmUser ${SOURCES} ${HEADERS})
 
 target_link_libraries (registerAndConfirmUser MMSEngine)
 target_link_libraries (registerAndConfirmUser FFMpeg)
-target_link_libraries (registerAndConfirmUser MMSUtility)
 target_link_libraries (registerAndConfirmUser curl)
 target_link_libraries (registerAndConfirmUser curlpp)
 target_link_libraries (registerAndConfirmUser mysqlcppconn)

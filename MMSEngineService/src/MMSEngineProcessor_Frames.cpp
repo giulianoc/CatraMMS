@@ -1,5 +1,5 @@
 
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
@@ -145,7 +145,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				string frameAssetPathName = workspaceIngestionRepository + "/" + frameFileName;
 
 				pid_t childPid;
-				FFMpeg ffmpeg(_configurationRoot);
+				FFMpegWrapper ffmpeg(_configurationRoot);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight,
 					&childPid

@@ -3,7 +3,6 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "catralibraries/Convert.h"
-#include "catralibraries/PostgresConnection.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <algorithm>

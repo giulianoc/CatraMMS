@@ -12,7 +12,6 @@
  */
 
 #include "ActiveEncodingsManager.h"
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "catralibraries/System.h"
 #include "spdlog/spdlog.h"

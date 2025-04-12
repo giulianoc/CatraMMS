@@ -1,5 +1,5 @@
 
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
 
@@ -140,7 +140,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
 						);
 
-						FFMpeg ffmpeg(_configurationRoot);
+						FFMpegWrapper ffmpeg(_configurationRoot);
 
 						ffmpeg.changeFileFormat(
 							ingestionJobKey, physicalPathKey, mmsSourceAssetPathName, videoTracks, audioTracks, stagingChangeFileFormatAssetPathName,
@@ -194,7 +194,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						);
 						int timeoutInSeconds = 20;
 						bool isMMSAssetPathName = true;
-						FFMpeg ffmpeg(_configurationRoot);
+						FFMpegWrapper ffmpeg(_configurationRoot);
 						mediaInfoDetails = ffmpeg.getMediaInfo(
 							ingestionJobKey, isMMSAssetPathName, timeoutInSeconds, stagingChangeFileFormatAssetPathName, videoTracks, audioTracks
 						);

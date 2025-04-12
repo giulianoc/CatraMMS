@@ -1,6 +1,7 @@
 
 #include "FFMPEGEncoderTask.h"
 #include "CurlWrapper.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "StringUtils.h"
 #include "catralibraries/Encrypt.h"
@@ -881,7 +882,7 @@ static int progressDownloadCallback2(void *clientp, curl_off_t dltotal, curl_off
 }
 
 string FFMPEGEncoderTask::downloadMediaFromMMS(
-	int64_t ingestionJobKey, int64_t encodingJobKey, shared_ptr<FFMpeg> ffmpeg, string sourceFileExtension, string sourcePhysicalDeliveryURL,
+	int64_t ingestionJobKey, int64_t encodingJobKey, shared_ptr<FFMpegWrapper> ffmpeg, string sourceFileExtension, string sourcePhysicalDeliveryURL,
 	string destAssetPathName
 )
 {

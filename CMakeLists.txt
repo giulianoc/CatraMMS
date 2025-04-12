@@ -58,13 +58,16 @@ add_compile_options(-DMAGICKCORE_HDRI_ENABLE=0)
 add_compile_options(-DMAGICKCORE_QUANTUM_DEPTH=16)
 
 add_subdirectory(CatraLibraries/StringUtils/src)
+add_subdirectory(CatraLibraries/JSONUtils/src)
+add_subdirectory(CatraLibraries/PostgresHelper/src)
+add_subdirectory(CatraLibraries/CurlWrapper/src)
+add_subdirectory(CatraLibraries/FastCGIAPI/src)
+add_subdirectory(CatraLibraries/ProcessUtility/src)
+add_subdirectory(CatraLibraries/FFMpegWrapper/src)
+add_subdirectory(CatraLibraries/StatisticTimer/src)
 
 add_subdirectory(API/src)
 
-add_subdirectory(FastCGIAPI/src)
-add_subdirectory(MMSUtility/src)
-add_subdirectory(PostgresHelper/src)
-add_subdirectory(FFMpeg/src)
 add_subdirectory(MMSEngine/src)
 add_subdirectory(MMSEngineService/src)
 

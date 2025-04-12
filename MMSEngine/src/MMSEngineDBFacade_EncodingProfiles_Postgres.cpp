@@ -1,7 +1,6 @@
 
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "catralibraries/PostgresConnection.h"
 #include "spdlog/spdlog.h"
 
 int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(

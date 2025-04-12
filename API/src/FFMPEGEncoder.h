@@ -15,7 +15,7 @@
 #define FFMPEGEncoder_h
 
 #include "FFMPEGEncoderTask.h"
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "FastCGIAPI.h"
 #include <deque>
 

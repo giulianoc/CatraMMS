@@ -12,9 +12,9 @@
  */
 
 #include "EncoderProxy.h"
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "LocalAssetIngestionEvent.h"
+#include <FFMpegWrapper.h>
 
 #include "opencv2/face.hpp"
 #include "opencv2/highgui.hpp"

@@ -4,3 +4,24 @@
 [submodule "CatraLibraries/DBConnectionsPool"]
 	path = CatraLibraries/DBConnectionsPool
 	url = https://github.com/giulianoc/DBConnectionsPool.git
+[submodule "CatraLibraries/PostgresHelper"]
+	path = CatraLibraries/PostgresHelper
+	url = https://github.com/giulianoc/PostgresHelper.git
+[submodule "CatraLibraries/JSONUtils"]
+	path = CatraLibraries/JSONUtils
+	url = https://github.com/giulianoc/JSONUtils.git
+[submodule "CatraLibraries/CurlWrapper"]
+	path = CatraLibraries/CurlWrapper
+	url = https://github.com/giulianoc/CurlWrapper.git
+[submodule "CatraLibraries/FastCGIAPI"]
+	path = CatraLibraries/FastCGIAPI
+	url = https://github.com/giulianoc/FastCGIAPI.git
+[submodule "CatraLibraries/FFMpegWrapper"]
+	path = CatraLibraries/FFMpegWrapper
+	url = https://github.com/giulianoc/FFMpegWrapper.git
+[submodule "CatraLibraries/ProcessUtility"]
+	path = CatraLibraries/ProcessUtility
+	url = https://github.com/giulianoc/ProcessUtility.git
+[submodule "CatraLibraries/StatisticTimer"]
+	path = CatraLibraries/StatisticTimer
+	url = https://github.com/giulianoc/StatisticTimer.git

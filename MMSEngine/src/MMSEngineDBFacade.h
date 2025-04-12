@@ -25,9 +25,9 @@
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 #define DBCONNECTIONPOOL_LOG
+#include "MySQLConnection.h"
+#include "PostgresConnection.h"
 #include "PostgresHelper.h"
-#include "catralibraries/MySQLConnection.h"
-#include "catralibraries/PostgresConnection.h"
 
 namespace fs = std::filesystem;
 

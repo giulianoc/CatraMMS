@@ -1,5 +1,5 @@
 
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
 
@@ -127,7 +127,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 						extractTrackMediaPathName = workspaceIngestionRepository + "/" + localSourceFileName;
 					}
 
-					FFMpeg ffmpeg(_configurationRoot);
+					FFMpegWrapper ffmpeg(_configurationRoot);
 
 					ffmpeg.extractTrackMediaToIngest(ingestionJobKey, mmsAssetPathName, tracksToBeExtracted, extractTrackMediaPathName);
 

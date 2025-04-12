@@ -1,5 +1,5 @@
 
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
@@ -349,7 +349,7 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		else
 		{
-			FFMpeg ffmpeg(_configurationRoot);
+			FFMpegWrapper ffmpeg(_configurationRoot);
 			ffmpeg.concat(
 				ingestionJobKey, concatContentType == MMSEngineDBFacade::ContentType::Video ? true : false, sourcePhysicalPaths,
 				concatenatedMediaPathName
@@ -395,7 +395,7 @@ void MMSEngineProcessor::manageConcatThread(
 			);
 			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = true;
-			FFMpeg ffmpeg(_configurationRoot);
+			FFMpegWrapper ffmpeg(_configurationRoot);
 			mediaInfoDetails =
 				ffmpeg.getMediaInfo(ingestionJobKey, isMMSAssetPathName, timeoutInSeconds, concatenatedMediaPathName, videoTracks, audioTracks);
 
@@ -831,8 +831,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					endTime = newEndTime;
 				}
 			}
-			double startTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime).first;
-			double endTimeInSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime).first;
+			double startTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).first;
+			double endTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).first;
 
 			field = "timesRelativeToMetaDataField";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -905,15 +905,15 @@ void MMSEngineProcessor::manageCutMediaThread(
 					timeCode = newTimeCode;
 				}
 
-				long startTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, startTime).second;
-				long endTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, endTime).second;
-				long relativeTimeInCentsOfSeconds = FFMpeg::timeToSeconds(ingestionJobKey, timeCode).second;
+				long startTimeInCentsOfSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).second;
+				long endTimeInCentsOfSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).second;
+				long relativeTimeInCentsOfSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, timeCode).second;
 
 				long newStartTimeInCentsOfSeconds = startTimeInCentsOfSeconds - relativeTimeInCentsOfSeconds;
-				string newStartTime = FFMpeg::centsOfSecondsToTime(ingestionJobKey, newStartTimeInCentsOfSeconds);
+				string newStartTime = FFMpegWrapper::centsOfSecondsToTime(ingestionJobKey, newStartTimeInCentsOfSeconds);
 
 				long newEndTimeInCentsOfSeconds = endTimeInCentsOfSeconds - relativeTimeInCentsOfSeconds;
-				string newEndTime = FFMpeg::centsOfSecondsToTime(ingestionJobKey, newEndTimeInCentsOfSeconds);
+				string newEndTime = FFMpegWrapper::centsOfSecondsToTime(ingestionJobKey, newEndTimeInCentsOfSeconds);
 
 				SPDLOG_INFO(
 					"correction because of timesRelativeToMetaDataField"
@@ -1078,9 +1078,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
 						{
 							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-							newUtcStartTimeInMilliSecs += ((int64_t)(FFMpeg::timeToSeconds(ingestionJobKey, startTime).second * 10));
+							newUtcStartTimeInMilliSecs += ((int64_t)(FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).second * 10));
 							newUtcEndTimeInMilliSecs =
-								utcStartTimeInMilliSecs + ((int64_t)(FFMpeg::timeToSeconds(ingestionJobKey, endTime).second * 10));
+								utcStartTimeInMilliSecs + ((int64_t)(FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).second * 10));
 						}
 					}
 				}
@@ -1191,7 +1191,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
 			string cutMediaPathName = workspaceIngestionRepository + "/" + localSourceFileName;
 
-			FFMpeg ffmpeg(_configurationRoot);
+			FFMpegWrapper ffmpeg(_configurationRoot);
 			ffmpeg.cutWithoutEncoding(
 				ingestionJobKey, sourceAssetPathName, referenceContentType == MMSEngineDBFacade::ContentType::Video ? true : false, cutType,
 				"", // startKeyFramesSeekingInterval,
@@ -1214,7 +1214,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 				cutOfAudioMediaItemKey = sourceMediaItemKey;
 			string mediaMetaDataContent = generateMediaMetadataToIngest(
 				ingestionJobKey, fileFormat, title, imageOfVideoMediaItemKey, cutOfVideoMediaItemKey, cutOfAudioMediaItemKey,
-				FFMpeg::timeToSeconds(ingestionJobKey, startTime).first, FFMpeg::timeToSeconds(ingestionJobKey, endTime).first, parametersRoot
+				FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).first, FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).first,
+				parametersRoot
 			);
 
 			{

@@ -13,10 +13,10 @@
 
 #include "CurlWrapper.h"
 #include "EncoderProxy.h"
-#include "FFMpeg.h"
 #include "JSONUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <FFMpegWrapper.h>
 
 void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
@@ -454,7 +454,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, fileFormatLowerCase, encodedNFSStagingAssetPathName
 		);
 		bool isMMSAssetPathName = true;
-		FFMpeg ffmpeg(_configuration);
+		FFMpegWrapper ffmpeg(_configuration);
 		if (fileFormatLowerCase == "hls" || fileFormatLowerCase == "dash")
 		{
 			mediaInfoDetails = ffmpeg.getMediaInfo(

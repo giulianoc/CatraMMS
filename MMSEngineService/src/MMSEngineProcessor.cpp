@@ -6,7 +6,7 @@
 #include "ContentRetentionTimes.h"
 #include "CurlWrapper.h"
 #include "DBDataRetentionTimes.h"
-#include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "GEOInfoTimes.h"
 #include "JSONUtils.h"
 #include "StatisticTimer.h"
