@@ -7,8 +7,9 @@
 
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "ProcessUtility.h"
 #include "catralibraries/Scheduler2.h"
-#include "catralibraries/Service.h"
+// #include "catralibraries/Service.h"
 #include "catralibraries/System.h"
 
 #include "ActiveEncodingsManager.h"
@@ -234,7 +235,7 @@ int main(int iArgc, char *pArgv[])
 	}
 
 	if (!noDaemon)
-		Service::launchUnixDaemon(pidFilePathName);
+		ProcessUtility::launchUnixDaemon(pidFilePathName);
 
 	Magick::InitializeMagick(*pArgv);
 

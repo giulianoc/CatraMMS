@@ -28,13 +28,13 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/PostgresHelper/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/ProcessUtility/src")
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/DBConnectionsPool/src")
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/JSONUtils/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
-include_directories("${PROJECT_SOURCE_DIR}/PostgresHelper/src")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/nlohmann/include")
 if(APPLE)
   include_directories(
@@ -67,6 +67,7 @@ add_executable(awsSigner ${SOURCES} ${HEADERS})
 
 target_link_libraries(awsSigner MMSEngine)
 target_link_libraries(awsSigner PostgresHelper)
+target_link_libraries(awsSigner ProcessUtility)
 target_link_libraries(awsSigner JSONUtils)
 target_link_libraries(awsSigner CurlWrapper)
 target_link_libraries(awsSigner FFMpegWrapper)
