@@ -53,7 +53,8 @@ set(SCRIPTs
     startRecorder.sh
     switchTranscoderInternalExternal.sh
     backupStorageLoop.sh
-    cibortvStartChannelsLoop.sh)
+    cibortvStartChannelsManualLoop.sh
+    cibortvStartChannelsAutoLoop.sh)
 
 install(
   FILES ${SCRIPTs}
