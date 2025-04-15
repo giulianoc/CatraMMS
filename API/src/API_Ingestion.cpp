@@ -5735,11 +5735,12 @@ void API::changeLiveProxyPlaylist(
 				);
 			}
 			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi
-			// precedenti a 'now - 2 days' (just a retention)
+			// precedenti a 'now - X days' (just a retention)
+			int32_t playlistItemsRetentionInDays = 8;
 			{
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				chrono::duration<int, ratio<60 * 60 * 24>> two_day(2);
-				chrono::system_clock::time_point retention = now - two_day;
+				chrono::duration<int, ratio<60 * 60 * 24>> retention_day(playlistItemsRetentionInDays);
+				chrono::system_clock::time_point retention = now - retention_day;
 
 				time_t utcRetention = chrono::system_clock::to_time_t(retention);
 
