@@ -728,45 +728,25 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string startTime;
 		string endTime = "0.0";
 		{
-			string field = "startTime";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			startTime = JSONUtils::asString(parametersRoot, "startTime", "");
+
+			if (!JSONUtils::isMetadataPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
+				// endTime in case of Audio is mandatory because we cannot use the other option (FramesNumber)
+
 				string errorMessage = std::format(
-					"Field is not present or it is null"
+					"Field is not present or it is null, endTimeInSeconds "
+					"in case of Audio is mandatory because we cannot use "
+					"the other option (FramesNumber)"
 					", _processorIdentifier: {}"
-					", ingestionJobKey: {}"
-					", Field: {}",
-					_processorIdentifier, ingestionJobKey, field
+					", ingestionJobKey: {}",
+					_processorIdentifier, ingestionJobKey
 				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			startTime = JSONUtils::asString(parametersRoot, field, "");
-
-			field = "endTime";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Audio)
-				{
-					// endTime in case of Audio is mandatory
-					// because we cannot use the other option (FramesNumber)
-
-					string errorMessage = std::format(
-						"Field is not present or it is null, endTimeInSeconds "
-						"in case of Audio is mandatory because we cannot use "
-						"the other option (FramesNumber)"
-						", _processorIdentifier: {}"
-						", ingestionJobKey: {}"
-						", Field: {}",
-						_processorIdentifier, ingestionJobKey, field
-					);
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-			}
-			endTime = JSONUtils::asString(parametersRoot, field, "");
+			endTime = JSONUtils::asString(parametersRoot, "endTime", "");
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 				framesNumber = JSONUtils::asInt(parametersRoot, "framesNumber", -1);
@@ -827,11 +807,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 			double endTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).first;
 
 			string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, "timesRelativeToMetaDataField", "");
+			string timeCode;
 			if (timesRelativeToMetaDataField != "")
 			{
 				json metaDataRoot = _mmsEngineDBFacade->physicalPath_columnAsJson("metadata", sourcePhysicalPathKey);
 
-				string timeCode = JSONUtils::asString(metaDataRoot, timesRelativeToMetaDataField, "");
+				timeCode = JSONUtils::asString(metaDataRoot, timesRelativeToMetaDataField, "");
 				if (timeCode == "")
 				{
 					string errorMessage = std::format(
@@ -995,14 +976,19 @@ void MMSEngineProcessor::manageCutMediaThread(
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
 					", video sourceMediaItemKey: {}"
+					", initial startTime: {}"
 					", startTime: {}"
 					", startTimeInSeconds: {}"
+					", initial endTime: {}"
 					", endTime: {}"
 					", endTimeInSeconds: {}"
-					", sourceDurationInMilliSecs: {}"
-					"endTimeChangedToDurationBecauseTooBig: {}",
-					_processorIdentifier, ingestionJobKey, sourceMediaItemKey, startTime, startTimeInSeconds, endTime, endTimeInSeconds,
-					sourceDurationInMilliSecs, endTimeChangedToDurationBecauseTooBig
+					", timeCode: {}"
+					", sourceDurationInMilliSecs: {} ({})"
+					", endTimeChangedToDurationBecauseTooBig: {}",
+					_processorIdentifier, ingestionJobKey, sourceMediaItemKey, JSONUtils::asString(parametersRoot, "startTime", ""), startTime,
+					startTimeInSeconds, JSONUtils::asString(parametersRoot, "endTime", ""), endTime, endTimeInSeconds, timeCode,
+					sourceDurationInMilliSecs, FFMpegWrapper::secondsToTime(ingestionJobKey, sourceDurationInMilliSecs),
+					endTimeChangedToDurationBecauseTooBig
 				);
 				SPDLOG_ERROR(errorMessage);
 
