@@ -17,14 +17,22 @@ void MMSEngineProcessor::manageConcatThread(
 	try
 	{
 		SPDLOG_INFO(
-			string() + "manageConcatThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+			"manageConcatThread"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _processorsThreadsNumber.use_count(): {}",
+			_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 		);
 
 		if (dependencies.size() < 1)
 		{
-			string errorMessage = string() + "No enough media to be concatenated" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format(
+				"No enough media to be concatenated"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}",
+				_processorIdentifier, ingestionJobKey, dependencies.size()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -596,55 +604,43 @@ void MMSEngineProcessor::manageCutMediaThread(
 	try
 	{
 		SPDLOG_INFO(
-			string() + "manageCutMediaThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+			"manageCutMediaThread"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _processorsThreadsNumber.use_count(): {}",
+			_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 		);
 
 		if (dependencies.size() != 1)
 		{
-			string errorMessage = string() + "Wrong number of media to be cut" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format(
+				"Wrong number of media to be cut"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}",
+				_processorIdentifier, ingestionJobKey, dependencies.size()
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		int64_t sourceMediaItemKey;
-		int64_t sourcePhysicalPathKey;
-		MMSEngineDBFacade::ContentType referenceContentType;
-		string sourceAssetPathName;
-		string sourceRelativePath;
-		string sourceFileName;
-		string sourceFileExtension;
-		int64_t sourceDurationInMilliSecs;
-		string sourcePhysicalDeliveryURL;
-		string sourceTranscoderStagingAssetPathName;
-		bool stopIfReferenceProcessingError;
-		tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string, string, int64_t, string, string, bool> dependencyInfo =
-			processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
-		tie(sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType, sourceAssetPathName, sourceRelativePath, sourceFileName,
-			sourceFileExtension, sourceDurationInMilliSecs, sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
-			stopIfReferenceProcessingError) = dependencyInfo;
+		auto
+			[sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType, sourceAssetPathName, sourceRelativePath, sourceFileName,
+			 sourceFileExtension, sourceDurationInMilliSecs, sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
+			 stopIfReferenceProcessingError] = processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
 
-		string userData;
-		{
-			bool warningIfMissing = false;
-
-			tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t> mediaItemDetails =
-				_mmsEngineDBFacade->getMediaItemKeyDetails(
-					workspace->_workspaceKey, sourceMediaItemKey, warningIfMissing,
-					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
-					true
-				);
-
-			tie(ignore, ignore, userData, ignore, ignore, ignore) = mediaItemDetails;
-		}
+		json sourceUserDataRoot = _mmsEngineDBFacade->mediaItem_columnAsJson("userdata", sourceMediaItemKey);
 
 		if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 		{
-			string errorMessage = string() + "It is not possible to cut a media that is not video or audio" +
-								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", contentType: " + MMSEngineDBFacade::toString(referenceContentType);
+			string errorMessage = std::format(
+				"It is not possible to cut a media that is not video or audio"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", contentType: {}",
+				_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(referenceContentType)
+			);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -653,70 +649,66 @@ void MMSEngineProcessor::manageCutMediaThread(
 		// abbiamo bisogno del source frame rate in un paio di casi sotto
 		string forcedAvgFrameRate;
 		int framesPerSecond = -1;
+		if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
 		{
 			try
 			{
-				if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
+				vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
+				vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
+
+				_mmsEngineDBFacade->getVideoDetails(
+					sourceMediaItemKey, sourcePhysicalPathKey,
+					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+					true, videoTracks, audioTracks
+				);
+				if (videoTracks.size() == 0)
 				{
-					vector<tuple<int64_t, int, int64_t, int, int, string, string, long, string>> videoTracks;
-					vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
-
-					_mmsEngineDBFacade->getVideoDetails(
-						sourceMediaItemKey, sourcePhysicalPathKey,
-						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
-						true, videoTracks, audioTracks
+					string errorMessage = std::format(
+						"No video track are present"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}",
+						_processorIdentifier, ingestionJobKey
 					);
-					if (videoTracks.size() == 0)
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
+
+				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
+
+				if (forcedAvgFrameRate != "")
+				{
+					// es: 25/1
+					size_t index = forcedAvgFrameRate.find("/");
+					if (index == string::npos)
+						framesPerSecond = stoi(forcedAvgFrameRate);
+					else
 					{
-						string errorMessage = string() + "No video track are present" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey);
-
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					tuple<int64_t, int, int64_t, int, int, string, string, long, string> videoTrack = videoTracks[0];
-
-					tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
-
-					if (forcedAvgFrameRate != "")
-					{
-						// es: 25/1
-						size_t index = forcedAvgFrameRate.find("/");
-						if (index == string::npos)
-							framesPerSecond = stoi(forcedAvgFrameRate);
-						else
-						{
-							int frames = stoi(forcedAvgFrameRate.substr(0, index));
-							int seconds = stoi(forcedAvgFrameRate.substr(index + 1));
-							if (seconds != 0) // I saw: 0/0
-								framesPerSecond = frames / seconds;
-							SPDLOG_INFO(
-								"forcedAvgFrameRate: {}"
-								"frames: {}"
-								"seconds: {}"
-								"framesPerSecond: {}",
-								forcedAvgFrameRate, frames, seconds, framesPerSecond
-							);
-						}
+						int frames = stoi(forcedAvgFrameRate.substr(0, index));
+						int seconds = stoi(forcedAvgFrameRate.substr(index + 1));
+						if (seconds != 0) // I saw: 0/0
+							framesPerSecond = frames / seconds;
+						SPDLOG_INFO(
+							"forcedAvgFrameRate: {}"
+							", frames: {}"
+							", seconds: {}"
+							", framesPerSecond: {}",
+							forcedAvgFrameRate, frames, seconds, framesPerSecond
+						);
 					}
 				}
 			}
-			catch (runtime_error &e)
-			{
-				string errorMessage = string() + "_mmsEngineDBFacade->getVideoDetails failed" +
-									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
 			catch (exception &e)
 			{
-				string errorMessage = string() + "_mmsEngineDBFacade->getVideoDetails failed" +
-									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what();
+				string errorMessage = std::format(
+					"_mmsEngineDBFacade->getVideoDetails failed"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", e.what(): {}",
+					_processorIdentifier, ingestionJobKey, e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -724,8 +716,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 
 		SPDLOG_INFO(
-			string() + "manageCutMediaThread frame rate" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", forcedAvgFrameRate" + forcedAvgFrameRate
+			"manageCutMediaThread frame rate"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", forcedAvgFrameRate: {}",
+			_processorIdentifier, ingestionJobKey, forcedAvgFrameRate
 		);
 
 		// check start time / end time
@@ -736,8 +731,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 			string field = "startTime";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", Field: {}",
+					_processorIdentifier, ingestionJobKey, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -752,12 +752,15 @@ void MMSEngineProcessor::manageCutMediaThread(
 					// endTime in case of Audio is mandatory
 					// because we cannot use the other option (FramesNumber)
 
-					string errorMessage = string() +
-										  "Field is not present or it is null, endTimeInSeconds "
-										  "in case of Audio is mandatory because we cannot use "
-										  "the other option (FramesNumber)" +
-										  ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
+					string errorMessage = std::format(
+						"Field is not present or it is null, endTimeInSeconds "
+						"in case of Audio is mandatory because we cannot use "
+						"the other option (FramesNumber)"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", Field: {}",
+						_processorIdentifier, ingestionJobKey, field
+					);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -766,27 +769,17 @@ void MMSEngineProcessor::manageCutMediaThread(
 			endTime = JSONUtils::asString(parametersRoot, field, "");
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
-			{
-				field = "framesNumber";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
-					framesNumber = JSONUtils::asInt(parametersRoot, field, 0);
-			}
+				framesNumber = JSONUtils::asInt(parametersRoot, "framesNumber", -1);
 
-			// 2021-02-05: default is set to true because often we have the
-			// error
+			// 2021-02-05: default is set to true because often we have the error
 			//	endTimeInSeconds is bigger of few milliseconds of the duration
-			// of the media 	For this reason this field is set to true by
-			// default
-			bool fixEndTimeIfOvercomeDuration = true;
-			field = "FixEndTimeIfOvercomeDuration";
-			fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, field, true);
+			// of the media 	For this reason this field is set to true by default
+			bool fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, "fixEndTimeIfOvercomeDuration", true);
 
 			// startTime/endTime potrebbero avere anche il formato HH:MM:SS:FF.
-			// Questo formato è stato utile per il cut di file mxf ma non è
-			// supportato da ffmpeg (il formato supportati da ffmpeg sono quelli
-			// gestiti da FFMpeg::timeToSeconds) Per cui qui riconduciamo il
-			// formato HH:MM:SS:FF a quello gestito da ffmpeg HH:MM:SS.<decimi
-			// di secondo>.
+			// Questo formato è stato utile per il cut di file mxf ma non è supportato da ffmpeg (il formato supportati da ffmpeg sono quelli
+			// gestiti da FFMpeg::timeToSeconds) Per cui qui riconduciamo il formato HH:MM:SS:FF a quello gestito da ffmpeg HH:MM:SS.<decimi di
+			// secondo>.
 			{
 				if (count_if(startTime.begin(), startTime.end(), [](char c) { return c == ':'; }) == 3)
 				{
@@ -798,7 +791,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					// ffmpeg sarà 16, 	cioè: (4/25)*100
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
-					string newStartTime = startTime.substr(0, framesIndex) + "." + to_string(decimals);
+					string newStartTime = std::format("{}.{}", startTime.substr(0, framesIndex), decimals);
 					SPDLOG_INFO(
 						"conversion from HH:MM:SS:FF to ffmeg format"
 						", _processorIdentifier: {}"
@@ -814,12 +807,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 					int framesIndex = endTime.find_last_of(":");
 					double frames = stoi(endTime.substr(framesIndex + 1));
 
-					// se ad esempio sono 4 frames su 25 frames al secondo
-					//	la parte decimale del secondo richiesta dal formato
-					// ffmpeg sarà 16, 	cioè: (4/25)*100
+					// se ad esempio sono 4 frames su 25 frames al secondo la parte decimale del secondo richiesta dal formato ffmpeg sarà 16, 	cioè:
+					// (4/25)*100
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
-					string newEndTime = endTime.substr(0, framesIndex) + "." + to_string(decimals);
+					string newEndTime = std::format("{}.{}", endTime.substr(0, framesIndex), decimals);
 					SPDLOG_INFO(
 						"conversion from HH:MM:SS:FF to ffmeg format"
 						", _processorIdentifier: {}"
@@ -834,50 +826,21 @@ void MMSEngineProcessor::manageCutMediaThread(
 			double startTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).first;
 			double endTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).first;
 
-			field = "timesRelativeToMetaDataField";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, "timesRelativeToMetaDataField", "");
+			if (timesRelativeToMetaDataField != "")
 			{
-				string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, field, "");
-
-				string metaData;
-				{
-					bool warningIfMissing = false;
-
-					metaData = _mmsEngineDBFacade->getPhysicalPathDetails(
-						sourcePhysicalPathKey, warningIfMissing,
-						// 2022-12-18: MIK potrebbe essere stato appena aggiunto
-						true
-					);
-				}
-
-				if (metaData == "")
-				{
-					string errorMessage = std::format(
-						"timesRelativeToMetaDataField cannot be applied "
-						"because source media does not have metaData"
-						", ingestionJobKey: {}"
-						", sourcePhysicalPathKey: {}",
-						ingestionJobKey, sourcePhysicalPathKey
-					);
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-
-				json metaDataRoot = JSONUtils::toJson(metaData);
+				json metaDataRoot = _mmsEngineDBFacade->physicalPath_columnAsJson("metadata", sourcePhysicalPathKey);
 
 				string timeCode = JSONUtils::asString(metaDataRoot, timesRelativeToMetaDataField, "");
 				if (timeCode == "")
 				{
 					string errorMessage = std::format(
-						"timesRelativeToMetaDataField cannot be applied "
-						"because source media has metaData but does not have "
-						"the timecode"
+						"timesRelativeToMetaDataField cannot be applied because source media has metaData but does not have the timecode"
 						", ingestionJobKey: {}"
 						", sourcePhysicalPathKey: {}"
 						", metaData: {}"
 						", timesRelativeToMetaDataField: {}",
-						ingestionJobKey, sourcePhysicalPathKey, metaData, timesRelativeToMetaDataField
+						ingestionJobKey, sourcePhysicalPathKey, JSONUtils::toString(metaDataRoot), timesRelativeToMetaDataField
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -888,12 +851,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 					int framesIndex = timeCode.find_last_of(":");
 					double frames = stoi(timeCode.substr(framesIndex + 1));
 
-					// se ad esempio sono 4 frames su 25 frames al secondo
-					//	la parte decimale del secondo richiesta dal formato
-					// ffmpeg sarà 16, 	cioè: (4/25)*100
+					// se ad esempio sono 4 frames su 25 frames al secondo la parte decimale del secondo richiesta dal formato ffmpeg sarà 16, 	cioè:
+					// (4/25)*100
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
-					string newTimeCode = timeCode.substr(0, framesIndex) + "." + to_string(decimals);
+					string newTimeCode = std::format("{}.{}", timeCode.substr(0, framesIndex), decimals);
 					SPDLOG_INFO(
 						"conversion from HH:MM:SS:FF to ffmeg format"
 						", _processorIdentifier: {}"
@@ -940,21 +902,24 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 			if (framesNumber == -1)
 			{
-				// il prossimo controllo possiamo farlo solo nel caso la stringa
-				// non sia nel formato HH:MM:SS
+				// il prossimo controllo possiamo farlo solo nel caso la stringa non sia nel formato HH:MM:SS
 				if (endTimeInSeconds < 0)
 				{
-					// if negative, it has to be subtract by the
-					// durationInMilliSeconds
+					// if negative, it has to be subtract by the durationInMilliSeconds
 					double newEndTimeInSeconds = (sourceDurationInMilliSecs - (endTimeInSeconds * -1000)) / 1000;
 
 					endTime = to_string(newEndTimeInSeconds);
 
 					SPDLOG_ERROR(
-						string() + "endTime was changed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
-						", startTime: " + startTime + ", endTime: " + endTime + ", newEndTimeInSeconds: " + to_string(newEndTimeInSeconds) +
-						", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs)
+						"endTime was changed"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", video sourceMediaItemKey: {}"
+						", startTime: {}"
+						", endTime: {}"
+						", newEndTimeInSeconds: {}"
+						", sourceDurationInMilliSecs: {}",
+						_processorIdentifier, ingestionJobKey, sourceMediaItemKey, startTime, endTime, newEndTimeInSeconds, sourceDurationInMilliSecs
 					);
 				}
 			}
@@ -964,124 +929,107 @@ void MMSEngineProcessor::manageCutMediaThread(
 				startTime = "0.0";
 
 				SPDLOG_INFO(
-					string() + "startTime was changed to 0.0 because it is negative" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", fixEndTimeIfOvercomeDuration: " +
-					to_string(fixEndTimeIfOvercomeDuration) + ", video sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
-					", previousStartTimeInSeconds: " + to_string(startTimeInSeconds) + ", new startTime: " + startTime +
-					", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
+					"startTime was changed to 0.0 because it is negative"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", fixEndTimeIfOvercomeDuration: {}"
+					", video sourceMediaItemKey: {}"
+					", previousStartTimeInSeconds: {}"
+					", new startTime: {}"
+					", sourceDurationInMilliSecs (input media): {}",
+					_processorIdentifier, ingestionJobKey, fixEndTimeIfOvercomeDuration, sourceMediaItemKey, startTimeInSeconds, startTime,
+					sourceDurationInMilliSecs
 				);
 
 				startTimeInSeconds = 0.0;
 			}
 
-			if (startTimeInSeconds > endTimeInSeconds)
-			{
-				string errorMessage =
-					string() +
-					"Cut was not done because startTimeInSeconds is bigger "
-					"than endTimeInSeconds" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", video sourceMediaItemKey: " + to_string(sourceMediaItemKey) + ", startTimeInSeconds: " + to_string(startTimeInSeconds) +
-					", endTimeInSeconds: " + to_string(endTimeInSeconds) + ", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
+			bool endTimeChangedToDurationBecauseTooBig = false;
 			if (framesNumber == -1)
 			{
 				if (sourceDurationInMilliSecs < endTimeInSeconds * 1000)
 				{
 					if (fixEndTimeIfOvercomeDuration)
 					{
-						endTime = to_string(sourceDurationInMilliSecs / 1000);
+						endTime = std::format("{}", sourceDurationInMilliSecs / 1000);
+						endTimeInSeconds = sourceDurationInMilliSecs / 1000;
+
+						endTimeChangedToDurationBecauseTooBig = true;
 
 						SPDLOG_INFO(
-							string() +
-							"endTimeInSeconds was changed to "
-							"durationInMilliSeconds" +
-							", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							", fixEndTimeIfOvercomeDuration: " + to_string(fixEndTimeIfOvercomeDuration) +
-							", video sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
-							", previousEndTimeInSeconds: " + to_string(endTimeInSeconds) + ", new endTimeInSeconds: " + endTime +
-							", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs)
+							"endTimeInSeconds was changed to durationInMilliSeconds"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", fixEndTimeIfOvercomeDuration: {}"
+							", video sourceMediaItemKey: {}"
+							", previousEndTimeInSeconds: {}"
+							", new endTimeInSeconds: {}"
+							", sourceDurationInMilliSecs (input media): {}",
+							_processorIdentifier, ingestionJobKey, fixEndTimeIfOvercomeDuration, sourceMediaItemKey, endTimeInSeconds, endTime,
+							sourceDurationInMilliSecs
 						);
 					}
 					else
 					{
-						string errorMessage =
-							string() +
-							"Cut was not done because endTimeInSeconds is "
-							"bigger than durationInMilliSeconds (input media)" +
-							", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-							", video sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
-							", startTimeInSeconds: " + to_string(startTimeInSeconds) + ", endTimeInSeconds: " + to_string(endTimeInSeconds) +
-							", sourceDurationInMilliSecs (input media): " + to_string(sourceDurationInMilliSecs);
+						string errorMessage = std::format(
+							"Cut was not done because endTimeInSeconds is bigger than durationInMilliSeconds (input media)"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", video sourceMediaItemKey: {}"
+							", startTimeInSeconds: {}"
+							", endTimeInSeconds: {}"
+							", sourceDurationInMilliSecs (input media): {}",
+							_processorIdentifier, ingestionJobKey, sourceMediaItemKey, startTimeInSeconds, endTimeInSeconds, sourceDurationInMilliSecs
+						);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
 			}
+
+			if (startTimeInSeconds > endTimeInSeconds)
+			{
+				string errorMessage = std::format(
+					"Cut was not done because startTimeInSeconds is bigger than endTimeInSeconds"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", video sourceMediaItemKey: {}"
+					", startTime: {}"
+					", startTimeInSeconds: {}"
+					", endTime: {}"
+					", endTimeInSeconds: {}"
+					", sourceDurationInMilliSecs: {}"
+					"endTimeChangedToDurationBecauseTooBig: {}",
+					_processorIdentifier, ingestionJobKey, sourceMediaItemKey, startTime, startTimeInSeconds, endTime, endTimeInSeconds,
+					sourceDurationInMilliSecs, endTimeChangedToDurationBecauseTooBig
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		int64_t newUtcStartTimeInMilliSecs = -1;
 		int64_t newUtcEndTimeInMilliSecs = -1;
 		{
-			// In case the media has TimeCode, we will report them in the new
-			// content
-			if (framesNumber == -1 && userData != "")
+			// In case the media has TimeCode, we will report them in the new content
+			if (framesNumber == -1 && JSONUtils::isMetadataPresent(sourceUserDataRoot, "mmsData"))
 			{
-				// try to retrieve time codes
-				json sourceUserDataRoot = JSONUtils::toJson(userData);
+				json sourceMmsDataRoot = sourceUserDataRoot["mmsData"];
 
-				int64_t utcStartTimeInMilliSecs = -1;
-				int64_t utcEndTimeInMilliSecs = -1;
+				int64_t utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, "utcStartTimeInMilliSecs", -1);
 
-				string field = "mmsData";
-				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
+				if (utcStartTimeInMilliSecs != -1)
 				{
-					json sourceMmsDataRoot = sourceUserDataRoot[field];
+					int64_t utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, "utcEndTimeInMilliSecs", -1);
 
-					string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
-					// string utcChunkStartTimeField = "utcChunkStartTime";
-					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
-						utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
-					/*
-					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot,
-					utcChunkStartTimeField))
+					if (utcEndTimeInMilliSecs != -1)
 					{
-						utcStartTimeInMilliSecs =
-					JSONUtils::asInt64(sourceMmsDataRoot,
-					utcChunkStartTimeField, 0); utcStartTimeInMilliSecs *= 1000;
-					}
-					*/
-
-					if (utcStartTimeInMilliSecs != -1)
-					{
-						string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
-						// string utcChunkEndTimeField = "utcChunkEndTime";
-						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
-							utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
-						/*
-						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot,
-						utcChunkEndTimeField))
-						{
-							utcEndTimeInMilliSecs =
-						JSONUtils::asInt64(sourceMmsDataRoot,
-						utcChunkEndTimeField, 0); utcEndTimeInMilliSecs *= 1000;
-						}
-						*/
-
-						// utcStartTimeInMilliSecs and utcEndTimeInMilliSecs
-						// will be set in parametersRoot
-						if (utcStartTimeInMilliSecs != -1 && utcEndTimeInMilliSecs != -1)
-						{
-							newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
-							newUtcStartTimeInMilliSecs += ((int64_t)(FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).second * 10));
-							newUtcEndTimeInMilliSecs =
-								utcStartTimeInMilliSecs + ((int64_t)(FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).second * 10));
-						}
+						newUtcStartTimeInMilliSecs = utcStartTimeInMilliSecs;
+						newUtcStartTimeInMilliSecs += ((int64_t)(FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).second * 10));
+						newUtcEndTimeInMilliSecs =
+							utcStartTimeInMilliSecs + ((int64_t)(FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).second * 10));
 					}
 				}
 			}
@@ -1091,12 +1039,21 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
 
 		SPDLOG_INFO(
-			string() + "manageCutMediaThread new start/end" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", cutType: " + cutType + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
-			", sourcePhysicalPathKey: " + to_string(sourcePhysicalPathKey) + ", sourceAssetPathName: " + sourceAssetPathName +
-			", sourceDurationInMilliSecs: " + to_string(sourceDurationInMilliSecs) + ", framesNumber: " + to_string(framesNumber) +
-			", startTime: " + startTime + ", endTime: " + endTime + ", newUtcStartTimeInMilliSecs: " + to_string(newUtcStartTimeInMilliSecs) +
-			", newUtcEndTimeInMilliSecs: " + to_string(newUtcEndTimeInMilliSecs)
+			"manageCutMediaThread new start/end"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", cutType: {}"
+			", sourceMediaItemKey: {}"
+			", sourcePhysicalPathKey: {}"
+			", sourceAssetPathName: {}"
+			", sourceDurationInMilliSecs: {}"
+			", framesNumber: {}"
+			", startTime: {}"
+			", endTime: {}"
+			", newUtcStartTimeInMilliSecs: {}"
+			", newUtcEndTimeInMilliSecs: {}",
+			_processorIdentifier, ingestionJobKey, cutType, sourceMediaItemKey, sourcePhysicalPathKey, sourceAssetPathName, sourceDurationInMilliSecs,
+			framesNumber, startTime, endTime, newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs
 		);
 		if (cutType == "KeyFrameSeeking" || cutType == "FrameAccurateWithoutEncoding" || cutType == "KeyFrameSeekingInterval")
 		{
@@ -1105,8 +1062,10 @@ void MMSEngineProcessor::manageCutMediaThread(
 			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
 			SPDLOG_INFO(
-				string() + "1 manageCutMediaThread new start/end" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey)
+				"1 manageCutMediaThread new start/end"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}",
+				_processorIdentifier, ingestionJobKey
 			);
 
 			// this is a cut so destination file name shall have the same
@@ -1127,8 +1086,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 			}
 
 			SPDLOG_INFO(
-				string() + "manageCutMediaThread file format" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", fileFormat: " + fileFormat
+				"manageCutMediaThread file format"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", fileFormat: {}",
+				_processorIdentifier, ingestionJobKey, fileFormat
 			);
 
 			if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
@@ -1181,12 +1143,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 			}
 
 			SPDLOG_INFO(
-				string() + "manageCutMediaThread user data management" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey)
+				"manageCutMediaThread user data management"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}",
+				_processorIdentifier, ingestionJobKey
 			);
 
-			string localSourceFileName = to_string(ingestionJobKey) + "_cut" + "." + fileFormat // + "_source"
-				;
+			string localSourceFileName = std::format("{}_cut.{}", ingestionJobKey, fileFormat);
 
 			string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
 			string cutMediaPathName = workspaceIngestionRepository + "/" + localSourceFileName;
@@ -1200,8 +1163,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 			);
 
 			SPDLOG_INFO(
-				string() + "cut done" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", cutMediaPathName: " + cutMediaPathName
+				"cut done"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", cutMediaPathName: {}",
+				_processorIdentifier, ingestionJobKey, cutMediaPathName
 			);
 
 			string title;
@@ -1246,9 +1212,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 				_multiEventsSet->addEvent(event);
 
 				SPDLOG_INFO(
-					string() + "addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", getEventKey().first: " + to_string(event->getEventKey().first) +
-					", getEventKey().second: " + to_string(event->getEventKey().second)
+					"addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", getEventKey().first: {}"
+					", getEventKey().second: {}",
+					_processorIdentifier, ingestionJobKey, event->getEventKey().first, event->getEventKey().second
 				);
 			}
 		}
@@ -1282,9 +1251,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 				}
 				else
 				{
-					string errorMessage = string() + "Both fields are not present or it is null" +
-										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + keyField +
-										  ", Field: " + labelField;
+					string errorMessage = std::format(
+						"Both fields are not present or it is null"
+						", _processorIdentifier: {}"
+						", Field: {}"
+						", Field: {}",
+						_processorIdentifier, keyField, labelField
+					);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -1354,103 +1327,37 @@ void MMSEngineProcessor::manageCutMediaThread(
 			);
 		}
 	}
-	catch (DBRecordNotFound &e)
-	{
-		SPDLOG_ERROR(
-			string() + "manageCutMediaThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
-		);
-
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
-			);
-		}
-
-		// it's a thread, no throw
-		// throw e;
-		return;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "manageCutMediaThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
-		);
-
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
-			);
-		}
-
-		// it's a thread, no throw
-		// throw e;
-		return;
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "manageCutMediaThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+			"manageCutMediaThread failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what(): {}",
+			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
+			"Update IngestionJob"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", IngestionStatus: End_IngestionFailure"
+			", errorMessage: {}",
+			_processorIdentifier, ingestionJobKey, e.what()
 		);
+
 		try
 		{
 			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
 		catch (exception &ex)
 		{
 			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
+				"Update IngestionJob failed"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", errorMessage: {}",
+				_processorIdentifier, ingestionJobKey, ex.what()
 			);
 		}
 

@@ -1721,6 +1721,174 @@ json MMSEngineDBFacade::getMediaItemsList(
 	return mediaItemsListRoot;
 }
 
+json MMSEngineDBFacade::mediaItem_columnAsJson(string columnName, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = std::format("mms_mediaitem:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = mediaItemQuery(requestedColumns, mediaItemKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		return (*sqlResultSet)[0][0].as<json>(json());
+	}
+	catch (DBRecordNotFound &e)
+	{
+		/*
+		SPDLOG_ERROR(
+			"NotFound"
+			", physicalPathKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			physicalPathKey, fromMaster, e.what()
+		);
+		*/
+
+		throw;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", mediaItemKey: {}"
+			", fromMaster: {}",
+			mediaItemKey, fromMaster
+		);
+
+		throw;
+	}
+}
+
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::mediaItemQuery(
+	vector<string> &requestedColumns, int64_t mediaItemKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
+)
+{
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
+	try
+	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = std::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = std::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
+		{
+			string where;
+			if (mediaItemKey != -1)
+				where += std::format("{} mediaItemKey = {} ", where.size() > 0 ? "and" : "", mediaItemKey);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = std::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = std::format("offset {} ", startIndex);
+			if (orderBy != "")
+				orderByCondition = std::format("order by {} ", orderBy);
+
+			string sqlStatement = std::format(
+				"select {} "
+				"from MMS_MediaItem "
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), where.size() > 0 ? "where " : "", where, limit, offset, orderByCondition
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+
+			sqlResultSet = _postgresHelper.buildResult(res);
+
+			chrono::system_clock::time_point endSql = chrono::system_clock::now();
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(endSql - startSql));
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), chrono::duration_cast<chrono::milliseconds>(endSql - startSql).count()
+			);
+
+			if (empty(res) && mediaItemKey != -1 && notFoundAsException)
+			{
+				string errorMessage = std::format(
+					"mediaItemKey not found"
+					", mediaItemKey: {}",
+					mediaItemKey
+				);
+				// abbiamo il log nel catch
+				// SPDLOG_WARN(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+		}
+
+		return sqlResultSet;
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else if (de != nullptr) // il chaimante decidera se loggarlo come error
+			SPDLOG_WARN(
+				"query failed"
+				", exceptionMessage: {}"
+				", conn: {}",
+				de->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
 int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
 {
 	try
@@ -1761,21 +1929,50 @@ int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t
 	}
 }
 
+json MMSEngineDBFacade::physicalPath_columnAsJson(string columnName, int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = std::format("mms_physicalpath:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = physicalPathQuery(requestedColumns, physicalPathKey, fromMaster);
+
+		if (sqlDuration != nullptr)
+			*sqlDuration = sqlResultSet->getSqlDuration();
+
+		return (*sqlResultSet)[0][0].as<json>(json());
+	}
+	catch (DBRecordNotFound &e)
+	{
+		/*
+		SPDLOG_ERROR(
+			"NotFound"
+			", physicalPathKey: {}"
+			", fromMaster: {}"
+			", exceptionMessage: {}",
+			physicalPathKey, fromMaster, e.what()
+		);
+		*/
+
+		throw;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"exception"
+			", physicalPathKey: {}"
+			", fromMaster: {}",
+			physicalPathKey, fromMaster
+		);
+
+		throw;
+	}
+}
+
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 	vector<string> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{

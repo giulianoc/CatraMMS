@@ -1642,7 +1642,9 @@ class MMSEngineDBFacade
 	json getEncodingProfileList(int64_t workspaceKey, int64_t encodingProfileKey, bool contentTypePresent, ContentType contentType, string label);
 
 	int64_t getPhysicalPathDetails(int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
-	int64_t physicalPath_columnAsInt64(string columnName, int64_t physicalPathKey, chrono::milliseconds *sqlDuration, bool fromMaster);
+	int64_t
+	physicalPath_columnAsInt64(string columnName, int64_t physicalPathKey, chrono::milliseconds *sqlDuration = nullptr, bool fromMaster = false);
+	json physicalPath_columnAsJson(string columnName, int64_t physicalPathKey, chrono::milliseconds *sqlDuration = nullptr, bool fromMaster = false);
 	shared_ptr<PostgresHelper::SqlResultSet> physicalPathQuery(
 		vector<string> &requestedColumns, int64_t physicalPathKey, bool fromMaster, int startIndex = -1, int rows = -1, string orderBy = "",
 		bool notFoundAsException = true
@@ -1682,6 +1684,12 @@ class MMSEngineDBFacade
 	getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, string referenceUniqueName, bool warningIfMissing, bool fromMaster);
 
 	int64_t getMediaDurationInMilliseconds(int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster);
+
+	json mediaItem_columnAsJson(string columnName, int64_t mediaItemKey, chrono::milliseconds *sqlDuration = nullptr, bool fromMaster = false);
+	shared_ptr<PostgresHelper::SqlResultSet> mediaItemQuery(
+		vector<string> &requestedColumns, int64_t mediaItemKey, bool fromMaster = false, int startIndex = -1, int rows = -1, string orderBy = "",
+		bool notFoundAsException = true
+	);
 
 	// tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
 	// getVideoDetails(
@@ -1726,7 +1734,7 @@ class MMSEngineDBFacade
 
 	shared_ptr<PostgresHelper::SqlResultSet> deliveryAuthorizationQuery(
 		vector<string> &requestedColumns, int64_t deliveryAuthorizationKey, string contentType, int64_t contentKey, string deliveryURI,
-		bool notExpiredCheck, bool fromMaster, int startIndex = -1, int rows = -1, string orderBy = "", bool notFoundAsException = true
+		bool notExpiredCheck, bool fromMaster = false, int startIndex = -1, int rows = -1, string orderBy = "", bool notFoundAsException = true
 	);
 
 	bool checkDeliveryAuthorization(int64_t deliveryAuthorizationKey, string contentURI);
