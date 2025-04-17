@@ -1,9 +1,9 @@
 
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "StringUtils.h"
-#include "catralibraries/DateTime.h"
 
 void MMSEngineProcessor::manageLiveRecorder(
 	int64_t ingestionJobKey, string ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace,
@@ -306,12 +306,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-		time_t utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
+		time_t utcRecordingPeriodStart = Datetime::sDateSecondsToUtc(recordingPeriodStart);
 		// SPDLOG_ERROR(string() + "ctime recordingPeriodStart: "
 		//		+ ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
-		time_t utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
+		time_t utcRecordingPeriodEnd = Datetime::sDateSecondsToUtc(recordingPeriodEnd);
 
 		string tvType;
 		int64_t tvServiceId = -1;

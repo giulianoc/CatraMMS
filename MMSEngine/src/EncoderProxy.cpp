@@ -13,8 +13,8 @@
 
 #include "EncoderProxy.h"
 #include "CurlWrapper.h"
+#include "Datetime.h"
 #include "JSONUtils.h"
-#include "catralibraries/DateTime.h"
 #include "catralibraries/System.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -2276,7 +2276,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 				try
 				{
-					string errorMessage = DateTime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())) +
+					string errorMessage = Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())) +
 										  " LiveProxy/Recording media file completed unexpected";
 
 					string firstLineOfErrorMessage;

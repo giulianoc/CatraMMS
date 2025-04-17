@@ -1,8 +1,8 @@
 
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/DateTime.h"
 #include "spdlog/fmt/fmt.h"
 
 void MMSEngineProcessor::manageLiveProxy(
@@ -122,10 +122,10 @@ void MMSEngineProcessor::manageLiveProxy(
 					json proxyPeriodRoot = parametersRoot["schedule"];
 
 					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, "start", "", true);
-					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+					utcProxyPeriodStart = Datetime::sDateSecondsToUtc(proxyPeriodStart);
 
 					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, "end", "", true);
-					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+					utcProxyPeriodEnd = Datetime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
 
@@ -259,13 +259,13 @@ void MMSEngineProcessor::manageLiveProxy(
 				inputRoot[field] = utcProxyPeriodStart;
 
 				field = "sUtcScheduleStart";
-				inputRoot[field] = DateTime::utcToUtcString(utcProxyPeriodStart);
+				inputRoot[field] = Datetime::utcToUtcString(utcProxyPeriodStart);
 
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 
 				field = "sUtcScheduleEnd";
-				inputRoot[field] = DateTime::utcToUtcString(utcProxyPeriodEnd);
+				inputRoot[field] = Datetime::utcToUtcString(utcProxyPeriodEnd);
 
 				if (defaultBroadcast)
 				{

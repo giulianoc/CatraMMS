@@ -64,6 +64,7 @@ add_executable(sendEmail ${SOURCES} ${HEADERS})
 
 target_link_libraries (sendEmail CurlWrapper)
 target_link_libraries (sendEmail JSONUtils)
+target_link_libraries (sendEmail Datetime)
 target_link_libraries (sendEmail MMSEngine)
 target_link_libraries (sendEmail FFMpegWrapper)
 target_link_libraries (sendEmail curl)

@@ -25,3 +25,6 @@
 [submodule "CatraLibraries/StatisticTimer"]
 	path = CatraLibraries/StatisticTimer
 	url = https://github.com/giulianoc/StatisticTimer.git
+[submodule "CatraLibraries/Datetime"]
+	path = CatraLibraries/Datetime
+	url = https://github.com/giulianoc/Datetime.git

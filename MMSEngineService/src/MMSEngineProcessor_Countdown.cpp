@@ -1,8 +1,8 @@
 
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/DateTime.h"
 
 void MMSEngineProcessor::manageCountdown(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -76,7 +76,7 @@ void MMSEngineProcessor::manageCountdown(
 				throw runtime_error(errorMessage);
 			}
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::sDateSecondsToUtc(proxyPeriodStart);
 
 			field = "end";
 			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
@@ -88,7 +88,7 @@ void MMSEngineProcessor::manageCountdown(
 				throw runtime_error(errorMessage);
 			}
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::sDateSecondsToUtc(proxyPeriodEnd);
 		}
 
 		string mmsSourceVideoAssetPathName;
@@ -257,13 +257,13 @@ void MMSEngineProcessor::manageCountdown(
 				inputRoot[field] = utcProxyPeriodStart;
 
 				field = "sUtcScheduleStart";
-				inputRoot[field] = DateTime::utcToUtcString(utcProxyPeriodStart);
+				inputRoot[field] = Datetime::utcToUtcString(utcProxyPeriodStart);
 
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 
 				field = "sUtcScheduleEnd";
-				inputRoot[field] = DateTime::utcToUtcString(utcProxyPeriodEnd);
+				inputRoot[field] = Datetime::utcToUtcString(utcProxyPeriodEnd);
 
 				if (defaultBroadcast)
 				{

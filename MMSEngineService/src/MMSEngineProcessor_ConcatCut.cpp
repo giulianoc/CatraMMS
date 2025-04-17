@@ -1,9 +1,9 @@
 
+#include "Datetime.h"
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/DateTime.h"
 
 void MMSEngineProcessor::manageConcatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -1102,7 +1102,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				{
 					time_t newUtcStartTimeInSecs = newUtcStartTimeInMilliSecs / 1000;
 					// i.e.: 2021-02-26T15:41:15Z
-					string utcToUtcString = DateTime::utcToUtcString(newUtcStartTimeInSecs);
+					string utcToUtcString = Datetime::utcToUtcString(newUtcStartTimeInSecs);
 					utcToUtcString.insert(utcToUtcString.size() - 1, "." + to_string(newUtcStartTimeInMilliSecs % 1000));
 					destMmsDataRoot[field] = utcToUtcString;
 				}
@@ -1116,7 +1116,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				{
 					time_t newUtcEndTimeInSecs = newUtcEndTimeInMilliSecs / 1000;
 					// i.e.: 2021-02-26T15:41:15Z
-					string utcToUtcString = DateTime::utcToUtcString(newUtcEndTimeInSecs);
+					string utcToUtcString = Datetime::utcToUtcString(newUtcEndTimeInSecs);
 					utcToUtcString.insert(utcToUtcString.size() - 1, "." + to_string(newUtcEndTimeInMilliSecs % 1000));
 					destMmsDataRoot[field] = utcToUtcString;
 				}

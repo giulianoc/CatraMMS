@@ -1,8 +1,8 @@
 
 #include "CurlWrapper.h"
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -127,10 +127,10 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-		int64_t utcCutPeriodStartTimeInMilliSeconds = DateTime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
+		int64_t utcCutPeriodStartTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
 
 		// next code is the same in the Validator class
-		int64_t utcCutPeriodEndTimeInMilliSeconds = DateTime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
+		int64_t utcCutPeriodEndTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
 
 		/*
 		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In
@@ -936,10 +936,10 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-		int64_t utcCutPeriodStartTimeInMilliSeconds = DateTime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
+		int64_t utcCutPeriodStartTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
 
 		// next code is the same in the Validator class
-		int64_t utcCutPeriodEndTimeInMilliSeconds = DateTime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
+		int64_t utcCutPeriodEndTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
 
 		/*
 		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In

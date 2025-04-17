@@ -1,9 +1,9 @@
 
 #include "MMSStorage.h"
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "ProcessUtility.h"
 #include "StringUtils.h"
-#include "catralibraries/DateTime.h"
 #include "catralibraries/System.h"
 #include "spdlog/spdlog.h"
 #include <fstream>
@@ -797,7 +797,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 		throw runtime_error(errorMessage);
 	}
 
-	DateTime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
+	Datetime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
 
 	if (fileName == "")
 	{

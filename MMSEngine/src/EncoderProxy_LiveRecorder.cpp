@@ -11,10 +11,10 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include "Datetime.h"
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
 #include "MMSDeliveryAuthorization.h"
-#include "catralibraries/DateTime.h"
 #include "spdlog/spdlog.h"
 #include <FFMpegWrapper.h>
 
@@ -43,7 +43,7 @@ bool EncoderProxy::liveRecorder()
 			throw runtime_error(errorMessage);
 		}
 		string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
-		utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
+		utcRecordingPeriodStart = Datetime::sDateSecondsToUtc(recordingPeriodStart);
 
 		field = "end";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -61,7 +61,7 @@ bool EncoderProxy::liveRecorder()
 			throw runtime_error(errorMessage);
 		}
 		string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
-		utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
+		utcRecordingPeriodEnd = Datetime::sDateSecondsToUtc(recordingPeriodEnd);
 
 		field = "autoRenew";
 		autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
@@ -898,7 +898,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 			throw runtime_error(errorMessage);
 		}
 		string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
-		utcRecordingPeriodStart = DateTime::sDateSecondsToUtc(recordingPeriodStart);
+		utcRecordingPeriodStart = Datetime::sDateSecondsToUtc(recordingPeriodStart);
 
 		field = "end";
 		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -916,7 +916,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 			throw runtime_error(errorMessage);
 		}
 		string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
-		utcRecordingPeriodEnd = DateTime::sDateSecondsToUtc(recordingPeriodEnd);
+		utcRecordingPeriodEnd = Datetime::sDateSecondsToUtc(recordingPeriodEnd);
 
 		field = "autoRenew";
 		autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);

@@ -13,6 +13,7 @@
 
 #include "API.h"
 #include "CurlWrapper.h"
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
@@ -20,7 +21,6 @@
 #include "StringUtils.h"
 #include "Validator.h"
 #include "catralibraries/Convert.h"
-#include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
@@ -4526,14 +4526,14 @@ void API::updateIngestionJob(
 					{
 						// Validator validator(_logger, _mmsEngineDBFacade,
 						// _configuration);
-						DateTime::sDateSecondsToUtc(newRecordingPeriodStart);
+						Datetime::sDateSecondsToUtc(newRecordingPeriodStart);
 					}
 
 					if (recordingPeriodEndModified)
 					{
 						// Validator validator(_logger, _mmsEngineDBFacade,
 						// _configuration);
-						DateTime::sDateSecondsToUtc(newRecordingPeriodEnd);
+						Datetime::sDateSecondsToUtc(newRecordingPeriodEnd);
 					}
 
 					SPDLOG_INFO(
@@ -5088,11 +5088,11 @@ void API::changeLiveProxyPlaylist(
 
 			field = "start";
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
-			utcBroadcasterStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+			utcBroadcasterStart = Datetime::sDateSecondsToUtc(proxyPeriodStart);
 
 			field = "end";
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
-			utcBroadcasterEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+			utcBroadcasterEnd = Datetime::sDateSecondsToUtc(proxyPeriodEnd);
 
 			field = "broadcastDefaultPlaylistItem";
 			if (JSONUtils::isMetadataPresent(broadcasterRoot, field))
@@ -5448,12 +5448,12 @@ void API::changeLiveProxyPlaylist(
 						{
 							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleStart"))
 							{
-								sUtcScheduleStart = DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleStart"]);
+								sUtcScheduleStart = Datetime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleStart"]);
 								newReceivedPlaylistItemRoot["sUtcScheduleStart"] = sUtcScheduleStart;
 							}
 							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleEnd"))
 							{
-								sUtcScheduleEnd = DateTime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleEnd"]);
+								sUtcScheduleEnd = Datetime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleEnd"]);
 								newReceivedPlaylistItemRoot["sUtcScheduleEnd"] = sUtcScheduleEnd;
 							}
 						}
@@ -5815,8 +5815,8 @@ void API::changeLiveProxyPlaylist(
 						", utcProxyPeriodStart: {} ({})"
 						", utcProxyPeriodEnd: {} ({})",
 						broadcasterIngestionJobKey, newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), utcCurrentBroadcasterStart,
-						DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, DateTime::utcToUtcString(utcProxyPeriodStart),
-						utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd)
+						Datetime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, Datetime::utcToUtcString(utcProxyPeriodStart),
+						utcProxyPeriodEnd, Datetime::utcToUtcString(utcProxyPeriodEnd)
 					);
 
 					if (utcCurrentBroadcasterStart > utcProxyPeriodStart || utcProxyPeriodStart >= utcProxyPeriodEnd ||
@@ -5827,18 +5827,18 @@ void API::changeLiveProxyPlaylist(
 						if (utcCurrentBroadcasterStart > utcProxyPeriodStart)
 							partialMessage = std::format(
 								"utcCurrentBroadcasterStart {} ({}) > utcProxyPeriodStart {} ({})", utcCurrentBroadcasterStart,
-								DateTime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart,
-								DateTime::utcToUtcString(utcProxyPeriodStart)
+								Datetime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart,
+								Datetime::utcToUtcString(utcProxyPeriodStart)
 							);
 						else if (utcProxyPeriodStart >= utcProxyPeriodEnd)
 							partialMessage = std::format(
 								"utcProxyPeriodStart {} ({}) >= utcProxyPeriodEnd {} ({})", utcProxyPeriodStart,
-								DateTime::utcToUtcString(utcProxyPeriodStart), utcProxyPeriodEnd, DateTime::utcToUtcString(utcProxyPeriodEnd)
+								Datetime::utcToUtcString(utcProxyPeriodStart), utcProxyPeriodEnd, Datetime::utcToUtcString(utcProxyPeriodEnd)
 							);
 						else if (utcProxyPeriodEnd > utcBroadcasterEnd)
 							partialMessage = std::format(
 								"utcProxyPeriodEnd {} ({}) > utcBroadcasterEnd {} ({})", utcProxyPeriodEnd,
-								DateTime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd, DateTime::utcToUtcString(utcBroadcasterEnd)
+								Datetime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd, Datetime::utcToUtcString(utcBroadcasterEnd)
 							);
 
 						string errorMessage = std::format(

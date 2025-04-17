@@ -108,6 +108,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
+include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/Datetime/src")
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/JSONUtils/src")
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/PostgresHelper/src")
 include_directories("${PROJECT_SOURCE_DIR}/CatraLibraries/DBConnectionsPool/src")

@@ -1,8 +1,8 @@
 
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/DateTime.h"
 
 void MMSEngineProcessor::manageVODProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -85,7 +85,7 @@ void MMSEngineProcessor::manageVODProxy(
 					}
 
 					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
-					utcProxyPeriodStart = DateTime::sDateSecondsToUtc(proxyPeriodStart);
+					utcProxyPeriodStart = Datetime::sDateSecondsToUtc(proxyPeriodStart);
 
 					field = "end";
 					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
@@ -98,7 +98,7 @@ void MMSEngineProcessor::manageVODProxy(
 					}
 
 					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
-					utcProxyPeriodEnd = DateTime::sDateSecondsToUtc(proxyPeriodEnd);
+					utcProxyPeriodEnd = Datetime::sDateSecondsToUtc(proxyPeriodEnd);
 				}
 			}
 
@@ -279,13 +279,13 @@ void MMSEngineProcessor::manageVODProxy(
 				inputRoot[field] = utcProxyPeriodStart;
 
 				field = "sUtcScheduleStart";
-				inputRoot[field] = DateTime::utcToUtcString(utcProxyPeriodStart);
+				inputRoot[field] = Datetime::utcToUtcString(utcProxyPeriodStart);
 
 				field = "utcScheduleEnd";
 				inputRoot[field] = utcProxyPeriodEnd;
 
 				field = "sUtcScheduleEnd";
-				inputRoot[field] = DateTime::utcToUtcString(utcProxyPeriodEnd);
+				inputRoot[field] = Datetime::utcToUtcString(utcProxyPeriodEnd);
 
 				if (defaultBroadcast)
 				{

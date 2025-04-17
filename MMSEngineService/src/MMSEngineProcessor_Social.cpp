@@ -1,9 +1,9 @@
 
 #include "CurlWrapper.h"
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
-#include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -716,7 +716,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					// scheduledStartTime
 					{
-						int64_t utcScheduleStartTimeInSeconds = DateTime::sDateSecondsToUtc(scheduleStartTimeInSeconds);
+						int64_t utcScheduleStartTimeInSeconds = Datetime::sDateSecondsToUtc(scheduleStartTimeInSeconds);
 
 						// format: YYYY-MM-DDTHH:MI:SS.000Z
 						string scheduleStartTimeInMilliSeconds = scheduleStartTimeInSeconds;
@@ -728,7 +728,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					// scheduledEndTime
 					{
-						int64_t utcScheduleEndTimeInSeconds = DateTime::sDateSecondsToUtc(scheduleEndTimeInSeconds);
+						int64_t utcScheduleEndTimeInSeconds = Datetime::sDateSecondsToUtc(scheduleEndTimeInSeconds);
 
 						// format: YYYY-MM-DDTHH:MI:SS.000Z
 						string scheduleEndTimeInMilliSeconds = scheduleEndTimeInSeconds;
@@ -1716,7 +1716,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				throw runtime_error(errorMessage);
 			}
 			string scheduleStartTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
-			utcScheduleStartTimeInSeconds = DateTime::sDateSecondsToUtc(scheduleStartTimeInSeconds);
+			utcScheduleStartTimeInSeconds = Datetime::sDateSecondsToUtc(scheduleStartTimeInSeconds);
 
 			field = "sourceType";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))

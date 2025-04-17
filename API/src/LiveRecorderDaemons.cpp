@@ -2,12 +2,12 @@
 #include "LiveRecorderDaemons.h"
 
 #include "CurlWrapper.h"
+#include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "ProcessUtility.h"
 #include "StringUtils.h"
-#include "catralibraries/DateTime.h"
 #include "catralibraries/Encrypt.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
@@ -1060,9 +1060,9 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 				else if (manifestLine.size() >= dateTimePrefix.size() && 0 == manifestLine.compare(0, dateTimePrefix.size(), dateTimePrefix))
 				{
 					if (toBeIngested)
-						toBeIngestedSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(dateTimePrefix.size()));
+						toBeIngestedSegmentUtcStartTimeInMillisecs = Datetime::sDateMilliSecondsToUtc(manifestLine.substr(dateTimePrefix.size()));
 					else
-						currentSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(dateTimePrefix.size()));
+						currentSegmentUtcStartTimeInMillisecs = Datetime::sDateMilliSecondsToUtc(manifestLine.substr(dateTimePrefix.size()));
 				}
 				else if (manifestLine[0] != '#')
 				{
@@ -2704,7 +2704,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 					lastSegmentDuration = stod(manifestLine.substr(extInfPrefix.size(), endOfSegmentDuration - extInfPrefix.size()));
 				}
 				else if (manifestLine.size() >= programDatePrefix.size() && 0 == manifestLine.compare(0, programDatePrefix.size(), programDatePrefix))
-					lastSegmentUtcStartTimeInMillisecs = DateTime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
+					lastSegmentUtcStartTimeInMillisecs = Datetime::sDateMilliSecondsToUtc(manifestLine.substr(programDatePrefix.size()));
 				else if (manifestLine != "" && manifestLine[0] != '#')
 				{
 					string sourceTSPathFileName = sourceSegmentsDirectoryPathName + "/" + manifestLine;
@@ -3221,7 +3221,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		{
 			time_t utcEndTimeInSeconds = utcEndTimeInMilliSecs / 1000;
 			// i.e.: 2021-02-26T15:41:15Z
-			string utcToUtcString = DateTime::utcToUtcString(utcEndTimeInSeconds);
+			string utcToUtcString = Datetime::utcToUtcString(utcEndTimeInSeconds);
 			utcToUtcString.insert(utcToUtcString.size() - 1, "." + to_string(utcEndTimeInMilliSecs % 1000));
 
 			field = "utcEndTimeInMilliSecs_str";
