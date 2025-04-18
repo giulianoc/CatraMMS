@@ -7,18 +7,6 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 {
 	_logger->info(__FILEREF__ + "retentionOfIngestionData");
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -100,13 +88,10 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			);
 		}
 
-		// IngestionJobs taking too time to download/move/copy/upload
-		// the content are set to failed
+		// AddContent IngestionJobs taking too time to download/move/copy/upload the content are set to failed
+		/* 2025-04-18: commentata perchè inclusa nella select successiva
 		{
-			_logger->info(
-				__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time "
-							  "to download/move/copy/upload the content"
-			);
+			SPDLOG_INFO("retentionOfIngestionData. AddContent IngestionJobs taking too time to be completed");
 			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			int sqlLimit = 1000;
@@ -118,6 +103,9 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 			{
 				try
 				{
+					IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
+					string errorMessage = "Set to Failure by MMS because of too old";
+
 					// 2025-03-29: scenario: il file è stato trasferito nella directory per l'ingestion (quindi sourceBinaryTransferred è true),
 					// 	Per qualche motivo l'ingestion fallisce (ad es. è arrivato il retention dei file in quella directory e l'engine fallisce
 					// 	perchè non riesce a copiare il file in MMSRepository), l'IngestionJob (AddContent) rimane per sempre non completato
@@ -140,13 +128,111 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					{
 						int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
 						{
-							IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
+							SPDLOG_INFO(
+								"Update IngestionJob"
+								", ingestionJobKey: {}"
+								", IngestionStatus: {}"
+								", errorMessage: {}"
+								", processorMMS: ",
+								ingestionJobKey, toString(newIngestionStatus), errorMessage
+							);
+							updateIngestionJob(trans, ingestionJobKey, newIngestionStatus, errorMessage);
+							totalRowsUpdated++;
+						}
+					}
+					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+					SQLQUERYLOG(
+						"default", elapsed,
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@"
+						", res.size: {}"
+						", totalRowsUpdated: {}",
+						sqlStatement, trans.connection->getConnectionId(), elapsed, res.size(), totalRowsUpdated
+					);
 
-							string errorMessage = "Set to Failure by MMS because of timeout to download/move/copy/upload the content";
-							string processorMMS;
-							_logger->info(
-								__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " +
-								toString(newIngestionStatus) + ", errorMessage: " + errorMessage + ", processorMMS: " + processorMMS
+					if (res.size() == 0)
+						moreRowsToBeUpdated = false;
+					currentRetriesOnError = 0;
+				}
+				catch (sql_error const &e)
+				{
+					// Deadlock!!!
+					SPDLOG_ERROR(
+						"SQL exception"
+						", query: {}"
+						", exceptionMessage: {}"
+						", conn: {}",
+						e.query(), e.what(), trans.connection->getConnectionId()
+					);
+
+					currentRetriesOnError++;
+
+					{
+						int secondsBetweenRetries = 15;
+						_logger->info(
+							__FILEREF__ + "retentionOfIngestionData. IngestionJobs taking too time failed, " + "waiting before to try again" +
+							", currentRetriesOnError: " + to_string(currentRetriesOnError) + ", maxRetriesOnError: " + to_string(maxRetriesOnError) +
+							", secondsBetweenRetries: " + to_string(secondsBetweenRetries)
+						);
+						this_thread::sleep_for(chrono::seconds(secondsBetweenRetries));
+					}
+				}
+			}
+
+			_logger->info(
+				__FILEREF__ +
+				"retentionOfIngestionData. IngestionJobs taking too time "
+				"to download/move/copy/upload the content" +
+				", totalRowsUpdated: " + to_string(totalRowsUpdated) + ", elapsed (millisecs): @" +
+				to_string(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startRetention).count()) + "@"
+			);
+		}
+		*/
+
+		// IngestionJobs without encodingJob taking too time to be completed are set to failed
+		// Comprende anche gli AddContent rimasti incompleti, indipendentemente se sia stati trasferiti o meno (sourceBinaryTransferred).
+		// Nota che i casi in cui IngestionJob sia in stato finale ed encoding no o viceversa sono già gestiti dai metodi fix*JobsHavingWrongStatus
+		{
+			SPDLOG_INFO("retentionOfIngestionData. IngestionJobs without EncodingJob taking too time to be completed");
+			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
+
+			int sqlLimit = 1000;
+			long totalRowsUpdated = 0;
+			bool moreRowsToBeUpdated = true;
+			int maxRetriesOnError = 2;
+			int currentRetriesOnError = 0;
+			while (moreRowsToBeUpdated && currentRetriesOnError < maxRetriesOnError)
+			{
+				try
+				{
+					IngestionStatus newIngestionStatus = IngestionStatus::End_IngestionFailure;
+					string errorMessage = "Set to Failure by MMS because of too old";
+
+					// Si poteva eseguire una left join tra MMS_IngestionJob e MMS_EncodingJob ma, poichè abbiamo un indice su ej.ingestionJobKey,
+					// la query sotto dovrebbe essere piu efficiente rispetto alla left join
+					string sqlStatement = std::format(
+						"select ij.ingestionJobKey from MMS_IngestionJob ij "
+						"where ij.status not like 'End_%' "
+						"and ij.startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc' "
+						"and not exists (select 1 from MMS_EncodingJob ej where ij.ingestionJobKey = ej.ingestionJobKey) "
+						"limit {}",
+						(_doNotManageIngestionsOlderThanDays + 1) * 24, sqlLimit
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					result res = trans.transaction->exec(sqlStatement);
+					for (auto row : res)
+					{
+						int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+						{
+							SPDLOG_INFO(
+								"Update IngestionJob"
+								", ingestionJobKey: {}"
+								", IngestionStatus: {}"
+								", errorMessage: {}"
+								", processorMMS: ",
+								ingestionJobKey, toString(newIngestionStatus), errorMessage
 							);
 							updateIngestionJob(trans, ingestionJobKey, newIngestionStatus, errorMessage);
 							totalRowsUpdated++;

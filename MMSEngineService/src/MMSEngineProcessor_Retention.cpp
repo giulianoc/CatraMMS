@@ -384,20 +384,6 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			_mmsEngineDBFacade->retentionOfIngestionData();
 			statisticTimer.stop("retentionOfIngestionData");
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"DBDataRetention: retentionOfIngestionData failed"
-				", _processorIdentifier: {}"
-				", exception: {}",
-				_processorIdentifier, e.what()
-			);
-
-			statisticTimer.stop("retentionOfIngestionData");
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -424,20 +410,6 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			_mmsEngineDBFacade->retentionOfDeliveryAuthorization();
 			statisticTimer.stop("retentionOfDeliveryAuthorization");
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"DBDataRetention: retentionOfDeliveryAuthorization failed"
-				", _processorIdentifier: {}"
-				", exception: {}",
-				_processorIdentifier, e.what()
-			);
-
-			statisticTimer.stop("retentionOfDeliveryAuthorization");
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -463,20 +435,6 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			statisticTimer.start("retentionOfStatisticData");
 			_mmsEngineDBFacade->retentionOfStatisticData();
 			statisticTimer.stop("retentionOfStatisticData");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"DBDataRetention: retentionOfStatisticData failed"
-				", _processorIdentifier: {}"
-				", exception: {}",
-				_processorIdentifier, e.what()
-			);
-
-			statisticTimer.stop("retentionOfStatisticData");
-
-			// no throw since it is running in a detached thread
-			// throw e;
 		}
 		catch (exception &e)
 		{
@@ -506,20 +464,6 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			_mmsEngineDBFacade->fixEncodingJobsHavingWrongStatus();
 			statisticTimer.stop("fixEncodingJobsHavingWrongStatus");
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"DBDataRetention: fixEncodingJobsHavingWrongStatus failed"
-				", _processorIdentifier: {}"
-				", exception: {}",
-				_processorIdentifier, e.what()
-			);
-
-			statisticTimer.stop("fixEncodingJobsHavingWrongStatus");
-
-			// no throw since it is running in a detached thread
-			// throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -548,20 +492,6 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			statisticTimer.start("fixIngestionJobsHavingWrongStatus");
 			_mmsEngineDBFacade->fixIngestionJobsHavingWrongStatus();
 			statisticTimer.stop("fixIngestionJobsHavingWrongStatus");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"DBDataRetention: fixIngestionJobsHavingWrongStatus failed"
-				", _processorIdentifier: {}"
-				", exception: {}",
-				_processorIdentifier, e.what()
-			);
-
-			statisticTimer.stop("fixIngestionJobsHavingWrongStatus");
-
-			// no throw since it is running in a detached thread
-			// throw e;
 		}
 		catch (exception &e)
 		{

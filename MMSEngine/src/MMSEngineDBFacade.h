@@ -2446,7 +2446,7 @@ class MMSEngineDBFacade
 	int _maxEncodingFailures;
 	int _confirmationCodeExpirationInDays;
 	int _contentRetentionInMinutesDefaultValue;
-	int _addContentIngestionJobsNotCompletedRetentionInDays;
+	// int _addContentIngestionJobsNotCompletedRetentionInDays;
 
 	int _maxSecondsToWaitUpdateIngestionJobLock;
 	int _maxSecondsToWaitUpdateEncodingJobLock;

@@ -60,12 +60,14 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
 	);
+	/*
 	_addContentIngestionJobsNotCompletedRetentionInDays =
 		JSONUtils::asInt(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->addContentIngestionJobsNotCompletedRetentionInDays: " + to_string(_addContentIngestionJobsNotCompletedRetentionInDays)
 	);
+	*/
 
 	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
 	_logger->info(
