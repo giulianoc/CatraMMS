@@ -1,11 +1,11 @@
 
 #include "FFMPEGEncoderTask.h"
 #include "CurlWrapper.h"
+#include "Encrypt.h"
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "ProcessUtility.h"
 #include "StringUtils.h"
-#include "catralibraries/Encrypt.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>

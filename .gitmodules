@@ -28,3 +28,30 @@
 [submodule "CatraLibraries/Datetime"]
 	path = CatraLibraries/Datetime
 	url = https://github.com/giulianoc/Datetime.git
+[submodule "CatraLibraries/Encrypt"]
+	path = CatraLibraries/Encrypt
+	url = https://github.com/giulianoc/Encrypt.git
+[submodule "CatraLibraries/System"]
+	path = CatraLibraries/System
+	url = https://github.com/giulianoc/System.git
+[submodule "CatraLibraries/Convert"]
+	path = CatraLibraries/Convert
+	url = https://github.com/giulianoc/Convert.git
+[submodule "CatraLibraries/GetCpuUsage"]
+	path = CatraLibraries/GetCpuUsage
+	url = https://github.com/giulianoc/GetCpuUsage.git
+[submodule "CatraLibraries/MultiEventsSet"]
+	path = CatraLibraries/MultiEventsSet
+	url = https://github.com/giulianoc/MultiEventsSet.git
+[submodule "CatraLibraries/Error"]
+	path = CatraLibraries/Error
+	url = https://github.com/giulianoc/Error.git
+[submodule "CatraLibraries/EventsSet"]
+	path = CatraLibraries/EventsSet
+	url = https://github.com/giulianoc/EventsSet.git
+[submodule "CatraLibraries/PThread"]
+	path = CatraLibraries/PThread
+	url = https://github.com/giulianoc/PThread.git
+[submodule "CatraLibraries/LdapWrapper"]
+	path = CatraLibraries/LdapWrapper
+	url = https://github.com/giulianoc/LdapWrapper.git

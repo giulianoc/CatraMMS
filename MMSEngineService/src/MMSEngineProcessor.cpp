@@ -6,13 +6,13 @@
 #include "ContentRetentionTimes.h"
 #include "CurlWrapper.h"
 #include "DBDataRetentionTimes.h"
+#include "Encrypt.h"
 #include "FFMpegWrapper.h"
 #include "GEOInfoTimes.h"
 #include "JSONUtils.h"
 #include "StatisticTimer.h"
+#include "System.h"
 #include "ThreadsStatisticTimes.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/System.h"
 #include "spdlog/spdlog.h"
 
 MMSEngineProcessor::MMSEngineProcessor(
@@ -33,7 +33,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_mmsDeliveryAuthorization = mmsDeliveryAuthorization;
 	_pActiveEncodingsManager = pActiveEncodingsManager;
 
-	_processorMMS = System::getHostName();
+	_processorMMS = System::hostName();
 
 	_cpuUsageMutex = cpuUsageMutex;
 	_cpuUsage = cpuUsage;

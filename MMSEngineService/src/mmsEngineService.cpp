@@ -8,9 +8,9 @@
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
 #include "ProcessUtility.h"
-#include "catralibraries/Scheduler2.h"
-// #include "catralibraries/Service.h"
-#include "catralibraries/System.h"
+#include "Scheduler2.h"
+// #include "Service.h"
+#include "System.h"
 
 #include "ActiveEncodingsManager.h"
 #include "CheckEncodingTimes.h"
@@ -265,7 +265,7 @@ int main(int iArgc, char *pArgv[])
 	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade =
 		make_shared<MMSEngineDBFacade>(configurationRoot, configurationRoot["log"]["mms"]["slowQuery"], masterDbPoolSize, slaveDbPoolSize, logger);
 
-	string processorMMS = System::getHostName();
+	string processorMMS = System::hostName();
 	if (resetdata)
 	{
 		try

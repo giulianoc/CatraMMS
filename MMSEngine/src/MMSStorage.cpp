@@ -4,7 +4,7 @@
 #include "JSONUtils.h"
 #include "ProcessUtility.h"
 #include "StringUtils.h"
-#include "catralibraries/System.h"
+#include "System.h"
 #include "spdlog/spdlog.h"
 #include <fstream>
 
@@ -20,7 +20,7 @@ MMSStorage::MMSStorage(
 		_logger = logger;
 		_configuration = configuration;
 
-		_hostName = System::getHostName();
+		_hostName = System::hostName();
 
 		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 		_logger->info(
@@ -1379,7 +1379,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			 * 2021-08-29: sometimes the moveFile failed:
 			 * [2021-08-28 22:52:08.756] [mmsEngineService] [error] [tid 3114800] [MMSEngineProcessor.cpp:5992] _mmsStorage->moveAssetInMMSRepository
 			 *failed, _processorIdentifier: 1, ingestionJobKey: 5477449, errorMessage: FileIO::moveFile failed: Class: ToolsErrors, Code: 211, File:
-			 * /opt/catrasoftware/CatraLibraries/Tools/src/FileIO.cpp, Line: 5872, Msg: The write function failed. Errno: 5 It is not clear the reason
+			 * /opt/catrasoftware/.../Tools/src/FileIO.cpp, Line: 5872, Msg: The write function failed. Errno: 5 It is not clear the reason
 			 *of this error, I'll try again 2021-09-05: I had again this error. Looking at the log, I saw that the size of the file logged just before
 			 *the starting of the move was 5923184964 and the move failed when it already written bytes 6208068844. So May be the nfs was still
 			 *writing the file and we started to copy/move. I'll increase the delay before to copy again.

@@ -1033,21 +1033,21 @@ install-mms-packages()
 	fi
 
 
-	if [ "$moduleType" != "integration" ]; then
-		packageName=CatraLibraries
-		echo ""
-		catraLibrariesVersion=1.0.2050
-		echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
-		read version
-		if [ "$version" == "" ]; then
-			version=$catraLibrariesVersion
-		fi
-		package=$packageName-$version
-		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-		ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
-	fi
+	#if [ "$moduleType" != "integration" ]; then
+		#packageName=CatraLibraries
+		#echo ""
+		#catraLibrariesVersion=1.0.2050
+		#echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
+		#read version
+		#if [ "$version" == "" ]; then
+			#version=$catraLibrariesVersion
+		#fi
+		#package=$packageName-$version
+		#echo "Downloading $package..."
+		#curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+		#tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+		#ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
+	#fi
 
 
 	packageName=CatraMMS

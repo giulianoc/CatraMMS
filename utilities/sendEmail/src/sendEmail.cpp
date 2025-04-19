@@ -1,7 +1,7 @@
 
 #include "CurlWrapper.h"
+#include "Encrypt.h"
 #include "JSONUtils.h"
-#include "catralibraries/Encrypt.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include <fstream>
 #include <iostream>

@@ -8,7 +8,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "FFMpegWrapper.h"
-#include "catralibraries/GetCpuUsage.h"
+#include "GetCpuUsage.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
 #include <deque>
@@ -48,7 +48,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 
 	int _maxRealTimeInfoNotChangedToleranceInSeconds;
 	int _maxRealTimeInfoTimestampDiscontinuity;
-	GetCpuUsage_t _getCpuUsage;
+	GetCpuUsage _getCpuUsage;
 
 	mutex *_liveRecordingMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;

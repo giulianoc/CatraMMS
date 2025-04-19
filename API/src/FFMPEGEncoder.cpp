@@ -13,12 +13,15 @@
 
 #include "FFMPEGEncoder.h"
 #include "AddSilentAudio.h"
+#include "Convert.h"
 #include "CurlWrapper.h"
 #include "CutFrameAccurate.h"
 #include "Datetime.h"
 #include "EncodeContent.h"
+#include "Encrypt.h"
 #include "FFMPEGEncoderDaemons.h"
 #include "GenerateFrames.h"
+#include "GetCpuUsage.h"
 #include "IntroOutroOverlay.h"
 #include "JSONUtils.h"
 #include "LiveGrid.h"
@@ -32,11 +35,8 @@
 #include "ProcessUtility.h"
 #include "SlideShow.h"
 #include "StringUtils.h"
+#include "System.h"
 #include "VideoSpeed.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/GetCpuUsage.h"
-#include "catralibraries/System.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/sinks/daily_file_sink.h"
@@ -533,7 +533,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			json responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+			responseBodyRoot["ffmpegEncoderHost"] = System::hostName();
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
 
@@ -741,7 +741,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			json responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+			responseBodyRoot["ffmpegEncoderHost"] = System::hostName();
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
 
@@ -973,7 +973,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			json responseBodyRoot;
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
-			responseBodyRoot["ffmpegEncoderHost"] = System::getHostName();
+			responseBodyRoot["ffmpegEncoderHost"] = System::hostName();
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
 

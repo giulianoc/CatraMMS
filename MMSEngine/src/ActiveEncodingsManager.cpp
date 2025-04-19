@@ -13,7 +13,7 @@
 
 #include "ActiveEncodingsManager.h"
 #include "JSONUtils.h"
-#include "catralibraries/System.h"
+#include "System.h"
 #include "spdlog/spdlog.h"
 #include <fstream>
 
@@ -28,7 +28,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 	_encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_mmsEngineDBFacade, _configuration);
 
-	_hostName = System::getHostName();
+	_hostName = System::hostName();
 
 	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 0);
 	SPDLOG_INFO(

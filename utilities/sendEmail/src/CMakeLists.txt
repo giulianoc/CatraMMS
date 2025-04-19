@@ -35,7 +35,7 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 
 include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/CurlWrapper/src")
 include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/JSONUtils/src")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/include")
+include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/Encrypt/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories ("${PROJECT_SOURCE_DIR}/../deploy/nlohmann/include")
@@ -46,7 +46,6 @@ endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/CatraLibraries/lib")
 if (APPLE)
 	link_directories ("${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/lib")
 else()

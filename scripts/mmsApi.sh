@@ -51,7 +51,7 @@ fi
 
 CatraMMS_PATH=/opt/catramms
 
-export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraLibraries/lib:$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/libpqxx/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib:$CatraMMS_PATH/aws-sdk-cpp/lib
+export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/libpqxx/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib:$CatraMMS_PATH/aws-sdk-cpp/lib
 source ~/mms/conf/mms-env.sh
 export MMS_CONFIGPATHNAME=/opt/catramms/CatraMMS/conf/mms.cfg
 
@@ -72,10 +72,9 @@ then
 		else
 			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod"
 			hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod
-			#il load balancer impiega un po piu di tempo prima di ridirigere le nuove richieste al server
-			sleepWaitingLoadBalancer_forAdd=$((sleepWaitingLoadBalancer*6))
-			echo "Waiting load balancer command ($sleepWaitingLoadBalancer_forAdd secs) ..."
-			sleep $sleepWaitingLoadBalancer_forAdd
+			#nota che il load balancer si accorgera che il servizio è su quando nginx sarà fatto nuovamente ripartire
+			echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
+			sleep $sleepWaitingLoadBalancer
 		fi
 	fi
 elif [ "$command" == "status" ]

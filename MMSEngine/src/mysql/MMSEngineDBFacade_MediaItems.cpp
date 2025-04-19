@@ -1,7 +1,7 @@
 
 #include "MMSEngineDBFacade.h"
 #include "JSONUtils.h"
-#include "catralibraries/StringUtils.h"
+#include "StringUtils.h"
 
 
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(

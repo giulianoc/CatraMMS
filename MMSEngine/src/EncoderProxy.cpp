@@ -15,7 +15,7 @@
 #include "CurlWrapper.h"
 #include "Datetime.h"
 #include "JSONUtils.h"
-#include "catralibraries/System.h"
+#include "System.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <FFMpegWrapper.h>
@@ -49,7 +49,7 @@ void EncoderProxy::init(
 	_faceRecognitionNumber = faceRecognitionNumber;
 	_maxFaceRecognitionNumber = maxFaceRecognitionNumber;
 
-	_hostName = System::getHostName();
+	_hostName = System::hostName();
 
 	_mp4Encoder = JSONUtils::asString(_configuration["encoding"], "mp4Encoder", "");
 	SPDLOG_INFO(

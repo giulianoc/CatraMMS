@@ -24,7 +24,7 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "Magick++.h"
-#include "catralibraries/MultiEventsSet.h"
+#include "MultiEventsSet.h"
 #include "spdlog/spdlog.h"
 
 #define ENCODERPROXY "EncoderProxy"

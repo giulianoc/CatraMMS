@@ -12,10 +12,10 @@
  */
 
 #include "APICommon.h"
+#include "Compressor.h"
+#include "Convert.h"
 #include "JSONUtils.h"
-#include "catralibraries/Compressor.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/System.h"
+#include "System.h"
 #include <curl/curl.h>
 #include <deque>
 #include <fstream>

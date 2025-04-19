@@ -14,7 +14,7 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "catralibraries/LdapWrapper.h"
+#include "LdapWrapper.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 #include <format>

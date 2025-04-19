@@ -12,8 +12,8 @@
  */
 
 #include "EMailSender.h"
+#include "Encrypt.h"
 #include "JSONUtils.h"
-#include "catralibraries/Encrypt.h"
 #include "spdlog/spdlog.h"
 #include <curl/curl.h>
 #include <deque>

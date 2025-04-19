@@ -12,13 +12,13 @@
  */
 
 #include "AWSSigner.h"
+#include "Convert.h"
 #include "CurlWrapper.h"
+#include "Encrypt.h"
 #include "JSONUtils.h"
+#include "LdapWrapper.h"
 #include "StringUtils.h"
 #include "Validator.h"
-#include "catralibraries/Convert.h"
-#include "catralibraries/Encrypt.h"
-#include "catralibraries/LdapWrapper.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"

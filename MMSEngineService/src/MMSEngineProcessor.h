@@ -3,13 +3,13 @@
 #define MMSEngineProcessor_h
 
 #include "ActiveEncodingsManager.h"
+#include "GetCpuUsage.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MMSDeliveryAuthorization.h"
+#include "MultiEventsSet.h"
 #include "MultiLocalAssetIngestionEvent.h"
 #include "ThreadsStatistic.h"
 #include "Validator.h"
-#include "catralibraries/GetCpuUsage.h"
-#include "catralibraries/MultiEventsSet.h"
 #include <fstream>
 
 using json = nlohmann::json;
@@ -85,7 +85,7 @@ class MMSEngineProcessor
 
 	shared_ptr<MMSDeliveryAuthorization> _mmsDeliveryAuthorization;
 
-	GetCpuUsage_t _getCpuUsage;
+	GetCpuUsage _getCpuUsage;
 	mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;
 	bool _cpuUsageThreadShutdown;
