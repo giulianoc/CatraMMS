@@ -95,8 +95,6 @@ endif()
 
 #target_link_libraries (registerAndConfirmUser Scheduler)
 #target_link_libraries (registerAndConfirmUser PThread)
-target_link_libraries (registerAndConfirmUser Tools)
-target_link_libraries (registerAndConfirmUser ErrMsg)
 target_link_libraries (registerAndConfirmUser MultiEventsSet)
 if(CRYPTO_FOUND)
 	if (APPLE)

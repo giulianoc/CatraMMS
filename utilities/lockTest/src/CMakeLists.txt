@@ -88,10 +88,6 @@ else()
 endif() 
 
 
-#target_link_libraries (lockTest Scheduler)
-#target_link_libraries (lockTest PThread)
-target_link_libraries (lockTest Tools)
-target_link_libraries (lockTest ErrMsg)
 target_link_libraries (lockTest MultiEventsSet)
 if(CRYPTO_FOUND)
 	if (APPLE)

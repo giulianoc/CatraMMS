@@ -84,8 +84,6 @@ endif()
 
 #target_link_libraries (ffmpeg_getLiveStreamingInfo Scheduler)
 #target_link_libraries (ffmpeg_getLiveStreamingInfo PThread)
-target_link_libraries (ffmpeg_getLiveStreamingInfo Tools)
-target_link_libraries (ffmpeg_getLiveStreamingInfo ErrMsg)
 target_link_libraries (ffmpeg_getLiveStreamingInfo MultiEventsSet)
 if(CRYPTO_FOUND)
 	if (APPLE)

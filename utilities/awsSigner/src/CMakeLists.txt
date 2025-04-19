@@ -101,10 +101,9 @@ target_link_libraries(awsSigner Magick++-7.Q16HDRI)
 # target_link_libraries (awsSigner MagickCore-7.Q16HDRI) target_link_libraries
 # (awsSigner MagickWand-7.Q16HDRI) endif()
 #
+target_link_libraries(awsSigner Encrypt)
 target_link_libraries(awsSigner Scheduler)
 target_link_libraries(awsSigner PThread)
-target_link_libraries(awsSigner Tools)
-target_link_libraries(awsSigner ErrMsg)
 target_link_libraries(awsSigner MultiEventsSet)
 if(CRYPTO_FOUND)
   if(APPLE)

@@ -55,3 +55,6 @@
 [submodule "CatraLibraries/LdapWrapper"]
 	path = CatraLibraries/LdapWrapper
 	url = https://github.com/giulianoc/LdapWrapper.git
+[submodule "CatraLibraries/Scheduler"]
+	path = CatraLibraries/Scheduler
+	url = https://github.com/giulianoc/Scheduler.git

@@ -95,8 +95,6 @@ endif()
 
 #target_link_libraries (registerAdministratorCustomer Scheduler)
 #target_link_libraries (registerAdministratorCustomer PThread)
-target_link_libraries (addWorkspaceToExistingActiveDirectoryUser Tools)
-target_link_libraries (addWorkspaceToExistingActiveDirectoryUser ErrMsg)
 target_link_libraries (addWorkspaceToExistingActiveDirectoryUser MultiEventsSet)
 if(CRYPTO_FOUND)
 	if (APPLE)
