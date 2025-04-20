@@ -215,7 +215,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					string sqlStatement = std::format(
 						"select ij.ingestionJobKey from MMS_IngestionJob ij "
 						"where ij.status not like 'End_%' "
-						"and ij.startProcessing + INTERVAL '{} hours' <= NOW() at time zone 'utc' "
+						"and ij.processingStartingFrom + INTERVAL '{} hours' <= NOW() at time zone 'utc' "
 						"and not exists (select 1 from MMS_EncodingJob ej where ij.ingestionJobKey = ej.ingestionJobKey) "
 						"limit {}",
 						(_doNotManageIngestionsOlderThanDays + 1) * 24, sqlLimit
