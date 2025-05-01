@@ -73,8 +73,9 @@ then
 			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod"
 			hcloud load-balancer add-target --ip $privateIPAddress mms-api-prod
 			#nota che il load balancer si accorgera che il servizio è su quando nginx sarà fatto nuovamente ripartire
-			echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
-			sleep $sleepWaitingLoadBalancer
+			#Per cui lo sleep è stato spostato in mmsStart.sh
+			#echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
+			#sleep $sleepWaitingLoadBalancer
 		fi
 	fi
 elif [ "$command" == "status" ]

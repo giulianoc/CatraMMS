@@ -4,6 +4,7 @@
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
+#include <chrono>
 #include <random>
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
@@ -3537,7 +3538,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 	}
 }
 
-pair<string, string> MMSEngineDBFacade::getUserDetails(int64_t userKey)
+pair<string, string> MMSEngineDBFacade::getUserDetails(int64_t userKey, chrono::milliseconds *sqlDuration)
 {
 	string emailAddress;
 	string name;
@@ -3569,6 +3570,8 @@ pair<string, string> MMSEngineDBFacade::getUserDetails(int64_t userKey)
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
+			if (sqlDuration != nullptr)
+				*sqlDuration = chrono::milliseconds(elapsed);
 			if (!empty(res))
 			{
 				name = res[0]["name"].as<string>();

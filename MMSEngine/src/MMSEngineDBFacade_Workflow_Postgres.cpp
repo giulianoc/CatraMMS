@@ -509,7 +509,9 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				workflowRoot[field] = userKey;
 
 				{
-					pair<string, string> userDetails = getUserDetails(userKey);
+					chrono::milliseconds sqlDuration(0);
+					pair<string, string> userDetails = getUserDetails(userKey, &sqlDuration);
+					internalSqlDuration += sqlDuration;
 
 					string userName;
 
@@ -569,15 +571,14 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 
 				workflowsRoot.push_back(workflowRoot);
 			}
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
 			SQLQUERYLOG(
 				"getIngestionRootsStatus", elapsed,
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@getIngestionRootsStatus@",
-				sqlStatement, trans.connection->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
 

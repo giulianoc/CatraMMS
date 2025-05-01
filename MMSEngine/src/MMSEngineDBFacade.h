@@ -1293,7 +1293,7 @@ class MMSEngineDBFacade
 		bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 	);
 
-	pair<string, string> getUserDetails(int64_t userKey);
+	pair<string, string> getUserDetails(int64_t userKey, chrono::milliseconds *sqlDuration = nullptr);
 #ifdef __POSTGRES__
 	pair<int64_t, string> getUserDetailsByEmail(string email, bool warningIfError);
 #else
