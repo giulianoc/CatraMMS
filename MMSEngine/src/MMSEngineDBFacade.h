@@ -2322,11 +2322,12 @@ class MMSEngineDBFacade
 	void removeEncoder(int64_t encoderKey);
 
 	// tuple<string, string, string> getEncoderDetails(int64_t encoderKey);
-	tuple<string, string, string> encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster = false);
+	tuple<string, string, string>
+	encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster = false, chrono::milliseconds *sqlDuration = nullptr);
 	string encoder_columnAsString(string columnName, int64_t encoderKey, bool fromMaster = false);
 	shared_ptr<PostgresHelper::SqlResultSet> encoderQuery(
 		vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex = -1, int rows = -1, string orderBy = "",
-		bool notFoundAsException = true
+		bool notFoundAsException = true, chrono::milliseconds *sqlDuration = nullptr
 	);
 
 	bool isEncoderRunning(bool external, string protocol, string publicServerName, string internalServerName, int port);
@@ -2346,7 +2347,7 @@ class MMSEngineDBFacade
 		string labelOrder // "" or "asc" or "desc"
 	);
 
-	string getEncodersPoolDetails(int64_t encodersPoolKey);
+	string getEncodersPoolDetails(int64_t encodersPoolKey, chrono::milliseconds *sqlDuration = nullptr);
 
 	json getEncodersPoolList(
 		int start, int rows, int64_t workspaceKey, int64_t encodersPoolKey, string label,
@@ -2542,7 +2543,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
-		int64_t ingestionJobKey, int64_t workspaceKey, IngestionStatus ingestionStatus, IngestionType ingestionType, PostgresConnTrans &trans
+		int64_t ingestionJobKey, int64_t workspaceKey, IngestionStatus ingestionStatus, IngestionType ingestionType, PostgresConnTrans &trans,
+		chrono::milliseconds *sqlDuration = nullptr
 	);
 #else
 	tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> isIngestionJobToBeManaged(
@@ -2690,7 +2692,7 @@ class MMSEngineDBFacade
 		shared_ptr<Workspace> workspace, row &row,
 		bool dependencyInfo,	  // added for performance issue
 		bool ingestionJobOutputs, // added because output could be thousands of entries
-		PostgresConnTrans &trans
+		PostgresConnTrans &trans, chrono::milliseconds *sqlDuration = nullptr
 	);
 #else
 	json getIngestionJobRoot(

@@ -854,6 +854,7 @@ json MMSEngineDBFacade::getStreamList(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
+			chrono::milliseconds internalSqlDuration(0);
 			for (auto row : res)
 			{
 				json streamRoot;
@@ -881,7 +882,9 @@ json MMSEngineDBFacade::getStreamList(
 					{
 						try
 						{
-							string encodersPoolLabel = getEncodersPoolDetails(encodersPoolKey);
+							chrono::milliseconds sqlDuration(0);
+							string encodersPoolLabel = getEncodersPoolDetails(encodersPoolKey, &sqlDuration);
+							internalSqlDuration += sqlDuration;
 
 							field = "encodersPoolLabel";
 							streamRoot[field] = encodersPoolLabel;
@@ -944,8 +947,10 @@ json MMSEngineDBFacade::getStreamList(
 								field = "pushPublicEncoderName";
 								streamRoot[field] = pushPublicEncoderName;
 
+								chrono::milliseconds sqlDuration(0);
 								auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
-									encoder_LabelPublicServerNameInternalServerName(pushEncoderKey);
+									encoder_LabelPublicServerNameInternalServerName(pushEncoderKey, &sqlDuration);
+								internalSqlDuration += sqlDuration;
 
 								field = "pushEncoderLabel";
 								streamRoot[field] = pushEncoderLabel;
@@ -1102,7 +1107,7 @@ json MMSEngineDBFacade::getStreamList(
 
 				streamsRoot.push_back(streamRoot);
 			}
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
 			// per questa query abbiamo l'indice ma recupera tanti dati e prende un po piu di tempo
 			SQLQUERYLOG(
 				"getStreamList", elapsed,

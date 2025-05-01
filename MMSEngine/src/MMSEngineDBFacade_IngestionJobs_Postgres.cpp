@@ -4,6 +4,7 @@
 #include "PersistenceLock.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <chrono>
 #include <utility>
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
@@ -384,7 +385,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 }
 
 tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade::isIngestionJobToBeManaged(
-	int64_t ingestionJobKey, int64_t workspaceKey, IngestionStatus ingestionStatus, IngestionType ingestionType, PostgresConnTrans &trans
+	int64_t ingestionJobKey, int64_t workspaceKey, IngestionStatus ingestionStatus, IngestionType ingestionType, PostgresConnTrans &trans,
+	chrono::milliseconds *sqlDuration
 )
 {
 	bool ingestionJobToBeManaged = true;
@@ -407,6 +409,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 		// 2019-10-05: GroupOfTasks has always to be executed once the dependencies are in a final state.
 		//	This is because the manageIngestionJobStatusUpdate do not update the GroupOfTasks with a state
 		//	like End_NotToBeExecuted
+		chrono::milliseconds internalSqlDuration(0);
 		for (auto row : res)
 		{
 			if (!atLeastOneDependencyRowFound)
@@ -421,6 +424,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				result res = trans.transaction->exec(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+				internalSqlDuration += chrono::milliseconds(elapsed);
 				SQLQUERYLOG(
 					"default", elapsed,
 					"SQL statement"
@@ -513,7 +517,9 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				);
 			}
 		}
-		long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+		long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
+		if (sqlDuration != nullptr)
+			*sqlDuration = chrono::milliseconds(elapsed);
 		SQLQUERYLOG(
 			"default", elapsed,
 			"SQL statement"
@@ -3532,7 +3538,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 	shared_ptr<Workspace> workspace, row &row,
 	bool dependencyInfo,	  // added for performance issue
 	bool ingestionJobOutputs, // added because output could be thousands of entries
-	PostgresConnTrans &trans
+	PostgresConnTrans &trans, chrono::milliseconds *sqlDuration
 )
 {
 	json ingestionJobRoot;
@@ -3567,17 +3573,15 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		else
 			ingestionJobRoot[field] = row["label"].as<string>();
 
+		if (sqlDuration != nullptr)
+			*sqlDuration = chrono::milliseconds(0);
 		if (dependencyInfo)
 		{
-			tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> ingestionJobToBeManagedInfo =
-				isIngestionJobToBeManaged(ingestionJobKey, workspace->_workspaceKey, ingestionStatus, ingestionType, trans);
-
-			bool ingestionJobToBeManaged;
-			int64_t dependOnIngestionJobKey;
-			int dependOnSuccess;
-			IngestionStatus ingestionStatusDependency;
-
-			tie(ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency) = ingestionJobToBeManagedInfo;
+			chrono::milliseconds localSqlDuration;
+			auto [ingestionJobToBeManaged, dependOnIngestionJobKey, dependOnSuccess, ingestionStatusDependency] =
+				isIngestionJobToBeManaged(ingestionJobKey, workspace->_workspaceKey, ingestionStatus, ingestionType, trans, &localSqlDuration);
+			if (sqlDuration != nullptr)
+				*sqlDuration += localSqlDuration;
 
 			if (dependOnIngestionJobKey != -1)
 			{
@@ -3620,6 +3624,8 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 				mediaItemsRoot.push_back(mediaItemRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			if (sqlDuration != nullptr)
+				*sqlDuration += chrono::milliseconds(elapsed);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -3714,21 +3720,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		case IngestionType::Countdown:
 		case IngestionType::Cut:
 		case IngestionType::AddSilentAudio:
-
-			// in case of LiveRecorder and HighAvailability true, we will have 2 encodingJobs, one for the main and one for the backup,
-			//	we will take the main one. In case HighAvailability is false, we still have the main field set to true
-			// 2021-05-12: HighAvailability true is not used anymore
-			/*
-			if (ingestionType == IngestionType::LiveRecorder)
-				sqlStatement =
-					"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
-					"DATE_FORMAT(convert_tz(encodingJobStart, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobStart, "
-					"DATE_FORMAT(convert_tz(encodingJobEnd, @@session.time_zone, '+00:00'), '%Y-%m-%dT%H:%i:%sZ') as encodingJobEnd, "
-					"processorMMS, encoderKey, encodingPid, failuresNumber from MMS_EncodingJob where ingestionJobKey = ? "
-					"and JSON_EXTRACT(parameters, '$.main') = true "
-					;
-			else
-			*/
+		{
 			string sqlStatement = std::format(
 				"select encodingJobKey, type, parameters, status, encodingProgress, encodingPriority, "
 				"to_char(encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
@@ -3740,6 +3732,8 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			if (sqlDuration != nullptr)
+				*sqlDuration += chrono::milliseconds(elapsed);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -3837,6 +3831,9 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 				field = "encodingJob";
 				ingestionJobRoot[field] = encodingJobRoot;
 			}
+		}
+		break;
+		default:;
 		}
 	}
 	catch (exception const &e)

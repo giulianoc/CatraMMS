@@ -3686,23 +3686,17 @@ void API::ingestionRootsStatus(
 		int64_t ingestionRootKey = -1;
 		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
 		if (ingestionRootKeyIt != queryParameters.end() && ingestionRootKeyIt->second != "")
-		{
 			ingestionRootKey = stoll(ingestionRootKeyIt->second);
-		}
 
 		int64_t mediaItemKey = -1;
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
 		if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
-		{
 			mediaItemKey = stoll(mediaItemKeyIt->second);
-		}
 
 		int start = 0;
 		auto startIt = queryParameters.find("start");
 		if (startIt != queryParameters.end() && startIt->second != "")
-		{
 			start = stoll(startIt->second);
-		}
 
 		int rows = 10;
 		auto rowsIt = queryParameters.find("rows");
@@ -3810,23 +3804,6 @@ void API::ingestionRootsStatus(
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{

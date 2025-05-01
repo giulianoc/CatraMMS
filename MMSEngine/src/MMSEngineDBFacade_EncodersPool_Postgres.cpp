@@ -6,6 +6,7 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <algorithm>
+#include <chrono>
 
 int64_t MMSEngineDBFacade::addEncoder(
 	string label, bool external, bool enabled, string protocol, string publicServerName, string internalServerName, int port
@@ -298,12 +299,13 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 	}
 }
 
-tuple<string, string, string> MMSEngineDBFacade::encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster)
+tuple<string, string, string>
+MMSEngineDBFacade::encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster, chrono::milliseconds *sqlDuration)
 {
 	try
 	{
 		vector<string> requestedColumns = {"mms_encoder:.label", "mms_encoder:.publicServerName", "mms_encoder:.internalServerName"};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster, -1, -1, "", true, sqlDuration);
 
 		string label = (*sqlResultSet)[0][0].as<string>("");
 		string publicServerName = (*sqlResultSet)[0][1].as<string>("");
@@ -480,20 +482,10 @@ string MMSEngineDBFacade::encoder_InternalServerName(int64_t encoderKey, bool fr
 */
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
-	vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException
+	vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException,
+	chrono::milliseconds *sqlDuration
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
@@ -556,7 +548,9 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 			result res = trans.transaction->exec(sqlStatement);
 			sqlResultSet = _postgresHelper.buildResult(res);
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			long elapsed = sqlResultSet->getSqlDuration().count();
+			if (sqlDuration != nullptr)
+				*sqlDuration = sqlResultSet->getSqlDuration();
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -1483,7 +1477,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, string protocol
 	return make_pair(isRunning, cpuUsage);
 }
 
-string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey)
+string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono::milliseconds *sqlDuration)
 {
 	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -1519,6 +1513,8 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey)
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			if (sqlDuration != nullptr)
+				*sqlDuration = chrono::milliseconds(elapsed);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
