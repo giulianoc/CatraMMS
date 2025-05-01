@@ -1264,10 +1264,11 @@ nontransaction trans{*(conn->_sqlConnection)};
 				ingestionJobKey, utcRecordingPeriodStart, utcRecordingPeriodEnd
 			);
 			// "RecordingPeriod" : { "AutoRenew" : true, "End" : "2020-05-10T02:00:00Z", "Start" : "2020-05-03T02:00:00Z" }
-			// to_timestamp({}) riceve utc ma ritorna la data in local time
 			string sqlStatement = std::format(
 				"update MMS_IngestionJob set "
 				"metaDataContent = jsonb_set("
+				// to_timestamp({}) riceve utc ma ritorna la data in local time (secondo il timezone della sessione).
+				// Per questo motivo serve at time zone 'utc'
 				"jsonb_set(metaDataContent, '{{schedule,start}}', ('\"' || to_char(to_timestamp({}) at time zone 'utc', 'YYYY-MM-DD') || 'T' || "
 				"to_char(to_timestamp({}) at time zone 'utc', 'HH24:MI:SS') || 'Z\"')::jsonb), "
 				"'{{schedule,end}}', ('\"' || to_char(to_timestamp({}) at time zone 'utc', 'YYYY-MM-DD') || 'T' || "
