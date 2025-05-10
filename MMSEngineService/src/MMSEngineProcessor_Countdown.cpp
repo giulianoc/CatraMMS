@@ -175,6 +175,7 @@ void MMSEngineProcessor::manageCountdown(
 
 					abs(utcNow - utcProxyPeriodEnd), // ttlInSeconds,
 					999999,							 // maxRetries,
+					false,							 // playerIPToBeAuthorized
 					false,							 // save,
 					"MMS_SignedURL",				 // deliveryType,
 

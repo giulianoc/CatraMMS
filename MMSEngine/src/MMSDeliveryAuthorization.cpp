@@ -94,7 +94,7 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 }
 
 pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
-	int64_t userKey, shared_ptr<Workspace> requestWorkspace, string clientIPAddress,
+	int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP,
 
 	int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey, string encodingProfileLabel,
 
@@ -102,7 +102,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 	int64_t ingestionJobKey, int64_t deliveryCode,
 
-	int ttlInSeconds, int maxRetries,
+	int ttlInSeconds, int maxRetries, bool playerIPToBeAuthorized,
 
 	bool save,
 	// deliveryType:
@@ -248,7 +248,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey, clientIPAddress, localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries, true
+					userKey, playerIPToBeAuthorized ? playerIP : "", localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries, true
 				);
 
 				deliveryURL = std::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
@@ -330,7 +330,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			try
 			{
 				_mmsEngineDBFacade->addRequestStatistic(
-					requestWorkspace->_workspaceKey, clientIPAddress, userId, localPhysicalPathKey,
+					requestWorkspace->_workspaceKey, playerIP, userId, localPhysicalPathKey,
 					-1, // confStreamKey
 					title
 				);
@@ -433,7 +433,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							filePath = "/" + filePath;
 
 						if (secureToken != "")
-							playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds);
+							playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds, playerIPToBeAuthorized ? playerIP : "");
 						else
 							playURL = std::format("https://{}{}", resourceURL, filePath);
 					}
@@ -634,7 +634,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
 						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-							userKey, clientIPAddress,
+							userKey, playerIPToBeAuthorized ? playerIP : "",
 							-1,			  // physicalPathKey,	vod key
 							deliveryCode, // live key
 							deliveryURI, ttlInSeconds, maxRetries, true
@@ -727,7 +727,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
 						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-							userKey, clientIPAddress,
+							userKey, playerIPToBeAuthorized ? playerIP : "",
 							-1,			  // physicalPathKey,	vod key
 							deliveryCode, // live key
 							deliveryURI, ttlInSeconds, maxRetries, true
@@ -830,7 +830,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				*/
 
 				_mmsEngineDBFacade->addRequestStatistic(
-					requestWorkspace->_workspaceKey, clientIPAddress, userId,
+					requestWorkspace->_workspaceKey, playerIP, userId,
 					-1, // localPhysicalPathKey,
 					streamConfKey, configurationLabel
 				);
@@ -870,7 +870,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey, clientIPAddress,
+					userKey, playerIPToBeAuthorized ? playerIP : "",
 					-1, // physicalPathKey,
 					deliveryCode, deliveryURI, ttlInSeconds, maxRetries, true
 				);
@@ -1704,7 +1704,7 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 string MMSDeliveryAuthorization::getSignedCDN77URL(
 	string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 	string filePath,	// /file/playlist/d.m3u8
-	string secureToken, long expirationInSeconds
+	string secureToken, long expirationInSeconds, string playerIP
 )
 {
 	SPDLOG_INFO(
@@ -1712,8 +1712,9 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 		", resourceURL: {}"
 		", filePath: {}"
 		", secureToken: {}"
-		", expirationInSeconds: {}",
-		resourceURL, filePath, secureToken, expirationInSeconds
+		", expirationInSeconds: {}"
+		", playerIP: {}",
+		resourceURL, filePath, secureToken, expirationInSeconds, playerIP
 	);
 
 	try
@@ -1761,7 +1762,8 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			}
 
 			// $hashStr = $strippedPath . $secureToken;
-			string hashStr = strippedPath + secureToken;
+			string hashStr =
+				playerIP.empty() ? std::format("{}{}", strippedPath, secureToken) : std::format("{}{} {}", strippedPath, playerIP, secureToken);
 
 			// if ($expiryTimestamp) {
 			// 	$hashStr = $expiryTimestamp . $hashStr;
@@ -1895,22 +1897,12 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			", filePath: {}"
 			", secureToken: {}"
 			", expirationInSeconds: {}"
+			", playerIP: {}"
 			", signedURL: {}",
-			resourceURL, filePath, secureToken, expirationInSeconds, signedURL
+			resourceURL, filePath, secureToken, expirationInSeconds, playerIP, signedURL
 		);
 
 		return signedURL;
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = std::format(
-			"getSignedCDN77URL failed"
-			", e.what(): {}",
-			e.what()
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1921,7 +1913,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		throw runtime_error(errorMessage);
+		throw;
 	}
 }
 

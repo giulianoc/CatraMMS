@@ -5196,6 +5196,7 @@ void API::changeLiveProxyPlaylist(
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 										999999,							 // maxRetries,
+										false,							 // playerIPToBeAuthorized
 										false,							 // save,
 										"MMS_SignedURL",				 // deliveryType,
 
@@ -5279,12 +5280,12 @@ void API::changeLiveProxyPlaylist(
 
 									broadcastDefaultPhysicalPathKey,
 
-									-1, // ingestionJobKey,	(in case
-										// of live)
+									-1, // ingestionJobKey,	(in case of live)
 									-1, // deliveryCode,
 
 									abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 									999999,							 // maxRetries,
+									false,							 // playerIPToBeAuthorized
 									false,							 // save,
 									"MMS_SignedURL",				 // deliveryType,
 
@@ -5581,6 +5582,7 @@ void API::changeLiveProxyPlaylist(
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 										999999,							 // maxRetries,
+										false,							 // playerIPToBeAuthorized
 										false,							 // save,
 										"MMS_SignedURL",				 // deliveryType,
 
@@ -6568,6 +6570,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 
 						365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
 						999999,				// maxRetries,
+						false,				// playerIPToBeAuthorized
 						false,				// save,
 						"MMS_SignedURL",	// deliveryType,
 

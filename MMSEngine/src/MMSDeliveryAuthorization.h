@@ -30,9 +30,9 @@ class MMSDeliveryAuthorization
 	MMSDeliveryAuthorization(json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade);
 
 	pair<string, string> createDeliveryAuthorization(
-		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string clientIPAddress, int64_t mediaItemKey, string uniqueName,
-		int64_t encodingProfileKey, string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode,
-		int ttlInSeconds, int maxRetries, bool save, string deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
+		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP, int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey,
+		string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode, int ttlInSeconds, int maxRetries,
+		bool playerIPToBeAuthorized, bool save, string deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
 	);
 
 	string checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
@@ -46,7 +46,7 @@ class MMSDeliveryAuthorization
 	static string getSignedCDN77URL(
 		string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
 		string filePath,	// /file/playlist/d.m3u8
-		string secureToken, long expirationInSeconds
+		string secureToken, long expirationInSeconds, string clientIP = ""
 	);
 	string getAWSSignedURL(string playURL, int expirationInSeconds);
 

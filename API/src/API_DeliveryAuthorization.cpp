@@ -22,13 +22,12 @@ void API::createDeliveryAuthorization(
 		// - sia questo sistema intermedio che crea le richieste di delivery
 		// Questo sistema forward l'IP del client come parametro
 		string remoteIPAddress = getQueryParameter(queryParameters, "remoteIPAddress", clientIPAddress, false);
+		bool playerIPToBeAuthorized = getQueryParameter(queryParameters, "playerIPToBeAuthorized", false, false);
 
 		int64_t physicalPathKey = -1;
 		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
 		if (physicalPathKeyIt != queryParameters.end())
-		{
 			physicalPathKey = stoll(physicalPathKeyIt->second);
-		}
 
 		int64_t mediaItemKey = -1;
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
@@ -84,17 +83,13 @@ void API::createDeliveryAuthorization(
 		int64_t ingestionJobKey = -1;
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
 		if (ingestionJobKeyIt != queryParameters.end())
-		{
 			ingestionJobKey = stoll(ingestionJobKeyIt->second);
-		}
 
 		// this is for live authorization
 		int64_t deliveryCode = -1;
 		auto deliveryCodeIt = queryParameters.find("deliveryCode");
 		if (deliveryCodeIt != queryParameters.end())
-		{
 			deliveryCode = stoll(deliveryCodeIt->second);
-		}
 
 		if (physicalPathKey == -1 &&
 			((mediaItemKey == -1 && uniqueName == "")
@@ -113,36 +108,22 @@ void API::createDeliveryAuthorization(
 		int ttlInSeconds = _defaultTTLInSeconds;
 		auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
 		if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
-		{
 			ttlInSeconds = stol(ttlInSecondsIt->second);
-		}
 
 		int maxRetries = _defaultMaxRetries;
 		auto maxRetriesIt = queryParameters.find("maxRetries");
 		if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
-		{
 			maxRetries = stol(maxRetriesIt->second);
-		}
 
 		bool redirect = _defaultRedirect;
 		auto redirectIt = queryParameters.find("redirect");
 		if (redirectIt != queryParameters.end())
-		{
-			if (redirectIt->second == "true")
-				redirect = true;
-			else
-				redirect = false;
-		}
+			redirect = redirectIt->second == "true";
 
 		bool save = false;
 		auto saveIt = queryParameters.find("save");
 		if (saveIt != queryParameters.end())
-		{
-			if (saveIt->second == "true")
-				save = true;
-			else
-				save = false;
-		}
+			save = saveIt->second == "true";
 
 		string deliveryType;
 		auto deliveryTypeIt = queryParameters.find("deliveryType");
@@ -152,12 +133,7 @@ void API::createDeliveryAuthorization(
 		bool filteredByStatistic = false;
 		auto filteredByStatisticIt = queryParameters.find("filteredByStatistic");
 		if (filteredByStatisticIt != queryParameters.end())
-		{
-			if (filteredByStatisticIt->second == "true")
-				filteredByStatistic = true;
-			else
-				filteredByStatistic = false;
-		}
+			filteredByStatistic = filteredByStatisticIt->second == "true";
 
 		string userId;
 		auto userIdIt = queryParameters.find("userId");
@@ -187,7 +163,7 @@ void API::createDeliveryAuthorization(
 
 				ingestionJobKey, deliveryCode,
 
-				ttlInSeconds, maxRetries, save, deliveryType,
+				ttlInSeconds, maxRetries, playerIPToBeAuthorized, save, deliveryType,
 
 				warningIfMissingMediaItemKey, filteredByStatistic, userId
 			);
@@ -419,7 +395,9 @@ void API::createBulkOfDeliveryAuthorization(
 								-1, // ingestionJobKey,
 								-1, // deliveryCode,
 
-								ttlInSeconds, maxRetries, save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
+								ttlInSeconds, maxRetries,
+								false, // playerIPToBeAuthorized
+								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
 						catch (MediaItemKeyNotFound &e)
@@ -530,7 +508,9 @@ void API::createBulkOfDeliveryAuthorization(
 								-1, // ingestionJobKey,
 								-1, // deliveryCode,
 
-								ttlInSeconds, maxRetries, save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
+								ttlInSeconds, maxRetries,
+								false, // playerIPToBeAuthorized
+								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
 						catch (MediaItemKeyNotFound &e)
@@ -631,7 +611,9 @@ void API::createBulkOfDeliveryAuthorization(
 
 							ingestionJobKey, deliveryCode,
 
-							ttlInSeconds, maxRetries, save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
+							ttlInSeconds, maxRetries,
+							false, // playerIPToBeAuthorized
+							save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 						);
 					}
 					catch (MediaItemKeyNotFound &e)
