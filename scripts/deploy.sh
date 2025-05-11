@@ -94,7 +94,7 @@ echo "mmsStatusALL.sh"
 /home/mms/mmsStatusALL.sh
 
 #per il transcoder serve un po piuu di tempo
-sleep 2
+sleep 3
 
 echo ""
 echo "------------------------------------------------------------------------------------------------------------------------------------------"
