@@ -351,8 +351,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			", title: {}"
 			", deliveryURI: {}"
 			", deliveryType: {}"
+			", mediaItemKey: {}"
+			", physicalPathKey: {}"
+			", ttlInSeconds: {}"
+			", playerIP: {}"
+			", playerIPToBeAuthorized: {}"
 			", deliveryURL (authorized): {}",
-			title, deliveryURI, deliveryType, deliveryURL
+			title, deliveryURI, deliveryType, mediaItemKey, physicalPathKey, ttlInSeconds, playerIP, playerIPToBeAuthorized, deliveryURL
 		);
 	}
 	else
