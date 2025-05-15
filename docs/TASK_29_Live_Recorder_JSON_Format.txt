@@ -33,6 +33,11 @@
 		// optional: It is possible to use this field to specify any other input options
 		"otherInputOptions": "",
 
+		// optional: true if an utc time overlay has to be overlayed in the recording. Default is false
+		// 	If true an encoding (h264 and aac) is applied to the input feed.
+		// 	If false the recording saves the received payload without any change
+		"utcTimeOverlay": false,
+
 		// mandatory: It specifies the recording period, his format is:
 		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
 		"schedule": {

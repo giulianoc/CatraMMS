@@ -406,6 +406,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		json framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetected"];
 
 		string otherInputOptions = JSONUtils::asString(_liveRecording->_ingestedParametersRoot, "otherInputOptions", "");
+		bool utcTimeOverlay = JSONUtils::asBool(_liveRecording->_ingestedParametersRoot, "utcTimeOverlay", false);
 
 		_liveRecording->_segmenterType = "hlsSegmenter";
 		// _liveRecording->_segmenterType = "streamSegmenter";
@@ -428,7 +429,7 @@ void LiveRecorder::encodeContent(string requestBody)
 			captureLive_videoInputFormat, captureLive_frameRate, captureLive_width, captureLive_height, captureLive_audioDeviceNumber,
 			captureLive_channelsNumber,
 
-			userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+			utcTimeOverlay, userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
 
 			segmentDurationInSeconds, outputFileFormat, _liveRecording->_segmenterType,
 
