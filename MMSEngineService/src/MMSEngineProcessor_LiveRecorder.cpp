@@ -306,12 +306,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
-		time_t utcRecordingPeriodStart = Datetime::sDateSecondsToUtc(recordingPeriodStart);
+		time_t utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 		// SPDLOG_ERROR(string() + "ctime recordingPeriodStart: "
 		//		+ ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
-		time_t utcRecordingPeriodEnd = Datetime::sDateSecondsToUtc(recordingPeriodEnd);
+		time_t utcRecordingPeriodEnd = Datetime::parseUtcStringToUtcInSecs(recordingPeriodEnd);
 
 		string tvType;
 		int64_t tvServiceId = -1;

@@ -76,7 +76,7 @@ void MMSEngineProcessor::manageCountdown(
 				throw runtime_error(errorMessage);
 			}
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = Datetime::sDateSecondsToUtc(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
 			field = "end";
 			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
@@ -88,7 +88,7 @@ void MMSEngineProcessor::manageCountdown(
 				throw runtime_error(errorMessage);
 			}
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = Datetime::sDateSecondsToUtc(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
 		}
 
 		string mmsSourceVideoAssetPathName;

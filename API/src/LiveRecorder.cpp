@@ -138,7 +138,7 @@ void LiveRecorder::encodeContent(string requestBody)
 				throw runtime_error(errorMessage);
 			}
 			string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
-			utcRecordingPeriodStart = Datetime::sDateSecondsToUtc(recordingPeriodStart);
+			utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 			field = "end";
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -155,7 +155,7 @@ void LiveRecorder::encodeContent(string requestBody)
 				throw runtime_error(errorMessage);
 			}
 			string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
-			utcRecordingPeriodEnd = Datetime::sDateSecondsToUtc(recordingPeriodEnd);
+			utcRecordingPeriodEnd = Datetime::parseUtcStringToUtcInSecs(recordingPeriodEnd);
 
 			field = "autoRenew";
 			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);

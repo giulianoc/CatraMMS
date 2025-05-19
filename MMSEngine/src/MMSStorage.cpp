@@ -6,6 +6,7 @@
 #include "StringUtils.h"
 #include "System.h"
 #include "spdlog/spdlog.h"
+#include <exception>
 #include <fstream>
 
 MMSStorage::MMSStorage(
@@ -23,33 +24,36 @@ MMSStorage::MMSStorage(
 		_hostName = System::hostName();
 
 		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-		_logger->info(
-			__FILEREF__ + "Configuration item" +
-			", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
+		SPDLOG_INFO(
+			"Configuration item"
+			", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
+			_waitingNFSSync_maxMillisecondsToWait
 		);
 
 		_storage = JSONUtils::asString(configuration["storage"], "path", "");
-		_logger->info(__FILEREF__ + "Configuration item" + ", storage->path: " + _storage.string());
+		SPDLOG_INFO(
+			"Configuration item"
+			", storage->path: {}",
+			_storage.string()
+		);
 
 		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
-		_logger->info(
-			__FILEREF__ + "Configuration item" + ", storage->freeSpaceToLeaveInEachPartitionInMB: " + to_string(_freeSpaceToLeaveInEachPartitionInMB)
+		SPDLOG_INFO(
+			"Configuration item"
+			", storage->freeSpaceToLeaveInEachPartitionInMB: {}",
+			_freeSpaceToLeaveInEachPartitionInMB
 		);
 
 		if (!_noFileSystemAccess)
-		{
-			// MMSStorage::createDirectories(configuration, _logger);
-
 			refreshPartitionsFreeSizes();
-		}
-	}
-	catch (runtime_error &e)
-	{
-		_logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
 	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
+		SPDLOG_ERROR(
+			"MMSStorage::MMSStorage failed"
+			", e.what(): {}",
+			e.what()
+		);
 	}
 }
 
@@ -308,9 +312,13 @@ MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfile
 		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
 			externalReadOnlyStorage) = storageDetails;
 
-		_logger->info(
-			__FILEREF__ + "getMMSAssetPathName ..." + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
-			", workspaceDirectoryName: " + workspace->_directoryName + ", relativePath: " + relativePath + ", fileName: " + fileName
+		SPDLOG_INFO(
+			"getMMSAssetPathName ..."
+			", mmsPartitionNumber: {}"
+			", workspaceDirectoryName: {}"
+			", relativePath: {}"
+			", fileName: {}",
+			mmsPartitionNumber, workspace->_directoryName, relativePath, fileName
 		);
 		fs::path physicalPath = getMMSAssetPathName(externalReadOnlyStorage, mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
 
@@ -318,32 +326,31 @@ MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfile
 	}
 	catch (MediaItemKeyNotFound &e)
 	{
-		string errorMessage = string("getPhysicalPathDetails failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-							  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", e.what(): " + e.what();
+		string errorMessage = std::format(
+			"getPhysicalPathDetails failed"
+			", mediaItemKey: {}"
+			", encodingProfileKey: {}"
+			", e.what(): {}",
+			mediaItemKey, encodingProfileKey, e.what()
+		);
 		if (warningIfMissing)
-			_logger->warn(__FILEREF__ + errorMessage);
+			SPDLOG_WARN(errorMessage);
 		else
-			_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("getPhysicalPathDetails failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-							  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("getPhysicalPathDetails failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-							  ", encodingProfileKey: " + to_string(encodingProfileKey);
+		SPDLOG_ERROR(
+			"getPhysicalPathDetails failed"
+			", mediaItemKey: {}"
+			", encodingProfileKey: {}"
+			", e.what(): {}",
+			mediaItemKey, encodingProfileKey, e.what()
+		);
 
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
+		throw;
 	}
 }
 
@@ -366,40 +373,29 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
 		tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
 			externalReadOnlyStorage) = storageDetails;
 
-		_logger->info(
-			__FILEREF__ + "getMMSAssetPathName ..." + ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage) +
-			", mmsPartitionNumber: " + to_string(mmsPartitionNumber) + ", workspaceDirectoryName: " + workspace->_directoryName +
-			", relativePath: " + relativePath + ", fileName: " + fileName
+		SPDLOG_INFO(
+			"getMMSAssetPathName ..."
+			", externalReadOnlyStorage: {}"
+			", mmsPartitionNumber: {}"
+			", workspaceDirectoryName: {}"
+			", relativePath: {}"
+			", fileName: {}",
+			externalReadOnlyStorage, mmsPartitionNumber, workspace->_directoryName, relativePath, fileName
 		);
 		fs::path physicalPath = getMMSAssetPathName(externalReadOnlyStorage, mmsPartitionNumber, workspace->_directoryName, relativePath, fileName);
 
 		return make_tuple(physicalPath, mmsPartitionNumber, relativePath, fileName, sizeInBytes, deliveryFileName);
 	}
-	catch (MediaItemKeyNotFound &e)
-	{
-		string errorMessage =
-			string("getPhysicalPathDetails failed") + ", physicalPathKey: " + to_string(physicalPathKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage =
-			string("getPhysicalPathDetails failed") + ", physicalPathKey: " + to_string(physicalPathKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		string errorMessage = string("getPhysicalPathDetails failed") + ", physicalPathKey: " + to_string(physicalPathKey);
+		SPDLOG_ERROR(
+			"getPhysicalPathDetails failed"
+			", physicalPathKey: {}"
+			", e.what(): {}",
+			physicalPathKey, e.what()
+		);
 
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
+		throw;
 	}
 }
 
@@ -437,10 +433,13 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 
 		if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
 		{
-			string errorMessage = string("Workspace of the content and Workspace of the requester is different") +
-								  ", contentWorkspace->_workspaceKey: " + to_string(contentWorkspace->_workspaceKey) +
-								  ", requestWorkspace->_workspaceKey: " + to_string(requestWorkspace->_workspaceKey);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"Workspace of the content and Workspace of the requester is different"
+				", contentWorkspace->_workspaceKey: {}"
+				", requestWorkspace->_workspaceKey: {}",
+				contentWorkspace->_workspaceKey, requestWorkspace->_workspaceKey
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -464,29 +463,16 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 
 		return make_tuple(title, mmsPartitionNumber, deliveryFileName, deliveryURI);
 	}
-	catch (MediaItemKeyNotFound &e)
-	{
-		string errorMessage = string("getDeliveryURI failed") + ", physicalPathKey: " + to_string(physicalPathKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("getDeliveryURI failed") + ", physicalPathKey: " + to_string(physicalPathKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		string errorMessage = string("getDeliveryURI failed") + ", physicalPathKey: " + to_string(physicalPathKey);
+		SPDLOG_ERROR(
+			"getDeliveryURI failed"
+			", physicalPathKey: {}"
+			", e.what(): {}",
+			physicalPathKey, e.what()
+		);
 
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
+		throw;
 	}
 }
 
@@ -527,10 +513,13 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 
 		if (contentWorkspace->_workspaceKey != requestWorkspace->_workspaceKey)
 		{
-			string errorMessage = string("Workspace of the content and Workspace of the requester is different") +
-								  ", contentWorkspace->_workspaceKey: " + to_string(contentWorkspace->_workspaceKey) +
-								  ", requestWorkspace->_workspaceKey: " + to_string(requestWorkspace->_workspaceKey);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"Workspace of the content and Workspace of the requester is different"
+				", contentWorkspace->_workspaceKey: {}"
+				", requestWorkspace->_workspaceKey: {}",
+				contentWorkspace->_workspaceKey, requestWorkspace->_workspaceKey
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -562,23 +551,17 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 
 		throw e;
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("getDeliveryURI failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-							  ", encodingProfileKey: " + to_string(encodingProfileKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		string errorMessage =
-			string("getDeliveryURI failed") + ", mediaItemKey: " + to_string(mediaItemKey) + ", encodingProfileKey: " + to_string(encodingProfileKey);
+		SPDLOG_ERROR(
+			"getDeliveryURI failed"
+			", mediaItemKey: {}"
+			", encodingProfileKey: {}"
+			", e.what(): {}",
+			mediaItemKey, encodingProfileKey, e.what()
+		);
 
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
+		throw;
 	}
 }
 
@@ -640,21 +623,16 @@ MMSStorage::getLiveDeliveryDetails(string directoryId, string liveFileExtension,
 			deliveryPathName = deliveryPath / deliveryFileName;
 		}
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("getLiveDeliveryDetails failed") + ", directoryId: " + directoryId + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		string errorMessage = string("getLiveDeliveryDetails failed") + ", directoryId: " + directoryId;
+		SPDLOG_ERROR(
+			"getLiveDeliveryDetails failed"
+			", directoryId: {}"
+			", e.what(): {}",
+			directoryId, e.what()
+		);
 
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw e;
+		throw;
 	}
 
 	return make_tuple(deliveryPathName, deliveryPath, deliveryFileName);
@@ -668,8 +646,12 @@ fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> works
 	//	non avrebbe piu senso
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -679,7 +661,11 @@ fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> works
 
 	if (!fs::exists(workspaceIngestionDirectory))
 	{
-		_logger->info(__FILEREF__ + "Create directory" + ", workspaceIngestionDirectory: " + workspaceIngestionDirectory.string());
+		SPDLOG_INFO(
+			"Create directory"
+			", workspaceIngestionDirectory: {}",
+			workspaceIngestionDirectory.string()
+		);
 		fs::create_directories(workspaceIngestionDirectory);
 		fs::permissions(
 			workspaceIngestionDirectory,
@@ -791,8 +777,12 @@ fs::path MMSStorage::getStagingAssetPathName(
 
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -842,7 +832,11 @@ fs::path MMSStorage::getStagingAssetPathName(
 		//	nel caso di directory 'locale' per il transcoder, non bisogna creare qui la directory
 		if (!neededForTranscoder && !fs::exists(assetPathName))
 		{
-			_logger->info(__FILEREF__ + "Create directory" + ", assetPathName: " + assetPathName.string());
+			SPDLOG_INFO(
+				"Create directory"
+				", assetPathName: {}",
+				assetPathName.string()
+			);
 			fs::create_directories(assetPathName);
 			fs::permissions(
 				assetPathName,
@@ -864,19 +858,30 @@ fs::path MMSStorage::getStagingAssetPathName(
 			{
 				if (fs::is_directory(assetPathName))
 				{
-					_logger->info(__FILEREF__ + "Remove directory" + ", assetPathName: " + assetPathName.string());
+					SPDLOG_INFO(
+						"Remove directory"
+						", assetPathName: {}",
+						assetPathName.string()
+					);
 					fs::remove_all(assetPathName);
 				}
 				else if (fs::is_regular_file(assetPathName))
 				{
-					_logger->info(__FILEREF__ + "Remove file" + ", assetPathName: " + assetPathName.string());
+					SPDLOG_INFO(
+						"Remove file"
+						", assetPathName: {}",
+						assetPathName.string()
+					);
 					fs::remove(assetPathName);
 				}
 				else
 				{
-					string errorMessage = string("Unexpected file in staging") + ", assetPathName: " + assetPathName.string();
-
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = std::format(
+						"Unexpected file in staging"
+						", assetPathName: {}",
+						assetPathName.string()
+					);
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -912,8 +917,12 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -926,7 +935,11 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 
 	if (!fs::exists(mmsAssetPathName))
 	{
-		_logger->info(__FILEREF__ + "Create directory" + ", mmsAssetPathName: " + mmsAssetPathName.string());
+		SPDLOG_INFO(
+			"Create directory"
+			", mmsAssetPathName: {}",
+			mmsAssetPathName.string()
+		);
 		fs::create_directories(mmsAssetPathName);
 		fs::permissions(
 			mmsAssetPathName,
@@ -945,13 +958,21 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 	{
 		if (_noFileSystemAccess)
 		{
-			string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"no rights to execute this method"
+				", _noFileSystemAccess: {}",
+				_noFileSystemAccess
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(__FILEREF__ + "getStorageDetailsByPhysicalPathKey ..." + ", physicalPathKey: " + to_string(physicalPathKey));
+		SPDLOG_INFO(
+			"getStorageDetailsByPhysicalPathKey ..."
+			", physicalPathKey: {}",
+			physicalPathKey
+		);
 
 		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, uint64_t, bool>
 			storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey, true /*fromMaster*/);
@@ -977,31 +998,22 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 			);
 		}
 
-		_logger->info(__FILEREF__ + "removePhysicalPathKey ..." + ", physicalPathKey: " + to_string(physicalPathKey));
-
+		SPDLOG_INFO(
+			"removePhysicalPathKey ..."
+			", physicalPathKey: {}",
+			physicalPathKey
+		);
 		_mmsEngineDBFacade->removePhysicalPath(physicalPathKey);
-	}
-	catch (MediaItemKeyNotFound &e)
-	{
-		string errorMessage = string("removePhysicalPath failed") + ", physicalPathKey: " + to_string(physicalPathKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("removePhysicalPath failed") + ", physicalPathKey: " + to_string(physicalPathKey) + ", e.what(): " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("removePhysicalPath failed") + ", physicalPathKey: " + to_string(physicalPathKey);
-
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"removePhysicalPath failed"
+			", physicalPathKey: {}"
+			", e.what(): {}",
+			physicalPathKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1013,13 +1025,21 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 	{
 		if (_noFileSystemAccess)
 		{
-			string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"no rights to execute this method"
+				", _noFileSystemAccess: {}",
+				_noFileSystemAccess
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(__FILEREF__ + "getAllStorageDetails ..." + ", mediaItemKey: " + to_string(mediaItemKey));
+		SPDLOG_INFO(
+			"getAllStorageDetails ..."
+			", mediaItemKey: {}",
+			mediaItemKey
+		);
 
 		vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
 		_mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, false /*fromMaster*/, allStorageDetails);
@@ -1046,22 +1066,22 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 			}
 		}
 
-		_logger->info(__FILEREF__ + "removeMediaItem ..." + ", mediaItemKey: " + to_string(mediaItemKey));
+		SPDLOG_INFO(
+			"removeMediaItem ..."
+			", mediaItemKey: {}",
+			mediaItemKey
+		);
 		_mmsEngineDBFacade->removeMediaItem(mediaItemKey);
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("removeMediaItem failed") + ", mediaItemKey: " + to_string(mediaItemKey) + ", exception: " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
-		string errorMessage = string("removeMediaItem failed") + ", mediaItemKey: " + to_string(mediaItemKey);
-
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"removeMediaItem failed"
+			", mediaItemKey: {}"
+			", exception: {}",
+			mediaItemKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1076,14 +1096,21 @@ void MMSStorage::removePhysicalPathFile(
 	{
 		if (_noFileSystemAccess)
 		{
-			string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"no rights to execute this method"
+				", _noFileSystemAccess: {}",
+				_noFileSystemAccess
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(
-			__FILEREF__ + "removePhysicalPathFile" + ", mediaItemKey: " + to_string(mediaItemKey) + ", physicalPathKey: " + to_string(physicalPathKey)
+		SPDLOG_INFO(
+			"removePhysicalPathFile"
+			", mediaItemKey: {}"
+			", physicalPathKey: {}",
+			mediaItemKey, physicalPathKey
 		);
 
 		{
@@ -1099,10 +1126,14 @@ void MMSStorage::removePhysicalPathFile(
 				fileName = "";
 			}
 
-			_logger->info(
-				__FILEREF__ + "getMMSAssetPathName ..." + ", externalReadOnlyStorage: " + to_string(externalReadOnlyStorage) +
-				", partitionKey: " + to_string(partitionKey) + ", workspaceDirectoryName: " + workspaceDirectoryName +
-				", relativePath: " + relativePath + ", fileName: " + fileName
+			SPDLOG_INFO(
+				"getMMSAssetPathName ..."
+				", externalReadOnlyStorage: {}"
+				", partitionKey: {}"
+				", workspaceDirectoryName: {}"
+				", relativePath: {}"
+				", fileName: {}",
+				externalReadOnlyStorage, partitionKey, workspaceDirectoryName, relativePath, fileName
 			);
 			fs::path mmsAssetPathName = getMMSAssetPathName(externalReadOnlyStorage, partitionKey, workspaceDirectoryName, relativePath, fileName);
 
@@ -1112,92 +1143,88 @@ void MMSStorage::removePhysicalPathFile(
 				{
 					try
 					{
-						_logger->info(__FILEREF__ + "Remove directory" + ", mmsAssetPathName: " + mmsAssetPathName.string());
+						SPDLOG_INFO(
+							"Remove directory"
+							", mmsAssetPathName: {}",
+							mmsAssetPathName.string()
+						);
 						fs::remove_all(mmsAssetPathName);
-					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = string("removeDirectory failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-											  ", physicalPathKey: " + to_string(physicalPathKey) +
-											  ", mmsAssetPathName: " + mmsAssetPathName.string() + ", exception: " + e.what();
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw e;
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("removeDirectory failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-											  ", physicalPathKey: " + to_string(physicalPathKey) + ", mmsAssetPathName: " + mmsAssetPathName.string();
-						_logger->error(__FILEREF__ + errorMessage);
+						SPDLOG_ERROR(
+							"removeDirectory failed"
+							", mediaItemKey: {}"
+							", physicalPathKey: {}"
+							", mmsAssetPathName: {}"
+							", exception: {}",
+							mediaItemKey, physicalPathKey, mmsAssetPathName.string(), e.what()
+						);
 
-						throw e;
+						throw;
 					}
 
 					uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, sizeInBytes);
-					_logger->info(
-						__FILEREF__ + "updatePartitionBecauseOfDeletion" + ", partitionKey: " + to_string(partitionKey) +
-						", newCurrentFreeSizeInBytes: " + to_string(newCurrentFreeSizeInBytes)
+					SPDLOG_INFO(
+						"updatePartitionBecauseOfDeletion"
+						", partitionKey: {}"
+						", newCurrentFreeSizeInBytes: {}",
+						partitionKey, newCurrentFreeSizeInBytes
 					);
 				}
 				else if (fs::is_regular_file(mmsAssetPathName))
 				{
 					try
 					{
-						_logger->info(__FILEREF__ + "Remove file" + ", mmsAssetPathName: " + mmsAssetPathName.string());
+						SPDLOG_INFO(
+							"Remove file"
+							", mmsAssetPathName: {}",
+							mmsAssetPathName.string()
+						);
 						fs::remove_all(mmsAssetPathName);
-					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = string("remove failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-											  ", physicalPathKey: " + to_string(physicalPathKey) +
-											  ", mmsAssetPathName: " + mmsAssetPathName.string() + ", exception: " + e.what();
-
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw e;
 					}
 					catch (exception &e)
 					{
-						string errorMessage = string("remove failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-											  ", physicalPathKey: " + to_string(physicalPathKey) + ", mmsAssetPathName: " + mmsAssetPathName.string();
+						SPDLOG_ERROR(
+							"remove failed"
+							", mediaItemKey: {}"
+							", physicalPathKey: {}"
+							", mmsAssetPathName: {}"
+							", exception: {}",
+							mediaItemKey, physicalPathKey, mmsAssetPathName.string(), e.what()
+						);
 
-						_logger->error(__FILEREF__ + errorMessage);
-
-						throw e;
+						throw;
 					}
 
 					uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, sizeInBytes);
-					_logger->info(
-						__FILEREF__ + "updatePartitionBecauseOfDeletion" + ", partitionKey: " + to_string(partitionKey) +
-						", newCurrentFreeSizeInBytes: " + to_string(newCurrentFreeSizeInBytes)
+					SPDLOG_INFO(
+						"updatePartitionBecauseOfDeletion"
+						", partitionKey: {}"
+						", newCurrentFreeSizeInBytes: {}",
+						partitionKey, newCurrentFreeSizeInBytes
 					);
 				}
 				else
 				{
-					string errorMessage = string("Unexpected directory entry");
-
-					_logger->error(__FILEREF__ + errorMessage);
+					string errorMessage = "Unexpected directory entry";
+					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 		}
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = string("removePhysicalPathFile failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-							  ", physicalPathKey: " + to_string(physicalPathKey) + ", exception: " + e.what();
-
-		_logger->error(__FILEREF__ + errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		string errorMessage = string("removePhysicalPathFile failed") + ", mediaItemKey: " + to_string(mediaItemKey) +
-							  ", physicalPathKey: " + to_string(physicalPathKey);
-
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"removePhysicalPathFile failed"
+			", mediaItemKey: {}"
+			", physicalPathKey: {}"
+			", exception: {}",
+			mediaItemKey, physicalPathKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1214,17 +1241,25 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 {
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 
 	if ((relativePath.size() > 0 && relativePath.front() != '/') || pulMMSPartitionIndexUsed == (unsigned long *)NULL)
 	{
-		string errorMessage = string("Wrong argument") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", relativePath: " + relativePath;
-
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"Wrong argument"
+			", ingestionJobKey: {}"
+			", relativePath: {}",
+			ingestionJobKey, relativePath
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1267,7 +1302,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				", ullFSEntrySizeInBytes: {}",
 				ingestionJobKey, ullFSEntrySizeInBytes
 			);
-			_logger->error(__FILEREF__ + errorMessage);
+			SPDLOG_ERROR(errorMessage);
 
 			// 2024-01-21: A volte il campo del DB currentFreeSizeInBytes si "corrompe" ed assume un valore
 			// non corretto (molto piu basso). Per essere sicuri che non sia un falso errore di 'no more space',
@@ -1283,10 +1318,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			tie(partitionKey, newCurrentFreeSizeInBytes) = partitionDetails;
 		}
 
-		_logger->info(
-			__FILEREF__ + "getPartitionToBeUsedAndUpdateFreeSpace" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes) + ", partitionKey: " + to_string(partitionKey) +
-			", newCurrentFreeSizeInBytes: " + to_string(newCurrentFreeSizeInBytes)
+		SPDLOG_INFO(
+			"getPartitionToBeUsedAndUpdateFreeSpace"
+			", ingestionJobKey: {}"
+			", ullFSEntrySizeInBytes: {}"
+			", partitionKey: {}"
+			", newCurrentFreeSizeInBytes: {}",
+			ingestionJobKey, ullFSEntrySizeInBytes, partitionKey, newCurrentFreeSizeInBytes
 		);
 
 		*pulMMSPartitionIndexUsed = partitionKey;
@@ -1303,10 +1341,14 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		mmsAssetPathName /= destinationAssetFileName;
 	}
 
-	_logger->info(
-		__FILEREF__ + "Selected MMS Partition for the content" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-		", workspaceDirectoryName: " + workspaceDirectoryName + ", *pulMMSPartitionIndexUsed: " + to_string(*pulMMSPartitionIndexUsed) +
-		", mmsAssetPathName: " + mmsAssetPathName.string() + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+	SPDLOG_INFO(
+		"Selected MMS Partition for the content"
+		", ingestionJobKey: {}"
+		", workspaceDirectoryName: {}"
+		", *pulMMSPartitionIndexUsed: {}"
+		", mmsAssetPathName: {}"
+		", ullFSEntrySizeInBytes: {}",
+		ingestionJobKey, workspaceDirectoryName, *pulMMSPartitionIndexUsed, mmsAssetPathName.string(), ullFSEntrySizeInBytes
 	);
 
 	// move the file in case of .3gp content OR
@@ -1320,7 +1362,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			//	In this way we will be able to manage the failure of the remove directory
 
 			/*
-			_logger->info(__FILEREF__ + "Move directory"
+			info(__FILEREF__ + "Move directory"
 				+ ", from: " + sourceAssetPathName
 				+ ", to: " + mmsAssetPathName
 			);
@@ -1332,47 +1374,63 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 					S_IRGRP | S_IXGRP |
 					S_IROTH | S_IXOTH);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-			_logger->info(__FILEREF__ + "Move directory statistics"
+			info(__FILEREF__ + "Move directory statistics"
 				+ ", @MMS MOVE statistics@ - elapsed (secs): @"
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
 			*/
-			_logger->info(
-				__FILEREF__ + "Copy directory" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", from: " + sourceAssetPathName.string() +
-				", to: " + mmsAssetPathName.string()
+			SPDLOG_INFO(
+				"Copy directory"
+				", ingestionJobKey: {}"
+				", from: {}"
+				", to: {}",
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string()
 			);
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 			fs::copy(sourceAssetPathName, mmsAssetPathName, fs::copy_options::recursive);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ + "Copy directory statistics" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", from: " + sourceAssetPathName.string() + ", to: " + mmsAssetPathName.string() + ", @MMS COPY statistics@ - elapsed (secs): @" +
-				to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+			SPDLOG_INFO(
+				"Copy directory statistics"
+				", ingestionJobKey: {}"
+				", from: {}"
+				", to: {}"
+				", @MMS COPY statistics@ - elapsed (secs): @{}@",
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(),
+				chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 			);
 
 			try
 			{
-				_logger->info(
-					__FILEREF__ + "Remove directory" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sourceAssetPathName: " + sourceAssetPathName.string()
+				SPDLOG_INFO(
+					"Remove directory"
+					", ingestionJobKey: {}"
+					", sourceAssetPathName: {}",
+					ingestionJobKey, sourceAssetPathName.string()
 				);
 				fs::remove_all(sourceAssetPathName);
 			}
-			catch (runtime_error &e)
+			catch (exception &e)
 			{
 				// we will not raise an exception, it is a staging directory,
 				// it will be removed by cronjob (see the comment above)
-				_logger->error(
-					__FILEREF__ + "fs::remove_all failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sourceAssetPathName: " + sourceAssetPathName.string() + ", e.what(): " + e.what()
+				SPDLOG_ERROR(
+					"fs::remove_all failed"
+					", ingestionJobKey: {}"
+					", sourceAssetPathName: {}"
+					", e.what(): {}",
+					ingestionJobKey, sourceAssetPathName.string(), e.what()
 				);
 			}
 		}
 		else // fs::is_regilar_file(sourceAssetPathName))
 		{
-			_logger->info(
-				__FILEREF__ + "Move file" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", from: " + sourceAssetPathName.string() +
-				", to: " + mmsAssetPathName.string() + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+			SPDLOG_INFO(
+				"Move file"
+				", ingestionJobKey: {}"
+				", from: {}"
+				", to: {}"
+				", ullFSEntrySizeInBytes: {}",
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes
 			);
 
 			/*
@@ -1389,13 +1447,18 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			{
 				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
-			catch (runtime_error &e)
+			catch (exception &e)
 			{
-				_logger->error(
-					__FILEREF__ + "Move file failed, wait a bit, retrieve again the size and try again" +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", from: " + sourceAssetPathName.string() +
-					", to: " + mmsAssetPathName.string() + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes) +
-					", _waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait) + ", e.what: " + e.what()
+				SPDLOG_ERROR(
+					"Move file failed, wait a bit, retrieve again the size and try again"
+					", ingestionJobKey: {}"
+					", from: {}"
+					", to: {}"
+					", ullFSEntrySizeInBytes: {}"
+					", _waitingNFSSync_maxMillisecondsToWait: {}"
+					", e.what: {}",
+					ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes,
+					_waitingNFSSync_maxMillisecondsToWait, e.what()
 				);
 
 				// scenario of the above comment marked as 2021-09-05
@@ -1403,35 +1466,67 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 
 				ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
 
-				_logger->info(
-					__FILEREF__ + "Move file again" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", from: " + sourceAssetPathName.string() +
-					", to: " + mmsAssetPathName.string() + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes)
+				SPDLOG_INFO(
+					"Move file again"
+					", ingestionJobKey: {}"
+					", from: {}"
+					", to: {}"
+					", ullFSEntrySizeInBytes: {}",
+					ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes
 				);
 
 				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 
+			SPDLOG_INFO(
+				"Move file completed, start sleeping"
+				", ingestionJobKey: {}"
+				", from: {}"
+				", to: {}"
+				", ullFSEntrySizeInBytes: {}",
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes
+			);
+
 			// 2024-02-11: è capitato (poche volte) che le size del source e della dest siano differenti
 			//	per pochi bytes e quindi il controllo sotto genera un errore
 			//	Per questo motivo metto un piccolo sleep prima di inizializzare ulDestFileSizeInBytes
 			this_thread::sleep_for(chrono::milliseconds(5000));
+
+			SPDLOG_INFO(
+				"Move file completed, file_size"
+				", ingestionJobKey: {}"
+				", from: {}"
+				", to: {}"
+				", ullFSEntrySizeInBytes: {}",
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes
+			);
+
 			unsigned long ulDestFileSizeInBytes = fs::file_size(mmsAssetPathName);
 
-			_logger->info(
-				__FILEREF__ + "Move file statistics" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", from: " + sourceAssetPathName.string() + ", to: " + mmsAssetPathName.string() +
-				", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes) + ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes) +
-				", @MMS MOVE statistics@ - elapsed (secs): @" + to_string(moveElapsedInSeconds) + "@"
+			SPDLOG_INFO(
+				"Move file statistics"
+				", ingestionJobKey: {}"
+				", from: {}"
+				", to: {}"
+				", ullFSEntrySizeInBytes: {}"
+				", ulDestFileSizeInBytes: {}"
+				", @MMS MOVE statistics@ - elapsed (secs): @{}@",
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, ulDestFileSizeInBytes,
+				moveElapsedInSeconds
 			);
 
 			if (ullFSEntrySizeInBytes != ulDestFileSizeInBytes)
 			{
-				string errorMessage = string("Source and destination file have different sizes") +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", source: " + sourceAssetPathName.string() +
-									  ", dest: " + mmsAssetPathName.string() + ", ullFSEntrySizeInBytes: " + to_string(ullFSEntrySizeInBytes) +
-									  ", ulDestFileSizeInBytes: " + to_string(ulDestFileSizeInBytes);
-
-				_logger->error(__FILEREF__ + errorMessage);
+				string errorMessage = std::format(
+					"Source and destination file have different sizes"
+					", ingestionJobKey: {}"
+					", source: {}"
+					", dest: {}"
+					", ullFSEntrySizeInBytes: {}"
+					", ulDestFileSizeInBytes: {}",
+					ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, ulDestFileSizeInBytes
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1513,7 +1608,20 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 					ingestionJobKey, source.string(), dest.string(), e.what(), e.code().value(), e.code().message(), e.code().category().name()
 				);
 
-				throw e;
+				throw;
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"move (copy and remove) failed"
+					", ingestionJobKey: {}"
+					", source: {}"
+					", dest: {}"
+					", e.what: {}",
+					ingestionJobKey, source.string(), dest.string(), e.what()
+				);
+
+				throw;
 			}
 		}
 		else if (e.code().value() == 17) // filesystem error: cannot copy: File exists
@@ -1548,6 +1656,19 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 			throw e;
 		}
 	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"Move failed"
+			", ingestionJobKey: {}"
+			", source: {}"
+			", dest: {}"
+			", e.what: {}",
+			ingestionJobKey, source.string(), dest.string(), e.what()
+		);
+
+		throw;
+	}
 
 	return chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
 }
@@ -1556,8 +1677,12 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 {
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1568,7 +1693,11 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 
 		if (fs::exists(workspaceIngestionDirectory))
 		{
-			_logger->info(__FILEREF__ + "Remove directory" + ", workspaceIngestionDirectory: " + workspaceIngestionDirectory.string());
+			SPDLOG_INFO(
+				"Remove directory"
+				", workspaceIngestionDirectory: {}",
+				workspaceIngestionDirectory.string()
+			);
 			fs::remove_all(workspaceIngestionDirectory);
 		}
 	}
@@ -1579,7 +1708,11 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 
 		if (fs::is_directory(liveRootDirectory))
 		{
-			_logger->info(__FILEREF__ + "Remove directory" + ", liveRootDirectory: " + liveRootDirectory.string());
+			SPDLOG_INFO(
+				"Remove directory"
+				", liveRootDirectory: {}",
+				liveRootDirectory.string()
+			);
 			fs::remove_all(liveRootDirectory);
 		}
 	}
@@ -1614,13 +1747,19 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 						directorySizeInBytes += entry.file_size();
 				}
 
-				_logger->info(__FILEREF__ + "Remove directory" + ", workspacePathName: " + workspacePathName.string());
+				SPDLOG_INFO(
+					"Remove directory"
+					", workspacePathName: {}",
+					workspacePathName.string()
+				);
 				fs::remove_all(workspacePathName);
 
 				uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, directorySizeInBytes);
-				_logger->info(
-					__FILEREF__ + "updatePartitionBecauseOfDeletion" + ", partitionKey: " + to_string(partitionKey) +
-					", newCurrentFreeSizeInBytes: " + to_string(newCurrentFreeSizeInBytes)
+				SPDLOG_INFO(
+					"updatePartitionBecauseOfDeletion"
+					", partitionKey: {}"
+					", newCurrentFreeSizeInBytes: {}",
+					partitionKey, newCurrentFreeSizeInBytes
 				);
 			}
 		}
@@ -1638,8 +1777,12 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(string workspaceDirectoryName
 
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1676,11 +1819,15 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(string workspaceDirectoryName
 						ullDirectoryUsageInBytes += entry.file_size();
 				}
 			}
-			catch (runtime_error &e)
+			catch (exception &e)
 			{
 				ullDirectoryUsageInBytes = 0;
 
-				_logger->error(__FILEREF__ + "getDirectorySizeInBytes failed" + ", e.what(): " + e.what());
+				SPDLOG_ERROR(
+					"getDirectorySizeInBytes failed"
+					", e.what(): {}",
+					e.what()
+				);
 			}
 
 			ullWorkspaceStorageUsageInBytes += ullDirectoryUsageInBytes;
@@ -1699,8 +1846,12 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 	if (_noFileSystemAccess)
 	{
-		string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"no rights to execute this method"
+			", _noFileSystemAccess: {}",
+			_noFileSystemAccess
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1739,10 +1890,14 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			currentFreeSizeInBytes = si.available;
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-			_logger->info(
-				__FILEREF__ + "refreshPartitionFreeSizes" + ", partitionKey: " + to_string(partitionKey) +
-				", partitionPathName: " + partitionPathName.string() + ", currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes) +
-				", @MMS statistics@ - elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+			SPDLOG_INFO(
+				"refreshPartitionFreeSizes"
+				", partitionKey: {}"
+				", partitionPathName: {}"
+				", currentFreeSizeInBytes: {}"
+				", @MMS statistics@ - elapsed (secs): @{}@",
+				partitionKey, partitionPathName.string(), currentFreeSizeInBytes,
+				chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 			);
 		}
 
@@ -1757,10 +1912,13 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			localFreeSpaceToLeaveInMB = JSONUtils::asInt(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
 		}
 
-		_logger->info(
-			__FILEREF__ + "addUpdatePartitionInfo" + ", partitionKey: " + to_string(partitionKey) +
-			", partitionPathName: " + partitionPathName.string() + ", currentFreeSizeInBytes: " + to_string(currentFreeSizeInBytes) +
-			", localFreeSpaceToLeaveInMB: " + to_string(localFreeSpaceToLeaveInMB)
+		SPDLOG_INFO(
+			"addUpdatePartitionInfo"
+			", partitionKey: {}"
+			", partitionPathName: {}"
+			", currentFreeSizeInBytes: {}"
+			", localFreeSpaceToLeaveInMB: {}",
+			partitionKey, partitionPathName.string(), currentFreeSizeInBytes, localFreeSpaceToLeaveInMB
 		);
 		_mmsEngineDBFacade->addUpdatePartitionInfo(partitionKey, partitionPathName, currentFreeSizeInBytes, localFreeSpaceToLeaveInMB);
 
@@ -1782,7 +1940,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			;
 		}
 
-		_logger->info(__FILEREF__ + infoMessage);
+		info(__FILEREF__ + infoMessage);
 	}
 	*/
 }
@@ -1804,16 +1962,24 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 	{
 		if (_noFileSystemAccess)
 		{
-			string errorMessage = string("no rights to execute this method") + ", _noFileSystemAccess: " + to_string(_noFileSystemAccess);
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"no rights to execute this method"
+				", _noFileSystemAccess: {}",
+				_noFileSystemAccess
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		_logger->info(
-			__FILEREF__ + "Received manageTarFileInCaseOfIngestionOfSegments" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", tarBinaryPathName: " + tarBinaryPathName + ", tarBinary size: " + to_string(fs::file_size(tarBinaryPathName)) +
-			", workspaceIngestionRepository: " + workspaceIngestionRepository + ", sourcePathName: " + sourcePathName
+		SPDLOG_INFO(
+			"Received manageTarFileInCaseOfIngestionOfSegments"
+			", ingestionJobKey: {}"
+			", tarBinaryPathName: {}"
+			", tarBinary size: {}"
+			", workspaceIngestionRepository: {}"
+			", sourcePathName: {}",
+			ingestionJobKey, tarBinaryPathName, fs::file_size(tarBinaryPathName), workspaceIngestionRepository, sourcePathName
 		);
 
 		// non possiamo eseguire il tar contenente la directory content direttamente
@@ -1822,7 +1988,11 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		// Aggiungiamo quindi l'ingestionJobKey
 		string workIngestionDirectory = std::format("{}/{}", workspaceIngestionRepository, ingestionJobKey);
 
-		_logger->info(__FILEREF__ + "Creating directory (if needed)" + ", workIngestionDirectory: " + workIngestionDirectory);
+		SPDLOG_INFO(
+			"Creating directory (if needed)"
+			", workIngestionDirectory: {}",
+			workIngestionDirectory
+		);
 		fs::create_directories(workIngestionDirectory);
 		fs::permissions(
 			workIngestionDirectory,
@@ -1839,19 +2009,30 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		//	source will be something like <ingestion key>_source
 		//	destination will be the original directory (that has to be the same name of the tar file name)
 		executeCommand = std::format("tar xfz {} --directory {}", tarBinaryPathName, workIngestionDirectory);
-		_logger->info(__FILEREF__ + "Start tar command " + ", executeCommand: " + executeCommand);
+		SPDLOG_INFO(
+			"Start tar command "
+			", executeCommand: {}",
+			executeCommand
+		);
 		chrono::system_clock::time_point startTar = chrono::system_clock::now();
 		int executeCommandStatus = ProcessUtility::execute(executeCommand);
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
-		_logger->info(
-			__FILEREF__ + "End tar command " + ", executeCommand: " + executeCommand + ", @MMS statistics@ - tarDuration (secs): @" +
-			to_string(chrono::duration_cast<chrono::seconds>(endTar - startTar).count()) + "@"
+		SPDLOG_INFO(
+			"End tar command "
+			", executeCommand: {}"
+			", @MMS statistics@ - tarDuration (secs): @{}@",
+			executeCommand, chrono::duration_cast<chrono::seconds>(endTar - startTar).count()
 		);
 		if (executeCommandStatus != 0)
 		{
-			string errorMessage = string("ProcessUtility::execute failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", executeCommandStatus: " + to_string(executeCommandStatus) + ", executeCommand: " + executeCommand;
-			_logger->error(__FILEREF__ + errorMessage);
+			string errorMessage = std::format(
+				"ProcessUtility::execute failed"
+				", ingestionJobKey: {}"
+				", executeCommandStatus: {}"
+				", executeCommand: {}",
+				ingestionJobKey, executeCommandStatus, executeCommand
+			);
+			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1872,7 +2053,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 					", sourcePathName: '{}'",
 					suffix, ingestionJobKey, sourcePathName
 				);
-				_logger->error(errorMessage);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1880,9 +2061,14 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			size_t startFileNameIndex = sourcePathName.find_last_of("/");
 			if (startFileNameIndex == string::npos)
 			{
-				string errorMessage = __FILEREF__ + "sourcePathName bad format" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", sourcePathName: " + sourcePathName + ", startFileNameIndex: " + to_string(startFileNameIndex);
-				_logger->error(errorMessage);
+				string errorMessage = std::format(
+					"sourcePathName bad format"
+					", ingestionJobKey: {}"
+					", sourcePathName: {}"
+					", startFileNameIndex: {}",
+					ingestionJobKey, sourcePathName, startFileNameIndex
+				);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1895,8 +2081,11 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			fs::path sourceTarFile = workspaceIngestionRepository;
 			sourceTarFile /= (to_string(ingestionJobKey) + "_source" + ".tar.gz");
 
-			_logger->info(
-				__FILEREF__ + "Remove file" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceTarFile: " + sourceTarFile.string()
+			SPDLOG_INFO(
+				"Remove file"
+				", ingestionJobKey: {}"
+				", sourceTarFile: {}",
+				ingestionJobKey, sourceTarFile.string()
 			);
 
 			fs::remove_all(sourceTarFile);
@@ -1912,9 +2101,12 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			fs::path destDirectory = workspaceIngestionRepository;
 			destDirectory /= (to_string(ingestionJobKey) + "_source");
 
-			_logger->info(
-				__FILEREF__ + "Start copyDirectory..." + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", sourceDirectory: " + sourceDirectory.string() + ", destDirectory: " + destDirectory.string()
+			SPDLOG_INFO(
+				"Start copyDirectory..."
+				", ingestionJobKey: {}"
+				", sourceDirectory: {}"
+				", destDirectory: {}",
+				ingestionJobKey, sourceDirectory.string(), destDirectory.string()
 			);
 			// 2020-05-01: since the remove of the director could fails because of nfs issue,
 			//	better do a copy and then a remove.
@@ -1941,14 +2133,16 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 					}
 				}
 				*/
-				_logger->info(
-					__FILEREF__ + "End copyDirectory" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", sourceDirectory: " + sourceDirectory.string() + ", destDirectory: " +
-					destDirectory.string()
+				SPDLOG_INFO(
+					"End copyDirectory"
+					", ingestionJobKey: {}"
+					", sourceDirectory: {}"
+					", destDirectory: {}"
 					// + ", sourceDirectorySize: " + to_string(sourceDirectorySize)
 					// + ", destDirectorySize: " + to_string(destDirectorySize)
-					+ ", @MMS COPY statistics@ - copyDuration (secs): @" +
-					to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+					", @MMS COPY statistics@ - copyDuration (secs): @{}@",
+					ingestionJobKey, sourceDirectory.string(), destDirectory.string(),
+					chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 				);
 			}
 
@@ -1957,26 +2151,36 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 				fs::remove_all(workIngestionDirectory);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				_logger->info(
-					__FILEREF__ + "End removeDirectory" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", workIngestionDirectory: " + workIngestionDirectory + ", @MMS REMOVE statistics@ - removeDuration (secs): @" +
-					to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
+				SPDLOG_INFO(
+					"End removeDirectory"
+					", ingestionJobKey: {}"
+					", workIngestionDirectory: {}"
+					", @MMS REMOVE statistics@ - removeDuration (secs): @{}@",
+					ingestionJobKey, workIngestionDirectory, chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()
 				);
 			}
-			catch (runtime_error &e)
+			catch (exception &e)
 			{
-				string errorMessage = string("removeDirectory failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what: " + e.what();
-				_logger->error(__FILEREF__ + errorMessage);
+				SPDLOG_ERROR(
+					"removeDirectory failed"
+					", ingestionJobKey: {}"
+					", e.what: {}",
+					ingestionJobKey, e.what()
+				);
 
 				// throw runtime_error(errorMessage);
 			}
 		}
 	}
-	catch (runtime_error &e)
+	catch (exception &e)
 	{
-		string errorMessage =
-			string("manageTarFileInCaseOfIngestionOfSegments failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what: " + e.what();
-		_logger->error(__FILEREF__ + errorMessage);
+		string errorMessage = std::format(
+			"manageTarFileInCaseOfIngestionOfSegments failed"
+			", ingestionJobKey: {}"
+			", e.what: {}",
+			ingestionJobKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

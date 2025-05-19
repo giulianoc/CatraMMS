@@ -12,7 +12,8 @@ help()
 		[ -e | --endTime <date %Y-%m-%dT%H:%M:%S> ]
 		[ -r | --retention <i.e.: 3y> ]
 		[ -v | --virtualVOD <default: false> ]
-		[ -v | --autoRenew <default: false> ]
+		[ -n | --autoRenew <default: false> ]
+		[ -i | --utcTimeOverlay <default: false> ]
 		[ -c | --cdn77ChannelConfigurationLabel <i.e.: camera_1_main> ]"
 
     exit 1
@@ -21,8 +22,8 @@ help()
 #Due punti singoli (:) : il valore è obbligatorio per questa opzione
 #Due punti doppi (::) - Il valore è facoltativo
 #Senza due punti : non sono richiesti valori
-SHORT=t:,u:,a:,k:,m:,s:,e:,r:,v:,c:,h
-LONG=env:,userKey:,apiKey:,streamKey:,minutesToBeRun:,startTime:,endTime:,retention:,virtualVOD:,autoRenew:,cdn77ChannelConfigurationLabel:,help
+SHORT=t:,u:,a:,k:,m:,s:,e:,r:,v:,n:,i:,c:,h
+LONG=env:,userKey:,apiKey:,streamKey:,minutesToBeRun:,startTime:,endTime:,retention:,virtualVOD:,autoRenew:,utcTimeOverlay:,cdn77ChannelConfigurationLabel:,help
 OPTS=$(getopt -a -n recorder --options $SHORT --longoptions $LONG -- "$@")
 
 eval set -- "$OPTS"
@@ -45,6 +46,7 @@ startTime=$(date +'%Y-%m-%dT%H:%M:%S')
 endTime=$(date --date="+$minutesToBeRun minutes" +'%Y-%m-%dT%H:%M:%S')
 virtualVOD=false
 autoRenew=false
+utcTimeOverlay=false
 cdn77ChannelConfigurationLabel=
 
 while :
@@ -92,6 +94,10 @@ do
 			autoRenew="$2"
 			shift 2
 			;;
+		-i | --utcTimeOverlay )
+			utcTimeOverlay="$2"
+			shift 2
+			;;
 		-c | --cdn77ChannelConfigurationLabel )
 			cdn77ChannelConfigurationLabel="$2"
 			shift 2
@@ -132,5 +138,5 @@ else
 fi
 
 
-curl "https://$hostname/catramms/webapi/1.0.0/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77ChannelConfigurationLabel=$cdn77ChannelConfigurationLabel&monitoringFrameIncreasingEnabled=false&autoRenew=$autoRenew&startRecording=$startTime&stopRecording=$endTime"
+curl "https://$hostname/catramms/webapi/1.0.0/liveRecorder/$streamKey/60?userKey=$userKey&apiKey=$apiKey&retention=$retention&thumbnail=true&virtualVOD=$virtualVOD&virtualVODMaxDurationInMinutes=60&cdn77ChannelConfigurationLabel=$cdn77ChannelConfigurationLabel&monitoringFrameIncreasingEnabled=false&autoRenew=$autoRenew&utcTimeOverlay=$utcTimeOverlay&startRecording=$startTime&stopRecording=$endTime"
 
