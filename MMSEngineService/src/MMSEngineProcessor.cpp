@@ -805,7 +805,7 @@ bool MMSEngineProcessor::newThreadPermission(shared_ptr<long> processorsThreadsN
 	// questo metodo ritornerebbe 20 e si crerebbero 20 threads di download FTP che creerebbero problemi al processo ed alla banda.
 	// Una volta si è bloccato tutto ed ho dovuto fare un restart del server.
 	// Per cui teniamo un valore 'safe'
-	int maxAdditionalProcessorThreads = 5;
+	int maxAdditionalProcessorThreads = 4;
 
 	// se il numero di threads ha già raggiunto il massimo, è inutile verificare la CPU
 	if (_processorsThreadsNumber.use_count() > _processorThreads + maxAdditionalProcessorThreads)

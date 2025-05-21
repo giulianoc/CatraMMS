@@ -283,18 +283,6 @@ void MMSEngineDBFacade::loadSqlColumnsSchema()
 
 void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	/*
 	 2024-12-16: Questo metodo viene chiamato quando l'engine service viene fatto partire.
@@ -343,6 +331,37 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				trans.transaction->quote(toString(IngestionStatus::SourceDownloadingInProgress)),
 				trans.transaction->quote(toString(IngestionStatus::SourceMovingInProgress)),
 				trans.transaction->quote(toString(IngestionStatus::SourceCopingInProgress))
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		// 2025-05-21: Scenario: il task Concat-Demuxer è rimasto bloccato sulla move di un file da IngestionRepository a MMSRepository.
+		// 	In generale se un task gestito dall'Engine e non da un Encoding rimane incompleto, rimane in stato Start_TaskQueued
+		// 	con processorMMS inizializzato. In questo caso, in caso di ripartenza dell'Engine, è necessario resettare processorMMS
+		// 	altrimenti, anche il restart dell'Engine non recupera questo task che rimarrebbe incompleto e bloccato da quel processor.
+		// 	E' importante che questo reset considera SOLAMENTE i task non gestiti da un EncodingJob, infatti per quelli l'engine
+		// 	si ricollega automaticamente
+		{
+			SPDLOG_INFO(
+				"resetProcessingJobsIfNeeded. Tasks managed only by Engine (not by Encoding) not completed"
+				", processorMMS: {}",
+				processorMMS
+			);
+			string sqlStatement = std::format(
+				"UPDATE MMS_IngestionJob SET processorMMS = null "
+				"WHERE processorMMS = {} AND status = {} "
+				"AND NOT EXISTS (SELECT 1 FROM MMS_EncodingJob WHERE MMS_IngestionJob.ingestionJobKey = MMS_EncodingJob.ingestionJobKey)",
+				trans.transaction->quote(processorMMS), trans.transaction->quote(toString(IngestionStatus::Start_TaskQueued))
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -457,6 +476,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		}
 
 		{
+			/*
 			SPDLOG_INFO(
 				"resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing"
 				", processorMMS: {}",
@@ -466,7 +486,6 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			// is still able to attach to it (encoder). Commento per cui non capisco l'update sotto
 			// lastSQLCommand =
 			//   "update MMS_EncodingJob set status = ?, processorMMS = null, transcoder = null where processorMMS = ? and status = ?";
-			/*
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set status = {}, processorMMS = null "
 				"where processorMMS = {} and status = {} ",

@@ -1542,41 +1542,13 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 	chrono::system_clock::time_point endPoint;
 	try
 	{
-		/*
-		if (fs::exists(dest))
-		{
-			SPDLOG_WARN(
-				"move. Dest already exists!!! Let's remove it"
-				", dest: {}",
-				dest.string()
-			);
-			try
-			{
-				fs::remove_all(dest);
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					"remove failed"
-					", ingestionJobKey: {}"
-					", dest: {}"
-					", e.what(): {}",
-					ingestionJobKey, dest.string(), e.what()
-				);
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					"remove failed"
-					", ingestionJobKey: {}"
-					", dest: {}"
-					", e.what(): {}",
-					ingestionJobKey, dest.string(), e.what()
-				);
-			}
-		}
-		*/
-
+		SPDLOG_INFO(
+			"fs::rename"
+			", ingestionJobKey: {}"
+			", source: {}"
+			", dest: {}",
+			ingestionJobKey, source.string(), dest.string()
+		);
 		startPoint = chrono::system_clock::now();
 		// fs::rename works only if source and destination are on the same file systems
 		fs::rename(source, dest);
@@ -1588,9 +1560,23 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 		{
 			try
 			{
+				SPDLOG_INFO(
+					"fs::copy"
+					", ingestionJobKey: {}"
+					", source: {}"
+					", dest: {}",
+					ingestionJobKey, source.string(), dest.string()
+				);
 				// copy and delete
 				startPoint = chrono::system_clock::now();
 				fs::copy(source, dest, fs::copy_options::recursive);
+				SPDLOG_INFO(
+					"fs::remove_all"
+					", ingestionJobKey: {}"
+					", source: {}"
+					", dest: {}",
+					ingestionJobKey, source.string(), dest.string()
+				);
 				fs::remove_all(source);
 				endPoint = chrono::system_clock::now();
 			}

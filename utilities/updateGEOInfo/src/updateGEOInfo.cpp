@@ -8,7 +8,6 @@ json loadConfigurationFile(const char *configurationPathName);
 
 int main(int iArgc, char *pArgv[])
 {
-
 	if (iArgc != 2)
 	{
 		cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
