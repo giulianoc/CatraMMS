@@ -4,6 +4,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
+#include <filesystem>
 
 void MMSEngineProcessor::manageConcatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -353,7 +354,12 @@ void MMSEngineProcessor::manageConcatThread(
 				", concatenatedMediaPathName: " + concatenatedMediaPathName
 			);
 
-			fs::copy(sourcePhysicalPath, concatenatedMediaPathName, fs::copy_options::recursive);
+			// 2025-05-21: aggiunto overwrite_existing per gestire il seguente scenario:
+			// - partito il task concat che pero' rimane bloccato per un problema sul mount del disco
+			// - l'engine viene fatto ripartire, il task riparte ma questo comando fs::copy fallisce perchè
+			//   cannot copy: File exists
+			// - Ho aggiunto quindi overwrite_existing
+			fs::copy(sourcePhysicalPath, concatenatedMediaPathName, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
 		}
 		else
 		{

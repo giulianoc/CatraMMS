@@ -8,6 +8,7 @@
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "ProcessUtility.h"
+#include "SafeFileSystem.h"
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
@@ -1776,7 +1777,17 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 	// ingest binary
 	try
 	{
+#ifdef SAFEFILESYSTEMTHREAD
+		int64_t chunkFileSize = SafeFileSystem::fileSizeThread(
+			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey)
+		);
+#elif SAFEFILESYSTEMPROCESS
+		int64_t chunkFileSize = SafeFileSystem::fileSizeProcess(
+			chunksTranscoderStagingContentsPath + currentRecordedAssetFileName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey)
+		);
+#else
 		int64_t chunkFileSize = fs::file_size(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
+#endif
 
 		string mmsBinaryIngestionURL;
 		{
@@ -3107,7 +3118,17 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 				throw runtime_error(errorMessage);
 			}
 
+#ifdef SAFEFILESYSTEMTHREAD
+			int64_t chunkFileSize = SafeFileSystem::fileSizeThread(
+				tarGzStagingLiveRecorderVirtualVODPathName, 10, std::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey)
+			);
+#elif SAFEFILESYSTEMPROCESS
+			int64_t chunkFileSize = SafeFileSystem::fileSizeProcess(
+				tarGzStagingLiveRecorderVirtualVODPathName, 10, std::format(", ingestionJobKey: {}", liveRecorderIngestionJobKey)
+			);
+#else
 			int64_t chunkFileSize = fs::file_size(tarGzStagingLiveRecorderVirtualVODPathName);
+#endif
 
 			mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
 

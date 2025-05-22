@@ -3,6 +3,8 @@
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
+#include "MMSStorage.h"
+#include "SafeFileSystem.h"
 #include "spdlog/fmt/bundled/format.h"
 #include <openssl/evp.h>
 
@@ -1850,7 +1852,17 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 		}
 		else
+#ifdef SAFEFILESYSTEMTHREAD
+			sizeInBytes = SafeFileSystem::fileSizeThread(
+				mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", localAssetIngestionEvent.getIngestionJobKey())
+			);
+#elif SAFEFILESYSTEMPROCESS
+			sizeInBytes = SafeFileSystem::fileSizeProcess(
+				mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", localAssetIngestionEvent.getIngestionJobKey())
+			);
+#else
 			sizeInBytes = fs::file_size(mmsAssetPathName);
+#endif
 
 		int64_t variantOfMediaItemKey = -1;
 		{
@@ -2844,7 +2856,15 @@ void MMSEngineProcessor::validateMediaSourceFile(
 	// we just simplify and file size check is not done in case of segments
 	if (mediaFileFormat != "m3u8-tar.gz" && fileSizeInBytes != -1)
 	{
+#ifdef SAFEFILESYSTEMTHREAD
+		unsigned long downloadedFileSizeInBytes =
+			SafeFileSystem::fileSizeThread(mediaSourcePathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+		unsigned long downloadedFileSizeInBytes =
+			SafeFileSystem::fileSizeProcess(mediaSourcePathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
 		unsigned long downloadedFileSizeInBytes = fs::file_size(mediaSourcePathName);
+#endif
 
 		if (fileSizeInBytes != downloadedFileSizeInBytes)
 		{

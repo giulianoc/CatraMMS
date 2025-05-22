@@ -18,8 +18,10 @@
 #include "Encrypt.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "MMSStorage.h"
 #include "PersistenceLock.h"
 #include "ProcessUtility.h"
+#include "SafeFileSystem.h"
 #include "StringUtils.h"
 #include "Validator.h"
 #include "spdlog/fmt/bundled/format.h"
@@ -3076,8 +3078,20 @@ void API::uploadedBinary(
 					osDestStream.close();
 				}
 
+#ifdef SAFEFILESYSTEMTHREAD
+				unsigned long destBinaryPathNameSizeInBytes =
+					SafeFileSystem::fileSizeThread(destBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+				unsigned long sourceBinaryPathFileSizeInBytes =
+					SafeFileSystem::fileSizeThread(sourceBinaryPathFile, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+				unsigned long destBinaryPathNameSizeInBytes =
+					SafeFileSystem::fileSizeProcess(destBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+				unsigned long sourceBinaryPathFileSizeInBytes =
+					SafeFileSystem::fileSizeProcess(sourceBinaryPathFile, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
 				unsigned long destBinaryPathNameSizeInBytes = fs::file_size(destBinaryPathName);
 				unsigned long sourceBinaryPathFileSizeInBytes = fs::file_size(sourceBinaryPathFile);
+#endif
 
 				SPDLOG_INFO(
 					"Content-Range before concat"
@@ -3100,7 +3114,15 @@ void API::uploadedBinary(
 				{
 					this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_milliSecondsWaitingBetweenChecks));
 
+#ifdef SAFEFILESYSTEMTHREAD
+					destBinaryPathNameSizeInBytes =
+						SafeFileSystem::fileSizeThread(destBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+					destBinaryPathNameSizeInBytes =
+						SafeFileSystem::fileSizeProcess(destBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
 					destBinaryPathNameSizeInBytes = fs::file_size(destBinaryPathName);
+#endif
 				}
 
 				if (contentRangeStart != destBinaryPathNameSizeInBytes)
@@ -3145,6 +3167,15 @@ void API::uploadedBinary(
 						ifSource.close();
 					}
 
+#ifdef SAFEFILESYSTEMTHREAD
+					uintmax_t destBinaryPathNameSize =
+						SafeFileSystem::fileSizeThread(destBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+					uintmax_t destBinaryPathNameSize =
+						SafeFileSystem::fileSizeProcess(destBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
+					uintmax_t destBinaryPathNameSize = fs::file_size(destBinaryPathName);
+#endif
 					SPDLOG_INFO(
 						"Content-Range after concat"
 						", ingestionJobKey: {}"
@@ -3158,7 +3189,7 @@ void API::uploadedBinary(
 						", sourceBinaryPathFileSizeInBytes: {}"
 						", concat elapsed (secs): {}",
 						ingestionJobKey, contentRangeStart, contentRangeEnd, contentRangeSize, segmentedContent, destBinaryPathName,
-						fs::file_size(destBinaryPathName), sourceBinaryPathFile, sourceBinaryPathFileSizeInBytes,
+						destBinaryPathNameSize, sourceBinaryPathFile, sourceBinaryPathFileSizeInBytes,
 						chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - start).count()
 					);
 

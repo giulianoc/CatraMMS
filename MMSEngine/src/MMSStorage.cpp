@@ -3,6 +3,7 @@
 #include "Datetime.h"
 #include "JSONUtils.h"
 #include "ProcessUtility.h"
+#include "SafeFileSystem.h"
 #include "StringUtils.h"
 #include "System.h"
 #include "spdlog/spdlog.h"
@@ -1277,7 +1278,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		}
 		else if (fs::is_regular_file(sourceAssetPathName))
 		{
+#ifdef SAFEFILESYSTEMTHREAD
+			ullFSEntrySizeInBytes = SafeFileSystem::fileSizeThread(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+			ullFSEntrySizeInBytes = SafeFileSystem::fileSizeProcess(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
 			ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
+#endif
 		}
 	}
 
@@ -1464,7 +1471,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				// scenario of the above comment marked as 2021-09-05
 				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait));
 
-				ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
+#ifdef SAFEFILESYSTEMTHREAD
+			ullFSEntrySizeInBytes = SafeFileSystem::fileSizeThread(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+			ullFSEntrySizeInBytes = SafeFileSystem::fileSizeProcess(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
+			ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
+#endif
 
 				SPDLOG_INFO(
 					"Move file again"
@@ -1501,7 +1514,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes
 			);
 
-			unsigned long ulDestFileSizeInBytes = fs::file_size(mmsAssetPathName);
+#ifdef SAFEFILESYSTEMTHREAD
+			uintmax_t destFileSizeInBytes = SafeFileSystem::fileSizeThread(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+			uintmax_t destFileSizeInBytes = SafeFileSystem::fileSizeProcess(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
+			uintmax_t destFileSizeInBytes = fs::file_size(mmsAssetPathName);
+#endif
 
 			SPDLOG_INFO(
 				"Move file statistics"
@@ -1509,13 +1528,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				", from: {}"
 				", to: {}"
 				", ullFSEntrySizeInBytes: {}"
-				", ulDestFileSizeInBytes: {}"
+				", destFileSizeInBytes: {}"
 				", @MMS MOVE statistics@ - elapsed (secs): @{}@",
-				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, ulDestFileSizeInBytes,
+				ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, destFileSizeInBytes,
 				moveElapsedInSeconds
 			);
 
-			if (ullFSEntrySizeInBytes != ulDestFileSizeInBytes)
+			if (ullFSEntrySizeInBytes != destFileSizeInBytes)
 			{
 				string errorMessage = std::format(
 					"Source and destination file have different sizes"
@@ -1523,8 +1542,8 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 					", source: {}"
 					", dest: {}"
 					", ullFSEntrySizeInBytes: {}"
-					", ulDestFileSizeInBytes: {}",
-					ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, ulDestFileSizeInBytes
+					", destFileSizeInBytes: {}",
+					ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, destFileSizeInBytes
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -1958,6 +1977,13 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			throw runtime_error(errorMessage);
 		}
 
+#ifdef SAFEFILESYSTEMTHREAD
+			uintmax_t tarBinaryPathNameSize = SafeFileSystem::fileSizeThread(tarBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+			uintmax_t tarBinaryPathNameSize = SafeFileSystem::fileSizeProcess(tarBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
+			uintmax_t tarBinaryPathNameSize = fs::file_size(tarBinaryPathName);
+#endif
 		SPDLOG_INFO(
 			"Received manageTarFileInCaseOfIngestionOfSegments"
 			", ingestionJobKey: {}"
@@ -1965,7 +1991,8 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			", tarBinary size: {}"
 			", workspaceIngestionRepository: {}"
 			", sourcePathName: {}",
-			ingestionJobKey, tarBinaryPathName, fs::file_size(tarBinaryPathName), workspaceIngestionRepository, sourcePathName
+			ingestionJobKey, tarBinaryPathName, tarBinaryPathNameSize, workspaceIngestionRepository,
+			sourcePathName
 		);
 
 		// non possiamo eseguire il tar contenente la directory content direttamente

@@ -6,6 +6,8 @@
 #include "Encrypt.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
+#include "MMSStorage.h"
+#include "SafeFileSystem.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
@@ -736,7 +738,16 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	// ingest binary
 	try
 	{
+#ifdef SAFEFILESYSTEMTHREAD
+		int64_t frameFileSize =
+			SafeFileSystem::fileSizeThread(imagesDirectory + "/" + generatedFrameFileName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+		int64_t frameFileSize = SafeFileSystem::fileSizeProcess(
+			imagesDirectory + "/" + generatedFrameFileName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey)
+		);
+#else
 		int64_t frameFileSize = fs::file_size(imagesDirectory + "/" + generatedFrameFileName);
+#endif
 
 		string mmsBinaryIngestionURL;
 		{

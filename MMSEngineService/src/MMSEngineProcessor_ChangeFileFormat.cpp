@@ -2,6 +2,7 @@
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
+#include "SafeFileSystem.h"
 
 void MMSEngineProcessor::changeFileFormatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -394,7 +395,17 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						unsigned long long mmsAssetSizeInBytes;
 						{
+#ifdef SAFEFILESYSTEMTHREAD
+							mmsAssetSizeInBytes = SafeFileSystem::fileSizeThread(
+								mmsChangeFileFormatAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey)
+							);
+#elif SAFEFILESYSTEMPROCESS
+							mmsAssetSizeInBytes = SafeFileSystem::fileSizeProcess(
+								mmsChangeFileFormatAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey)
+							);
+#else
 							mmsAssetSizeInBytes = fs::file_size(mmsChangeFileFormatAssetPathName);
+#endif
 						}
 
 						bool externalReadOnlyStorage = false;

@@ -13,6 +13,7 @@
 
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
+#include "SafeFileSystem.h"
 #include "spdlog/spdlog.h"
 #include <tuple>
 
@@ -58,7 +59,16 @@ void EncoderProxy::encodeContentImage()
 			// added the check of the file size is zero because in this case
 			// the magick library cause the crash of the xmms engine
 			{
+#ifdef SAFEFILESYSTEMTHREAD
+				unsigned long ulFileSize =
+					SafeFileSystem::fileSizeThread(mmsSourceAssetPathName, 10, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+				unsigned long ulFileSize = SafeFileSystem::fileSizeProcess(
+					mmsSourceAssetPathName, 10, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+				);
+#else
 				unsigned long ulFileSize = fs::file_size(mmsSourceAssetPathName);
+#endif
 				if (ulFileSize == 0)
 				{
 					string errorMessage = std::format(
@@ -818,7 +828,15 @@ void EncoderProxy::processEncodedImage()
 			{
 				unsigned long long mmsAssetSizeInBytes;
 				{
+#ifdef SAFEFILESYSTEMTHREAD
+					mmsAssetSizeInBytes =
+						SafeFileSystem::fileSizeThread(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+					mmsAssetSizeInBytes =
+						SafeFileSystem::fileSizeProcess(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey));
+#else
 					mmsAssetSizeInBytes = fs::file_size(mmsAssetPathName);
+#endif
 				}
 
 				bool externalReadOnlyStorage = false;

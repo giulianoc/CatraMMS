@@ -4,7 +4,9 @@
 #include "Encrypt.h"
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
+#include "MMSStorage.h"
 #include "ProcessUtility.h"
+#include "SafeFileSystem.h"
 #include "StringUtils.h"
 #include "spdlog/spdlog.h"
 #include <filesystem>
@@ -224,7 +226,13 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	int64_t fileSizeInBytes = 0;
 	if (fileFormat != "hls")
 	{
+#ifdef SAFEFILESYSTEMTHREAD
+		fileSizeInBytes = SafeFileSystem::fileSizeThread(encodedStagingAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+		fileSizeInBytes = SafeFileSystem::fileSizeProcess(encodedStagingAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
 		fileSizeInBytes = fs::file_size(encodedStagingAssetPathName);
+#endif
 	}
 
 	json userDataRoot;
@@ -587,7 +595,15 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 						throw runtime_error(errorMessage);
 					}
 
+#ifdef SAFEFILESYSTEMTHREAD
+					localBinaryFileSizeInBytes =
+						SafeFileSystem::fileSizeThread(localBinaryPathFileName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+					localBinaryFileSizeInBytes =
+						SafeFileSystem::fileSizeProcess(localBinaryPathFileName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+#else
 					localBinaryFileSizeInBytes = fs::file_size(localBinaryPathFileName);
+#endif
 				}
 				catch (runtime_error &e)
 				{

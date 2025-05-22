@@ -14,6 +14,7 @@
 #include "CurlWrapper.h"
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
+#include "SafeFileSystem.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <FFMpegWrapper.h>
@@ -750,7 +751,15 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			}
 			else
 			{
+#ifdef SAFEFILESYSTEMTHREAD
+				mmsAssetSizeInBytes =
+					SafeFileSystem::fileSizeThread(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey));
+#elif SAFEFILESYSTEMPROCESS
+				mmsAssetSizeInBytes =
+					SafeFileSystem::fileSizeProcess(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey));
+#else
 				mmsAssetSizeInBytes = fs::file_size(mmsAssetPathName);
+#endif
 			}
 		}
 

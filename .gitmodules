@@ -58,3 +58,6 @@
 [submodule "CatraLibraries/Scheduler"]
 	path = CatraLibraries/Scheduler
 	url = https://github.com/giulianoc/Scheduler.git
+[submodule "CatraLibraries/SafeFileSystem"]
+	path = CatraLibraries/SafeFileSystem
+	url = https://github.com/giulianoc/SafeFileSystem.git
