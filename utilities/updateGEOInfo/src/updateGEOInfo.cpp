@@ -8,6 +8,9 @@ json loadConfigurationFile(const char *configurationPathName);
 
 int main(int iArgc, char *pArgv[])
 {
+	cout << "size uintmax_t: " << sizeof(uintmax_t) << endl;
+	cout << "size int: " << sizeof(int) << endl;
+
 	if (iArgc != 2)
 	{
 		cerr << "Usage: " << pArgv[0] << " config-path-name" << endl;
