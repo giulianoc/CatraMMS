@@ -23,6 +23,11 @@ then
 		serverAddress=${prodServers[$((index*6+1))]}
 		serverKey=${prodServers[$((index*6+2))]}
 		serverPort=${prodServers[$((index*6+3))]}
+		serverType=${prodServers[$((index*6+4))]}
+
+		if [ "$serverType" == "storage" ]; then
+			continue
+		fi
 
 		echo ""
 		echo "serverName: $serverName"
@@ -40,6 +45,11 @@ then
 		serverAddress=${testServers[$((index*6+1))]}
 		serverKey=${testServers[$((index*6+2))]}
 		serverPort=${testServers[$((index*6+3))]}
+		serverType=${testServers[$((index*6+4))]}
+
+		if [ "$serverType" == "storage" ]; then
+			continue
+		fi
 
 		echo ""
 		echo "serverName: $serverName"

@@ -107,7 +107,16 @@ install-packages()
 	if [ "$moduleType" == "storage" ]; then
 
 		#for storage just nfs is enougth
+		echo ""
+		read -n 1 -s -r -p "install nfs-kernel-server..."
+		echo ""
 		apt -y install nfs-kernel-server
+
+		#aggiungiamo anche nfs-common anche se non obbligatorio
+		echo ""
+		read -n 1 -s -r -p "install nfs-common..."
+		echo ""
+		apt-get -y install nfs-common
 
 		return
 	fi
@@ -1322,11 +1331,16 @@ firewall-rules()
 		ufw allow 443
 		ufw allow 8088
 	elif [ "$moduleType" == "storage" ]; then
-		ufw allow from 10.0.0.0/16 to any port nfs
-		#ufw allow 111
-		ufw allow from 10.0.0.0/16 to any port 111
-		#ufw allow 13035
-		ufw allow from 10.0.0.0/16 to any port 13035
+		ufw allow from 10.0.0.0/16 to any port 2049 proto tcp
+		ufw allow from 10.0.0.0/16 to any port 2049 proto udp
+
+		ufw allow from 10.0.0.0/16 to any port 111 proto tcp
+		ufw allow from 10.0.0.0/16 to any port 111 proto udp
+
+		ufw allow from 10.0.0.0/16 to any port 20048
+
+		ufw allow from 10.0.0.0/16 to any port 32765:32767 proto tcp
+		ufw allow from 10.0.0.0/16 to any port 32765:32767 proto udp
 	fi
 
 	ufw enable
@@ -1426,11 +1440,45 @@ install-packages $moduleType
 adds-to-bashrc $moduleType
 if [ "$moduleType" == "storage" ]; then
 
-	echo "- to avoid nfs to listen on random ports (we would have problems open the firewall):"
-	echo "- open /etc/default/nfs-kernel-server"
-	echo "-	comment out the line RPCMOUNTDOPTS=--manage-gids"
-	echo "- add the following line RPCMOUNTDOPTS=\"-p 13035\""
-	echo "- Restart NFSd with sudo systemctl restart nfs-kernel-server"
+	echo "Se alta concorrenza, aumenta thread NFS con"
+	echo "EDITOR=vi systemctl edit nfs-server"
+	echo "[Service]"
+	echo "ExecStart=/usr/sbin/rpc.nfsd 16"
+	echo ""
+	echo ""
+	echo "to avoid nfs to listen on random ports (we would have problems to open the firewall):"
+	echo "edita /etc/nfs.conf"
+	echo "[nfsd]"
+	echo "port = 2049"
+	echo "[mountd]"
+	echo "port = 20048"
+	echo "[statd]"
+	echo "port = 32765"
+	echo "outgoing-port = 32766"
+	echo "[lockd]"
+	echo "port = 32767"
+	echo ""
+	echo ""
+	echo "Configurare /etc/exports con le directory da esportare, ad es:"
+	echo "/mnt/storage-1/dbDump 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/MMSGUI 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/mmsIngestionRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/MMSLive 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/mmsRepository0000 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/MMSRepositoryFree 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/MMSWorkingAreaRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/storage-1/nginxWorkingAreaRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo ""
+	echo ""
+	echo "Comandi per ricaricare le conf sono:"
+	echo "sudo exportfs -a"
+	echo "sudo systemctl restart nfs-kernel-server"
+	#conf sostituita dalla precedente 
+	#echo "- open /etc/default/nfs-kernel-server"
+	#echo "-	comment out the line RPCMOUNTDOPTS=--manage-gids"
+	#echo "- add the following line RPCMOUNTDOPTS=\"-p 13035\""
+	#echo "- Restart NFSd with sudo systemctl restart nfs-kernel-server"
+	read -n 1 -s -r -p "premi un tasto per continuare"
 else
 	echo ""
 	create-directory $moduleType
@@ -1459,7 +1507,7 @@ echo ""
 echo ""
 
 
-read -n 1 -s -r -p "Aggiornare scripts/servers.sh"
+read -n 1 -s -r -p "Aggiornare <dev server>/.../scripts/servers.sh"
 echo ""
 echo ""
 

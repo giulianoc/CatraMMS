@@ -2612,7 +2612,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 		workspaceDetailRoot[field] = row["creationDate"].as<string>();
 
 		if (row["preferences"].is_null())
-			workspaceDetailRoot["preferences"] = "";
+			workspaceDetailRoot["preferences"] = nullptr;
 		else
 			workspaceDetailRoot["preferences"] = row["preferences"].as<string>();
 

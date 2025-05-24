@@ -57,7 +57,7 @@ add_compile_options(-D_FILE_OFFSET_BITS=64)
 add_compile_options(-DMAGICKCORE_HDRI_ENABLE=0)
 add_compile_options(-DMAGICKCORE_QUANTUM_DEPTH=16)
 
-add_compile_options(-DSAFEFILESYSTEMPROCESS)
+#add_compile_options(-DSAFEFILESYSTEMPROCESS)
 #add_compile_options(-DSAFEFILESYSTEMTHREAD)
 
 set(SPDLOG_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
