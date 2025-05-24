@@ -932,7 +932,7 @@ install-mms-packages()
 	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
 
 		echo ""
-		tomcatVersion=9.0.97
+		tomcatVersion=9.0.105
 		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
 		read VERSION
 		if [ "$VERSION" == "" ]; then
