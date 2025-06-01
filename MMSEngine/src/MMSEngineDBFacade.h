@@ -2190,7 +2190,7 @@ class MMSEngineDBFacade
 
 	void removeCDN77ChannelConf(int64_t workspaceKey, int64_t confKey);
 
-	json getCDN77ChannelConfList(int64_t workspaceKey, int64_t confKey, string label,
+	json getCDN77ChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 								 int type); // 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<string, string, string> getCDN77ChannelDetails(int64_t workspaceKey, string label);

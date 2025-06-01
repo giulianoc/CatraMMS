@@ -455,17 +455,24 @@ create-directory()
 	echo ""
 
 	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
+
+	if [ "$moduleType" == "storage" ]; then
+
+		#for storage just we need just /opt/catramms for CatraMMS scripts directory
+
+		return
+	fi
 
 	mkdir -p /var/catramms
 	mkdir -p /var/catramms/pids
+	chown -R mms:mms /var/catramms
 
 	if [ "$moduleType" == "api" -o "$moduleType" == "api-and-delivery" ]; then
 		if [ "$moduleType" == "api" ]; then
-			read -n 1 -s -r -p "create the following directories (/mnt/mmsStorage-X), press a key once done"
+			read -n 1 -s -r -p "create the following directories (/mnt/mmsStorage-1), press a key once done"
 			echo ""
-			read -n 1 -s -r -p "set /etc/fstab and mount the dirs (es: //u330289.your-storagebox.de/backup     /mnt/mmsStorage-1       cifs    username=XXX,password=YYY,file_mode=0664,dir_mode=0775,uid=1000,gid=1000       0       0)"
-			echo ""
-			read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
+			read -n 1 -s -r -p "set /etc/fstab and mount the dirs (es: 10.0.1.16:/mnt/storage-1/commonConfiguration /mnt/mmsStorage-1-new/commonConfiguration nfs defaults 0 0)"
 			echo ""
 		else
 			read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
@@ -483,12 +490,12 @@ create-directory()
 		fi
 
 		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
-		mkdir -p /mnt/mmsStorage/commonConfiguration
-		mkdir -p /mnt/mmsStorage/dbDump
-		mkdir -p /mnt/mmsStorage/MMSGUI
-		mkdir -p /mnt/mmsStorage/MMSLive
-		mkdir -p /mnt/mmsStorage/MMSRepository-free
-		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
+		mkdir -p /mnt/mmsStorage-1/commonConfiguration
+		mkdir -p /mnt/mmsStorage-1/MMSGUI
+		mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository
+		mkdir -p /mnt/mmsStorage-1/MMSLive
+		mkdir -p /mnt/mmsStorage-1/mmsRepository0000
+		mkdir -p /mnt/mmsStorage-1/MMSRepositoryFree
 
 
 		mkdir -p /var/catramms/storage
@@ -831,352 +838,104 @@ install-mms-packages()
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
-	#DA ELIMINARE, NON PENSO SERVE PIU
-	#if [ "$moduleType" != "integration" ]; then
-	#	package=jsoncpp
-	#	read -n 1 -s -r -p "Downloading $package..."
-	#	echo ""
-	#	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	#	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	#fi
+	while [ -n "$moduleType" ]
+	do
+		case "$1" in
+			"storage")
+				install-mms-CatraMMS-package $architecture
+				install-mms-storage-conf $architecture
+				return
+				;;
+			"engine")
+				install-mms-ImageMagick-package $architecture
+				install-mms-FFMpeg-package $architecture
+				install-mms-libpqxx-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-opencv-package $architecture
+				install-mms-youtube-dl-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-engine-conf $architecture
 
-
-	if [ "$moduleType" != "integration" ]; then
-		packageName=ImageMagick
-		echo ""
-		imageMagickVersion=7.1.1
-		echo -n "$packageName version (i.e.: $imageMagickVersion)? "
-		read version
-		if [ "$version" == "" ]; then
-			version=$imageMagickVersion
-		fi
-		package=$packageName-$version
-		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-		ln -rs /opt/catramms/$package /opt/catramms/$packageName
-	fi
-
-
-	packageName=ffmpeg
-	echo ""
-	ffmpegVersion=7.0.2
-	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$ffmpegVersion
-	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
-
-
-	if [ "$moduleType" != "integration" ]; then
-		packageName=libpqxx
-		echo ""
-		libpqxxVersion=7.9.2
-		echo -n "$packageName version (i.e.: $libpqxxVersion)? "
-		read version
-		if [ "$version" == "" ]; then
-			version=$libpqxxVersion
-		fi
-		package=$packageName-$version
-		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-		ln -rs /opt/catramms/$package /opt/catramms/$packageName
-	fi
-
-
-	packageName=nginx
-	echo ""
-	nginxVersion=1.27.2
-	echo -n "$packageName version (i.e.: $nginxVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$nginxVersion
-	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
-
-	#nginx configuration
-	rm -rf /opt/catramms/nginx/logs
-	ln -s /var/catramms/logs/nginx /opt/catramms/nginx/logs
-
-	if [[ -f /opt/catramms/nginx/conf/nginx.conf ]]
-	then
-		mv /opt/catramms/nginx/conf/nginx.conf /opt/catramms/nginx/conf/nginx.conf.backup
-	fi
-	ln -s /opt/catramms/CatraMMS/conf/nginx.conf /opt/catramms/nginx/conf/
-
-	mkdir /opt/catramms/nginx/conf/sites-enabled
-
-	if [ "$moduleType" == "load-balancer" ]; then
-		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx /opt/catramms/nginx/conf/sites-enabled/
-	else
-		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
-	fi
-
-	#per evitare errori nginx: 24: Too many open files                                                        
-	#In caso di un systemctl service servirebbe indicare nel file del servizio LimitNOFILE=500000
-	#see https://access.redhat.com/solutions/1257953
-	echo "fs.file-max = 70000" >> /etc/sysctl.conf                                                            
-	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
-	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
-
-	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
-
-		echo ""
-		tomcatVersion=9.0.105
-		echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
-		read VERSION
-		if [ "$VERSION" == "" ]; then
-			VERSION=$tomcatVersion
-		fi
-		wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
-		tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
-		ln -rs /opt/catramms/apache-tomcat-${VERSION} /opt/catramms/tomcat
-
-		rm -rf /opt/catramms/tomcat/logs
-		ln -s /var/catramms/logs/tomcat-gui /opt/catramms/tomcat/logs
-
-		#/opt/catramms/tomcat/work viene anche usato da tomcat per salvare i chunks
-		#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
-		#in /var/catramms/logs/tomcatWorkDir
-		rm -rf /opt/catramms/tomcat/work
-		ln -s /var/catramms/logs/tomcatWorkDir/work /opt/catramms/tomcat/work
-		#/opt/catramms/tomcat/temp viene anche usato da tomcat per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
-		rm -rf /opt/catramms/tomcat/temp
-		ln -s /var/catramms/logs/tomcatWorkDir/temp /opt/catramms/tomcat/temp
-
-		echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomcat/webapps/ROOT/index.html
-
-		chown -R mms:mms /opt/catramms/apache-tomcat-${VERSION}
-
-		chmod u+x /opt/catramms/tomcat/bin/*.sh
-
-		echo "[Unit]" > /etc/systemd/system/tomcat.service
-		echo "Description=Tomcat 9 servlet container" >> /etc/systemd/system/tomcat.service
-		echo "After=network.target" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-		echo "[Service]" >> /etc/systemd/system/tomcat.service
-		echo "Type=forking" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-		echo "User=mms" >> /etc/systemd/system/tomcat.service
-		echo "Group=mms" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"CATALINA_HOME=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"CATALINA_PID=/var/catramms/pids/tomcat.pid\"" >> /etc/systemd/system/tomcat.service
-		echo "Environment=\"CATALINA_OPTS=-Xms512M -Xmx4096M -server -XX:+UseParallelGC\"" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-		echo "ExecStart=/opt/catramms/tomcat/bin/startup.sh" >> /etc/systemd/system/tomcat.service
-		echo "ExecStop=/opt/catramms/tomcat/bin/shutdown.sh" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-		echo "[Install]" >> /etc/systemd/system/tomcat.service
-		echo "WantedBy=multi-user.target" >> /etc/systemd/system/tomcat.service
-		echo "" >> /etc/systemd/system/tomcat.service
-
-		#notify systemd that a new unit file exists
-		systemctl daemon-reload
-
-		systemctl enable --now tomcat
-
-		echo "Make sure inside tomcat/conf/server.xml we have:"
-		echo ""
-		echo "<Connector port=\"8080\" protocol=\"HTTP/1.1\""
-		echo "address=\"127.0.0.1\""
-		echo "connectionTimeout=\"20000\""
-		echo "URIEncoding=\"UTF-8\""
-		echo "redirectPort=\"8443\" />"
-		echo ""
-		echo "Make sure inside the Host tag we have:"
-		echo ""
-		echo "<Context path=\"/catramms\" docBase=\"catramms\" reloadable=\"true\">"
-		echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
-		echo "</Context>"
-		echo ""
-		echo "copiare catramms.war in /opt/catramms/tomcat/webapps"
-		echo "far partire tomcat in modo che crea la directory catramms"
-		echo "ln -s /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomcat/conf/catramms.properties"
-		#favicon is selected by the <link ...> tag inside the xhtml of the project
-		#echo "cp /opt/catramms/tomcat/webapps/catramms/favicon_2.ico /opt/catramms/tomcat/webapps/ROOT/"
-	fi
-
-	if [ "$moduleType" != "integration" ]; then
-		package=opencv
-		read -n 1 -s -r -p "Downloading $package..."
-		echo ""
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	fi
-
-
-	if [ "$moduleType" != "integration" ]; then
-		#Only in case we have to download it again, AS mms user
-		#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
-		#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
-		#	chmod a+rx /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
-		#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
-		packageName=youtube-dl
-		echo ""
-		youtubeDlVersion=2022-08-07
-		echo -n "$packageName version (i.e.: $youtubeDlVersion)? "
-		read version
-		if [ "$version" == "" ]; then
-			version=$youtubeDlVersion
-		fi
-		package=$packageName-$version
-		echo "Downloading $package..."
-		curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-		ln -rs /opt/catramms/$package /opt/catramms/$packageName
-	fi
-
-
-	#if [ "$moduleType" != "integration" ]; then
-		#packageName=CatraLibraries
-		#echo ""
-		#catraLibrariesVersion=1.0.2050
-		#echo -n "$packageName version (i.e.: $catraLibrariesVersion)? "
-		#read version
-		#if [ "$version" == "" ]; then
-			#version=$catraLibrariesVersion
-		#fi
-		#package=$packageName-$version
-		#echo "Downloading $package..."
-		#curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		#tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-		#ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
-	#fi
-
-
-	packageName=CatraMMS
-	echo ""
-	catraMMSVersion=1.0.6282
-	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
-	read version
-	if [ "$version" == "" ]; then
-		version=$catraMMSVersion
-	fi
-	package=$packageName-$version
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
-
-
-	packageName=aws-sdk-cpp
-	package=$packageName
-	read -n 1 -s -r -p "Downloading $package..."
-	echo ""
-	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-
-	if [ "$moduleType" == "externalEncoder" ]; then
-		echo ""
-		echo -n "Type the AWS Access Key Id: "
-		read awsAccessKeyId
-		echo ""
-		echo -n "Type the AWS Secret Access Key: "
-		read awsSecretAccessKey
-		mkdir -p /home/mms/.aws
-		echo "[default]" > /home/mms/.aws/credentials
-		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
-		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
-	else
-		ln -s /var/catramms/storage/commonConfiguration/.aws ~mms
-	fi
-
-
-	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-		if [ "$moduleType" == "externalEncoder" ]; then
-			packageName=externalEncoderMmsConf
-		else
-			packageName=encoderMmsConf
-		fi
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-
-		chown -R mms:mms ~mms/mms
-	fi
-	if [ "$moduleType" == "engine" ]; then
-		packageName=engineMmsConf
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-
-		chown -R mms:mms ~mms/mms
-	fi
-	if [ "$moduleType" == "api" ]; then
-		packageName=apiMmsConf
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-
-		chown -R mms:mms ~mms/mms
-	fi
-	if [ "$moduleType" == "delivery" ]; then
-		packageName=deliveryMmsConf
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-
-		chown -R mms:mms ~mms/mms
-	fi
-	if [ "$moduleType" == "api-and-delivery" ]; then
-		packageName=apiAndDeliveryMmsConf
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-
-		chown -R mms:mms ~mms/mms
-	fi
-	if [ "$moduleType" == "integration" ]; then
-		packageName=integrationMmsConf
-		echo ""
-		package=$packageName
-		echo "Downloading $package..."
-		curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-		tar xvfz ~/$package.tar.gz -C ~mms
-
-		chown -R mms:mms ~mms/mms
-	fi
-	if [ "$moduleType" == "engine" ]; then
-		echo "" > ~/.psqlrc
-		echo "#evita che l’output sparisce" >> ~/.psqlrc
-		echo "\setenv LESS -FX" >> ~/.psqlrc
-		echo "" >> ~/.psqlrc
-		echo "\timing on" >> ~/.psqlrc
-		echo "" >> ~/.psqlrc
-		echo "#senza \s e \t abbiamo un output simile a mysql" >> ~/.psqlrc
-		echo "#\x off" >> ~/.psqlrc
-		echo "#enable tuple, per avere solo tuple è necessario anche \x off" >> ~/.psqlrc
-		echo "#\t on" >> ~/.psqlrc
-	fi
-
-	chown -R mms:mms /opt/catramms
-	chown -R mms:mms /var/catramms
+				echo "" > ~/.psqlrc
+				echo "#evita che l’output sparisce" >> ~/.psqlrc
+				echo "\setenv LESS -FX" >> ~/.psqlrc
+				echo "" >> ~/.psqlrc
+				echo "\timing on" >> ~/.psqlrc
+				echo "" >> ~/.psqlrc
+				echo "#senza \s e \t abbiamo un output simile a mysql" >> ~/.psqlrc
+				echo "#\x off" >> ~/.psqlrc
+				echo "#enable tuple, per avere solo tuple è necessario anche \x off" >> ~/.psqlrc
+				echo "#\t on" >> ~/.psqlrc
+				;;
+			"api")
+				install-mms-ImageMagick-package $architecture
+				install-mms-FFMpeg-package $architecture
+				install-mms-libpqxx-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-opencv-package $architecture
+				install-mms-youtube-dl-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-api-conf $architecture
+				;;
+			"delivery")
+				install-mms-ImageMagick-package $architecture
+				install-mms-FFMpeg-package $architecture
+				install-mms-libpqxx-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-tomcat-package $architecture
+				install-mms-opencv-package $architecture
+				install-mms-youtube-dl-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-delivery-conf $architecture
+				;;
+			"api-and-delivery")
+				install-mms-ImageMagick-package $architecture
+				install-mms-FFMpeg-package $architecture
+				install-mms-libpqxx-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-tomcat-package $architecture
+				install-mms-opencv-package $architecture
+				install-mms-youtube-dl-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-api-and-delivery-conf $architecture
+				;;
+			"encoder")
+				install-mms-ImageMagick-package $architecture
+				install-mms-FFMpeg-package $architecture
+				install-mms-libpqxx-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-opencv-package $architecture
+				install-mms-youtube-dl-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-encoder-conf $architecture
+				;;
+			"externalEncoder")
+				install-mms-ImageMagick-package $architecture
+				install-mms-FFMpeg-package $architecture
+				install-mms-libpqxx-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-opencv-package $architecture
+				install-mms-youtube-dl-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-externalEncoder-conf $architecture
+				;;
+			"integration")
+				install-mms-FFMpeg-package $architecture
+				install-mms-nginx-package $architecture
+				install-mms-CatraMMS-package $architecture
+				install-mms-aws-sdk-cpp-package $architecture $moduleType
+				install-mms-integration-conf $architecture
+				;;
+    	*) echo "$moduleType is not an option" >> $debugFilename
+				;;
+		esac
+	done
 
 	if [ ! -e /home/mms/mmsStatusALL.sh ]; then
 		ln -s /home/mms/mms/scripts/mmsStatusALL.sh /home/mms
@@ -1216,6 +975,386 @@ install-mms-packages()
 	if [ ! -e /home/mms/printLogFileName.sh ]; then
 		ln -s /opt/catramms/CatraMMS/scripts/printLogFileName.sh /home/mms
 	fi
+}
+
+install-mms-storage-conf()
+{
+	architecture=$1
+
+	packageName=storageMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-encoder-conf()
+{
+	architecture=$1
+
+	packageName=encoderMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-externalEncoder-conf()
+{
+	architecture=$1
+
+	packageName=externalEncoderMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-engine-conf()
+{
+	architecture=$1
+
+	packageName=engineMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-api-conf()
+{
+	architecture=$1
+
+	packageName=apiMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-delivery-conf()
+{
+	architecture=$1
+
+	packageName=deliveryMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-api-and-delivery-conf()
+{
+	architecture=$1
+
+	packageName=apiAndDeliveryMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-integration-conf()
+{
+	architecture=$1
+
+	packageName=integrationMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-aws-sdk-cpp-package()
+{
+	architecture=$1
+	moduleType=$2
+
+	packageName=aws-sdk-cpp
+	package=$packageName
+	read -n 1 -s -r -p "Downloading $package..."
+	echo ""
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+
+	if [ "$moduleType" == "externalEncoder" ]; then
+		echo ""
+		echo -n "Type the AWS Access Key Id: "
+		read awsAccessKeyId
+		echo ""
+		echo -n "Type the AWS Secret Access Key: "
+		read awsSecretAccessKey
+		mkdir -p /home/mms/.aws
+		echo "[default]" > /home/mms/.aws/credentials
+		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
+		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
+	else
+		ln -s /var/catramms/storage/commonConfiguration/.aws ~mms
+	fi
+}
+
+install-mms-youtube-dl-package()
+{
+	architecture=$1
+
+	#Only in case we have to download it again, AS mms user
+	#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
+	#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
+	#	chmod a+rx /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
+	#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
+	packageName=youtube-dl
+	echo ""
+	youtubeDlVersion=2022-08-07
+	echo -n "$packageName version (i.e.: $youtubeDlVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$youtubeDlVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+}
+
+install-mms-opencv-package()
+{
+	architecture=$1
+
+	package=opencv
+	read -n 1 -s -r -p "Downloading $package..."
+	echo ""
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+}
+
+install-mms-tomcat-package()
+{
+	architecture=$1
+
+	echo ""
+	tomcatVersion=9.0.105
+	echo -n "tomcat version (i.e.: $tomcatVersion)? Look the version at https://www-eu.apache.org/dist/tomcat: "
+	read VERSION
+	if [ "$VERSION" == "" ]; then
+		VERSION=$tomcatVersion
+	fi
+	wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
+	tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/apache-tomcat-${VERSION} /opt/catramms/tomcat
+
+	rm -rf /opt/catramms/tomcat/logs
+	ln -s /var/catramms/logs/tomcat-gui /opt/catramms/tomcat/logs
+
+	#/opt/catramms/tomcat/work viene anche usato da tomcat per salvare i chunks
+	#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
+	#in /var/catramms/logs/tomcatWorkDir
+	rm -rf /opt/catramms/tomcat/work
+	ln -s /var/catramms/logs/tomcatWorkDir/work /opt/catramms/tomcat/work
+	#/opt/catramms/tomcat/temp viene anche usato da tomcat per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
+	rm -rf /opt/catramms/tomcat/temp
+	ln -s /var/catramms/logs/tomcatWorkDir/temp /opt/catramms/tomcat/temp
+
+	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomcat/webapps/ROOT/index.html
+
+	chown -R mms:mms /opt/catramms/apache-tomcat-${VERSION}
+
+	chmod u+x /opt/catramms/tomcat/bin/*.sh
+
+	echo "[Unit]" > /etc/systemd/system/tomcat.service
+	echo "Description=Tomcat 9 servlet container" >> /etc/systemd/system/tomcat.service
+	echo "After=network.target" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+	echo "[Service]" >> /etc/systemd/system/tomcat.service
+	echo "Type=forking" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+	echo "User=mms" >> /etc/systemd/system/tomcat.service
+	echo "Group=mms" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_HOME=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_PID=/var/catramms/pids/tomcat.pid\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_OPTS=-Xms512M -Xmx4096M -server -XX:+UseParallelGC\"" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+	echo "ExecStart=/opt/catramms/tomcat/bin/startup.sh" >> /etc/systemd/system/tomcat.service
+	echo "ExecStop=/opt/catramms/tomcat/bin/shutdown.sh" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+	echo "[Install]" >> /etc/systemd/system/tomcat.service
+	echo "WantedBy=multi-user.target" >> /etc/systemd/system/tomcat.service
+	echo "" >> /etc/systemd/system/tomcat.service
+
+	#notify systemd that a new unit file exists
+	systemctl daemon-reload
+
+	systemctl enable --now tomcat
+
+	echo "Make sure inside tomcat/conf/server.xml we have:"
+	echo ""
+	echo "<Connector port=\"8080\" protocol=\"HTTP/1.1\""
+	echo "address=\"127.0.0.1\""
+	echo "connectionTimeout=\"20000\""
+	echo "URIEncoding=\"UTF-8\""
+	echo "redirectPort=\"8443\" />"
+	echo ""
+	echo "Make sure inside the Host tag we have:"
+	echo ""
+	echo "<Context path=\"/catramms\" docBase=\"catramms\" reloadable=\"true\">"
+	echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
+	echo "</Context>"
+	echo ""
+	echo "copiare catramms.war in /opt/catramms/tomcat/webapps"
+	echo "far partire tomcat in modo che crea la directory catramms"
+	echo "ln -s /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomcat/conf/catramms.properties"
+	#favicon is selected by the <link ...> tag inside the xhtml of the project
+	#echo "cp /opt/catramms/tomcat/webapps/catramms/favicon_2.ico /opt/catramms/tomcat/webapps/ROOT/"
+}
+
+install-mms-nginx-package()
+{
+	architecture=$1
+
+	packageName=nginx
+	echo ""
+	nginxVersion=1.27.2
+	echo -n "$packageName version (i.e.: $nginxVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$nginxVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+
+	#nginx configuration
+	rm -rf /opt/catramms/nginx/logs
+	ln -s /var/catramms/logs/nginx /opt/catramms/nginx/logs
+
+	if [[ -f /opt/catramms/nginx/conf/nginx.conf ]]
+	then
+		mv /opt/catramms/nginx/conf/nginx.conf /opt/catramms/nginx/conf/nginx.conf.backup
+	fi
+	ln -s /opt/catramms/CatraMMS/conf/nginx.conf /opt/catramms/nginx/conf/
+
+	mkdir /opt/catramms/nginx/conf/sites-enabled
+
+	if [ "$moduleType" == "load-balancer" ]; then
+		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx /opt/catramms/nginx/conf/sites-enabled/
+	else
+		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
+	fi
+
+	#per evitare errori nginx: 24: Too many open files                                                        
+	#In caso di un systemctl service servirebbe indicare nel file del servizio LimitNOFILE=500000
+	#see https://access.redhat.com/solutions/1257953
+	echo "fs.file-max = 70000" >> /etc/sysctl.conf                                                            
+	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
+	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
+}
+
+install-mms-libpqxx-package()
+{
+	architecture=$1
+
+	packageName=libpqxx
+	echo ""
+	libpqxxVersion=7.9.2
+	echo -n "$packageName version (i.e.: $libpqxxVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$libpqxxVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+}
+
+install-mms-CatraMMS-package()
+{
+	architecture=$1
+
+	packageName=CatraMMS
+	echo ""
+	catraMMSVersion=1.0.6282
+	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$catraMMSVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
+}
+
+install-mms-ImageMagick-package()
+{
+	architecture=$1
+
+	packageName=ImageMagick
+	echo ""
+	imageMagickVersion=7.1.1
+	echo -n "$packageName version (i.e.: $imageMagickVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$imageMagickVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+}
+
+install-mms-FFMpeg-package()
+{
+	architecture=$1
+
+	packageName=ffmpeg
+	echo ""
+	ffmpegVersion=7.0.2
+	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
+	read version
+	if [ "$version" == "" ]; then
+		version=$ffmpegVersion
+	fi
+	package=$packageName-$version
+	echo "Downloading $package..."
+	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/$package /opt/catramms/$packageName
 }
 
 firewall-rules()
@@ -1331,16 +1470,17 @@ firewall-rules()
 		ufw allow 443
 		ufw allow 8088
 	elif [ "$moduleType" == "storage" ]; then
-		ufw allow from 10.0.0.0/16 to any port 2049 proto tcp
-		ufw allow from 10.0.0.0/16 to any port 2049 proto udp
+		internalNetwork=10.0.0.0/16
+		ufw allow from $internalNetwork to any port 2049 proto tcp
+		ufw allow from $internalNetwork to any port 2049 proto udp
 
-		ufw allow from 10.0.0.0/16 to any port 111 proto tcp
-		ufw allow from 10.0.0.0/16 to any port 111 proto udp
+		ufw allow from $internalNetwork to any port 111 proto tcp
+		ufw allow from $internalNetwork to any port 111 proto udp
 
-		ufw allow from 10.0.0.0/16 to any port 20048
+		ufw allow from $internalNetwork to any port 20048
 
-		ufw allow from 10.0.0.0/16 to any port 32765:32767 proto tcp
-		ufw allow from 10.0.0.0/16 to any port 32765:32767 proto udp
+		ufw allow from $internalNetwork to any port 32765:32767 proto tcp
+		ufw allow from $internalNetwork to any port 32765:32767 proto udp
 	fi
 
 	ufw enable
@@ -1479,11 +1619,11 @@ if [ "$moduleType" == "storage" ]; then
 	#echo "- add the following line RPCMOUNTDOPTS=\"-p 13035\""
 	#echo "- Restart NFSd with sudo systemctl restart nfs-kernel-server"
 	read -n 1 -s -r -p "premi un tasto per continuare"
-else
-	echo ""
-	create-directory $moduleType
-	install-mms-packages $moduleType
 fi
+
+echo ""
+create-directory $moduleType
+install-mms-packages $moduleType
 firewall-rules $moduleType
 
 read -n 1 -s -r -p "verificare ~/mms/conf/* (in particolare mms-env.sh) e attivare il crontab -u mms ~/mms/conf/crontab.txt"

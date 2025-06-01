@@ -65,6 +65,9 @@ getAlarmDescription()
 		"alarm_mms_server_reachable")
 			echo "mms server is not reachable"
 			;;
+		"alarm_raid_error")
+			echo "raid has an issue"
+			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): Unknown alarmType: $alarmType" >> $debugFilename
@@ -886,3 +889,41 @@ logfile_slowquery_newlines_check()
 	fi
 }
 
+raid_error()
+{
+	mdstatFile=/proc/mdstat
+	raid_name="md0"
+
+	if [ ! -f "$mdstatFile" ]; then
+		alarmNotificationPeriod=$((60 * 15))		#15 minuti
+		notify "$(hostname)" "alarm_raid_error" "alarm_raid_error" $alarmNotificationPeriod "RAID $mdstatFile not found"
+		return 1
+	fi
+
+	raid_status=$(grep -A 2 "^$raid_name :" "$mdstatFile")
+
+	# Verifica presenza di [UU] o simili
+	if echo "$raid_status" | grep -q "\[.*\]"; then
+		# Estrai la riga con [UU]
+		health=$(echo "$raid_status" | grep -o "\[[U_]*\]")
+		if [[ "$health" == *"[UU]"* ]]; then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_raid_error, RAID is healthy: [$health]" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_raid_error"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+
+			return 0
+		else
+			alarmNotificationPeriod=$((60 * 15))		#15 minuti
+			notify "$(hostname)" "alarm_raid_error" "alarm_raid_error" $alarmNotificationPeriod "RAID degraded or has failed disk: [$raidStatus]"
+			return 1
+			# Notifica, log, o alert via email/SMS può essere aggiunto qui
+    fi
+	else
+		alarmNotificationPeriod=$((60 * 15))		#15 minuti
+		notify "$(hostname)" "alarm_raid_error" "alarm_raid_error" $alarmNotificationPeriod "RAID status unknown or not found in $mdstatFile"
+		return 1
+	fi
+}

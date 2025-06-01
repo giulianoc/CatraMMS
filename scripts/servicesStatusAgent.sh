@@ -201,6 +201,13 @@ do
 			shift
 
 			;;
+		"storage")
+			echo "" >> $debugFilename
+			raid_error
+
+			shift
+
+			;;
         *) echo "$1 is not an option" >> $debugFilename
 			;;
 	esac

@@ -4806,6 +4806,7 @@ void API::cdn77ChannelConfList(
 	try
 	{
 		string label = getQueryParameter(queryParameters, "label", string(), false);
+		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
 		string sType;
@@ -4818,7 +4819,7 @@ void API::cdn77ChannelConfList(
 				type = 2;
 		}
 		{
-			json cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(workspace->_workspaceKey, -1, label, type);
+			json cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
 

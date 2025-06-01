@@ -37,16 +37,19 @@ cd $workspacePathName
 #It is assumed we have ONLY m3u8 having the following format:
 #<relative path (i.e.: /123/456/789/)><m3u8 directory (i.e.: 5384612_938916_75)><main m3u8 file (i.e.: 5384638_938983.m3u8)>
 find ./ -mindepth 5 -maxdepth 5 -type f -name "*.m3u8" | awk -v dbPassword=$dbPassword -v partitionNumber=$partitionNumber -v workspacePathName=$workspacePathName -v removeFilesDirectories=$removeFilesDirectories -v logFileName=$currentDir/checkDirectoryAndRemove.log \
-	'BEGIN { printf("#!/bin/bash\n\nmediaRemoved=0\n\n: > %s\n\n", logFileName); }	\
+	'BEGIN { printf("#!/bin/bash\n\nmediaRemoved=0\nmediaIndex=0\n\n: > %s\n\n", logFileName); }	\
 	{ relativePath=substr($1, 2, 13);	\
 		endOfM3u8DirectoryIndex=index(substr($1, 15), "/");	\
 		m3u8Directory=substr($1, 15, endOfM3u8DirectoryIndex);	\
 		fileName=substr($1, 14+endOfM3u8DirectoryIndex+1);	\
 		printf("#input: %s\n#relativePath: %s\n#endOfM3u8DirectoryIndex: %d\n#m3u8Directory: %s\n#fileName: %s\n", $1, relativePath, endOfM3u8DirectoryIndex, m3u8Directory, fileName);	\
+		echoCommand="echo \"$mediaIndex: "fileName"\" >> "logFileName;	\
+		printf("%s\n", echoCommand);	\
+		printf("((mediaIndex++))\n");	\
 		rmCommand="echo \"rm -rf "workspacePathName""relativePath""m3u8Directory"\" >> "logFileName;	\
 		if (removeFilesDirectories == 1)	\
 			rmCommand=rmCommand"\n\trm -rf "workspacePathName""relativePath""m3u8Directory;	\
-		printf("count=$(echo \"select count(*) from MMS_PhysicalPath where partitionNumber = %s and relativePath = \\\"%s%s\\\" and fileName = \\\"%s\\\"\" | mysql -N -u mms -p%s -h db-slaves  mms)\nif [ $count -eq 0 ]; then\n\t%s\n\tmediaRemoved=$((mediaRemoved+1))\nfi\n\n", partitionNumber, relativePath, m3u8Directory, fileName, dbPassword, rmCommand);	\
+			printf("count=$(echo \"select count(*) from MMS_PhysicalPath where partitionNumber = %s and relativePath = \x27%s%s\x27 and fileName = \x27%s\x27\" | psql --no-psqlrc -t -A \"postgresql://mms:%s@$MMS_DB_LOCALHOST:5432/mms\")\nif [ $count -eq 0 ]; then\n\t%s\n\tmediaRemoved=$((mediaRemoved+1))\nfi\n\n", partitionNumber, relativePath, m3u8Directory, fileName, dbPassword, rmCommand);	\
 	}	\
 	END { printf("echo \"Removed media: $mediaRemoved/%d\"", NR); }' > $currentDir/checkDirectoryAndRemove.sh
 
@@ -54,14 +57,17 @@ chmod u+x $currentDir/checkDirectoryAndRemove.sh
 
 #check of the "simple" media (files)
 find ./ -mindepth 4 -maxdepth 4 -type f | awk -v dbPassword=$dbPassword -v partitionNumber=$partitionNumber -v workspacePathName=$workspacePathName -v removeFilesDirectories=$removeFilesDirectories -v logFileName=$currentDir/checkFileAndRemove.log	\
-	'BEGIN { printf("#!/bin/bash\n\nmediaRemoved=0\n\n: > %s\n\n", logFileName); }	\
+	'BEGIN { printf("#!/bin/bash\n\nmediaRemoved=0\nmediaIndex=0\n\n: > %s\n\n", logFileName); }	\
 	{ relativePath=substr($1, 2, 13);	\
 		fileName=substr($1, 15);	\
 		printf("#input: %s\n#relativePath: %s\n#fileName: %s\n", $1, relativePath, fileName);	\
+		echoCommand="echo \"$mediaIndex: "fileName"\" >> "logFileName;	\
+		printf("%s\n", echoCommand);	\
+		printf("((mediaIndex++))\n");	\
 		rmCommand="echo \"rm -rf "workspacePathName""relativePath""fileName"\" >> "logFileName;	\
 		if (removeFilesDirectories == 1)	\
 			rmCommand=rmCommand"\n\trm -rf "workspacePathName""relativePath""fileName;	\
-		printf("count=$(echo \"select count(*) from MMS_PhysicalPath where partitionNumber = %s and relativePath = \\\"%s\\\" and fileName = \\\"%s\\\"\" | mysql -N -u mms -p%s -h db-slaves  mms)\nif [ $count -eq 0 ]; then\n\t%s\n\tmediaRemoved=$((mediaRemoved+1))\nfi\n\n", partitionNumber, relativePath, fileName, dbPassword, rmCommand);	\
+		printf("count=$(echo \"select count(*) from MMS_PhysicalPath where partitionNumber = %s and relativePath = \x27%s\x27 and fileName = \x27%s\x27\" | psql --no-psqlrc -t -A \"postgresql://mms:%s@$MMS_DB_LOCALHOST:5432/mms\")\nif [ $count -eq 0 ]; then\n\t%s\n\tmediaRemoved=$((mediaRemoved+1))\nfi\n\n", partitionNumber, relativePath, fileName, dbPassword, rmCommand);	\
 	}	\
 	END { printf("echo \"Removed media: $mediaRemoved/%d\"", NR); }' > $currentDir/checkFileAndRemove.sh
 

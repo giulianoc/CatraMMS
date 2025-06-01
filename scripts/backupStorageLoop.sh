@@ -2,8 +2,9 @@
 
 debugFilename=/tmp/backupStorage.log
 
-while [ 1 -eq 1 ]
-do
+#lo eseguiamo una volta al giorno
+#while [ 1 -eq 1 ]
+#do
 	if [ ! -f "$debugFilename" ]; then
 		echo "" > $debugFilename
 	else
@@ -19,38 +20,16 @@ do
 	echo "" >> $debugFilename
 	echo "" >> $debugFilename
 
-	startTotal=$(date +%s)
-
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup mmsIngestionRepository..." >> $debugFilename
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): start backup mmsRepository0000..." >> $debugFilename
 	start=$(date +%s)
-	rsync --archive --recursive --compress --delete --partial --omit-dir-times /mnt/mmsIngestionRepository-main/ /mnt/mmsIngestionRepository-backup >> $debugFilename
+	#max 120 min
+	timeout 120m rsync --verbose --archive --recursive --delete --partial /mnt/mmsStorage-1-new/mmsRepository0000/ /mnt/backupRepository0000/ >> $debugFilename
 	end=$(date +%s)
 	elapsed=$((end-start))
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup mmsIngestionRepository elapsed: $elapsed secs" >> $debugFilename
+	elapsedInMin=$(echo "scale=1; $elapsed / 60" | bc)
+	echo "$(date +'%Y/%m/%d %H:%M:%S'): end backup mmsRepository0000, elapsed: $elapsedInMin min" >> $debugFilename
 
-	echo "$(date +'%Y/%m/%d %H:%M:%S'):backup mmsStorage..." >> $debugFilename
-	start=$(date +%s)
-	rsync --archive --recursive --compress --delete --partial --omit-dir-times /mnt/mmsStorage-main/ /mnt/mmsStorage-backup >> $debugFilename
-	end=$(date +%s)
-	elapsed=$((end-start))
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup mmsStorage elapsed: $elapsed secs" >> $debugFilename
-
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup mmsRepository0000..." >> $debugFilename
-	start=$(date +%s)
-	rsync --archive --recursive --compress --delete --partial --omit-dir-times /mnt/mmsRepository0000-main/ /mnt/mmsRepository0000-backup >> $debugFilename
-	end=$(date +%s)
-	elapsed=$((end-start))
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup mmsRepository0000 elapsed: $elapsed secs" >> $debugFilename
-
-	endTotal=$(date +%s)
-	elapsedTotal=$((endTotal-startTotal))
-
-	#3600 * 5 = 18000
-	#60 * 15 = 900
-	secondsToSleep=900
-
-	echo "" >> $debugFilename
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup (total) elapsed: $elapsedTotal secs, sleeping $secondsToSleep secs" >> $debugFilename
-	sleep $secondsToSleep
-done
+#	echo "$(date +'%Y/%m/%d %H:%M:%S'): backup (total) elapsed: $elapsedTotal secs, sleeping $secondsToSleep secs" >> $debugFilename
+#	sleep $secondsToSleep
+#done
 

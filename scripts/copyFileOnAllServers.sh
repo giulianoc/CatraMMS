@@ -25,9 +25,10 @@ then
 		serverPort=${prodServers[$((index*6+3))]}
 		serverType=${prodServers[$((index*6+4))]}
 
-		if [ "$serverType" == "storage" ]; then
-			continue
-		fi
+		#if [ "$serverType" == "storage" ]; then
+		#	index=$((index+1))
+		#	continue
+		#fi
 
 		echo ""
 		echo "serverName: $serverName"
@@ -47,9 +48,10 @@ then
 		serverPort=${testServers[$((index*6+3))]}
 		serverType=${testServers[$((index*6+4))]}
 
-		if [ "$serverType" == "storage" ]; then
-			continue
-		fi
+		#if [ "$serverType" == "storage" ]; then
+		#	index=$((index+1))
+		#	continue
+		#fi
 
 		echo ""
 		echo "serverName: $serverName"
