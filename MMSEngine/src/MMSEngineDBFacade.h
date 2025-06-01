@@ -2173,7 +2173,7 @@ class MMSEngineDBFacade
 
 	void removeAWSChannelConf(int64_t workspaceKey, int64_t confKey);
 
-	json getAWSChannelConfList(int64_t workspaceKey, int64_t confKey, string label,
+	json getAWSChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 							   int type); // 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<string, string, string, bool> reserveAWSChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
@@ -2212,7 +2212,7 @@ class MMSEngineDBFacade
 
 	void removeRTMPChannelConf(int64_t workspaceKey, int64_t confKey);
 
-	json getRTMPChannelConfList(int64_t workspaceKey, int64_t confKey, string label,
+	json getRTMPChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 								int type); // 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<int64_t, string, string, string, string, string> getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing);
@@ -2231,7 +2231,7 @@ class MMSEngineDBFacade
 
 	void removeHLSChannelConf(int64_t workspaceKey, int64_t confKey);
 
-	json getHLSChannelConfList(int64_t workspaceKey, int64_t confKey, string label,
+	json getHLSChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 							   int type); // 0: all, 1: SHARED, 2: DEDICATED
 
 	tuple<int64_t, int64_t, int, int> getHLSChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing);

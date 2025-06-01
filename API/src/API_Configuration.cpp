@@ -4243,21 +4243,8 @@ void API::awsChannelConfList(
 
 	try
 	{
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		string label = getQueryParameter(queryParameters, "label", string(), false);
+		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
 		string sType;
@@ -4270,7 +4257,7 @@ void API::awsChannelConfList(
 				type = 2;
 		}
 		{
-			json awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(workspace->_workspaceKey, -1, label, type);
+			json awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(awsChannelConfListRoot);
 
@@ -5353,21 +5340,8 @@ void API::rtmpChannelConfList(
 
 	try
 	{
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		string label = getQueryParameter(queryParameters, "label", string(), false);
+		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
 		string sType;
@@ -5381,7 +5355,7 @@ void API::rtmpChannelConfList(
 		}
 
 		{
-			json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(workspace->_workspaceKey, -1, label, type);
+			json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
 
@@ -5877,21 +5851,8 @@ void API::hlsChannelConfList(
 
 	try
 	{
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		string label = getQueryParameter(queryParameters, "label", string(), false);
+		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
 		string sType;
@@ -5905,7 +5866,7 @@ void API::hlsChannelConfList(
 		}
 
 		{
-			json hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(workspace->_workspaceKey, -1, label, type);
+			json hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
 

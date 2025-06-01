@@ -220,23 +220,11 @@ void MMSEngineDBFacade::removeAWSChannelConf(int64_t workspaceKey, int64_t confK
 }
 
 json MMSEngineDBFacade::getAWSChannelConfList(
-	int64_t workspaceKey, int64_t confKey, string label,
+	int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 	int type // 0: all, 1: SHARED, 2: DEDICATED
 )
 {
 	json awsChannelConfListRoot;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -261,6 +249,9 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 
 				field = "label";
 				requestParametersRoot[field] = label;
+
+				field = "labelLike";
+				requestParametersRoot[field] = labelLike;
 			}
 
 			field = "requestParameters";
@@ -271,7 +262,12 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 		if (confKey != -1)
 			sqlWhere += std::format("and ac.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += std::format("and ac.label = {} ", trans.transaction->quote(label));
+		{
+			if (labelLike)
+				sqlWhere += std::format("and ac.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+			else
+				sqlWhere += std::format("and ac.label = {} ", trans.transaction->quote(label));
+		}
 		if (type == 1)
 			sqlWhere += "and ac.type = 'SHARED' ";
 		else if (type == 2)
@@ -1095,6 +1091,9 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 
 				field = "label";
 				requestParametersRoot[field] = label;
+
+				field = "labelLike";
+				requestParametersRoot[field] = labelLike;
 			}
 
 			field = "requestParameters";
@@ -2016,23 +2015,11 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 }
 
 json MMSEngineDBFacade::getRTMPChannelConfList(
-	int64_t workspaceKey, int64_t confKey, string label,
+	int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 	int type // 0: all, 1: SHARED, 2: DEDICATED
 )
 {
 	json rtmpChannelConfListRoot;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -2057,6 +2044,9 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 
 				field = "label";
 				requestParametersRoot[field] = label;
+
+				field = "labelLike";
+				requestParametersRoot[field] = labelLike;
 			}
 
 			field = "requestParameters";
@@ -2067,7 +2057,12 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 		if (confKey != -1)
 			sqlWhere += std::format("and rc.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += std::format("and rc.label = {} ", trans.transaction->quote(label));
+		{
+			if (labelLike)
+				sqlWhere += std::format("and rc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+			else
+				sqlWhere += std::format("and rc.label = {} ", trans.transaction->quote(label));
+		}
 		if (type == 1)
 			sqlWhere += "and rc.type = 'SHARED' ";
 		else if (type == 2)
@@ -2994,23 +2989,11 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 }
 
 json MMSEngineDBFacade::getHLSChannelConfList(
-	int64_t workspaceKey, int64_t confKey, string label,
+	int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 	int type // 0: all, 1: SHARED, 2: DEDICATED
 )
 {
 	json hlsChannelConfListRoot;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -3035,6 +3018,9 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 
 				field = "label";
 				requestParametersRoot[field] = label;
+
+				field = "labelLike";
+				requestParametersRoot[field] = labelLike;
 			}
 
 			field = "requestParameters";
@@ -3045,7 +3031,12 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 		if (confKey != -1)
 			sqlWhere += std::format("and hc.confKey = {} ", confKey);
 		else if (label != "")
-			sqlWhere += std::format("and hc.label = {} ", trans.transaction->quote(label));
+		{
+			if (labelLike)
+				sqlWhere += std::format("and hc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+			else
+				sqlWhere += std::format("and hc.label = {} ", trans.transaction->quote(label));
+		}
 		if (type == 1)
 			sqlWhere += "and hc.type = 'SHARED' ";
 		else if (type == 2)
