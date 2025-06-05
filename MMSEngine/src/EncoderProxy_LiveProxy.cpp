@@ -218,6 +218,13 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 					// update outputsRoot with the new details
 					{
+						SPDLOG_INFO(
+							"AAAAAAAAAAAAA"
+							", srtFeed: {}"
+							", srtUrl: {}"
+							", rtmpUrl: {}",
+							srtFeed, srtURL, rtmpURL
+						);
 						if (srtFeed)
 							outputRoot["srtUrl"] = srtURL;
 						else
