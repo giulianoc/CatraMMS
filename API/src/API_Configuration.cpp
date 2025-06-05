@@ -4357,7 +4357,6 @@ void API::addCDN77ChannelConf(
 
 					throw runtime_error(errorMessage);
 				}
-				srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 			}
 			else
 			{
@@ -4373,8 +4372,10 @@ void API::addCDN77ChannelConf(
 
 					throw runtime_error(errorMessage);
 				}
-				rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
 			}
+			// è possibile salvare entrambe le url
+			rtmpURL = JSONUtils::asString(requestBodyRoot, "rtmpURL", "");
+			srtURL = JSONUtils::asString(requestBodyRoot, "srtURL", "");
 
 			field = "resourceURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4563,7 +4564,6 @@ void API::modifyCDN77ChannelConf(
 
 					throw runtime_error(errorMessage);
 				}
-				srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 			}
 			else
 			{
@@ -4579,8 +4579,9 @@ void API::modifyCDN77ChannelConf(
 
 					throw runtime_error(errorMessage);
 				}
-				rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
 			}
+			rtmpURL = JSONUtils::asString(requestBodyRoot, "rtmpURL", "");
+			srtURL = JSONUtils::asString(requestBodyRoot, "srtURL", "");
 
 			field = "resourceURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
