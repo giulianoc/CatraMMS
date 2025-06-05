@@ -109,21 +109,30 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=storage
 prodServers[$((serverIndex*6+5))]=10.0.1.16
 
-#serverIndex=$((serverIndex+1))
-#prodServers[$((serverIndex*6+0))]=cibortv-encoder-4
-#prodServers[$((serverIndex*6+1))]=93.58.249.102
-#prodServers[$((serverIndex*6+2))]=cibortv-transcoder-4
-#prodServers[$((serverIndex*6+3))]=9255
-#prodServers[$((serverIndex*6+4))]=externalEncoder
-#prodServers[$((serverIndex*6+5))]=
 
-#serverIndex=$((serverIndex+1))
-#prodServers[$((serverIndex*6+0))]=hetzner-encoder-1
-#prodServers[$((serverIndex*6+1))]=157.90.129.10
-#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-#prodServers[$((serverIndex*6+3))]=9255
-#prodServers[$((serverIndex*6+4))]=encoder
-#prodServers[$((serverIndex*6+5))]=10.0.1.16
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-1
+prodServers[$((serverIndex*6+1))]=144.76.24.221
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=encoder
+prodServers[$((serverIndex*6+5))]=10.0.1.18
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-2
+prodServers[$((serverIndex*6+1))]=148.251.70.83
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=encoder
+prodServers[$((serverIndex*6+5))]=10.0.1.19
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-5
+prodServers[$((serverIndex*6+1))]=88.99.99.241
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=encoder
+prodServers[$((serverIndex*6+5))]=10.0.1.20
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-encoder-3

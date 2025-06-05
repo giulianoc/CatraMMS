@@ -5396,6 +5396,553 @@ void API::rtmpChannelConfList(
 	}
 }
 
+void API::addSRTChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, string requestBody
+)
+{
+	string api = "addSRTChannelConf";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
+
+	try
+	{
+		string label;
+		string srtURL;
+		string streamName;
+		string userName;
+		string password;
+		string playURL;
+		string type;
+
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson(requestBody);
+
+			string field = "label";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "srtURL";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "streamName";
+			streamName = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "userName";
+			userName = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "password";
+			password = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "playURL";
+			playURL = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "type";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			type = JSONUtils::asString(requestBodyRoot, field, "");
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string sResponse;
+		try
+		{
+			int64_t confKey =
+				_mmsEngineDBFacade->addSRTChannelConf(workspace->_workspaceKey, label, srtURL, streamName, userName, password, playURL, type);
+
+			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addSRTChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->addSRTChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw e;
+		}
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		string errorMessage = string("Internal server error: ") + e.what();
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		string errorMessage = string("Internal server error");
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+void API::modifySRTChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters, string requestBody
+)
+{
+	string api = "modifySRTChannelConf";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestBody: {}",
+		api, workspace->_workspaceKey, requestBody
+	);
+
+	try
+	{
+		string label;
+		string srtURL;
+		string streamName;
+		string userName;
+		string password;
+		string playURL;
+		string type;
+
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson(requestBody);
+
+			string field = "label";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "srtURL";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "streamName";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			streamName = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "userName";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			userName = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "password";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			password = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "playURL";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			playURL = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "type";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			type = JSONUtils::asString(requestBodyRoot, field, "");
+		}
+		catch (runtime_error &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		catch (exception &e)
+		{
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string sResponse;
+		try
+		{
+			int64_t confKey;
+			auto confKeyIt = queryParameters.find("confKey");
+			if (confKeyIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'confKey' parameter is not found");
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			confKey = stoll(confKeyIt->second);
+
+			_mmsEngineDBFacade->modifySRTChannelConf(confKey, workspace->_workspaceKey, label, srtURL, streamName, userName, password, playURL, type);
+
+			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifySRTChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->modifySRTChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw e;
+		}
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		string errorMessage = string("Internal server error: ") + e.what();
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		string errorMessage = string("Internal server error");
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+void API::removeSRTChannelConf(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters
+)
+{
+	string api = "removeSRTChannelConf";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
+
+	try
+	{
+		string sResponse;
+		try
+		{
+			int64_t confKey;
+			auto confKeyIt = queryParameters.find("confKey");
+			if (confKeyIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'confKey' parameter is not found");
+				SPDLOG_ERROR(errorMessage);
+
+				sendError(request, 400, errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			confKey = stoll(confKeyIt->second);
+
+			_mmsEngineDBFacade->removeSRTChannelConf(workspace->_workspaceKey, confKey);
+
+			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
+		}
+		catch (runtime_error &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeSRTChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw e;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->removeSRTChannelConf failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw e;
+		}
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+
+		string errorMessage = string("Internal server error: ") + e.what();
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+
+		string errorMessage = string("Internal server error");
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
+void API::srtChannelConfList(
+	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+	unordered_map<string, string> queryParameters
+)
+{
+	string api = "srtChannelConfList";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, workspace->_workspaceKey
+	);
+
+	try
+	{
+		string label = getQueryParameter(queryParameters, "label", string(), false);
+		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+
+		int type = 0; // ALL
+		string sType;
+		auto typeIt = queryParameters.find("type");
+		if (typeIt != queryParameters.end() && typeIt->second != "")
+		{
+			if (typeIt->second == "SHARED")
+				type = 1;
+			else if (typeIt->second == "DEDICATED")
+				type = 2;
+		}
+
+		{
+			json srtChannelConfListRoot = _mmsEngineDBFacade->getSRTChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
+
+			string responseBody = JSONUtils::toString(srtChannelConfListRoot);
+
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		}
+	}
+	catch (runtime_error &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+
+		string errorMessage = string("Internal server error: ") + e.what();
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+
+		string errorMessage = string("Internal server error");
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 500, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+}
+
 void API::addHLSChannelConf(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
 	unordered_map<string, string> queryParameters, string requestBody

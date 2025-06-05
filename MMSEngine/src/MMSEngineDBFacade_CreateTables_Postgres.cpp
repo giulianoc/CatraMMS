@@ -594,6 +594,54 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			// type: SHARED or DEDICATED
+			string sqlStatement = "create table if not exists MMS_Conf_SRTChannel ("
+								  "confKey					bigint GENERATED ALWAYS AS IDENTITY,"
+								  "workspaceKey				bigint NOT NULL,"
+								  "label						text NOT NULL,"
+								  "srtURL					text NOT NULL,"
+								  "streamName					text NULL,"
+								  "userName					text NULL,"
+								  "password					text NULL,"
+								  "playURL					text NULL,"
+								  "type						text NOT NULL,"
+								  "outputIndex				smallint NULL,"
+								  "reservedByIngestionJobKey	bigint NULL,"
+								  "constraint MMS_Conf_SRTChannel_PK PRIMARY KEY (confKey), "
+								  "constraint MMS_Conf_SRTChannel_FK foreign key (workspaceKey) "
+								  "references MMS_Workspace (workspaceKey) on delete cascade, "
+								  "UNIQUE (workspaceKey, label)) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "create unique index if not exists MMS_Conf_SRTChannel_idx "
+								  "on MMS_Conf_SRTChannel (outputIndex, reservedByIngestionJobKey) "
+								  "where outputIndex is not null and reservedByIngestionJobKey is not null";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			// type: SHARED or DEDICATED
 			string sqlStatement = "create table if not exists MMS_Conf_HLSChannel ("
 								  "confKey					bigint GENERATED ALWAYS AS IDENTITY,"
 								  "workspaceKey				bigint NOT NULL,"

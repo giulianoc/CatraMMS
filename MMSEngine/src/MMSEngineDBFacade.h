@@ -2222,6 +2222,27 @@ class MMSEngineDBFacade
 	string rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
 	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
+	int64_t addSRTChannelConf(
+		int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL, string type
+	);
+
+	void modifySRTChannelConf(
+		int64_t confKey, int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL,
+		string type
+	);
+
+	void removeSRTChannelConf(int64_t workspaceKey, int64_t confKey);
+
+	json getSRTChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
+							   int type); // 0: all, 1: SHARED, 2: DEDICATED
+
+	tuple<int64_t, string, string, string, string, string> getSRTChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing);
+
+	tuple<string, string, string, string, string, string, bool>
+	reserveSRTChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
+	string srt_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
+
+	void releaseSRTChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 
 	int64_t addHLSChannelConf(int64_t workspaceKey, string label, int64_t deliveryCode, int segmentDuration, int playlistEntriesNumber, string type);
 

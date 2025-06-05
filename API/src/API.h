@@ -648,6 +648,26 @@ class API : public FastCGIAPI
 		unordered_map<string, string> queryParameters
 	);
 
+	void addSRTChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters, string requestBody
+	);
+
+	void modifySRTChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters, string requestBody
+	);
+
+	void removeSRTChannelConf(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters
+	);
+
+	void srtChannelConfList(
+		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
+		unordered_map<string, string> queryParameters
+	);
+
 	void addHLSChannelConf(
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
 		unordered_map<string, string> queryParameters, string requestBody

@@ -454,322 +454,369 @@ create-directory()
 	read -n 1 -s -r -p "create-directory..."
 	echo ""
 
+	case "$moduleType" in
+		"storage")
+			create-directory-storage
+
+			;;
+		"api")
+			create-directory-api $moduleType
+
+			;;
+		"api-and-delivery")
+			create-directory-api $moduleType
+
+			;;
+		"delivery")
+			create-directory-delivery
+
+			;;
+		"api-and-delivery")
+			create-directory-delivery
+
+			;;
+		"engine")
+			create-directory-engine
+
+			;;
+		"encoder")
+			create-directory-encoder $moduleType
+
+			;;
+		"externalEncoder")
+			create-directory-encoder $moduleType
+
+			;;
+		"integration")
+			create-directory-integration
+
+			;;
+		*) echo "moduleType unknown: $moduleType"
+
+			;;
+	esac
+}
+
+create-directory-storage()
+{
 	mkdir -p /opt/catramms
 	chown -R mms:mms /opt/catramms
+}
 
-	if [ "$moduleType" == "storage" ]; then
+create-directory-api()
+{
+	moduleType=$1
 
-		#for storage just we need just /opt/catramms for CatraMMS scripts directory
-
-		return
-	fi
+	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
 
 	mkdir -p /var/catramms
 	mkdir -p /var/catramms/pids
 	chown -R mms:mms /var/catramms
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "api-and-delivery" ]; then
-		if [ "$moduleType" == "api" ]; then
-			read -n 1 -s -r -p "create the following directories (/mnt/mmsStorage-1), press a key once done"
-			echo ""
-			read -n 1 -s -r -p "set /etc/fstab and mount the dirs (es: 10.0.1.16:/mnt/storage-1/commonConfiguration /mnt/mmsStorage-1-new/commonConfiguration nfs defaults 0 0)"
-			echo ""
-		else
-			read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
-			echo ""
-			read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
-			echo ""
-			read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
-			echo ""
-			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
-			echo ""
-			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
-			echo ""
+	if [ "$moduleType" == "api" ]; then
+		read -n 1 -s -r -p "create the following directories (/mnt/storage-1/commonConfiguration), press a key once done"
+		echo ""
+		read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created (es: 10.0.1.16:/mnt/storage-1/commonConfiguration /mnt/storage-1/commonConfiguration nfs defaults 0 0)"
+		echo ""
+	else
+		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree), press a key once done"
+		echo ""
+		read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created"
+		echo ""
 
-			mkdir -p /mnt/mmsIngestionRepository/users
-		fi
-
-		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
-		mkdir -p /mnt/mmsStorage-1/commonConfiguration
-		mkdir -p /mnt/mmsStorage-1/MMSGUI
-		mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository
-		mkdir -p /mnt/mmsStorage-1/MMSLive
-		mkdir -p /mnt/mmsStorage-1/mmsRepository0000
-		mkdir -p /mnt/mmsStorage-1/MMSRepositoryFree
-
-
-		mkdir -p /var/catramms/storage
-		if [ ! -e /home/mms/storage ]; then
-			ln -s /var/catramms/storage /home/mms
-		fi
-
-		mkdir -p /mnt/local-data/logs/mmsAPI
-		mkdir -p /mnt/local-data/logs/catraMMSWEBServices
-		mkdir -p /mnt/local-data/logs/nginx
-		if [ ! -e /var/catramms/logs ]; then
-			ln -s /mnt/local-data/logs /var/catramms
-		fi
-		chown -R mms:mms /mnt/local-data/logs
-
-		mkdir -p /mnt/local-data/cache/nginx
-		if [ ! -e /var/catramms/cache ]; then
-			ln -s /mnt/local-data/cache /var/catramms/cache
-		fi
-		chown -R mms:mms /mnt/local-data/cache
-
-		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
-		fi
+		mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
 	fi
-	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then	#insieme al delivery abbiamo anche la GUI
-		read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
-		echo ""
-		read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
-		echo ""
-		read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
-		echo ""
-		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
-		echo ""
-		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
-		echo ""
 
-		mkdir -p /mnt/mmsIngestionRepository/users
-
-		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
-		mkdir -p /mnt/mmsStorage/commonConfiguration
-		mkdir -p /mnt/mmsStorage/dbDump
-		mkdir -p /mnt/mmsStorage/MMSGUI
-		mkdir -p /mnt/mmsStorage/MMSLive
-		mkdir -p /mnt/mmsStorage/MMSRepository-free
-		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
-
-
-		mkdir -p /var/catramms/storage/MMSRepository
-		if [ ! -e /home/mms/storage ]; then
-			ln -s /var/catramms/storage /home/mms
-		fi
-
-		mkdir -p /mnt/local-data/logs/mmsAPI
-		mkdir -p /mnt/local-data/logs/nginx
-		mkdir -p /mnt/local-data/logs/tomcat-gui
-		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
-		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
-		mkdir -p /mnt/local-data/cache/nginx
-		if [ ! -e /var/catramms/logs ]; then
-			ln -s /mnt/local-data/logs /var/catramms
-		fi
-		if [ ! -e /var/catramms/cache ]; then
-			ln -s /mnt/local-data/cache /var/catramms/cache
-		fi
-		chown -R mms:mms /mnt/local-data/logs
-		chown -R mms:mms /mnt/local-data/cache
-
-		if [ ! -e /var/catramms/storage/IngestionRepository ]; then
-			ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
-		fi
-
-		if [ ! -e /var/catramms/storage/MMSGUI ]; then
-			ln -s /mnt/mmsStorage/MMSGUI /var/catramms/storage
-		fi
-
-		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-			ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-		fi
-		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-			ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
-		fi
-
-		if [ ! -e /var/catramms/storage/MMSRepository-free ]; then
-			ln -s /mnt/mmsStorage/MMSRepository-free /var/catramms/storage
-		fi
-
-		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
-		fi
+	mkdir -p /var/catramms/storage
+	if [ ! -e /home/mms/storage ]; then
+		ln -s /var/catramms/storage /home/mms
 	fi
-	if [ "$moduleType" == "engine" ]; then
-		#Non usiamo RAID. Usiamo un disco separato di 1TB SSD dove mettere dati del DB. 500GB per il logs e 500GB per il sistema operativo
-		read -n 1 -s -r -p "create the following directories (/mnt/local-data-logs /mnt/local-data-mmsDatabaseData /mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
-		echo ""
-		read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
-		echo ""
-		read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
-		echo ""
-		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
-		echo ""
-		read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
-		echo ""
 
-		mkdir -p /mnt/mmsIngestionRepository/users
+	mkdir -p /mnt/local-data/logs/mmsAPI
+	mkdir -p /mnt/local-data/logs/catraMMSWEBServices
+	mkdir -p /mnt/local-data/logs/nginx
+	if [ ! -e /var/catramms/logs ]; then
+		ln -s /mnt/local-data/logs /var/catramms
+	fi
+	chown -R mms:mms /mnt/local-data/logs
+
+	mkdir -p /mnt/local-data/cache/nginx
+	if [ ! -e /var/catramms/cache ]; then
+		ln -s /mnt/local-data/cache /var/catramms/cache
+	fi
+	chown -R mms:mms /mnt/local-data/cache
+
+	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	fi
+
+	if [ ! -e /home/mms/logs ]; then
+		ln -s /var/catramms/logs /home/mms
+	fi
+}
+
+create-directory-delivery()
+{
+	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
+
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
+	chown -R mms:mms /var/catramms
+
+	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree), press a key once done"
+	echo ""
+	read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created"
+	echo ""
+
+	#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
+	mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
+
+	mkdir -p /var/catramms/storage/MMSRepository
+	if [ ! -e /home/mms/storage ]; then
+		ln -s /var/catramms/storage /home/mms
+	fi
+
+	mkdir -p /mnt/local-data/logs/mmsAPI
+	mkdir -p /mnt/local-data/logs/nginx
+	mkdir -p /mnt/local-data/logs/tomcat-gui
+	mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+	mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+	mkdir -p /mnt/local-data/cache/nginx
+	if [ ! -e /var/catramms/logs ]; then
+		ln -s /mnt/local-data/logs /var/catramms
+	fi
+	if [ ! -e /var/catramms/cache ]; then
+		ln -s /mnt/local-data/cache /var/catramms/cache
+	fi
+	chown -R mms:mms /mnt/local-data/logs
+	chown -R mms:mms /mnt/local-data/cache
+
+	if [ ! -e /var/catramms/storage/IngestionRepository ]; then
+		ln -s /mnt/mmsStorage-1/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+	fi
+
+	if [ ! -e /var/catramms/storage/MMSGUI ]; then
+		ln -s /mnt/mmsStorage-1/MMSGUI /var/catramms/storage
+	fi
+
+	if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+		ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+	fi
+	if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+		ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+	fi
+
+	if [ ! -e /var/catramms/storage/MMSRepository-free ]; then
+		ln -s /mnt/mmsStorage-1/MMSRepositoryFree /var/catramms/storage/MMSRepository-free
+	fi
+
+	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	fi
+
+	if [ ! -e /home/mms/logs ]; then
+		ln -s /var/catramms/logs /home/mms
+	fi
+}
+
+create-directory-engine()
+{
+	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
+
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
+	chown -R mms:mms /var/catramms
+
+	#Non usiamo RAID. Usiamo un disco separato di 1TB SSD dove mettere dati del DB. 500GB per il logs e 500GB per il sistema operativo
+	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/local-data-logs /mnt/local-data-mmsDatabaseData /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/dbDump /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository), press a key once done"
+	echo ""
+	read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created"
+	echo ""
+
+	#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
+	mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
+
+	mkdir -p /var/catramms/storage/MMSRepository
+	if [ ! -e /home/mms/storage ]; then
+		ln -s /var/catramms/storage /home/mms
+	fi
+
+	mkdir -p /mnt/local-data
+
+	ln -s /mnt/local-data-logs /mnt/local-data/logs
+	mkdir -p /mnt/local-data/logs/mmsEngineService
+
+	ln -s /mnt/local-data-mmsDatabaseData /mnt/local-data/mmsDatabaseData
+
+	#MMSTranscoderWorkingAreaRepository: confermato che serve all'engine per le sue attività con ffmpeg (ad esempio changeFileFormat)
+	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
+	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+	#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
+	ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
+	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
+	if [ ! -e /var/catramms/logs ]; then
+		ln -s /mnt/local-data/logs /var/catramms
+	fi
+	if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
+		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+	fi
+	chown -R mms:mms /mnt/local-data/logs/mmsEngineService
+	chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
+
+	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
+		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	fi
+	if [ ! -e /var/catramms/storage/dbDump ]; then
+		ln -s /mnt/mmsStorage-1/dbDump /var/catramms/storage
+	fi
+	if [ ! -e /var/catramms/storage/IngestionRepository ]; then
+		ln -s /mnt/mmsStorage-1/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+	fi
+	if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+		ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+	fi
+	if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+		ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+	fi
+
+	mkdir -p /mnt/mmsStorage-1/MMSWorkingAreaRepository/nginx
+	if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
+		ln -s /mnt/mmsStorage-1/MMSWorkingAreaRepository /var/catramms/storage
+	fi
+
+	if [ ! -e /home/mms/logs ]; then
+		ln -s /var/catramms/logs /home/mms
+	fi
+}
+
+create-directory-encoder()
+{
+	moduleType=$1
+
+	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
+
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
+	chown -R mms:mms /var/catramms
+
+	if [ "$moduleType" == "encoder" ]; then
+		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000), press a key once done"
+		echo ""
+		read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created above"
+		echo ""
+		#read -n 1 -s -r -p "create the following link (ln -s /mnt/storage-1 /mnt/mmsStorage)"
+		#echo ""
+		#read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
+		#echo ""
+		#read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
+		#echo ""
 
 		#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
-		mkdir -p /mnt/mmsStorage/commonConfiguration
-		mkdir -p /mnt/mmsStorage/dbDump
-		mkdir -p /mnt/mmsStorage/MMSGUI
-		mkdir -p /mnt/mmsStorage/MMSLive
-		mkdir -p /mnt/mmsStorage/MMSRepository-free
-		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
+		mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
+	fi
 
+	mkdir -p /var/catramms/storage/MMSRepository
+	if [ ! -e /home/mms/storage ]; then
+		ln -s /var/catramms/storage /home/mms
+	fi
 
-		mkdir -p /var/catramms/storage/MMSRepository
-		if [ ! -e /home/mms/storage ]; then
-			ln -s /var/catramms/storage /home/mms
-		fi
+	mkdir -p /mnt/local-data/logs/mmsEncoder
+	mkdir -p /mnt/local-data/logs/nginx
+	if [ ! -e /var/catramms/logs ]; then
+		ln -s /mnt/local-data/logs /var/catramms
+	fi
+	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
+	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
+	#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
+	ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
+	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
+	if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
+		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+	fi
+	if [ ! -e /var/catramms/storage/IngestionRepository ]; then
+		ln -s /mnt/mmsStorage-1/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+	fi
+	#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
+	#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
+	mkdir -p /mnt/local-data/cache/nginx
+	if [ ! -e /var/catramms/cache ]; then
+		ln -s /mnt/local-data/cache /var/catramms
+	fi
+			chown -R mms:mms /mnt/local-data/logs
+	chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
+	chown -R mms:mms /mnt/local-data/cache
 
-		mkdir -p /mnt/local-data
+	mkdir -p /var/catramms/tv
+	chown -R mms:mms /var/catramms/tv
 
-		ln -s /mnt/local-data-logs /mnt/local-data/logs
-		mkdir -p /mnt/local-data/logs/mmsEngineService
+	#link comodo per avere accesso ai file di log di ffmpeg
+	ln -s /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg /home/mms/
 
-		ln -s /mnt/local-data-mmsDatabaseData /mnt/local-data/mmsDatabaseData
-
-		#MMSTranscoderWorkingAreaRepository: confermato che serve all'engine per le sue attività con ffmpeg (ad esempio changeFileFormat)
-		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
-		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
-		#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
-		ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
-		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
-		if [ ! -e /var/catramms/logs ]; then
-			ln -s /mnt/local-data/logs /var/catramms
-		fi
-		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
-			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
-		fi
-		chown -R mms:mms /mnt/local-data/logs/mmsEngineService
-		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
-
+	if [ "$moduleType" == "encoder" ]; then
 		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-			ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
+			ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
 		fi
-		if [ ! -e /var/catramms/storage/dbDump ]; then
-			ln -s /mnt/mmsStorage/dbDump /var/catramms/storage
-		fi
-		if [ ! -e /var/catramms/storage/IngestionRepository ]; then
-			ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
-		fi
-		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-			ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-		fi
-		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-			ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
-		fi
-
-		mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository/nginx
+		mkdir -p /mnt/mmsStorage-1/MMSWorkingAreaRepository/nginx
 		if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
-			ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
+			ln -s /mnt/mmsStorage-1/MMSWorkingAreaRepository /var/catramms/storage
 		fi
+		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+			ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		fi
+		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+			ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+		fi
+	else
+		mkdir -p /mnt/local-data/MMSWorkingAreaRepository/nginx
+		if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
+			ln -s /mnt/local-data/MMSWorkingAreaRepository /var/catramms/storage
+		fi
+		mkdir -p /mnt/local-data/mmsRepository0000
+		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+			ln -s /mnt/local-data/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		fi
+		mkdir -p /mnt/local-data/MMSLive
+		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+			ln -s /mnt/local-data/MMSLive /var/catramms/storage/MMSRepository
+		fi
+
+		chown -R mms:mms /mnt/local-data/MMSWorkingAreaRepository
+		chown -R mms:mms /mnt/local-data/mmsRepository0000
+		chown -R mms:mms /mnt/local-data/MMSLive
 	fi
-	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
-		if [ "$moduleType" == "encoder" ]; then
-			read -n 1 -s -r -p "create the following directories (/mnt/mmsIngestionRepository-X, /mnt/mmsRepository0000-X, /mnt/mmsStorage-X), press a key once done"
-			echo ""
-			read -n 1 -s -r -p "set /etc/fstab and mount the dirs"
-			echo ""
-			read -n 1 -s -r -p "create the following link (ln -s /mnt/mmsStorage-1 /mnt/mmsStorage)"
-			echo ""
-			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsRepository0000-1 /mnt/mmsRepository0000)"
-			echo ""
-			read -n 1 -s -r -p "create the following links (ln -s /mnt/mmsIngestionRepository-1 /mnt/mmsIngestionRepository)"
-			echo ""
 
-			mkdir -p /mnt/mmsIngestionRepository/users
-
-			#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
-			mkdir -p /mnt/mmsStorage/commonConfiguration
-			mkdir -p /mnt/mmsStorage/dbDump
-			mkdir -p /mnt/mmsStorage/MMSGUI
-			mkdir -p /mnt/mmsStorage/MMSLive
-			mkdir -p /mnt/mmsStorage/MMSRepository-free
-			mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository
-		fi
-
-		mkdir -p /var/catramms/storage/MMSRepository
-		if [ ! -e /home/mms/storage ]; then
-			ln -s /var/catramms/storage /home/mms
-		fi
-
-		mkdir -p /mnt/local-data/logs/mmsEncoder
-		mkdir -p /mnt/local-data/logs/nginx
-		if [ ! -e /var/catramms/logs ]; then
-			ln -s /mnt/local-data/logs /var/catramms
-		fi
-		mkdir -p /var/catramms/storage/MMSRepository
-		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
-		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
-		#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
-		ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
-		mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
-		if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
-			ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
-		fi
-		if [ ! -e /var/catramms/storage/IngestionRepository ]; then
-			ln -s /mnt/mmsIngestionRepository /var/catramms/storage/IngestionRepository
-		fi
-		#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
-		#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
-		mkdir -p /mnt/local-data/cache/nginx
-		if [ ! -e /var/catramms/cache ]; then
-			ln -s /mnt/local-data/cache /var/catramms
-		fi
-		chown -R mms:mms /mnt/local-data/logs
-		chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
-		chown -R mms:mms /mnt/local-data/cache
-
-		mkdir -p /var/catramms/tv
-		chown -R mms:mms /var/catramms/tv
-
-		#link comodo per avere accesso ai file di log di ffmpeg
-		ln -s /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg /home/mms/
-
-		if [ "$moduleType" == "encoder" ]; then
-			if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-				ln -s /mnt/mmsStorage/commonConfiguration /var/catramms/storage
-			fi
-			mkdir -p /mnt/mmsStorage/MMSWorkingAreaRepository/nginx
-			if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
-				ln -s /mnt/mmsStorage/MMSWorkingAreaRepository /var/catramms/storage
-			fi
-			if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-				ln -s /mnt/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-			fi
-			if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-				ln -s /mnt/mmsStorage/MMSLive /var/catramms/storage/MMSRepository
-			fi
-		else
-			mkdir -p /mnt/local-data/MMSWorkingAreaRepository/nginx
-			if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
-				ln -s /mnt/local-data/MMSWorkingAreaRepository /var/catramms/storage
-			fi
-			mkdir -p /mnt/local-data/mmsRepository0000
-			if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-				ln -s /mnt/local-data/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
-			fi
-			mkdir -p /mnt/local-data/MMSLive
-			if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-				ln -s /mnt/local-data/MMSLive /var/catramms/storage/MMSRepository
-			fi
-
-			chown -R mms:mms /mnt/local-data/MMSWorkingAreaRepository
-			chown -R mms:mms /mnt/local-data/mmsRepository0000
-			chown -R mms:mms /mnt/local-data/MMSLive
-		fi
+	if [ ! -e /home/mms/logs ]; then
+		ln -s /var/catramms/logs /home/mms
 	fi
-	if [ "$moduleType" == "integration" ]; then
-		#DA VERIFICARE
-		mkdir -p /mnt/local-data/logs/tomcat-gui
-		mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
-		mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
-		mkdir -p /mnt/local-data/logs/nginx
-		mkdir -p /mnt/local-data/cache/nginx
-		if [ ! -e /var/catramms/cache ]; then
-			ln -s /mnt/local-data/cache /var/catramms
-		fi
-		chown -R mms:mms /mnt/local-data/logs
-		chown -R mms:mms /mnt/local-data/cache
+}
 
-		if [ ! -e /var/catramms/logs ]; then
-			ln -s /mnt/local-data/logs /var/catramms
-		fi
+create-directory-integration()
+{
+	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
+
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
+	chown -R mms:mms /var/catramms
+
+	#DA VERIFICARE
+	mkdir -p /mnt/local-data/logs/tomcat-gui
+	mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+	mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+	mkdir -p /mnt/local-data/logs/nginx
+	mkdir -p /mnt/local-data/cache/nginx
+	if [ ! -e /var/catramms/cache ]; then
+		ln -s /mnt/local-data/cache /var/catramms
+	fi
+	chown -R mms:mms /mnt/local-data/logs
+	chown -R mms:mms /mnt/local-data/cache
+
+	if [ ! -e /var/catramms/logs ]; then
+		ln -s /mnt/local-data/logs /var/catramms
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
@@ -838,104 +885,101 @@ install-mms-packages()
 	read -n 1 -s -r -p "install-mms-packages..."
 	echo ""
 
-	while [ -n "$moduleType" ]
-	do
-		case "$1" in
-			"storage")
-				install-mms-CatraMMS-package $architecture
-				install-mms-storage-conf $architecture
-				return
-				;;
-			"engine")
-				install-mms-ImageMagick-package $architecture
-				install-mms-FFMpeg-package $architecture
-				install-mms-libpqxx-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-opencv-package $architecture
-				install-mms-youtube-dl-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-engine-conf $architecture
+	case "$moduleType" in
+		"storage")
+			install-mms-CatraMMS-package $architecture
+			install-mms-storage-conf $architecture
+			return
+			;;
+		"engine")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-engine-conf $architecture
 
-				echo "" > ~/.psqlrc
-				echo "#evita che l’output sparisce" >> ~/.psqlrc
-				echo "\setenv LESS -FX" >> ~/.psqlrc
-				echo "" >> ~/.psqlrc
-				echo "\timing on" >> ~/.psqlrc
-				echo "" >> ~/.psqlrc
-				echo "#senza \s e \t abbiamo un output simile a mysql" >> ~/.psqlrc
-				echo "#\x off" >> ~/.psqlrc
-				echo "#enable tuple, per avere solo tuple è necessario anche \x off" >> ~/.psqlrc
-				echo "#\t on" >> ~/.psqlrc
-				;;
-			"api")
-				install-mms-ImageMagick-package $architecture
-				install-mms-FFMpeg-package $architecture
-				install-mms-libpqxx-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-opencv-package $architecture
-				install-mms-youtube-dl-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-api-conf $architecture
-				;;
-			"delivery")
-				install-mms-ImageMagick-package $architecture
-				install-mms-FFMpeg-package $architecture
-				install-mms-libpqxx-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-tomcat-package $architecture
-				install-mms-opencv-package $architecture
-				install-mms-youtube-dl-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-delivery-conf $architecture
-				;;
-			"api-and-delivery")
-				install-mms-ImageMagick-package $architecture
-				install-mms-FFMpeg-package $architecture
-				install-mms-libpqxx-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-tomcat-package $architecture
-				install-mms-opencv-package $architecture
-				install-mms-youtube-dl-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-api-and-delivery-conf $architecture
-				;;
-			"encoder")
-				install-mms-ImageMagick-package $architecture
-				install-mms-FFMpeg-package $architecture
-				install-mms-libpqxx-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-opencv-package $architecture
-				install-mms-youtube-dl-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-encoder-conf $architecture
-				;;
-			"externalEncoder")
-				install-mms-ImageMagick-package $architecture
-				install-mms-FFMpeg-package $architecture
-				install-mms-libpqxx-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-opencv-package $architecture
-				install-mms-youtube-dl-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-externalEncoder-conf $architecture
-				;;
-			"integration")
-				install-mms-FFMpeg-package $architecture
-				install-mms-nginx-package $architecture
-				install-mms-CatraMMS-package $architecture
-				install-mms-aws-sdk-cpp-package $architecture $moduleType
-				install-mms-integration-conf $architecture
-				;;
-    	*) echo "$moduleType is not an option" >> $debugFilename
-				;;
-		esac
-	done
+			echo "" > ~/.psqlrc
+			echo "#evita che l’output sparisce" >> ~/.psqlrc
+			echo "\setenv LESS -FX" >> ~/.psqlrc
+			echo "" >> ~/.psqlrc
+			echo "\timing on" >> ~/.psqlrc
+			echo "" >> ~/.psqlrc
+			echo "#senza \s e \t abbiamo un output simile a mysql" >> ~/.psqlrc
+			echo "#\x off" >> ~/.psqlrc
+			echo "#enable tuple, per avere solo tuple è necessario anche \x off" >> ~/.psqlrc
+			echo "#\t on" >> ~/.psqlrc
+			;;
+		"api")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-api-conf $architecture
+			;;
+		"delivery")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-tomcat-package $architecture
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-delivery-conf $architecture
+			;;
+		"api-and-delivery")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-tomcat-package $architecture
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-api-and-delivery-conf $architecture
+			;;
+		"encoder")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-encoder-conf $architecture
+			;;
+		"externalEncoder")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-externalEncoder-conf $architecture
+			;;
+		"integration")
+			install-mms-FFMpeg-package $architecture
+			install-mms-nginx-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-integration-conf $architecture
+			;;
+   	*) echo "$moduleType is not an option" >> $debugFilename
+			;;
+	esac
 
 	if [ ! -e /home/mms/mmsStatusALL.sh ]; then
 		ln -s /home/mms/mms/scripts/mmsStatusALL.sh /home/mms
@@ -1306,7 +1350,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6282
+	catraMMSVersion=1.0.6352
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

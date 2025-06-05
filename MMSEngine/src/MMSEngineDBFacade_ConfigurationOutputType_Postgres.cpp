@@ -7,18 +7,6 @@ int64_t MMSEngineDBFacade::addAWSChannelConf(int64_t workspaceKey, string label,
 {
 	int64_t confKey;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -74,18 +62,6 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 	int64_t confKey, int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -150,17 +126,6 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 
 void MMSEngineDBFacade::removeAWSChannelConf(int64_t workspaceKey, int64_t confKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -391,18 +356,6 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 
 tuple<string, string, string, bool> MMSEngineDBFacade::reserveAWSChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -719,18 +672,6 @@ string MMSEngineDBFacade::cdnaws_reservationDetails(int64_t reservedIngestionJob
 
 string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -848,18 +789,6 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 {
 	int64_t confKey;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -915,18 +844,6 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 	int64_t confKey, int64_t workspaceKey, string label, string rtmpURL, string resourceURL, string filePath, string secureToken, string type
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -992,18 +909,6 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 
 void MMSEngineDBFacade::removeCDN77ChannelConf(int64_t workspaceKey, int64_t confKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1240,18 +1145,6 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 
 tuple<string, string, string> MMSEngineDBFacade::getCDN77ChannelDetails(int64_t workspaceKey, string label)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
@@ -1414,18 +1307,6 @@ tuple<string, string, string> MMSEngineDBFacade::cdn77_reservationDetails(int64_
 tuple<string, string, string, string, string, bool>
 MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -1672,18 +1553,6 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1798,18 +1667,6 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 {
 	int64_t confKey;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1868,18 +1725,6 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 	string type
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1945,18 +1790,6 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 
 void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t confKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -2205,18 +2038,6 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 tuple<int64_t, string, string, string, string, string>
 MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
@@ -2387,18 +2208,6 @@ string MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKe
 tuple<string, string, string, string, string, string, bool>
 MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -2649,18 +2458,6 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 
 void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(trans.connection->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -2713,6 +2510,911 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 		{
 			string sqlStatement = std::format(
 				"update MMS_Conf_RTMPChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+				"where confKey = {} ",
+				reservedConfKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+int64_t MMSEngineDBFacade::addSRTChannelConf(
+	int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL, string type
+)
+{
+	int64_t confKey;
+
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		{
+			string sqlStatement = std::format(
+				"insert into MMS_Conf_SRTChannel(workspaceKey, label, srtURL, "
+				"streamName, userName, password, playURL, type) values ("
+				"{}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(srtURL),
+				streamName == "" ? "null" : trans.transaction->quote(streamName), userName == "" ? "null" : trans.transaction->quote(userName),
+				password == "" ? "null" : trans.transaction->quote(password), playURL == "" ? "null" : trans.transaction->quote(playURL),
+				trans.transaction->quote(type)
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+
+	return confKey;
+}
+
+void MMSEngineDBFacade::modifySRTChannelConf(
+	int64_t confKey, int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL,
+	string type
+)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		{
+			string sqlStatement = std::format(
+				"update MMS_Conf_SRTChannel set label = {}, srtURL = {}, streamName = {}, "
+				"userName = {}, password = {}, playURL = {}, type = {} "
+				"where confKey = {} and workspaceKey = {} ",
+				trans.transaction->quote(label), trans.transaction->quote(srtURL), streamName == "" ? "null" : trans.transaction->quote(streamName),
+				userName == "" ? "null" : trans.transaction->quote(userName), password == "" ? "null" : trans.transaction->quote(password),
+				playURL == "" ? "null" : trans.transaction->quote(playURL), trans.transaction->quote(type), confKey, workspaceKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			/*
+		if (rowsUpdated != 1)
+		{
+			string errorMessage = __FILEREF__ + "no update was done"
+					+ ", confKey: " + to_string(confKey)
+					+ ", rowsUpdated: " + to_string(rowsUpdated)
+					+ ", sqlStatement: " + sqlStatement
+			;
+			warn(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+			*/
+		}
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+void MMSEngineDBFacade::removeSRTChannelConf(int64_t workspaceKey, int64_t confKey)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		{
+			string sqlStatement = std::format("delete from MMS_Conf_SRTChannel where confKey = {} and workspaceKey = {} ", confKey, workspaceKey);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = std::format(
+					"no delete was done"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					confKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+json MMSEngineDBFacade::getSRTChannelConfList(
+	int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
+	int type // 0: all, 1: SHARED, 2: DEDICATED
+)
+{
+	json srtChannelConfListRoot;
+
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"getSRTChannelConfList"
+			", workspaceKey: {}",
+			workspaceKey
+		);
+
+		{
+			json requestParametersRoot;
+
+			{
+				field = "workspaceKey";
+				requestParametersRoot[field] = workspaceKey;
+
+				field = "confKey";
+				requestParametersRoot[field] = confKey;
+
+				field = "label";
+				requestParametersRoot[field] = label;
+
+				field = "labelLike";
+				requestParametersRoot[field] = labelLike;
+			}
+
+			field = "requestParameters";
+			srtChannelConfListRoot[field] = requestParametersRoot;
+		}
+
+		string sqlWhere = std::format("where rc.workspaceKey = {} ", workspaceKey);
+		if (confKey != -1)
+			sqlWhere += std::format("and rc.confKey = {} ", confKey);
+		else if (label != "")
+		{
+			if (labelLike)
+				sqlWhere += std::format("and rc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+			else
+				sqlWhere += std::format("and rc.label = {} ", trans.transaction->quote(label));
+		}
+		if (type == 1)
+			sqlWhere += "and rc.type = 'SHARED' ";
+		else if (type == 2)
+			sqlWhere += "and rc.type = 'DEDICATED' ";
+
+		json responseRoot;
+		{
+			string sqlStatement = std::format("select count(*) from MMS_Conf_SRTChannel rc {}", sqlWhere);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			field = "numFound";
+			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		json srtChannelRoot = json::array();
+		{
+			string sqlStatement = std::format(
+				"select rc.confKey, rc.label, rc.srtURL, rc.streamName, rc.userName, rc.password, "
+				"rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
+				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
+				"from MMS_Conf_SRTChannel rc left join MMS_IngestionJob ij "
+				"on rc.reservedByIngestionJobKey = ij.ingestionJobKey {} "
+				"order by rc.label ",
+				sqlWhere
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			for (auto row : res)
+			{
+				json srtChannelConfRoot;
+
+				field = "confKey";
+				srtChannelConfRoot[field] = row["confKey"].as<int64_t>();
+
+				field = "label";
+				srtChannelConfRoot[field] = row["label"].as<string>();
+
+				field = "srtURL";
+				srtChannelConfRoot[field] = row["srtURL"].as<string>();
+
+				field = "streamName";
+				if (row["streamName"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["streamName"].as<string>();
+
+				field = "userName";
+				if (row["userName"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["userName"].as<string>();
+
+				field = "password";
+				if (row["password"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["password"].as<string>();
+
+				field = "playURL";
+				if (row["playURL"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["playURL"].as<string>();
+
+				field = "type";
+				srtChannelConfRoot[field] = row["type"].as<string>();
+
+				field = "outputIndex";
+				if (row["outputIndex"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["outputIndex"].as<int>();
+
+				field = "reservedByIngestionJobKey";
+				if (row["reservedByIngestionJobKey"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["reservedByIngestionJobKey"].as<int64_t>();
+
+				field = "configurationLabel";
+				if (row["configurationLabel"].is_null())
+					srtChannelConfRoot[field] = nullptr;
+				else
+					srtChannelConfRoot[field] = row["configurationLabel"].as<string>();
+
+				srtChannelRoot.push_back(srtChannelConfRoot);
+			}
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		field = "srtChannelConf";
+		responseRoot[field] = srtChannelRoot;
+
+		field = "response";
+		srtChannelConfListRoot[field] = responseRoot;
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+
+	return srtChannelConfListRoot;
+}
+
+tuple<int64_t, string, string, string, string, string>
+MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing)
+{
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"getSRTChannelDetails"
+			", workspaceKey: {}",
+			workspaceKey
+		);
+
+		int64_t confKey;
+		string srtURL;
+		string streamName;
+		string userName;
+		string password;
+		string playURL;
+		{
+			string sqlStatement = std::format(
+				"select confKey, srtURL, streamName, userName, password, playURL "
+				"from MMS_Conf_SRTChannel "
+				"where workspaceKey = {} and label = {}",
+				workspaceKey, trans.transaction->quote(label)
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"Configuration label is not found"
+					", workspaceKey: {}"
+					", label: {}",
+					workspaceKey, label
+				);
+				if (warningIfMissing)
+					SPDLOG_WARN(errorMessage);
+				else
+					SPDLOG_ERROR(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+
+			confKey = res[0]["confKey"].as<int64_t>();
+			srtURL = res[0]["srtURL"].as<string>();
+			if (!res[0]["streamName"].is_null())
+				streamName = res[0]["streamName"].as<string>();
+			if (!res[0]["userName"].is_null())
+				userName = res[0]["userName"].as<string>();
+			if (!res[0]["password"].is_null())
+				password = res[0]["password"].as<string>();
+			if (!res[0]["playURL"].is_null())
+				playURL = res[0]["playURL"].as<string>();
+		}
+
+		return make_tuple(confKey, srtURL, streamName, userName, password, playURL);
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+string MMSEngineDBFacade::srt_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex)
+{
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"srt_reservedDetails"
+			", reservedIngestionJobKey: {}"
+			", outputIndex: {}",
+			reservedIngestionJobKey, outputIndex
+		);
+
+		string playURL;
+		{
+			string sqlStatement = std::format(
+				"select playURL "
+				"from MMS_Conf_SRTChannel "
+				"where reservedByIngestionJobKey = {} and outputIndex = {}",
+				reservedIngestionJobKey, outputIndex
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"Configuration label is not found"
+					", reservedIngestionJobKey: {}"
+					", outputIndex: {}",
+					reservedIngestionJobKey, outputIndex
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+
+			if (!res[0]["playURL"].is_null())
+				playURL = res[0]["playURL"].as<string>();
+		}
+
+		return playURL;
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+tuple<string, string, string, string, string, string, bool>
+MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"reserveSRTChannel"
+			", workspaceKey: {}"
+			", label: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, label, outputIndex, ingestionJobKey
+		);
+
+		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_SRTChannel
+		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
+		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
+		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
+		// outputIndex (stesso ingestion con ad esempio 2 SRT)
+		{
+			// like: non lo uso per motivi di performance
+			string sqlStatement = std::format(
+				"select ingestionJobKey  from MMS_IngestionJob where "
+				"status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') " // like 'End_%' "
+				"and ingestionJobKey in ("
+				"select distinct reservedByIngestionJobKey from MMS_Conf_SRTChannel where "
+				"workspaceKey = {} and reservedByIngestionJobKey is not null)",
+				workspaceKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			string ingestionJobKeyList;
+			for (auto row : res)
+			{
+				int64_t localIngestionJobKey = row["ingestionJobKey"].as<int64_t>();
+				if (ingestionJobKeyList == "")
+					ingestionJobKeyList = to_string(localIngestionJobKey);
+				else
+					ingestionJobKeyList += (", " + to_string(localIngestionJobKey));
+			}
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+
+			if (ingestionJobKeyList != "")
+			{
+				SPDLOG_ERROR(
+					"reserveSRTChannel. "
+					"The following SRT channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
+					", ingestionJobKeyList: {}",
+					ingestionJobKeyList
+				);
+
+				{
+					string sqlStatement = std::format(
+						"update MMS_Conf_SRTChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
+						"where reservedByIngestionJobKey in ({}) ",
+						ingestionJobKeyList
+					);
+					chrono::system_clock::time_point startSql = chrono::system_clock::now();
+					trans.transaction->exec0(sqlStatement);
+					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+					SQLQUERYLOG(
+						"default", elapsed,
+						"SQL statement"
+						", sqlStatement: @{}@"
+						", getConnectionId: @{}@"
+						", elapsed (millisecs): @{}@",
+						sqlStatement, trans.connection->getConnectionId(), elapsed
+					);
+					/*
+					if (rowsUpdated == 0)
+					{
+						string errorMessage =
+							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
+						SPDLOG_ERROR(errorMessage);
+
+						// throw runtime_error(errorMessage);
+					}
+					*/
+				}
+			}
+		}
+
+		int64_t reservedConfKey;
+		string reservedLabel;
+		string reservedSrtURL;
+		string reservedStreamName;
+		string reservedUserName;
+		string reservedPassword;
+		string reservedPlayURL;
+		int64_t reservedByIngestionJobKey = -1;
+
+		{
+			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
+			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
+			string sqlStatement;
+			if (label == "")
+			{
+				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
+				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
+				// Poichè solo workspaceKey NON è chiave unica, la select, puo' ritornare piu righe:
+				// quella con ingestionJobKey inizializzato e quelle con ingestionJobKey NULL.
+				// In questo scenario è importante che questo metodo ritorni le informazioni
+				// della riga con ingestionJobKey inizializzato.
+				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
+				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
+				sqlStatement = std::format(
+					"select confKey, label, srtURL, streamName, userName, password, playURL, "
+					"reservedByIngestionJobKey from MMS_Conf_SRTChannel "
+					"where workspaceKey = {} and type = 'SHARED' "
+					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
+					"order by reservedByIngestionJobKey asc limit 1 for update",
+					workspaceKey, outputIndex, ingestionJobKey
+				);
+			}
+			else
+			{
+				// workspaceKey, label sono chiave unica, quindi la select ritorna una solo riga
+				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
+				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
+				sqlStatement = std::format(
+					"select confKey, label, srtURL, streamName, userName, password, playURL, "
+					"reservedByIngestionJobKey from MMS_Conf_SRTChannel "
+					"where workspaceKey = {} " // and type = 'DEDICATED' "
+					"and label = {} "
+					"and (reservedByIngestionJobKey is null or reservedByIngestionJobKey = {}) "
+					"for update",
+					workspaceKey, trans.transaction->quote(label), ingestionJobKey
+				);
+			}
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"No SRT Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}"
+					", label: {}",
+					ingestionJobKey, workspaceKey, label
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			reservedConfKey = res[0]["confKey"].as<int64_t>();
+			reservedLabel = res[0]["label"].as<string>();
+			reservedSrtURL = res[0]["srtURL"].as<string>();
+			if (!res[0]["streamName"].is_null())
+				reservedStreamName = res[0]["streamName"].as<string>();
+			if (!res[0]["userName"].is_null())
+				reservedUserName = res[0]["userName"].as<string>();
+			if (!res[0]["password"].is_null())
+				reservedPassword = res[0]["password"].as<string>();
+			if (!res[0]["playURL"].is_null())
+				reservedPlayURL = res[0]["playURL"].as<string>();
+			if (!res[0]["reservedByIngestionJobKey"].is_null())
+				reservedByIngestionJobKey = res[0]["reservedByIngestionJobKey"].as<int64_t>();
+		}
+
+		if (reservedByIngestionJobKey == -1)
+		{
+			string sqlStatement = std::format(
+				"update MMS_Conf_SRTChannel set outputIndex = {}, reservedByIngestionJobKey = {} "
+				"where confKey = {} ",
+				outputIndex, ingestionJobKey, reservedConfKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			int rowsUpdated = res.affected_rows();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = std::format(
+					"no update was done"
+					", ingestionJobKey: {}"
+					", confKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		bool channelAlreadyReserved;
+		if (reservedByIngestionJobKey == -1)
+			channelAlreadyReserved = false;
+		else
+			channelAlreadyReserved = true;
+
+		return make_tuple(
+			reservedLabel, reservedSrtURL, reservedStreamName, reservedUserName, reservedPassword, reservedPlayURL, channelAlreadyReserved
+		);
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+void MMSEngineDBFacade::releaseSRTChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		string field;
+
+		SPDLOG_INFO(
+			"releaseSRTChannel"
+			", workspaceKey: {}"
+			", outputIndex: {}"
+			", ingestionJobKey: {}",
+			workspaceKey, outputIndex, ingestionJobKey
+		);
+
+		int64_t reservedConfKey;
+		string reservedChannelId;
+
+		{
+			string sqlStatement = std::format(
+				"select confKey from MMS_Conf_SRTChannel "
+				"where workspaceKey = {} and outputIndex = {} and reservedByIngestionJobKey = {} ",
+				workspaceKey, outputIndex, ingestionJobKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (empty(res))
+			{
+				string errorMessage = std::format(
+					"No SRT Channel found"
+					", ingestionJobKey: {}"
+					", workspaceKey: {}",
+					ingestionJobKey, workspaceKey
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+
+			reservedConfKey = res[0]["confKey"].as<int64_t>();
+		}
+
+		{
+			string sqlStatement = std::format(
+				"update MMS_Conf_SRTChannel set outputIndex = NULL, reservedByIngestionJobKey = NULL "
 				"where confKey = {} ",
 				reservedConfKey
 			);
@@ -3291,7 +3993,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 			workspaceKey, label, outputIndex, ingestionJobKey
 		);
 
-		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_RTMPChannel
+		// 2023-02-01: scenario in cui è rimasto un reservedByIngestionJobKey in MMS_Conf_HLSChannel
 		//	che in realtà è in stato 'End_*'. E' uno scenario che non dovrebbe mai capitare ma,
 		//	nel caso in cui dovesse capitare, eseguiamo prima questo update.
 		// Aggiunto distinct perchè fissato reservedByIngestionJobKey ci potrebbero essere diversi
