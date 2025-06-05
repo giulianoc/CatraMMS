@@ -179,8 +179,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_encodingJobKey, awsChannelConfigurationLabel, awsChannelId, rtmpURL, playURL, channelAlreadyReserved
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmp(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, false, rtmpURL
 							);
 						}
 						catch (exception &e)
@@ -218,13 +218,6 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 					// update outputsRoot with the new details
 					{
-						SPDLOG_INFO(
-							"AAAAAAAAAAAAA"
-							", srtFeed: {}"
-							", srtUrl: {}"
-							", rtmpUrl: {}",
-							srtFeed, srtURL, rtmpURL
-						);
 						if (srtFeed)
 							outputRoot["srtUrl"] = srtURL;
 						else
@@ -252,8 +245,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								secureToken, channelAlreadyReserved
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmp(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, srtFeed, srtFeed ? srtURL : rtmpURL
 							);
 						}
 						catch (runtime_error &e)
@@ -339,8 +332,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmp(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, false, rtmpURL
 							);
 						}
 						catch (exception &e)

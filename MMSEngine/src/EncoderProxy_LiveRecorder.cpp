@@ -232,8 +232,8 @@ bool EncoderProxy::liveRecorder()
 							);
 
 							// update sia IngestionJob che EncodingJob
-							_mmsEngineDBFacade->updateOutputRtmp(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, false, rtmpURL
 							);
 							// _mmsEngineDBFacade->updateEncodingJobParameters(
 							// 	_encodingItem->_encodingJobKey,
@@ -319,8 +319,8 @@ bool EncoderProxy::liveRecorder()
 								secureToken, channelAlreadyReserved
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmp(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, srtFeed, srtFeed ? srtURL : rtmpURL
 							);
 						}
 						catch (exception &e)
@@ -415,8 +415,8 @@ bool EncoderProxy::liveRecorder()
 								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
 							);
 
-							_mmsEngineDBFacade->updateOutputRtmp(
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, false, rtmpURL
 							);
 						}
 						catch (exception &e)

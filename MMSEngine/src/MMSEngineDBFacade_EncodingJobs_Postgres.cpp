@@ -2341,47 +2341,15 @@ nontransaction trans{*(conn->_sqlConnection)};
 	}
 }
 
-void MMSEngineDBFacade::updateOutputRtmp(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL)
+void MMSEngineDBFacade::updateOutputURL(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, bool srtFeed, string outputURL)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
-		// PlayUrl in MMS_IngestionJob per il play del canale
-		/*
-		{
-			string path_playUrl = std::format("{{outputs,{},playUrl}}", outputIndex);
-			string sqlStatement = std::format(
-				"update MMS_IngestionJob set "
-				"metaDataContent = jsonb_set(metaDataContent, {}, jsonb {}) "
-				"where ingestionJobKey = {} ",
-				trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""), ingestionJobKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-			// if (rowsUpdated != 1)
-			// {
-			// 	string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL +
-			// 						  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-			// 						  ", sqlStatement: " + sqlStatement;
-			// 	warn(errorMessage);
-
-				// throw runtime_error(errorMessage);
-			// }
-		}
-		*/
-
 		{
 			// string path_playUrl = std::format("{{outputsRoot,{},playUrl}}", outputIndex);
-			string path_rtmpUrl = std::format("{{outputsRoot,{},rtmpUrl}}", outputIndex);
+			string path_outputUrl =
+				srtFeed ? std::format("{{outputsRoot,{},srtUrl}}", outputIndex) : std::format("{{outputsRoot,{},rtmpUrl}}", outputIndex);
 			string sqlStatement = std::format(
 				"update MMS_EncodingJob set "
 				"parameters = " // jsonb_set("
@@ -2389,7 +2357,7 @@ void MMSEngineDBFacade::updateOutputRtmp(int64_t ingestionJobKey, int64_t encodi
 				// "{}, jsonb {}) "
 				"where encodingJobKey = {} ",
 				// trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""),
-				trans.transaction->quote(path_rtmpUrl), trans.transaction->quote("\"" + rtmpURL + "\""), encodingJobKey
+				trans.transaction->quote(path_outputUrl), trans.transaction->quote("\"" + outputURL + "\""), encodingJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -2419,8 +2387,9 @@ void MMSEngineDBFacade::updateOutputRtmp(int64_t ingestionJobKey, int64_t encodi
 			"EncodingJob updated successful"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
-			", rtmpURL: {}",
-			ingestionJobKey, encodingJobKey, rtmpURL
+			", srtFeed: {}"
+			", outputURL: {}",
+			ingestionJobKey, encodingJobKey, srtFeed, outputURL
 		);
 	}
 	catch (exception const &e)
