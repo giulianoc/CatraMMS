@@ -287,9 +287,9 @@ bool EncoderProxy::liveRecorder()
 					// update outputsRoot with the new details
 					{
 						if (srtFeed)
-							outputRoot["srtURL"] = srtURL;
+							outputRoot["srtUrl"] = srtURL;
 						else
-							outputRoot["rtmpURL"] = rtmpURL;
+							outputRoot["rtmpUrl"] = rtmpURL;
 
 						// field = "playUrl";
 						// outputRoot[field] = playURL;
@@ -514,7 +514,9 @@ bool EncoderProxy::liveRecorder()
 								_encodingItem->_encodingJobKey, srtChannelConfigurationLabel, reservedLabel, srtURL, channelAlreadyReserved, playURL
 							);
 
-							_mmsEngineDBFacade->updateOutputSrt(_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, srtURL);
+							_mmsEngineDBFacade->updateOutputURL(
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, true, srtURL
+							);
 						}
 						catch (exception &e)
 						{
