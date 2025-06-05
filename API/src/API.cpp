@@ -2460,6 +2460,64 @@ void API::manageRequestAndResponse(
 	{
 		rtmpChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
 	}
+	else if (method == "addSRTChannelConf")
+	{
+		if (!admin && !editConfiguration)
+		{
+			string errorMessage = std::format(
+				"APIKey does not have the permission"
+				", editConfiguration: {}",
+				editConfiguration
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 403, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		addSRTChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
+	}
+	else if (method == "modifySRTChannelConf")
+	{
+		if (!admin && !editConfiguration)
+		{
+			string errorMessage = std::format(
+				"APIKey does not have the permission"
+				", editConfiguration: {}",
+				editConfiguration
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 403, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		modifySRTChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
+	}
+	else if (method == "removeSRTChannelConf")
+	{
+		if (!admin && !editConfiguration)
+		{
+			string errorMessage = std::format(
+				"APIKey does not have the permission"
+				", editConfiguration: {}",
+				editConfiguration
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 403, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		removeSRTChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
+	}
+	else if (method == "srtChannelConfList")
+	{
+		srtChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
+	}
 	else if (method == "addHLSChannelConf")
 	{
 		if (!admin && !editConfiguration)
