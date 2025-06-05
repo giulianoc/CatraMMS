@@ -536,6 +536,38 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (playURL == "")
 						continue;
 				}
+				else if (outputType == "SRT_Channel")
+				{
+					try
+					{
+						playURL = _mmsEngineDBFacade->srt_reservationDetails(ingestionJobKey, outputIndex);
+					}
+					catch (DBRecordNotFound &e)
+					{
+						SPDLOG_ERROR(
+							"ingestionJobKey/outputIndex not found failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
+					catch (exception &e)
+					{
+						SPDLOG_ERROR(
+							"srt_reservationDetails failed"
+							", ingestionJobKey: {}"
+							", outputIndex: {}"
+							", exception: {}",
+							ingestionJobKey, outputIndex, e.what()
+						);
+						continue;
+					}
+
+					if (playURL == "")
+						continue;
+				}
 				else if (outputType == "HLS_Channel")
 				{
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, "deliveryCode", -1);
@@ -616,7 +648,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 			}
 
-			if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
+			if (outputType == "RTMP_Channel" || outputType == "SRT_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
 			{
 				deliveryURL = playURL;
 			}

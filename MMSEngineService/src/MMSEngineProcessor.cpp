@@ -919,6 +919,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		string cdn77ChannelConfigurationLabel;
 		int cdn77ExpirationInMinutes = -1;
 		string rtmpChannelConfigurationLabel;
+		string srtChannelConfigurationLabel;
 		string hlsChannelConfigurationLabel;
 		string udpUrl;
 		json drawTextDetailsRoot = nullptr;
@@ -973,6 +974,11 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 			// it could not exist in case of SHARED RTMP
 			field = "rtmpChannelConfigurationLabel";
 			rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
+		}
+		else if (outputType == "SRT_Channel")
+		{
+			// it could not exist in case of SHARED RTMP
+			srtChannelConfigurationLabel = JSONUtils::asString(outputRoot, "srtChannelConfigurationLabel", "");
 		}
 		else if (outputType == "HLS_Channel")
 		{
@@ -1103,6 +1109,9 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 
 		field = "rtmpChannelConfigurationLabel";
 		localOutputRoot[field] = rtmpChannelConfigurationLabel;
+
+		field = "srtChannelConfigurationLabel";
+		localOutputRoot[field] = srtChannelConfigurationLabel;
 
 		field = "hlsChannelConfigurationLabel";
 		localOutputRoot[field] = hlsChannelConfigurationLabel;

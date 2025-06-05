@@ -1939,6 +1939,7 @@ class MMSEngineDBFacade
 	void updateEncodingJobParameters(int64_t encodingJobKey, string parameters);
 
 	void updateOutputRtmp(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL);
+	void updateOutputSrt(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string srtURL);
 
 	void updateOutputHLSDetails(
 		int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, int64_t deliveryCode, int segmentDurationInSeconds,
@@ -2181,11 +2182,14 @@ class MMSEngineDBFacade
 	string releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 	string cdnaws_reservationDetails(int64_t reservedIngestionJobKey, int outputIndex);
 
-	int64_t
-	addCDN77ChannelConf(int64_t workspaceKey, string label, string rtmpURL, string resourceURL, string filePath, string secureToken, string type);
+	int64_t addCDN77ChannelConf(
+		int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath, string secureToken,
+		string type
+	);
 
 	void modifyCDN77ChannelConf(
-		int64_t confKey, int64_t workspaceKey, string label, string rtmpURL, string resourceURL, string filePath, string secureToken, string type
+		int64_t confKey, int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath,
+		string secureToken, string type
 	);
 
 	void removeCDN77ChannelConf(int64_t workspaceKey, int64_t confKey);
@@ -2195,7 +2199,7 @@ class MMSEngineDBFacade
 
 	tuple<string, string, string> getCDN77ChannelDetails(int64_t workspaceKey, string label);
 
-	tuple<string, string, string, string, string, bool>
+	tuple<string, bool, string, string, string, string, string, bool>
 	reserveCDN77Channel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
 	tuple<string, string, string> cdn77_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
@@ -2223,11 +2227,11 @@ class MMSEngineDBFacade
 
 	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 	int64_t addSRTChannelConf(
-		int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL, string type
+		int64_t workspaceKey, string label, string srtURL, string mode, string streamId, string passphrase, string playURL, string type
 	);
 
 	void modifySRTChannelConf(
-		int64_t confKey, int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL,
+		int64_t confKey, int64_t workspaceKey, string label, string srtURL, string mode, string streamId, string passphrase, string playURL,
 		string type
 	);
 

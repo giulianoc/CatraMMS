@@ -6734,7 +6734,8 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
 bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 {
 	vector<string> outputTypes = {
-		"RTMP_Channel", "CDN_AWS", "CDN_CDN77", "UDP_Stream", "HLS_Channel"
+		"RTMP_Channel", "SRT_Channel", "CDN_AWS", "CDN_CDN77",
+		"UDP_Stream",	"HLS_Channel"
 		// "HLS",
 		// "DASH"
 	};
@@ -7276,7 +7277,8 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 		liveProxyOutputType = JSONUtils::asString(outputRoot, field, "");
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be RTMP_Channel, CDN_AWS, CDN_CDN77, UDP_Stream or HLS_Channel)" +
+			string errorMessage = __FILEREF__ + field +
+								  " is wrong (it could be RTMP_Channel, SRT_Channel, CDN_AWS, CDN_CDN77, UDP_Stream or HLS_Channel)" +
 								  ", Field: " + field + ", liveProxyOutputType: " + liveProxyOutputType + ", label: " + label;
 			SPDLOG_ERROR(errorMessage);
 
@@ -7291,6 +7293,9 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 	{
 	}
 	else if (liveProxyOutputType == "RTMP_Channel")
+	{
+	}
+	else if (liveProxyOutputType == "SRT_Channel")
 	{
 	}
 	else if (liveProxyOutputType == "HLS_Channel")

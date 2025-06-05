@@ -2343,18 +2343,6 @@ nontransaction trans{*(conn->_sqlConnection)};
 
 void MMSEngineDBFacade::updateOutputRtmp(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string rtmpURL)
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-nontransaction trans{*(conn->_sqlConnection)};
-*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -2433,6 +2421,113 @@ nontransaction trans{*(conn->_sqlConnection)};
 			", encodingJobKey: {}"
 			", rtmpURL: {}",
 			ingestionJobKey, encodingJobKey, rtmpURL
+		);
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+void MMSEngineDBFacade::updateOutputSrt(int64_t ingestionJobKey, int64_t encodingJobKey, int outputIndex, string srtURL)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		// PlayUrl in MMS_IngestionJob per il play del canale
+		/*
+		{
+			string path_playUrl = std::format("{{outputs,{},playUrl}}", outputIndex);
+			string sqlStatement = std::format(
+				"update MMS_IngestionJob set "
+				"metaDataContent = jsonb_set(metaDataContent, {}, jsonb {}) "
+				"where ingestionJobKey = {} ",
+				trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""), ingestionJobKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			// if (rowsUpdated != 1)
+			// {
+			// 	string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL +
+			// 						  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
+			// 						  ", sqlStatement: " + sqlStatement;
+			// 	warn(errorMessage);
+
+				// throw runtime_error(errorMessage);
+			// }
+		}
+		*/
+
+		{
+			// string path_playUrl = std::format("{{outputsRoot,{},playUrl}}", outputIndex);
+			string path_srtUrl = std::format("{{outputsRoot,{},srtUrl}}", outputIndex);
+			string sqlStatement = std::format(
+				"update MMS_EncodingJob set "
+				"parameters = " // jsonb_set("
+				"jsonb_set(parameters, {}, jsonb {}) "
+				// "{}, jsonb {}) "
+				"where encodingJobKey = {} ",
+				// trans.transaction->quote(path_playUrl), trans.transaction->quote("\"" + playURL + "\""),
+				trans.transaction->quote(path_srtUrl), trans.transaction->quote("\"" + srtURL + "\""), encodingJobKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			/*
+			if (rowsUpdated != 1)
+			{
+				string errorMessage = __FILEREF__ + "no update was done" + ", playURL: " + playURL + ", rtmpURL: " + rtmpURL +
+									  ", encodingJobKey: " + to_string(encodingJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
+									  ", sqlStatement: " + sqlStatement;
+				warn(errorMessage);
+
+				// throw runtime_error(errorMessage);
+			}
+			*/
+		}
+
+		SPDLOG_INFO(
+			"EncodingJob updated successful"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", srtURL: {}",
+			ingestionJobKey, encodingJobKey, srtURL
 		);
 	}
 	catch (exception const &e)

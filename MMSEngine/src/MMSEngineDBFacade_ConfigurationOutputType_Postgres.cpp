@@ -784,7 +784,8 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 }
 
 int64_t MMSEngineDBFacade::addCDN77ChannelConf(
-	int64_t workspaceKey, string label, string rtmpURL, string resourceURL, string filePath, string secureToken, string type
+	int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath, string secureToken,
+	string type
 )
 {
 	int64_t confKey;
@@ -794,11 +795,12 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"insert into MMS_Conf_CDN77Channel(workspaceKey, label, rtmpURL, "
+				"insert into MMS_Conf_CDN77Channel(workspaceKey, label, srtFeed, srtURL, rtmpURL, "
 				"resourceURL, filePath, secureToken, type) values ("
-				"{}, {}, {}, {}, {}, {}, {}) returning confKey",
-				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(rtmpURL), trans.transaction->quote(resourceURL),
-				trans.transaction->quote(filePath), secureToken == "" ? "null" : trans.transaction->quote(secureToken), trans.transaction->quote(type)
+				"{}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
+				workspaceKey, trans.transaction->quote(label), srtFeed, srtURL == "" ? "null" : trans.transaction->quote(srtURL),
+				rtmpURL == "" ? "null" : trans.transaction->quote(rtmpURL), trans.transaction->quote(resourceURL), trans.transaction->quote(filePath),
+				secureToken == "" ? "null" : trans.transaction->quote(secureToken), trans.transaction->quote(type)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
@@ -841,7 +843,8 @@ int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 }
 
 void MMSEngineDBFacade::modifyCDN77ChannelConf(
-	int64_t confKey, int64_t workspaceKey, string label, string rtmpURL, string resourceURL, string filePath, string secureToken, string type
+	int64_t confKey, int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath,
+	string secureToken, string type
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -849,12 +852,12 @@ void MMSEngineDBFacade::modifyCDN77ChannelConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"update MMS_Conf_CDN77Channel set label = {}, rtmpURL = {}, resourceURL = {}, "
+				"update MMS_Conf_CDN77Channel set label = {}, srtFeed = {}, srtURL = {}, rtmpURL = {}, resourceURL = {}, "
 				"filePath = {}, secureToken = {}, type = {} "
 				"where confKey = {} and workspaceKey = {}",
-				trans.transaction->quote(label), trans.transaction->quote(rtmpURL), trans.transaction->quote(resourceURL),
-				trans.transaction->quote(filePath), secureToken == "" ? "null" : trans.transaction->quote(secureToken),
-				trans.transaction->quote(type), confKey, workspaceKey
+				trans.transaction->quote(label), srtFeed, srtURL == "" ? "null" : trans.transaction->quote(srtURL),
+				rtmpURL == "" ? "null" : trans.transaction->quote(rtmpURL), trans.transaction->quote(resourceURL), trans.transaction->quote(filePath),
+				secureToken == "" ? "null" : trans.transaction->quote(secureToken), trans.transaction->quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -1040,7 +1043,7 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 		json cdn77ChannelRoot = json::array();
 		{
 			string sqlStatement = std::format(
-				"select cc.confKey, cc.label, cc.rtmpURL, cc.resourceURL, cc.filePath, "
+				"select cc.confKey, cc.label, cc.srtFeed, cc.srtURL, cc.rtmpURL, cc.resourceURL, cc.filePath, "
 				"cc.secureToken, cc.type, cc.outputIndex, cc.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
 				"from MMS_Conf_CDN77Channel cc left join MMS_IngestionJob ij "
@@ -1061,8 +1064,20 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 				field = "label";
 				cdn77ChannelConfRoot[field] = row["label"].as<string>();
 
+				field = "srtFeed";
+				cdn77ChannelConfRoot[field] = row["srtFeed"].as<bool>();
+
+				field = "srtURL";
+				if (row["srtURL"].is_null())
+					cdn77ChannelConfRoot[field] = nullptr;
+				else
+					cdn77ChannelConfRoot[field] = row["srtURL"].as<string>();
+
 				field = "rtmpURL";
-				cdn77ChannelConfRoot[field] = row["rtmpURL"].as<string>();
+				if (row["rtmpURL"].is_null())
+					cdn77ChannelConfRoot[field] = nullptr;
+				else
+					cdn77ChannelConfRoot[field] = row["rtmpURL"].as<string>();
 
 				field = "resourceURL";
 				cdn77ChannelConfRoot[field] = row["resourceURL"].as<string>();
@@ -1304,7 +1319,7 @@ tuple<string, string, string> MMSEngineDBFacade::cdn77_reservationDetails(int64_
 	}
 }
 
-tuple<string, string, string, string, string, bool>
+tuple<string, bool, string, string, string, string, string, bool>
 MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
@@ -1403,6 +1418,8 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 		int64_t reservedConfKey;
 		string reservedLabel;
+		bool reservedSrtFeed;
+		string reservedSrtURL;
 		string reservedRtmpURL;
 		string reservedResourceURL;
 		string reservedFilePath;
@@ -1424,7 +1441,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = std::format(
-					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
+					"select confKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel "
 					"where workspaceKey = {} and type = 'SHARED' "
 					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
@@ -1438,7 +1455,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				sqlStatement = std::format(
-					"select confKey, label, rtmpURL, resourceURL, filePath, secureToken, "
+					"select confKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, "
 					"reservedByIngestionJobKey from MMS_Conf_CDN77Channel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
 					"and label = {} "
@@ -1474,7 +1491,15 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 
 			reservedConfKey = res[0]["confKey"].as<int64_t>();
 			reservedLabel = res[0]["label"].as<string>();
-			reservedRtmpURL = res[0]["rtmpURL"].as<string>();
+			reservedSrtFeed = res[0]["srtFeed"].as<bool>();
+			if (res[0]["srtURL"].is_null())
+				reservedSrtURL = "";
+			else
+				reservedSrtURL = res[0]["srtURL"].as<string>();
+			if (res[0]["rtmpURL"].is_null())
+				reservedRtmpURL = "";
+			else
+				reservedRtmpURL = res[0]["rtmpURL"].as<string>();
 			reservedResourceURL = res[0]["resourceURL"].as<string>();
 			reservedFilePath = res[0]["filePath"].as<string>();
 			if (!res[0]["secureToken"].is_null())
@@ -1524,7 +1549,10 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 		else
 			channelAlreadyReserved = true;
 
-		return make_tuple(reservedLabel, reservedRtmpURL, reservedResourceURL, reservedFilePath, reservedSecureToken, channelAlreadyReserved);
+		return make_tuple(
+			reservedLabel, reservedSrtFeed, reservedSrtURL, reservedRtmpURL, reservedResourceURL, reservedFilePath, reservedSecureToken,
+			channelAlreadyReserved
+		);
 	}
 	catch (exception const &e)
 	{
@@ -2567,7 +2595,7 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 }
 
 int64_t MMSEngineDBFacade::addSRTChannelConf(
-	int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL, string type
+	int64_t workspaceKey, string label, string srtURL, string mode, string streamId, string passphrase, string playURL, string type
 )
 {
 	int64_t confKey;
@@ -2578,12 +2606,11 @@ int64_t MMSEngineDBFacade::addSRTChannelConf(
 		{
 			string sqlStatement = std::format(
 				"insert into MMS_Conf_SRTChannel(workspaceKey, label, srtURL, "
-				"streamName, userName, password, playURL, type) values ("
+				"mode, streamId, passwphrase, playURL, type) values ("
 				"{}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
-				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(srtURL),
-				streamName == "" ? "null" : trans.transaction->quote(streamName), userName == "" ? "null" : trans.transaction->quote(userName),
-				password == "" ? "null" : trans.transaction->quote(password), playURL == "" ? "null" : trans.transaction->quote(playURL),
-				trans.transaction->quote(type)
+				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(srtURL), mode == "" ? "null" : trans.transaction->quote(mode),
+				streamId == "" ? "null" : trans.transaction->quote(streamId), passphrase == "" ? "null" : trans.transaction->quote(passphrase),
+				playURL == "" ? "null" : trans.transaction->quote(playURL), trans.transaction->quote(type)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			confKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
@@ -2626,8 +2653,7 @@ int64_t MMSEngineDBFacade::addSRTChannelConf(
 }
 
 void MMSEngineDBFacade::modifySRTChannelConf(
-	int64_t confKey, int64_t workspaceKey, string label, string srtURL, string streamName, string userName, string password, string playURL,
-	string type
+	int64_t confKey, int64_t workspaceKey, string label, string srtURL, string mode, string streamId, string passphrase, string playURL, string type
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -2635,11 +2661,11 @@ void MMSEngineDBFacade::modifySRTChannelConf(
 	{
 		{
 			string sqlStatement = std::format(
-				"update MMS_Conf_SRTChannel set label = {}, srtURL = {}, streamName = {}, "
-				"userName = {}, password = {}, playURL = {}, type = {} "
+				"update MMS_Conf_SRTChannel set label = {}, srtURL = {}, mode = {}, "
+				"streamId = {}, passphrase = {}, playURL = {}, type = {} "
 				"where confKey = {} and workspaceKey = {} ",
-				trans.transaction->quote(label), trans.transaction->quote(srtURL), streamName == "" ? "null" : trans.transaction->quote(streamName),
-				userName == "" ? "null" : trans.transaction->quote(userName), password == "" ? "null" : trans.transaction->quote(password),
+				trans.transaction->quote(label), trans.transaction->quote(srtURL), mode == "" ? "null" : trans.transaction->quote(mode),
+				streamId == "" ? "null" : trans.transaction->quote(streamId), passphrase == "" ? "null" : trans.transaction->quote(passphrase),
 				playURL == "" ? "null" : trans.transaction->quote(playURL), trans.transaction->quote(type), confKey, workspaceKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2826,7 +2852,7 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 		json srtChannelRoot = json::array();
 		{
 			string sqlStatement = std::format(
-				"select rc.confKey, rc.label, rc.srtURL, rc.streamName, rc.userName, rc.password, "
+				"select rc.confKey, rc.label, rc.srtURL, rc.mode, rc.streamId, rc.passphrase, "
 				"rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
 				"from MMS_Conf_SRTChannel rc left join MMS_IngestionJob ij "
@@ -2849,23 +2875,23 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 				field = "srtURL";
 				srtChannelConfRoot[field] = row["srtURL"].as<string>();
 
-				field = "streamName";
-				if (row["streamName"].is_null())
+				field = "mode";
+				if (row["mode"].is_null())
 					srtChannelConfRoot[field] = nullptr;
 				else
-					srtChannelConfRoot[field] = row["streamName"].as<string>();
+					srtChannelConfRoot[field] = row["mode"].as<string>();
 
-				field = "userName";
-				if (row["userName"].is_null())
+				field = "streamId";
+				if (row["streamId"].is_null())
 					srtChannelConfRoot[field] = nullptr;
 				else
-					srtChannelConfRoot[field] = row["userName"].as<string>();
+					srtChannelConfRoot[field] = row["streamId"].as<string>();
 
-				field = "password";
-				if (row["password"].is_null())
+				field = "passphrase";
+				if (row["passphrase"].is_null())
 					srtChannelConfRoot[field] = nullptr;
 				else
-					srtChannelConfRoot[field] = row["password"].as<string>();
+					srtChannelConfRoot[field] = row["passphrase"].as<string>();
 
 				field = "playURL";
 				if (row["playURL"].is_null())
@@ -2956,13 +2982,13 @@ MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool
 
 		int64_t confKey;
 		string srtURL;
-		string streamName;
-		string userName;
-		string password;
+		string mode;
+		string streamId;
+		string passphrase;
 		string playURL;
 		{
 			string sqlStatement = std::format(
-				"select confKey, srtURL, streamName, userName, password, playURL "
+				"select confKey, srtURL, mode, streamId, passphrase, playURL "
 				"from MMS_Conf_SRTChannel "
 				"where workspaceKey = {} and label = {}",
 				workspaceKey, trans.transaction->quote(label)
@@ -2996,17 +3022,17 @@ MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool
 
 			confKey = res[0]["confKey"].as<int64_t>();
 			srtURL = res[0]["srtURL"].as<string>();
-			if (!res[0]["streamName"].is_null())
-				streamName = res[0]["streamName"].as<string>();
-			if (!res[0]["userName"].is_null())
-				userName = res[0]["userName"].as<string>();
-			if (!res[0]["password"].is_null())
-				password = res[0]["password"].as<string>();
+			if (!res[0]["mode"].is_null())
+				mode = res[0]["mode"].as<string>();
+			if (!res[0]["streamId"].is_null())
+				streamId = res[0]["streamId"].as<string>();
+			if (!res[0]["passphrase"].is_null())
+				passphrase = res[0]["passphrase"].as<string>();
 			if (!res[0]["playURL"].is_null())
 				playURL = res[0]["playURL"].as<string>();
 		}
 
-		return make_tuple(confKey, srtURL, streamName, userName, password, playURL);
+		return make_tuple(confKey, srtURL, mode, streamId, passphrase, playURL);
 	}
 	catch (exception const &e)
 	{
@@ -3207,9 +3233,9 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 		int64_t reservedConfKey;
 		string reservedLabel;
 		string reservedSrtURL;
-		string reservedStreamName;
-		string reservedUserName;
-		string reservedPassword;
+		string reservedMode;
+		string reservedStreamId;
+		string reservedPassphrase;
 		string reservedPlayURL;
 		int64_t reservedByIngestionJobKey = -1;
 
@@ -3228,7 +3254,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = std::format(
-					"select confKey, label, srtURL, streamName, userName, password, playURL, "
+					"select confKey, label, srtURL, mode, streamId, passphrase, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_SRTChannel "
 					"where workspaceKey = {} and type = 'SHARED' "
 					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
@@ -3242,7 +3268,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				sqlStatement = std::format(
-					"select confKey, label, srtURL, streamName, userName, password, playURL, "
+					"select confKey, label, srtURL, mode, streamId, passphrase, playURL, "
 					"reservedByIngestionJobKey from MMS_Conf_SRTChannel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
 					"and label = {} "
@@ -3279,12 +3305,12 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 			reservedConfKey = res[0]["confKey"].as<int64_t>();
 			reservedLabel = res[0]["label"].as<string>();
 			reservedSrtURL = res[0]["srtURL"].as<string>();
-			if (!res[0]["streamName"].is_null())
-				reservedStreamName = res[0]["streamName"].as<string>();
-			if (!res[0]["userName"].is_null())
-				reservedUserName = res[0]["userName"].as<string>();
-			if (!res[0]["password"].is_null())
-				reservedPassword = res[0]["password"].as<string>();
+			if (!res[0]["mode"].is_null())
+				reservedMode = res[0]["mode"].as<string>();
+			if (!res[0]["streamId"].is_null())
+				reservedStreamId = res[0]["streamId"].as<string>();
+			if (!res[0]["passphrase"].is_null())
+				reservedPassphrase = res[0]["passphrase"].as<string>();
 			if (!res[0]["playURL"].is_null())
 				reservedPlayURL = res[0]["playURL"].as<string>();
 			if (!res[0]["reservedByIngestionJobKey"].is_null())
@@ -3332,9 +3358,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 		else
 			channelAlreadyReserved = true;
 
-		return make_tuple(
-			reservedLabel, reservedSrtURL, reservedStreamName, reservedUserName, reservedPassword, reservedPlayURL, channelAlreadyReserved
-		);
+		return make_tuple(reservedLabel, reservedSrtURL, reservedMode, reservedStreamId, reservedPassphrase, reservedPlayURL, channelAlreadyReserved);
 	}
 	catch (exception const &e)
 	{

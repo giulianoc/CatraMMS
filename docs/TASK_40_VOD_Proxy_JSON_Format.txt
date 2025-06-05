@@ -59,7 +59,7 @@
 		//	At least one Output has to be present
 		"outputs" = [
 			{
-				// optional, possible values: HLS_Channel, RTMP_Channel, CDN_AWS, CDN_CDN77.
+				// optional, possible values: HLS_Channel, RTMP_Channel, SRT_Channel, CDN_AWS, CDN_CDN77.
 				// HLS_Channel works also in case of an external transcoder
 				// Default: HLS_Channel
 				"outputType": "HLS_Channel",
@@ -98,6 +98,11 @@
 				// the configuration label of an RTMP Channel defined in MMS.
 				// If not present, a SHARED free RTMP channel is used
 				"rtmpChannelConfigurationLabel": "",
+
+				// optional, used only in case of SRT_Channel
+				// the configuration label of an SRT Channel defined in MMS.
+				// If not present, a SHARED free SRT channel is used
+				"srtChannelConfigurationLabel": "",
 
 				// optional: It is possible to use this field to specify any other output options.
 				// Examples:

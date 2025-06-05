@@ -4315,6 +4315,8 @@ void API::addCDN77ChannelConf(
 	try
 	{
 		string label;
+		bool srtFeed;
+		string srtURL;
 		string rtmpURL;
 		string resourceURL;
 		string filePath;
@@ -4339,19 +4341,40 @@ void API::addCDN77ChannelConf(
 			}
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "rtmpURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", Field: {}",
-					field
-				);
-				SPDLOG_ERROR(errorMessage);
+			srtFeed = JSONUtils::asBool(requestBodyRoot, "srtFeed", false);
 
-				throw runtime_error(errorMessage);
+			if (srtFeed)
+			{
+				field = "srtURL";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 			}
-			rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
+			else
+			{
+				field = "rtmpURL";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
+			}
 
 			field = "resourceURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4416,8 +4439,9 @@ void API::addCDN77ChannelConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey =
-				_mmsEngineDBFacade->addCDN77ChannelConf(workspace->_workspaceKey, label, rtmpURL, resourceURL, filePath, secureToken, type);
+			int64_t confKey = _mmsEngineDBFacade->addCDN77ChannelConf(
+				workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
+			);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 		}
@@ -4497,6 +4521,8 @@ void API::modifyCDN77ChannelConf(
 	try
 	{
 		string label;
+		bool srtFeed;
+		string srtURL;
 		string rtmpURL;
 		string resourceURL;
 		string filePath;
@@ -4521,19 +4547,40 @@ void API::modifyCDN77ChannelConf(
 			}
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "rtmpURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", Field: {}",
-					field
-				);
-				SPDLOG_ERROR(errorMessage);
+			srtFeed = JSONUtils::asBool(requestBodyRoot, "srtFeed", false);
 
-				throw runtime_error(errorMessage);
+			if (srtFeed)
+			{
+				field = "srtURL";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 			}
-			rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
+			else
+			{
+				field = "rtmpURL";
+				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				{
+					string errorMessage = std::format(
+						"Field is not present or it is null"
+						", Field: {}",
+						field
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
+			}
 
 			field = "resourceURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4622,7 +4669,9 @@ void API::modifyCDN77ChannelConf(
 			}
 			confKey = stoll(confKeyIt->second);
 
-			_mmsEngineDBFacade->modifyCDN77ChannelConf(confKey, workspace->_workspaceKey, label, rtmpURL, resourceURL, filePath, secureToken, type);
+			_mmsEngineDBFacade->modifyCDN77ChannelConf(
+				confKey, workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
+			);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 		}
@@ -5414,9 +5463,9 @@ void API::addSRTChannelConf(
 	{
 		string label;
 		string srtURL;
-		string streamName;
-		string userName;
-		string password;
+		string mode;
+		string streamId;
+		string passphrase;
 		string playURL;
 		string type;
 
@@ -5452,14 +5501,11 @@ void API::addSRTChannelConf(
 			}
 			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "streamName";
-			streamName = JSONUtils::asString(requestBodyRoot, field, "");
+			mode = JSONUtils::asString(requestBodyRoot, "mode", "");
 
-			field = "userName";
-			userName = JSONUtils::asString(requestBodyRoot, field, "");
+			streamId = JSONUtils::asString(requestBodyRoot, "streamId", "");
 
-			field = "password";
-			password = JSONUtils::asString(requestBodyRoot, field, "");
+			passphrase = JSONUtils::asString(requestBodyRoot, "passphrase", "");
 
 			field = "playURL";
 			playURL = JSONUtils::asString(requestBodyRoot, field, "");
@@ -5478,16 +5524,9 @@ void API::addSRTChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -5497,7 +5536,7 @@ void API::addSRTChannelConf(
 		try
 		{
 			int64_t confKey =
-				_mmsEngineDBFacade->addSRTChannelConf(workspace->_workspaceKey, label, srtURL, streamName, userName, password, playURL, type);
+				_mmsEngineDBFacade->addSRTChannelConf(workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 		}
@@ -5578,9 +5617,9 @@ void API::modifySRTChannelConf(
 	{
 		string label;
 		string srtURL;
-		string streamName;
-		string userName;
-		string password;
+		string mode;
+		string streamId;
+		string passphrase;
 		string playURL;
 		string type;
 
@@ -5616,7 +5655,7 @@ void API::modifySRTChannelConf(
 			}
 			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "streamName";
+			field = "mode";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
@@ -5628,9 +5667,9 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			streamName = JSONUtils::asString(requestBodyRoot, field, "");
+			mode = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "userName";
+			field = "streamId";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
@@ -5642,9 +5681,9 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			userName = JSONUtils::asString(requestBodyRoot, field, "");
+			streamId = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "password";
+			field = "passphrase";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
@@ -5656,7 +5695,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			password = JSONUtils::asString(requestBodyRoot, field, "");
+			passphrase = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "playURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5717,7 +5756,7 @@ void API::modifySRTChannelConf(
 			}
 			confKey = stoll(confKeyIt->second);
 
-			_mmsEngineDBFacade->modifySRTChannelConf(confKey, workspace->_workspaceKey, label, srtURL, streamName, userName, password, playURL, type);
+			_mmsEngineDBFacade->modifySRTChannelConf(confKey, workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 		}

@@ -211,44 +211,17 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// reserveCDN77Channel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
 					// associate a ingestionJobKey (senza exception)
-					auto [reservedLabel, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved] =
+					auto [reservedLabel, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, channelAlreadyReserved] =
 						_mmsEngineDBFacade->reserveCDN77Channel(
 							_encodingItem->_workspace->_workspaceKey, cdn77ChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
 
-					/*
-					int cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, "cdn77ExpirationInMinutes", 1440);
-
-					if (filePath.size() > 0 && filePath.front() != '/')
-						filePath = "/" + filePath;
-
-					string playURL;
-					if (secureToken != "")
-					{
-						try
-						{
-							playURL = MMSDeliveryAuthorization::getSignedCDN77URL(resourceURL, filePath, secureToken, cdn77ExpirationInMinutes * 60);
-						}
-						catch (exception &ex)
-						{
-							SPDLOG_ERROR(
-								"getSignedCDN77URL failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
-							);
-
-							// throw e;
-						}
-					}
-					else
-						playURL = "https://" + resourceURL + filePath;
-					*/
-
 					// update outputsRoot with the new details
 					{
-						outputRoot["rtmpUrl"] = rtmpURL;
-						// outputRoot["playUrl"] = playURL;
+						if (srtFeed)
+							outputRoot["srtUrl"] = srtURL;
+						else
+							outputRoot["rtmpUrl"] = rtmpURL;
 						outputsRoot[outputIndex] = outputRoot;
 						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
@@ -362,6 +335,87 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 							_mmsEngineDBFacade->updateOutputRtmp(
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, rtmpURL
 							);
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"updateEncodingJobParameters failed"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", e.what(): {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+							);
+
+							throw;
+						}
+					}
+				}
+				else if (outputType == "SRT_Channel")
+				{
+					// SrtUrl and PlayUrl fields have to be initialized
+
+					string srtChannelConfigurationLabel = JSONUtils::asString(outputRoot, "srtChannelConfigurationLabel", "");
+
+					// reserveSRTChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
+					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
+					// associate a ingestionJobKey (senza exception)
+					auto [reservedLabel, srtURL, mode, streamId, passphrase, playURL, channelAlreadyReserved] = _mmsEngineDBFacade->reserveSRTChannel(
+						_encodingItem->_workspace->_workspaceKey, srtChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
+					);
+
+					if (mode != "")
+					{
+						if (srtURL.find('?') == string::npos)
+							srtURL += "?";
+						else if (srtURL.back() != '?' && srtURL.back() != '&')
+							srtURL += "&";
+
+						srtURL += std::format("mode={}", mode);
+					}
+					if (streamId != "")
+					{
+						if (srtURL.find('?') == string::npos)
+							srtURL += "?";
+						else if (srtURL.back() != '?' && srtURL.back() != '&')
+							srtURL += "&";
+
+						srtURL += std::format("streamid={}", streamId);
+					}
+					if (passphrase != "")
+					{
+						if (srtURL.find('?') == string::npos)
+							srtURL += "?";
+						else if (srtURL.back() != '?' && srtURL.back() != '&')
+							srtURL += "&";
+
+						srtURL += std::format("passphrase={}", passphrase);
+					}
+
+					// update outputsRoot with the new details
+					{
+						outputRoot["srtUrl"] = srtURL;
+						// outputRoot["playUrl"] = playURL;
+						outputsRoot[outputIndex] = outputRoot;
+						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
+
+						try
+						{
+							SPDLOG_INFO(
+								"updateOutputSrtAndPlaURL"
+								", _proxyIdentifier: {}"
+								", workspaceKey: {}"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", srtChannelConfigurationLabel: {}"
+								", reservedLabel: {}"
+								", srtURL: {}"
+								", channelAlreadyReserved: {}"
+								", playURL: {}",
+								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
+								_encodingItem->_encodingJobKey, srtChannelConfigurationLabel, reservedLabel, srtURL, channelAlreadyReserved, playURL
+							);
+
+							_mmsEngineDBFacade->updateOutputSrt(_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, outputIndex, srtURL);
 						}
 						catch (exception &e)
 						{
@@ -541,6 +595,24 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						);
 					}
 				}
+				else if (outputType == "SRT_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseSRTChannel(_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey);
+					}
+					catch (...)
+					{
+						SPDLOG_ERROR(
+							"releaseSRTChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+					}
+				}
 				else if (outputType == "HLS_Channel")
 				{
 					try
@@ -624,6 +696,24 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					{
 						SPDLOG_ERROR(
 							"releaseRTMPChannel failed"
+							", _proxyIdentifier: {}"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}",
+							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						);
+					}
+				}
+				else if (outputType == "SRT_Channel")
+				{
+					try
+					{
+						// error in case do not find ingestionJobKey
+						_mmsEngineDBFacade->releaseSRTChannel(_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey);
+					}
+					catch (...)
+					{
+						SPDLOG_ERROR(
+							"releaseSRTChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}",
