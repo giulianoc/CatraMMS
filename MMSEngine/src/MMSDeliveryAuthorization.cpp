@@ -178,64 +178,12 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			time_t expirationTime = chrono::system_clock::to_time_t(chrono::system_clock::now());
 			expirationTime += ttlInSeconds;
 
-			/*
-			// deliverURI: /MMS_0000/2/.....
-			size_t beginURIIndex = deliveryURI.find("/", 1);
-			if (beginURIIndex == string::npos)
-			{
-				string errorMessage = string("wrong deliveryURI") + ", deliveryURI: " + deliveryURI;
-				error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string uriPath = deliveryURI.substr(beginURIIndex + 1);
-
-			if (mmsPartitionNumber >= _vodCloudFrontHostNamesRoot.size())
-			{
-				string errorMessage = string("no CloudFrontHostName available") + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
-									  ", _vodCloudFrontHostNamesRoot.size: " + to_string(_vodCloudFrontHostNamesRoot.size());
-				error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
-
-			AWSSigner awsSigner;
-			string signedPlayURL = awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationTime);
-			*/
 			AWSSigner awsSigner;
 			string signedPlayURL =
 				awsSigner.calculateSignedURL(_vodCloudFrontHostName, deliveryURI, _keyPairId, _privateKeyPEMPathName, expirationTime);
 
 			deliveryURL = signedPlayURL;
 		}
-		/*
-		else if (deliveryType == "AWSCloudFront")
-		{
-			// deliverURI: /MMS_0000/2/.....
-			size_t beginURIIndex = deliveryURI.find("/", 1);
-			if (beginURIIndex == string::npos)
-			{
-				string errorMessage = string("wrong deliveryURI") + ", deliveryURI: " + deliveryURI;
-				error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string uriPath = deliveryURI.substr(beginURIIndex);
-
-			if (mmsPartitionNumber >= _vodCloudFrontHostNamesRoot.size())
-			{
-				string errorMessage = string("no CloudFrontHostName available") + ", mmsPartitionNumber: " + to_string(mmsPartitionNumber) +
-									  ", _vodCloudFrontHostNamesRoot.size: " + to_string(_vodCloudFrontHostNamesRoot.size());
-				error(__FILEREF__ + errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string cloudFrontHostName = JSONUtils::asString(_vodCloudFrontHostNamesRoot[mmsPartitionNumber]);
-
-			deliveryURL = "https://" + cloudFrontHostName + uriPath;
-		}
-		*/
 		else if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
 				 deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 		{

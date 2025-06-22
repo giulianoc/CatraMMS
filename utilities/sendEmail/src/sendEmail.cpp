@@ -5,10 +5,12 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include <fstream>
 #include <iostream>
+#include <regex>
 
 using namespace std;
 
-json loadConfigurationFile(const char *configurationPathName);
+json loadConfigurationFile(string configurationPathName, string environmentPrefix);
+string applyEnvironmentToConfiguration(string configuration, string environmentPrefix);
 
 int main(int iArgc, char *pArgv[])
 {
@@ -20,7 +22,7 @@ int main(int iArgc, char *pArgv[])
 		return 1;
 	}
 
-	json configuration = loadConfigurationFile(pArgv[1]);
+	json configuration = loadConfigurationFile(pArgv[1], "MMS_");
 	string tosCommaSeparated = pArgv[2];
 	string subject = pArgv[3];
 	string bodyPathFileName = pArgv[4];
@@ -71,27 +73,67 @@ int main(int iArgc, char *pArgv[])
 	return 0;
 }
 
-json loadConfigurationFile(const char *configurationPathName)
+json loadConfigurationFile(string configurationPathName, string environmentPrefix)
 {
-	try
+
+#ifdef BOOTSERVICE_DEBUG_LOG
+	ofstream of("/tmp/bootservice.log", ofstream::app);
+	of << "loadConfigurationFile..." << endl;
+#endif
+
+	string sConfigurationFile;
 	{
 		ifstream configurationFile(configurationPathName, ifstream::binary);
-
-		return json::parse(
-			configurationFile,
-			nullptr, // callback
-			true,	 // allow exceptions
-			true	 // ignore_comments
-		);
+		stringstream buffer;
+		buffer << configurationFile.rdbuf();
+		if (environmentPrefix == "")
+			sConfigurationFile = buffer.str();
+		else
+			sConfigurationFile = applyEnvironmentToConfiguration(buffer.str(), environmentPrefix);
 	}
-	catch (...)
+
+	json configurationRoot = json::parse(
+		sConfigurationFile,
+		nullptr, // callback
+		true,	 // allow exceptions
+		true	 // ignore_comments
+	);
+
+	return configurationRoot;
+}
+
+string applyEnvironmentToConfiguration(string configuration, string environmentPrefix)
+{
+	char **s = environ;
+
+#ifdef BOOTSERVICE_DEBUG_LOG
+	ofstream of("/tmp/bootservice.log", ofstream::app);
+#endif
+
+	int envNumber = 0;
+	for (; *s; s++)
 	{
-		string errorMessage = fmt::format(
-			"wrong json configuration format"
-			", configurationPathName: {}",
-			configurationPathName
-		);
+		string envVariable = *s;
+#ifdef BOOTSERVICE_DEBUG_LOG
+//					of << "ENV " << *s << endl;
+#endif
+		if (envVariable.starts_with(environmentPrefix))
+		{
+			size_t endOfVarName = envVariable.find("=");
+			if (endOfVarName == string::npos)
+				continue;
 
-		throw runtime_error(errorMessage);
+			envNumber++;
+
+			// sarebbe \$\{ZORAC_SOLR_PWD\}
+			string envLabel = std::format("\\$\\{{{}\\}}", envVariable.substr(0, endOfVarName));
+			string envValue = envVariable.substr(endOfVarName + 1);
+#ifdef BOOTSERVICE_DEBUG_LOG
+			of << "ENV " << envLabel << ": " << envValue << endl;
+#endif
+			configuration = regex_replace(configuration, regex(envLabel), envValue);
+		}
 	}
+
+	return configuration;
 }

@@ -142,13 +142,13 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=encoder
 prodServers[$((serverIndex*6+5))]=10.0.1.2
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-encoder-4
-prodServers[$((serverIndex*6+1))]=23.88.12.229
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=encoder
-prodServers[$((serverIndex*6+5))]=10.0.1.9
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-encoder-4
+#prodServers[$((serverIndex*6+1))]=23.88.12.229
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=encoder
+#prodServers[$((serverIndex*6+5))]=10.0.1.9
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-encoder-6
@@ -157,6 +157,15 @@ prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=encoder
 prodServers[$((serverIndex*6+5))]=10.0.1.15
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=hetzner-encoder-7
+prodServers[$((serverIndex*6+1))]=188.40.73.231
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=encoder
+prodServers[$((serverIndex*6+5))]=10.0.1.21
+
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=aws-encoder-irl-1
@@ -169,6 +178,14 @@ prodServers[$((serverIndex*6+5))]=
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=aws-encoder-irl-2
 prodServers[$((serverIndex*6+1))]=ec2-34-242-128-224.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*6+2))]=aws-cibortv1-key-ireland
+prodServers[$((serverIndex*6+3))]=22
+prodServers[$((serverIndex*6+4))]=externalEncoder
+prodServers[$((serverIndex*6+5))]=
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=aws-encoder-irl-3
+prodServers[$((serverIndex*6+1))]=ec2-52-50-208-202.eu-west-1.compute.amazonaws.com
 prodServers[$((serverIndex*6+2))]=aws-cibortv1-key-ireland
 prodServers[$((serverIndex*6+3))]=22
 prodServers[$((serverIndex*6+4))]=externalEncoder

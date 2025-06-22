@@ -1576,6 +1576,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			// utile per MMSEngineDBFacade::retentionOfIngestionData
+			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx4 on MMS_IngestionRoot (workspaceKey, ingestionRootKey)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
 			// 2024-08-15: ho pensato di partizionare MMS_IngestionJob in base al campo status (partizione not_completed e completed)
 			// Il vantaggio sarebbe:
 			// 1. avere migliori performance in quanto la maggioranza delle query solo sul not_completed che sarebbe molto piccolo
@@ -1681,6 +1697,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		{
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx7 on MMS_IngestionJob (processingStartingFrom, "
+								  "scheduleStart_virtual, priority) WHERE processorMMS IS NULL AND toBeManaged_virtual";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
 		// 2024-01-14: usato poco
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx8 on MMS_IngestionJob (recordingCode_virtual)";
@@ -1763,7 +1795,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			// viene usato dalla select di getIngestionJobsStatus
-			string sqlStatement = "create index if not exists MMS_IngestionJob_idx13 on MMS_IngestionJob (ingestionType, configurationLabel_virtual)";
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx13 on MMS_IngestionJob (ingestionType, configurationLabel_virtual, "
+								  "ingestionRootKey, startProcessing, endProcessing)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

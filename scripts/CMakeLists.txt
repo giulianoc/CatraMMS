@@ -52,7 +52,7 @@ set(SCRIPTs
     loopServicesStatus.sh
     startRecorder.sh
     switchTranscoderInternalExternal.sh
-    backupStorageLoop.sh
+    backupStorage.sh
     cibortvStartChannelsManualLoop.sh
     cibortvStartChannelsAutoLoop.sh)
 
