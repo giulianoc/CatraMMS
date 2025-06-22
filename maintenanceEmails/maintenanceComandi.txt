@@ -1,5 +1,23 @@
-source /opt/catramms/CatraMMS/scripts/mmsEnv.sh
-#/opt/catramms/CatraMMS/bin/sendEmail ~/mms/conf/mms.cfg "giulianocatrambone@gmail.com" "Maintenance work transcoder server transcoder-2" /opt/catramms/CatraMMS/maintenanceEmails/maintenanceAnnuncio.html
+#loggarsi al server dev
+
+#creare il file di annuncio
+vi maintenanceEmails/maintenanceAnnuncio-202X-XX-XX.html
+#aggiungerlo in maintenanceEmails/CMakeLists.txt
+vi maintenanceEmails/CMakeLists.txt
+
+#copiarlo sui server produttivi
+./scripts/copyFileOnAllServers.sh prod maintenanceEmails/maintenanceAnnuncio-202X-XX-XX.html /opt/catramms/CatraMMS/maintenanceEmails/
+
+#loggarsi su un server produttivo, ad es. engine-1
+
+. /opt/catramms/CatraMMS/scripts/mmsEnv.sh
+. ~/mms/conf/mms-env.sh
+
+#inserire il subject corretto e mandare l'email al mio indirizzo per verificare che sia corretta
+/opt/catramms/CatraMMS/bin/sendEmail /opt/catramms/CatraMMS/conf/mms.cfg "giulianocatrambone@gmail.com" "Maintenance work transcoder server transcoder-2" /opt/catramms/CatraMMS/maintenanceEmails/maintenanceAnnuncio.html
+#ripetere il comando dopo aver inserito le email dei destinatari corretti
+
+
 
 #In caso di nuova email di maintenance, leggere l'email (files maintenanceAnnuncio e ...Completed) e sicuramente cambiare
 #- date di Start-Stop
