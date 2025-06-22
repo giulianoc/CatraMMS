@@ -86,6 +86,8 @@ set(DBCONN_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/DBConnectionsPool/s
 set(SAFEFILESYSTEM_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/SafeFileSystem/src")
 add_subdirectory(CatraLibraries/StringUtils/src)
 add_subdirectory(CatraLibraries/Encrypt/src)
+#add_subdirectory(CatraLibraries/Encrypt/examples/encrypt)
+#add_subdirectory(CatraLibraries/Encrypt/examples/decrypt)
 add_subdirectory(CatraLibraries/LdapWrapper/src)
 add_subdirectory(CatraLibraries/System/src)
 add_subdirectory(CatraLibraries/Convert/src)

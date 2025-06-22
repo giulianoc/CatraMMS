@@ -41,6 +41,7 @@ int main(int iArgc, char *pArgv[])
 
 		emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
 		emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
+		emailUserName = "support@catramms-cloud.com";
 
 		{
 			string encryptedPassword = JSONUtils::asString(configuration["EmailNotification"], "password", "");
