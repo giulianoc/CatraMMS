@@ -32,14 +32,16 @@ int main(int iArgc, char *pArgv[])
 	// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
 	// spdlog::register_logger(logger);
 
+	string emailProviderURL;
+	string emailUserName;
+	string emailPassword;
 	try
 	{
 		logger->info(__FILEREF__ + "Sending email to " + tosCommaSeparated);
 
-		string emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
-		string emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
+		emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
+		emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
 
-		string emailPassword;
 		{
 			string encryptedPassword = JSONUtils::asString(configuration["EmailNotification"], "password", "");
 			emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
@@ -65,7 +67,14 @@ int main(int iArgc, char *pArgv[])
 	}
 	catch (...)
 	{
-		logger->error(__FILEREF__ + "emailSender.sendEmail failed");
+		string errorMessage = std::format(
+			"emailSender.sendEmail failed"
+			", emailProviderURL: {}"
+			", emailUserName: {}"
+			", emailPassword: {}",
+			emailProviderURL, emailUserName, emailPassword
+		);
+		logger->error(__FILEREF__ + errorMessage);
 	}
 
 	logger->info(__FILEREF__ + "Shutdown done");
