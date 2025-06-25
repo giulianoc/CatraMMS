@@ -108,6 +108,7 @@ add_subdirectory(CatraLibraries/StatisticTimer/src)
 add_subdirectory(CatraLibraries/SafeFileSystem/src)
 
 add_subdirectory(API/src)
+add_subdirectory(FFMPEGEncoder/src)
 
 add_subdirectory(MMSEngine/src)
 add_subdirectory(MMSEngineService/src)

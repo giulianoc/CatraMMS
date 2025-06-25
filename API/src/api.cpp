@@ -186,11 +186,17 @@ int main(int argc, char **argv)
 	{
 		bool noFileSystemAccess = false;
 
+		// utilizzato nel caso di "external delivery", cioè un delivery distribuito come una CDN.
+		// In questo caso non bisogna accedere al database e tutte le richieste vengono autorizzate tramite controllo dell'autorization tramite path
+		bool noDatabaseAccess = false;
+
 		if (argc == 2)
 		{
 			string sAPIType = argv[1];
 			if (sAPIType == "NoFileSystem")
 				noFileSystemAccess = true;
+			else if (sAPIType == "NoDatabase")
+				noDatabaseAccess = true;
 		}
 
 		CurlWrapper::globalInitialize();
@@ -221,13 +227,21 @@ int main(int argc, char **argv)
 		// signal(SIGBUS, signalHandler);
 
 #ifdef __POSTGRES__
-		size_t masterDbPoolSize = JSONUtils::asInt(configuration["postgres"]["master"], "apiPoolSize", 5);
+		size_t masterDbPoolSize;
+		if (noDatabaseAccess)
+			masterDbPoolSize = 0;
+		else
+			masterDbPoolSize = JSONUtils::asInt(configuration["postgres"]["master"], "apiPoolSize", 5);
 		SPDLOG_INFO(
 			"Configuration item"
 			", postgres->master->apiPoolSize: {}",
 			masterDbPoolSize
 		);
-		size_t slaveDbPoolSize = JSONUtils::asInt(configuration["postgres"]["slave"], "apiPoolSize", 5);
+		size_t slaveDbPoolSize;
+		if (noDatabaseAccess)
+			slaveDbPoolSize = 0;
+		else
+			slaveDbPoolSize = JSONUtils::asInt(configuration["postgres"]["slave"], "apiPoolSize", 5);
 		SPDLOG_INFO(
 			"Configuration item"
 			", postgres->slave->apiPoolSize: {}",

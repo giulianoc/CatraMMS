@@ -110,13 +110,13 @@ prodServers[$((serverIndex*6+4))]=storage
 prodServers[$((serverIndex*6+5))]=10.0.1.16
 
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-encoder-1
-prodServers[$((serverIndex*6+1))]=144.76.24.221
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=encoder
-prodServers[$((serverIndex*6+5))]=10.0.1.18
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-encoder-1
+#prodServers[$((serverIndex*6+1))]=144.76.24.221
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=encoder
+#prodServers[$((serverIndex*6+5))]=10.0.1.18
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-encoder-2
@@ -126,21 +126,21 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=encoder
 prodServers[$((serverIndex*6+5))]=10.0.1.19
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-encoder-5
-prodServers[$((serverIndex*6+1))]=88.99.99.241
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=encoder
-prodServers[$((serverIndex*6+5))]=10.0.1.20
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-encoder-5
+#prodServers[$((serverIndex*6+1))]=88.99.99.241
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=encoder
+#prodServers[$((serverIndex*6+5))]=10.0.1.20
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-encoder-3
-prodServers[$((serverIndex*6+1))]=23.88.12.230
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=encoder
-prodServers[$((serverIndex*6+5))]=10.0.1.2
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-encoder-3
+#prodServers[$((serverIndex*6+1))]=23.88.12.230
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=encoder
+#prodServers[$((serverIndex*6+5))]=10.0.1.2
 
 #serverIndex=$((serverIndex+1))
 #prodServers[$((serverIndex*6+0))]=hetzner-encoder-4
@@ -150,13 +150,13 @@ prodServers[$((serverIndex*6+5))]=10.0.1.2
 #prodServers[$((serverIndex*6+4))]=encoder
 #prodServers[$((serverIndex*6+5))]=10.0.1.9
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-encoder-6
-prodServers[$((serverIndex*6+1))]=23.88.13.17
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=encoder
-prodServers[$((serverIndex*6+5))]=10.0.1.15
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-encoder-6
+#prodServers[$((serverIndex*6+1))]=23.88.13.17
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=encoder
+#prodServers[$((serverIndex*6+5))]=10.0.1.15
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-encoder-7

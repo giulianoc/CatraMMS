@@ -19,9 +19,7 @@
 
 add_definitions(-DNO_FCGI_DEFINES)
 
-# set(COMMON_SOURCES APICommon.cpp)
-
-set(SOURCES_API
+set(SOURCES
     api.cpp
     API.cpp
     API_DeliveryAuthorization.cpp
@@ -35,51 +33,8 @@ set(SOURCES_API
     API_EncodersPool.cpp
     API_Statistic.cpp)
 
-# SET (SOURCES_UPLOADBINARY UploadBinary.cpp )
-
-set(SOURCES_FFMPEGENCODER
-    ffmpegEncoder.cpp
-    FFMPEGEncoder.cpp
-    FFMPEGEncoderDaemons.cpp
-    FFMPEGEncoderBase.cpp
-    FFMPEGEncoderTask.cpp
-    EncodeContent.cpp
-    OverlayImageOnVideo.cpp
-    OverlayTextOnVideo.cpp
-    GenerateFrames.cpp
-    SlideShow.cpp
-    VideoSpeed.cpp
-    AddSilentAudio.cpp
-    PictureInPicture.cpp
-    IntroOutroOverlay.cpp
-    CutFrameAccurate.cpp
-    LiveRecorder.cpp
-    LiveRecorderDaemons.cpp
-    LiveProxy.cpp
-    LiveGrid.cpp)
-
 set(HEADERS
-    AddSilentAudio.h
-    FFMPEGEncoderBase.h
-    IntroOutroOverlay.h
-    OverlayImageOnVideo.h
-    VideoSpeed.h
-    # APICommon.h
-    FFMPEGEncoderDaemons.h
-    LiveGrid.h
-    OverlayTextOnVideo.h
-    API.h
-    FFMPEGEncoder.h
-    LiveProxy.h
-    PictureInPicture.h
-    CutFrameAccurate.h
-    FFMPEGEncoderTask.h
-    LiveRecorderDaemons.h
-    SlideShow.h
-    EncodeContent.h
-    GenerateFrames.h
-    LiveRecorder.h
-    UploadBinaryNotUsed.h)
+    API.h)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(
@@ -125,7 +80,7 @@ link_directories("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 # link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 
-add_executable(api.fcgi ${SOURCES_API} ${HEADERS})
+add_executable(api.fcgi ${SOURCES} ${HEADERS})
 
 target_link_libraries(api.fcgi StringUtils)
 target_link_libraries(api.fcgi Encrypt)
@@ -194,90 +149,6 @@ target_link_libraries(api.fcgi avformat)
 target_link_libraries(api.fcgi avutil)
 target_link_libraries(api.fcgi swscale)
 target_link_libraries(api.fcgi swresample)
-list(APPEND TARGETS api.fcgi)
+#list(APPEND TARGETS api.fcgi)
 
-# UploadBinary add_executable(uploadBinary.cgi ${SOURCES_UPLOADBINARY}
-# ${COMMON_SOURCES} ${HEADERS}) target_link_libraries (uploadBinary.cgi
-# MMSEngine) target_link_libraries (uploadBinary.cgi FFMpeg)
-# target_link_libraries (uploadBinary.cgi mysqlcppconn) target_link_libraries
-# (uploadBinary.cgi jsoncpp) if (APPLE) else() target_link_libraries
-# (uploadBinary.cgi Magick++-7.Q16HDRI) endif()
-# #target_link_libraries(uploadBinary.cgi fcgi++)
-# target_link_libraries(uploadBinary.cgi curl)
-# target_link_libraries(uploadBinary.cgi fcgi) target_link_libraries
-# (uploadBinary.cgi Tools) target_link_libraries (uploadBinary.cgi ErrMsg)
-# if(CRYPTO_FOUND) if (APPLE) target_link_libraries (uploadBinary.cgi
-# ${CRYPTO_LIBRARIES}) else() target_link_libraries (uploadBinary.cgi crypt)
-# endif() endif() if (ZLIB_FOUND) target_link_libraries(uploadBinary.cgi
-# ${ZLIB_LIBRARIES}) endif() target_link_libraries (uploadBinary.cgi pthread)
-# list(APPEND TARGETS uploadBinary.cgi)
-
-# FFMPEGEncoder add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER}
-# ${COMMON_SOURCES} ${HEADERS})
-add_executable(ffmpegEncoder.fcgi ${SOURCES_FFMPEGENCODER} ${HEADERS})
-target_link_libraries(ffmpegEncoder.fcgi StringUtils)
-target_link_libraries(ffmpegEncoder.fcgi Encrypt)
-target_link_libraries(ffmpegEncoder.fcgi System)
-target_link_libraries(ffmpegEncoder.fcgi GetCpuUsage)
-target_link_libraries(ffmpegEncoder.fcgi Datetime)
-target_link_libraries(ffmpegEncoder.fcgi FastCGIAPI)
-target_link_libraries(ffmpegEncoder.fcgi MMSEngine)
-target_link_libraries(ffmpegEncoder.fcgi PostgresHelper)
-target_link_libraries(ffmpegEncoder.fcgi SafeFileSystem)
-target_link_libraries(ffmpegEncoder.fcgi ProcessUtility)
-target_link_libraries(ffmpegEncoder.fcgi CurlWrapper)
-target_link_libraries(ffmpegEncoder.fcgi JSONUtils)
-target_link_libraries(ffmpegEncoder.fcgi FFMpegWrapper)
-target_link_libraries(ffmpegEncoder.fcgi mysqlcppconn)
-target_link_libraries(ffmpegEncoder.fcgi pqxx)
-target_link_libraries(ffmpegEncoder.fcgi pq)
-if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
-  target_link_libraries(ffmpegEncoder.fcgi jsoncpp)
-elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
-  # target_link_libraries (ffmpegEncoder.fcgi
-  # ${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib/libjsoncpp.a)
-  target_link_libraries(ffmpegEncoder.fcgi aom)
-  target_link_libraries(ffmpegEncoder.fcgi opencore-amrwb)
-  target_link_libraries(ffmpegEncoder.fcgi opencore-amrnb)
-  target_link_libraries(ffmpegEncoder.fcgi mp3lame)
-  target_link_libraries(ffmpegEncoder.fcgi xvidcore)
-  target_link_libraries(ffmpegEncoder.fcgi fdk-aac)
-  target_link_libraries(ffmpegEncoder.fcgi x264)
-  target_link_libraries(ffmpegEncoder.fcgi x265)
-  target_link_libraries(ffmpegEncoder.fcgi srt)
-endif()
-if(APPLE)
-
-else()
-  target_link_libraries(ffmpegEncoder.fcgi Magick++-7.Q16HDRI)
-endif()
-target_link_libraries(ffmpegEncoder.fcgi curl)
-target_link_libraries(ffmpegEncoder.fcgi fcgi)
-target_link_libraries(ffmpegEncoder.fcgi MultiEventsSet)
-if(CRYPTO_FOUND)
-  if(APPLE)
-    target_link_libraries(ffmpegEncoder.fcgi ${CRYPTO_LIBRARIES})
-  else()
-    target_link_libraries(ffmpegEncoder.fcgi crypt)
-  endif()
-endif()
-if(ZLIB_FOUND)
-  target_link_libraries(ffmpegEncoder.fcgi ${ZLIB_LIBRARIES})
-endif()
-target_link_libraries(ffmpegEncoder.fcgi pthread)
-target_link_libraries(ffmpegEncoder.fcgi opencv_core)
-target_link_libraries(ffmpegEncoder.fcgi opencv_imgcodecs)
-target_link_libraries(ffmpegEncoder.fcgi opencv_imgproc)
-target_link_libraries(ffmpegEncoder.fcgi opencv_videoio)
-target_link_libraries(ffmpegEncoder.fcgi opencv_video)
-target_link_libraries(ffmpegEncoder.fcgi opencv_videostab)
-target_link_libraries(ffmpegEncoder.fcgi opencv_objdetect)
-target_link_libraries(ffmpegEncoder.fcgi opencv_face)
-target_link_libraries(ffmpegEncoder.fcgi avcodec)
-target_link_libraries(ffmpegEncoder.fcgi avformat)
-target_link_libraries(ffmpegEncoder.fcgi avutil)
-target_link_libraries(ffmpegEncoder.fcgi swscale)
-target_link_libraries(ffmpegEncoder.fcgi swresample)
-list(APPEND TARGETS ffmpegEncoder.fcgi)
-
-install(TARGETS api.fcgi ffmpegEncoder.fcgi DESTINATION bin/cgi)
+install(TARGETS api.fcgi DESTINATION bin/cgi)
