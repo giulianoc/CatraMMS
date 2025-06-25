@@ -189,11 +189,16 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
 	_lastConnectionStatsReport = chrono::system_clock::now();
 
-	_logger->info(__FILEREF__ + "createTablesIfNeeded...");
-	createTablesIfNeeded();
+	if (masterDbPoolSize > 0)
+	{
+		_logger->info(__FILEREF__ + "createTablesIfNeeded...");
+		createTablesIfNeeded();
 
-	_logger->info(__FILEREF__ + "loadSqlColumnsSchema...");
-	loadSqlColumnsSchema();
+		_logger->info(__FILEREF__ + "loadSqlColumnsSchema...");
+		loadSqlColumnsSchema();
+	}
+	else
+		_logger->warn(__FILEREF__ + "createTablesIfNeeded not done because no master connections");
 }
 
 MMSEngineDBFacade::~MMSEngineDBFacade() {}
