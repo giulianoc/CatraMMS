@@ -262,7 +262,7 @@ int main(int argc, char **argv)
 			", noFileSystemAccess: {}",
 			noFileSystemAccess
 		);
-		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, mmsEngineDBFacade, configuration, logger);
+		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configuration, logger);
 
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
 			make_shared<MMSDeliveryAuthorization>(configuration, mmsStorage, mmsEngineDBFacade);

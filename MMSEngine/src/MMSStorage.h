@@ -27,7 +27,10 @@ class MMSStorage
 	};
 
   public:
-	MMSStorage(bool noFileSystemAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration, shared_ptr<spdlog::logger> logger);
+	MMSStorage(
+		bool noFileSystemAccess, bool noDatabaseAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration,
+		shared_ptr<spdlog::logger> logger
+	);
 
 	~MMSStorage(void);
 

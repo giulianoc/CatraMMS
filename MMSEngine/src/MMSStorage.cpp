@@ -11,7 +11,8 @@
 #include <fstream>
 
 MMSStorage::MMSStorage(
-	bool noFileSystemAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration, shared_ptr<spdlog::logger> logger
+	bool noFileSystemAccess, bool noDatabaseAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration,
+	shared_ptr<spdlog::logger> logger
 )
 {
 
@@ -45,7 +46,7 @@ MMSStorage::MMSStorage(
 			_freeSpaceToLeaveInEachPartitionInMB
 		);
 
-		if (!_noFileSystemAccess)
+		if (!noDatabaseAccess && !_noFileSystemAccess)
 			refreshPartitionsFreeSizes();
 	}
 	catch (exception &e)
@@ -1472,11 +1473,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				this_thread::sleep_for(chrono::milliseconds(_waitingNFSSync_maxMillisecondsToWait));
 
 #ifdef SAFEFILESYSTEMTHREAD
-			ullFSEntrySizeInBytes = SafeFileSystem::fileSizeThread(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+				ullFSEntrySizeInBytes =
+					SafeFileSystem::fileSizeThread(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
 #elif SAFEFILESYSTEMPROCESS
-			ullFSEntrySizeInBytes = SafeFileSystem::fileSizeProcess(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+				ullFSEntrySizeInBytes =
+					SafeFileSystem::fileSizeProcess(sourceAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
 #else
-			ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
+				ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
 #endif
 
 				SPDLOG_INFO(
@@ -1515,9 +1518,11 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			);
 
 #ifdef SAFEFILESYSTEMTHREAD
-			uintmax_t destFileSizeInBytes = SafeFileSystem::fileSizeThread(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+			uintmax_t destFileSizeInBytes =
+				SafeFileSystem::fileSizeThread(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
 #elif SAFEFILESYSTEMPROCESS
-			uintmax_t destFileSizeInBytes = SafeFileSystem::fileSizeProcess(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+			uintmax_t destFileSizeInBytes =
+				SafeFileSystem::fileSizeProcess(mmsAssetPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
 #else
 			uintmax_t destFileSizeInBytes = fs::file_size(mmsAssetPathName);
 #endif
@@ -1978,11 +1983,13 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		}
 
 #ifdef SAFEFILESYSTEMTHREAD
-			uintmax_t tarBinaryPathNameSize = SafeFileSystem::fileSizeThread(tarBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+		uintmax_t tarBinaryPathNameSize =
+			SafeFileSystem::fileSizeThread(tarBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
 #elif SAFEFILESYSTEMPROCESS
-			uintmax_t tarBinaryPathNameSize = SafeFileSystem::fileSizeProcess(tarBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
+		uintmax_t tarBinaryPathNameSize =
+			SafeFileSystem::fileSizeProcess(tarBinaryPathName, 10, std::format(", ingestionJobKey: {}", ingestionJobKey));
 #else
-			uintmax_t tarBinaryPathNameSize = fs::file_size(tarBinaryPathName);
+		uintmax_t tarBinaryPathNameSize = fs::file_size(tarBinaryPathName);
 #endif
 		SPDLOG_INFO(
 			"Received manageTarFileInCaseOfIngestionOfSegments"
@@ -1991,8 +1998,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			", tarBinary size: {}"
 			", workspaceIngestionRepository: {}"
 			", sourcePathName: {}",
-			ingestionJobKey, tarBinaryPathName, tarBinaryPathNameSize, workspaceIngestionRepository,
-			sourcePathName
+			ingestionJobKey, tarBinaryPathName, tarBinaryPathNameSize, workspaceIngestionRepository, sourcePathName
 		);
 
 		// non possiamo eseguire il tar contenente la directory content direttamente
