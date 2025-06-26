@@ -1683,6 +1683,21 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx1 on MMS_IngestionJob (scheduleStart_virtual) WHERE processorMMS "
+								  "IS NULL AND toBeManaged_virtual";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -2517,8 +2532,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement =
-				"create index if not exists MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, encodingPriority)";
+			string sqlStatement = "create index if not exists MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, "
+								  "encodingPriority DESC, creationDate, failuresNumber) WHERE processorMMS IS NULL AND status = 'ToBeProcessed'";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
