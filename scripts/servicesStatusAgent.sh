@@ -145,6 +145,11 @@ do
 
 			;;
 		"externalDelivery")
+			echo "" >> $debugFilename
+			serviceName=externalDelivery
+			healthCheckURL=$2/status?should_bypass_cache=true
+			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
+
 			#echo "" >> $debugFilename
 			#mount_error
 
