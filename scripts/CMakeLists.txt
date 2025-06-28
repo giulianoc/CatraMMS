@@ -20,6 +20,7 @@
 set(SCRIPTs
     mmsApi.sh
     mmsDelivery.sh
+    mmsExternalDelivery.sh
     mmsEncoder.sh
     mmsEnv.sh
     mmsEngineService.sh

@@ -144,6 +144,23 @@ do
 			nginx_error delivery-path
 
 			;;
+		"externalDelivery")
+			#echo "" >> $debugFilename
+			#mount_error
+
+			#echo "" >> $debugFilename
+			#nginx_error binary
+
+			echo "" >> $debugFilename
+			nginx_error delivery
+
+			echo "" >> $debugFilename
+			nginx_error delivery-f
+
+			echo "" >> $debugFilename
+			nginx_error delivery-path
+
+			;;
 		"encoder" | "externalEncoder")
 			if [ "$1" = "encoder" ]
 			then

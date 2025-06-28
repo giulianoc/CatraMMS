@@ -4,6 +4,14 @@
 
 	root /var/catramms/storage/MMSRepository/;
 
+	#nel caso di un externalDelivery abbiamo solo il servizion nginx di delivery-path running, non abbiamo il servizio di api
+	#Viene aggiunto quindi l'api status solo per verificare che l'agent sia up and running
+	location /catramms {
+		if ($request_method = GET) {
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
+		}
+	}
+
 	#https://www.keycdn.com/support/nginx-location-directive
 	#match qualunque URL o URI che inizia con /healthy.txt
 	location /healthy.txt {

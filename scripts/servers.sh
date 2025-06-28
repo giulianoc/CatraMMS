@@ -78,6 +78,14 @@ prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=10.0.1.14
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-delivery-1
+prodServers[$((serverIndex*6+1))]=194.42.206.8
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=194.42.206.8
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-engine-db-1
 prodServers[$((serverIndex*6+1))]=167.235.10.244
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
@@ -92,14 +100,6 @@ prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=engine
 prodServers[$((serverIndex*6+5))]=10.0.1.6
-
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-engine-db-5
-prodServers[$((serverIndex*6+1))]=5.9.81.10
-prodServers[$((serverIndex*6+2))]=hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=engine
-prodServers[$((serverIndex*6+5))]=10.0.1.5
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-storage-1

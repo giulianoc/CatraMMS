@@ -13,6 +13,8 @@ ssh-port()
 
 mms-account-creation()
 {
+	moduleType=$1
+
 	read -n 1 -s -r -p "mms account creation..."
 	echo ""
 
@@ -45,6 +47,14 @@ mms-account-creation()
 	echo "altrimenti ci saranno problemi di scrittura dei file in quanto i mount autorizzano l'id 1000,"
 	echo "forziamo l'id ad essere 1000 con il comando usermod"
 	usermod -u 1000 mms
+
+	if [ "$moduleType" == "externalDelivery" ]; then
+		#nel caso di externalDelivery, nginx deve partire come root (in mmsStart abbiamo sudo ./nginx.sh start)
+		#perchè ascolta sulla porta 443. Per cui aggiungiamo mms tra i sudoers
+
+		echo "mms ALL=(ALL) NOPASSWD: /home/mms/nginx.sh start, /home/mms/nginx.sh stop" > "/etc/sudoers.d/mms-nginx-commands"
+		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
+	fi
 }
 
 time-zone()
@@ -471,6 +481,10 @@ create-directory()
 			create-directory-delivery
 
 			;;
+		"externalDelivery")
+			create-directory-externalDelivery
+
+			;;
 		"api-and-delivery")
 			create-directory-delivery
 
@@ -573,6 +587,9 @@ create-directory-delivery()
 	#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
 	mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
 
+	#aggiunta a seguito di externalDelivery
+	mkdir -p /var/catramms/storage/nginxWorkingAreaRepository
+
 	mkdir -p /var/catramms/storage/MMSRepository
 	if [ ! -e /home/mms/storage ]; then
 		ln -s /var/catramms/storage /home/mms
@@ -614,6 +631,53 @@ create-directory-delivery()
 
 	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
 		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	fi
+
+	if [ ! -e /home/mms/logs ]; then
+		ln -s /var/catramms/logs /home/mms
+	fi
+}
+
+create-directory-externalDelivery()
+{
+	mkdir -p /opt/catramms
+	chown -R mms:mms /opt/catramms
+
+	mkdir -p /var/catramms
+	mkdir -p /var/catramms/pids
+	chown -R mms:mms /var/catramms
+
+	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree), press a key once done"
+	echo ""
+
+	mkdir -p /var/catramms/storage/nginxWorkingAreaRepository
+
+	mkdir -p /var/catramms/storage/MMSRepository
+	if [ ! -e /home/mms/storage ]; then
+		ln -s /var/catramms/storage /home/mms
+	fi
+
+	mkdir -p /mnt/local-data/logs/mmsAPI
+	mkdir -p /mnt/local-data/logs/nginx
+	mkdir -p /mnt/local-data/cache/nginx
+	if [ ! -e /var/catramms/logs ]; then
+		ln -s /mnt/local-data/logs /var/catramms
+	fi
+	if [ ! -e /var/catramms/cache ]; then
+		ln -s /mnt/local-data/cache /var/catramms/cache
+	fi
+	chown -R mms:mms /mnt/local-data/logs
+	chown -R mms:mms /mnt/local-data/cache
+
+	if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
+		ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+	fi
+	if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
+		ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+	fi
+
+	if [ ! -e /var/catramms/storage/MMSRepository-free ]; then
+		ln -s /mnt/mmsStorage-1/MMSRepositoryFree /var/catramms/storage/MMSRepository-free
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
@@ -895,7 +959,7 @@ install-mms-packages()
 			install-mms-ImageMagick-package $architecture
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
 			install-mms-CatraMMS-package $architecture
@@ -917,7 +981,7 @@ install-mms-packages()
 			install-mms-ImageMagick-package $architecture
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
 			install-mms-CatraMMS-package $architecture
@@ -928,7 +992,7 @@ install-mms-packages()
 			install-mms-ImageMagick-package $architecture
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-tomcat-package $architecture
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
@@ -936,11 +1000,22 @@ install-mms-packages()
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-delivery-conf $architecture
 			;;
+		"externalDelivery")
+			install-mms-ImageMagick-package $architecture
+			install-mms-FFMpeg-package $architecture
+			install-mms-libpqxx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
+			install-mms-opencv-package $architecture
+			install-mms-youtube-dl-package $architecture
+			install-mms-CatraMMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-externalDelivery-conf $architecture
+			;;
 		"api-and-delivery")
 			install-mms-ImageMagick-package $architecture
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-tomcat-package $architecture
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
@@ -952,7 +1027,7 @@ install-mms-packages()
 			install-mms-ImageMagick-package $architecture
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
 			install-mms-CatraMMS-package $architecture
@@ -963,7 +1038,7 @@ install-mms-packages()
 			install-mms-ImageMagick-package $architecture
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
 			install-mms-CatraMMS-package $architecture
@@ -972,7 +1047,7 @@ install-mms-packages()
 			;;
 		"integration")
 			install-mms-FFMpeg-package $architecture
-			install-mms-nginx-package $architecture
+			install-mms-nginx-package $architecture $moduleType
 			install-mms-CatraMMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-integration-conf $architecture
@@ -1005,6 +1080,9 @@ install-mms-packages()
 	fi
 	if [ ! -e /home/mms/mmsDelivery.sh ]; then
 		ln -s /opt/catramms/CatraMMS/scripts/mmsDelivery.sh /home/mms
+	fi
+	if [ ! -e /home/mms/mmsExternalDelivery.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/mmsExternalDelivery.sh /home/mms
 	fi
 
 	if [ ! -e /home/mms/mmsEngineService.sh ]; then
@@ -1096,6 +1174,20 @@ install-mms-delivery-conf()
 	architecture=$1
 
 	packageName=deliveryMmsConf
+	echo ""
+	package=$packageName
+	echo "Downloading $package..."
+	curl -o ~/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ~/$package.tar.gz -C ~mms
+
+	chown -R mms:mms ~mms/mms
+}
+
+install-mms-externalDelivery-conf()
+{
+	architecture=$1
+
+	packageName=externalDeliveryMmsConf
 	echo ""
 	package=$packageName
 	echo "Downloading $package..."
@@ -1284,6 +1376,7 @@ install-mms-tomcat-package()
 install-mms-nginx-package()
 {
 	architecture=$1
+	moduleType=$2
 
 	packageName=nginx
 	echo ""
@@ -1323,6 +1416,24 @@ install-mms-nginx-package()
 	echo "fs.file-max = 70000" >> /etc/sysctl.conf                                                            
 	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
 	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
+
+	if [ "$moduleType" == "externalDelivery" ]; then
+		#serve certbot per la configurazione del certificato)
+		apt install -y certbot python3-certbot-nginx
+	
+		echo "creeremo un certificato il cui dominio sarà validato tramite un record TXT che dovremo configurare nel DNS."
+		echo "Dopo aver fatto la configurazione DNS aspettare qualche minuto che si sia propagato"
+		echo "Se vuoi verificare che il record sia visibile, il comando, dopo aver corretto il nome dell'hostname, è:"
+		echo "dig TXT _acme-challenge.srv-1.cibortv.tv +short"
+		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
+		certbot certonly --manual --preferred-challenges dns -d srv-1.cibortv.tv
+
+		#inoltre blocchiamo (ritorno 444 che chiude la connessione senza inviare nessuna risposta) tutte le richieste HTTPS con Host sbagliato (tipo xj5zr.usdsh.com)
+		#Per questo motivo bisogna generare i files invalid.crt e invalid.key utilizzati in catramms.nginx
+		openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  		-keyout /etc/ssl/invalid.key -out /etc/ssl/invalid.crt \
+  		-subj "/CN=invalid.local"
+	fi
 }
 
 install-mms-libpqxx-package()
@@ -1474,6 +1585,11 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8091		#mms-delivery
 		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
 		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
+	elif [ "$moduleType" == "externalDelivery" ]; then
+		#HTTP Per ora commentato perchè le richieste saranno su https. Se si abilitasse HTTP
+		#dovremmo aggiungere la relativa sezione su catramms.nginx che dovrebbe redirigere o autorizzare la richiesta
+		#ufw allow 80 		#HTTP Per ora commentato perchè le richieste saranno su https
+		ufw allow 443 	#HTTPS/SSL
 	elif [ "$moduleType" == "api-and-delivery" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
@@ -1572,7 +1688,7 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or externalDelivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
 
 	exit
 fi
@@ -1617,7 +1733,7 @@ echo ""
 if [ "$moduleType" != "integration" ]; then
 	ssh-port
 fi
-mms-account-creation
+mms-account-creation $moduleType
 time-zone
 install-packages $moduleType
 
