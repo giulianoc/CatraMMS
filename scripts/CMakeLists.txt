@@ -17,6 +17,7 @@
 # Commercial use other than under the terms of the GNU General Public License is
 # allowed only after express negotiation of conditions with the authors.
 
+#servers.sh non è stato inserito perchè non deve essere deployed nei server di pre e prod
 set(SCRIPTs
     mmsApi.sh
     mmsDelivery.sh

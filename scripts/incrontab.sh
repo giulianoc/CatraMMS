@@ -1,16 +1,16 @@
 #!/bin/bash
 
-debug=0
+debug=1
 #2021-01-08: it has to be a path in home user otherwise incron does not run the script
 debugFileName=/home/mms/incrontab.log
 
-if [ ! -f "$debugFilename" ]; then
-	echo "" > $debugFilename
+if [ ! -f "$debugFileName" ]; then
+	echo "" > $debugFileName
 else
-	filesize=$(stat -c %s $debugFilename)
+	filesize=$(stat -c %s $debugFileName)
 	if [ $filesize -gt 10000000 ]
 	then    
-		echo "" > $debugFilename
+		echo "" > $debugFileName
 	fi              
 fi
 
@@ -29,7 +29,10 @@ channelDirectory=$2
 fileName=$3
 
 
-storageServer=mms-api-2.catramms-cloud.com
+MAX_PARALLEL=5											  	# Max sincronizzazioni in parallelo
+BW_LIMIT=5000  											  	# Banda limite per ogni rsync (KB/s), opzionale
+storageServer=116.202.53.105 						# mms-delivery-binary-gui-2
+externalDeliveryServers=194.42.206.8 		# srv-1.cibortv.tv
 
 
 #Example of events using debug:
@@ -45,29 +48,63 @@ storageServer=mms-api-2.catramms-cloud.com
 
 if [ $debug -eq 1 ]
 then
-	date >> $debugFileName
-	whoami >> $debugFileName
+	#date >> $debugFileName
+	#whoami >> $debugFileName
+
+	echo "$(date): $eventName --> $fileName ($channelDirectory)" >> $debugFileName
 
 	if [[ "$fileName" == *.tmp ]]
 	then
-		echo "temporary file: $eventName --> $fileName" >> $debugFileName
-		echo "" >> $debugFileName
+		#echo "$(date): temporary file: $eventName --> $fileName" >> $debugFileName
+		#echo "" >> $debugFileName
 
 		exit 0
 	fi
-
-	echo "$eventName --> $fileName ($channelDirectory)" >> $debugFileName
 fi
 
+#Abbiamo:
+#IN_MOVED_TO per i file .m3u8
+#IN_MODIFY per i files .ts e .m3u8.tmp
+#IN_DELETE per i file .ts
+#IN_MOVED_FROM per i files .m3u8.tmp
+#IN_CREATE per i files .m3u8.tmp e .ts
 #we synchronize when .m3u8 is changed
 if [ $eventName == "IN_MOVED_TO" ]
 then
 	if [ $debug -eq 1 ]
 	then
-		echo "rsync -az -e \"ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no\" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory)" >> $debugFileName
-		rsync -az -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory) >> $debugFileName 2>&1 
+		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
+		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
+		export channelDirectory BW_LIMIT debugFileName
+		parallel --env channelDirectory --env BW_LIMIT --env debugFileName --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+			'{
+					echo "$(date) ({}): Inizio sincronizzazione...$(dirname $channelDirectory)";
+					rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+						--delete --partial --progress --archive --verbose --omit-dir-times --timeout=60 --inplace --bwlimit=$BW_LIMIT \
+						$channelDirectory mms@{}:$(dirname $channelDirectory)
+					status=$?
+					if [[ $status -eq 0 ]]; then
+						echo "$(date) ({}): COMPLETATO" >> $debugFileName
+					else
+						echo "$(date) ({}): ERRORE: rsync exited with status $status" >> $debugFileName
+					fi
+				} >> $debugFileName 2>&1' \
+				::: $storageServer $externalDeliveryServers
 	else
-		rsync -az -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" --delete --partial --progress --archive --verbose --compress --omit-dir-times $channelDirectory mms@$storageServer:$(dirname $channelDirectory) > /dev/null
+		export channelDirectory BW_LIMIT debugFileName
+		parallel --env channelDirectory --env BW_LIMIT --env debugFileName --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+			'{
+					rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+						--delete --partial --progress --archive --verbose --omit-dir-times --timeout=60 --inplace --bwlimit=$BW_LIMIT \
+						$channelDirectory mms@{}:$(dirname $channelDirectory)
+					status=$?
+					if [[ $status -eq 0 ]]; then
+						#echo "$(date) ({}): COMPLETATO" >> $debugFileName
+					else
+						echo "$(date) ({}): ERRORE: rsync exited with status $status" >> $debugFileName
+					fi
+				} >> $debugFileName 2>&1' \
+				::: $storageServer $externalDeliveryServers
 	fi
 fi
 
