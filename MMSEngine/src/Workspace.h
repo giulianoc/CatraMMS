@@ -15,7 +15,8 @@ struct Workspace
 	string _name;
 	string _directoryName;
 	int _maxEncodingPriority;
-	string _notes;
+	string _anotes;
+	string _externalDeliveries;
 
 	unsigned long _maxStorageInGB;
 	unsigned long _currentCostForStorage;

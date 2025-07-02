@@ -32,7 +32,8 @@ class MMSDeliveryAuthorization
 	pair<string, string> createDeliveryAuthorization(
 		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP, int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey,
 		string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode, int ttlInSeconds, int maxRetries,
-		bool playerIPToBeAuthorized, bool save, string deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
+		bool playerIPToBeAuthorized, string playerCountry, bool save, string deliveryType, bool warningIfMissingMediaItemKey,
+		bool filteredByStatistic, string userId
 	);
 
 	string checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
@@ -55,6 +56,9 @@ class MMSDeliveryAuthorization
 	shared_ptr<MMSStorage> _mmsStorage;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
+	mutex _nextExternalDeliveriesMutex;
+	int _externalDeliveriesHLSLiveIndex;
+
 	string _keyPairId;
 	string _privateKeyPEMPathName;
 	string _vodCloudFrontHostName;			   // token as parameter
@@ -67,5 +71,7 @@ class MMSDeliveryAuthorization
 
 	string getSignedMMSPath(string contentURI, time_t expirationTime);
 	time_t getReusableExpirationTime(int ttlInSeconds);
+	string getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string country, string defaultDeliveryHost);
+	int nextExternalDeliveriesHLSLiveIndex();
 };
 #endif

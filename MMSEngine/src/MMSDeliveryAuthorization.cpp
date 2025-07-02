@@ -102,7 +102,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 	int64_t ingestionJobKey, int64_t deliveryCode,
 
-	int ttlInSeconds, int maxRetries, bool playerIPToBeAuthorized,
+	int ttlInSeconds, int maxRetries, bool playerIPToBeAuthorized, string playerCountry,
 
 	bool save,
 	// deliveryType:
@@ -678,27 +678,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-					// TODO: nel caso di externalDelivery, si potrebbe sostituire _deliveryHost_authorizationThroughPath con un externalDelivery IP
-					// getDeliveryHost
-					// 		deliveryHost = _deliveryHost_authorizationThroughPath;
-					// 		json externalDeliveriesRoot = workspace->externalDeliveries["HLS"][country]
-					// 		if(externalDeliveriesRoot.size > 0)
-					// 		{
-					// 			for(index ... size)
-					// 			{
-					// 				currentIndex = NextIndex++ mod size;
-					// 				externalDeliveries ed il flag running sono recuperati dal DB
-					// 				Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutanzione,
-					// 				è sufficiente mettere il flag running a false
-					// 				if (JSONUtils::asBool(workspace->externalDeliveries[country][currentIndex], "running"))
-					// 				{
-					// 					deliveryHost = JSONUtils::asString(workspace->externalDeliveries[country][currentIndex], "host");
-					// 					break;
-					// 				}
-					// 			}
-					// 		}
-					deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
-								  to_string(expirationTime) + deliveryURI;
+					deliveryURL = _deliveryProtocol + "://" +
+								  getDeliveryHost(requestWorkspace, playerCountry, _deliveryHost_authorizationThroughPath) + "/token_" + md5Base64 +
+								  "," + to_string(expirationTime) + deliveryURI;
 				}
 				/*
 				else
@@ -925,6 +907,41 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	}
 
 	return make_pair(deliveryURL, deliveryFileName);
+}
+
+string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string playerCountry, string defaultDeliveryHost)
+{
+	string deliveryHost = defaultDeliveryHost;
+	if (playerCountry != "")
+	{
+		// verifica se abbiamo externalDeliveries per questo specifico playerCountry
+
+		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveries, "HLS-live", json());
+		json countryExternalDeliveriesRoot = JSONUtils::asJson(hlsLiveRoot, playerCountry, json::array());
+		if (countryExternalDeliveriesRoot.size() > 0)
+		{
+			for (int index = 0; index < countryExternalDeliveriesRoot.size(); index++)
+			{
+				int currentIndex = nextExternalDeliveriesHLSLiveIndex() % countryExternalDeliveriesRoot.size();
+				// externalDeliveries ed il flag running sono recuperati dal DB
+				// Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutenzione,
+				// è sufficiente mettere il flag running a false
+				if (JSONUtils::asBool(countryExternalDeliveriesRoot[currentIndex], "running"))
+				{
+					deliveryHost = JSONUtils::asString(countryExternalDeliveriesRoot[currentIndex], "host");
+					break;
+				}
+			}
+		}
+	}
+
+	return deliveryHost;
+}
+
+int MMSDeliveryAuthorization::nextExternalDeliveriesHLSLiveIndex()
+{
+	lock_guard<mutex> locker(_nextExternalDeliveriesMutex);
+	return _externalDeliveriesHLSLiveIndex++;
 }
 
 string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)

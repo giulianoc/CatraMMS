@@ -26,6 +26,8 @@ void API::createDeliveryAuthorization(
 			playerIP = getQueryParameter(queryParameters, "playerIP", clientIPAddress, false);
 		bool playerIPToBeAuthorized = getQueryParameter(queryParameters, "playerIPToBeAuthorized", false, false);
 
+		string playerCountry = getQueryParameter(queryParameters, "playerCountry", "", false);
+
 		int64_t physicalPathKey = -1;
 		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
 		if (physicalPathKeyIt != queryParameters.end())
@@ -165,7 +167,7 @@ void API::createDeliveryAuthorization(
 
 				ingestionJobKey, deliveryCode,
 
-				ttlInSeconds, maxRetries, playerIPToBeAuthorized, save, deliveryType,
+				ttlInSeconds, maxRetries, playerIPToBeAuthorized, playerCountry, save, deliveryType,
 
 				warningIfMissingMediaItemKey, filteredByStatistic, userId
 			);
@@ -401,6 +403,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 								ttlInSeconds, maxRetries,
 								false, // playerIPToBeAuthorized
+								"",	   // playerCountry
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
@@ -514,6 +517,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 								ttlInSeconds, maxRetries,
 								false, // playerIPToBeAuthorized
+								"",	   // playerCountry
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
@@ -617,6 +621,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 							ttlInSeconds, maxRetries,
 							false, // playerIPToBeAuthorized
+							"",	   // playerCountry
 							save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 						);
 					}
