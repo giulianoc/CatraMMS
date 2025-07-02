@@ -678,6 +678,25 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
+					// TODO: nel caso di externalDelivery, si potrebbe sostituire _deliveryHost_authorizationThroughPath con un externalDelivery IP
+					// getDeliveryHost
+					// 		deliveryHost = _deliveryHost_authorizationThroughPath;
+					// 		json externalDeliveriesRoot = workspace->externalDeliveries["HLS"][country]
+					// 		if(externalDeliveriesRoot.size > 0)
+					// 		{
+					// 			for(index ... size)
+					// 			{
+					// 				currentIndex = NextIndex++ mod size;
+					// 				externalDeliveries ed il flag running sono recuperati dal DB
+					// 				Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutanzione,
+					// 				è sufficiente mettere il flag running a false
+					// 				if (JSONUtils::asBool(workspace->externalDeliveries[country][currentIndex], "running"))
+					// 				{
+					// 					deliveryHost = JSONUtils::asString(workspace->externalDeliveries[country][currentIndex], "host");
+					// 					break;
+					// 				}
+					// 			}
+					// 		}
 					deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
 								  to_string(expirationTime) + deliveryURI;
 				}
@@ -696,11 +715,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			else
 			{
 				string deliveryURI;
-				string liveFileExtension;
-				if (outputType == "HLS_Channel")
-					liveFileExtension = "m3u8";
-				else
-					liveFileExtension = "mpd";
+				string liveFileExtension = "mpd";
 
 				tuple<string, string, string> liveDeliveryDetails =
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);

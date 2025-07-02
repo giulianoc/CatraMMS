@@ -165,6 +165,8 @@ do
 			echo "" >> $debugFilename
 			nginx_error delivery-path
 
+			shift
+
 			;;
 		"encoder" | "externalEncoder")
 			if [ "$1" = "encoder" ]

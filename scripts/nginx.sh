@@ -27,7 +27,13 @@ then
 	#LD_LIBRARY_PATH with ffmpeg was set because I guess it could be used by nginx-vod-module
 	if [ "$sudoToBeUsed" == "sudo" ]
 	then
-		$sudoToBeUsed LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
+		#abbiamo impostato in /etc/security/limits.conf 65536 per mms. Se nginx parte con sudo non usa questo setting, per cui forziamo qui il setting
+		sudo bash -c "
+		ulimit -n 65536
+		export LD_LIBRARY_PATH='$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64'
+		'$CatraMMS_PATH/nginx/sbin/nginx' -p '$CatraMMS_PATH/nginx'
+		"
+		#$sudoToBeUsed LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
 	else
 		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
 		$CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
@@ -39,7 +45,11 @@ elif [ "$command" == "stop" ]
 then
 	if [ "$sudoToBeUsed" == "sudo" ]
 	then
-		sudo LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -s stop
+		sudo bash -c "
+		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
+	  $CatraMMS_PATH/nginx/sbin/nginx -s stop -p $CatraMMS_PATH/nginx
+		"
+		#sudo LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -s stop
 	else
 		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
 		timeout 15 $CatraMMS_PATH/nginx/sbin/nginx -s stop

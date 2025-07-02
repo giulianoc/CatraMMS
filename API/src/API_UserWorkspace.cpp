@@ -2574,6 +2574,8 @@ void API::updateWorkspace(
 		bool timezoneChanged = false;
 		string newPreferences;
 		bool preferencesChanged = false;
+		string newExternalDeliveries;
+		bool externalDeliveriesChanged = false;
 		string newExpirationUtcDate;
 		bool expirationDateChanged = false;
 
@@ -2694,6 +2696,12 @@ void API::updateWorkspace(
 		{
 			preferencesChanged = true;
 			newPreferences = JSONUtils::asString(metadataRoot, "preferences", "");
+		}
+
+		if (JSONUtils::isMetadataPresent(metadataRoot, "externalDeliveries"))
+		{
+			externalDeliveriesChanged = true;
+			newExternalDeliveries = JSONUtils::asString(metadataRoot, "externalDeliveries", "");
 		}
 
 		field = "maxStorageInGB";
@@ -2864,7 +2872,7 @@ void API::updateWorkspace(
 				userKey, workspace->_workspaceKey, notesChanged, newNotes, enabledChanged, newEnabled, nameChanged, newName,
 				maxEncodingPriorityChanged, newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged,
 				newMaxIngestionsNumber, languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, preferencesChanged, newPreferences,
-				expirationDateChanged, newExpirationUtcDate,
+				externalDeliveriesChanged, newExternalDeliveries, expirationDateChanged, newExpirationUtcDate,
 
 				maxStorageInGBChanged, maxStorageInGB, currentCostForStorageChanged, currentCostForStorage, dedicatedEncoder_power_1Changed,
 				dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,

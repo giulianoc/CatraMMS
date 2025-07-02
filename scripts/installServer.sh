@@ -49,10 +49,11 @@ mms-account-creation()
 	usermod -u 1000 mms
 
 	if [ "$moduleType" == "externalDelivery" ]; then
-		#nel caso di externalDelivery, nginx deve partire come root (in mmsStart abbiamo sudo ./nginx.sh start)
-		#perchè ascolta sulla porta 443. Per cui aggiungiamo mms tra i sudoers
+		#nel caso di externalDelivery, nginx deve partire come root
+		#perchè ascolta sulla porta 443. Per cui aggiungiamo i comandi sotto
+		#che si giustificano guardando lo script nginx.sh
 
-		echo "mms ALL=(ALL) NOPASSWD: /home/mms/nginx.sh start, /home/mms/nginx.sh stop" > "/etc/sudoers.d/mms-nginx-commands"
+		echo "mms ALL=(ALL) NOPASSWD: /bin/bash" > "/etc/sudoers.d/mms-nginx-commands"
 		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
 	fi
 }
@@ -1414,8 +1415,13 @@ install-mms-nginx-package()
 	#In caso di un systemctl service servirebbe indicare nel file del servizio LimitNOFILE=500000
 	#see https://access.redhat.com/solutions/1257953
 	echo "fs.file-max = 70000" >> /etc/sysctl.conf                                                            
-	echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
-	echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
+	#echo "mms soft nofile 10000" >> /etc/security/limits.conf                                                 
+	#echo "mms hard nofile 30000" >> /etc/security/limits.conf                                                 
+	echo "mms soft nofile 65536" >> /etc/security/limits.conf                                                 
+	echo "mms hard nofile 65536" >> /etc/security/limits.conf                                                 
+
+	#è possibile verificare il Max Open Files, ad es. di nginx, con il seguente comando:
+	#cat /proc/$(pidof nginx | awk '{print $1}')/limits | grep "Max open files"
 
 	if [ "$moduleType" == "externalDelivery" ]; then
 		#serve certbot per la configurazione del certificato)

@@ -1329,7 +1329,8 @@ class MMSEngineDBFacade
 		int64_t userKey, int64_t workspaceKey, bool notesChanged, string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged,
 		string newName, bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
 		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
-		string newTimezone, bool preferencesChanged, string newPreferences, bool expirationDateChanged, string newExpirationDate,
+		string newTimezone, bool preferencesChanged, string newPreferences, bool externalDeliveriesChanged, string newExternalDeliveries,
+		bool expirationDateChanged, string newExpirationDate,
 
 		bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 		bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,

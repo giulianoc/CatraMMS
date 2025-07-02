@@ -163,6 +163,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "timezone							text NOT NULL default 'CET',"
 								  "notes								text NULL,"
 								  "preferences					jsonb,"
+								  "externalDeliveries		jsonb,"
 								  "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);

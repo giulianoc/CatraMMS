@@ -9,18 +9,6 @@
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
@@ -50,36 +38,34 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 
 		shared_ptr<Workspace> workspace = make_shared<Workspace>();
 
-		if (!empty(res))
-		{
-			workspace->_workspaceKey = res[0]["workspaceKey"].as<int64_t>();
-			workspace->_name = res[0]["name"].as<string>();
-			workspace->_directoryName = res[0]["directoryName"].as<string>();
-			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
-			workspace->_notes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
-
-			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
-			workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
-			workspace->_dedicatedEncoder_power_1 = res[0]["dedicatedEncoder_power_1"].as<int>();
-			workspace->_currentCostForDedicatedEncoder_power_1 = res[0]["currentCostForDedicatedEncoder_power_1"].as<int>();
-			workspace->_dedicatedEncoder_power_2 = res[0]["dedicatedEncoder_power_2"].as<int>();
-			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
-			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
-			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
-			workspace->_CDN_type_1 = res[0]["CDN_type_1"].as<int>();
-			workspace->_currentCostForCDN_type_1 = res[0]["currentCostForCDN_type_1"].as<int>();
-			workspace->_support_type_1 = res[0]["support_type_1"].as<bool>();
-			workspace->_currentCostForSupport_type_1 = res[0]["currentCostForSupport_type_1"].as<int>();
-
-			// getTerritories(workspace);
-		}
-		else
+		if (empty(res))
 		{
 			string errorMessage = __FILEREF__ + "select failed" + ", workspaceKey: " + to_string(workspaceKey) + ", sqlStatement: " + sqlStatement;
 			_logger->error(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+
+		workspace->_workspaceKey = res[0]["workspaceKey"].as<int64_t>();
+		workspace->_name = res[0]["name"].as<string>();
+		workspace->_directoryName = res[0]["directoryName"].as<string>();
+		workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
+		workspace->_notes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
+
+		workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
+		workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
+		workspace->_dedicatedEncoder_power_1 = res[0]["dedicatedEncoder_power_1"].as<int>();
+		workspace->_currentCostForDedicatedEncoder_power_1 = res[0]["currentCostForDedicatedEncoder_power_1"].as<int>();
+		workspace->_dedicatedEncoder_power_2 = res[0]["dedicatedEncoder_power_2"].as<int>();
+		workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
+		workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
+		workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
+		workspace->_CDN_type_1 = res[0]["CDN_type_1"].as<int>();
+		workspace->_currentCostForCDN_type_1 = res[0]["currentCostForCDN_type_1"].as<int>();
+		workspace->_support_type_1 = res[0]["support_type_1"].as<bool>();
+		workspace->_currentCostForSupport_type_1 = res[0]["currentCostForSupport_type_1"].as<int>();
+
+		// getTerritories(workspace);
 
 		return workspace;
 	}
@@ -2274,17 +2260,6 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costDetails)
 {
 	json workspaceListRoot;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -2347,7 +2322,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -2361,7 +2336,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -2429,18 +2404,6 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 {
 	json loginWorkspaceRoot;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
@@ -2450,7 +2413,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, w.timezone, w.preferences, "
+				"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
@@ -2487,7 +2450,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			{
 				string sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, w.preferences, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, w.preferences, w.externalDeliveries, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -2616,6 +2579,11 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 		else
 			workspaceDetailRoot["preferences"] = row["preferences"].as<string>();
 
+		if (row["externalDeliveries"].is_null())
+			workspaceDetailRoot["externalDeliveries"] = nullptr;
+		else
+			workspaceDetailRoot["externalDeliveries"] = row["externalDeliveries"].as<string>();
+
 		if (userAPIKeyInfo)
 		{
 			json userAPIKeyRoot;
@@ -2715,7 +2683,8 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 	int64_t userKey, int64_t workspaceKey, bool notesChanged, string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged, string newName,
 	bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
 	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
-	string newTimezone, bool preferencesChanged, string newPreferences, bool expirationDateChanged, string newExpirationUtcDate,
+	string newTimezone, bool preferencesChanged, string newPreferences, bool externalDeliveriesChanged, string newExternalDeliveries,
+	bool expirationDateChanged, string newExpirationUtcDate,
 
 	bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 	bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -2944,6 +2913,14 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				oneParameterPresent = true;
 			}
 
+			if (externalDeliveriesChanged)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("externalDeliveries = {}", trans.transaction->quote(newExternalDeliveries));
+				oneParameterPresent = true;
+			}
+
 			if (oneParameterPresent)
 			{
 				string sqlStatement = std::format(
@@ -3160,7 +3137,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
+				"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
 				"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
