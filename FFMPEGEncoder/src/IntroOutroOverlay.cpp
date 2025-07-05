@@ -568,7 +568,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 								introPathName,
 
-								_encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+								_encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
 							);
 						}
 						else
@@ -613,7 +613,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 								outroPathName,
 
-								_encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+								_encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
 							);
 						}
 						else
@@ -653,7 +653,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 							concatSourcePhysicalPaths.push_back(encodedPathName);
 							_encoding->_ffmpeg->encodeContent(
 								currentFile, currentFileDurationInMilliSeconds, encodedPathName, encodingProfileDetailsRoot, true, nullptr, nullptr,
-								-1, -1, nullptr, -1, _encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+								-1, -1, nullptr, -1, _encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
 							);
 						}
 						else
@@ -938,7 +938,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				encodedStagingAssetPathName,
 
-				_encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+				_encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
 			);
 		}
 

@@ -118,7 +118,7 @@ void LiveGrid::encodeContent(string requestBody)
 
 			_liveProxyData->_ffmpeg->liveGrid(
 				_liveProxyData->_ingestionJobKey, _encodingJobKey, externalEncoder, userAgent, inputChannelsRoot, gridColumns, gridWidth, gridHeight,
-				_liveProxyData->_outputsRoot, &(_liveProxyData->_childPid)
+				_liveProxyData->_outputsRoot, _liveProxyData->_childProcessId
 			);
 		}
 

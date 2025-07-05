@@ -3,6 +3,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
+#include "ProcessUtility.h"
 
 // this is to generate one Frame
 void MMSEngineProcessor::generateAndIngestFrameThread(
@@ -144,11 +145,11 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				string frameFileName = to_string(ingestionJobKey) + "." + fileFormat;
 				string frameAssetPathName = workspaceIngestionRepository + "/" + frameFileName;
 
-				pid_t childPid;
+				ProcessUtility::ProcessId childProcessId;
 				FFMpegWrapper ffmpeg(_configurationRoot);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight,
-					&childPid
+					childProcessId
 				);
 
 				{

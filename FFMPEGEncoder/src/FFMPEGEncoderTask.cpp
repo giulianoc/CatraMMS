@@ -65,8 +65,8 @@ FFMPEGEncoderTask::~FFMPEGEncoderTask()
 	{
 		addEncodingCompleted();
 
-		_encoding->_childPid = 0;	  // set to 0 just to be sure because it is already set info the FFMpeg lib
-		_encoding->_available = true; // this is the last setting making the encoding available again
+		_encoding->_childProcessId.reset(); // set to 0 just to be sure because it is already set info the FFMpeg lib
+		_encoding->_available = true;		// this is the last setting making the encoding available again
 	}
 	catch (runtime_error &e)
 	{

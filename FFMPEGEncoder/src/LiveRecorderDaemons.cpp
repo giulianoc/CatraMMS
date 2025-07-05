@@ -94,7 +94,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 
 			for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording : *_liveRecordingsCapability)
 			{
-				if (liveRecording->_childPid != 0) // running
+				if (liveRecording->_childProcessId.isInitialized()) // running
 				{
 					SPDLOG_INFO(
 						"processSegmenterOutput ..."
@@ -253,7 +253,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 				for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording : *_liveRecordingsCapability)
 				{
-					if (liveRecording->_childPid != 0 && liveRecording->_virtualVOD && startClone > liveRecording->_recordingStart)
+					if (liveRecording->_childProcessId.isInitialized() && liveRecording->_virtualVOD && startClone > liveRecording->_recordingStart)
 					{
 						liveRecordingVirtualVODCounter++;
 
@@ -297,18 +297,19 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 					copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 				);
 
-				if (sourceLiveRecording->_childPid == 0 || copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
 				{
 					SPDLOG_INFO(
 						"virtualVOD. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childPid: {}"
+						", sourceLiveRecording->_childProcessId: {}"
 						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
 						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childPid, copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
 						sourceLiveRecording->_recordingStart.time_since_epoch().count()
 					);
 
@@ -325,14 +326,14 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", externalEncoder: {}"
-						", childPid: {}"
+						", _childProcessId: {}"
 						", virtualVOD: {}"
 						", virtualVODsNumber: {}"
 						", monitorVirtualVODManifestDirectoryPath: {}"
 						", monitorVirtualVODManifestFileName: {}"
 						", virtualVODStagingContentsPath: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_externalEncoder,
-						copiedLiveRecording->_childPid, copiedLiveRecording->_virtualVOD, virtualVODsNumber,
+						copiedLiveRecording->_childProcessId.toString(), copiedLiveRecording->_virtualVOD, virtualVODsNumber,
 						copiedLiveRecording->_monitorVirtualVODManifestDirectoryPath, copiedLiveRecording->_monitorVirtualVODManifestFileName,
 						copiedLiveRecording->_virtualVODStagingContentsPath
 					);

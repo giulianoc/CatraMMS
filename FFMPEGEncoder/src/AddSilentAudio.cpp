@@ -121,7 +121,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 					encodingProfileDetailsRoot,
 
-					encodedStagingAssetPathName, _encodingJobKey, _ingestionJobKey, &(_encoding->_childPid)
+					encodedStagingAssetPathName, _encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
 				);
 
 				_encoding->_ffmpegTerminatedSuccessful = true;

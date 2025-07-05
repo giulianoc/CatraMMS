@@ -289,7 +289,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpeg->slideShow(
 			_ingestionJobKey, _encodingJobKey, durationOfEachSlideInSeconds, frameRateMode, encodingProfileDetailsRoot, imagesPathNames,
-			audiosPathNames, shortestAudioDurationInSeconds, encodedStagingAssetPathName, &(_encoding->_childPid)
+			audiosPathNames, shortestAudioDurationInSeconds, encodedStagingAssetPathName, _encoding->_childProcessId
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

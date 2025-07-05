@@ -194,7 +194,7 @@ int main(int argc, char **argv)
 			{
 				shared_ptr<FFMPEGEncoderBase::Encoding> encoding = make_shared<FFMPEGEncoderBase::Encoding>();
 				encoding->_available = true;
-				encoding->_childPid = 0; // not running
+				encoding->_childProcessId.reset(); // not running
 				encoding->_ffmpeg = make_shared<FFMpegWrapper>(configurationRoot);
 
 				encodingsCapability.push_back(encoding);
@@ -210,7 +210,7 @@ int main(int argc, char **argv)
 			{
 				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy = make_shared<FFMPEGEncoderBase::LiveProxyAndGrid>();
 				liveProxy->_available = true;
-				liveProxy->_childPid = 0; // not running
+				liveProxy->_childProcessId.reset(); // not running
 				liveProxy->_ingestionJobKey = 0;
 				liveProxy->_ffmpeg = make_shared<FFMpegWrapper>(configurationRoot);
 
@@ -227,7 +227,7 @@ int main(int argc, char **argv)
 			{
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording = make_shared<FFMPEGEncoderBase::LiveRecording>();
 				liveRecording->_available = true;
-				liveRecording->_childPid = 0; // not running
+				liveRecording->_childProcessId.reset(); // not running
 				liveRecording->_ingestionJobKey = 0;
 				liveRecording->_encodingParametersRoot = nullptr;
 				liveRecording->_ffmpeg = make_shared<FFMpegWrapper>(configurationRoot);

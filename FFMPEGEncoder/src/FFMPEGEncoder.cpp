@@ -403,7 +403,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				*_lastEncodingAcceptedTime = chrono::system_clock::now();
 
 				selectedEncoding->_available = false;
-				selectedEncoding->_childPid = 0; // not running
+				selectedEncoding->_childProcessId.reset(); // not running
 				selectedEncoding->_killToRestartByEngine = false;
 				selectedEncoding->_encodingJobKey = encodingJobKey;
 				selectedEncoding->_ffmpegTerminatedSuccessful = false;
@@ -484,7 +484,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				else
 				{
 					selectedEncoding->_available = true;
-					selectedEncoding->_childPid = 0; // not running
+					selectedEncoding->_childProcessId.reset(); // not running
 
 					string errorMessage = std::format(
 						"wrong method"
@@ -508,7 +508,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch (exception &e)
 			{
 				selectedEncoding->_available = true;
-				selectedEncoding->_childPid = 0; // not running
+				selectedEncoding->_childProcessId.reset(); // not running
 
 				SPDLOG_ERROR(
 					"{} failed"
@@ -694,7 +694,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				// liveRecorderThread method
 				selectedLiveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(60);
 				selectedLiveRecording->_available = false;
-				selectedLiveRecording->_childPid = 0; // not running
+				selectedLiveRecording->_childProcessId.reset(); // not running
 				selectedLiveRecording->_killToRestartByEngine = false;
 				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 
@@ -716,7 +716,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch (exception &e)
 			{
 				selectedLiveRecording->_available = true;
-				selectedLiveRecording->_childPid = 0; // not running
+				selectedLiveRecording->_childProcessId.reset(); // not running
 
 				SPDLOG_ERROR(
 					"liveRecorder failed"
@@ -901,7 +901,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				*/
 
 				selectedLiveProxy->_available = false;
-				selectedLiveProxy->_childPid = 0; // not running
+				selectedLiveProxy->_childProcessId.reset(); // not running
 				selectedLiveProxy->_killToRestartByEngine = false;
 				selectedLiveProxy->_encodingJobKey = encodingJobKey;
 				selectedLiveProxy->_method = method;
@@ -947,7 +947,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			catch (exception &e)
 			{
 				selectedLiveProxy->_available = true;
-				selectedLiveProxy->_childPid = 0; // not running
+				selectedLiveProxy->_childProcessId.reset(); // not running
 
 				SPDLOG_ERROR(
 					"liveProxyThread failed"
@@ -1124,7 +1124,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			", liveRecordingMutexDuration: {}"
 			", @MMS statistics@ - duration looking for encodingStatus (secs): @{}@",
 			ingestionJobKey, encodingJobKey, encodingFound, encodingFound ? to_string(selectedEncoding->_available) : "not available",
-			encodingFound ? to_string(selectedEncoding->_childPid) : "not available", liveProxyFound, liveRecordingFound, encodingCompleted,
+			encodingFound ? selectedEncoding->_childProcessId.toString() : "not available", liveProxyFound, liveRecordingFound, encodingCompleted,
 			encodingCompletedMutexDuration, encodingMutexDuration, liveProxyMutexDuration, liveRecordingMutexDuration,
 			chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()
 		);
@@ -1249,7 +1249,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 				responseBodyRoot["encodingJobKey"] = selectedEncoding->_encodingJobKey;
-				responseBodyRoot["pid"] = selectedEncoding->_childPid;
+				responseBodyRoot["pid"] = selectedEncoding->_childProcessId.pid;
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["urlForbidden"] = false;
 				responseBodyRoot["urlNotFound"] = false;
@@ -1274,7 +1274,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				responseBodyRoot["ingestionJobKey"] = selectedLiveProxy->_ingestionJobKey;
 				responseBodyRoot["encodingJobKey"] = selectedLiveProxy->_encodingJobKey;
-				responseBodyRoot["pid"] = selectedLiveProxy->_childPid;
+				responseBodyRoot["pid"] = selectedLiveProxy->_childProcessId.pid;
 				responseBodyRoot["realTimeFrameRate"] = selectedLiveProxy->_realTimeFrameRate;
 				responseBodyRoot["realTimeBitRate"] = selectedLiveProxy->_realTimeBitRate;
 				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveProxy->_numberOfRestartBecauseOfFailure;
@@ -1296,7 +1296,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 				responseBodyRoot["ingestionJobKey"] = selectedLiveRecording->_ingestionJobKey;
 				responseBodyRoot["encodingJobKey"] = selectedLiveRecording->_encodingJobKey;
-				responseBodyRoot["pid"] = selectedLiveRecording->_childPid;
+				responseBodyRoot["pid"] = selectedLiveRecording->_childProcessId.pid;
 				responseBodyRoot["realTimeFrameRate"] = selectedLiveRecording->_realTimeFrameRate;
 				responseBodyRoot["realTimeBitRate"] = selectedLiveRecording->_realTimeBitRate;
 				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveRecording->_numberOfRestartBecauseOfFailure;
@@ -1657,20 +1657,20 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			"ProcessUtility::killProcess. Found Encoding to kill"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
-			", _childPid: {}"
+			", _childProcessId: {}"
 			", killType: {}",
-			ingestionJobKey, encodingJobKey, selectedEncoding->_childPid, killType
+			ingestionJobKey, encodingJobKey, selectedEncoding->_childProcessId.toString(), killType
 		);
 
 		// if (pidToBeKilled == 0)
-		if (selectedEncoding->_childPid == 0)
+		if (!selectedEncoding->_childProcessId.isInitialized())
 		{
 			SPDLOG_ERROR(
-				"The EncodingJob seems not running (see _childPid)"
+				"The EncodingJob seems not running (see _childProcessId)"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
-				", _childPid: {}",
-				ingestionJobKey, encodingJobKey, selectedEncoding->_childPid
+				", _childProcessId: {}",
+				ingestionJobKey, encodingJobKey, selectedEncoding->_childProcessId.toString()
 			);
 
 			string errorMessage = "Internal server error";
@@ -1715,9 +1715,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				"ProcessUtility::killProcess failed"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
-				", _childPid: {}"
+				", _childProcessId: {}"
 				", e.what(): {}",
-				ingestionJobKey, encodingJobKey, selectedEncoding->_childPid, e.what()
+				ingestionJobKey, encodingJobKey, selectedEncoding->_childProcessId.toString(), e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1737,7 +1737,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			responseBodyRoot[field] = encodingJobKey;
 
 			field = "pid";
-			responseBodyRoot[field] = selectedEncoding->_childPid;
+			responseBodyRoot[field] = selectedEncoding->_childProcessId.pid;
 
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
@@ -1857,9 +1857,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						"ProcessUtility::termProcess failed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
-						", _childPid: {}"
+						", _childProcessId: {}"
 						", e.what(): {}",
-						selectedLiveProxy->_ingestionJobKey, selectedLiveProxy->_encodingJobKey, selectedLiveProxy->_childPid, e.what()
+						selectedLiveProxy->_ingestionJobKey, selectedLiveProxy->_encodingJobKey, selectedLiveProxy->_childProcessId.toString(),
+						e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 				}
@@ -3179,20 +3180,21 @@ void FFMPEGEncoder::termProcess(
 		// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
 		// 2023-02-18: using SIGQUIT, the process was not stopped, it worked with SIGTERM SIGTERM now is managed by FFMpeg.cpp too
 		chrono::system_clock::time_point start = chrono::system_clock::now();
-		pid_t previousChildPid = selectedEncoding->_childPid;
-		if (previousChildPid == 0)
+		ProcessUtility::ProcessId previousChildProcessId;
+		previousChildProcessId = selectedEncoding->_childProcessId;
+		if (!previousChildProcessId.isInitialized())
 			return;
 		long secondsToWait = 10;
 		int counter = 0;
 		do
 		{
-			if (selectedEncoding->_childPid == 0 || selectedEncoding->_childPid != previousChildPid)
+			if (!(selectedEncoding->_childProcessId).isInitialized() || selectedEncoding->_childProcessId != previousChildProcessId)
 				break;
 
 			if (kill)
-				ProcessUtility::killProcess(previousChildPid);
+				ProcessUtility::killProcess(previousChildProcessId);
 			else
-				ProcessUtility::termProcess(previousChildPid);
+				ProcessUtility::termProcess(previousChildProcessId);
 			SPDLOG_INFO(
 				"ProcessUtility::termProcess"
 				", ingestionJobKey: {}"
@@ -3200,14 +3202,16 @@ void FFMPEGEncoder::termProcess(
 				", label: {}"
 				", message: {}"
 				", previousChildPid: {}"
-				", selectedEncoding->_childPid: {}"
+				", selectedEncoding->_childProcessId: {}"
 				", kill: {}"
 				", counter: {}",
-				ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, previousChildPid, selectedEncoding->_childPid, kill, counter++
+				ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, previousChildProcessId.toString(),
+				selectedEncoding->_childProcessId.toString(), kill, counter++
 			);
 			this_thread::sleep_for(chrono::seconds(1));
 			// ripete il loop se la condizione è true
-		} while (selectedEncoding->_childPid == previousChildPid && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait));
+		} while (selectedEncoding->_childProcessId == previousChildProcessId && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait)
+		);
 	}
 	catch (runtime_error e)
 	{

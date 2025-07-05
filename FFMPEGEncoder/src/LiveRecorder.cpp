@@ -437,7 +437,7 @@ void LiveRecorder::encodeContent(string requestBody)
 
 			framesToBeDetectedRoot,
 
-			&(_liveRecording->_childPid), &(_liveRecording->_recordingStart), &(_liveRecording->_numberOfRestartBecauseOfFailure)
+			_liveRecording->_childProcessId, &(_liveRecording->_recordingStart), &(_liveRecording->_numberOfRestartBecauseOfFailure)
 		);
 
 		if (_liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized

@@ -2,6 +2,7 @@
 #ifndef FFMPEGEncoderBase_h
 #define FFMPEGEncoderBase_h
 
+#include "ProcessUtility.h"
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -26,7 +27,7 @@ class FFMPEGEncoderBase
 	struct Encoding
 	{
 		bool _available;
-		pid_t _childPid;
+		ProcessUtility::ProcessId _childProcessId;
 		int64_t _encodingJobKey;
 		shared_ptr<FFMpegWrapper> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful;
@@ -91,7 +92,7 @@ class FFMPEGEncoderBase
 			shared_ptr<LiveProxyAndGrid> liveProxyAndGrid = make_shared<LiveProxyAndGrid>();
 
 			liveProxyAndGrid->_available = _available;
-			liveProxyAndGrid->_childPid = _childPid;
+			liveProxyAndGrid->_childProcessId = _childProcessId;
 			liveProxyAndGrid->_killToRestartByEngine = _killToRestartByEngine;
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveProxyAndGrid->_realTimeFrame = _realTimeFrame;
@@ -164,7 +165,7 @@ class FFMPEGEncoderBase
 			shared_ptr<LiveRecording> liveRecording = make_shared<LiveRecording>();
 
 			liveRecording->_available = _available;
-			liveRecording->_childPid = _childPid;
+			liveRecording->_childProcessId = _childProcessId;
 			liveRecording->_killToRestartByEngine = _killToRestartByEngine;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;

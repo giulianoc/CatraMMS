@@ -163,7 +163,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpeg->generateFramesToIngest(
 			_ingestionJobKey, _encodingJobKey, imagesDirectory, imageBaseFileName, startTimeInSeconds, maxFramesNumber, videoFilter, periodInSeconds,
-			mjpeg, imageWidth, imageHeight, sourceAssetPathName, videoDurationInMilliSeconds, &(_encoding->_childPid)
+			mjpeg, imageWidth, imageHeight, sourceAssetPathName, videoDurationInMilliSeconds, _encoding->_childProcessId
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
