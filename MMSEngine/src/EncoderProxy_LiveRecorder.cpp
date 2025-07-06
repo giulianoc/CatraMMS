@@ -11,6 +11,7 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include "CurlWrapper.h"
 #include "Datetime.h"
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
@@ -382,7 +383,7 @@ bool EncoderProxy::liveRecorder()
 					if (userName != "" && password != "")
 					{
 						// rtmp://.....
-						rtmpURL.insert(7, (userName + ":" + password + "@"));
+						rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
 					}
 
 					// update outputsRoot with the new details

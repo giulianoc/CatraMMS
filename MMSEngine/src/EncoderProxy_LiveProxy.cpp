@@ -11,6 +11,7 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
+#include "CurlWrapper.h"
 #include "EncoderProxy.h"
 #include "JSONUtils.h"
 #include "MMSDeliveryAuthorization.h"
@@ -305,7 +306,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					if (userName != "" && password != "")
 					{
 						// rtmp://.....
-						rtmpURL.insert(7, (userName + ":" + password + "@"));
+						rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
 					}
 
 					// update outputsRoot with the new details
