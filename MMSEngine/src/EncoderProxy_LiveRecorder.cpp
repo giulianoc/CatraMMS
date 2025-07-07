@@ -362,17 +362,6 @@ bool EncoderProxy::liveRecorder()
 							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
 
-					/*
-					string reservedLabel;
-					string rtmpURL;
-					string streamName;
-					string userName;
-					string password;
-					string playURL;
-					bool channelAlreadyReserved;
-					tie(reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved) = rtmpChannelDetails;
-					*/
-
 					if (streamName != "")
 					{
 						if (rtmpURL.back() == '/')
