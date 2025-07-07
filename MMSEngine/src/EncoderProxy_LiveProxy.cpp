@@ -309,12 +309,15 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
 						SPDLOG_INFO(
 							"rtmp check"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
 							", userName: {}"
 							", userName encoded: {}"
 							", password: {}"
 							", password encoded: {}"
 							", rtmp: {}",
-							userName, CurlWrapper::escape(userName), password, CurlWrapper::escape(password), rtmpURL
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, userName, CurlWrapper::escape(userName), password,
+							CurlWrapper::escape(password), rtmpURL
 						);
 					}
 
