@@ -371,8 +371,10 @@ bool EncoderProxy::liveRecorder()
 					}
 					if (userName != "" && password != "")
 					{
-						// rtmp://.....
-						rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
+						// nel caso di rtmp nativo (basato su libavformat/protocols/rtmp.c) non serve l'escape.
+						// Ad esempio avevo una password con il '.' e, se fosse codificato, non funziona
+						// rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
+						rtmpURL.insert(7, (userName + ":" + password + "@"));
 					}
 
 					// update outputsRoot with the new details

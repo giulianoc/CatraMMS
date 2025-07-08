@@ -174,6 +174,12 @@ install-packages()
 	apt-get -y install libjpeg-dev
 
 	echo ""
+	read -n 1 -s -r -p "install librtmp-dev..."
+	echo ""
+	apt-get install librtmp-dev
+	apt-get install libsndio7.0
+
+	echo ""
 	read -n 1 -s -r -p "install libpng-dev..."
 	echo ""
 	apt-get -y install libpng-dev

@@ -305,20 +305,10 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					if (userName != "" && password != "")
 					{
-						// rtmp://.....
-						rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
-						SPDLOG_INFO(
-							"rtmp check"
-							", _ingestionJobKey: {}"
-							", _encodingJobKey: {}"
-							", userName: {}"
-							", userName encoded: {}"
-							", password: {}"
-							", password encoded: {}"
-							", rtmp: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, userName, CurlWrapper::escape(userName), password,
-							CurlWrapper::escape(password), rtmpURL
-						);
+						// nel caso di rtmp nativo (basato su libavformat/protocols/rtmp.c) non serve l'escape.
+						// Ad esempio avevo una password con il '.' e, se fosse codificato, non funziona
+						// rtmpURL.insert(7, (CurlWrapper::escape(userName) + ":" + CurlWrapper::escape(password) + "@"));
+						rtmpURL.insert(7, (userName + ":" + password + "@"));
 					}
 
 					// update outputsRoot with the new details
