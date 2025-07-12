@@ -1,0 +1,36 @@
+{
+	"label" : "MMS_HLS_H264_3000Kb_veryfast_720p30_high_AAC_128",
+	"fileFormat" : "hls",
+	"description": "Used for live real time streaming, good quality, low latency and high compatibility. Compromize between quality, latency and bitrate.",
+	"HLS" : 
+	{
+		"segmentDuration" : 10
+	},
+	"video" : 
+	{
+		"codec" : "libx264",
+		"profile" : "high",
+		"frameRate": 30,
+		"twoPasses" : false,
+		"kMaxRate": 3500,
+		"KBufferSize": 3500,
+		"otherOutputParameters": "-pix_fmt yuv420p -preset veryfast -tune zerolatency -level 4.1",
+		"bitRates": [
+			{
+				"width" : 1280,
+				"height" : 720,
+				"kBitRate" : 3000
+			}
+		]
+	},
+	"audio" : 
+	{
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
+			{
+				"kBitRate" : 128
+			}
+		]
+	}
+}
