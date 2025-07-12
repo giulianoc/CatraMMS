@@ -176,8 +176,8 @@ install-packages()
 	echo ""
 	read -n 1 -s -r -p "install librtmp-dev..."
 	echo ""
-	apt-get install librtmp-dev
-	apt-get install libsndio7.0
+	apt-get -y install librtmp-dev
+	apt-get -y install libsndio7.0
 
 	echo ""
 	read -n 1 -s -r -p "install libpng-dev..."
@@ -1434,11 +1434,13 @@ install-mms-nginx-package()
 		apt install -y certbot python3-certbot-nginx
 	
 		echo "creeremo un certificato il cui dominio sarà validato tramite un record TXT che dovremo configurare nel DNS."
+		echo -n "Scrivi il nome del server (i.e.: srv-1.cibortv.tv)? "
+		read servername
 		echo "Dopo aver fatto la configurazione DNS aspettare qualche minuto che si sia propagato"
-		echo "Se vuoi verificare che il record sia visibile, il comando, dopo aver corretto il nome dell'hostname, è:"
-		echo "dig TXT _acme-challenge.srv-1.cibortv.tv +short"
+		echo "Se vuoi verificare che il record sia visibile, il comando è:"
+		echo "dig TXT _acme-challenge.$servername +short"
 		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
-		certbot certonly --manual --preferred-challenges dns -d srv-1.cibortv.tv
+		certbot certonly --manual --preferred-challenges dns -d $servername
 
 		#inoltre blocchiamo (ritorno 444 che chiude la connessione senza inviare nessuna risposta) tutte le richieste HTTPS con Host sbagliato (tipo xj5zr.usdsh.com)
 		#Per questo motivo bisogna generare i files invalid.crt e invalid.key utilizzati in catramms.nginx
@@ -1707,7 +1709,7 @@ fi
 
 moduleType=$1
 
-if [ "$moduleType" != "load-balancer" -a "$moduleType" != "engine" -a "$moduleType" != "api" -a "$moduleType" != "delivery" -a "$moduleType" != "api-and-delivery" -a "$moduleType" != "encoder" -a "$moduleType" != "externalEncoder" -a "$moduleType" != "storage" -a "$moduleType" != "integration" ]; then
+if [ "$moduleType" != "load-balancer" -a "$moduleType" != "engine" -a "$moduleType" != "api" -a "$moduleType" != "delivery" -a "$moduleType" != "externalDelivery" -a "$moduleType" != "api-and-delivery" -a "$moduleType" != "encoder" -a "$moduleType" != "externalEncoder" -a "$moduleType" != "storage" -a "$moduleType" != "integration" ]; then
 	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
 
 	exit
@@ -1814,7 +1816,7 @@ read -n 1 -s -r -p "Aggiornare foglio su google Server List's"
 echo ""
 echo ""
 
-read -n 1 -s -r -p "Inserire alias in myBashProfile.sh"
+read -n 1 -s -r -p "Inserire alias in myBashProfile.sh oppure configurare in .ssh/config"
 echo ""
 echo ""
 
