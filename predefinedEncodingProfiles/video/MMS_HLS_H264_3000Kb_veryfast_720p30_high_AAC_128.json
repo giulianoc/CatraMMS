@@ -12,14 +12,14 @@
 		"profile" : "high",
 		"frameRate": 30,
 		"twoPasses" : false,
-		"kMaxRate": 3500,
-		"KBufferSize": 3500,
 		"otherOutputParameters": "-pix_fmt yuv420p -preset veryfast -tune zerolatency -level 4.1",
 		"bitRates": [
 			{
 				"width" : 1280,
 				"height" : 720,
-				"kBitRate" : 3000
+				"kBitRate" : 3000,
+				"kMaxRate": 3500,
+				"KBufferSize": 3500
 			}
 		]
 	},
