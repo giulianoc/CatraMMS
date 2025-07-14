@@ -1475,7 +1475,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6352
+	catraMMSVersion=1.0.6385
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1774,14 +1774,14 @@ if [ "$moduleType" == "storage" ]; then
 	echo ""
 	echo ""
 	echo "Configurare /etc/exports con le directory da esportare, ad es:"
-	echo "/mnt/storage-1/dbDump 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/MMSGUI 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/mmsIngestionRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/MMSLive 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/mmsRepository0000 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/MMSRepositoryFree 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/MMSWorkingAreaRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
-	echo "/mnt/storage-1/nginxWorkingAreaRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/dbDump 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/MMSGUI 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/mmsIngestionRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/MMSLive 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/mmsRepository0000 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/MMSRepositoryFree 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/MMSWorkingAreaRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/nginxWorkingAreaRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
 	echo ""
 	echo ""
 	echo "Comandi per ricaricare le conf sono:"

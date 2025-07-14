@@ -19,7 +19,7 @@
 				"height" : 720,
 				"kBitRate" : 3000,
 				"kMaxRate": 3500,
-				"KBufferSize": 3500
+				"kBufferSize": 3500
 			}
 		]
 	},

@@ -32,7 +32,7 @@ fileName=$3
 MAX_PARALLEL=5											  	# Max sincronizzazioni in parallelo
 BW_LIMIT=5000  											  	# Banda limite per ogni rsync (KB/s), opzionale
 storageServer=116.202.53.105 						# mms-delivery-binary-gui-2
-externalDeliveryServers=194.42.206.8 		# srv-1.cibortv.tv
+externalDeliveryServers=91.222.174.119 	# srv-2.cibortv.tv (storage USA)
 
 
 #Example of events using debug:
