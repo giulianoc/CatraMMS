@@ -935,8 +935,7 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 
 		CurlWrapper::downloadFile(
 			sourcePhysicalDeliveryURL, localDestAssetPathName, progressDownloadCallback2, &progressData, 500,
-			std::format(", ingestionJobKey: {}", ingestionJobKey),
-			3 // maxRetryNumber
+			std::format(", ingestionJobKey: {}", ingestionJobKey), 120 /*timeoutInSeconds*/, 3 /* maxRetryNumber */
 		);
 	}
 
