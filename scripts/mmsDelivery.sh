@@ -59,7 +59,7 @@ PIDFILE=/var/catramms/pids/api.pid
 #port used by nginx (see conf/*.nginx files)
 PORT=8010
 
-sleepWaitingLoadBalancer=10
+sleepWaitingLoadBalancer=20
 
 if [ "$command" == "start" ]
 then

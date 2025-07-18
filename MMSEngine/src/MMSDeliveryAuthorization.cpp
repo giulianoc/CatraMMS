@@ -916,6 +916,12 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 	{
 		// verifica se abbiamo externalDeliveries per questo specifico playerCountry
 
+		SPDLOG_INFO(
+			"getDeliveryHost"
+			", playerCountry: {}"
+			", requestWorkspace->_externalDeliveries: {}",
+			playerCountry, JSONUtils::toString(requestWorkspace->_externalDeliveries)
+		);
 		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveries, "HLS-live", json());
 		json countryExternalDeliveriesRoot = JSONUtils::asJson(hlsLiveRoot, playerCountry, json::array());
 		if (countryExternalDeliveriesRoot.size() > 0)
