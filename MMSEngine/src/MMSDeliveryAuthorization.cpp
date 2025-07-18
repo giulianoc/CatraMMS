@@ -912,13 +912,19 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string playerCountry, string defaultDeliveryHost)
 {
+	bool hlsLive = false;
+	bool playerCountryFlag = false;
 	string deliveryHost = defaultDeliveryHost;
 	if (playerCountry != "")
 	{
 		// verifica se abbiamo externalDeliveries per questo specifico playerCountry
 
 		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveries, "HLS-live", json());
+		if (hlsLiveRoot != json())
+			hlsLive = true;
 		json countryExternalDeliveriesRoot = JSONUtils::asJson(hlsLiveRoot, playerCountry, json::array());
+		if (countryExternalDeliveriesRoot != json::array())
+			playerCountryFlag = true;
 		if (countryExternalDeliveriesRoot.size() > 0)
 		{
 			for (int index = 0; index < countryExternalDeliveriesRoot.size(); index++)
@@ -940,8 +946,10 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		"getDeliveryHost"
 		", playerCountry: {}"
 		", externalDeliveries: {}"
-		", deliveryHost: {}",
-		playerCountry, JSONUtils::toString(requestWorkspace->_externalDeliveries), deliveryHost
+		", deliveryHost: {}"
+		", hlsLive: {}"
+		", playerCountryFlag: {}",
+		playerCountry, JSONUtils::toString(requestWorkspace->_externalDeliveries), deliveryHost, hlsLive, playerCountryFlag
 	);
 
 	return deliveryHost;
