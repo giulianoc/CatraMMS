@@ -2910,7 +2910,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("preferences = {}", trans.transaction->quote(newPreferences));
+				setSQL += std::format("preferences = {}", newPreferences == "" ? "null" : trans.transaction->quote(newPreferences));
 				oneParameterPresent = true;
 			}
 
@@ -2918,7 +2918,8 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("externalDeliveries = {}", trans.transaction->quote(newExternalDeliveries));
+				setSQL +=
+					std::format("externalDeliveries = {}", newExternalDeliveries == "" ? "null" : trans.transaction->quote(newExternalDeliveries));
 				oneParameterPresent = true;
 			}
 
