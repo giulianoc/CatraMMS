@@ -184,8 +184,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			deliveryURL = signedPlayURL;
 		}
-		else if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
-				 deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
+		else if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
+		// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // riga da eliminare
 		{
 			string deliveryHost;
 #ifdef AWSCLOUDFRONT
@@ -613,8 +613,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
-					deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
+				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
+				// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // riga da eliminare
 				{
 					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
@@ -652,7 +652,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 						deliveryURL = std::format(
-							"{}://{}{}?token={},{}", _deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI,
+							"{}://{}{}?token={},{}", _deliveryProtocol,
+							getDeliveryHost(requestWorkspace, playerCountry, _deliveryHost_authorizationThroughParameter), deliveryURI,
 							CurlWrapper::escape(md5Base64), expirationTime
 						);
 					}
@@ -703,8 +704,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
-					deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
+				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
+				// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 				{
 					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
@@ -848,8 +849,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 			tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed" ||
-				deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
+			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
+			// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey, playerIPToBeAuthorized ? playerIP : "",

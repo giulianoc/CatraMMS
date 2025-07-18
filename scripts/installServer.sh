@@ -72,6 +72,10 @@ time-zone()
 	echo "turn off timesyncd..."
 	timedatectl set-ntp no
 
+	systemctl stop systemd-timesyncd
+	systemctl disable systemd-timesyncd
+	apt-get remove systemd-timesyncd
+
 	echo "update..."
 	apt-get update
 
