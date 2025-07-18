@@ -2,10 +2,15 @@
 #ifndef Workspace_h
 #define Workspace_h
 
+#include "nlohmann/json.hpp"
 #include <string>
 #include <unordered_map>
 
 using namespace std;
+
+using json = nlohmann::json;
+using orderd_json = nlohmann::ordered_json;
+using namespace nlohmann::literals;
 
 struct Workspace
 {
@@ -15,8 +20,8 @@ struct Workspace
 	string _name;
 	string _directoryName;
 	int _maxEncodingPriority;
-	string _anotes;
-	string _externalDeliveries;
+	string _notes;
+	json _externalDeliveriesRoot = nullptr;
 
 	unsigned long _maxStorageInGB;
 	unsigned long _currentCostForStorage;

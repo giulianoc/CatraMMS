@@ -4,6 +4,7 @@
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
+#include "spdlog/spdlog.h"
 #include <chrono>
 #include <random>
 
@@ -50,8 +51,23 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		workspace->_name = res[0]["name"].as<string>();
 		workspace->_directoryName = res[0]["directoryName"].as<string>();
 		workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
-		workspace->_anotes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
-		workspace->_externalDeliveries = res[0]["externalDeliveries"].is_null() ? "" : res[0]["externalDeliveries"].as<string>();
+		workspace->_notes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
+		try
+		{
+			workspace->_externalDeliveriesRoot =
+				res[0]["externalDeliveries"].is_null() ? nullptr : JSONUtils::toJson(res[0]["externalDeliveries"].as<string>());
+		}
+		catch (exception &e)
+		{
+			workspace->_externalDeliveriesRoot = nullptr;
+
+			SPDLOG_ERROR(
+				"JSONUtils::toJson failed"
+				", json: {}"
+				", exception: {}",
+				res[0]["externalDeliveries"].as<string>(), e.what()
+			);
+		}
 
 		workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
 		workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
