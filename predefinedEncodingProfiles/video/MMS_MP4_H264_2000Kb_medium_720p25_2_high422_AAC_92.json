@@ -8,7 +8,7 @@
 		"frameRate": 25,
 		"twoPasses" : false,
 		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
-		"keyFrameIntervalInSeconds": 1,
+		"keyFrameIntervalInSeconds": 2,
 		"bitRates": [
 			{
 				"width" : 1280,
