@@ -50,10 +50,12 @@ mms-account-creation()
 
 	if [ "$moduleType" == "externalDelivery" ]; then
 		#nel caso di externalDelivery, nginx deve partire come root
-		#perchè ascolta sulla porta 443. Per cui aggiungiamo i comandi sotto
-		#che si giustificano guardando lo script nginx.sh
+		#perchè ascolta sulla porta 443. Per cui aggiungiamo il comando sotto (/bin/bash)
+		#che si giustifica guardando lo script nginx.sh
+		#Inoltre bisogna aggiungere /bin/kill perchè lo script crontab.sh, durante la rotazione dei log file di nginx, esegue la kill
+		#su nginx (che gira come root) per fargli ricreare i file di log
 
-		echo "mms ALL=(ALL) NOPASSWD: /bin/bash" > "/etc/sudoers.d/mms-nginx-commands"
+		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill" > "/etc/sudoers.d/mms-nginx-commands"
 		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
 	fi
 }

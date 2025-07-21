@@ -936,7 +936,6 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		}
 	}
 
-	/*
 	SPDLOG_INFO(
 		"getDeliveryHost"
 		", playerCountry: {}"
@@ -944,7 +943,6 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		", deliveryHost: {}",
 		playerCountry, JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot), deliveryHost
 	);
-	*/
 
 	return deliveryHost;
 }

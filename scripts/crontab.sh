@@ -255,7 +255,7 @@ else
 			#BE CAREFULL SUDO MAY ASK PASSWORD. 
 			#Add the command '.../crontab.rsi.sh 12' to 'sudo crontab -e'
 			#sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
-			kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+			sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
 		fi
 
 		if [ "$timeoutInMinutes" == "" ]
