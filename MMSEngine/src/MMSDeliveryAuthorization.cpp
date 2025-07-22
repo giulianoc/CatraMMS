@@ -916,22 +916,46 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 	if (playerCountry != "")
 	{
 		// verifica se abbiamo externalDeliveries per questo specifico playerCountry
+		/*
+		{"HLS-live": {
+		"hostGroups": {
+			"group-1": [
+			{ "host": "srv-1.cibortvlive.com", "running": true },
+			{ "host": "srv-2.cibortvlive.com", "running": true }
+			],
+			"default": [
+			{ "host": "srv-3.cibortvlive.com", "running": true },
+			{ "host": "srv-4.cibortvlive.com", "running": false }
+			]
+		},
+		"countryMap": {
+			"US": "group-1",
+			"CA": "group-1",
+			"BR": "group-2",
+			"AR": "group-2",
+			"IT": "group-1"
+		}
+		}}
+		*/
 
 		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveriesRoot, "HLS-live", json());
-		json countryExternalDeliveriesRoot = JSONUtils::asJson(hlsLiveRoot, playerCountry, json::array());
-		if (countryExternalDeliveriesRoot.size() > 0)
+
+		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
+		json countryExternalDeliveriesGroupRoot = JSONUtils::asJson(countryMapRoot, playerCountry, "default");
+		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
+
+		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, playerCountry, json::array());
+
+		for (int index = 0; index < hostGroupRoot.size(); index++)
 		{
-			for (int index = 0; index < countryExternalDeliveriesRoot.size(); index++)
+			int currentIndex = nextExternalDeliveriesHLSLiveIndex() % hostGroupRoot.size();
+			// externalDeliveries ed il flag running sono recuperati dal DB
+			// Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutenzione,
+			// è sufficiente mettere il flag running a false
+			if (JSONUtils::asBool(hostGroupRoot[currentIndex], "running"))
 			{
-				int currentIndex = nextExternalDeliveriesHLSLiveIndex() % countryExternalDeliveriesRoot.size();
-				// externalDeliveries ed il flag running sono recuperati dal DB
-				// Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutenzione,
-				// è sufficiente mettere il flag running a false
-				if (JSONUtils::asBool(countryExternalDeliveriesRoot[currentIndex], "running"))
-				{
-					deliveryHost = JSONUtils::asString(countryExternalDeliveriesRoot[currentIndex], "host");
-					break;
-				}
+				deliveryHost = JSONUtils::asString(hostGroupRoot[currentIndex], "host");
+				break;
 			}
 		}
 	}
@@ -950,6 +974,8 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 int MMSDeliveryAuthorization::nextExternalDeliveriesHLSLiveIndex()
 {
 	lock_guard<mutex> locker(_nextExternalDeliveriesMutex);
+	if (_externalDeliveriesHLSLiveIndex > 2000000)
+		_externalDeliveriesHLSLiveIndex = 0;
 	return _externalDeliveriesHLSLiveIndex++;
 }
 

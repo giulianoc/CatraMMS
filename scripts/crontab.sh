@@ -255,7 +255,13 @@ else
 			#BE CAREFULL SUDO MAY ASK PASSWORD. 
 			#Add the command '.../crontab.rsi.sh 12' to 'sudo crontab -e'
 			#sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
-			sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+			nginxUser=$(stat -c "%U" /proc/$(cat /var/catramms/pids/nginx.pid))
+			if [ "$nginxUser" = "root" ]; then
+				#nel caso di externalDelivery lo user è root
+				sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+			else
+				kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+			fi
 		fi
 
 		if [ "$timeoutInMinutes" == "" ]

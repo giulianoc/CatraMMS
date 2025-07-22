@@ -57,7 +57,7 @@ class MMSDeliveryAuthorization
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
 	mutex _nextExternalDeliveriesMutex;
-	int _externalDeliveriesHLSLiveIndex;
+	int32_t _externalDeliveriesHLSLiveIndex;
 
 	string _keyPairId;
 	string _privateKeyPEMPathName;
