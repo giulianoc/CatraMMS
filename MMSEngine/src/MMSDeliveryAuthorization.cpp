@@ -941,10 +941,10 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveriesRoot, "HLS-live", json());
 
 		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
-		json countryExternalDeliveriesGroupRoot = JSONUtils::asJson(countryMapRoot, playerCountry, "default");
+		string countryExternalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
 		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
 
-		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, playerCountry, json::array());
+		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, countryExternalDeliveriesGroup, json::array());
 
 		for (int index = 0; index < hostGroupRoot.size(); index++)
 		{
