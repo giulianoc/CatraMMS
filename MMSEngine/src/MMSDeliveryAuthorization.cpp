@@ -25,6 +25,7 @@
 #include "spdlog/spdlog.h"
 // #include <openssl/md5.h>
 #include <exception>
+#include <memory>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -920,12 +921,12 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		{"HLS-live": {
 		"hostGroups": {
 			"group-1": [
-			{ "host": "srv-1.cibortvlive.com", "running": true },
-			{ "host": "srv-2.cibortvlive.com", "running": true }
+				{ "host": "srv-1.cibortvlive.com", "running": true },
+				{ "host": "srv-2.cibortvlive.com", "running": true }
 			],
 			"default": [
-			{ "host": "srv-3.cibortvlive.com", "running": true },
-			{ "host": "srv-4.cibortvlive.com", "running": false }
+				{ "host": "srv-3.cibortvlive.com", "running": true },
+				{ "host": "srv-4.cibortvlive.com", "running": false }
 			]
 		},
 		"countryMap": {
@@ -941,14 +942,15 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveriesRoot, "HLS-live", json());
 
 		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
-		string countryExternalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
 		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
 
+		string countryExternalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
 		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, countryExternalDeliveriesGroup, json::array());
 
 		for (int index = 0; index < hostGroupRoot.size(); index++)
 		{
-			int currentIndex = nextExternalDeliveriesHLSLiveIndex() % hostGroupRoot.size();
+			int currentIndex =
+				externalDeliveryGroup(requestWorkspace->_workspaceKey, countryExternalDeliveriesGroup)->nextIndex() % hostGroupRoot.size();
 			// externalDeliveries ed il flag running sono recuperati dal DB
 			// Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutenzione,
 			// è sufficiente mettere il flag running a false
@@ -971,12 +973,24 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 	return deliveryHost;
 }
 
-int MMSDeliveryAuthorization::nextExternalDeliveriesHLSLiveIndex()
+shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup> MMSDeliveryAuthorization::externalDeliveryGroup(int64_t workspaceKey, string groupName)
 {
-	lock_guard<mutex> locker(_nextExternalDeliveriesMutex);
-	if (_externalDeliveriesHLSLiveIndex > 2000000)
-		_externalDeliveriesHLSLiveIndex = 0;
-	return _externalDeliveriesHLSLiveIndex++;
+	lock_guard<mutex> locker(_externalDeliveriesMutex);
+
+	shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup> externalDeliveryGroup;
+
+	string key = std::format("{}-{}", workspaceKey, groupName);
+	auto it = _externalDeliveriesGroups.find(key);
+	if (it == _externalDeliveriesGroups.end())
+	{
+		externalDeliveryGroup = make_shared<MMSDeliveryAuthorization::ExternalDeliveryGroup>();
+
+		_externalDeliveriesGroups.insert(pair<string, shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup>>(key, externalDeliveryGroup));
+	}
+	else
+		externalDeliveryGroup = it->second;
+
+	return externalDeliveryGroup;
 }
 
 string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)

@@ -1440,7 +1440,7 @@ install-mms-nginx-package()
 		apt install -y certbot python3-certbot-nginx
 	
 		echo "creeremo un certificato il cui dominio sarà validato tramite un record TXT che dovremo configurare nel DNS."
-		echo -n "Scrivi il nome del server (i.e.: srv-1.cibortv.tv)? "
+		echo -n "Scrivi il nome del server (i.e.: srv-1.cibortvlive.com)? "
 		read servername
 		echo "Dopo aver fatto la configurazione DNS aspettare qualche minuto che si sia propagato"
 		echo "Se vuoi verificare che il record sia visibile, il comando è:"

@@ -25,6 +25,19 @@ using namespace std;
 
 class MMSDeliveryAuthorization
 {
+  public:
+	struct ExternalDeliveryGroup
+	{
+		mutex _groupMutex;
+		int32_t _nextIndex;
+		int32_t nextIndex()
+		{
+			lock_guard<mutex> locker(_groupMutex);
+			if (_nextIndex > 2000000)
+				_nextIndex = 0;
+			return _nextIndex++;
+		}
+	};
 
   public:
 	MMSDeliveryAuthorization(json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade);
@@ -56,8 +69,8 @@ class MMSDeliveryAuthorization
 	shared_ptr<MMSStorage> _mmsStorage;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
-	mutex _nextExternalDeliveriesMutex;
-	int32_t _externalDeliveriesHLSLiveIndex;
+	mutex _externalDeliveriesMutex;
+	map<string, shared_ptr<ExternalDeliveryGroup>> _externalDeliveriesGroups;
 
 	string _keyPairId;
 	string _privateKeyPEMPathName;
@@ -72,6 +85,6 @@ class MMSDeliveryAuthorization
 	string getSignedMMSPath(string contentURI, time_t expirationTime);
 	time_t getReusableExpirationTime(int ttlInSeconds);
 	string getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string country, string defaultDeliveryHost);
-	int nextExternalDeliveriesHLSLiveIndex();
+	shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup> externalDeliveryGroup(int64_t workspaceKey, string groupName);
 };
 #endif
