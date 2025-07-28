@@ -17,11 +17,11 @@ class HostBandwidthTracker
   public:
 	void updateHosts(json hostAndRunningRoot);
 
-	// Aggiorna (sovrascrive) la banda per un dato hostname
-	void updateBandwidth(const string &hostname, uint64_t bandwidth);
+	// Aggiorna (sovrascrive) la banda per un dato host
+	void updateBandwidth(const string &host, uint64_t bandwidth);
 
 	// Aggiunge banda (cumulativamente)
-	void addBandwidth(const string &hostname, uint64_t bandwidth);
+	void addBandwidth(const string &host, uint64_t bandwidth);
 
 	optional<string> getMinBandwidthHost();
 
@@ -29,6 +29,6 @@ class HostBandwidthTracker
 
   private:
 	mutex _trackerMutex;
-	// associa ad ogni hostname due informazioni: running e bandwidthUsage
+	// associa ad ogni host due informazioni: running e bandwidthUsage
 	unordered_map<string, pair<bool, uint64_t>> _bandwidthMap;
 };

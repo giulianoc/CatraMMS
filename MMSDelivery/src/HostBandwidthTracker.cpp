@@ -41,10 +41,10 @@ void HostBandwidthTracker::updateHosts(json hostAndRunningRoot)
 	}
 }
 
-void HostBandwidthTracker::addBandwidth(const string &hostname, uint64_t bandwidth)
+void HostBandwidthTracker::addBandwidth(const string &host, uint64_t bandwidth)
 {
 	lock_guard<mutex> locker(_trackerMutex);
-	auto it = _bandwidthMap.find("hostname");
+	auto it = _bandwidthMap.find(host);
 	if (it != _bandwidthMap.end())
 		it->second.second += bandwidth;
 }
@@ -87,17 +87,11 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 		return minHost;
 }
 
-void HostBandwidthTracker::updateBandwidth(const string &hostname, uint64_t bandwidth)
+void HostBandwidthTracker::updateBandwidth(const string &host, uint64_t bandwidth)
 {
-	SPDLOG_INFO(
-		"bandwidthUsageThread updateBandwidth"
-		", host: {}"
-		", bandwidth: {}",
-		hostname, bandwidth
-	);
 	lock_guard<mutex> locker(_trackerMutex);
 
-	auto it = _bandwidthMap.find("hostname");
+	auto it = _bandwidthMap.find(host);
 	if (it != _bandwidthMap.end())
 		it->second.second = bandwidth;
 }
