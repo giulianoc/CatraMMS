@@ -17,6 +17,7 @@
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
+#include "HostBandwidthTracker.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 // #include <fstream>
@@ -25,20 +26,6 @@ using namespace std;
 
 class MMSDeliveryAuthorization
 {
-  public:
-	struct ExternalDeliveryGroup
-	{
-		mutex _groupMutex;
-		int32_t _nextIndex;
-		int32_t nextIndex()
-		{
-			lock_guard<mutex> locker(_groupMutex);
-			if (_nextIndex > 2000000)
-				_nextIndex = 0;
-			return _nextIndex++;
-		}
-	};
-
   public:
 	MMSDeliveryAuthorization(json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade);
 
@@ -64,13 +51,16 @@ class MMSDeliveryAuthorization
 	);
 	string getAWSSignedURL(string playURL, int expirationInSeconds);
 
+	unordered_map<string, uint64_t> getExternalDeliveriesHosts();
+	void updateExternalDeliveriesBandwidthHosts(unordered_map<string, uint64_t> hostsBandwidth);
+
   private:
 	json _configuration;
 	shared_ptr<MMSStorage> _mmsStorage;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
 	mutex _externalDeliveriesMutex;
-	map<string, shared_ptr<ExternalDeliveryGroup>> _externalDeliveriesGroups;
+	map<string, shared_ptr<HostBandwidthTracker>> _externalDeliveriesGroups;
 
 	string _keyPairId;
 	string _privateKeyPEMPathName;
@@ -85,6 +75,6 @@ class MMSDeliveryAuthorization
 	string getSignedMMSPath(string contentURI, time_t expirationTime);
 	time_t getReusableExpirationTime(int ttlInSeconds);
 	string getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string country, string defaultDeliveryHost);
-	shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup> externalDeliveryGroup(int64_t workspaceKey, string groupName);
+	shared_ptr<HostBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, string groupName, json hostGroupRoot);
 };
 #endif

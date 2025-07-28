@@ -17,61 +17,14 @@
 # Commercial use other than under the terms of the GNU General Public License is
 # allowed only after express negotiation of conditions with the authors.
 
-  set(SOURCES
-      AWSSigner.cpp
-      #MMSDeliveryAuthorization.cpp
-      MMSEngineDBFacade_Postgres.cpp
-      MMSEngineDBFacade_Configuration_Postgres.cpp
-      MMSEngineDBFacade_ConfigurationOutputType_Postgres.cpp
-      MMSEngineDBFacade_ConfigurationSocial_Postgres.cpp
-      MMSEngineDBFacade_ConfigurationStream_Postgres.cpp
-      MMSEngineDBFacade_CreateTables_Postgres.cpp
-      MMSEngineDBFacade_EncodersPool_Postgres.cpp
-      MMSEngineDBFacade_EncodingJobs_Postgres.cpp
-      MMSEngineDBFacade_EncodingProfiles_Postgres.cpp
-      MMSEngineDBFacade_IngestionJobs_Postgres.cpp
-      MMSEngineDBFacade_Invoice_Postgres.cpp
-      MMSEngineDBFacade_MediaItems_Postgres.cpp
-      MMSEngineDBFacade_PartitionInfo_Postgres.cpp
-      MMSEngineDBFacade_Retention_Postgres.cpp
-      MMSEngineDBFacade_Statistic_Postgres.cpp
-      MMSEngineDBFacade_UserWorkspace_Postgres.cpp
-      MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp
-      MMSEngineDBFacade_Workflow_Postgres.cpp
-      #MMSStorage.cpp
-      Workspace.cpp
-      Validator.cpp
-      #ActiveEncodingsManager.cpp
-      #EncoderProxy.cpp
-      #EncoderProxy_Content.cpp
-      #EncoderProxy_FaceIdentification.cpp
-      #EncoderProxy_FaceRecognition.cpp
-      #EncoderProxy_Image.cpp
-      #EncoderProxy_LiveProxy.cpp
-      #EncoderProxy_LiveRecorder.cpp
-      #EncoderProxy_Process.cpp
-      #EncoderProxy_AWS.cpp
-      #EncodersLoadBalancer.cpp
-      EMailSender.cpp
-      ThreadsStatistic.cpp)
+set(SOURCES
+  HostBandwidthTracker.cpp
+  MMSDeliveryAuthorization.cpp
+)
 set(HEADERS
-    AWSSigner.h
-    #MMSDeliveryAuthorization.h
-    MMSEngineDBFacade.h
-    #MMSStorage.h
-    PersistenceLock.h
-    Workspace.h
-    Validator.h
-    #ActiveEncodingsManager.h
-    #EncoderProxy.h
-    #EncodersLoadBalancer.h
-    EMailSender.h
-    LocalAssetIngestionEvent.h
-    MultiLocalAssetIngestionEvent.h
-    ThreadsStatistic.h)
-
-#add_compile_definitions(MAGICKCORE_HDRI_ENABLE=0)
-#add_compile_definitions(MAGICKCORE_QUANTUM_DEPTH=16)
+  HostBandwidthTracker.h
+  MMSDeliveryAuthorization.h
+)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(
@@ -80,26 +33,24 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories("${STRINGUTILS_INCLUDE_DIR}")
-include_directories("${CONVERT_INCLUDE_DIR}")
-include_directories("${DATETIME_INCLUDE_DIR}")
+#include_directories("${DATETIME_INCLUDE_DIR}")
 include_directories("${ENCRYPT_INCLUDE_DIR}")
 #include_directories("${SYSTEM_INCLUDE_DIR}")
+include_directories("${CONVERT_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
 #include_directories("${MULTIEVENTSSET_INCLUDE_DIR}")
 include_directories("${POSTGRESHELPER_INCLUDE_DIR}")
 include_directories("${DBCONN_INCLUDE_DIR}")
 include_directories("${CURLWRAPPER_INCLUDE_DIR}")
-include_directories("${FFMPEGWRAPPER_INCLUDE_DIR}")
-include_directories("${PROCESSUTILITY_INCLUDE_DIR}")
+#include_directories("${FFMPEGWRAPPER_INCLUDE_DIR}")
+#include_directories("${PROCESSUTILITY_INCLUDE_DIR}")
 #include_directories("${SAFEFILESYSTEM_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
 include_directories("${SPDLOG_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
-#include_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
+include_directories("${PROJECT_SOURCE_DIR}/MMSStorage/src")
+include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
-if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
-  include_directories("/usr/include/mysql-cppconn/jdbc")
-endif()
 #if(APPLE)
 #include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 #include_directories(
@@ -121,7 +72,7 @@ endif()
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
-add_library(MMSEngine SHARED ${SOURCES} ${HEADERS})
+add_library(MMSDelivery SHARED ${SOURCES} ${HEADERS})
 
 #target_link_libraries(MMSEngine aws-cpp-sdk-core)
 #target_link_libraries(MMSEngine aws-cpp-sdk-medialive)
@@ -134,5 +85,5 @@ add_library(MMSEngine SHARED ${SOURCES} ${HEADERS})
 #target_link_libraries(MMSEngine MultiEventsSet)
 #endif()
 
-install(TARGETS MMSEngine DESTINATION lib)
+install(TARGETS MMSDelivery DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION include)

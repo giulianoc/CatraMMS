@@ -298,10 +298,12 @@ int main(int argc, char **argv)
 		if (threadsNumber > 0)
 		{
 			thread fileUploadProgressThread(&API::fileUploadProgressCheck, apis[0]);
+			thread bandwidthUsage(&API::bandwidthUsageThread, apis[0]);
 
 			apiThreads[0].join();
 
 			apis[0]->stopUploadFileProgressThread();
+			apis[0]->stopBandwidthUsageThread();
 		}
 
 		SPDLOG_INFO("API shutdown");

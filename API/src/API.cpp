@@ -18,11 +18,13 @@
 #include "JSONUtils.h"
 #include "LdapWrapper.h"
 #include "StringUtils.h"
+#include "System.h"
 #include "Validator.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
+#include <format>
 #include <fstream>
 #include <openssl/evp.h>
 #include <regex>
@@ -32,6 +34,7 @@
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#include <unordered_map>
 
 #include "API.h"
 
@@ -132,146 +135,159 @@ API::API(
 		);
 	}
 
-	_defaultSharedHLSChannelsNumber = JSONUtils::asInt(configurationRoot["api"], "defaultSharedHLSChannelsNumber", 1);
+	json apiRoot = configurationRoot["api"];
+
+	_defaultSharedHLSChannelsNumber = JSONUtils::asInt(apiRoot, "defaultSharedHLSChannelsNumber", 1);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->defaultSharedHLSChannelsNumber: {}",
 		_defaultSharedHLSChannelsNumber
 	);
 
-	/*
-	_apiProtocol =  JSONUtils::asString(_configuration["api"], "protocol", "");
-	SPDLOG_INFO("Configuration item"
-		", api->protocol: {}", _apiProtocol
+	_apiProtocol = JSONUtils::asString(apiRoot, "protocol", "");
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->protocol: {}",
+		_apiProtocol
 	);
-	_apiHostname =  JSONUtils::asString(_configuration["api"], "hostname", "");
-	SPDLOG_INFO("Configuration item"
-		", api->hostname: {}", _apiHostname
+	_apiHostname = JSONUtils::asString(apiRoot, "hostname", "");
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->hostname: {}",
+		_apiHostname
 	);
-	_apiPort = JSONUtils::asInt(_configuration["api"], "port", 0);
-	SPDLOG_INFO("Configuration item"
-		", api->port: {}", _apiPort
+	_apiPort = JSONUtils::asInt(apiRoot, "port", 0);
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->port: {}",
+		_apiPort
 	);
-	_apiVersion =  JSONUtils::asString(_configuration["api"], "version", "");
-	SPDLOG_INFO("Configuration item"
-		", api->version: {}", _apiVersion
+	_apiVersion = JSONUtils::asString(apiRoot, "version", "");
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->version: {}",
+		_apiVersion
 	);
-	*/
 
-	json api = configurationRoot["api"];
 	// _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
 	// SPDLOG_INFO(__FILEREF__ + "Configuration item"
 	//    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
 	// );
-	_progressUpdatePeriodInSeconds = JSONUtils::asInt(api["binary"], "progressUpdatePeriodInSeconds", 0);
+	_progressUpdatePeriodInSeconds = JSONUtils::asInt(apiRoot["binary"], "progressUpdatePeriodInSeconds", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->progressUpdatePeriodInSeconds: {}",
 		_progressUpdatePeriodInSeconds
 	);
-	_webServerPort = JSONUtils::asInt(api["binary"], "webServerPort", 0);
+	_bandwidthUsagePeriodInSeconds = JSONUtils::asInt(apiRoot["binary"], "bandwidthUsagePeriodInSeconds", 15);
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->binary->bandwidthUsagePeriodInSeconds: {}",
+		_bandwidthUsagePeriodInSeconds
+	);
+	_webServerPort = JSONUtils::asInt(apiRoot["binary"], "webServerPort", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->webServerPort: {}",
 		_webServerPort
 	);
-	_maxProgressCallFailures = JSONUtils::asInt(api["binary"], "maxProgressCallFailures", 0);
+	_maxProgressCallFailures = JSONUtils::asInt(apiRoot["binary"], "maxProgressCallFailures", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->maxProgressCallFailures: {}",
 		_maxProgressCallFailures
 	);
-	_progressURI = JSONUtils::asString(api["binary"], "progressURI", "");
+	_progressURI = JSONUtils::asString(apiRoot["binary"], "progressURI", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->progressURI: {}",
 		_progressURI
 	);
 
-	_defaultTTLInSeconds = JSONUtils::asInt(api["delivery"], "defaultTTLInSeconds", 60);
+	_defaultTTLInSeconds = JSONUtils::asInt(apiRoot["delivery"], "defaultTTLInSeconds", 60);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->defaultTTLInSeconds: {}",
 		_defaultTTLInSeconds
 	);
 
-	_defaultMaxRetries = JSONUtils::asInt(api["delivery"], "defaultMaxRetries", 60);
+	_defaultMaxRetries = JSONUtils::asInt(apiRoot["delivery"], "defaultMaxRetries", 60);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->defaultMaxRetries: {}",
 		_defaultMaxRetries
 	);
 
-	_defaultRedirect = JSONUtils::asBool(api["delivery"], "defaultRedirect", true);
+	_defaultRedirect = JSONUtils::asBool(apiRoot["delivery"], "defaultRedirect", true);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->defaultRedirect: {}",
 		_defaultRedirect
 	);
 
-	_deliveryProtocol = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
+	_deliveryProtocol = JSONUtils::asString(apiRoot["delivery"], "deliveryProtocol", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryProtocol: {}",
 		_deliveryProtocol
 	);
-	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
+	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(apiRoot["delivery"], "deliveryHost_authorizationThroughParameter", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughParameter: {}",
 		_deliveryHost_authorizationThroughParameter
 	);
-	_deliveryHost_authorizationThroughPath = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
+	_deliveryHost_authorizationThroughPath = JSONUtils::asString(apiRoot["delivery"], "deliveryHost_authorizationThroughPath", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
 	);
 
-	_ldapEnabled = JSONUtils::asBool(api["activeDirectory"], "enabled", false);
+	_ldapEnabled = JSONUtils::asBool(apiRoot["activeDirectory"], "enabled", false);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->enabled: {}",
 		_ldapEnabled
 	);
-	_ldapURL = JSONUtils::asString(api["activeDirectory"], "ldapURL", "");
+	_ldapURL = JSONUtils::asString(apiRoot["activeDirectory"], "ldapURL", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->ldapURL: {}",
 		_ldapURL
 	);
-	_ldapCertificatePathName = JSONUtils::asString(api["activeDirectory"], "certificatePathName", "");
+	_ldapCertificatePathName = JSONUtils::asString(apiRoot["activeDirectory"], "certificatePathName", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->certificatePathName: {}",
 		_ldapCertificatePathName
 	);
-	_ldapManagerUserName = JSONUtils::asString(api["activeDirectory"], "managerUserName", "");
+	_ldapManagerUserName = JSONUtils::asString(apiRoot["activeDirectory"], "managerUserName", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->managerUserName: {}",
 		_ldapManagerUserName
 	);
-	_ldapManagerPassword = JSONUtils::asString(api["activeDirectory"], "managerPassword", "");
+	_ldapManagerPassword = JSONUtils::asString(apiRoot["activeDirectory"], "managerPassword", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->managerPassword: {}",
 		_ldapManagerPassword
 	);
-	_ldapBaseDn = JSONUtils::asString(api["activeDirectory"], "baseDn", "");
+	_ldapBaseDn = JSONUtils::asString(apiRoot["activeDirectory"], "baseDn", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->baseDn: {}",
 		_ldapBaseDn
 	);
-	_ldapDefaultWorkspaceKeys = JSONUtils::asString(api["activeDirectory"], "defaultWorkspaceKeys", "");
+	_ldapDefaultWorkspaceKeys = JSONUtils::asString(apiRoot["activeDirectory"], "defaultWorkspaceKeys", "");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->activeDirectory->defaultWorkspaceKeys: {}",
 		_ldapDefaultWorkspaceKeys
 	);
 
-	_registerUserEnabled = JSONUtils::asBool(api, "registerUserEnabled", false);
+	_registerUserEnabled = JSONUtils::asBool(apiRoot, "registerUserEnabled", false);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->registerUserEnabled: {}",
@@ -424,6 +440,8 @@ API::API(
 
 	_fileUploadProgressData = fileUploadProgressData;
 	_fileUploadProgressThreadShutdown = false;
+
+	_bandwidthUsageThreadShutdown = false;
 }
 
 API::~API() = default;
@@ -532,6 +550,35 @@ void API::manageRequestAndResponse(
 		{
 			SPDLOG_ERROR(
 				"status failed"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what()
+			);
+
+			string errorMessage = string("Internal server error");
+			SPDLOG_ERROR(errorMessage);
+
+			sendError(request, 500, errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+	else if (method == "bandwidthUsage")
+	{
+		try
+		{
+			json statusRoot;
+
+			statusRoot["bandwidthUsage"] = _bandwidthUsage.load(memory_order_relaxed);
+
+			sendSuccess(
+				sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
+			);
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"bandwidthUsage failed"
 				", requestBody: {}"
 				", e.what(): {}",
 				requestBody, e.what()
@@ -2838,7 +2885,7 @@ bool API::basicAuthenticationRequired(string requestURI, unordered_map<string, s
 
 	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword" ||
 		method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
-		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" ||
+		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" || method == "bandwidthUsage" ||
 		method == "status" // often used as healthy check
 	)
 		basicAuthenticationRequired = false;
@@ -3070,4 +3117,84 @@ void API::sendError(FCGX_Request &request, int htmlResponseCode, string errorMes
 	responseBodyRoot["error"] = errorMessage;
 
 	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
+}
+
+void API::stopBandwidthUsageThread()
+{
+	_bandwidthUsageThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
+}
+
+void API::bandwidthUsageThread()
+{
+	while (!_bandwidthUsageThreadShutdown)
+	{
+		this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
+
+		// aggiorniamo la banda usata da questo server
+		try
+		{
+			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
+
+			uint64_t bandwidthUsage = 0;
+			for (const auto &[iface, stats] : bandwidth)
+			{
+				auto [receivedBytes, transmittedBytes] = stats;
+				bandwidthUsage += (receivedBytes + transmittedBytes);
+				SPDLOG_INFO(
+					"bandwidthUsageThread, getBandwidthInMbps"
+					", iface: {}"
+					", receivedBytes: {}"
+					", transmittedBytes: {}"
+					", bandwidthUsage (Mbps): {}",
+					iface, receivedBytes, transmittedBytes, (bandwidthUsage * 8) / 1000000
+				);
+			}
+			_bandwidthUsage.store(bandwidthUsage, memory_order_relaxed);
+		}
+		catch (exception e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
+
+		// aggiorniamo le bande usate da _externalDeliveriesGroups
+		try
+		{
+			unordered_map<string, uint64_t> hostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesHosts();
+
+			if (hostsBandwidth.size() > 0)
+			{
+				for (auto &[host, bandwidth] : hostsBandwidth)
+				{
+					string bandwidthUsageURL = std::format("{}://{}:{}/catramms/{}/bandwidthUsage", _apiProtocol, host, _apiPort, _apiVersion);
+					int bandwidthUsageTimeoutInSeconds = 2;
+					json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
+
+					bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "bandwidthUsage");
+				}
+
+				for (auto &[host, bandwidth] : hostsBandwidth)
+					SPDLOG_INFO(
+						"bandwidthUsageThread, getExternalDeliveriesHosts"
+						", host: {}"
+						", bandwidthUsage (Mbps): {}",
+						host, (bandwidth * 8) / 1000000
+					);
+				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(hostsBandwidth);
+			}
+		}
+		catch (exception e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
+	}
 }

@@ -76,7 +76,7 @@ time-zone()
 
 	systemctl stop systemd-timesyncd
 	systemctl disable systemd-timesyncd
-	apt-get remove systemd-timesyncd
+	apt-get -y remove systemd-timesyncd
 
 	echo "update..."
 	apt-get update
@@ -1481,7 +1481,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6385
+	catraMMSVersion=1.0.6402
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

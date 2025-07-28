@@ -30,6 +30,8 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <regex>
+#include <unordered_map>
+#include <unordered_set>
 
 #define AWSCLOUDFRONT
 
@@ -946,18 +948,19 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 
 		string countryExternalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
 		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, countryExternalDeliveriesGroup, json::array());
-
-		for (int index = 0; index < hostGroupRoot.size(); index++)
+		if (hostGroupRoot.size() > 0)
 		{
-			int currentIndex =
-				externalDeliveryGroup(requestWorkspace->_workspaceKey, countryExternalDeliveriesGroup)->nextIndex() % hostGroupRoot.size();
-			// externalDeliveries ed il flag running sono recuperati dal DB
-			// Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutenzione,
-			// è sufficiente mettere il flag running a false
-			if (JSONUtils::asBool(hostGroupRoot[currentIndex], "running"))
+			shared_ptr<HostBandwidthTracker> hostBandwidthTracker =
+				getHostBandwidthTracker(requestWorkspace->_workspaceKey, countryExternalDeliveriesGroup, hostGroupRoot);
+			optional<string> deliveryHostOpt = hostBandwidthTracker->getMinBandwidthHost();
+			if (deliveryHostOpt.has_value())
 			{
-				deliveryHost = JSONUtils::asString(hostGroupRoot[currentIndex], "host");
-				break;
+				deliveryHost = deliveryHostOpt.value();
+				// aggiungiamo una banda fittizia occupata da questa richiesta in attesa
+				// che la banda reala venga aggiornata periodicamente
+				// Questo per evitare che tutte le richieste andranno tutte sullo stesso host in attesa che bandwidthUsage si aggiorni
+				uint64_t bandwidth = 2 * 1000000;
+				hostBandwidthTracker->addBandwidth(deliveryHost, bandwidth);
 			}
 		}
 	}
@@ -973,24 +976,56 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 	return deliveryHost;
 }
 
-shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup> MMSDeliveryAuthorization::externalDeliveryGroup(int64_t workspaceKey, string groupName)
+shared_ptr<HostBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTracker(int64_t workspaceKey, string groupName, json hostGroupRoot)
 {
 	lock_guard<mutex> locker(_externalDeliveriesMutex);
 
-	shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup> externalDeliveryGroup;
+	shared_ptr<HostBandwidthTracker> hostBandwidthTracker;
 
 	string key = std::format("{}-{}", workspaceKey, groupName);
 	auto it = _externalDeliveriesGroups.find(key);
 	if (it == _externalDeliveriesGroups.end())
 	{
-		externalDeliveryGroup = make_shared<MMSDeliveryAuthorization::ExternalDeliveryGroup>();
-
-		_externalDeliveriesGroups.insert(pair<string, shared_ptr<MMSDeliveryAuthorization::ExternalDeliveryGroup>>(key, externalDeliveryGroup));
+		hostBandwidthTracker = make_shared<HostBandwidthTracker>();
+		_externalDeliveriesGroups.insert(pair<string, shared_ptr<HostBandwidthTracker>>(key, hostBandwidthTracker));
 	}
 	else
-		externalDeliveryGroup = it->second;
+		hostBandwidthTracker = it->second;
+	hostBandwidthTracker->updateHosts(hostGroupRoot);
 
-	return externalDeliveryGroup;
+	// externalDeliveries ed il flag running sono recuperati dal DB
+	// Se volessimo disabilitare un externalDelivery perchè ad es. bisogna fare manutenzione,
+	// è sufficiente mettere il flag running a false
+
+	return hostBandwidthTracker;
+}
+
+unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesHosts()
+{
+	unordered_map<string, uint64_t> hostsBandwidth;
+
+	lock_guard<mutex> locker(_externalDeliveriesMutex);
+
+	unordered_set<string> hosts;
+	for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
+		hostBandwidthTracker->addHosts(hosts);
+
+	for (string host : hosts)
+		hostsBandwidth.insert(make_pair(host, 0));
+
+	return hostsBandwidth;
+}
+
+void MMSDeliveryAuthorization::updateExternalDeliveriesBandwidthHosts(unordered_map<string, uint64_t> hostsBandwidth)
+{
+
+	lock_guard<mutex> locker(_externalDeliveriesMutex);
+
+	for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
+	{
+		for (const auto &[host, hostBandwidth] : hostsBandwidth)
+			hostBandwidthTracker->updateBandwidth(host, hostBandwidth);
+	}
 }
 
 string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)

@@ -62,6 +62,9 @@ class API : public FastCGIAPI
 	void fileUploadProgressCheck();
 	void stopUploadFileProgressThread();
 
+	void bandwidthUsageThread();
+	void stopBandwidthUsageThread();
+
   private:
 	json _configurationRoot;
 
@@ -88,12 +91,16 @@ class API : public FastCGIAPI
 	int _maxProgressCallFailures;
 	string _progressURI;
 
+	bool _bandwidthUsageThreadShutdown;
+	unsigned long _bandwidthUsagePeriodInSeconds;
+	atomic<uint64_t> _bandwidthUsage{0};
+
 	int _maxPageSize;
 
-	// string              _apiProtocol;
-	// string              _apiHostname;
-	// int                 _apiPort;
-	// string				_apiVersion;
+	string _apiProtocol;
+	string _apiHostname;
+	int _apiPort;
+	string _apiVersion;
 
 	// string				_ffmpegEncoderProtocol;
 	// int					_ffmpegEncoderPort;

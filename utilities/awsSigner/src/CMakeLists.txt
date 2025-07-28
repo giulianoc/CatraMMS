@@ -103,6 +103,7 @@ target_link_libraries(awsSigner Magick++-7.Q16HDRI)
 #
 target_link_libraries(awsSigner Encrypt)
 target_link_libraries(awsSigner Scheduler)
+target_link_libraries(awsSigner ProcessUtility)
 target_link_libraries(awsSigner PThread)
 target_link_libraries(awsSigner MultiEventsSet)
 if(CRYPTO_FOUND)
