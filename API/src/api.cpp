@@ -279,13 +279,16 @@ int main(int argc, char **argv)
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
 
+		shared_ptr<atomic<uint64_t>> bandwidthUsage = make_shared<atomic<uint64_t>>(0);
+
 		vector<shared_ptr<API>> apis;
 		vector<thread> apiThreads;
 
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
 			shared_ptr<API> api = make_shared<API>(
-				noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization, &fcgiAcceptMutex, &fileUploadProgressData
+				noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization, &fcgiAcceptMutex, &fileUploadProgressData,
+				bandwidthUsage
 			);
 
 			apis.push_back(api);

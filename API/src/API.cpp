@@ -40,12 +40,14 @@
 
 API::API(
 	bool noFileSystemAccess, json configurationRoot, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
-	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData
+	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
+	shared_ptr<atomic<uint64_t>> bandwidthUsage
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
 	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization)
 {
 	_configurationRoot = configurationRoot;
+	_bandwidthUsage = bandwidthUsage;
 
 	string encodingPriority = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPriority", "low");
 	SPDLOG_INFO(
@@ -569,7 +571,7 @@ void API::manageRequestAndResponse(
 		{
 			json statusRoot;
 
-			statusRoot["bandwidthUsage"] = _bandwidthUsage.load(memory_order_relaxed);
+			statusRoot["bandwidthUsage"] = _bandwidthUsage->load(memory_order_relaxed);
 
 			sendSuccess(
 				sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
@@ -3151,7 +3153,7 @@ void API::bandwidthUsageThread()
 					iface, receivedBytes, transmittedBytes, (bandwidthUsage * 8) / 1000000
 				);
 			}
-			_bandwidthUsage.store(bandwidthUsage, memory_order_relaxed);
+			_bandwidthUsage->store(bandwidthUsage, memory_order_relaxed);
 		}
 		catch (exception e)
 		{
