@@ -23,9 +23,23 @@ void HostBandwidthTracker::updateHosts(json hostAndRunningRoot)
 
 		auto it = _bandwidthMap.find(host);
 		if (it == _bandwidthMap.end())
+		{
+			SPDLOG_INFO(
+				"bandwidthUsageThread _bandwidthMap added"
+				", host: {}",
+				host
+			);
 			_bandwidthMap[host] = make_pair(running, 0); // insert
+		}
 		else
+		{
+			SPDLOG_INFO(
+				"bandwidthUsageThread _bandwidthMap NOT added"
+				", host: {}",
+				host
+			);
 			it->second.first = running; // update
+		}
 	}
 
 	// remove if not present anymore
@@ -35,14 +49,34 @@ void HostBandwidthTracker::updateHosts(json hostAndRunningRoot)
 
 		// erase(it) restituisce l’iteratore al prossimo elemento valido → non serve fare ++it in quel caso.
 		if (hosts.find(host) == hosts.end())
+		{
+			SPDLOG_INFO(
+				"bandwidthUsageThread _bandwidthMap removed"
+				", host: {}",
+				host
+			);
 			it = _bandwidthMap.erase(it); // remove
+		}
 		else
+		{
+			SPDLOG_INFO(
+				"bandwidthUsageThread _bandwidthMap NOT removed"
+				", host: {}",
+				host
+			);
 			++it; // Avanza solo se non si cancella
+		}
 	}
 }
 
 void HostBandwidthTracker::addBandwidth(const string &hostname, uint64_t bandwidth)
 {
+	SPDLOG_INFO(
+		"bandwidthUsageThread addBandwidth"
+		", hostname: {}"
+		", bandwidth: {}",
+		hostname, bandwidth
+	);
 	lock_guard<mutex> locker(_trackerMutex);
 	auto it = _bandwidthMap.find("hostname");
 	if (it != _bandwidthMap.end())
@@ -64,6 +98,13 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 		bool running = bandwidthDetails.first;
 		uint64_t bandwidth = bandwidthDetails.second;
 
+		SPDLOG_INFO(
+			"bandwidthUsageThread getMinBandwidthHost"
+			", host: {}"
+			", running: {}"
+			", bandwidth: {}",
+			host, running, bandwidth
+		);
 		if (running && bandwidth < minBandwidth)
 		{
 			minBandwidth = bandwidth;
@@ -79,6 +120,12 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 
 void HostBandwidthTracker::updateBandwidth(const string &hostname, uint64_t bandwidth)
 {
+	SPDLOG_INFO(
+		"bandwidthUsageThread updateBandwidth"
+		", host: {}"
+		", bandwidth: {}",
+		hostname, bandwidth
+	);
 	lock_guard<mutex> locker(_trackerMutex);
 
 	auto it = _bandwidthMap.find("hostname");
@@ -88,10 +135,18 @@ void HostBandwidthTracker::updateBandwidth(const string &hostname, uint64_t band
 
 void HostBandwidthTracker::addHosts(unordered_set<string> &hosts)
 {
+	SPDLOG_INFO("bandwidthUsageThread addHosts");
 	lock_guard<mutex> locker(_trackerMutex);
 
 	for (const auto &[host, bandwidthDetails] : _bandwidthMap)
+	{
+		SPDLOG_INFO(
+			"bandwidthUsageThread addHosts"
+			", host: {}",
+			host
+		);
 		hosts.insert(host);
+	}
 }
 
 /*

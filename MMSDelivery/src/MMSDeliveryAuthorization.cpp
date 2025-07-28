@@ -986,11 +986,15 @@ shared_ptr<HostBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTrack
 	auto it = _externalDeliveriesGroups.find(key);
 	if (it == _externalDeliveriesGroups.end())
 	{
+		SPDLOG_INFO("bandwidthUsageThread HostBandwidthTracker created");
 		hostBandwidthTracker = make_shared<HostBandwidthTracker>();
 		_externalDeliveriesGroups.insert(pair<string, shared_ptr<HostBandwidthTracker>>(key, hostBandwidthTracker));
 	}
 	else
+	{
+		SPDLOG_INFO("bandwidthUsageThread HostBandwidthTracker NOT created");
 		hostBandwidthTracker = it->second;
+	}
 	hostBandwidthTracker->updateHosts(hostGroupRoot);
 
 	// externalDeliveries ed il flag running sono recuperati dal DB
