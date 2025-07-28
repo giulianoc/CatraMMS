@@ -64,13 +64,6 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 		bool running = bandwidthDetails.first;
 		uint64_t bandwidth = bandwidthDetails.second;
 
-		SPDLOG_INFO(
-			"bandwidthUsageThread getMinBandwidthHost"
-			", host: {}"
-			", running: {}"
-			", bandwidth: {}",
-			host, running, bandwidth
-		);
 		if (running && bandwidth < minBandwidth)
 		{
 			minBandwidth = bandwidth;

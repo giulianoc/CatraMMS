@@ -3192,13 +3192,6 @@ void API::bandwidthUsageThread()
 					}
 				}
 
-				for (auto &[host, bandwidth] : hostsBandwidth)
-					SPDLOG_INFO(
-						"bandwidthUsageThread, getExternalDeliveriesHosts"
-						", host: {}"
-						", bandwidthUsage (Mbps): {}",
-						host, (bandwidth * 8) / 1000000
-					);
 				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(hostsBandwidth);
 			}
 		}
