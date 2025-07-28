@@ -3173,11 +3173,29 @@ void API::bandwidthUsageThread()
 			{
 				for (auto &[host, bandwidth] : hostsBandwidth)
 				{
-					string bandwidthUsageURL = std::format("{}://{}:{}/catramms/{}/bandwidthUsage", _apiProtocol, host, _apiPort, _apiVersion);
-					int bandwidthUsageTimeoutInSeconds = 2;
-					json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
+					try
+					{
+						string bandwidthUsageURL = std::format("{}://{}:{}/catramms/{}/bandwidthUsage", _apiProtocol, host, _apiPort, _apiVersion);
+						int bandwidthUsageTimeoutInSeconds = 2;
+						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
+						SPDLOG_INFO(
+							"bandwidthUsageThread, bandwidthUsageRoot"
+							", host: {}"
+							", bandwidthUsageRoot: {}",
+							host, JSONUtils::toString(bandwidthUsageRoot)
+						);
 
-					bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "bandwidthUsage");
+						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "bandwidthUsage");
+					}
+					catch (exception &e)
+					{
+						// se una culr fallisce comunque andiamo avanti
+						SPDLOG_ERROR(
+							"/bandwidthUsage failed"
+							", exception: {}",
+							e.what()
+						);
+					}
 				}
 
 				for (auto &[host, bandwidth] : hostsBandwidth)
