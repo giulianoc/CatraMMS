@@ -1481,7 +1481,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6402
+	catraMMSVersion=1.0.6409
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1738,6 +1738,20 @@ read -n 1 -s -r -p "premi un tasto per continuare"
 echo ""
 echo ""
 
+echo "Per sapere dove il cavo di rete è connesso bisogna eseguire il comando"
+echo "ethtool enp24s0f1"
+echo "e controllare se viene scritto: Link detected: yes"
+echo "Per applicare la conf in /etv/netplan"
+echo "netplan apply oppure netplan try"
+echo "Per mostrare tutte le interfaccie"
+echo "ip addr show"
+echo "Per verificare lo stato di un link"
+echo "ip addr show enp24s0f0"
+echo "Per attivare un link che è down"
+echo "ip link set dev enp24s0f0 up"
+echo ""
+echo ""
+
 echo "In caso di server dedicato:"
 echo ""
 echo "seguire le istruzioni nel doc Hetzner Info in google drive per far comunicare la rete interna del cloud con il server dedicato"
@@ -1814,6 +1828,7 @@ read -n 1 -s -r -p "verificare ~/mms/conf/mms-env.sh"
 echo ""
 echo ""
 
+#htpasswd: curl -u asdkljc0:iMCjYNGTTUYu8YQikBSC1UUA1wr2
 read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (serve per il download di EPG e APK)"
 echo ""
 echo ""

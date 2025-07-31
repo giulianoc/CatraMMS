@@ -77,7 +77,15 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 	if (minHost.empty())
 		return nullopt;
 	else
+	{
+		SPDLOG_INFO(
+			"getMinBandwidthHost"
+			", minHost: {}"
+			", minBandwidth (Mbps): {}",
+			minHost, (minBandwidth * 8) / 1000000
+		);
 		return minHost;
+	}
 }
 
 void HostBandwidthTracker::updateBandwidth(const string &host, uint64_t bandwidth)
