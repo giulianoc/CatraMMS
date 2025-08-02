@@ -41,7 +41,9 @@ void BandwidthStats::addSample(uint64_t bytesUsed, chrono::system_clock::time_po
 			}
 
 			double avg = static_cast<double>(sum) / samples.size();
-			SPDLOG_INFO("BandwidthStats. Day: {}, Hour {}: Peak={} Avg={}", _currentDay, _currentHour, peak, avg);
+			SPDLOG_INFO(
+				"BandwidthStats (Mbps). Day: {}, Hour {}: Peak={} Avg={}", _currentDay, _currentHour, (peak * 8) / 1000000, (avg * 8) / 1000000
+			);
 		}
 	}
 
@@ -73,7 +75,7 @@ void BandwidthStats::logAndReset()
 		}
 
 		double avg = static_cast<double>(sum) / samples.size();
-		SPDLOG_INFO("BandwidthStats. Day: {}, Hour {}: Peak={} Avg={}", _currentDay, h, peak, avg);
+		SPDLOG_INFO("BandwidthStats (Mbps). Day: {}, Hour {}: Peak={} Avg={}", _currentDay, h, (peak * 8) / 1000000, (avg * 8) / 1000000);
 	}
 
 	if (!_dailySamples.empty())
@@ -83,8 +85,10 @@ void BandwidthStats::logAndReset()
 			total += val;
 		double avg = static_cast<double>(total) / _dailySamples.size();
 
-		time_t peakTimeT = chrono::system_clock::to_time_t(_dailyPeakTime);
-		SPDLOG_INFO("BandwidthStats. Day: {}: Daily Peak={} at {}, Daily Avg={}, _currentDay, _dailyPeak, ctime(&peakTimeT), avg");
+		SPDLOG_INFO(
+			"BandwidthStats (Mbps). Day: {}: Daily Peak={} at {}, Daily Avg={}", _currentDay, (_dailyPeak * 8) / 1000000,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(_dailyPeakTime)), (avg * 8) / 1000000
+		);
 	}
 
 	// Reset
