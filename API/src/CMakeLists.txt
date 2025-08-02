@@ -31,10 +31,12 @@ set(SOURCES
     API_Invoice.cpp
     API_Configuration.cpp
     API_EncodersPool.cpp
-    API_Statistic.cpp)
+    API_Statistic.cpp
+    BandwidthStats.cpp)
 
 set(HEADERS
-    API.h)
+    API.h
+    BandwidthStats.h)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(
