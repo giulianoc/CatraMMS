@@ -33,6 +33,36 @@ eventName=$1
 channelDirectory=$2
 fileName=$3
 
+# Lista degli IP (separati da spazio)
+mmsStorageIPList=("116.202.53.105" "116.202.172.245") #mms-delivery-binary-gui-XXXXX
+usaExternalDeliveriesIPList=("194.42.206.8" "91.222.174.119" "91.222.174.80" "91.222.174.77" "91.222.174.97" "91.222.174.81" "194.42.196.8")
+euExternalDeliveriesIPList=("195.160.222.54" "195.160.222.53" "31.42.176.36")
+
+get_next_ip() {
+	local list_name="$1"                   # es: "mmsStorageIPList"
+	# File che memorizza l'indice corrente
+	local state_file="/tmp/incontab-round_robin_${list_name}_index"
+
+ 	# Crea un riferimento all'array con nome dinamico
+ 	# crea un nameref, cioè un riferimento a una variabile di nome contenuto in un’altra variabile.
+	declare -n ip_list="$list_name"
+
+	local total_ips=${#ip_list[@]}
+
+	# Leggi indice corrente (default 0 se mancante)
+	local current_index=0
+	if [[ -f "$state_file" ]]; then
+		current_index=$(<"$state_file")
+	fi
+
+	# Stampa IP corrente
+	echo "${ip_list[$current_index]}"
+
+	# Calcola il prossimo indice
+	local next_index=$(( (current_index + 1) % total_ips ))
+	echo "$next_index" > "$state_file"
+}
+
 elapsedCleanupTS=0
 
 #Abbiamo:
@@ -54,7 +84,7 @@ then
 	#-n significa “non aspettare”: se il file è già lockato da un altro processo, esci subito
 	#|| exit 1: se il lock non riesce, lo script esce con errore 1
 	flock -n 200 || {
-		echo "$(date)-$pid: Lock attivo per $channelDirectory, esco."
+		echo "$(date)-$pid: Lock attivo per $channelDirectory, esco" >> $debugFileName
 		exit 1
 	}
 
@@ -63,9 +93,9 @@ then
 	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
 	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
 	#che impiega piu tempo, cioé quello in USA
-	storageServer=116.202.53.105 						# mms-delivery-binary-gui-2
-	# srv-2.cibortvlive.com (storage USA), srv-10.cibortvlive.com (storage EU)
-	externalDeliveryServers="91.222.174.119 195.160.222.54"
+	#Inoltre, per evitare di stressare gli stessi server, eseguiamo il sync ogni volta su server diversi
+	serversToBeSynched="$(get_next_ip "mmsStorageIPList") $(get_next_ip "euExternalDeliveriesIPList") $(get_next_ip "usaExternalDeliveriesIPList")"
+	#echo "serversToBeSynched: $serversToBeSynched" >> $debugFileName
 
 
 	#Example of events using debug:
@@ -78,25 +108,35 @@ then
 	#temporary file: IN_MOVED_FROM --> 1258.m3u8.tmp
 	#IN_MOVED_TO --> 1258.m3u8 (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
 
+
+	#rsyncSource=$channelDirectory
+	#rsyncDest=$(dirname $channelDirectory)
+
+	#invece di sincronizzare una directory che cambia in continuazione, congeliamo la directory prima di sincronizzarla
+	cp -r $channelDirectory $channelDirectory.$channelDirectoryMd5sum
+	#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
+	rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
+	rsyncDest=$channelDirectory/
+
 	if [ $debug_rsync -eq 1 ]
 	then
 		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
 		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
-		export channelDirectory BW_LIMIT debugFileName pid
-		parallel --env channelDirectory --env BW_LIMIT --env debugFileName --env pid --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid
+		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
-					echo "$(date)-$pid ({}): Inizio sincronizzazione...$(dirname $channelDirectory)";
+					echo "$(date)-$pid ({}): Inizio sincronizzazione...$rsyncDest";
 					# 1. Sincronizza solo i file .ts
 					rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
 						--partial --archive --progress --verbose --omit-dir-times --timeout=60 --inplace --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
-    				"$channelDirectory" mms@{}:$(dirname "$channelDirectory")
+    				"$rsyncSource" mms@{}:$rsyncDest
 					status_ts=$?
 					# 2. Sincronizza solo il file .m3u8
 					rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
 						--partial --archive --progress --verbose --omit-dir-times --timeout=60 --inplace --bwlimit=$BW_LIMIT \
 					  --include "*/" --include "*.m3u8" --exclude "*" \
-    				"$channelDirectory" mms@{}:$(dirname "$channelDirectory")
+    				"$rsyncSource" mms@{}:$rsyncDest
 					status_m3u8=$?
 					if [[ $status_ts -eq 0 ]] && [[ $status_m3u8 -eq 0 ]]; then
 						echo "$(date)-$pid ({}): COMPLETATO" >> $debugFileName
@@ -104,29 +144,30 @@ then
 						echo "$(date)-$pid ({}): ERRORE: rsync exited with status_ts $status_ts, status_m3u8 $status_m3u8" >> $debugFileName
 					fi
 				} >> $debugFileName 2>&1' \
-				::: $storageServer $externalDeliveryServers
+				::: $serversToBeSynched
 	else
-		export channelDirectory BW_LIMIT debugFileName pid
-		parallel --env channelDirectory --env BW_LIMIT --env debugFileName --env pid --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid
+		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
 					# 1. Sincronizza solo i file .ts
 					rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
 						--partial --archive --omit-dir-times --timeout=60 --inplace --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
-						$channelDirectory mms@{}:$(dirname $channelDirectory)
+						$rsyncSource mms@{}:$rsyncDest
 					status_ts=$?
 					# 2. Sincronizza solo il file .m3u8
 					rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
 						--partial --archive --omit-dir-times --timeout=60 --inplace --bwlimit=$BW_LIMIT \
 					  --include "*/" --include "*.m3u8" --exclude "*" \
-						$channelDirectory mms@{}:$(dirname $channelDirectory)
+						$rsyncSource mms@{}:$rsyncDest
 					status_m3u8=$?
 					if [[ $status_ts -ne 0 ]] || [[ $status_m3u8 -ne 0 ]]; then
 						echo "$(date)-$pid ({}): ERRORE: rsync exited with status_ts $status_ts, status_m3u8 $status_m3u8" >> $debugFileName
 					fi
 				} >> $debugFileName 2>&1' \
-				::: $storageServer $externalDeliveryServers
+				::: $serversToBeSynched
 	fi
+	rm -rf $channelDirectory.$channelDirectoryMd5sum
 
 	if [ 0 -eq 1 ]; then 	#no clean
 	#elimina i files .ts remoti dopo il retention retentionRemoteTSFilesInMinutes
@@ -144,7 +185,7 @@ then
 		retentionRemoteTSFilesInMinutes=3
 		totalCommandTimeoutInSeconds=5
 		startCleanupTS=$(date +%s)
-		for remote_host in $storageServer $externalDeliveryServers; do
+		for remote_host in $serversToBeSynched; do
 			remote_dir=$(dirname "$channelDirectory")
 			timeout ${totalCommandTimeoutInSeconds}s ssh -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=no \
 				-p 9255 -i ~/ssh-keys/hetzner-mms-key.pem mms@"$remote_host" \

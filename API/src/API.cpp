@@ -3134,12 +3134,12 @@ void API::bandwidthUsageThread()
 	{
 		this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
 
-		// aggiorniamo la banda usata da questo server
+		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
+		uint64_t bandwidthUsage = 0;
 		try
 		{
 			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
 
-			uint64_t bandwidthUsage = 0;
 			for (const auto &[iface, stats] : bandwidth)
 			{
 				auto [receivedBytes, transmittedBytes] = stats;
@@ -3164,7 +3164,7 @@ void API::bandwidthUsageThread()
 			);
 		}
 
-		// aggiorniamo le bande usate da _externalDeliveriesGroups
+		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
 		try
 		{
 			unordered_map<string, uint64_t> hostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesHosts();
@@ -3194,6 +3194,21 @@ void API::bandwidthUsageThread()
 
 				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(hostsBandwidth);
 			}
+		}
+		catch (exception e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
+
+		// inizializziamo la struttura BandwidthStats
+		try
+		{
+			// addSample logs when a new day is started
+			_bandwidthStats.addSample(bandwidthUsage, chrono::system_clock::now());
 		}
 		catch (exception e)
 		{

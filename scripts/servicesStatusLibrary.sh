@@ -765,68 +765,6 @@ server_reachable()
 	fi
 }
 
-#replaced by logfile_slowquery_newlines_check
-#mms_sql_timing_check_service()
-#{
-	#serviceName=$1
-
-	#lastLogTimestampCheckedFile=/tmp/alarm_mms_sql_timing_check_service_info
-
-	#if [ -f "$lastLogTimestampCheckedFile" ]; then
-		#lastLogTimestampChecked=$(cat $lastLogTimestampCheckedFile)
-	#else
-		#lastLogTimestampChecked=-1
-	#fi
-
-	#if [ "$serviceName" == "engine" ]; then
-		#logFilePathName=/var/catramms/logs/mmsEngineService/mmsEngineService.log
-	#elif [ "$serviceName" == "api" ]; then
-		#logFilePathName=/var/catramms/logs/mmsAPI/mmsAPI.log
-	#else
-		#echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serviceName: $serviceName" >> $debugFilename
-		#return 1
-	#fi
-
-	#incrementato a 300 perchè capita di avere poco piu di 200 anche per query perfettamente indicizzate che impiegano al 99.9% 1 millisecs
-	# e poco piu di 200 nello 0.1%
-	#maxSQLDuration=500
-	#warningMessage=$(grep "statement, sqlStatement" $logFilePathName | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxSQLDuration=$maxSQLDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
-	#{	\
-		#datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
-		#newLastLogTimestampChecked=mktime(datespec);	\
-		#if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) {	\
-			#datetime=substr($0, 2, 23);	\
-			#sqlStatement=$2;	\
-			#duration=$6;	\
-			#label=$7;	\
-			#if (label == "getIngestionsToBeManaged")	\
-				#maxSQLDuration = 3000;	\
-			#else if (label == "getIngestionRootsStatus")	\
-				#maxSQLDuration = 400;	\
-			#if (duration > maxSQLDuration)	\
-				#warningMessage=warningMessage""datetime" - "label" - "sqlStatement" - "duration"/"maxSQLDuration"\n";	\
-		#}	\
-	#}	\
-	#END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
-
-	#if [ "$warningMessage" = "" ]; then
-		#echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
-
-		#alarmNotificationPathFileName="/tmp/alarm_mms_sql_timing_check_service"
-		#if [ -f "$alarmNotificationPathFileName" ]; then
-			#rm -f $alarmNotificationPathFileName
-		#fi
-
-		#return 0
-	#else
-		#echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
-
-		#alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		#notify "$(hostname)" "alarm_mms_sql_timing_check_service" "alarm_mms_sql_timing_check_service" $alarmNotificationPeriod "$warningMessage"
-		#return 1
-	#fi
-#}
-
 logfile_slowquery_newlines_check()
 {
 	serverType=$1
@@ -924,6 +862,27 @@ raid_error()
 	else
 		alarmNotificationPeriod=$((60 * 15))		#15 minuti
 		notify "$(hostname)" "alarm_raid_error" "alarm_raid_error" $alarmNotificationPeriod "RAID status unknown or not found in $mdstatFile"
+		return 1
+	fi
+}
+
+incrond_working()
+{
+	if systemctl is-active --quiet incron; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_incrond_working, incrond is active" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_incrond_working"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_incrond_working, incrond IS NOT active" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 1))		#1 minut0
+		alarmDetails="incrond IS NOT active even with systemd auto restart"
+		notify "$(hostname)" "alarm_mms_incrond_working" "alarm_mms_incrond_working" $alarmNotificationPeriod "$alarmDetails"
 		return 1
 	fi
 }

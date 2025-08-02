@@ -179,13 +179,14 @@ do
 			nginx_error encoder
 
 			echo "" >> $debugFilename
+			incrond_working
 
+			echo "" >> $debugFilename
 			serviceName=encoder
       baseEncoderURL=$2
 			healthCheckURL=$baseEncoderURL/status
       encoderAPIUser=1
       encoderAPIPassword=SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHu3Iy6W94kQvSd4cJm.el3j
-
 			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
 			echo "" >> $debugFilename

@@ -396,6 +396,16 @@ install-packages()
 		echo ""
 		apt-get -y install incron
 		systemctl enable incron.service
+		mkdir -p /etc/systemd/system/incron.service.d
+		echo "[Service]" > /etc/systemd/system/incron.service.d/override.conf
+		echo "Restart=always" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "#attende 3 secondi prima del riavvio" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "RestartSec=3" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "#se il servizio viene spesso riavviato da systemd (supera la soglia StartLimitBurst in quel periodo StartLimitIntervalSec)," >> /etc/systemd/system/incron.service.d/override.conf
+		echo "#systemd blocca ulteriori riavvii e segna il servizio come “crashed permanently" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "#Questo parametro disattiva il controllo del numero di restart" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "StartLimitIntervalSec=0" >> /etc/systemd/system/incron.service.d/override.conf
+		systemctl daemon-reload
 		service incron start
 
 		echo "mms" > /etc/incron.allow
@@ -1447,6 +1457,10 @@ install-mms-nginx-package()
 		echo "dig TXT _acme-challenge.$servername +short"
 		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
 		certbot certonly --manual --preferred-challenges dns -d $servername
+		#per avere la lista dei certificati
+		#certbot certificates
+		#per rimuovere un certificato (verrà mostrata la lista dei certificati e devi selezionarne uno)
+		#certbot delete
 
 		#inoltre blocchiamo (ritorno 444 che chiude la connessione senza inviare nessuna risposta) tutte le richieste HTTPS con Host sbagliato (tipo xj5zr.usdsh.com)
 		#Per questo motivo bisogna generare i files invalid.crt e invalid.key utilizzati in catramms.nginx
@@ -1481,7 +1495,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6409
+	catraMMSVersion=1.0.6410
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

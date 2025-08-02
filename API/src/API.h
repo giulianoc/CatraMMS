@@ -14,10 +14,12 @@
 #ifndef API_h
 #define API_h
 
+#include "Datetime.h"
 #include "FastCGIAPI.h"
 #include "MMSDeliveryAuthorization.h"
 #include "MMSStorage.h"
 #include "PostgresConnection.h"
+#include "spdlog/spdlog.h"
 
 class API : public FastCGIAPI
 {
@@ -69,6 +71,89 @@ class API : public FastCGIAPI
   private:
 	json _configurationRoot;
 
+	class BandwidthStats
+	{
+	  public:
+		void addSample(uint64_t bytesUsed, chrono::system_clock::time_point timestamp)
+		{
+			// lock_guard<std::mutex> lock(_mutex);
+
+			string day = Datetime::utcToLocalString(chrono::system_clock::to_time_t(timestamp), Datetime::Format::YYYY_MM_DD);
+
+			if (_currentDay.empty())
+			{
+				_currentDay = day;
+			}
+			else if (day != _currentDay)
+			{
+				logAndReset();
+				_currentDay = day;
+			}
+
+			tm local_tm = Datetime::utcSecondsToLocalTime(chrono::system_clock::to_time_t(timestamp));
+			int hour = local_tm.tm_hour;
+
+			_hourlyData[hour].push_back(bytesUsed);
+			_dailySamples.emplace_back(timestamp, bytesUsed);
+
+			if (bytesUsed > _dailyPeak)
+			{
+				_dailyPeak = bytesUsed;
+				_dailyPeakTime = timestamp;
+			}
+		}
+
+	  private:
+		// il mutex non serve visto che un solo thread gestisce la bandwidthUsage
+		// mutex _mutex;
+
+		string _currentDay;
+
+		unordered_map<int, vector<uint64_t>> _hourlyData; // hour → samples
+		uint64_t _dailyPeak = 0;
+		chrono::system_clock::time_point _dailyPeakTime;
+		vector<pair<chrono::system_clock::time_point, uint64_t>> _dailySamples;
+
+		void logAndReset()
+		{
+			for (int h = 0; h < 24; ++h)
+			{
+				const auto &samples = _hourlyData[h];
+				if (samples.empty())
+					continue;
+
+				uint64_t sum = 0;
+				uint64_t peak = 0;
+				for (auto v : samples)
+				{
+					sum += v;
+					if (v > peak)
+						peak = v;
+				}
+
+				double avg = static_cast<double>(sum) / samples.size();
+				SPDLOG_INFO("BandwidthStats. Day: {}, Hour {}: Peak={} Avg={}, _currentDay, h, avg");
+			}
+
+			if (!_dailySamples.empty())
+			{
+				uint64_t total = 0;
+				for (const auto &[_, val] : _dailySamples)
+					total += val;
+				double avg = static_cast<double>(total) / _dailySamples.size();
+
+				time_t peakTimeT = chrono::system_clock::to_time_t(_dailyPeakTime);
+				SPDLOG_INFO("BandwidthStats. Day: {}: Daily Peak={} at {}, Daily Avg={}, _currentDay, _dailyPeak, ctime(&peakTimeT), avg");
+			}
+
+			// Reset
+			_hourlyData.clear();
+			_dailySamples.clear();
+			_dailyPeak = 0;
+			_dailyPeakTime = {};
+		}
+	};
+
 	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool> _userKeyWorkspaceAndFlags;
 	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 	bool _noFileSystemAccess;
@@ -95,6 +180,7 @@ class API : public FastCGIAPI
 	bool _bandwidthUsageThreadShutdown;
 	unsigned long _bandwidthUsagePeriodInSeconds;
 	shared_ptr<std::atomic<uint64_t>> _bandwidthUsage;
+	BandwidthStats _bandwidthStats;
 
 	int _maxPageSize;
 
