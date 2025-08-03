@@ -3150,12 +3150,16 @@ void API::bandwidthUsageThread()
 					"bandwidthUsageThread, getBandwidthInMbps"
 					", iface: {}"
 					", receivedBytes: {}"
-					", transmittedBytes: {}"
-					", bandwidthUsage (Mbps): {}",
-					iface, receivedBytes, transmittedBytes, (bandwidthUsage * 8) / 1000000
+					", transmittedBytes: {}",
+					iface, receivedBytes, transmittedBytes
 				);
 			}
 			_bandwidthUsage->store(bandwidthUsage, memory_order_relaxed);
+			SPDLOG_INFO(
+				"bandwidthUsageThread, getBandwidthInMbps"
+				", bandwidthUsage: @{}@Mbps",
+				(bandwidthUsage * 8) / 1000000
+			);
 		}
 		catch (exception e)
 		{
