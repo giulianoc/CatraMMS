@@ -773,11 +773,13 @@ void API::manageRequestAndResponse(
 			}
 			string contentURI = originalURIIt->second;
 
+			/* log incluso in checkDeliveryAuthorizationThroughPath
 			SPDLOG_INFO(
 				"deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
 				", contentURI: {}",
 				contentURI
 			);
+			*/
 
 			_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
 
