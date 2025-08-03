@@ -27,8 +27,6 @@ void BandwidthStats::addSample(uint64_t bytesUsed, chrono::system_clock::time_po
 	{
 		const auto &samples = _hourlyData[_currentHour];
 
-		_currentHour = local_tm.tm_hour;
-
 		if (!samples.empty())
 		{
 			uint64_t sum = 0;
@@ -46,6 +44,8 @@ void BandwidthStats::addSample(uint64_t bytesUsed, chrono::system_clock::time_po
 				std::format("{:.1f}", (avg * 8) / 1000000)
 			);
 		}
+
+		_currentHour = local_tm.tm_hour;
 	}
 
 	_hourlyData[local_tm.tm_hour].push_back(bytesUsed);
