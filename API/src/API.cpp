@@ -3144,8 +3144,8 @@ void API::bandwidthUsageThread()
 			{
 				auto [receivedBytes, transmittedBytes] = stats;
 				// considero l'interface che occupa maggiore banda
-				if (receivedBytes + transmittedBytes > bandwidthUsage)
-					bandwidthUsage = receivedBytes + transmittedBytes;
+				if (transmittedBytes > bandwidthUsage)
+					bandwidthUsage = transmittedBytes;
 				SPDLOG_INFO(
 					"bandwidthUsageThread, getBandwidthInMbps"
 					", iface: {}"
