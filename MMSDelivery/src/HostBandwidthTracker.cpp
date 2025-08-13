@@ -67,6 +67,14 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 		// bool running = bandwidthDetails.first;
 		// uint64_t bandwidth = bandwidthDetails.second;
 
+		SPDLOG_INFO(
+			"getMinBandwidthHost"
+			", host: {}"
+			", running: {}"
+			", storage: {}"
+			", bandwidth: {}",
+			host, running, storage, bandwidth
+		);
 		// in caso il server di delivery è anche uno storage, per non sovraccaricarlo,
 		// gli diamo 0.5 GB di banda fittizia in piu
 		if (storage)
