@@ -29,6 +29,6 @@ class HostBandwidthTracker
 
   private:
 	mutex _trackerMutex;
-	// associa ad ogni host due informazioni: running e bandwidthUsage
-	unordered_map<string, pair<bool, uint64_t>> _bandwidthMap;
+	// associa ad ogni host le seguenti informazioni: running, bandwidthUsage, storage (indica se il server di delivery fa anche da storage)
+	unordered_map<string, tuple<bool, uint64_t, bool>> _bandwidthMap;
 };

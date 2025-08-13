@@ -68,6 +68,9 @@ getAlarmDescription()
 		"alarm_raid_error")
 			echo "raid has an issue"
 			;;
+		"alarm_mms_delivery_check_bandwidth_usage")
+			echo "mms_delivery too much bandwidth usage"
+			;;
 		*)
 			echo "Unknown alarmType: $alarmType"
 			echo "$(date +'%Y/%m/%d %H:%M:%S'): Unknown alarmType: $alarmType" >> $debugFilename
@@ -886,3 +889,46 @@ incrond_working()
 		return 1
 	fi
 }
+
+mms_delivery_check_bandwidth_usage()
+{
+	lastLogTimestampCheckedFile=/tmp/alarm_mms_delivery_check_bandwidth_usage_info
+
+	if [ -f "$lastLogTimestampCheckedFile" ]; then
+		lastLogTimestampChecked=$(cat $lastLogTimestampCheckedFile)
+	else
+		lastLogTimestampChecked=-1
+	fi
+
+	maxBandwidth=900
+	warningMessage=$(grep "getBandwidthInMbps, bandwidthUsage" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
+	{	\
+		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
+		newLastLogTimestampChecked=mktime(datespec);	\
+		if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) {	\
+			datetime=substr($0, 2, 23);	\
+			bandwidth=$2;	\
+			if (bandwidth > maxBandwidth)	\
+				warningMessage=warningMessage""datetime" - "bandwidth"/"maxBandwidth"\n";	\
+		}	\
+	}	\
+	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
+
+	if [ "$warningMessage" = "" ]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage is fine" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_delivery_check_bandwidth_usage"
+		if [ -f "$alarmNotificationPathFileName" ]; then
+			rm -f $alarmNotificationPathFileName
+		fi
+
+		return 0
+	else
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 5))		#5 minuti
+		notify "$(hostname)" "alarm_mms_delivery_check_bandwidth_usage" "alarm_mms_delivery_check_bandwidth_usage" $alarmNotificationPeriod "$warningMessage"
+		return 1
+	fi
+}
+

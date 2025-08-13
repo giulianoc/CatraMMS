@@ -264,17 +264,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 #endif
 			deliveryURL = std::format("{}://{}/token_{},{}{}", _deliveryProtocol, deliveryHost, md5Base64, expirationTime, deliveryURI);
 		}
-		/*
-		else
-		{
-			string errorMessage = string("wrong vodDeliveryType")
-				+ ", deliveryType: " + deliveryType
-			;
-			error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		*/
 
 		if (!filteredByStatistic && userId != "")
 		{
@@ -351,10 +340,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				throw runtime_error(errorMessage);
 			}
 			json outputsRoot = JSONUtils::asJson(ingestionJobRoot, "outputs", json::array());
-			// if (JSONUtils::isMetadataPresent(ingestionJobRoot, "outputs"))
-			// 	outputsRoot = ingestionJobRoot["outputs"];
-			// else // if (JSONUtils::isMetadataPresent(ingestionJobRoot, "Outputs"))
-			// 	outputsRoot = ingestionJobRoot["Outputs"];
 
 			// Option 1: OutputType HLS with deliveryCode
 			// Option 2: OutputType RTMP_Channel/CDN_AWS/CDN_CDN77 with playURL
@@ -370,15 +355,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				outputType = JSONUtils::asString(outputRoot, "outputType", "HLS_Channel");
 
-				/*
-				if (outputType == "RTMP_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
-				{
-					field = "playUrl";
-					playURL = JSONUtils::asString(outputRoot, field, "");
-					if (playURL == "")
-						continue;
-				}
-				*/
 				if (outputType == "CDN_CDN77")
 				{
 					try
@@ -460,6 +436,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					try
 					{
 						playURL = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+						// if (secureToken != "")
+						// 		playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds, playerIPToBeAuthorized ? playerIP : "");
 					}
 					catch (DBRecordNotFound &e)
 					{

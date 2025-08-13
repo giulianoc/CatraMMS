@@ -143,6 +143,9 @@ do
 			echo "" >> $debugFilename
 			nginx_error delivery-path
 
+			echo "" >> $debugFilename
+			mms_delivery_check_bandwidth_usage
+
 			;;
 		"externalDelivery")
 			echo "" >> $debugFilename
@@ -164,6 +167,9 @@ do
 
 			echo "" >> $debugFilename
 			nginx_error delivery-path
+
+			echo "" >> $debugFilename
+			mms_delivery_check_bandwidth_usage
 
 			shift
 

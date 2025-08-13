@@ -1454,7 +1454,7 @@ install-mms-nginx-package()
 		read servername
 		echo "Dopo aver fatto la configurazione DNS aspettare qualche minuto che si sia propagato"
 		echo "Se vuoi verificare che il record sia visibile, il comando è:"
-		echo "dig TXT _acme-challenge.$servername +short"
+		echo "dig TXT _acme-challenge.$servername +short oppure tramite sito https://dnschecker.org"
 		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
 		certbot certonly --manual --preferred-challenges dns -d $servername
 		#per avere la lista dei certificati

@@ -134,12 +134,20 @@ prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=194.42.196.8
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-delivery-8
+prodServers[$((serverIndex*6+1))]=194.42.206.31
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=194.42.206.31
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=eu-delivery-1
 prodServers[$((serverIndex*6+1))]=195.160.222.54
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
-prodServers[$((serverIndex*6+5))]=192.168.0.1
+prodServers[$((serverIndex*6+5))]=195.160.222.54
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=eu-delivery-2
@@ -147,7 +155,7 @@ prodServers[$((serverIndex*6+1))]=195.160.222.53
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
-prodServers[$((serverIndex*6+5))]=192.168.0.2
+prodServers[$((serverIndex*6+5))]=195.160.222.53
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=eu-delivery-3
@@ -155,7 +163,15 @@ prodServers[$((serverIndex*6+1))]=31.42.176.36
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
-prodServers[$((serverIndex*6+5))]=192.168.0.3
+prodServers[$((serverIndex*6+5))]=31.42.176.36
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=eu-delivery-4
+prodServers[$((serverIndex*6+1))]=213.111.144.119
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=213.111.144.119
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-engine-db-1
