@@ -18,13 +18,13 @@ void HostBandwidthTracker::updateHosts(json hostAndRunningRoot)
 		json hostRoot = hostAndRunningRoot[index];
 		string host = JSONUtils::asString(hostRoot, "host");
 		bool running = JSONUtils::asBool(hostRoot, "running");
-		bool storage = JSONUtils::asBool(hostRoot, "storage", false);
+		int64_t bandwidthCorrection = JSONUtils::asInt64(hostRoot, "bandwidthCorrection", 0);
 
 		hosts.insert(host);
 
 		auto it = _bandwidthMap.find(host);
 		if (it == _bandwidthMap.end())
-			_bandwidthMap[host] = make_tuple(running, 0, storage); // insert
+			_bandwidthMap[host] = make_tuple(running, 0, bandwidthCorrection); // insert
 		else
 			get<0>(it->second) = running; // update
 										  // it->second.first = running; // update
@@ -63,7 +63,7 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 
 	for (const auto &[host, bandwidthDetails] : _bandwidthMap)
 	{
-		auto [running, bandwidth, storage] = bandwidthDetails;
+		auto [running, bandwidth, bandwidthCorrection] = bandwidthDetails;
 		// bool running = bandwidthDetails.first;
 		// uint64_t bandwidth = bandwidthDetails.second;
 
@@ -71,14 +71,12 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 			"getMinBandwidthHost"
 			", host: {}"
 			", running: {}"
-			", storage: {}"
+			", bandwidthCorrection: {}"
 			", bandwidth: {}",
-			host, running, storage, bandwidth
+			host, running, bandwidthCorrection, bandwidth
 		);
-		// in caso il server di delivery è anche uno storage, per non sovraccaricarlo,
-		// gli diamo 0.5 GB di banda fittizia in piu
-		if (storage)
-			bandwidth += 500000000; // 500 000 000
+
+		bandwidth += bandwidthCorrection;
 
 		if (running && bandwidth < minBandwidth)
 		{

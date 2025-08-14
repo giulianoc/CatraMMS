@@ -444,6 +444,31 @@ API::API(
 	_fileUploadProgressThreadShutdown = false;
 
 	_bandwidthUsageThreadShutdown = false;
+
+	try
+	{
+		vector<pair<string, string>> ativeNetworkInterfaces = System::getActiveNetworkInterface();
+		for (const auto &[interfaceName, ipAddress] : ativeNetworkInterfaces)
+		{
+			SPDLOG_INFO(
+				"getActiveNetworkInterface"
+				", interface name: {}"
+				", ip address: {}",
+				interfaceName, ipAddress
+			);
+			if (ipAddress.starts_with("192.168") || ipAddress.starts_with("10.0"))
+				continue;
+			_deliveryExternalNetworkInterface = interfaceName;
+		}
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"System::getActiveNetworkInterface failed"
+			", exception: {}",
+			e.what()
+		);
+	}
 }
 
 API::~API() = default;
@@ -3142,21 +3167,34 @@ void API::bandwidthUsageThread()
 		{
 			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
 
+			bool deliveryExternalNetworkInterfaceFound = false;
 			for (const auto &[iface, stats] : bandwidth)
 			{
 				auto [receivedBytes, transmittedBytes] = stats;
-				// considero l'interface che occupa maggiore banda
-				if (transmittedBytes > bandwidthUsage)
-					bandwidthUsage = transmittedBytes;
 				SPDLOG_INFO(
 					"bandwidthUsageThread, getBandwidthInMbps"
 					", iface: {}"
+					", _deliveryExternalNetworkInterface: {}"
 					", receivedBytes: {}"
 					", transmittedBytes: {}",
-					iface, receivedBytes, transmittedBytes
+					iface, _deliveryExternalNetworkInterface, receivedBytes, transmittedBytes
 				);
+				if (_deliveryExternalNetworkInterface == iface)
+				{
+					bandwidthUsage = transmittedBytes;
+					deliveryExternalNetworkInterfaceFound = true;
+					break;
+				}
 			}
-			_bandwidthUsage->store(bandwidthUsage, memory_order_relaxed);
+			if (!deliveryExternalNetworkInterfaceFound)
+				SPDLOG_WARN(
+					"bandwidthUsageThread, getBandwidthInMbps"
+					", deliveryExternalNetworkInterface not found"
+					", _deliveryExternalNetworkInterface: {}",
+					_deliveryExternalNetworkInterface
+				);
+			else
+				_bandwidthUsage->store(bandwidthUsage, memory_order_relaxed);
 			SPDLOG_INFO(
 				"bandwidthUsageThread, getBandwidthInMbps"
 				", bandwidthUsage: @{}@Mbps",

@@ -127,6 +127,8 @@ class API : public FastCGIAPI
 	string _deliveryHost_authorizationThroughParameter;
 	string _deliveryHost_authorizationThroughPath;
 
+	string _deliveryExternalNetworkInterface;
+
 	bool _ldapEnabled;
 	string _ldapURL;
 	string _ldapCertificatePathName;

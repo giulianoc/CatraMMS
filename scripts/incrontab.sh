@@ -35,8 +35,8 @@ fileName=$3
 
 # Lista degli IP (separati da spazio)
 mmsStorageIPList=("116.202.53.105" "116.202.172.245") #mms-delivery-binary-gui-XXXXX
-usaExternalDeliveriesIPList=("194.42.206.8" "91.222.174.119" "91.222.174.80" "91.222.174.77" "91.222.174.97" "91.222.174.81" "194.42.196.8")
-euExternalDeliveriesIPList=("195.160.222.54" "195.160.222.53" "31.42.176.36")
+usaExternalDeliveriesIPList=("91.222.174.119")
+euExternalDeliveriesIPList=("195.160.222.54")
 
 get_next_ip() {
 	local list_name="$1"                   # es: "mmsStorageIPList"
