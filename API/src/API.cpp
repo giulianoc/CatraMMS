@@ -3180,9 +3180,9 @@ void API::bandwidthUsageThread()
 				SPDLOG_INFO(
 					"bandwidthUsageThread, getBandwidthInMbps"
 					", iface: {}"
-					", receivedBytes: {}"
-					", transmittedBytes: {}",
-					iface, receivedBytes, transmittedBytes
+					", receivedBytes: {} ({}Mbps)"
+					", transmittedBytes: {} ({}Mbps)",
+					iface, receivedBytes, (receivedBytes * 8) / 1000000, transmittedBytes, (transmittedBytes * 8) / 1000000
 				);
 				if (_deliveryExternalNetworkInterface == iface)
 				{
