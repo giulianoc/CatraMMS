@@ -3180,16 +3180,15 @@ void API::bandwidthUsageThread()
 				SPDLOG_INFO(
 					"bandwidthUsageThread, getBandwidthInMbps"
 					", iface: {}"
-					", _deliveryExternalNetworkInterface: {}"
 					", receivedBytes: {}"
 					", transmittedBytes: {}",
-					iface, _deliveryExternalNetworkInterface, receivedBytes, transmittedBytes
+					iface, receivedBytes, transmittedBytes
 				);
 				if (_deliveryExternalNetworkInterface == iface)
 				{
 					bandwidthUsage = transmittedBytes;
 					deliveryExternalNetworkInterfaceFound = true;
-					break;
+					// break; commentato in modo da avere sempre il log della banda usata da tutte le reti (public e internal)
 				}
 			}
 			if (!deliveryExternalNetworkInterfaceFound)

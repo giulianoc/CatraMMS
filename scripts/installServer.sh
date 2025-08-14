@@ -121,6 +121,11 @@ install-packages()
 	echo ""
 	apt -y upgrade
 
+	echo ""
+	read -n 1 -s -r -p "install parallel..."
+	echo ""
+	apt-get -y install parallel
+
 	if [ "$moduleType" == "storage" ]; then
 
 		#for storage just nfs is enougth
@@ -390,7 +395,7 @@ install-packages()
 		fi
 	fi
 
-	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+	if [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "externalDelivery" ]; then
 		echo ""
 		read -n 1 -s -r -p "install incron..."
 		echo ""

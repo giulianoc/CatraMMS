@@ -5,6 +5,8 @@ debug_rsync=0
 #2021-01-08: it has to be a path in home user otherwise incron does not run the script
 debugFileName=/home/mms/incrontab.log
 
+source ~/mms/conf/mms-env.sh
+
 start=$(date +%s)
 pid=$$
 
@@ -34,45 +36,49 @@ channelDirectory=$2
 fileName=$3
 
 # Lista degli IP (separati da spazio)
-mmsStorageIPList=("116.202.53.105" "116.202.172.245") #mms-delivery-binary-gui-XXXXX
-usaExternalDeliveriesIPList=("91.222.174.119")
-euExternalDeliveriesIPList=("195.160.222.54")
+# BEGIN: uso di IP destinazione per rsync a rotazione
+#mmsStorageIPList=("116.202.53.105" "116.202.172.245") #mms-delivery-binary-gui-XXXXX
+#usaExternalDeliveriesIPList=("91.222.174.119")
+#euExternalDeliveriesIPList=("195.160.222.54")
 
-get_next_ip() {
-	local list_name="$1"                   # es: "mmsStorageIPList"
-	# File che memorizza l'indice corrente
-	local state_file="/tmp/incontab-round_robin_${list_name}_index"
-
- 	# Crea un riferimento all'array con nome dinamico
- 	# crea un nameref, cioè un riferimento a una variabile di nome contenuto in un’altra variabile.
-	declare -n ip_list="$list_name"
-
-	local total_ips=${#ip_list[@]}
-
-	# Leggi indice corrente (default 0 se mancante)
-	local current_index=0
-	if [[ -f "$state_file" ]]; then
-		current_index=$(<"$state_file")
-	fi
-
-	# Stampa IP corrente
-	echo "${ip_list[$current_index]}"
-
-	# Calcola il prossimo indice
-	local next_index=$(( (current_index + 1) % total_ips ))
-	echo "$next_index" > "$state_file"
-}
+#get_next_ip() {
+#	local list_name="$1"                   # es: "mmsStorageIPList"
+#	# File che memorizza l'indice corrente
+#	local state_file="/tmp/incontab-round_robin_${list_name}_index"
+#
+# 	# Crea un riferimento all'array con nome dinamico
+# 	# crea un nameref, cioè un riferimento a una variabile di nome contenuto in un’altra variabile.
+#	declare -n ip_list="$list_name"
+#
+#	local total_ips=${#ip_list[@]}
+#
+#	# Leggi indice corrente (default 0 se mancante)
+#	local current_index=0
+#	if [[ -f "$state_file" ]]; then
+#		current_index=$(<"$state_file")
+#	fi
+#
+#	# Stampa IP corrente
+#	echo "${ip_list[$current_index]}"
+#
+#	# Calcola il prossimo indice
+#	local next_index=$(( (current_index + 1) % total_ips ))
+#	echo "$next_index" > "$state_file"
+#}
+# END
 
 elapsedCleanupTS=0
 
-#Abbiamo:
+#Caso (1). Nel caso di un encoder che genera HLS, abbiamo:
 #IN_MOVED_TO per i file .m3u8
 #IN_MODIFY per i files .ts e .m3u8.tmp
 #IN_DELETE per i file .ts
 #IN_MOVED_FROM per i files .m3u8.tmp
 #IN_CREATE per i files .m3u8.tmp e .ts
-#we synchronize when .m3u8 is changed
-if [ $eventName == "IN_MOVED_TO" ]
+#we synchronize when .m3u8 is changed (IN_MOVED_TO)
+#Caso (2). Nel caso invece in cui siamo nello scenario in cui un externalDelivery riceve i files dall'encoder (tramite rsync) e deve replicarli
+#su un altro storage, in questo caso è sufficiente che il file .m3u8 sia cambiato
+if [[ "$eventName" == "IN_MOVED_TO" || "$fileName" == *.m3u8 ]]
 then
 	#Per evitare che lo script venga eseguito piu volte per la stessa directory
 	# Lock file specifico per la directory
@@ -94,7 +100,8 @@ then
 	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
 	#che impiega piu tempo, cioé quello in USA
 	#Inoltre, per evitare di stressare gli stessi server, eseguiamo il sync ogni volta su server diversi
-	serversToBeSynched="$(get_next_ip "mmsStorageIPList") $(get_next_ip "euExternalDeliveriesIPList") $(get_next_ip "usaExternalDeliveriesIPList")"
+	#serversToBeSynched="$(get_next_ip "mmsStorageIPList") $(get_next_ip "euExternalDeliveriesIPList") $(get_next_ip "usaExternalDeliveriesIPList") $(get_next_ip "usa2ExternalDeliveriesIPList")"
+	serversToBeSynched="$MMS_RSYNC_EXTERNAL_DELIVERY_SERVERS" # defined in mms-env.sh
 	#echo "serversToBeSynched: $serversToBeSynched" >> $debugFileName
 
 

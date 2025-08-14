@@ -40,6 +40,7 @@ set(SCRIPTs
     crontab.sh
     incrontab.sh
     incronServiceCheck.sh
+    genIncrontabForMMSLive.sh
     sqlQueries.txt
     checkStatistics.sh
     checkConsistencyFileSystem-Database.sh

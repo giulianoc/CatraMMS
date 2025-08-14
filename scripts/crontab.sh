@@ -277,10 +277,12 @@ else
 	then
 		if [ "$timeoutInMinutes" == "" ]
 		then
-			timeoutInMinutes=$oneDayInMinutes
+			timeoutInMinutes=$twoDaysInMinutes
 		fi
 
-		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -mmin +$timeoutInMinutes -type f"
+		#ho tolto -maxdepth 1 perchè altrimenti venivano eliminati solo i files che si trovano direttamente dentro .../MMSRepository/MMSLive/
+		#Nel mio caso ho files in sottodirectory interne a .../MMSRepository/MMSLive/ rimasti vecchi che devono essere rimossi
+		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -mmin +$timeoutInMinutes -type f"
 		#commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 14 ]
@@ -290,7 +292,9 @@ else
 			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d"
+		#ho tolto -maxdepth 1 perchè altrimenti venivano eliminati solo le dir vuote che si trovano direttamente dentro .../MMSRepository/MMSLive/
+		#Nel mio caso ho dir in sottodirectory interne a .../MMSRepository/MMSLive/ rimasti vecchie che devono essere rimosse
+		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -empty -mmin +$timeoutInMinutes -type d"
 		#commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 15 ]
