@@ -447,16 +447,17 @@ API::API(
 
 	try
 	{
-		vector<pair<string, string>> ativeNetworkInterfaces = System::getActiveNetworkInterface();
-		for (const auto &[interfaceName, ipAddress] : ativeNetworkInterfaces)
+		vector<tuple<string, string, string>> ativeNetworkInterfaces = System::getActiveNetworkInterface();
+		for (const auto &[interfaceName, interfaceType, ipAddress] : ativeNetworkInterfaces)
 		{
 			SPDLOG_INFO(
 				"getActiveNetworkInterface"
 				", interface name: {}"
+				", interface type: {}"
 				", ip address: {}",
-				interfaceName, ipAddress
+				interfaceName, interfaceType, ipAddress
 			);
-			if (ipAddress.starts_with("192.168") || ipAddress.starts_with("10.0"))
+			if (interfaceType != "IPv4" || ipAddress.starts_with("192.168") || ipAddress.starts_with("10.0"))
 				continue;
 			_deliveryExternalNetworkInterface = interfaceName;
 		}
