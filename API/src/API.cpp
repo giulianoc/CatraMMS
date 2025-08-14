@@ -461,6 +461,11 @@ API::API(
 				continue;
 			_deliveryExternalNetworkInterface = interfaceName;
 		}
+		SPDLOG_INFO(
+			"getActiveNetworkInterface"
+			", _deliveryExternalNetworkInterface: {}",
+			_deliveryExternalNetworkInterface
+		);
 	}
 	catch (exception &e)
 	{
