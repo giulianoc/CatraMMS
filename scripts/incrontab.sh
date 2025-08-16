@@ -90,7 +90,12 @@ then
 	#-n significa “non aspettare”: se il file è già lockato da un altro processo, esci subito
 	#|| exit 1: se il lock non riesce, lo script esce con errore 1
 	flock -n 200 || {
-		echo "$(date)-$pid: Lock attivo per $channelDirectory, esco" >> $debugFileName
+		echo "$(date)-$pid: Lock attivo per $channelDirectory ($LOCKFILE), esco" >> $debugFileName
+
+		end=$(date +%s)
+		elapsed=$((end-start))
+		echo "$(date)-$pid: @$eventName@ @$fileName@ @$channelDirectory@ @$elapsedCleanupTS@ @$elapsed@" >> $debugFileName
+
 		exit 1
 	}
 
