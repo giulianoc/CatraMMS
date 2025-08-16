@@ -3220,6 +3220,12 @@ void API::bandwidthUsageThread()
 		{
 			unordered_map<string, uint64_t> hostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesHosts();
 
+			SPDLOG_INFO(
+				"bandwidthUsageThread, getBandwidthInMbps"
+				", hostsBandwidth.size: {}",
+				hostsBandwidth.size()
+			);
+
 			if (hostsBandwidth.size() > 0)
 			{
 				for (auto &[host, bandwidth] : hostsBandwidth)

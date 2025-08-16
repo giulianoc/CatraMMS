@@ -72,7 +72,7 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 			", host: {}"
 			", running: {}"
 			", bandwidthCorrection: {}"
-			", bandwidth: {} ({}Mbps)",
+			", bandwidth: {} ({} Mbps)",
 			host, running, bandwidthCorrection, bandwidth, (bandwidth * 8) / 1000000
 		);
 
@@ -95,7 +95,7 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 		SPDLOG_INFO(
 			"getMinBandwidthHost"
 			", minHost: {}"
-			", minBandwidth: {} ({}Mbps)",
+			", minBandwidth: {} ({} Mbps)",
 			minHost, minBandwidth, (minBandwidth * 8) / 1000000
 		);
 		return minHost;

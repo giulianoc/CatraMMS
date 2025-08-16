@@ -984,12 +984,15 @@ unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesH
 
 	lock_guard<mutex> locker(_externalDeliveriesMutex);
 
-	unordered_set<string> hosts;
-	for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
-		hostBandwidthTracker->addHosts(hosts);
+	if (_externalDeliveriesGroups.size() > 0)
+	{
+		unordered_set<string> hosts;
+		for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
+			hostBandwidthTracker->addHosts(hosts);
 
-	for (string host : hosts)
-		hostsBandwidth.insert(make_pair(host, 0));
+		for (string host : hosts)
+			hostsBandwidth.insert(make_pair(host, 0));
+	}
 
 	return hostsBandwidth;
 }
