@@ -40,7 +40,7 @@ void BandwidthStats::addSample(uint64_t bytesUsed, chrono::system_clock::time_po
 
 			double avg = static_cast<double>(sum) / samples.size();
 			SPDLOG_INFO(
-				"BandwidthStats. Day: {}, Hour {}, Peak: {} Mbps, Avg: {} Mbps", _currentDay, _currentHour, (peak * 8) / 1000000,
+				"BandwidthStats. addSample. Day: {}, Hour {}, Peak: {} Mbps, Avg: {} Mbps", _currentDay, _currentHour, (peak * 8) / 1000000,
 				std::format("{:.1f}", (avg * 8) / 1000000)
 			);
 		}

@@ -892,30 +892,37 @@ incrond_working()
 
 mms_delivery_check_bandwidth_usage()
 {
-	lastLogTimestampCheckedFile=/tmp/alarm_mms_delivery_check_bandwidth_usage_info
+	#contiene lastLogTimestampChecked e previousBandwidth
+	lastLogTimestampCheckedAndLastBandwidthFile=/tmp/alarm_mms_delivery_check_bandwidth_usage_info
 
-	if [ -f "$lastLogTimestampCheckedFile" ]; then
-		lastLogTimestampChecked=$(cat $lastLogTimestampCheckedFile)
+	if [ -f "$lastLogTimestampCheckedAndLastBandwidthFile" ]; then
+		lastLogTimestampChecked=$(cat $lastLogTimestampCheckedAndLastBandwidthFile | cut -d'-' -f1)
+		previousBandwidth=$(cat $lastLogTimestampCheckedAndLastBandwidthFile | cut -d'-' -f2)
 	else
 		lastLogTimestampChecked=-1
+		previousBandwidth=0
 	fi
 
 	maxBandwidth=900
-	warningMessage=$(grep "getBandwidthInMbps, bandwidthUsage" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
+	warningMessage=$(grep "getBandwidthInMbps, bandwidthUsage" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v previousBandwidth=$previousBandwidth -v lastLogTimestampCheckedAndLastBandwidthFile=$lastLogTimestampCheckedAndLastBandwidthFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; lastBandwidth=previousBandwidth }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
 		newLastLogTimestampChecked=mktime(datespec);	\
 		if(lastLogTimestampChecked == -1 || newLastLogTimestampChecked > lastLogTimestampChecked) {	\
 			datetime=substr($0, 2, 23);	\
-			bandwidth=$2;	\
-			if (bandwidth > maxBandwidth)	\
-				warningMessage=warningMessage""datetime" - "bandwidth"/"maxBandwidth"\n";	\
+			lastBandwidth=$2;	\
+			if (lastBandwidth > maxBandwidth)	\
+				warningMessage=warningMessage""datetime" - "lastBandwidth"/"maxBandwidth"\n";	\
 		}	\
 	}	\
-	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
+	END { printf("%s", warningMessage); printf("%s-%s", newLastLogTimestampChecked, lastBandwidth) > lastLogTimestampCheckedAndLastBandwidthFile; } ')
 
 	if [ "$warningMessage" = "" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage is fine" >> $debugFilename
+		if [ $previousBandwidth -gt $maxBandwidth ]; then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage NOW is fine, previous was $previousBandwidth/$maxBandwidth" >> $debugFilename
+		else
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage is fine" >> $debugFilename
+		fi
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_delivery_check_bandwidth_usage"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -924,11 +931,22 @@ mms_delivery_check_bandwidth_usage()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage" >> $debugFilename
+		if [ $previousBandwidth -gt $maxBandwidth ]; then
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage (two consecutive, previous was $previousBandwidth/$maxBandwidth)" >> $debugFilename
 
-		alarmNotificationPeriod=$((60 * 5))		#5 minuti
-		notify "$(hostname)" "alarm_mms_delivery_check_bandwidth_usage" "alarm_mms_delivery_check_bandwidth_usage" $alarmNotificationPeriod "$warningMessage"
-		return 1
+			alarmNotificationPeriod=$((60 * 5))		#5 minuti
+			notify "$(hostname)" "alarm_mms_delivery_check_bandwidth_usage" "alarm_mms_delivery_check_bandwidth_usage" $alarmNotificationPeriod "$warningMessage"
+			return 1
+		else
+			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage (alarm not raised because previous $previousBandwidth/$maxBandwidth was fine)" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_mms_delivery_check_bandwidth_usage"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+
+			return 0
+		fi
 	fi
 }
 
