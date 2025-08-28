@@ -142,6 +142,15 @@ prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=194.42.206.31
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-delivery-9
+prodServers[$((serverIndex*6+1))]=194.42.196.102
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=194.42.196.102
+
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=eu-delivery-1
 prodServers[$((serverIndex*6+1))]=195.160.222.54
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
@@ -174,6 +183,15 @@ prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=213.111.144.119
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=eu-delivery-5
+prodServers[$((serverIndex*6+1))]=195.160.222.197
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=195.160.222.197
+
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=hetzner-engine-db-1
 prodServers[$((serverIndex*6+1))]=167.235.10.244
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
@@ -189,13 +207,21 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=engine
 prodServers[$((serverIndex*6+5))]=10.0.1.6
 
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=hetzner-storage-1
+#prodServers[$((serverIndex*6+1))]=5.9.65.244
+#prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=storage
+#prodServers[$((serverIndex*6+5))]=10.0.1.16
+
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=hetzner-storage-1
-prodServers[$((serverIndex*6+1))]=5.9.65.244
+prodServers[$((serverIndex*6+0))]=hetzner-storage-2
+prodServers[$((serverIndex*6+1))]=136.243.0.158
 prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=storage
-prodServers[$((serverIndex*6+5))]=10.0.1.16
+prodServers[$((serverIndex*6+5))]=10.0.1.2
 
 
 serverIndex=$((serverIndex+1))

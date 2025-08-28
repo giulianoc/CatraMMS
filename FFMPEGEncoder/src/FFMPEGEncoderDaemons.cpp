@@ -228,6 +228,54 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
+				// controlla se il lastModificationTime dell'output file di ffmpeg è cambiato
+				if (liveProxyWorking)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor outputFFMpegFileLastModificationTime check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+					);
+					time_t previousOutputFfmpegFileModificationTime = copiedLiveProxy->_outputFfmpegFileModificationTime;
+					copiedLiveProxy->_outputFfmpegFileModificationTime = sourceLiveProxy->_ffmpeg->getOutputFFMpegFileLastModificationTime();
+					if (previousOutputFfmpegFileModificationTime != 0 &&
+						previousOutputFfmpegFileModificationTime == copiedLiveProxy->_outputFfmpegFileModificationTime)
+					{
+						liveProxyWorking = false;
+
+						SPDLOG_ERROR(
+							"liveProxyMonitor. output ffmpeg file last modification time is not changing"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey
+						);
+
+						localErrorMessage = " restarted because of 'output ffmpeg file last modification time is not changing'";
+
+						break;
+					}
+				}
+
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childProcessId: {}"
+						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
+						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
+						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+					);
+
+					continue;
+				}
+
 				// First health check
 				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
 				//		rtmp(Proxy)/SRT(Grid):	kill if it was found 'Non-monotonous DTS in output stream' and 'incorrect timestamps'
@@ -1211,6 +1259,55 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				continue;
 			}
 			*/
+
+				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
+					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+				{
+					SPDLOG_INFO(
+						"liveRecordingMonitor. LiveRecorder changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}"
+						", sourceLiveRecording->_childProcessId: {}"
+						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
+						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
+						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+					);
+
+					continue;
+				}
+
+				// controlla se il lastModificationTime dell'output file di ffmpeg non è cambiato
+				if (liveRecorderWorking)
+				{
+					SPDLOG_INFO(
+						"liveRecordingMonitor outputFFMpegFileLastModificationTime check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", channelLabel: {}",
+						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
+					);
+					time_t previousOutputFfmpegFileModificationTime = copiedLiveRecording->_outputFfmpegFileModificationTime;
+					copiedLiveRecording->_outputFfmpegFileModificationTime = copiedLiveRecording->_ffmpeg->getOutputFFMpegFileLastModificationTime();
+					if (previousOutputFfmpegFileModificationTime != 0 &&
+						previousOutputFfmpegFileModificationTime == copiedLiveRecording->_outputFfmpegFileModificationTime)
+					{
+						liveRecorderWorking = false;
+
+						SPDLOG_ERROR(
+							"liveRecorderMonitor. output ffmpeg file last modification time is not changing"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey
+						);
+
+						localErrorMessage = " restarted because of 'output ffmpeg file last modification time is not changing'";
+
+						break;
+					}
+				}
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)

@@ -77,6 +77,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
+			// livello di log sul sink
 			if (logLevel == "debug")
 				dailySink->set_level(spdlog::level::debug);
 			else if (logLevel == "info")
@@ -99,6 +100,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
+			// livello di log sul sink
 			if (logLevel == "debug")
 				rotatingSink->set_level(spdlog::level::debug);
 			else if (logLevel == "info")
@@ -133,12 +135,15 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 	// trigger flush if the log severity is error or higher
 	logger->flush_on(spdlog::level::trace);
 
-	logger->set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+	// livello di log sul logger
+	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
 	string pattern = JSONUtils::asString(configurationRoot["log"]["mms"], "pattern", "");
 	spdlog::set_pattern(pattern);
 
 	spdlog::set_default_logger(logger);
+	// livello di log globale
+	spdlog::set_level(spdlog::level::trace);
 
 	return logger;
 }

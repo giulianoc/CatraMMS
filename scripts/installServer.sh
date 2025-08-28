@@ -1466,6 +1466,10 @@ install-mms-nginx-package()
 		#certbot certificates
 		#per rimuovere un certificato (verrà mostrata la lista dei certificati e devi selezionarne uno)
 		#certbot delete
+		#Se si vuole estendere il certificato con un nuovo hostname, devi inserire entrambi gli hostnames
+		#1. sudo certbot certonly --expand --manual --preferred-challenges dns -d us2-blade7-1.cbrtvlv.com -d us2-blade7-1.cibortvlive.com
+		#2. aggiungi il nuovo hostname in ~/mms/conf/catramms.nginx (campo server_name)
+		#3 restart di nginx
 
 		#inoltre blocchiamo (ritorno 444 che chiude la connessione senza inviare nessuna risposta) tutte le richieste HTTPS con Host sbagliato (tipo xj5zr.usdsh.com)
 		#Per questo motivo bisogna generare i files invalid.crt e invalid.key utilizzati in catramms.nginx
@@ -1500,7 +1504,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6410
+	catraMMSVersion=1.0.6430
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

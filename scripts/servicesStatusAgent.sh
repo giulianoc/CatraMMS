@@ -171,6 +171,12 @@ do
 			echo "" >> $debugFilename
 			mms_delivery_check_bandwidth_usage
 
+			echo "" >> $debugFilename
+			mms_incrontab_check_locks
+
+			echo "" >> $debugFilename
+			mms_incrontab_check_rsync
+
 			shift
 
 			;;
@@ -185,7 +191,13 @@ do
 			nginx_error encoder
 
 			echo "" >> $debugFilename
-			incrond_working
+			systemctlServiceUpAndRunning incron
+
+			echo "" >> $debugFilename
+			mms_incrontab_check_locks
+
+			echo "" >> $debugFilename
+			mms_incrontab_check_rsync
 
 			echo "" >> $debugFilename
 			serviceName=encoder
@@ -233,10 +245,16 @@ do
 
 			;;
 		"storage")
-			echo "" >> $debugFilename
-			raid_error
+			if [ "$2" = "raid-check" ]
+			then
+				echo "" >> $debugFilename
+				raid_error
 
-			shift
+				shift
+			fi
+
+			echo "" >> $debugFilename
+			systemctlServiceUpAndRunning nfs-server
 
 			;;
         *) echo "$1 is not an option" >> $debugFilename

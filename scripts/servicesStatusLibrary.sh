@@ -72,40 +72,10 @@ getAlarmDescription()
 			echo "mms_delivery too much bandwidth usage"
 			;;
 		*)
-			echo "Unknown alarmType: $alarmType"
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): Unknown alarmType: $alarmType" >> $debugFilename
+			echo "$alarmType"
 			;;
 	esac
 }
-
-#getIngestionJobLabelByIngestionJobKey()
-#{
-#ingestionJobKey = $1
-
-	##dominio da essere cambiato con catramms-cloud
-    #apiIngestionJobDetailsURL="https://mms-api.cibortv-mms.com:443/catramms/1.0.1/ingestionJob/__INGESTIONJOBKEY__?ingestionJobOutputs=true&fromMaster=false"
-	##custom key
-    #basicAuthentication = "MTpITlZPb1ZoSHgweW9XTkl4RnUtVGhCQTF2QVBFS1dzeG5lR2d6ZTZlb2RkRXY5YUIxeHA5TnpzQktEQkRNRUZO"
-#maxTime = 5
-#apiIngestionJobDetailsURL = ${apiIngestionJobDetailsURL / __INGESTIONJOBKEY__ / $ingestionJobKey }
-#ingestionJobKeyPathName = / tmp / $ingestionJobKey.json
-#start = $(date + % s)
-#curl - k-- silent-- output $ingestionJobKeyPathName-- max - time $maxTime - H 'accept:: application/json' -                                     \ H "Authorization: Basic $basicAuthentication" - X 'GET' "$apiIngestionJobDetailsURL"
-#end = $(date + % s)
-#ingestionJobLabel = ""
-#if[-f "$ingestionJobKeyPathName"]; then
-#fileSize = $(stat - c % s "$ingestionJobKeyPathName")
-#if[$fileSize - gt 1000]; then
-#ingestionJobLabel = $(cat $ingestionJobKeyPathName | jq '.response.ingestionJobs[0].label')
-#echo                                                                                                                                                                                                   \ "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, ingestionJobLabel: $ingestionJobLabel, elapsed: $((end-start)) secs">> \ $debugFilename
-#else
-#echo                                                                                                                                                                                                  \ "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, $ingestionJobKeyPathName size: $(stat -c%s " $ingestionJobKeyPathName \ "), elapsed: $((end-start)) secs">> $debugFilename
-#fi
-#else
-#echo                                                                                                                                                            \ "$(date +'%Y/%m/%d %H:%M:%S'): getIngestionJobLabelByIngestionJobKey, apiIngestionJobDetailsURL: $apiIngestionJobDetailsURL, elapsed: $((end-start)) secs">> \ $debugFilename
-#fi
-#rm - f $ingestionJobKeyPathName
-#}
 
 notify()
 {
@@ -124,17 +94,17 @@ notify()
 		now=$(date +%s)
 		elapsed=$((now-lastNotificationTime))
 		if [ $elapsed -lt $alarmNotificationPeriodInSeconds ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): $alarmType not sent because too early, elapsed: $elapsed secs" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): $alarmType not sent because too early, elapsed: $elapsed secs" >> $debugFilename
 			return 1
 		fi
 	fi
 
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): Sending $alarmType" >> $debugFilename
+	echo "$(date +'%Y-%m-%d %H:%M:%S'): Sending $alarmType" >> $debugFilename
 
 	touch $alarmNotificationPathFileName
 
 	alarmDescription=$(getAlarmDescription $alarmType)
-	message="$(date +'%Y/%m/%d %H:%M:%S') - ${serverName} - ${alarmDescription} - ${alarmDetails}"
+	message="$(date +'%Y-%m-%d %H:%M:%S') - ${serverName} - ${alarmDescription} - ${alarmDetails}"
 
 	curl -X POST	\
 		--data-urlencode "chat_id=${TELEGRAM_GROUPALARMS_ID}" \
@@ -165,7 +135,7 @@ mysql_sql_slave_off()
     #solo se è uno slave verifico il suo stato
 	mysqlSlaveStatus=$(echo "select service_state from performance_schema.replication_applier_status_by_coordinator" | mysql -N -u ${DB_USER} -p${DB_PASSWORD} -h localhost ${DB_DBNAME})
 	if [ "$mysqlSlaveStatus" == "ON" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, slave is working fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): sql_slave_off, slave is working fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_sql_slave_off"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -179,7 +149,7 @@ mysql_sql_slave_off()
 		return 1
 	fi
   else
-	echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_slave_off, it is not a slave. isMysqlSlave: $isMysqlSlave" >> $debugFilename
+	echo "$(date +'%Y-%m-%d %H:%M:%S'): sql_slave_off, it is not a slave. isMysqlSlave: $isMysqlSlave" >> $debugFilename
 
 	return 0
   fi
@@ -193,7 +163,7 @@ postgres_replication_check()
       #in case of slave
 	  status=$(echo "SELECT status FROM pg_stat_wal_receiver" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@${MMS_DB_LOCALHOST}:5432/${DB_DBNAME}")
 	  if [ "$status" == "streaming" ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication slave is working fine" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): postgres_replication_check, replication slave is working fine" >> $debugFilename
 
 			alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
 			if [ -f "$alarmNotificationPathFileName" ]; then
@@ -212,7 +182,7 @@ postgres_replication_check()
       #il campo state di ogni riga deve essere 'streaming'
 	  count=$(echo "SELECT count(*) FROM pg_stat_replication where state != 'streaming'" | psql --no-psqlrc -At "postgresql://${DB_USER}:${DB_PASSWORD}@${MMS_DB_LOCALHOST}:5432/${DB_DBNAME}")
 	  if [ $count -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, replication master is working fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): postgres_replication_check, replication master is working fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_postgres_replication_check"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -226,7 +196,7 @@ postgres_replication_check()
 			return 1
 	  fi
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_replication_check, it is not a slave neither a master. isSlave: $isSlave" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): postgres_replication_check, it is not a slave neither a master. isSlave: $isSlave" >> $debugFilename
 
 		return 0
 	fi
@@ -242,7 +212,7 @@ mysql_check()
 
         #it is a number
 
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check. sql is working fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): sql_check. sql is working fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_sql_check"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -251,7 +221,7 @@ mysql_check()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): sql_check. sql count return: $count" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): sql_check. sql count return: $count" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 15))		#15 minuti
 		notify "$(hostname)" "alarm_sql_check" "alarm_sql_check" $alarmNotificationPeriod "sql count return: $count"
@@ -269,7 +239,7 @@ postgres_check()
 
         #it is a number
 
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_check. postgres is working fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): postgres_check. postgres is working fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_postgres_check"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -278,7 +248,7 @@ postgres_check()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): postgres_check. postgres count return: $count" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): postgres_check. postgres count return: $count" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 15))		#15 minuti
 		notify "$(hostname)" "alarm_postgres_check" "alarm_postgres_check" $alarmNotificationPeriod "postgres count return: $count"
@@ -290,7 +260,7 @@ disks_usage()
 {
 	alarmsDiskUsage=$(df -Ph | grep -v "/snap/" | grep -v "/sys/firmware/efi/" | awk 'BEGIN { alarms=""; maxDiskUsage=75; } { if (NR == 1) next; usagePercentage=substr($5, 0, length($5)-1)+0; if (usagePercentage > maxDiskUsage) { alarms=alarms$6" -> "usagePercentage"%; "; } } END {printf("%s", alarms) } ')
 	if [ "$alarmsDiskUsage" == "" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_disks_usage, disks usage is fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_disks_usage, disks usage is fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_disks_usage"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -317,7 +287,7 @@ cpu_usage()
 	fi
 	result=$(echo "${cpuUsage}<${maxCpuUsage}" | bc)                                                                   
 	if [ $result = 1 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_cpu_usage, cpu usage is fine: $cpuUsage" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_cpu_usage, cpu usage is fine: $cpuUsage" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_cpu_usage"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -344,7 +314,7 @@ memory_usage()
 	fi
 	result=$(echo "${memoryUsage}<${maxMemoryUsage}" | bc)                                                                   
 	if [ $result = 1 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_memory_usage, memory usage is fine: $memoryUsage" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_memory_usage, memory usage is fine: $memoryUsage" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_memory_usage"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -365,7 +335,7 @@ mount_error()
 	mountError=$(ls -la /mnt/ > /dev/null 2> $mountErrorFileName)
 	mountErrorFileSize=$(stat -c%s "$mountErrorFileName")
 	if [ $mountErrorFileSize = 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mount_error, mount is fine, mount error file size: $mountErrorFileSize" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mount_error, mount is fine, mount error file size: $mountErrorFileSize" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mount_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -389,7 +359,7 @@ nginx_error()
 	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | grep -v "was not found in \"/etc/.htpasswd\"" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_nginx_error, nginx ${serviceName} is fine: $nginxErrorsCount" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_nginx_error, nginx ${serviceName} is fine: $nginxErrorsCount" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_nginx_${serviceName}_error"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -418,7 +388,7 @@ mms_service_running_by_processName()
 		notify "$(hostname)" "alarm_mms_service_running" "alarm_mms_${serviceName}_service_running" $alarmNotificationPeriod ""
 
 #fix management
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} service is restarted" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} service is restarted" >> $debugFilename
 
 		~/mmsStopALL.sh
 		sleep 1
@@ -426,7 +396,7 @@ mms_service_running_by_processName()
 
 		return 1
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} is running" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} is running" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_${serviceName}_service_running"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -446,7 +416,7 @@ mms_service_running_by_healthCheckURL()
 	httpStatus=$(curl -k --output $outputHealthCheckURL -w "%{http_code}" --max-time 20 "$healthCheckURL")
 	if [ $httpStatus -ne 200 ]
 	then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): mms_service_running failed, serviceName: ${serviceName}, healthCheckURL: $healthCheckURL, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): mms_service_running failed, serviceName: ${serviceName}, healthCheckURL: $healthCheckURL, httpStatus: $httpStatus, outputHealthCheckURL: $(cat $outputHealthCheckURL)" >> $debugFilename
 
 		failuresNumberFileName=/tmp/alarm_mms_${serviceName}_service_running.failuresNumber.txt
 		if [ -s $failuresNumberFileName ]
@@ -463,7 +433,7 @@ mms_service_running_by_healthCheckURL()
         #fix management
 		if [ $failuresNumber -ge $maxFailuresNumber ]
 		then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} service is restarted" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_service_running, ${serviceName} service is restarted" >> $debugFilename
 
 			~/mmsStopALL.sh
 			sleep 1
@@ -473,14 +443,14 @@ mms_service_running_by_healthCheckURL()
 		else
 			failuresNumber=$((failuresNumber+1))
 
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, serviceName: ${serviceName}, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_service_running, serviceName: ${serviceName}, one more failure: $failuresNumber, healthCheckURL: $healthCheckURL" >> $debugFilename
 
 			echo "$failuresNumber" > $failuresNumberFileName
 		fi
 
 		return 1
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_service_running, mms ${serviceName} is running" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_service_running, mms ${serviceName} is running" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_${serviceName}_service_running"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -516,7 +486,7 @@ ffmpeg_filter_detect()
 		alarmNotificationPathFileName="/tmp/alarm_${filterName}_${fileName}"
 		infoPathFileName="${alarmNotificationPathFileName}_info"
 		if [ $filterCount -eq 0 ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, logFile: $logFile" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, logFile: $logFile" >> $debugFilename
 
             # 2023 - 08 - 31 : remove non funzionante perchè, dopo che nel log saranno trovati i filtri, filterCount non sarà mai 0
             #Per questo motivo è stato aggiunto il find - delete sopra
@@ -534,7 +504,7 @@ ffmpeg_filter_detect()
 				if [ $filterCount -ne $previousFilterCount ]; then
 					counterIncreased=1
 				else
-					echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, previousFilterCount: $previousFilterCount, logFile: $logFile" >> $debugFilename
+					echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_$filterName, filterCount: $filterCount, previousFilterCount: $previousFilterCount, logFile: $logFile" >> $debugFilename
 				fi
 			else
 				counterIncreased=1
@@ -555,10 +525,10 @@ ffmpeg_filter_detect()
                 start=$(date +%s)
                 curl -k -u $encoderFilterNotificationURLUser:$encoderFilterNotificationURLPassword -w "%{http_code}" --silent --output /dev/null --max-time $maxTime -H 'accept:: application/json' -X 'GET' "$encoderFilterNotificationURL"
 	            end=$(date +%s)
-			    echo "$(date +'%Y/%m/%d %H:%M:%S'): encoderFilterNotificationURL: $encoderFilterNotificationURL, httpStatus: $httpStatus, filterCount: $filterCount, elapsed: $((end-start)) secs" >> $debugFilename
+			    echo "$(date +'%Y-%m-%d %H:%M:%S'): encoderFilterNotificationURL: $encoderFilterNotificationURL, httpStatus: $httpStatus, filterCount: $filterCount, elapsed: $((end-start)) secs" >> $debugFilename
 	            if [ $httpStatus -ne 200 ]
 	            then
-			       echo "$(date +'%Y/%m/%d %H:%M:%S'): encoderFilterNotificationURL failed: $encoderFilterNotificationURL, elapsed: $((end-start)) secs" >> $debugFilename
+			       echo "$(date +'%Y-%m-%d %H:%M:%S'): encoderFilterNotificationURL failed: $encoderFilterNotificationURL, elapsed: $((end-start)) secs" >> $debugFilename
                 fi
 
 				##inizializza ingestionJobLabel
@@ -596,7 +566,7 @@ mms_call_api_service()
 	end=$(date +%s)
 
 	if [ $httpStatus -eq 200 -a $((end-start)) -lt $maxTime ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_call_api_service, mms call api is fine: curl $curlOptions_2" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_call_api_service, mms call api is fine: curl $curlOptions_2" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_call_api_service"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -605,7 +575,7 @@ mms_call_api_service()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_call_api_service, mms call api failed. httpStatus: $httpStatus, end-start: $((end-start)), curl $curlOptions_2" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_call_api_service, mms call api failed. httpStatus: $httpStatus, end-start: $((end-start)), curl $curlOptions_2" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 30))		#30 minuti
 		if [ $((end-start)) -ge $maxTime ]; then
@@ -662,7 +632,7 @@ mms_api_timing_check_service()
   ')
 
 	if [ "$warningMessage" = "" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_timing_check_service, mms api timing is fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_api_timing_check_service, mms api timing is fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_api_timing_check_service"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -671,7 +641,7 @@ mms_api_timing_check_service()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_api_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_api_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		notify "$(hostname)" "alarm_mms_api_timing_check_service" "alarm_mms_api_timing_check_service" $alarmNotificationPeriod "$warningMessage"
@@ -726,7 +696,7 @@ mms_webservices_timing_check_service()
 	END { printf("%s", warningMessage); printf("%s", newLastLogTimestampChecked) > lastLogTimestampCheckedFile; } ')
 
 	if [ "$warningMessage" = "" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_webservices_${logFileName}_timing_check_service, mms_webservices timing is fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_webservices_${logFileName}_timing_check_service, mms_webservices timing is fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_webservices_${logFileName}_timing_check_service"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -735,7 +705,7 @@ mms_webservices_timing_check_service()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_webservices_${logFileName}_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_webservices_${logFileName}_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		notify "$(hostname)" "alarm_mms_webservices_timing_check_service" "alarm_mms_webservices_timing_check_service" $alarmNotificationPeriod "$warningMessage"
@@ -750,7 +720,7 @@ server_reachable()
 	host_name=$3
 
 	if nc -w 15 -z $ip_address $port 2>/dev/null; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_server_reachable, mms server is reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_server_reachable, mms server is reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_server_reachable"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -759,7 +729,7 @@ server_reachable()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_server_reachable, mms server IS NOT reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_server_reachable, mms server IS NOT reachable: ip_address $ip_address, host_name: $host_name" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		alarmDetails="The $host_name ($ip_address) mms server IS NOT reachable"
@@ -777,7 +747,7 @@ logfile_slowquery_newlines_check()
 	elif [ "$serviceType" == "api" ]; then
 		logFilePathName=/var/catramms/logs/mmsAPI/mmsAPI-slowquery.log
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serverType: $serverType" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serverType: $serverType" >> $debugFilename
 		return 1
 	fi
 
@@ -813,7 +783,7 @@ logfile_slowquery_newlines_check()
 	echo "$currentLogFileSize" > "$lastLogTimestampCheckedFile"
 
 	if [ "$warningMessage" = "" ]; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_sql_timing_check_service, mms sql ($serviceName) timing is fine" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_sql_timing_check_service"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -822,7 +792,7 @@ logfile_slowquery_newlines_check()
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_sql_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_sql_timing_check_service. warningMessage: $warningMessage" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 5))		#5 minuti
 		notify "$(hostname)" "alarm_mms_sql_timing_check_service" "alarm_mms_sql_timing_check_service" $alarmNotificationPeriod "$warningMessage"
@@ -848,7 +818,7 @@ raid_error()
 		# Estrai la riga con [UU]
 		health=$(echo "$raid_status" | grep -o "\[[U_]*\]")
 		if [[ "$health" == *"[UU]"* ]]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_raid_error, RAID is healthy: [$health]" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_raid_error, RAID is healthy: [$health]" >> $debugFilename
 
 			alarmNotificationPathFileName="/tmp/alarm_raid_error"
 			if [ -f "$alarmNotificationPathFileName" ]; then
@@ -869,23 +839,25 @@ raid_error()
 	fi
 }
 
-incrond_working()
+systemctlServiceUpAndRunning()
 {
-	if systemctl is-active --quiet incron; then
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_incrond_working, incrond is active" >> $debugFilename
+	serviceName=$1
 
-		alarmNotificationPathFileName="/tmp/alarm_mms_incrond_working"
+	if systemctl is-active --quiet $serviceName; then
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName is active" >> $debugFilename
+
+		alarmNotificationPathFileName="/tmp/alarm_mms_${serviceName}_working"
 		if [ -f "$alarmNotificationPathFileName" ]; then
 			rm -f $alarmNotificationPathFileName
 		fi
 
 		return 0
 	else
-		echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_incrond_working, incrond IS NOT active" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName IS NOT active" >> $debugFilename
 
 		alarmNotificationPeriod=$((60 * 1))		#1 minut0
-		alarmDetails="incrond IS NOT active even with systemd auto restart"
-		notify "$(hostname)" "alarm_mms_incrond_working" "alarm_mms_incrond_working" $alarmNotificationPeriod "$alarmDetails"
+		alarmDetails="$serviceName IS NOT active even with systemd auto restart"
+		notify "$(hostname)" "alarm_mms_${serviceName}_working" "alarm_mms_${serviceName}_working" $alarmNotificationPeriod "$alarmDetails"
 		return 1
 	fi
 }
@@ -919,9 +891,9 @@ mms_delivery_check_bandwidth_usage()
 
 	if [ "$warningMessage" = "" ]; then
 		if [ $previousBandwidth -gt $maxBandwidth ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage NOW is fine, previous was $previousBandwidth/$maxBandwidth" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage NOW is fine, previous was $previousBandwidth/$maxBandwidth" >> $debugFilename
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage is fine" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage, mms_delivery bandwidth usage is fine" >> $debugFilename
 		fi
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_delivery_check_bandwidth_usage"
@@ -932,13 +904,13 @@ mms_delivery_check_bandwidth_usage()
 		return 0
 	else
 		if [ $previousBandwidth -gt $maxBandwidth ]; then
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage (two consecutive, previous was $previousBandwidth/$maxBandwidth)" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage (two consecutive, previous was $previousBandwidth/$maxBandwidth)" >> $debugFilename
 
 			alarmNotificationPeriod=$((60 * 5))		#5 minuti
 			notify "$(hostname)" "alarm_mms_delivery_check_bandwidth_usage" "alarm_mms_delivery_check_bandwidth_usage" $alarmNotificationPeriod "$warningMessage"
 			return 1
 		else
-			echo "$(date +'%Y/%m/%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage (alarm not raised because previous $previousBandwidth/$maxBandwidth was fine)" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_delivery_check_bandwidth_usage. warningMessage: $warningMessage (alarm not raised because previous $previousBandwidth/$maxBandwidth was fine)" >> $debugFilename
 
 			alarmNotificationPathFileName="/tmp/alarm_mms_delivery_check_bandwidth_usage"
 			if [ -f "$alarmNotificationPathFileName" ]; then
@@ -950,3 +922,68 @@ mms_delivery_check_bandwidth_usage()
 	fi
 }
 
+mms_incrontab_check_locks()
+{
+	if [ ! -f /home/mms/incrontab.log ] || [ -s "$file" ]; then
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_locks, incrontab log file not existing or empty, check locks not done" >> $debugFilename
+		return 0
+	fi
+
+	#aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y-%m-%d %H:%M' -d "- 1 min")
+	incrontab -l | cut -f1 | while read path; do
+		#/var/catramms/storage/MMSRepository/MMSLive/6/5240
+    channel=$(basename "$path")
+    #Se trovo due 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
+    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 1 && prev ~ /Lock attivo/ && $0 ~ /Lock attivo/) {alarm=1; exit}; prev=$0; } END {printf("%d", alarm) } ')
+		if [ $alarm -eq 0 ]; then
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_locks, incrontab locks for channel $channel (filter ${dateFilter}) is fine" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_incrontab_check_locks_$channel"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+
+			#return 0
+		else
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_locks, incrontab locks for channel $channel (filter ${dateFilter}) failed" >> $debugFilename
+
+			alarmNotificationPeriod=$((5 * 60))		#5 minuti
+			notify "$(hostname)" "alarm_incrontab_check_locks" "alarm_incrontab_check_locks_$channel" $alarmNotificationPeriod "2 consecutive locks for channel $channel (filter ${dateFilter})"
+			#return 1
+		fi
+	done
+}
+
+mms_incrontab_check_rsync()
+{
+	if [ ! -f /home/mms/incrontab.log ] || [ -s "$file" ]; then
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_rsync, incrontab log file not existing or empty, check rsync not done" >> $debugFilename
+		return 0
+	fi
+
+	#aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
+	dateFilter=$(date +'%Y-%m-%d %H:%M' -d "- 1 min")
+	incrontab -l | cut -f1 | while read path; do
+		#/var/catramms/storage/MMSRepository/MMSLive/6/5240
+    channel=$(basename "$path")
+    #Se trovo due 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
+    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 1 && prev ~ /rsync failed/ && $0 ~ /rsync failed/) {alarm=1; exit}; prev=$0; } END {printf("%d", alarm) } ')
+		if [ $alarm -eq 0 ]; then
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_rsync, incrontab rsync for channel $channel (filter ${dateFilter}) is fine" >> $debugFilename
+
+			alarmNotificationPathFileName="/tmp/alarm_incrontab_check_rsync_$channel"
+			if [ -f "$alarmNotificationPathFileName" ]; then
+				rm -f $alarmNotificationPathFileName
+			fi
+
+			#return 0
+		else
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_rsync, incrontab rsync for channel $channel (filter ${dateFilter}) failed" >> $debugFilename
+
+			alarmNotificationPeriod=$((5 * 60))		#5 minuti
+			notify "$(hostname)" "alarm_incrontab_check_rsync" "alarm_incrontab_check_rsync_$channel" $alarmNotificationPeriod "2 consecutive rsync for channel $channel (filter ${dateFilter})"
+			#return 1
+		fi
+	done
+}

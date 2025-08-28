@@ -1040,40 +1040,17 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 
 		try
 		{
-			// json encodeStatusResponse = JSONUtils::toJson(-1, -1, sResponse);
-
-			string field = "completedWithError";
-			completedWithError = JSONUtils::asBool(encodeStatusResponse, field, false);
-
-			field = "errorMessage";
-			encoderErrorMessage = JSONUtils::asString(encodeStatusResponse, field, "");
-
-			field = "encodingFinished";
-			encodingFinished = JSONUtils::asBool(encodeStatusResponse, field, false);
-
-			field = "killedByUser";
-			killedByUser = JSONUtils::asBool(encodeStatusResponse, field, false);
-
-			field = "urlForbidden";
-			urlForbidden = JSONUtils::asBool(encodeStatusResponse, field, false);
-
-			field = "urlNotFound";
-			urlNotFound = JSONUtils::asBool(encodeStatusResponse, field, false);
-
-			field = "encodingProgress";
-			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, field, 0.0);
-
-			field = "pid";
-			pid = JSONUtils::asInt(encodeStatusResponse, field, -1);
-
-			field = "realTimeFrameRate";
-			realTimeFrameRate = JSONUtils::asInt(encodeStatusResponse, field, -1);
-
-			field = "realTimeBitRate";
-			realTimeBitRate = JSONUtils::asDouble(encodeStatusResponse, field, -1.0);
-
-			field = "numberOfRestartBecauseOfFailure";
-			numberOfRestartBecauseOfFailure = JSONUtils::asInt(encodeStatusResponse, field, -1);
+			completedWithError = JSONUtils::asBool(encodeStatusResponse, "completedWithError", false);
+			encoderErrorMessage = JSONUtils::asString(encodeStatusResponse, "errorMessage", "");
+			encodingFinished = JSONUtils::asBool(encodeStatusResponse, "encodingFinished", false);
+			killedByUser = JSONUtils::asBool(encodeStatusResponse, "killedByUser", false);
+			urlForbidden = JSONUtils::asBool(encodeStatusResponse, "urlForbidden", false);
+			urlNotFound = JSONUtils::asBool(encodeStatusResponse, "urlNotFound", false);
+			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, "encodingProgress", 0.0);
+			pid = JSONUtils::asInt(encodeStatusResponse, "pid", -1);
+			realTimeFrameRate = JSONUtils::asInt(encodeStatusResponse, "realTimeFrameRate", -1);
+			realTimeBitRate = JSONUtils::asDouble(encodeStatusResponse, "realTimeBitRate", -1.0);
+			numberOfRestartBecauseOfFailure = JSONUtils::asInt(encodeStatusResponse, "numberOfRestartBecauseOfFailure", -1);
 		}
 		catch (...)
 		{
@@ -1992,7 +1969,10 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			 Non vogliamo quindi abbandonare l'encoding ed eventualmente attivare un nuovo encoding su un'altro
 			 Encoder se non siamo sicurissimi che l'encoding attuale sia terminato.
 			*/
-			while (!(encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures))
+			while (!(
+				// exit condition
+				encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures
+			))
 			{
 				SPDLOG_INFO(
 					"sleep_for"

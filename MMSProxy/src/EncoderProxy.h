@@ -123,8 +123,6 @@ class EncoderProxy
 	string _mpeg2TSEncoder;
 	int _intervalInSecondsToCheckEncodingFinished;
 
-	// string                              _ffmpegEncoderProtocol;
-	// int                                 _ffmpegEncoderPort;
 	string _ffmpegEncoderUser;
 	string _ffmpegEncoderPassword;
 	int _ffmpegEncoderTimeoutInSeconds;
@@ -138,8 +136,6 @@ class EncoderProxy
 	string _ffmpegSlideShowURI;
 	string _ffmpegLiveRecorderURI;
 	string _ffmpegLiveProxyURI;
-	// string                              _ffmpegVODProxyURI;
-	// string								_ffmpegAwaitingTheBeginningURI;
 	string _ffmpegLiveGridURI;
 	string _ffmpegVideoSpeedURI;
 	string _ffmpegAddSilentAudioURI;

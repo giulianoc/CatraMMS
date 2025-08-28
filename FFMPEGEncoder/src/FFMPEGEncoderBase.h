@@ -69,6 +69,7 @@ class FFMPEGEncoderBase
 		json _outputsRoot;
 
 		bool _monitoringRealTimeInfoEnabled; // frame/size/time
+		time_t _outputFfmpegFileModificationTime;
 		long _realTimeFrame;
 		long _realTimeSize;
 		long _realTimeFrameRate;
@@ -95,6 +96,7 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_childProcessId = _childProcessId;
 			liveProxyAndGrid->_killToRestartByEngine = _killToRestartByEngine;
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
+			liveProxyAndGrid->_outputFfmpegFileModificationTime = _outputFfmpegFileModificationTime;
 			liveProxyAndGrid->_realTimeFrame = _realTimeFrame;
 			liveProxyAndGrid->_realTimeSize = _realTimeSize;
 			liveProxyAndGrid->_realTimeFrameRate = _realTimeFrameRate;
@@ -129,6 +131,7 @@ class FFMPEGEncoderBase
 		bool _monitoringEnabled;
 
 		bool _monitoringRealTimeInfoEnabled; // frame/size/time
+		time_t _outputFfmpegFileModificationTime;
 		long _realTimeFrame;
 		long _realTimeSize;
 		long _realTimeFrameRate;
@@ -169,6 +172,7 @@ class FFMPEGEncoderBase
 			liveRecording->_killToRestartByEngine = _killToRestartByEngine;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
+			liveRecording->_outputFfmpegFileModificationTime = _outputFfmpegFileModificationTime;
 			liveRecording->_realTimeFrame = _realTimeFrame;
 			liveRecording->_realTimeSize = _realTimeSize;
 			liveRecording->_realTimeFrameRate = _realTimeFrameRate;

@@ -77,6 +77,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
 			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
 
+			// livello di log sul sink
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
 			if (logLevel == "debug")
@@ -109,7 +110,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 	// trigger flush if the log severity is error or higher
 	logger->flush_on(spdlog::level::trace);
 
-	logger->set_level(spdlog::level::debug); // trace, debug, info, warn, err, critical, off
+	// livello di log sul logger
+	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
 	string pattern = JSONUtils::asString(configurationRoot["log"]["api"], "pattern", "");
 	spdlog::set_pattern(pattern);
@@ -118,6 +120,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 	// spdlog::register_logger(logger);
 
 	spdlog::set_default_logger(logger);
+	// livello di log globale
+	spdlog::set_level(spdlog::level::trace);
 
 	return logger;
 }

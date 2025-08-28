@@ -52,6 +52,12 @@ find_package(ZLIB)
 find_package(aws-cpp-sdk-ec2)
 # $(aws-cpp-sdk-ec2_INCLUDE_DIRS) and $(aws-cpp-sdk-ec2_LIBS) availables
 
+#Le macro SPDLOG_DEBUG, SPDLOG_TRACE sono controllate at Compile-time dal define SPDLOG_ACTIVE_LEVEL.
+#Di default è SPDLOG_LEVEL_INFO.
+#Se non si cambia questa define a SPDLOG_LEVEL_DEBUG o SPDLOG_LEVEL_TRACE al momento della compilazione,
+#le chiamate a SPDLOG_DEBUG e SPDLOG_TRACE vengono eliminate dal codice già in fase di compilazione.
+add_compile_options(-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+
 add_compile_options(-D_FILE_OFFSET_BITS=64)
 # Next Magick defines are just to avoid compilation warnings
 add_compile_options(-DMAGICKCORE_HDRI_ENABLE=0)
