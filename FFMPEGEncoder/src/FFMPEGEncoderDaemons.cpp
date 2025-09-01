@@ -248,14 +248,26 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						SPDLOG_ERROR(
 							"liveProxyMonitor. output ffmpeg file size is not changing"
 							", ingestionJobKey: {}"
-							", encodingJobKey: {}",
-							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey
+							", encodingJobKey: {}"
+							", previousOutputFfmpegFileSize: {}"
+							", copiedLiveProxy->_outputFfmpegFileSize: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize,
+							copiedLiveProxy->_outputFfmpegFileSize
 						);
 
 						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
 
 						break;
 					}
+					SPDLOG_INFO(
+						"AAAA liveProxyMonitor. output ffmpeg file size"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", previousOutputFfmpegFileSize: {}"
+						", copiedLiveProxy->_outputFfmpegFileSize: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize,
+						copiedLiveProxy->_outputFfmpegFileSize
+					);
 				}
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
@@ -1298,8 +1310,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						SPDLOG_ERROR(
 							"liveRecorderMonitor. output ffmpeg file size is not changing"
 							", ingestionJobKey: {}"
-							", encodingJobKey: {}",
-							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey
+							", encodingJobKey: {}"
+							", previousOutputFfmpegFileSize: {}"
+							", copiedLiveRecording->_outputFfmpegFileSize: {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, previousOutputFfmpegFileSize,
+							copiedLiveRecording->_outputFfmpegFileSize
 						);
 
 						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
