@@ -9,6 +9,7 @@
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
+#include <cstdint>
 #include <sstream>
 
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
@@ -238,21 +239,20 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						", configurationLabel: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 					);
-					time_t previousOutputFfmpegFileModificationTime = copiedLiveProxy->_outputFfmpegFileModificationTime;
-					copiedLiveProxy->_outputFfmpegFileModificationTime = sourceLiveProxy->_ffmpeg->getOutputFFMpegFileLastModificationTime();
-					if (previousOutputFfmpegFileModificationTime != 0 &&
-						previousOutputFfmpegFileModificationTime == copiedLiveProxy->_outputFfmpegFileModificationTime)
+					uintmax_t previousOutputFfmpegFileSize = copiedLiveProxy->_outputFfmpegFileSize;
+					copiedLiveProxy->_outputFfmpegFileSize = sourceLiveProxy->_ffmpeg->getOutputFFMpegFileSize();
+					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == copiedLiveProxy->_outputFfmpegFileSize)
 					{
 						liveProxyWorking = false;
 
 						SPDLOG_ERROR(
-							"liveProxyMonitor. output ffmpeg file last modification time is not changing"
+							"liveProxyMonitor. output ffmpeg file size is not changing"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey
 						);
 
-						localErrorMessage = " restarted because of 'output ffmpeg file last modification time is not changing'";
+						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
 
 						break;
 					}
@@ -1289,21 +1289,20 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						", channelLabel: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
-					time_t previousOutputFfmpegFileModificationTime = copiedLiveRecording->_outputFfmpegFileModificationTime;
-					copiedLiveRecording->_outputFfmpegFileModificationTime = copiedLiveRecording->_ffmpeg->getOutputFFMpegFileLastModificationTime();
-					if (previousOutputFfmpegFileModificationTime != 0 &&
-						previousOutputFfmpegFileModificationTime == copiedLiveRecording->_outputFfmpegFileModificationTime)
+					time_t previousOutputFfmpegFileSize = copiedLiveRecording->_outputFfmpegFileSize;
+					copiedLiveRecording->_outputFfmpegFileSize = copiedLiveRecording->_ffmpeg->getOutputFFMpegFileSize();
+					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == copiedLiveRecording->_outputFfmpegFileSize)
 					{
 						liveRecorderWorking = false;
 
 						SPDLOG_ERROR(
-							"liveRecorderMonitor. output ffmpeg file last modification time is not changing"
+							"liveRecorderMonitor. output ffmpeg file size is not changing"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}",
 							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey
 						);
 
-						localErrorMessage = " restarted because of 'output ffmpeg file last modification time is not changing'";
+						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
 
 						break;
 					}

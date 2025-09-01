@@ -59,7 +59,7 @@ void LiveProxy::encodeContent(string requestBody)
 
 		_liveProxyData->_monitoringRealTimeInfoEnabled =
 			JSONUtils::asBool(_liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-		_liveProxyData->_outputFfmpegFileModificationTime = 0;
+		_liveProxyData->_outputFfmpegFileSize = 0;
 		_liveProxyData->_realTimeFrame = -1;
 		_liveProxyData->_realTimeSize = -1;
 		_liveProxyData->_realTimeFrameRate = -1;

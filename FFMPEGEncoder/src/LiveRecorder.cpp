@@ -183,7 +183,7 @@ void LiveRecorder::encodeContent(string requestBody)
 		_liveRecording->_monitoringEnabled = JSONUtils::asBool(_liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
 		_liveRecording->_monitoringRealTimeInfoEnabled =
 			JSONUtils::asBool(_liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-		_liveRecording->_outputFfmpegFileModificationTime = 0;
+		_liveRecording->_outputFfmpegFileSize = 0;
 		_liveRecording->_realTimeFrame = -1;
 		_liveRecording->_realTimeSize = -1;
 		_liveRecording->_realTimeFrameRate = -1;
