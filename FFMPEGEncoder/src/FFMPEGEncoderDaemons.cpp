@@ -240,8 +240,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
 					);
 					uintmax_t previousOutputFfmpegFileSize = copiedLiveProxy->_outputFfmpegFileSize;
-					copiedLiveProxy->_outputFfmpegFileSize = sourceLiveProxy->_ffmpeg->getOutputFFMpegFileSize();
-					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == copiedLiveProxy->_outputFfmpegFileSize)
+					uintmax_t newOutputFfmpegFileSize = sourceLiveProxy->_ffmpeg->getOutputFFMpegFileSize();
+					sourceLiveProxy->_outputFfmpegFileSize = newOutputFfmpegFileSize;
+					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == newOutputFfmpegFileSize)
 					{
 						liveProxyWorking = false;
 
@@ -250,9 +251,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", previousOutputFfmpegFileSize: {}"
-							", copiedLiveProxy->_outputFfmpegFileSize: {}",
-							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize,
-							copiedLiveProxy->_outputFfmpegFileSize
+							", newOutputFfmpegFileSize: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize, newOutputFfmpegFileSize
 						);
 
 						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
@@ -264,9 +264,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", previousOutputFfmpegFileSize: {}"
-						", copiedLiveProxy->_outputFfmpegFileSize: {}",
-						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize,
-						copiedLiveProxy->_outputFfmpegFileSize
+						", newOutputFfmpegFileSize: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize, newOutputFfmpegFileSize
 					);
 				}
 
@@ -1301,9 +1300,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						", channelLabel: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
-					time_t previousOutputFfmpegFileSize = copiedLiveRecording->_outputFfmpegFileSize;
-					copiedLiveRecording->_outputFfmpegFileSize = copiedLiveRecording->_ffmpeg->getOutputFFMpegFileSize();
-					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == copiedLiveRecording->_outputFfmpegFileSize)
+					uintmax_t previousOutputFfmpegFileSize = copiedLiveRecording->_outputFfmpegFileSize;
+					uintmax_t newOutputFfmpegFileSize = sourceLiveRecording->_ffmpeg->getOutputFFMpegFileSize();
+					sourceLiveRecording->_outputFfmpegFileSize = newOutputFfmpegFileSize;
+					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == newOutputFfmpegFileSize)
 					{
 						liveRecorderWorking = false;
 
@@ -1312,9 +1312,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", previousOutputFfmpegFileSize: {}"
-							", copiedLiveRecording->_outputFfmpegFileSize: {}",
+							", newOutputFfmpegFileSize: {}",
 							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, previousOutputFfmpegFileSize,
-							copiedLiveRecording->_outputFfmpegFileSize
+							newOutputFfmpegFileSize
 						);
 
 						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
