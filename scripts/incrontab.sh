@@ -80,6 +80,21 @@ then
 	serversToBeSynched="$MMS_RSYNC_EXTERNAL_DELIVERY_SERVERS" # defined in mms-env.sh
 	#echo "serversToBeSynched: $serversToBeSynched" >> $debugFileName
 
+	#se non esiste il file ~/.ssh/known_hosts, lo creo e lo pre-popolo per evitare messaggi tipo
+	#Warning: Permanently added '[91.222.174.119]:9255' (ED25519) to the list of known hosts.
+	KNOWN="$HOME/.ssh/known_hosts"
+	if [[ ! -f "$KNOWN" ]]; then
+		mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"
+		: > "KNOWN"; chmod 600 "$KNOWN"
+
+		for H in $serversToBeSynched; do
+  		k=$(ssh-keyscan -p 9255 -T 5 "$H" 2>/dev/null) || continue
+  		# riscrive l’host iniziale in formato "[host]:9255 ..."
+  		printf '[%s]:9255 %s\n' "$H" "${k#* }" >> "$KNOWN"
+		done
+		# verifica:
+		# ssh-keygen -F "[91.222.174.119]:9255"
+	fi
 
 	#Example of events using debug:
 	#IN_CREATE --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
@@ -125,16 +140,17 @@ then
 		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate
 		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
+					SSH_OPTS="-p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 					echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
 					# 1. Sincronizza solo i file .ts
-					timeout 15s rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+					timeout 15s rsync -e "ssh $SSH_OPTS" \
 						--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
     				"$rsyncSource" mms@{}:$rsyncDest
 					status_ts=$?
 					if [[ $status_ts -eq 0 ]]; then
 						# 2. Sincronizza solo il file .m3u8
-						timeout 15s rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+						timeout 15s rsync -e "ssh $SSH_OPTS" \
 							--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
 					  	--include "*/" --include "*.m3u8" --exclude "*" \
     					"$rsyncSource" mms@{}:$rsyncDest
@@ -152,15 +168,16 @@ then
 		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate
 		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
+					SSH_OPTS="-p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 					# 1. Sincronizza solo i file .ts
-					timeout 15s rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+					timeout 15s rsync -e "ssh $SSH_OPTS" \
 						--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
 						$rsyncSource mms@{}:$rsyncDest
 					status_ts=$?
 					if [[ $status_ts -eq 0 ]]; then
 						# 2. Sincronizza solo il file .m3u8
-						timeout 15s rsync -e "ssh -p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" \
+						timeout 15s rsync -e "ssh $SSH_OPTS" \
 							--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
 					  	--include "*/" --include "*.m3u8" --exclude "*" \
 							$rsyncSource mms@{}:$rsyncDest

@@ -259,14 +259,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						break;
 					}
-					SPDLOG_INFO(
-						"AAAA liveProxyMonitor. output ffmpeg file size"
-						", ingestionJobKey: {}"
-						", encodingJobKey: {}"
-						", previousOutputFfmpegFileSize: {}"
-						", newOutputFfmpegFileSize: {}",
-						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, previousOutputFfmpegFileSize, newOutputFfmpegFileSize
-					);
 				}
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
