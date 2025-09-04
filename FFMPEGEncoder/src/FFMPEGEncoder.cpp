@@ -1108,25 +1108,31 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		chrono::system_clock::time_point endLookingForEncodingStatus = chrono::system_clock::now();
 
+		string sChildProcessId = "not available";
+		if (encodingFound)
+			sChildProcessId = selectedEncoding->_childProcessId.toString();
+		else if (liveProxyFound)
+			sChildProcessId = selectedLiveProxy->_childProcessId.toString();
+		else if (liveRecordingFound)
+			sChildProcessId = selectedLiveRecording->_childProcessId.toString();
 		SPDLOG_INFO(
 			"encodingStatus"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
 			", encodingFound: {}"
-			", available: {}"
-			", childPid: {}"
+			", encodingAvailable: {}"
 			", liveProxyFound: {}"
 			", liveRecordingFound: {}"
+			", childPid: {}"
 			", encodingCompleted: {}"
 			", encodingCompletedMutexDuration: {}"
 			", encodingMutexDuration: {}"
 			", liveProxyMutexDuration: {}"
 			", liveRecordingMutexDuration: {}"
 			", @MMS statistics@ - duration looking for encodingStatus (secs): @{}@",
-			ingestionJobKey, encodingJobKey, encodingFound, encodingFound ? to_string(selectedEncoding->_available) : "not available",
-			encodingFound ? selectedEncoding->_childProcessId.toString() : "not available", liveProxyFound, liveRecordingFound, encodingCompleted,
-			encodingCompletedMutexDuration, encodingMutexDuration, liveProxyMutexDuration, liveRecordingMutexDuration,
-			chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()
+			ingestionJobKey, encodingJobKey, encodingFound, encodingFound ? to_string(selectedEncoding->_available) : "not available", liveProxyFound,
+			liveRecordingFound, sChildProcessId, encodingCompleted, encodingCompletedMutexDuration, encodingMutexDuration, liveProxyMutexDuration,
+			liveRecordingMutexDuration, chrono::duration_cast<chrono::seconds>(endLookingForEncodingStatus - startEncodingStatus).count()
 		);
 
 		string responseBody;

@@ -233,7 +233,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (liveProxyWorking)
 				{
 					SPDLOG_INFO(
-						"liveProxyMonitor outputFFMpegFileLastModificationTime check"
+						"liveProxyMonitor outputFFMpegFileSize check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}",
