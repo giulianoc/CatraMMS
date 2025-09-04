@@ -937,7 +937,8 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 				// aggiungiamo una banda fittizia occupata da questa richiesta in attesa
 				// che la banda reala venga aggiornata periodicamente
 				// Questo per evitare che tutte le richieste andranno tutte sullo stesso host in attesa che bandwidthUsage si aggiorni
-				uint64_t bandwidth = 2 * 1000000;
+				// 2 sembra troppo poco perchè si crea troppa differenza di banda tra i server (da 266 Mbps fino a 725 Mbps)
+				uint64_t bandwidth = 3 * 1000000;
 				hostBandwidthTracker->addBandwidth(deliveryHost, bandwidth);
 			}
 		}

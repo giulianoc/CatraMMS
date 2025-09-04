@@ -82,6 +82,7 @@ time-zone()
 	apt-get update
 
 	echo "install ntp..."
+	sleep 5
 	apt-get -y install ntp
 
 	echo "to force the synchronization..."
@@ -1504,7 +1505,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6430
+	catraMMSVersion=1.0.6435
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

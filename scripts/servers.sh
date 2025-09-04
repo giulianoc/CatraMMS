@@ -149,6 +149,22 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=194.42.196.102
 
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-delivery-10
+prodServers[$((serverIndex*6+1))]=194.42.196.107
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=194.42.196.107
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-delivery-11
+prodServers[$((serverIndex*6+1))]=194.42.196.108
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=194.42.196.108
+
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=eu-delivery-1
@@ -189,6 +205,22 @@ prodServers[$((serverIndex*6+2))]=hetzner-mms-key
 prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=195.160.222.197
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=eu-delivery-6
+prodServers[$((serverIndex*6+1))]=195.160.220.29
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=195.160.220.29
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=eu-delivery-7
+prodServers[$((serverIndex*6+1))]=195.160.221.94
+prodServers[$((serverIndex*6+2))]=hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=195.160.221.94
 
 
 serverIndex=$((serverIndex+1))
