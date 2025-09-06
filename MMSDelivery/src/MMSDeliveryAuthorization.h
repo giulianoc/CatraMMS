@@ -51,7 +51,7 @@ class MMSDeliveryAuthorization
 	);
 	string getAWSSignedURL(string playURL, int expirationInSeconds);
 
-	unordered_map<string, uint64_t> getExternalDeliveriesHosts();
+	unordered_map<string, uint64_t> getExternalDeliveriesRunningHosts();
 	void updateExternalDeliveriesBandwidthHosts(unordered_map<string, uint64_t> hostsBandwidth);
 
   private:

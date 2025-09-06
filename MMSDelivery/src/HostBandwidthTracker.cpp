@@ -64,8 +64,6 @@ optional<string> HostBandwidthTracker::getMinBandwidthHost()
 	for (const auto &[host, bandwidthDetails] : _bandwidthMap)
 	{
 		auto [running, bandwidth, bandwidthCorrection] = bandwidthDetails;
-		// bool running = bandwidthDetails.first;
-		// uint64_t bandwidth = bandwidthDetails.second;
 
 		SPDLOG_INFO(
 			"getMinBandwidthHost"
@@ -111,12 +109,18 @@ void HostBandwidthTracker::updateBandwidth(const string &host, uint64_t bandwidt
 		get<1>(it->second) = bandwidth;
 }
 
-void HostBandwidthTracker::addHosts(unordered_set<string> &hosts)
+void HostBandwidthTracker::addRunningHosts(unordered_set<string> &hosts)
 {
 	lock_guard<mutex> locker(_trackerMutex);
 
 	for (const auto &[host, bandwidthDetails] : _bandwidthMap)
-		hosts.insert(host);
+	{
+		bool running;
+		tie(running, ignore, ignore) = bandwidthDetails;
+
+		if (running)
+			hosts.insert(host);
+	}
 }
 
 /*

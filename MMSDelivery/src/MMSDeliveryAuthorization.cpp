@@ -979,7 +979,7 @@ shared_ptr<HostBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTrack
 	return hostBandwidthTracker;
 }
 
-unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesHosts()
+unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesRunningHosts()
 {
 	unordered_map<string, uint64_t> hostsBandwidth;
 
@@ -989,7 +989,7 @@ unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesH
 	{
 		unordered_set<string> hosts;
 		for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
-			hostBandwidthTracker->addHosts(hosts);
+			hostBandwidthTracker->addRunningHosts(hosts);
 
 		for (string host : hosts)
 			hostsBandwidth.insert(make_pair(host, 0));

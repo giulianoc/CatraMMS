@@ -25,7 +25,7 @@ class HostBandwidthTracker
 
 	optional<string> getMinBandwidthHost();
 
-	void addHosts(unordered_set<string> &hosts);
+	void addRunningHosts(unordered_set<string> &hosts);
 
   private:
 	mutex _trackerMutex;

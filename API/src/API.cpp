@@ -3218,21 +3218,22 @@ void API::bandwidthUsageThread()
 		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
 		try
 		{
-			unordered_map<string, uint64_t> hostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesHosts();
+			unordered_map<string, uint64_t> runningHostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesRunningHosts();
 
 			SPDLOG_INFO(
 				"bandwidthUsageThread, getBandwidthInMbps"
-				", hostsBandwidth.size: {}",
-				hostsBandwidth.size()
+				", runningHostsBandwidth.size: {}",
+				runningHostsBandwidth.size()
 			);
 
-			if (hostsBandwidth.size() > 0)
+			if (runningHostsBandwidth.size() > 0)
 			{
-				for (auto &[host, bandwidth] : hostsBandwidth)
+				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
 				{
 					try
 					{
-						string bandwidthUsageURL = std::format("{}://{}:{}/catramms/{}/bandwidthUsage", _apiProtocol, host, _apiPort, _apiVersion);
+						string bandwidthUsageURL =
+							std::format("{}://{}:{}/catramms/{}/bandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
 						int bandwidthUsageTimeoutInSeconds = 2;
 						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
 
@@ -3249,7 +3250,7 @@ void API::bandwidthUsageThread()
 					}
 				}
 
-				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(hostsBandwidth);
+				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(runningHostsBandwidth);
 			}
 		}
 		catch (exception e)
