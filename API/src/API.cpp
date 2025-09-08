@@ -3163,15 +3163,19 @@ void API::stopBandwidthUsageThread()
 
 void API::bandwidthUsageThread()
 {
+	map<string, deque<pair<uint64_t, uint64_t>>> bandwidthHistory;
+
 	while (!_bandwidthUsageThreadShutdown)
 	{
-		this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
+		// non serve lo sleep perchè lo sleep è già all'interno di System::getBandwidthInBytes
+		// this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
 
 		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
 		uint64_t bandwidthUsage = 0;
 		try
 		{
-			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
+			// map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
+			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInBytes();
 
 			bool deliveryExternalNetworkInterfaceFound = false;
 			for (const auto &[iface, stats] : bandwidth)
