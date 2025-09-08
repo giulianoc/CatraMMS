@@ -3184,7 +3184,7 @@ void API::bandwidthUsageThread()
 					", iface: {}"
 					", rx: {} ({}Mbps)"
 					", tx: {} ({}Mbps)",
-					iface, rx, (rx * 8) / 1000000, tx, (tx * 8) / 1000000
+					iface, rx, static_cast<uint32_t>((rx * 8) / 1000000), tx, static_cast<uint32_t>((tx * 8) / 1000000)
 				);
 				if (_deliveryExternalNetworkInterface == iface)
 				{
@@ -3205,7 +3205,7 @@ void API::bandwidthUsageThread()
 			SPDLOG_INFO(
 				"bandwidthUsageThread, getBandwidthInMbps"
 				", bandwidthUsage: @{}@Mbps",
-				(bandwidthUsage * 8) / 1000000
+				static_cast<uint32_t>((bandwidthUsage * 8) / 1000000)
 			);
 		}
 		catch (exception e)
