@@ -3163,8 +3163,6 @@ void API::stopBandwidthUsageThread()
 
 void API::bandwidthUsageThread()
 {
-	map<string, deque<pair<uint64_t, uint64_t>>> bandwidthHistory;
-
 	while (!_bandwidthUsageThreadShutdown)
 	{
 		// non serve lo sleep perchè lo sleep è già all'interno di System::getBandwidthInBytes
@@ -3175,7 +3173,7 @@ void API::bandwidthUsageThread()
 		try
 		{
 			// map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
-			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInBytes();
+			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getAvgBandwidthInBytes();
 
 			bool deliveryExternalNetworkInterfaceFound = false;
 			for (const auto &[iface, stats] : bandwidth)
