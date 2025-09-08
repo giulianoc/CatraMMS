@@ -3169,26 +3169,26 @@ void API::bandwidthUsageThread()
 		// this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
 
 		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
-		uint64_t bandwidthUsage = 0;
+		double bandwidthUsage = 0;
 		try
 		{
 			// map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
-			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getAvgBandwidthInBytes();
+			map<string, pair<double, double>> bandwidth = System::getAvgBandwidthInBytes();
 
 			bool deliveryExternalNetworkInterfaceFound = false;
 			for (const auto &[iface, stats] : bandwidth)
 			{
-				auto [receivedBytes, transmittedBytes] = stats;
+				auto [rx, tx] = stats;
 				SPDLOG_INFO(
 					"bandwidthUsageThread, getBandwidthInMbps"
 					", iface: {}"
-					", receivedBytes: {} ({}Mbps)"
-					", transmittedBytes: {} ({}Mbps)",
-					iface, receivedBytes, (receivedBytes * 8) / 1000000, transmittedBytes, (transmittedBytes * 8) / 1000000
+					", rx: {} ({}Mbps)"
+					", tx: {} ({}Mbps)",
+					iface, rx, (rx * 8) / 1000000, tx, (tx * 8) / 1000000
 				);
 				if (_deliveryExternalNetworkInterface == iface)
 				{
-					bandwidthUsage = transmittedBytes;
+					bandwidthUsage = tx;
 					deliveryExternalNetworkInterfaceFound = true;
 					// break; commentato in modo da avere sempre il log della banda usata da tutte le reti (public e internal)
 				}
