@@ -3218,12 +3218,12 @@ void API::bandwidthUsageThread()
 				if (_deliveryExternalNetworkInterface == iface)
 				{
 					auto [peakRx, peakTx] = stats;
+					// messaggio usato da servicesStatusLibrary::mms_delivery_check_bandwidth_usage
 					SPDLOG_INFO(
 						"bandwidthUsageThread, peakBandwidthInMbps"
 						", iface: {}"
-						", peakRx: {} ({}Mbps)"
-						", peakTx: {} ({}Mbps)",
-						iface, peakRx, static_cast<uint32_t>((peakRx * 8) / 1000000), peakTx, static_cast<uint32_t>((peakTx * 8) / 1000000)
+						", peakTx: @{}@Mbps",
+						iface, static_cast<uint32_t>((peakTx * 8) / 1000000)
 					);
 					break;
 				}

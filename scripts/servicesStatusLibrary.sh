@@ -876,7 +876,7 @@ mms_delivery_check_bandwidth_usage()
 	fi
 
 	maxBandwidth=900
-	warningMessage=$(grep "getBandwidthInMbps, bandwidthUsage" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v previousBandwidth=$previousBandwidth -v lastLogTimestampCheckedAndLastBandwidthFile=$lastLogTimestampCheckedAndLastBandwidthFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; lastBandwidth=previousBandwidth }	\
+	warningMessage=$(grep "bandwidthUsageThread, peakBandwidthInMbps" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v previousBandwidth=$previousBandwidth -v lastLogTimestampCheckedAndLastBandwidthFile=$lastLogTimestampCheckedAndLastBandwidthFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; lastBandwidth=previousBandwidth }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
 		newLastLogTimestampChecked=mktime(datespec);	\
