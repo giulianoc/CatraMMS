@@ -3171,18 +3171,20 @@ void API::bandwidthUsageThread()
 		// this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
 
 		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
-		double bandwidthUsage = 0;
+		double avgBandwidthUsage = 0;
 		try
 		{
 			// impieghera' 15 secs
-			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getAvgBandwidthInBytes(2, 5);
+			// Ritorna la banda media secondo i parametri specificati ed anche i picchi
+			map<string, pair<uint64_t, uint64_t>> peakInBytes;
+			map<string, pair<uint64_t, uint64_t>> avgBandwidth = System::getAvgAndPeakBandwidthInBytes(peakInBytes, 2, 5);
 
 			bool deliveryExternalNetworkInterfaceFound = false;
-			for (const auto &[iface, stats] : bandwidth)
+			for (const auto &[iface, stats] : avgBandwidth)
 			{
 				auto [rx, tx] = stats;
 				SPDLOG_INFO(
-					"bandwidthUsageThread, getBandwidthInMbps"
+					"bandwidthUsageThread, avgBandwidthInMbps"
 					", iface: {}"
 					", rx: {} ({}Mbps)"
 					", tx: {} ({}Mbps)",
@@ -3190,25 +3192,42 @@ void API::bandwidthUsageThread()
 				);
 				if (_deliveryExternalNetworkInterface == iface)
 				{
-					bandwidthUsage = tx;
+					avgBandwidthUsage = tx;
 					deliveryExternalNetworkInterfaceFound = true;
 					// break; commentato in modo da avere sempre il log della banda usata da tutte le reti (public e internal)
 				}
 			}
 			if (!deliveryExternalNetworkInterfaceFound)
 				SPDLOG_WARN(
-					"bandwidthUsageThread, getBandwidthInMbps"
+					"bandwidthUsageThread, getAvgAndPeakBandwidthInBytes"
 					", deliveryExternalNetworkInterface not found"
 					", _deliveryExternalNetworkInterface: {}",
 					_deliveryExternalNetworkInterface
 				);
 			else
-				_bandwidthUsage->store(bandwidthUsage, memory_order_relaxed);
+				_bandwidthUsage->store(avgBandwidthUsage, memory_order_relaxed);
 			SPDLOG_INFO(
-				"bandwidthUsageThread, getBandwidthInMbps"
-				", bandwidthUsage: @{}@Mbps",
-				static_cast<uint32_t>((bandwidthUsage * 8) / 1000000)
+				"bandwidthUsageThread, avgBandwidthInMbps"
+				", avgBandwidthUsage: @{}@Mbps",
+				static_cast<uint32_t>((avgBandwidthUsage * 8) / 1000000)
 			);
+
+			// loggo il picco
+			for (const auto &[iface, stats] : peakInBytes)
+			{
+				if (_deliveryExternalNetworkInterface == iface)
+				{
+					auto [peakRx, peakTx] = stats;
+					SPDLOG_INFO(
+						"bandwidthUsageThread, peakBandwidthInMbps"
+						", iface: {}"
+						", peakRx: {} ({}Mbps)"
+						", peakTx: {} ({}Mbps)",
+						iface, peakRx, static_cast<uint32_t>((peakRx * 8) / 1000000), peakTx, static_cast<uint32_t>((peakTx * 8) / 1000000)
+					);
+					break;
+				}
+			}
 		}
 		catch (exception e)
 		{
@@ -3270,7 +3289,7 @@ void API::bandwidthUsageThread()
 		try
 		{
 			// addSample logs when a new day is started
-			_bandwidthStats.addSample(bandwidthUsage, chrono::system_clock::now());
+			_bandwidthStats.addSample(avgBandwidthUsage, chrono::system_clock::now());
 		}
 		catch (exception e)
 		{
