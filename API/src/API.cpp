@@ -41,13 +41,13 @@
 API::API(
 	bool noFileSystemAccess, json configurationRoot, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
 	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-	shared_ptr<atomic<uint64_t>> bandwidthUsage
+	shared_ptr<atomic<uint64_t>> avgBandwidthUsage
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
 	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization)
 {
 	_configurationRoot = configurationRoot;
-	_bandwidthUsage = bandwidthUsage;
+	_avgBandwidthUsage = avgBandwidthUsage;
 
 	string encodingPriority = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPriority", "low");
 	SPDLOG_INFO(
@@ -598,13 +598,13 @@ void API::manageRequestAndResponse(
 			throw runtime_error(errorMessage);
 		}
 	}
-	else if (method == "bandwidthUsage")
+	else if (method == "avgBandwidthUsage")
 	{
 		try
 		{
 			json statusRoot;
 
-			statusRoot["bandwidthUsage"] = _bandwidthUsage->load(memory_order_relaxed);
+			statusRoot["avgBandwidthUsage"] = _avgBandwidthUsage->load(memory_order_relaxed);
 
 			sendSuccess(
 				sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
@@ -613,7 +613,7 @@ void API::manageRequestAndResponse(
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
-				"bandwidthUsage failed"
+				"avgBandwidthUsage failed"
 				", requestBody: {}"
 				", e.what(): {}",
 				requestBody, e.what()
@@ -2922,7 +2922,7 @@ bool API::basicAuthenticationRequired(string requestURI, unordered_map<string, s
 
 	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword" ||
 		method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
-		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" || method == "bandwidthUsage" ||
+		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" || method == "avgBandwidthUsage" ||
 		method == "status" // often used as healthy check
 	)
 		basicAuthenticationRequired = false;
@@ -3205,7 +3205,7 @@ void API::bandwidthUsageThread()
 					_deliveryExternalNetworkInterface
 				);
 			else
-				_bandwidthUsage->store(avgBandwidthUsage, memory_order_relaxed);
+				_avgBandwidthUsage->store(avgBandwidthUsage, memory_order_relaxed);
 			SPDLOG_INFO(
 				"bandwidthUsageThread, avgBandwidthInMbps"
 				", avgBandwidthUsage: @{}@Mbps",
@@ -3244,7 +3244,7 @@ void API::bandwidthUsageThread()
 			unordered_map<string, uint64_t> runningHostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesRunningHosts();
 
 			SPDLOG_INFO(
-				"bandwidthUsageThread, getBandwidthInMbps"
+				"bandwidthUsageThread, avgBandwidthInMbps"
 				", runningHostsBandwidth.size: {}",
 				runningHostsBandwidth.size()
 			);
@@ -3256,11 +3256,11 @@ void API::bandwidthUsageThread()
 					try
 					{
 						string bandwidthUsageURL =
-							std::format("{}://{}:{}/catramms/{}/bandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
+							std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
 						int bandwidthUsageTimeoutInSeconds = 2;
 						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
 
-						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "bandwidthUsage");
+						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "avgBandwidthUsage");
 					}
 					catch (exception &e)
 					{

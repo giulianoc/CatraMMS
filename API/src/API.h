@@ -47,7 +47,7 @@ class API : public FastCGIAPI
 
 	API(bool noFileSystemAccess, json configurationRoot, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-		shared_ptr<atomic<uint64_t>> bandwidthUsage);
+		shared_ptr<atomic<uint64_t>> avgBandwidthUsage);
 
 	~API();
 
@@ -97,7 +97,7 @@ class API : public FastCGIAPI
 
 	bool _bandwidthUsageThreadShutdown;
 	unsigned long _bandwidthUsagePeriodInSeconds;
-	shared_ptr<std::atomic<uint64_t>> _bandwidthUsage;
+	shared_ptr<std::atomic<uint64_t>> _avgBandwidthUsage;
 	BandwidthStats _bandwidthStats;
 
 	int _maxPageSize;
