@@ -457,8 +457,10 @@ API::API(
 				", ip address: {}",
 				interfaceName, interfaceType, ipAddress
 			);
-			if (interfaceType != "IPv4" || ipAddress.starts_with("192.168") || ipAddress.starts_with("10.0"))
-				continue;
+			if (interfaceType != "IPv4" || ipAddress.starts_with("192.168.") || ipAddress.starts_with("10.") ||
+				(ipAddress.starts_with("172.") && std::stoi(ipAddress.substr(4, ipAddress.find('.', 4) - 4)) >= 16 &&
+				 std::stoi(ipAddress.substr(4, ipAddress.find('.', 4) - 4)) <= 31))
+				continue; // rete interna
 			_deliveryExternalNetworkInterface = interfaceName;
 		}
 		SPDLOG_INFO(
