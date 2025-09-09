@@ -3174,8 +3174,8 @@ void API::bandwidthUsageThread()
 		double bandwidthUsage = 0;
 		try
 		{
-			// map<string, pair<uint64_t, uint64_t>> bandwidth = System::getBandwidthInMbps();
-			map<string, pair<double, double>> bandwidth = System::getAvgBandwidthInBytes();
+			// impieghera' 15 secs
+			map<string, pair<uint64_t, uint64_t>> bandwidth = System::getAvgBandwidthInBytes(2, 5);
 
 			bool deliveryExternalNetworkInterfaceFound = false;
 			for (const auto &[iface, stats] : bandwidth)
