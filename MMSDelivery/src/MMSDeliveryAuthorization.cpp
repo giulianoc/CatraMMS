@@ -108,27 +108,24 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	bool save,
 	// deliveryType:
 	// 1. MMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by MMS with a Token parameter retrieved by DB (i.e.:
-	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
+	// https://mms-delivery.catramms-cloud.com/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
 	//
 	// 2. AWSMMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by AWS getting data from MMS with a Token parameter retrieved by DB (i.e.:
 	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
 	//
 	// 3. MMS_URLWithTokenAsParam_Signed (ex MMS_Token): delivered by MMS with a Token parameter signed (i.e.:
-	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=lprk6uoobhZ2GrkWXWvDJA%3D%3D,1822341600)
+	// https://mms-delivery.catramms-cloud.com/MMS_0000/47/000/000/280/18657840_source.mp4?token=lprk6uoobhZ2GrkWXWvDJA%3D%3D,1822341600)
 	//
 	// 4. AWSMMS_URLWithTokenAsParam_Signed (ex MMS_Token): delivered by AWS getting data from MMS with a Token parameter signed (i.e.:
 	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=lprk6uoobhZ2GrkWXWvDJA%3D%3D,1822341600)
 	//
 	// 5. MMS_SignedURL: delivered by MMS with a signed URL without parameter (i.e.:
-	// https://dl4y0maav2axc.cloudfront.net/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
+	// https://mms-delivery-path.catramms-cloud.com/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
 	//
 	// 6. AWSMMS_SignedURL: delivered by AWS getting data from MMS with a signed URL without parameter (i.e.:
 	// https://dl4y0maav2axc.cloudfront.net/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
 	//
-	// 7. AWSCloudFront: delivered by AWS CloudFront without a signed URL without parameter (i.e.:
-	// "https://dl4y0maav2axc.cloudfront.net/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
-	//
-	// 8. AWSCloudFront_Signed: delivered by AWS CloudFront with a signed URL without parameter (i.e.:
+	// 7. AWSCloudFront_Signed: delivered by AWS CloudFront with a signed URL without parameter (i.e.:
 	// https://d3mvdxwkjkh4kh.cloudfront.net//MMS_0000/47/000/000/280/18657840_source.mp4?Expires=3578439566&Signature=hiHYmI3~vu5dEhrI6G5xYNSgou1MpTqgNJI08EBinodNYLiqUWi33s4FNd31jARtKAJ~OSHEOKhLCWcE2JGtnEF~g2vasJdI4XWxNvo4G0Dd2R-4wGF2s5IPdhjj6jTkrJC7FXOnPfIve9vUvNdP~eovr~UCFN5jX7yy25b38qqXe5kUXjDHfj6-DMZmUC-uEGzSQT0SOB0Ihtvh9JaE9iBCIsxnwNIPdafMWZOZh9e1Ls70yIXP597-U9d4w~dFchDs3CasAn4ropikBOW3KrEFBCrBO~vdsFgMDHMAyARpqsoYK7WIxq8D3J369utKjNvD8qpVG9XQM6OH127k8g__&Key-Pair-Id=APKAUYWFOBAADUMU4IGK)
 	string deliveryType,
 
