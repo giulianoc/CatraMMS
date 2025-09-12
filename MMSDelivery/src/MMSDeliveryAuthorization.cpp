@@ -33,8 +33,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#define AWSCLOUDFRONT
-
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
 )
@@ -109,11 +107,29 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 	bool save,
 	// deliveryType:
-	// MMS_URLWithTokenAsParam_DB (ex MMS_Token): delivery by MMS with a Token retrieved by DB
-	// MMS_URLWithTokenAsParam_Signed (ex MMS_Token): delivery by MMS with a Token signed
-	// MMS_SignedURL: delivery by MMS with a signed URL
-	// AWSCloudFront: delivery by AWS CloudFront without a signed URL
-	// AWSCloudFront_Signed: delivery by AWS CloudFront with a signed URL
+	// 1. MMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by MMS with a Token parameter retrieved by DB (i.e.:
+	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
+	//
+	// 2. AWSMMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by AWS getting data from MMS with a Token parameter retrieved by DB (i.e.:
+	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
+	//
+	// 3. MMS_URLWithTokenAsParam_Signed (ex MMS_Token): delivered by MMS with a Token parameter signed (i.e.:
+	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=lprk6uoobhZ2GrkWXWvDJA%3D%3D,1822341600)
+	//
+	// 4. AWSMMS_URLWithTokenAsParam_Signed (ex MMS_Token): delivered by AWS getting data from MMS with a Token parameter signed (i.e.:
+	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=lprk6uoobhZ2GrkWXWvDJA%3D%3D,1822341600)
+	//
+	// 5. MMS_SignedURL: delivered by MMS with a signed URL without parameter (i.e.:
+	// https://dl4y0maav2axc.cloudfront.net/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
+	//
+	// 6. AWSMMS_SignedURL: delivered by AWS getting data from MMS with a signed URL without parameter (i.e.:
+	// https://dl4y0maav2axc.cloudfront.net/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
+	//
+	// 7. AWSCloudFront: delivered by AWS CloudFront without a signed URL without parameter (i.e.:
+	// "https://dl4y0maav2axc.cloudfront.net/token_lprk6uoobhZ2GrkWXWvDJA==,1822341600/MMS_0000/47/000/000/280/18657840_source.mp4)
+	//
+	// 8. AWSCloudFront_Signed: delivered by AWS CloudFront with a signed URL without parameter (i.e.:
+	// https://d3mvdxwkjkh4kh.cloudfront.net//MMS_0000/47/000/000/280/18657840_source.mp4?Expires=3578439566&Signature=hiHYmI3~vu5dEhrI6G5xYNSgou1MpTqgNJI08EBinodNYLiqUWi33s4FNd31jARtKAJ~OSHEOKhLCWcE2JGtnEF~g2vasJdI4XWxNvo4G0Dd2R-4wGF2s5IPdhjj6jTkrJC7FXOnPfIve9vUvNdP~eovr~UCFN5jX7yy25b38qqXe5kUXjDHfj6-DMZmUC-uEGzSQT0SOB0Ihtvh9JaE9iBCIsxnwNIPdafMWZOZh9e1Ls70yIXP597-U9d4w~dFchDs3CasAn4ropikBOW3KrEFBCrBO~vdsFgMDHMAyARpqsoYK7WIxq8D3J369utKjNvD8qpVG9XQM6OH127k8g__&Key-Pair-Id=APKAUYWFOBAADUMU4IGK)
 	string deliveryType,
 
 	bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
@@ -187,16 +203,16 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			deliveryURL = signedPlayURL;
 		}
-		else if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
-		// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // riga da eliminare
+		else if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB" ||
+				 deliveryType == "MMS_URLWithTokenAsParam_Signed" || deliveryType == "AWSMMS_URLWithTokenAsParam_Signed")
 		{
 			string deliveryHost;
-#ifdef AWSCLOUDFRONT
-			deliveryHost = _vodDeliveryCloudFrontHostName;
-#else
-			deliveryHost = _deliveryHost_authorizationThroughParameter;
-#endif
-			if (deliveryType == "MMS_URLWithTokenAsParam_DB")
+			if (deliveryType == "AWSMMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_Signed")
+				deliveryHost = _vodDeliveryCloudFrontHostName;
+			else // if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
+				deliveryHost = _deliveryHost_authorizationThroughParameter;
+
+			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB")
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey, playerIPToBeAuthorized ? playerIP : "", localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries, true
@@ -234,7 +250,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (save && deliveryFileName != "")
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
 		}
-		else // if (deliveryType == "MMS_SignedURL")
+		else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 		{
 			time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
@@ -257,11 +273,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 			string deliveryHost;
-#ifdef AWSCLOUDFRONT
-			deliveryHost = _vodDeliveryPathCloudFrontHostName;
-#else
-			deliveryHost = _deliveryHost_authorizationThroughPath;
-#endif
+			if (deliveryType == "AWSMMS_SignedURL")
+				deliveryHost = _vodDeliveryPathCloudFrontHostName;
+			else // if (deliveryType == "MMS_SignedURL")
+				deliveryHost = _deliveryHost_authorizationThroughPath;
+
 			deliveryURL = std::format("{}://{}/token_{},{}{}", _deliveryProtocol, deliveryHost, md5Base64, expirationTime, deliveryURI);
 		}
 
@@ -594,10 +610,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
-				// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // riga da eliminare
+				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB" ||
+					deliveryType == "MMS_URLWithTokenAsParam_Signed" || deliveryType == "AWSMMS_URLWithTokenAsParam_Signed")
 				{
-					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
+					if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB")
 					{
 						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 							userKey, playerIPToBeAuthorized ? playerIP : "",
@@ -639,7 +655,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						);
 					}
 				}
-				else // if (deliveryType == "MMS_SignedURL")
+				else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 				{
 					time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
@@ -685,10 +701,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 				tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
-				// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
+				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB" ||
+					deliveryType == "MMS_URLWithTokenAsParam_Signed" || deliveryType == "AWSMMS_URLWithTokenAsParam_Signed")
 				{
-					if (deliveryType == "MMS_URLWithTokenAsParam_DB")
+					if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_DB")
 					{
 						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 							userKey, playerIPToBeAuthorized ? playerIP : "",
@@ -729,7 +745,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						);
 					}
 				}
-				else // if (deliveryType == "MMS_SignedURL")
+				else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 				{
 					time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
@@ -830,8 +846,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				_mmsStorage->getLiveDeliveryDetails(to_string(deliveryCode), liveFileExtension, requestWorkspace);
 			tie(deliveryURI, ignore, deliveryFileName) = liveDeliveryDetails;
 
-			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_Signed")
-			// deliveryType == "MMS_URLWithTokenAsParam" || deliveryType == "MMS_Token") // da eliminare dopo il deploy
+			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB" ||
+				deliveryType == "MMS_URLWithTokenAsParam_Signed" || deliveryType == "AWSMMS_URLWithTokenAsParam_Signed")
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey, playerIPToBeAuthorized ? playerIP : "",
@@ -842,7 +858,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				deliveryURL =
 					_deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI + "?token=" + to_string(authorizationKey);
 			}
-			else // if (deliveryType == "MMS_SignedURL")
+			else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 			{
 				time_t expirationTime = getReusableExpirationTime(ttlInSeconds);
 
@@ -1195,7 +1211,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 				tokenParameter, firstPartOfToken, secondPartOfToken, contentURI
 			);
 
-			if (StringUtils::isNumber(firstPartOfToken)) // MMS_URLWithTokenAsParam_DB
+			if (StringUtils::isNumber(firstPartOfToken)) // MMS_URLWithTokenAsParam_DB || AWSMMS_URLWithTokenAsParam_DB
 			{
 				// tokenComingFromURL = stoll(firstPartOfToken);
 				tokenComingFromURL = firstPartOfToken;
@@ -1224,7 +1240,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 					throw runtime_error(errorMessage);
 				}
 			}
-			else // MMS_URLWithTokenAsParam_Signed
+			else // MMS_URLWithTokenAsParam_Signed || AWSMMS_URLWithTokenAsParam_Signed
 			{
 				string tokenSigned = firstPartOfToken;
 				checkSignedMMSPath(tokenSigned, contentURI);
@@ -1391,7 +1407,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 
 			if (cookie == "")
 			{
-				if (StringUtils::isNumber(token)) // MMS_URLWithTokenAsParam_DB
+				if (StringUtils::isNumber(token)) // MMS_URLWithTokenAsParam_DB || AWSMMS_URLWithTokenAsParam_DB
 				{
 					if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(token), contentURI))
 					{
@@ -1442,7 +1458,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 					);
 					SPDLOG_INFO(errorMessage);
 
-					if (StringUtils::isNumber(tokenComingFromURL)) // MMS_URLWithTokenAsParam_DB
+					if (StringUtils::isNumber(tokenComingFromURL)) // MMS_URLWithTokenAsParam_DB || AWSMMS_URLWithTokenAsParam_DB
 					{
 						if (!_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 						{
