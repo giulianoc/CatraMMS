@@ -213,7 +213,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB")
 			{
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
-					userKey, playerIPToBeAuthorized ? playerIP : "", localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries, true
+					userKey, playerIPToBeAuthorized ? playerIP : "", localPhysicalPathKey, -1, deliveryURI, ttlInSeconds, maxRetries,
+					reuseAuthIfPresent
 				);
 
 				deliveryURL = std::format("{}://{}{}?token={}", _deliveryProtocol, deliveryHost, deliveryURI, authorizationKey);
@@ -308,10 +309,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			", mediaItemKey: {}"
 			", physicalPathKey: {}"
 			", ttlInSeconds: {}"
+			", maxRetries: {}"
+			", reuseAuthIfPresent: {}"
 			", playerIP: {}"
 			", playerIPToBeAuthorized: {}"
 			", deliveryURL (authorized): {}",
-			title, deliveryURI, deliveryType, mediaItemKey, physicalPathKey, ttlInSeconds, playerIP, playerIPToBeAuthorized, deliveryURL
+			title, deliveryURI, deliveryType, mediaItemKey, physicalPathKey, ttlInSeconds, maxRetries, reuseAuthIfPresent, playerIP,
+			playerIPToBeAuthorized, deliveryURL
 		);
 	}
 	else
@@ -617,7 +621,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							userKey, playerIPToBeAuthorized ? playerIP : "",
 							-1,			  // physicalPathKey,	vod key
 							deliveryCode, // live key
-							deliveryURI, ttlInSeconds, maxRetries, true
+							deliveryURI, ttlInSeconds, maxRetries, reuseAuthIfPresent
 						);
 
 						deliveryURL = std::format(
@@ -708,7 +712,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							userKey, playerIPToBeAuthorized ? playerIP : "",
 							-1,			  // physicalPathKey,	vod key
 							deliveryCode, // live key
-							deliveryURI, ttlInSeconds, maxRetries, true
+							deliveryURI, ttlInSeconds, maxRetries, reuseAuthIfPresent
 						);
 
 						deliveryURL = std::format(
@@ -850,7 +854,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 					userKey, playerIPToBeAuthorized ? playerIP : "",
 					-1, // physicalPathKey,
-					deliveryCode, deliveryURI, ttlInSeconds, maxRetries, true
+					deliveryCode, deliveryURI, ttlInSeconds, maxRetries, reuseAuthIfPresent
 				);
 
 				deliveryURL =
