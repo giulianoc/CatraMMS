@@ -32,7 +32,7 @@ class MMSDeliveryAuthorization
 	pair<string, string> createDeliveryAuthorization(
 		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP, int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey,
 		string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode, int ttlInSeconds, int maxRetries,
-		bool playerIPToBeAuthorized, string playerCountry, bool save, string deliveryType, bool warningIfMissingMediaItemKey,
+		bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry, bool save, string deliveryType, bool warningIfMissingMediaItemKey,
 		bool filteredByStatistic, string userId
 	);
 

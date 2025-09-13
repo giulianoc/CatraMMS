@@ -5227,6 +5227,7 @@ void API::changeLiveProxyPlaylist(
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 										999999,							 // maxRetries,
+										false,							 // reuseAuthIfPresent
 										false,							 // playerIPToBeAuthorized
 										"",								 // playerCountry
 										false,							 // save,
@@ -5317,6 +5318,7 @@ void API::changeLiveProxyPlaylist(
 
 									abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 									999999,							 // maxRetries,
+									false,							 // reuseAuthIfPresent
 									false,							 // playerIPToBeAuthorized
 									"",								 // playerCountry
 									false,							 // save,
@@ -5615,6 +5617,7 @@ void API::changeLiveProxyPlaylist(
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 										999999,							 // maxRetries,
+										false,							 // reuseAuthIfPresent
 										false,							 // playerIPToBeAuthorized
 										"",								 // playerCountry
 										false,							 // save,
@@ -6604,6 +6607,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 
 						365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
 						999999,				// maxRetries,
+						false,				// reuseAuthIfPresent
 						false,				// playerIPToBeAuthorized
 						"",					// playerCountry
 						false,				// save,

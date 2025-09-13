@@ -119,6 +119,11 @@ void API::createDeliveryAuthorization(
 		if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
 			maxRetries = stol(maxRetriesIt->second);
 
+		bool reuseAuthIfPresent = true;
+		auto reuseAuthIfPresentIt = queryParameters.find("reuseAuthIfPresent");
+		if (reuseAuthIfPresentIt != queryParameters.end())
+			reuseAuthIfPresent = reuseAuthIfPresentIt->second == "true";
+
 		bool redirect = _defaultRedirect;
 		auto redirectIt = queryParameters.find("redirect");
 		if (redirectIt != queryParameters.end())
@@ -167,7 +172,7 @@ void API::createDeliveryAuthorization(
 
 				ingestionJobKey, deliveryCode,
 
-				ttlInSeconds, maxRetries, playerIPToBeAuthorized, playerCountry, save, deliveryType,
+				ttlInSeconds, maxRetries, reuseAuthIfPresent, playerIPToBeAuthorized, playerCountry, save, deliveryType,
 
 				warningIfMissingMediaItemKey, filteredByStatistic, userId
 			);
@@ -349,6 +354,11 @@ void API::createBulkOfDeliveryAuthorization(
 			if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
 				maxRetries = stol(maxRetriesIt->second);
 
+			bool reuseAuthIfPresent = true;
+			auto reuseAuthIfPresentIt = queryParameters.find("reuseAuthIfPresent");
+			if (reuseAuthIfPresentIt != queryParameters.end())
+				reuseAuthIfPresent = reuseAuthIfPresentIt->second == "true";
+
 			bool save = false;
 
 			string field = "mediaItemKeyList";
@@ -401,7 +411,7 @@ void API::createBulkOfDeliveryAuthorization(
 								-1, // ingestionJobKey,
 								-1, // deliveryCode,
 
-								ttlInSeconds, maxRetries,
+								ttlInSeconds, maxRetries, reuseAuthIfPresent,
 								false, // playerIPToBeAuthorized
 								"",	   // playerCountry
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
@@ -515,7 +525,7 @@ void API::createBulkOfDeliveryAuthorization(
 								-1, // ingestionJobKey,
 								-1, // deliveryCode,
 
-								ttlInSeconds, maxRetries,
+								ttlInSeconds, maxRetries, reuseAuthIfPresent,
 								false, // playerIPToBeAuthorized
 								"",	   // playerCountry
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
@@ -619,7 +629,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 							ingestionJobKey, deliveryCode,
 
-							ttlInSeconds, maxRetries,
+							ttlInSeconds, maxRetries, reuseAuthIfPresent,
 							false, // playerIPToBeAuthorized
 							"",	   // playerCountry
 							save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId

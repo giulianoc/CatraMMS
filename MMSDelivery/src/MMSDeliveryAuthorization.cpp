@@ -103,12 +103,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 	int64_t ingestionJobKey, int64_t deliveryCode,
 
-	int ttlInSeconds, int maxRetries, bool playerIPToBeAuthorized, string playerCountry,
+	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry,
 
 	bool save,
 	// deliveryType:
-	// 1. MMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by MMS with a Token parameter retrieved by DB (i.e.:
-	// https://mms-delivery.catramms-cloud.com/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
+	// 1. MMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by MMS with a Token parameter retrieved by DB.
+	// Vengono utilizzati i parametri: ttlInSeconds, maxRetries e reuseAuthIfPresent
+	// (i.e.: https://mms-delivery.catramms-cloud.com/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
 	//
 	// 2. AWSMMS_URLWithTokenAsParam_DB (ex MMS_Token): delivered by AWS getting data from MMS with a Token parameter retrieved by DB (i.e.:
 	// https://d3mvdxwkjkh4kh.cloudfront.net/MMS_0000/47/000/000/280/18657840_source.mp4?token=14)
