@@ -96,6 +96,15 @@ then
 		# ssh-keygen -F "[91.222.174.119]:9255"
 	fi
 
+	identityFile=~/ssh-keys/hetzner-mms-key.pem
+	if [[ ! -f "$identityFile" ]]; then
+		end=$(date +%s%3N)
+		totalElapsed=$((end-start))
+		echo "@$(date +'%Y-%m-%d %H:%M:%S')-$pid@ @ERROR@ @$eventName@ @$channelDirectory@ @$fileName@ @$elapsedCopyInMilliSecs@ @$totalElapsed@ identity files does not exist ($identityFile)" >> $debugFileName
+
+		exit 1
+	fi
+
 	#Example of events using debug:
 	#IN_CREATE --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
 	#IN_MODIFY --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
@@ -137,10 +146,11 @@ then
 	then
 		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
 		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate
-		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
+		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
-					SSH_OPTS="-p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+					SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 					echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
 					# 1. Sincronizza solo i file .ts
 					timeout 15s rsync -e "ssh $SSH_OPTS" \
@@ -165,10 +175,11 @@ then
 				} >> $debugFileName 2>&1' \
 				::: $serversToBeSynched
 	else
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate
-		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
+		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
-					SSH_OPTS="-p 9255 -i ~/ssh-keys/hetzner-mms-key.pem -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+					SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 					# 1. Sincronizza solo i file .ts
 					timeout 15s rsync -e "ssh $SSH_OPTS" \
 						--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
