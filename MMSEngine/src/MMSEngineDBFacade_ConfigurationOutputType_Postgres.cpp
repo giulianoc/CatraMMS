@@ -229,9 +229,9 @@ json MMSEngineDBFacade::getAWSChannelConfList(
 		else if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += std::format("and ac.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+				sqlWhere += std::format("and LOWER(ac.label) like LOWER({}) ", trans.transaction->quote(std::format("%{}%", label)));
 			else
-				sqlWhere += std::format("and ac.label = {} ", trans.transaction->quote(label));
+				sqlWhere += std::format("and LOWER(ac.label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (type == 1)
 			sqlWhere += "and ac.type = 'SHARED' ";
@@ -1014,9 +1014,9 @@ json MMSEngineDBFacade::getCDN77ChannelConfList(
 		else if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += std::format("and cc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+				sqlWhere += std::format("and LOWER(cc.label) like LOWER({}) ", trans.transaction->quote(std::format("%{}%", label)));
 			else
-				sqlWhere += std::format("and cc.label = {} ", trans.transaction->quote(label));
+				sqlWhere += std::format("and LOWER(cc.label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (type == 1)
 			sqlWhere += "and cc.type = 'SHARED' ";
@@ -1920,9 +1920,9 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 		else if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += std::format("and rc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+				sqlWhere += std::format("and LOWER(rc.label) like LOWER({}) ", trans.transaction->quote(std::format("%{}%", label)));
 			else
-				sqlWhere += std::format("and rc.label = {} ", trans.transaction->quote(label));
+				sqlWhere += std::format("and LOWER(rc.label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (type == 1)
 			sqlWhere += "and rc.type = 'SHARED' ";
@@ -2823,9 +2823,9 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 		else if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += std::format("and rc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+				sqlWhere += std::format("and LOWER(rc.label) like LOWER({}) ", trans.transaction->quote(std::format("%{}%", label)));
 			else
-				sqlWhere += std::format("and rc.label = {} ", trans.transaction->quote(label));
+				sqlWhere += std::format("and LOWER(rc.label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (type == 1)
 			sqlWhere += "and rc.type = 'SHARED' ";
@@ -3759,9 +3759,9 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 		else if (label != "")
 		{
 			if (labelLike)
-				sqlWhere += std::format("and hc.label like {} ", trans.transaction->quote(std::format("%{}%", label)));
+				sqlWhere += std::format("and LOWER(hc.label) like LOWER({}) ", trans.transaction->quote(std::format("%{}%", label)));
 			else
-				sqlWhere += std::format("and hc.label = {} ", trans.transaction->quote(label));
+				sqlWhere += std::format("and LOWER(hc.label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (type == 1)
 			sqlWhere += "and hc.type = 'SHARED' ";
