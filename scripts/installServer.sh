@@ -558,12 +558,12 @@ create-directory-api()
 	chown -R mms:mms /var/catramms
 
 	if [ "$moduleType" == "api" ]; then
-		read -n 1 -s -r -p "create the following directories (/mnt/storage-1/commonConfiguration), press a key once done"
+		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/storage-1/commonConfiguration; chown -R mms:mms /mnt/storage-1), press a key once done"
 		echo ""
 		read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created (es: 10.0.1.16:/mnt/storage-1/commonConfiguration /mnt/storage-1/commonConfiguration nfs defaults 0 0)"
 		echo ""
 	else
-		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree), press a key once done"
+		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 		echo ""
 		read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created"
 		echo ""
@@ -608,7 +608,7 @@ create-directory-delivery()
 	mkdir -p /var/catramms/pids
 	chown -R mms:mms /var/catramms
 
-	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree), press a key once done"
+	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 	echo ""
 	read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created"
 	echo ""
@@ -676,7 +676,7 @@ create-directory-externalDelivery()
 	mkdir -p /var/catramms/pids
 	chown -R mms:mms /var/catramms
 
-	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree), press a key once done"
+	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 	echo ""
 
 	mkdir -p /var/catramms/storage/nginxWorkingAreaRepository
@@ -724,7 +724,7 @@ create-directory-engine()
 	chown -R mms:mms /var/catramms
 
 	#Non usiamo RAID. Usiamo un disco separato di 1TB SSD dove mettere dati del DB. 500GB per il logs e 500GB per il sistema operativo
-	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/local-data-logs /mnt/local-data-mmsDatabaseData /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/dbDump /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository), press a key once done"
+	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/local-data-logs /mnt/local-data-mmsDatabaseData /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/dbDump /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 	echo ""
 	read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created"
 	echo ""
@@ -797,7 +797,7 @@ create-directory-encoder()
 	chown -R mms:mms /var/catramms
 
 	if [ "$moduleType" == "encoder" ]; then
-		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000), press a key once done"
+		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 		echo ""
 		read -n 1 -s -r -p "set /etc/fstab and mount the dirs just created above"
 		echo ""

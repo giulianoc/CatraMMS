@@ -568,7 +568,6 @@ void MMSEngineProcessor::userHttpCallback(
 	string httpMethod, long callbackTimeoutInSeconds, json userHeadersRoot, string &httpBody, string userName, string password, int maxRetries
 )
 {
-
 	string userURL;
 
 	try
@@ -666,6 +665,17 @@ void MMSEngineProcessor::userHttpCallback(
 					std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
+		}
+		else if (httpMethod == "DELETE")
+		{
+			string contentType;
+			if (httpBody != "")
+				contentType = "application/json";
+
+			CurlWrapper::httpDelete(
+				userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), otherHeaders,
+				std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+			);
 		}
 		else // if (httpMethod == "GET")
 		{

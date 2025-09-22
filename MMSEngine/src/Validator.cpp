@@ -3121,7 +3121,7 @@ void Validator::validateHTTPCallbackMetadata(
 	{
 		string method = JSONUtils::asString(parametersRoot, field, "");
 
-		if (method != "GET" && method != "POST" && method != "PUT")
+		if (method != "GET" && method != "POST" && method != "PUT" && method != "DELETE")
 		{
 			string errorMessage = string("Unknown Method") + ", method: " + method + ", label: " + label;
 			SPDLOG_ERROR(errorMessage);
