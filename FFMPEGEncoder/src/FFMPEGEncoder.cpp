@@ -20,6 +20,7 @@
 #include "EncodeContent.h"
 #include "Encrypt.h"
 #include "FFMPEGEncoderDaemons.h"
+#include "FFMpegFilters.h"
 #include "GenerateFrames.h"
 #include "GetCpuUsage.h"
 #include "IntroOutroOverlay.h"
@@ -1938,8 +1939,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 				selectedLiveProxy->_ingestionJobKey, encodingJobKey, requestBody
 			);
 
-			string textTemporaryFileName =
-				selectedLiveProxy->_ffmpeg->getDrawTextTemporaryPathName(selectedLiveProxy->_ingestionJobKey, encodingJobKey, 0);
+			string textTemporaryFileName = FFMpegFilters::getDrawTextTemporaryPathName(
+				selectedLiveProxy->_ffmpeg->_ffmpegTempDir, selectedLiveProxy->_ingestionJobKey, encodingJobKey, 0
+			);
+			// selectedLiveProxy->_ffmpeg->getDrawTextTemporaryPathName(selectedLiveProxy->_ingestionJobKey, encodingJobKey, 0);
 			if (fs::exists(textTemporaryFileName))
 			{
 				ofstream of(textTemporaryFileName, ofstream::trunc);
