@@ -32,8 +32,8 @@ class MMSDeliveryAuthorization
 	pair<string, string> createDeliveryAuthorization(
 		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP, int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey,
 		string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode, int ttlInSeconds, int maxRetries,
-		bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry, bool save, string deliveryType, bool warningIfMissingMediaItemKey,
-		bool filteredByStatistic, string userId
+		bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry, string playerRegion, bool save, string deliveryType,
+		bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
 	);
 
 	string checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
@@ -74,7 +74,7 @@ class MMSDeliveryAuthorization
 
 	string getSignedMMSPath(string contentURI, time_t expirationTime);
 	time_t getReusableExpirationTime(int ttlInSeconds);
-	string getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string country, string defaultDeliveryHost);
+	string getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string country, string region, string defaultDeliveryHost);
 	shared_ptr<HostBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, string groupName, json hostGroupRoot);
 };
 #endif

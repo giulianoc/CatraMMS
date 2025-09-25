@@ -1195,6 +1195,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Wor
 						false,				// reuseAuthIfPresent
 						false,				// playerIPToBeAuthorized
 						"",					// playerCountry
+						"",					// playerRegion
 						false,				// save,
 						"MMS_SignedURL",	// deliveryType,
 
@@ -1756,6 +1757,7 @@ MMSEngineProcessor::processDependencyInfo(
 			false,				// reuseAuthIfPresent
 			false,				// playerIPToBeAuthorized
 			"",					// playerCountry
+			"",					// playerRegion
 			false,				// save,
 			"MMS_SignedURL",	// deliveryType,
 

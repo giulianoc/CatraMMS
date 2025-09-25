@@ -103,7 +103,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 	int64_t ingestionJobKey, int64_t deliveryCode,
 
-	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry,
+	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry, string playerRegion,
 
 	bool save,
 	// deliveryType:
@@ -652,7 +652,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol,
-							getDeliveryHost(requestWorkspace, playerCountry, _deliveryHost_authorizationThroughParameter), deliveryURI,
+							getDeliveryHost(requestWorkspace, playerCountry, playerRegion, _deliveryHost_authorizationThroughParameter), deliveryURI,
 							CurlWrapper::escape(md5Base64), expirationTime
 						);
 					}
@@ -679,8 +679,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 					deliveryURL = _deliveryProtocol + "://" +
-								  getDeliveryHost(requestWorkspace, playerCountry, _deliveryHost_authorizationThroughPath) + "/token_" + md5Base64 +
-								  "," + to_string(expirationTime) + deliveryURI;
+								  getDeliveryHost(requestWorkspace, playerCountry, playerRegion, _deliveryHost_authorizationThroughPath) + "/token_" +
+								  md5Base64 + "," + to_string(expirationTime) + deliveryURI;
 				}
 				/*
 				else
@@ -909,15 +909,21 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	return make_pair(deliveryURL, deliveryFileName);
 }
 
-string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string playerCountry, string defaultDeliveryHost)
+string MMSDeliveryAuthorization::getDeliveryHost(
+	shared_ptr<Workspace> requestWorkspace, string playerCountry, string playerRegion, string defaultDeliveryHost
+)
 {
 	string deliveryHost = defaultDeliveryHost;
 	if (playerCountry != "")
 	{
-		// verifica se abbiamo externalDeliveries per questo specifico playerCountry
+		// verifica se abbiamo externalDeliveries per questo specifico playerCountry-playerRegion
 		/*
 		{"HLS-live": {
 		"hostGroups": {
+			"group-1-<playerRegion>": [
+				{ "host": "srv-1.cibortvlive.com", "running": true },
+				{ "host": "srv-2.cibortvlive.com", "running": true }
+			],
 			"group-1": [
 				{ "host": "srv-1.cibortvlive.com", "running": true },
 				{ "host": "srv-2.cibortvlive.com", "running": true }
@@ -942,12 +948,28 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
 		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
 
-		string countryExternalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
-		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, countryExternalDeliveriesGroup, json::array());
+		string externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
+		json hostGroupRoot = nullptr;
+		if (playerRegion.empty())
+			hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
+		else
+		{
+			if (externalDeliveriesGroup == "default")
+				hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
+			else
+			{
+				// verifico se presente un gruppo <country>-<region>
+				hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, std::format("{}-{}", externalDeliveriesGroup, playerRegion), json::array());
+				if (hostGroupRoot.size() == 0)
+					hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
+				else // il gruppo <country>-<region> è presente
+					externalDeliveriesGroup = std::format("{}-{}", externalDeliveriesGroup, playerRegion);
+			}
+		}
 		if (hostGroupRoot.size() > 0)
 		{
 			shared_ptr<HostBandwidthTracker> hostBandwidthTracker =
-				getHostBandwidthTracker(requestWorkspace->_workspaceKey, countryExternalDeliveriesGroup, hostGroupRoot);
+				getHostBandwidthTracker(requestWorkspace->_workspaceKey, externalDeliveriesGroup, hostGroupRoot);
 			optional<string> deliveryHostOpt = hostBandwidthTracker->getMinBandwidthHost();
 			if (deliveryHostOpt.has_value())
 			{
@@ -965,9 +987,10 @@ string MMSDeliveryAuthorization::getDeliveryHost(shared_ptr<Workspace> requestWo
 	SPDLOG_INFO(
 		"getDeliveryHost"
 		", playerCountry: {}"
+		", playerRegion: {}"
 		", externalDeliveries: {}"
 		", deliveryHost: {}",
-		playerCountry, JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot), deliveryHost
+		playerCountry, playerRegion, JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot), deliveryHost
 	);
 
 	return deliveryHost;

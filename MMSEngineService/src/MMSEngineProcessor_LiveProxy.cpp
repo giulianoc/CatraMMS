@@ -209,6 +209,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					false,				// reuseAuthIfPresent
 					false,				// playerIPToBeAuthorized
 					"",					// playerCountry
+					"",					// playerRegion
 					false,				// save,
 					"MMS_SignedURL",	// deliveryType,
 

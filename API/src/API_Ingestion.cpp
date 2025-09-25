@@ -5221,8 +5221,7 @@ void API::changeLiveProxyPlaylist(
 
 										broadcastDefaultPhysicalPathKey,
 
-										-1, // ingestionJobKey,	(in case
-											// of live)
+										-1, // ingestionJobKey,	(in case of live)
 										-1, // deliveryCode,
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
@@ -5230,6 +5229,7 @@ void API::changeLiveProxyPlaylist(
 										false,							 // reuseAuthIfPresent
 										false,							 // playerIPToBeAuthorized
 										"",								 // playerCountry
+										"",								 // playerRegion
 										false,							 // save,
 										"MMS_SignedURL",				 // deliveryType,
 
@@ -5321,6 +5321,7 @@ void API::changeLiveProxyPlaylist(
 									false,							 // reuseAuthIfPresent
 									false,							 // playerIPToBeAuthorized
 									"",								 // playerCountry
+									"",								 // playerRegion
 									false,							 // save,
 									"MMS_SignedURL",				 // deliveryType,
 
@@ -5620,6 +5621,7 @@ void API::changeLiveProxyPlaylist(
 										false,							 // reuseAuthIfPresent
 										false,							 // playerIPToBeAuthorized
 										"",								 // playerCountry
+										"",								 // playerRegion
 										false,							 // save,
 										"MMS_SignedURL",				 // deliveryType,
 
@@ -6610,6 +6612,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspa
 						false,				// reuseAuthIfPresent
 						false,				// playerIPToBeAuthorized
 						"",					// playerCountry
+						"",					// playerRegion
 						false,				// save,
 						"MMS_SignedURL",	// deliveryType,
 
