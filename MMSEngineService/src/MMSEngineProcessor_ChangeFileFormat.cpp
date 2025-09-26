@@ -155,27 +155,21 @@ void MMSEngineProcessor::changeFileFormatThread(
 							", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
 						);
 					}
-					catch (runtime_error &e)
-					{
-						SPDLOG_ERROR(
-							string() + "ffmpeg.changeFileFormat failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
-							", mmsSourceAssetPathName: " + mmsSourceAssetPathName +
-							", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName + ", e.what(): " + e.what()
-						);
-
-						throw e;
-					}
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
-							string() + "ffmpeg.changeFileFormat failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
-							", mmsSourceAssetPathName: " + mmsSourceAssetPathName +
-							", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName + ", e.what(): " + e.what()
+							"ffmpeg.changeFileFormat failed"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", mediaItemKey: {}"
+							", mmsSourceAssetPathName: {}"
+							", stagingChangeFileFormatAssetPathName: {}"
+							", e.what(): {}",
+							_processorIdentifier, ingestionJobKey, mediaItemKey, mmsSourceAssetPathName, stagingChangeFileFormatAssetPathName,
+							e.what()
 						);
 
-						throw e;
+						throw;
 					}
 
 					tuple<int64_t, long, json> mediaInfoDetails;

@@ -118,6 +118,10 @@
 		// optional. Default: 2
 		"maxRetries": 2,
 
+		// optional. Sinc ethis task do not generate any media as output, this parameter specifies if the input medias received by this task have to be forwarded to the next task
+		// Default: false
+		"forwardInputMedia": false,
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:

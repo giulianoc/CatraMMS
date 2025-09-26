@@ -3,6 +3,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
 #include <regex>
+#include <tuple>
 
 void MMSEngineProcessor::httpCallbackThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -17,9 +18,13 @@ void MMSEngineProcessor::httpCallbackThread(
 	{
 		if (dependencies.size() == 0)
 		{
-			string errorMessage = string() + "No configured any media to be notified (HTTP Callback)" +
-								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format(
+				"No configured any media to be notified (HTTP Callback)"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}",
+				_processorIdentifier, ingestionJobKey, dependencies.size()
+			);
 			_logger->warn(errorMessage);
 
 			// throw runtime_error(errorMessage);
@@ -39,24 +44,21 @@ void MMSEngineProcessor::httpCallbackThread(
 		int maxRetries;
 		string httpBody;
 		json httpHeadersRoot = json::array();
+		bool forwardInputMedia;
 		{
-			string field = "addMediaData";
-			addMediaData = JSONUtils::asBool(parametersRoot, field, true);
-
-			field = "protocol";
-			httpProtocol = JSONUtils::asString(parametersRoot, field, "http");
-
-			field = "userName";
-			userName = JSONUtils::asString(parametersRoot, field, "");
-
-			field = "password";
-			password = JSONUtils::asString(parametersRoot, field, "");
-
-			field = "hostName";
+			addMediaData = JSONUtils::asBool(parametersRoot, "addMediaData", true);
+			httpProtocol = JSONUtils::asString(parametersRoot, "protocol", "http");
+			userName = JSONUtils::asString(parametersRoot, "userName", "");
+			password = JSONUtils::asString(parametersRoot, "password", "");
+			string field = "hostName";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", Field: {}",
+					_processorIdentifier, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -74,31 +76,27 @@ void MMSEngineProcessor::httpCallbackThread(
 			else
 				httpPort = JSONUtils::asInt(parametersRoot, field, 0);
 
-			field = "timeout";
-			callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, field, 120);
+			callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, "timeout", 120);
 
 			field = "uri";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", Field: {}",
+					_processorIdentifier, field
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			httpURI = JSONUtils::asString(parametersRoot, field, "");
 
-			field = "parameters";
-			httpURLParameters = JSONUtils::asString(parametersRoot, field, "");
-
-			field = "formData";
-			formData = JSONUtils::asBool(parametersRoot, field, false);
-
-			field = "method";
-			httpMethod = JSONUtils::asString(parametersRoot, field, "POST");
-
-			field = "httpBody";
-			httpBody = JSONUtils::asString(parametersRoot, field, "");
+			httpURLParameters = JSONUtils::asString(parametersRoot, "parameters", "");
+			formData = JSONUtils::asBool(parametersRoot, "formData", false);
+			httpMethod = JSONUtils::asString(parametersRoot, "method", "POST");
+			httpBody = JSONUtils::asString(parametersRoot, "httpBody", "");
 
 			field = "headers";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -115,8 +113,8 @@ void MMSEngineProcessor::httpCallbackThread(
 				// httpHeadersRoot = parametersRoot[field];
 			}
 
-			field = "maxRetries";
-			maxRetries = JSONUtils::asInt(parametersRoot, field, 1);
+			maxRetries = JSONUtils::asInt(parametersRoot, "maxRetries", 1);
+			forwardInputMedia = JSONUtils::asBool(parametersRoot, "forwardInputMedia", false);
 		}
 
 		if (addMediaData && (httpMethod == "POST" || httpMethod == "PUT"))
@@ -124,8 +122,11 @@ void MMSEngineProcessor::httpCallbackThread(
 			if (httpBody != "")
 			{
 				SPDLOG_INFO(
-					string() + "POST/PUT with httpBody" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size())
+					"POST/PUT with httpBody"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", dependencies.size: {}",
+					_processorIdentifier, ingestionJobKey, dependencies.size()
 				);
 
 				int dependencyIndex = 0;
@@ -180,32 +181,24 @@ void MMSEngineProcessor::httpCallbackThread(
 						httpBody = regex_replace(httpBody, regex("\\$\\{physicalPathKey\\}"), to_string(physicalPathKey));
 
 						SPDLOG_INFO(
-							string() + "userHttpCallback" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", httpProtocol: " + httpProtocol +
-							", httpHostName: " + httpHostName + ", httpURI: " + httpURI + ", httpURLParameters: " + httpURLParameters +
-							", formData: " + to_string(formData) + ", httpMethod: " + httpMethod + ", httpBody: " + httpBody
+							"userHttpCallback"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", httpProtocol: {}"
+							", httpHostName: {}"
+							", httpURI: {}"
+							", httpURLParameters: {}"
+							", formData: {}"
+							", httpMethod: {}"
+							", httpBody: {}",
+							_processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpURI, httpURLParameters, formData, httpMethod,
+							httpBody
 						);
 
 						userHttpCallback(
 							ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, httpMethod,
 							callbackTimeoutInSeconds, httpHeadersRoot, httpBody, userName, password, maxRetries
 						);
-					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = string() + "http callback failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", dependencyIndex: " + to_string(dependencyIndex) +
-											  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-						SPDLOG_ERROR(errorMessage);
-
-						if (dependencies.size() > 1)
-						{
-							if (stopIfReferenceProcessingError)
-								throw runtime_error(errorMessage);
-						}
-						else
-							throw runtime_error(errorMessage);
 					}
 					catch (exception e)
 					{
@@ -214,8 +207,9 @@ void MMSEngineProcessor::httpCallbackThread(
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
 							", dependencyIndex: {}"
-							", dependencies.size(): {}",
-							_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
+							", dependencies.size(): {}"
+							", e.what(): {}",
+							_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size(), e.what()
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -385,24 +379,15 @@ void MMSEngineProcessor::httpCallbackThread(
 
 									callbackMedatada["durationInSeconds"] = durationInSeconds;
 								}
-								catch (runtime_error &e)
-								{
-									SPDLOG_ERROR(
-										string() +
-										"getMediaDurationInMilliseconds "
-										"failed" +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
-										", physicalPathKey: " + to_string(physicalPathKey) + ", exception: " + e.what()
-									);
-								}
 								catch (exception &e)
 								{
 									SPDLOG_ERROR(
-										string() +
-										"getMediaDurationInMilliseconds "
-										"failed" +
-										", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
-										", physicalPathKey: " + to_string(physicalPathKey)
+										"getMediaDurationInMilliseconds failed"
+										", ingestionJobKey: {}"
+										", mediaItemKey: {}"
+										", physicalPathKey: {}"
+										", e.what: {}",
+										ingestionJobKey, mediaItemKey, physicalPathKey, e.what()
 									);
 								}
 							}
@@ -415,22 +400,6 @@ void MMSEngineProcessor::httpCallbackThread(
 							callbackTimeoutInSeconds, httpHeadersRoot, data, userName, password, maxRetries
 						);
 					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = string() + "http callback failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-											  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-											  ", dependencyIndex: " + to_string(dependencyIndex) +
-											  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-						SPDLOG_ERROR(errorMessage);
-
-						if (dependencies.size() > 1)
-						{
-							if (stopIfReferenceProcessingError)
-								throw runtime_error(errorMessage);
-						}
-						else
-							throw runtime_error(errorMessage);
-					}
 					catch (exception e)
 					{
 						string errorMessage = std::format(
@@ -438,8 +407,9 @@ void MMSEngineProcessor::httpCallbackThread(
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
 							", dependencyIndex: {}"
-							", dependencies.size(): {}",
-							_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
+							", dependencies.size(): {}"
+							", e.what: {}",
+							_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size(), e.what()
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -465,95 +435,127 @@ void MMSEngineProcessor::httpCallbackThread(
 					httpHeadersRoot, httpBody, userName, password, maxRetries
 				);
 			}
-			catch (runtime_error &e)
-			{
-				string errorMessage = string() + "http callback failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
-									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
 			catch (exception e)
 			{
-				string errorMessage = string() + "http callback failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size(): " + to_string(dependencies.size());
+				string errorMessage = std::format(
+					"http callback failed"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", dependencies.size(): {}"
+					", e.what: {}",
+					_processorIdentifier, ingestionJobKey, dependencies.size(), e.what()
+				);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
+		if (forwardInputMedia)
+		{
+			for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> &keyAndDependencyType : dependencies)
+			{
+				try
+				{
+					int64_t key;
+					Validator::DependencyType dependencyType;
+
+					tie(key, ignore, dependencyType, ignore) = keyAndDependencyType;
+
+					int64_t physicalPathKey;
+					int64_t mediaItemKey;
+
+					if (dependencyType == Validator::DependencyType::MediaItemKey)
+					{
+						mediaItemKey = key;
+
+						{
+							int64_t encodingProfileKey = -1;
+							bool warningIfMissing = false;
+							tuple<int64_t, string, int, string, string, int64_t, string> physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
+								mediaItemKey, encodingProfileKey, warningIfMissing,
+								// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+								true
+							);
+
+							tie(physicalPathKey, ignore, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
+						}
+					}
+					else
+					{
+						physicalPathKey = key;
+
+						{
+							bool warningIfMissing = false;
+							tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
+								physicalPathKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+									workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+									// 2022-12-18: MIK potrebbe essere stato appena aggiunto
+									true
+								);
+
+							tie(mediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) = physicalPathKeyDetails;
+						}
+					}
+
+					_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey, mediaItemKey, physicalPathKey, -1);
+				}
+				catch (exception e)
+				{
+					string errorMessage = std::format(
+						"http callback failed"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", dependencies.size(): {}"
+						", exception(): {}",
+						_processorIdentifier, ingestionJobKey, dependencies.size(), e.what()
+					);
+					SPDLOG_ERROR(errorMessage);
+				}
+			}
+		}
+
 		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
-			", errorMessage: " + ""
+			"Update IngestionJob"
+			", ingestionJobKey: {}"
+			", IngestionStatus: End_TaskSuccess"
+			", errorMessage: ",
+			ingestionJobKey
 		);
 		_mmsEngineDBFacade->updateIngestionJob(
 			ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_TaskSuccess,
 			"" // errorMessage
 		);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "httpCallbackTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
-		);
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
-			);
-		}
-
-		// it's a thread, no throw
-		// throw e;
-		return;
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
-			string() + "httpCallbackTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+			"httpCallbackTask failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}",
+			_processorIdentifier, ingestionJobKey
 		);
 
 		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
+			"Update IngestionJob"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", IngestionStatus: End_IngestionFailure"
+			", errorMessage: {}",
+			_processorIdentifier, ingestionJobKey, e.what()
 		);
 		try
 		{
 			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
 		catch (exception &ex)
 		{
 			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
+				"Update IngestionJob failed"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", errorMessage: {}",
+				_processorIdentifier, ingestionJobKey, ex.what()
 			);
 		}
 
@@ -586,7 +588,7 @@ void MMSEngineProcessor::userHttpCallback(
 			_processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, maxRetries
 		);
 
-		userURL = httpProtocol + "://" + httpHostName + ":" + to_string(httpPort) + httpURI + (formData ? "" : httpURLParameters);
+		userURL = std::format("{}://{}:{}{}{}", httpProtocol, httpHostName, httpPort, httpURI, (formData ? "" : httpURLParameters));
 
 		vector<string> otherHeaders;
 		for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
@@ -686,18 +688,15 @@ void MMSEngineProcessor::userHttpCallback(
 			);
 		}
 	}
-	catch (runtime_error e)
-	{
-		string errorMessage = string() + "User Callback URL failed (runtime_error)" + ", userURL: " + userURL +
-							  ", maxRetries: " + to_string(maxRetries) + ", exception: " + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception e)
 	{
-		string errorMessage = string() + "User Callback URL failed (exception)" + ", userURL: " + userURL + ", maxRetries: " + to_string(maxRetries) +
-							  ", exception: " + e.what();
+		string errorMessage = std::format(
+			"User Callback URL failed (exception)"
+			", userURL: {}"
+			", maxRetries: {}"
+			", exception: {}",
+			userURL, maxRetries, e.what()
+		);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
