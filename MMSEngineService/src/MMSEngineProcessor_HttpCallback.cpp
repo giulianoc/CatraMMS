@@ -453,6 +453,14 @@ void MMSEngineProcessor::httpCallbackThread(
 
 		if (forwardInputMedia)
 		{
+			SPDLOG_INFO(
+				"userHttpCallback"
+				", processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", forwardInputMedia: {}",
+				_processorIdentifier, ingestionJobKey, forwardInputMedia
+			);
+
 			for (tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> &keyAndDependencyType : dependencies)
 			{
 				try
@@ -498,6 +506,14 @@ void MMSEngineProcessor::httpCallbackThread(
 						}
 					}
 
+					SPDLOG_INFO(
+						"userHttpCallback, addIngestionJobOutput"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", mediaItemKey: {}"
+						", physicalPathKey: {}",
+						_processorIdentifier, ingestionJobKey, mediaItemKey, physicalPathKey
+					);
 					_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey, mediaItemKey, physicalPathKey, -1);
 				}
 				catch (exception e)
