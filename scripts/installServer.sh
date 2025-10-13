@@ -54,8 +54,9 @@ mms-account-creation()
 		#che si giustifica guardando lo script nginx.sh
 		#Inoltre bisogna aggiungere /bin/kill perchè lo script crontab.sh, durante la rotazione dei log file di nginx, esegue la kill
 		#su nginx (che gira come root) per fargli ricreare i file di log
+		#Inoltre bisogna aggiungere /usr/bin/certbot per il comando del rinnovo del certificato
 
-		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill" > "/etc/sudoers.d/mms-nginx-commands"
+		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill, /usr/bin/certbot" > "/etc/sudoers.d/mms-nginx-commands"
 		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
 	fi
 }
@@ -269,6 +270,14 @@ install-packages()
 	echo ""
 	apt install -y dvb-tools
 	apt install -y dvblast
+
+	#Per monitorare il traffico di rete
+	echo ""
+	read -n 1 -s -r -p "install vnstat..."
+	echo ""
+	apt install -y vnstat
+	#restart automatico al boot e partenza del servizio
+	systemctl enable --now vnstat
 
 	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "integration" ]; then
 
@@ -1361,7 +1370,7 @@ install-mms-tomcat-package()
 	echo "User=mms" >> /etc/systemd/system/tomcat.service
 	echo "Group=mms" >> /etc/systemd/system/tomcat.service
 	echo "" >> /etc/systemd/system/tomcat.service
-	echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
 	echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
 	echo "" >> /etc/systemd/system/tomcat.service
 	echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
@@ -1467,6 +1476,8 @@ install-mms-nginx-package()
 		#certbot certificates
 		#per rimuovere un certificato (verrà mostrata la lista dei certificati e devi selezionarne uno)
 		#certbot delete
+		#Per il rinnovo del certificato aggiungere nel crontab il comando (lo script deploy-hook viene eseguito solo se il certificato viene effettivamente rinnovato):
+		#sudo certbot renew --deploy-hook 'sudo -u mms /home/mms/nginx.sh stop && sleep 2 && sudo -u mms /home/mms/nginx.sh start' --quiet
 		#Se si vuole estendere il certificato con un nuovo hostname, devi inserire entrambi gli hostnames
 		#1. sudo certbot certonly --expand --manual --preferred-challenges dns -d us2-blade7-1.cbrtvlv.com -d us2-blade7-1.cibortvlive.com
 		#2. aggiungi il nuovo hostname in ~/mms/conf/catramms.nginx (campo server_name)
@@ -1505,7 +1516,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6454
+	catraMMSVersion=1.0.6462
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

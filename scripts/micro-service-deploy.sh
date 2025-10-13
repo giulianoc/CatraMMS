@@ -24,7 +24,7 @@ if [ -d "$serviceFileName" ]; then
 fi
 
 echo "write the bitbucket pwd"
-git clone https://giuliano_catrambone@bitbucket.org/giuliano_catrambone/$serviceFileName.git
+git clone git@bitbucket-personal:giuliano_catrambone/$serviceFileName.git
 
 if [ ! -d "$serviceFileName" ]; then
 	echo "no service directory found: $serviceFileName"
