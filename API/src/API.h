@@ -11,8 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
-#ifndef API_h
-#define API_h
+#pragma once
 
 #include "BandwidthStats.h"
 #include "Datetime.h"
@@ -51,17 +50,17 @@ class API : public FastCGIAPI
 
 	~API();
 
-	virtual void manageRequestAndResponse(
-		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
-		unordered_map<string, string> queryParameters, bool authorizationPresent, string userName, string password, unsigned long contentLength,
-		string requestBody, unordered_map<string, string> &requestDetails
-	);
+	void manageRequestAndResponse(
+		const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
+		const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
+		const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
+	) override;
 
-	virtual void checkAuthorization(string sThreadId, string userName, string password);
+	void checkAuthorization(string sThreadId, string userName, string password) override;
 
-	virtual bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters);
+	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
 
-	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
+	void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage) override;
 
 	void fileUploadProgressCheck();
 	void stopUploadFileProgressThread();
@@ -387,7 +386,7 @@ class API : public FastCGIAPI
 		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestMethod,
 		unordered_map<string, string> queryParameters, shared_ptr<Workspace> workspace,
 		// unsigned long contentLength,
-		unordered_map<string, string> &requestDetails
+		const unordered_map<string, string> &requestDetails
 	);
 
 	// void manageTarFileInCaseOfIngestionOfSegments(
@@ -837,5 +836,3 @@ class API : public FastCGIAPI
 
 	json getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
 };
-
-#endif /* POSTCUSTOMER_H */

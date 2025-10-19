@@ -2860,7 +2860,7 @@ void API::uploadedBinary(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestMethod,
 	unordered_map<string, string> queryParameters, shared_ptr<Workspace> workspace,
 	// unsigned long contentLength,
-	unordered_map<string, string> &requestDetails
+	const unordered_map<string, string> &requestDetails
 )
 {
 	string api = "uploadedBinary";

@@ -35,6 +35,7 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <unordered_map>
+#include <utility>
 
 #include "API.h"
 
@@ -44,7 +45,7 @@ API::API(
 	shared_ptr<atomic<uint64_t>> avgBandwidthUsage
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
-	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization)
+	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization), _bandwidthStats()
 {
 	_configurationRoot = configurationRoot;
 	_avgBandwidthUsage = avgBandwidthUsage;
@@ -482,9 +483,10 @@ API::API(
 API::~API() = default;
 
 void API::manageRequestAndResponse(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
-	unordered_map<string, string> queryParameters, bool authorizationPresent, string userName, string password, unsigned long contentLength,
-	string requestBody, unordered_map<string, string> &requestDetails)
+	const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
+	const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
+	const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
+)
 {
 
 	int64_t userKey;
@@ -503,7 +505,7 @@ void API::manageRequestAndResponse(
 	bool applicationRecorder;
 	bool createRemoveLiveChannel;
 
-	if (authorizationPresent)
+	if (basicAuthenticationPresent)
 	{
 		tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob_, editEncodersPool, applicationRecorder, createRemoveLiveChannel) =
@@ -553,7 +555,7 @@ void API::manageRequestAndResponse(
 	if (versionIt != queryParameters.end())
 		version = versionIt->second;
 
-	if (!authorizationPresent)
+	if (!basicAuthenticationPresent)
 	{
 		SPDLOG_INFO(
 			"Received manageRequestAndResponse"
@@ -639,7 +641,7 @@ void API::manageRequestAndResponse(
 		if (binaryVirtualHostNameIt != queryParameters.end() && binaryListenHostIt != queryParameters.end() && progressIdIt != requestDetails.end() &&
 			originalURIIt != requestDetails.end())
 		{
-			int ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
+			size_t ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
 			if (ingestionJobKeyIndex != string::npos)
 			{
 				try
@@ -1026,8 +1028,8 @@ void API::manageRequestAndResponse(
 									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 								);
 								*/
-								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
-								responseBody += (manifestLine + "?token=" + auth + endLine);
+								string auth = Encrypt::opensslEncrypt(std::format("{}+++{}", manifestLine, tokenComingFromURL));
+								responseBody += std::format("{}?token={}{}", manifestLine, auth, endLine);
 							}
 							else if (manifestLine.starts_with(m3u8ExtXMedia))
 							{

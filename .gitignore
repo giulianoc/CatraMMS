@@ -35,6 +35,7 @@ Release
 
 .cache
 .idea
+build-make
 
 Makefile
 *.dylib

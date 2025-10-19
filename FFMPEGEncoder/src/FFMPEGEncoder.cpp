@@ -171,9 +171,9 @@ FFMPEGEncoder::~FFMPEGEncoder() {}
 // solo thread!!!
 
 void FFMPEGEncoder::manageRequestAndResponse(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
-	unordered_map<string, string> queryParameters, bool authorizationPresent, string userName, string password, unsigned long contentLength,
-	string requestBody, unordered_map<string, string> &requestDetails
+	const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
+	const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
+	const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
 )
 {
 	// chrono::system_clock::time_point startManageRequestAndResponse =

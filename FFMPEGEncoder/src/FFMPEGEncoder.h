@@ -55,17 +55,17 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	~FFMPEGEncoder();
 
-	virtual void manageRequestAndResponse(
-		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
-		unordered_map<string, string> queryParameters, bool authorizationPresent, string userName, string password, unsigned long contentLength,
-		string requestBody, unordered_map<string, string> &requestDetails
-	);
+	void manageRequestAndResponse(
+		const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
+		const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
+		const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
+	) override;
 
-	virtual void checkAuthorization(string sThreadId, string userName, string password);
+	void checkAuthorization(string sThreadId, string userName, string password) override;
 
-	virtual bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters);
+	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
 
-	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
+	void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage) override;
 
   private:
 	json _configurationRoot;
