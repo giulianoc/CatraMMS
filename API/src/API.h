@@ -59,7 +59,7 @@ class API : public FastCGIAPI
 
 	virtual void checkAuthorization(string sThreadId, string userName, string password);
 
-	virtual bool basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters);
+	virtual bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters);
 
 	virtual void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage);
 

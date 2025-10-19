@@ -2809,7 +2809,7 @@ void API::checkAuthorization(string sThreadId, string userName, string password)
 	}
 }
 
-bool API::basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters)
+bool API::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
 {
 	bool basicAuthenticationRequired = true;
 

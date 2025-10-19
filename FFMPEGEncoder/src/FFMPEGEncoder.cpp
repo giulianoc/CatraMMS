@@ -2277,7 +2277,7 @@ void FFMPEGEncoder::checkAuthorization(string sThreadId, string userName, string
 	}
 }
 
-bool FFMPEGEncoder::basicAuthenticationRequired(string requestURI, unordered_map<string, string> queryParameters)
+bool FFMPEGEncoder::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
 {
 	bool basicAuthenticationRequired = true;
 
