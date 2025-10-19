@@ -20,7 +20,7 @@
 add_definitions(-DNO_FCGI_DEFINES)
 
 set(SOURCES
-    api.cpp
+  apiMain.cpp
     API.cpp
     API_DeliveryAuthorization.cpp
     API_Encoding.cpp

@@ -20,7 +20,7 @@
 add_definitions(-DNO_FCGI_DEFINES)
 
 set(SOURCES
-    ffmpegEncoder.cpp
+    ffmpegEncoderMain.cpp
     FFMPEGEncoder.cpp
     FFMPEGEncoderDaemons.cpp
     FFMPEGEncoderBase.cpp
