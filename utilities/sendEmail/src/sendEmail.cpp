@@ -9,6 +9,10 @@
 
 using namespace std;
 
+#ifdef __APPLE__
+extern char **environ;
+#endif
+
 json loadConfigurationFile(string configurationPathName, string environmentPrefix);
 string applyEnvironmentToConfiguration(string configuration, string environmentPrefix);
 
@@ -37,7 +41,7 @@ int main(int iArgc, char *pArgv[])
 	string emailPassword;
 	try
 	{
-		logger->info(__FILEREF__ + "Sending email to " + tosCommaSeparated);
+		SPDLOG_INFO("Sending email to {}", tosCommaSeparated);
 
 		emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
 		emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
@@ -75,10 +79,10 @@ int main(int iArgc, char *pArgv[])
 			", emailPassword: {}",
 			emailProviderURL, emailUserName, emailPassword
 		);
-		logger->error(__FILEREF__ + errorMessage);
+		SPDLOG_ERROR(errorMessage);
 	}
 
-	logger->info(__FILEREF__ + "Shutdown done");
+	SPDLOG_INFO("Shutdown done");
 
 	return 0;
 }

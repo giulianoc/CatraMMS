@@ -46,7 +46,23 @@ include_directories("${PROJECT_SOURCE_DIR}/MMSStorage/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
 
+if(APPLE)
+    include_directories("${OPENSSL_INCLUDE_DIR}")
+endif()
+
+if(APPLE)
+    link_directories("${OPENSSL_LIB_DIR}")
+    link_directories("${LIBPQXX_LIB_DIR}")
+    link_directories("${LIBPQ_LIB_DIR}")
+endif()
+
 add_library(MMSDelivery SHARED ${SOURCES} ${HEADERS})
+
+if(APPLE)
+    target_link_libraries(MMSDelivery MMSStorage)
+    target_link_libraries(MMSDelivery FFMpegWrapper)
+    target_link_libraries(MMSDelivery crypto)
+endif()
 
 install(TARGETS MMSDelivery DESTINATION lib)
 install(FILES ${HEADERS} DESTINATION include)

@@ -121,7 +121,32 @@ endif()
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
+if(APPLE)
+  include_directories("${OPENSSL_INCLUDE_DIR}")
+endif()
+
+if(APPLE)
+  link_directories("${CURLWRAPPER_LIB_DIR}")
+  link_directories("${STRINGUTILS_LIB_DIR}")
+  link_directories("${OPENSSL_LIB_DIR}")
+  link_directories("${LIBPQXX_LIB_DIR}")
+  link_directories("${LIBPQ_LIB_DIR}")
+endif()
+
 add_library(MMSEngine SHARED ${SOURCES} ${HEADERS})
+
+if(DBCONNECTION_MYSQL)
+  target_compile_definitions(MMSEngine PRIVATE DBCONNECTION_MYSQL)
+endif()
+
+if(APPLE)
+  target_link_libraries(MMSEngine CurlWrapper)
+  target_link_libraries(MMSEngine FFMpegWrapper)
+  target_link_libraries(MMSEngine PostgresHelper)
+  target_link_libraries(MMSEngine StringUtils)
+  target_link_libraries(MMSEngine Encrypt)
+  target_link_libraries(MMSEngine crypto)
+endif()
 
 #target_link_libraries(MMSEngine aws-cpp-sdk-core)
 #target_link_libraries(MMSEngine aws-cpp-sdk-medialive)

@@ -1870,7 +1870,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		json mmsDataRoot = userDataRoot["mmsData"];
 		json liveRecordingChunkRoot = mmsDataRoot["liveRecordingChunk"];
 		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcPreviousChunkStartTime", -1);
-		int64_t utcChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkStartTime", -1);
+		time_t utcChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkStartTime", -1);
 		int64_t utcChunkEndTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkEndTime", -1);
 
 		json addContentRoot;

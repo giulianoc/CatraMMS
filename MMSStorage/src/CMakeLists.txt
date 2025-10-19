@@ -75,7 +75,19 @@ endif()
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
+if(APPLE)
+  link_directories("${OPENSSL_LIB_DIR}")
+  link_directories("${LIBPQXX_LIB_DIR}")
+  link_directories("${LIBPQ_LIB_DIR}")
+endif()
+
 add_library(MMSStorage SHARED ${SOURCES} ${HEADERS})
+
+if(APPLE)
+  target_link_libraries(MMSStorage ProcessUtility)
+  target_link_libraries(MMSStorage MMSEngine)
+  target_link_libraries(MMSStorage System)
+endif()
 
 #target_link_libraries(MMSEngine aws-cpp-sdk-core)
 #target_link_libraries(MMSEngine aws-cpp-sdk-medialive)

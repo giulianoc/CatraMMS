@@ -19,13 +19,15 @@
 #include <string>
 #include <vector>
 #ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+	#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "Workspace.h"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 #define DBCONNECTIONPOOL_LOG
-#include "MySQLConnection.h"
+#ifdef DBCONNECTION_MYSQL
+	#include "MySQLConnection.h"
+#endif
 #include "PostgresConnection.h"
 #include "PostgresHelper.h"
 
@@ -2764,7 +2766,10 @@ class MMSEngineDBFacade
 
 	bool isRealDBError(string exceptionMessage);
 
+#ifdef __POSTGRES__
+#else
 	bool isJsonTypeSupported(shared_ptr<sql::Statement> statement);
+#endif
 
 #ifdef __POSTGRES__
 #else

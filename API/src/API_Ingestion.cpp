@@ -355,7 +355,7 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 
 				for (auto &[keyRoot, valRoot] : variablesRoot.items())
 				{
-					string sKey = JSONUtils::toString(keyRoot);
+					string sKey = JSONUtils::toString(json(keyRoot));
 					if (sKey.length() > 2)
 						sKey = sKey.substr(1, sKey.length() - 2);
 

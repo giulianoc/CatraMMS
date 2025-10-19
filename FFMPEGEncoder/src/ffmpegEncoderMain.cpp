@@ -3,6 +3,7 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include <csignal>
+#include <iostream>
 
 #include "CurlWrapper.h"
 #include "FFMPEGEncoder.h"

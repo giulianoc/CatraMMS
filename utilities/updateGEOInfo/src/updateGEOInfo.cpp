@@ -3,6 +3,7 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include <fstream>
+#include <iostream>
 
 json loadConfigurationFile(const char *configurationPathName);
 

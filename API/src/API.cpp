@@ -484,8 +484,7 @@ API::~API() = default;
 void API::manageRequestAndResponse(
 	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestURI, string requestMethod,
 	unordered_map<string, string> queryParameters, bool authorizationPresent, string userName, string password, unsigned long contentLength,
-	string requestBody, unordered_map<string, string> &requestDetails
-)
+	string requestBody, unordered_map<string, string> &requestDetails)
 {
 
 	int64_t userKey;

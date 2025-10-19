@@ -694,34 +694,25 @@ string MMSEngineDBFacade::createCode(
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
 
-			try
-			{
-				string sqlStatement = std::format(
-					"insert into MMS_Code (code, workspaceKey, userKey, userEmail, "
-					"type, permissions, creationDate) values ("
-					"{}, {}, {}, {}, {}, {}, NOW() at time zone 'utc')",
-					trans.transaction->quote(code), workspaceKey, userKey == -1 ? "null" : to_string(userKey),
-					userEmail == "" ? "null" : trans.transaction->quote(userEmail), trans.transaction->quote(toString(codeType)),
-					trans.transaction->quote(permissions)
-				);
-				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				trans.transaction->exec0(sqlStatement);
-				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-				SQLQUERYLOG(
-					"default", elapsed,
-					"SQL statement"
-					", sqlStatement: @{}@"
-					", getConnectionId: @{}@"
-					", elapsed (millisecs): @{}@",
-					sqlStatement, trans.connection->getConnectionId(), elapsed
-				);
-			}
-			catch (sql::SQLException &se)
-			{
-				string exceptionMessage(se.what());
-
-				throw se;
-			}
+			string sqlStatement = std::format(
+				"insert into MMS_Code (code, workspaceKey, userKey, userEmail, "
+				"type, permissions, creationDate) values ("
+				"{}, {}, {}, {}, {}, {}, NOW() at time zone 'utc')",
+				trans.transaction->quote(code), workspaceKey, userKey == -1 ? "null" : to_string(userKey),
+				userEmail == "" ? "null" : trans.transaction->quote(userEmail), trans.transaction->quote(toString(codeType)),
+				trans.transaction->quote(permissions)
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
 		}
 	}
 	catch (exception const &e)

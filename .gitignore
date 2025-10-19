@@ -34,6 +34,7 @@ utilities/updateGEOInfo/src/updateGEOInfo
 Release
 
 .cache
+.idea
 
 Makefile
 *.dylib

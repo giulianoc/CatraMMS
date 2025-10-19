@@ -1,4 +1,5 @@
 
+#include <iostream>
 #include <csignal>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
@@ -325,13 +326,6 @@ int main(int argc, char **argv)
 		}
 
 		CurlWrapper::globalTerminate();
-	}
-	catch (sql::SQLException &se)
-	{
-		cerr << __FILEREF__ + "main failed. SQL exception" + ", se.what(): " + se.what();
-
-		// throw se;
-		return 1;
 	}
 	catch (runtime_error &e)
 	{

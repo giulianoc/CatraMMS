@@ -297,10 +297,10 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					json mmsDataRoot = userDataRoot[field];
 
 					field = "utcChunkStartTime";
-					int64_t currentUtcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+					time_t currentUtcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
 
 					field = "utcChunkEndTime";
-					int64_t currentUtcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+					time_t currentUtcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
 
 					string currentChunkStartTime;
 					string currentChunkEndTime;
@@ -1043,7 +1043,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						// char strDateTime[64];
 						tm tmDateTime;
 
-						int64_t currentUtcChunkStartTime = currentUtcChunkStartTimeInMilliSecs / 1000;
+						time_t currentUtcChunkStartTime = currentUtcChunkStartTimeInMilliSecs / 1000;
 						localtime_r(&currentUtcChunkStartTime, &tmDateTime);
 						/*
 						sprintf(
@@ -1057,7 +1057,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, (int)(currentUtcChunkStartTimeInMilliSecs % 1000)
 						);
 
-						int64_t currentUtcChunkEndTime = currentUtcChunkEndTimeInMilliSecs / 1000;
+						time_t currentUtcChunkEndTime = currentUtcChunkEndTimeInMilliSecs / 1000;
 						localtime_r(&currentUtcChunkEndTime, &tmDateTime);
 						/*
 						sprintf(
@@ -1091,7 +1091,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							// char strDateTime[64];
 							tm tmDateTime;
 
-							int64_t utcPreviousUtcChunkEndTime = utcPreviousUtcChunkEndTimeInMilliSecs / 1000;
+							time_t utcPreviousUtcChunkEndTime = utcPreviousUtcChunkEndTimeInMilliSecs / 1000;
 							localtime_r(&utcPreviousUtcChunkEndTime, &tmDateTime);
 
 							/*

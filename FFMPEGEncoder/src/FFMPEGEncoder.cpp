@@ -1336,7 +1336,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			", encodingCompleted: {}"
 			", responseBody: {}"
 			", @MMS statistics@ - duration encodingStatus (secs): @{}@",
-			ingestionJobKey, encodingJobKey, encodingFound, liveProxyFound, liveRecordingFound, encodingCompleted, JSONUtils::toString(responseBody),
+			ingestionJobKey, encodingJobKey, encodingFound, liveProxyFound, liveRecordingFound, encodingCompleted, JSONUtils::toString(json(responseBody)),
 			to_string(chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count())
 		);
 

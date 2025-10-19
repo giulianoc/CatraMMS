@@ -36,6 +36,10 @@
 
 // json loadConfigurationFile(string configurationPathName);
 
+#ifdef __APPLE__
+	extern char **environ;
+#endif
+
 chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
 void signalHandler(int signal)
 {

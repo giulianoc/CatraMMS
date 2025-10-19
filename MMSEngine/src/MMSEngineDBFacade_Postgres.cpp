@@ -220,7 +220,7 @@ void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigura
 		{
 			for (auto &[keyRoot, valRoot] : maxQueryElapsedRoot.items())
 			{
-				string queryLabel = JSONUtils::asString(keyRoot, "", "");
+				string queryLabel = JSONUtils::asString(json(keyRoot), "", "");
 				long maxQueryElapsed = JSONUtils::asInt(valRoot, "", 100);
 				_maxQueryElapsed.insert(make_pair(queryLabel, maxQueryElapsed));
 			}
