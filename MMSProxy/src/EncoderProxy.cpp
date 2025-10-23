@@ -1668,9 +1668,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					int64_t updatedPushEncoderKey = -1;
 					string updatedUrl;
 					{
-						json j = nullptr;
-						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", j);
-						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", j);
+						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
+						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", json(nullptr));
 						/*
 						if (encodersDetailsRoot == nullptr)
 						{
@@ -1766,9 +1765,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					else // if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType ==
 						 // MMSEngineDBFacade::EncodingType::LiveRecorder)
 					{
-						json j = nullptr;
-						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", j);
-						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", j);
+						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
+						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", json(nullptr));
 						encodersPool = JSONUtils::asString(encodersDetailsRoot, "encodersPoolLabel", string());
 					}
 

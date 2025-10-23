@@ -1303,7 +1303,7 @@ class MMSEngineDBFacade
 #endif
 
 	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-	checkAPIKey(string apiKey, bool fromMaster);
+	checkAPIKey(const string &apiKey, bool fromMaster);
 
 	json login(string eMailAddress, string password);
 
@@ -2525,7 +2525,7 @@ class MMSEngineDBFacade
 #ifdef __POSTGRES__
 	json getStreamList(
 		PostgresConnTrans &trans, int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label, bool labelLike, string url,
-		string sourceType, string type, string name, string region, string country, string labelOrder
+		string sourceType, string type, string name, string region, string country, string labelOrder, bool fromMaster = false
 	);
 #else
 	json getStreamList(

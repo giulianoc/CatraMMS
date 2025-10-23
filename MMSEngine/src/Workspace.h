@@ -22,6 +22,7 @@ struct Workspace
 	int _maxEncodingPriority;
 	string _notes;
 	json _externalDeliveriesRoot = nullptr;
+	json _preferences = nullptr;
 
 	unsigned long _maxStorageInGB;
 	unsigned long _currentCostForStorage;

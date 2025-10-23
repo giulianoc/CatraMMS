@@ -7,6 +7,7 @@
 #include "spdlog/spdlog.h"
 #include <chrono>
 #include <random>
+#include <tuple>
 
 shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 {
@@ -15,7 +16,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 	{
 		string sqlStatement = std::format(
 			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, w.notes, w.externalDeliveries, "
-			"wc.maxStorageInGB, wc.currentCostForStorage, "
+			"w.preferences, wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
 			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
@@ -52,6 +53,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		workspace->_directoryName = res[0]["directoryName"].as<string>();
 		workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
 		workspace->_notes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
+		workspace->_preferences = JSONUtils::toJson(res[0]["preferences"].as<string>(nullptr));
 		try
 		{
 			workspace->_externalDeliveriesRoot =
@@ -110,97 +112,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		throw;
 	}
 }
-
-/*
-shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(string workspaceName)
-{
-	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
-	try
-	{
-		string sqlStatement = std::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, w.notes, "
-			"wc.maxStorageInGB, wc.currentCostForStorage, "
-			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
-			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
-			"wc.dedicatedEncoder_power_3, wc.currentCostForDedicatedEncoder_power_3, "
-			"wc.CDN_type_1, wc.currentCostForCDN_type_1, "
-			"wc.support_type_1, wc.currentCostForSupport_type_1 "
-			"from MMS_Workspace w, MMS_WorkspaceCost wc "
-			"where w.workspaceKey = wc.workspaceKey and w.name = {}",
-			trans.transaction->quote(workspaceName)
-		);
-		chrono::system_clock::time_point startSql = chrono::system_clock::now();
-		result res = trans.transaction->exec(sqlStatement);
-		long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-		SQLQUERYLOG(
-			"default", elapsed,
-			"SQL statement"
-			", sqlStatement: @{}@"
-			", getConnectionId: @{}@"
-			", elapsed (millisecs): @{}@",
-			sqlStatement, trans.connection->getConnectionId(), elapsed
-		);
-
-		shared_ptr<Workspace> workspace = make_shared<Workspace>();
-
-		if (!empty(res))
-		{
-			workspace->_workspaceKey = res[0]["workspaceKey"].as<int64_t>();
-			workspace->_name = res[0]["name"].as<string>();
-			workspace->_directoryName = res[0]["directoryName"].as<string>();
-			workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
-			workspace->_notes = res[0]["notes"].as<string>();
-
-			workspace->_maxStorageInGB = res[0]["maxStorageInGB"].as<int>();
-			workspace->_currentCostForStorage = res[0]["currentCostForStorage"].as<int>();
-			workspace->_dedicatedEncoder_power_1 = res[0]["dedicatedEncoder_power_1"].as<int>();
-			workspace->_currentCostForDedicatedEncoder_power_1 = res[0]["currentCostForDedicatedEncoder_power_1"].as<int>();
-			workspace->_dedicatedEncoder_power_2 = res[0]["dedicatedEncoder_power_2"].as<int>();
-			workspace->_currentCostForDedicatedEncoder_power_2 = res[0]["currentCostForDedicatedEncoder_power_2"].as<int>();
-			workspace->_dedicatedEncoder_power_3 = res[0]["dedicatedEncoder_power_3"].as<int>();
-			workspace->_currentCostForDedicatedEncoder_power_3 = res[0]["currentCostForDedicatedEncoder_power_3"].as<int>();
-			workspace->_CDN_type_1 = res[0]["CDN_type_1"].as<int>();
-			workspace->_currentCostForCDN_type_1 = res[0]["currentCostForCDN_type_1"].as<int>();
-			workspace->_support_type_1 = res[0]["support_type_1"].as<bool>();
-			workspace->_currentCostForSupport_type_1 = res[0]["currentCostForSupport_type_1"].as<int>();
-
-			// getTerritories(workspace);
-		}
-		else
-		{
-			string errorMessage = __FILEREF__ + "select failed" + ", workspaceName: " + workspaceName + ", sqlStatement: " + sqlStatement;
-			_logger->error(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		return workspace;
-	}
-	catch (exception const &e)
-	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
-		if (se != nullptr)
-			SPDLOG_ERROR(
-				"query failed"
-				", query: {}"
-				", exceptionMessage: {}"
-				", conn: {}",
-				se->query(), se->what(), trans.connection->getConnectionId()
-			);
-		else
-			SPDLOG_ERROR(
-				"query failed"
-				", exception: {}"
-				", conn: {}",
-				e.what(), trans.connection->getConnectionId()
-			);
-
-		trans.setAbort();
-
-		throw;
-	}
-}
-*/
 
 tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 	string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName, string notes,
@@ -1954,7 +1865,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 }
 
 tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-MMSEngineDBFacade::checkAPIKey(string apiKey, bool fromMaster)
+MMSEngineDBFacade::checkAPIKey(const string& apiKey, bool fromMaster)
 {
 	shared_ptr<Workspace> workspace;
 	int64_t userKey;
@@ -1998,7 +1909,7 @@ MMSEngineDBFacade::checkAPIKey(string apiKey, bool fromMaster)
 			{
 				userKey = res[0]["userKey"].as<int64_t>();
 				workspaceKey = res[0]["workspaceKey"].as<int64_t>();
-				string permissions = res[0]["permissions"].as<string>();
+				auto permissions = res[0]["permissions"].as<string>();
 				permissionsRoot = JSONUtils::toJson(permissions);
 			}
 			else

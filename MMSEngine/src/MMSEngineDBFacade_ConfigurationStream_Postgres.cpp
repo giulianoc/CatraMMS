@@ -684,7 +684,9 @@ json MMSEngineDBFacade::getStreamList(
 json MMSEngineDBFacade::getStreamList(
 	PostgresConnTrans &trans, int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label, bool labelLike, string url,
 	string sourceType, string type, string name, string region, string country,
-	string labelOrder // "" or "asc" or "desc"
+	string labelOrder, // "" or "asc" or "desc"
+	bool fromMaster
+
 )
 {
 	json streamListRoot;
@@ -735,7 +737,7 @@ json MMSEngineDBFacade::getStreamList(
 				requestParametersRoot[field] = rows;
 			}
 
-			if (label != "")
+			if (!label.empty())
 			{
 				field = "label";
 				requestParametersRoot[field] = label;
@@ -746,43 +748,43 @@ json MMSEngineDBFacade::getStreamList(
 				requestParametersRoot[field] = labelLike;
 			}
 
-			if (url != "")
+			if (!url.empty())
 			{
 				field = "url";
 				requestParametersRoot[field] = url;
 			}
 
-			if (sourceType != "")
+			if (!sourceType.empty())
 			{
 				field = "sourceType";
 				requestParametersRoot[field] = sourceType;
 			}
 
-			if (type != "")
+			if (!type.empty())
 			{
 				field = "type";
 				requestParametersRoot[field] = type;
 			}
 
-			if (name != "")
+			if (!name.empty())
 			{
 				field = "name";
 				requestParametersRoot[field] = name;
 			}
 
-			if (region != "")
+			if (!region.empty())
 			{
 				field = "region";
 				requestParametersRoot[field] = region;
 			}
 
-			if (country != "")
+			if (!country.empty())
 			{
 				field = "country";
 				requestParametersRoot[field] = country;
 			}
 
-			if (labelOrder != "")
+			if (!labelOrder.empty())
 			{
 				field = "labelOrder";
 				requestParametersRoot[field] = labelOrder;
@@ -795,22 +797,22 @@ json MMSEngineDBFacade::getStreamList(
 		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (liveURLKey != -1)
 			sqlWhere += std::format("and confKey = {} ", liveURLKey);
-		if (label != "")
+		if (!label.empty())
 		{
 			if (labelLike)
 				sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
 			else
 				sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.transaction->quote(label));
 		}
-		if (url != "")
+		if (!url.empty())
 			sqlWhere += std::format("and url like {} ", trans.transaction->quote("%" + url + "%"));
-		if (sourceType != "")
+		if (!sourceType.empty())
 			sqlWhere += std::format("and sourceType = {} ", trans.transaction->quote(sourceType));
-		if (type != "")
+		if (!type.empty())
 			sqlWhere += std::format("and type = {} ", trans.transaction->quote(type));
-		if (name != "")
+		if (!name.empty())
 			sqlWhere += std::format("and LOWER(name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
-		if (region != "")
+		if (!region.empty())
 			sqlWhere += std::format("and region like {} ", trans.transaction->quote("%" + region + "%"));
 		if (country != "")
 			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.transaction->quote("%" + country + "%"));
@@ -835,7 +837,7 @@ json MMSEngineDBFacade::getStreamList(
 		json streamsRoot = json::array();
 		{
 			string orderByCondition;
-			if (labelOrder != "")
+			if (!labelOrder.empty())
 				orderByCondition = std::format("order by label {}", labelOrder);
 
 			string sqlStatement = std::format(
@@ -859,14 +861,14 @@ json MMSEngineDBFacade::getStreamList(
 			{
 				json streamRoot;
 
-				int64_t confKey = row["confKey"].as<int64_t>();
+				auto confKey = row["confKey"].as<int64_t>();
 				field = "confKey";
 				streamRoot[field] = confKey;
 
 				field = "label";
 				streamRoot[field] = row["label"].as<string>();
 
-				string sourceType = row["sourceType"].as<string>();
+				auto sourceType = row["sourceType"].as<string>();
 				field = "sourceType";
 				streamRoot[field] = sourceType;
 
@@ -875,7 +877,7 @@ json MMSEngineDBFacade::getStreamList(
 					streamRoot[field] = nullptr;
 				else
 				{
-					int64_t encodersPoolKey = row["encodersPoolKey"].as<int64_t>();
+					auto encodersPoolKey = row["encodersPoolKey"].as<int64_t>();
 					streamRoot[field] = encodersPoolKey;
 
 					if (encodersPoolKey >= 0)
@@ -937,7 +939,7 @@ json MMSEngineDBFacade::getStreamList(
 					}
 					else
 					{
-						int64_t pushEncoderKey = row["pushEncoderKey"].as<int64_t>();
+						auto pushEncoderKey = row["pushEncoderKey"].as<int64_t>();
 						streamRoot[field] = pushEncoderKey;
 
 						if (pushEncoderKey >= 0)
@@ -949,7 +951,7 @@ json MMSEngineDBFacade::getStreamList(
 
 								chrono::milliseconds sqlDuration(0);
 								auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
-									encoder_LabelPublicServerNameInternalServerName(pushEncoderKey, &sqlDuration);
+									encoder_LabelPublicServerNameInternalServerName(pushEncoderKey, fromMaster, &sqlDuration);
 								internalSqlDuration += sqlDuration;
 
 								field = "pushEncoderLabel";

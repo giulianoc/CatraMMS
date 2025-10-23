@@ -5756,10 +5756,22 @@ void API::changeLiveProxyPlaylist(
 			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi
 			// precedenti a 'now - X days' (just a retention)
 			{
-				int32_t playlistItemsRetentionInDays = 3;
+				int32_t playlistItemsRetentionInHours = 3 * 24;
+				if (workspace->_preferences.contains("api") && workspace->_preferences["api"].is_object())
+				{
+					const json &apiRoot = workspace->_preferences["api"];
+					if (apiRoot.contains("liveProxy") && apiRoot["liveProxy"].is_object())
+					{
+						const json &liveProxyRoot = apiRoot["liveProxy"];
+						if (liveProxyRoot.contains("playlist") && liveProxyRoot["playlist"].is_object())
+						{
+							const json &playlistRoot = liveProxyRoot["playlist"];
+							playlistItemsRetentionInHours = JSONUtils::asInt(playlistRoot, "retentionInHours", playlistItemsRetentionInHours);
+						}
+					}
+				}
 				chrono::system_clock::time_point now = chrono::system_clock::now();
-				chrono::duration<int, ratio<60 * 60 * 24>> retention_day(playlistItemsRetentionInDays);
-				chrono::system_clock::time_point retention = now - retention_day;
+				chrono::system_clock::time_point retention = now - chrono::hours(playlistItemsRetentionInHours);
 
 				time_t utcRetention = chrono::system_clock::to_time_t(retention);
 
