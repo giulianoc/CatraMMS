@@ -2257,7 +2257,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	*/
 }
 
-void FFMPEGEncoder::checkAuthorization(string sThreadId, string userName, string password)
+void FFMPEGEncoder::checkAuthorization(const string& sThreadId, const string& userName, const string& password)
 {
 	string userKey = userName;
 	string apiKey = password;

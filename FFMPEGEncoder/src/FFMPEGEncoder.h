@@ -61,7 +61,7 @@ class FFMPEGEncoder : public FastCGIAPI
 		const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
 	) override;
 
-	void checkAuthorization(string sThreadId, string userName, string password) override;
+	void checkAuthorization(const string& sThreadId, const string& userName, const string& password) override;
 
 	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
 

@@ -2756,7 +2756,7 @@ void API::manageRequestAndResponse(
 	}
 }
 
-void API::checkAuthorization(string sThreadId, string userName, string password)
+void API::checkAuthorization(const string& sThreadId, const string& userName, const string& password)
 {
 	string userKey = userName;
 	string apiKey = password;

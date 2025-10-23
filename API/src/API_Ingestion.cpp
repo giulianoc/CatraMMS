@@ -4992,8 +4992,9 @@ void API::ingestionJobSwitchToEncoder(
 }
 
 void API::changeLiveProxyPlaylist(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string& sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request,
+	const shared_ptr<Workspace>& workspace,
+	const unordered_map<string, string>& queryParameters, const string& requestBody
 )
 {
 	string api = "changeLiveProxyPlaylist";
@@ -5754,8 +5755,8 @@ void API::changeLiveProxyPlaylist(
 			}
 			// 2023-02-26: ora che il vettore è ordinato, elimino gli elementi
 			// precedenti a 'now - X days' (just a retention)
-			int32_t playlistItemsRetentionInDays = 8;
 			{
+				int32_t playlistItemsRetentionInDays = 3;
 				chrono::system_clock::time_point now = chrono::system_clock::now();
 				chrono::duration<int, ratio<60 * 60 * 24>> retention_day(playlistItemsRetentionInDays);
 				chrono::system_clock::time_point retention = now - retention_day;
@@ -5765,17 +5766,25 @@ void API::changeLiveProxyPlaylist(
 				int currentPlaylistIndex = -1;
 				for (int newReceivedPlaylistIndex = 0; newReceivedPlaylistIndex < vNewReceivedPlaylist.size(); newReceivedPlaylistIndex++)
 				{
-					json newReceivedPlaylistItemRoot = vNewReceivedPlaylist[newReceivedPlaylistIndex];
+					const json& newReceivedPlaylistItemRoot = vNewReceivedPlaylist[newReceivedPlaylistIndex];
 
 					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleStart", -1);
 					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleEnd", -1);
 
+					if (newReceivedPlaylistIndex != 0 && utcProxyPeriodStart >= utcRetention)
+					{
+						currentPlaylistIndex = newReceivedPlaylistIndex - 1;
+
+						break;
+					}
+					/*
 					if (utcProxyPeriodStart <= utcRetention && utcRetention < utcProxyPeriodEnd)
 					{
 						currentPlaylistIndex = newReceivedPlaylistIndex;
 
 						break;
 					}
+					*/
 				}
 				int leavePastEntriesNumber = 1;
 				if (currentPlaylistIndex - leavePastEntriesNumber > 0)

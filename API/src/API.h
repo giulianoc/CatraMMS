@@ -48,7 +48,7 @@ class API : public FastCGIAPI
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
 		shared_ptr<atomic<uint64_t>> avgBandwidthUsage);
 
-	~API();
+	~API() override;
 
 	void manageRequestAndResponse(
 		const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
@@ -56,7 +56,7 @@ class API : public FastCGIAPI
 		const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
 	) override;
 
-	void checkAuthorization(string sThreadId, string userName, string password) override;
+	void checkAuthorization(const string& sThreadId, const string& userName, const string& password) override;
 
 	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
 
@@ -278,8 +278,8 @@ class API : public FastCGIAPI
 	);
 
 	void changeLiveProxyPlaylist(
-		string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-		unordered_map<string, string> queryParameters, string requestBody
+		const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request,
+		const shared_ptr<Workspace> &workspace, const unordered_map<string, string> &queryParameters, const string &requestBody
 	);
 
 	void changeLiveProxyOverlayText(

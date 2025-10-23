@@ -1467,7 +1467,7 @@ install-mms-nginx-package()
 		echo "creeremo un certificato il cui dominio sarà validato tramite un record TXT che dovremo configurare nel DNS."
 		echo -n "Scrivi il nome del server (i.e.: srv-1.cibortvlive.com)? "
 		read servername
-		echo "Dopo aver fatto la configurazione DNS aspettare qualche minuto che si sia propagato"
+		echo "Dopo aver fatto la configurazione DNS (https://www.cloudns.net/profile) aspettare qualche minuto che si sia propagato"
 		echo "Se vuoi verificare che il record sia visibile, il comando è:"
 		echo "dig TXT _acme-challenge.$servername +short oppure tramite sito https://dnschecker.org"
 		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
