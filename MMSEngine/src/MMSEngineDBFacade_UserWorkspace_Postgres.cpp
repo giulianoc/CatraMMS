@@ -57,7 +57,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		{
 			workspace->_preferences =
 				res[0]["preferences"].is_null() ? nullptr
-				: JSONUtils::toJson(res[0]["preferences"].as<string>(nullptr));
+				: JSONUtils::toJson(res[0]["preferences"].as<string>());
 		}
 		catch (exception& e)
 		{
@@ -74,7 +74,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		{
 			workspace->_externalDeliveriesRoot =
 				res[0]["externalDeliveries"].is_null() ? nullptr
-				: JSONUtils::toJson(res[0]["externalDeliveries"].as<string>(nullptr));
+				: JSONUtils::toJson(res[0]["externalDeliveries"].as<string>());
 		}
 		catch (exception &e)
 		{
