@@ -53,18 +53,35 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		workspace->_directoryName = res[0]["directoryName"].as<string>();
 		workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
 		workspace->_notes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
-		// workspace->_preferences = JSONUtils::toJson(res[0]["preferences"].as<string>(nullptr));
+		try
+		{
+			workspace->_preferences =
+				res[0]["preferences"].is_null() ? nullptr
+				: JSONUtils::toJson(res[0]["preferences"].as<string>(nullptr));
+		}
+		catch (exception& e)
+		{
+			workspace->_preferences = nullptr;
+
+			SPDLOG_ERROR(
+				"JSONUtils::toJson preferences failed"
+				", json: {}"
+				", exception: {}",
+				res[0]["preferences"].as<string>(), e.what()
+			);
+		}
 		try
 		{
 			workspace->_externalDeliveriesRoot =
-				res[0]["externalDeliveries"].is_null() ? nullptr : JSONUtils::toJson(res[0]["externalDeliveries"].as<string>());
+				res[0]["externalDeliveries"].is_null() ? nullptr
+				: JSONUtils::toJson(res[0]["externalDeliveries"].as<string>(nullptr));
 		}
 		catch (exception &e)
 		{
 			workspace->_externalDeliveriesRoot = nullptr;
 
 			SPDLOG_ERROR(
-				"JSONUtils::toJson failed"
+				"JSONUtils::toJson externalDeliveriesRoot failed"
 				", json: {}"
 				", exception: {}",
 				res[0]["externalDeliveries"].as<string>(), e.what()

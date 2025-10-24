@@ -5757,7 +5757,8 @@ void API::changeLiveProxyPlaylist(
 			// precedenti a 'now - X days' (just a retention)
 			{
 				int32_t playlistItemsRetentionInHours = 3 * 24;
-				if (workspace->_preferences.contains("api") && workspace->_preferences["api"].is_object())
+				if (workspace->_preferences != nullptr
+					&& workspace->_preferences.contains("api") && workspace->_preferences["api"].is_object())
 				{
 					const json &apiRoot = workspace->_preferences["api"];
 					if (apiRoot.contains("liveProxy") && apiRoot["liveProxy"].is_object())
