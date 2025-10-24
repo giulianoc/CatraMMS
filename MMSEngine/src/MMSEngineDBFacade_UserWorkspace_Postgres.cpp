@@ -53,7 +53,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		workspace->_directoryName = res[0]["directoryName"].as<string>();
 		workspace->_maxEncodingPriority = static_cast<int>(toEncodingPriority(res[0]["maxEncodingPriority"].as<string>()));
 		workspace->_notes = res[0]["notes"].is_null() ? "" : res[0]["notes"].as<string>();
-		workspace->_preferences = JSONUtils::toJson(res[0]["preferences"].as<string>(nullptr));
+		// workspace->_preferences = JSONUtils::toJson(res[0]["preferences"].as<string>(nullptr));
 		try
 		{
 			workspace->_externalDeliveriesRoot =
