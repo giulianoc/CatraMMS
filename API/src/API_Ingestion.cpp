@@ -5781,7 +5781,7 @@ void API::changeLiveProxyPlaylist(
 					const json& newReceivedPlaylistItemRoot = vNewReceivedPlaylist[newReceivedPlaylistIndex];
 
 					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleStart", -1);
-					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleEnd", -1);
+					// int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleEnd", -1);
 
 					if (newReceivedPlaylistIndex != 0 && utcProxyPeriodStart >= utcRetention)
 					{
@@ -5804,11 +5804,12 @@ void API::changeLiveProxyPlaylist(
 					SPDLOG_INFO(
 						"Erase playlist items in the past: {} items"
 						", broadcasterIngestionJobKey: {}"
+						", playlistItemsRetentionInHours: {}"
 						", currentPlaylistIndex: {}"
 						", leavePastEntriesNumber: {}"
 						", vNewReceivedPlaylist.size: {}",
-						currentPlaylistIndex - leavePastEntriesNumber, broadcasterIngestionJobKey, currentPlaylistIndex, leavePastEntriesNumber,
-						vNewReceivedPlaylist.size()
+						currentPlaylistIndex - leavePastEntriesNumber, broadcasterIngestionJobKey, playlistItemsRetentionInHours,
+						currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
 					);
 
 					vNewReceivedPlaylist.erase(
@@ -5820,10 +5821,12 @@ void API::changeLiveProxyPlaylist(
 					SPDLOG_INFO(
 						"Erase playlist items in the past: nothing"
 						", broadcasterIngestionJobKey: {}"
+						", playlistItemsRetentionInHours: {}"
 						", currentPlaylistIndex: {}"
 						", leavePastEntriesNumber: {}"
 						", vNewReceivedPlaylist.size: {}",
-						broadcasterIngestionJobKey, currentPlaylistIndex, leavePastEntriesNumber, vNewReceivedPlaylist.size()
+						broadcasterIngestionJobKey, playlistItemsRetentionInHours, currentPlaylistIndex, leavePastEntriesNumber,
+						vNewReceivedPlaylist.size()
 					);
 				}
 			}
