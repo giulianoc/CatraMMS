@@ -7,7 +7,7 @@
 
 	#1. POST http://mms-binary.restream.ovh/catramms/v1/binary/1991788 goes through:
 	#	#2, #3, #4, #5, #7 (fcgi: /catramms/binary/authorization --> add monitoring with progressId...)
-	#2. once the upload is finished, /catramms/uploadedBinary?version=v1&method=uploadedBinary&ingestionJobKey=1989409&X-Progress-ID=1601367441.975 is called, it goes through:
+	#2. once the upload is finished, /catramms/uploadedBinary?x-api-version=v1&x-api-method=uploadedBinary&ingestionJobKey=1989409&X-Progress-ID=1601367441.975 is called, it goes through:
 	#	#1, #7
 	#Nginx carica i file uploadati temporaneamente in (client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository).
 	#Il metodo uploadedBinary si preoccupa di gestire il file caricato da nginx
@@ -23,11 +23,11 @@
 
 		if ($request_method = DELETE) {
 			#moved from API
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=deleteWorkspace last;
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?x-api-version=$1&x-api-method=status last;
 		}
 		if ($request_method = POST) {
 			#this request will receive the URL parameters
@@ -43,7 +43,7 @@
 
 		if ($request_method = POST) {
 			set $XProgressID "$msec";
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?version=$1&method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/binary/([0-9]+)/?$ /catramms/binary/toBeAuthorized?x-api-version=$1&x-api-method=uploadedBinary&ingestionJobKey=$2&X-Progress-ID=$XProgressID last;
 		}
 	}
 
@@ -120,7 +120,7 @@
 		allow 127.0.0.1;
 		deny all;
 		if ($request_method = GET) {
-			rewrite ^/catramms/binary/authorization/?$ /api?method=binaryAuthorization last;
+			rewrite ^/catramms/binary/authorization/?$ /api?x-api-method=binaryAuthorization last;
 		}
 	}
 

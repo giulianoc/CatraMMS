@@ -5,7 +5,7 @@
 	#used when from mms-gui it is 'Add-Content' using the Push method
 	client_max_body_size 10G;
 
-	root /opt/catramms/tomcat/webapps;
+	root /opt/catramms/tomee/webapps;
 
 	#proxy_cache one;
 
@@ -17,22 +17,22 @@
 	}
 
 	#scenario client url: https://mms-gui.catramms-cloud.com/catramms
-	#	in questo caso tomcat ritornerebbe una redirect a /catramms/
+	#	in questo caso tomee ritornerebbe una redirect a /catramms/
 	#	nginx quindi ritornerebbe al client la redirect:
 	#		http://mms-gui.catramms-cloud.com:8089/catramms/
 	#	che ovviamente non funziona (sia per http che per la porta 8089)
 	#	Questo perchè il load balancer gira a nginx l'url usando http e 8089
 	#	Quindi anche in questo caso eseguo una redirect senza mandare
-	#	la richiesta a tomcat
+	#	la richiesta a tomee
 	#match qualunque URL o URI che inizia con /catramms
 	location /catramms {
 		rewrite .* https://$host/catramms/ redirect;
 	}
 
 	#scenario client url: https://mms-gui.catramms-cloud.com/catramms/....
-	#	questo tipo di url puo essere girata a tomcat perchè, anche il caso
+	#	questo tipo di url puo essere girata a tomee perchè, anche il caso
 	#		https://mms-gui.catramms-cloud.com/catramms/
-	#	viene gestito da tomcat con il file index.html
+	#	viene gestito da tomee con il file index.html
 	#match qualunque URL o URI che inizia con /catramms/
 	location /catramms/ {
 		#Uso una coda "minima" per gestire le richieste contemporanee.

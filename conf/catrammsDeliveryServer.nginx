@@ -25,9 +25,9 @@
 
 		if ($request_method = GET) {
 			#live
-			rewrite ^/MMSLive /api?method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;                 
+			rewrite ^/MMSLive /api?x-api-method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;
 			#vod
-			rewrite ^/MMS_ /api?method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;                 
+			rewrite ^/MMS_ /api?x-api-method=manageHTTPStreamingManifest_authorizationThroughParameter&cookie=$cookie_mmsInfo last;
 		}
 	}
 
@@ -91,7 +91,7 @@
 		allow 127.0.0.1;
 		deny all;
 		if ($request_method = GET) {
-			rewrite ^/catramms/delivery/authorizationThroughParameter/?$ /api?method=deliveryAuthorizationThroughParameter last;
+			rewrite ^/catramms/delivery/authorizationThroughParameter/?$ /api?x-api-method=deliveryAuthorizationThroughParameter last;
 		}
 	}
 

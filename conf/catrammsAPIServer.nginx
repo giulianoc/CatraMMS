@@ -26,388 +26,388 @@
 		limit_req zone=mmsAPILimit burst=20;
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?version=$1&method=status last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/avgBandwidthUsage/?$ /api?version=$1&method=avgBandwidthUsage last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/status/?$ /api?x-api-version=$1&x-api-method=status last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/avgBandwidthUsage/?$ /api?x-api-version=$1&x-api-method=avgBandwidthUsage last;
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/support/?$ /api?version=$1&method=mmsSupport last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/support/?$ /api?x-api-version=$1&x-api-method=mmsSupport last;
 		}
 
 		#login
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/login/?$ /api?version=$1&method=login last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/login/?$ /api?x-api-version=$1&x-api-method=login last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?version=$1&method=registerUser last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?x-api-version=$1&x-api-method=registerUser last;
 		}
 		if ($request_method = GET) {
 			#2022-01-03: it has to be GET because this link is sent also via email
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=confirmRegistration&userKey=$2&confirmationeCode=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/password/reset/?$ /api?version=$1&method=createTokenToResetPassword last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/password/reset/?$ /api?x-api-version=$1&x-api-method=createTokenToResetPassword last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/password/reset/?$ /api?version=$1&method=resetPassword last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/password/reset/?$ /api?x-api-version=$1&x-api-method=resetPassword last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?version=$1&method=updateUser last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/user/?$ /api?x-api-version=$1&x-api-method=updateUser last;
 		}
 
 #invoice
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/invoice/?$ /api?version=$1&method=addInvoice last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/invoice/?$ /api?x-api-version=$1&x-api-method=addInvoice last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/invoice/?$ /api?version=$1&method=invoiceList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/invoice/?$ /api?x-api-version=$1&x-api-method=invoiceList last;
 		}
 
 #Workspace
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=createWorkspace last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=addAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=createWorkspace last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=addAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
 		}
 		if ($request_method = PUT) {
 			#Source User Key is retrieved from the request authorization
 			#Dest User details are in the body
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/share/?$ /api?version=$1&method=shareWorkspace last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/default/([0-9]+)/?$ /api?version=$1&method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=updateWorkspace last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/share/?$ /api?x-api-version=$1&x-api-method=shareWorkspace last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/default/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=setWorkspaceAsDefault&workspaceKeyToBeSetAsDefault=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=updateWorkspace last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/share/?$ /api?version=$1&method=unshareWorkspace last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/share/?$ /api?x-api-version=$1&x-api-method=unshareWorkspace last;
 			#moved to binary API
-			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=deleteWorkspace last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=removeAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=deleteWorkspace last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/usage/?$ /api?version=$1&method=workspaceUsage last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?version=$1&method=workspaceList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/usage/?$ /api?x-api-version=$1&x-api-method=workspaceUsage last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=workspaceList last;
 		}
 
 #Encoders and EncodersPool
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/?([0-9]*)/?$ /api?version=$1&method=encoderList&encoderKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/?([0-9]*)/?$ /api?version=$1&method=encodersPoolList&encodersPoolKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encoderList&encoderKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodersPoolList&encodersPoolKey=$2 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/?$ /api?version=$1&method=addEncoder last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/?$ /api?version=$1&method=addEncodersPool last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/?$ /api?x-api-version=$1&x-api-method=addEncoder last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/?$ /api?x-api-version=$1&x-api-method=addEncodersPool last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/?$ /api?version=$1&method=modifyEncoder&encoderKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/([0-9]+)/?$ /api?version=$1&method=modifyEncodersPool&encodersPoolKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyEncoder&encoderKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyEncodersPool&encodersPoolKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/?$ /api?version=$1&method=removeEncoder&encoderKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/([0-9]+)/?$ /api?version=$1&method=removeEncodersPool&encodersPoolKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeEncoder&encoderKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeEncodersPool&encodersPoolKey=$2 last;
 		}
 
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=saveWorkflowAsLibrary last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/?$ /api?x-api-version=$1&x-api-method=saveWorkflowAsLibrary last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=removeWorkflowAsLibrary&workflowLibraryKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=removeWorkflowAsLibrary&workflowLibraryKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/?$ /api?version=$1&method=workflowsAsLibraryList last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?version=$1&method=workflowAsLibraryContent&workflowLibraryKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/?$ /api?x-api-version=$1&x-api-method=workflowsAsLibraryList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflowAsLibrary/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=workflowAsLibraryContent&workflowLibraryKey=$2 last;
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflow/?([0-9]*)/?$ /api?version=$1&method=ingestionRootsStatus&ingestionRootKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflow/metaDataContent/([0-9]+)/?$ /api?version=$1&method=ingestionRootMetaDataContent&ingestionRootKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/?([0-9]*)/?$ /api?version=$1&method=ingestionJobsStatus&ingestionJobKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingJob/?([0-9]*)/?$ /api?version=$1&method=encodingJobsStatus&encodingJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflow/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=ingestionRootsStatus&ingestionRootKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflow/metaDataContent/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=ingestionRootMetaDataContent&ingestionRootKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=ingestionJobsStatus&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingJob/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingJobsStatus&encodingJobKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]*)/?$ /api?version=$1&method=cancelIngestionJob&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=cancelIngestionJob&ingestionJobKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]*)/?$ /api?version=$1&method=updateIngestionJob&ingestionJobKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]+)/switchToNewEncoder/?$ /api?version=$1&method=ingestionJobSwitchToEncoder&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=updateIngestionJob&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/([0-9]+)/switchToNewEncoder/?$ /api?x-api-version=$1&x-api-method=ingestionJobSwitchToEncoder&ingestionJobKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/liveProxy/playlist/([0-9]*)/?$ /api?version=$1&method=changeLiveProxyPlaylist&ingestionJobKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/liveProxy/overlayText/([0-9]*)/?$ /api?version=$1&method=changeLiveProxyOverlayText&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/liveProxy/playlist/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=changeLiveProxyPlaylist&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/ingestionJob/liveProxy/overlayText/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=changeLiveProxyOverlayText&ingestionJobKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingJob/?([0-9]*)/?$ /api?version=$1&method=encodingJobPriority&encodingJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingJob/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingJobPriority&encodingJobKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingJob/([0-9]*)/?$ /api?version=$1&method=killOrCancelEncodingJob&encodingJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingJob/([0-9]*)/?$ /api?x-api-version=$1&x-api-method=killOrCancelEncodingJob&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflow/?$ /api?version=$1&method=ingestion last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workflow/?$ /api?x-api-version=$1&x-api-method=ingestion last;
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?([0-9]*)/?$ /api?version=$1&method=mediaItemsList&mediaItemKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=mediaItemsList&mediaItemKey=$2 last;
 		}
 		#togliere il metodo POST quando AWS cibortv verrà dismesso (i campi del body sono stati aggiunti alla GET)
 		#if ($request_method = POST) {
-		#	rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?$ /api?version=$1&method=mediaItemsList last;
+		#	rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?$ /api?x-api-version=$1&x-api-method=mediaItemsList last;
 		#}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/?$ /api?version=$1&method=updateMediaItem&mediaItemKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=updatePhysicalPath&mediaItemKey=$2&physicalPathKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateMediaItem&mediaItemKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updatePhysicalPath&mediaItemKey=$2&physicalPathKey=$3 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/tag/?$ /api?version=$1&method=tagsList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/tag/?$ /api?x-api-version=$1&x-api-method=tagsList last;
 		}
 
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/([0-9]+)/?$ /api?version=$1&method=encodingProfilesList&encodingProfileKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/([0-9]+)/?$ /api?version=$1&method=encodingProfilesSetsList&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesList&encodingProfileKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesSetsList&encodingProfilesSetKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSets/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=video&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/video/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=video&encodingProfileKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSets/video/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesSetsList&contentType=video&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/video/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesList&contentType=video&encodingProfileKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSets/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=audio&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/audio/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=audio&encodingProfileKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSets/audio/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesSetsList&contentType=audio&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/audio/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesList&contentType=audio&encodingProfileKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSets/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesSetsList&contentType=image&encodingProfilesSetKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/image/?([0-9]*)/?$ /api?version=$1&method=encodingProfilesList&contentType=image&encodingProfileKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSets/image/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesSetsList&contentType=image&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfiles/image/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=encodingProfilesList&contentType=image&encodingProfileKey=$2 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/video/?$ /api?version=$1&method=addUpdateEncodingProfilesSet&contentType=video last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/video/?$ /api?version=$1&method=addEncodingProfile&contentType=video last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/video/?$ /api?x-api-version=$1&x-api-method=addUpdateEncodingProfilesSet&contentType=video last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/video/?$ /api?x-api-version=$1&x-api-method=addEncodingProfile&contentType=video last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/audio/?$ /api?version=$1&method=addUpdateEncodingProfilesSet&contentType=audio last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/audio/?$ /api?version=$1&method=addEncodingProfile&contentType=audio last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/audio/?$ /api?x-api-version=$1&x-api-method=addUpdateEncodingProfilesSet&contentType=audio last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/audio/?$ /api?x-api-version=$1&x-api-method=addEncodingProfile&contentType=audio last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/image/?$ /api?version=$1&method=addUpdateEncodingProfilesSet&contentType=image last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/image/?$ /api?version=$1&method=addEncodingProfile&contentType=image last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/image/?$ /api?x-api-version=$1&x-api-method=addUpdateEncodingProfilesSet&contentType=image last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/image/?$ /api?x-api-version=$1&x-api-method=addEncodingProfile&contentType=image last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfile&encodingProfileKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/([0-9]+)/?$ /api?version=$1&method=removeEncodingProfilesSet&encodingProfilesSetKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfile/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeEncodingProfile&encodingProfileKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodingProfilesSet/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeEncodingProfilesSet&encodingProfilesSetKey=$2 last;
 		}
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&physicalPathKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryAuthorization&ingestionJobKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryAuthorization&physicalPathKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/live/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryAuthorization&ingestionJobKey=$2 last;
 			#2023-02-01: rimossa perchè deve rientrare nella precedente API
-			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?version=$1&method=createDeliveryCDN77Authorization&streamConfKey=$2 last;
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryCDN77Authorization&streamConfKey=$2 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/bulk/?$ /api?version=$1&method=createBulkOfDeliveryAuthorization last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/bulk/?$ /api?x-api-version=$1&x-api-method=createBulkOfDeliveryAuthorization last;
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/?$ /api?version=$1&method=addYouTubeConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/?$ /api?x-api-version=$1&x-api-method=addYouTubeConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=modifyYouTubeConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyYouTubeConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/([0-9]+)/?$ /api?version=$1&method=removeYouTubeConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeYouTubeConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/?$ /api?version=$1&method=youTubeConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/youtube/?$ /api?x-api-version=$1&x-api-method=youTubeConfList last;
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/?$ /api?version=$1&method=addFacebookConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/?$ /api?x-api-version=$1&x-api-method=addFacebookConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=modifyFacebookConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyFacebookConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/([0-9]+)/?$ /api?version=$1&method=removeFacebookConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeFacebookConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/?([0-9]*)/?$ /api?version=$1&method=facebookConfList&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/facebook/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=facebookConfList&confKey=$2 last;
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?$ /api?version=$1&method=addTwitchConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?$ /api?x-api-version=$1&x-api-method=addTwitchConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?version=$1&method=modifyTwitchConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyTwitchConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?version=$1&method=removeTwitchConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeTwitchConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?([0-9]*)/?$ /api?version=$1&method=twitchConfList&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/twitch/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=twitchConfList&confKey=$2 last;
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/?$ /api?version=$1&method=addTiktokConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/?$ /api?x-api-version=$1&x-api-method=addTiktokConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/([0-9]+)/?$ /api?version=$1&method=modifyTiktokConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyTiktokConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/([0-9]+)/?$ /api?version=$1&method=removeTiktokConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeTiktokConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/?([0-9]*)/?$ /api?version=$1&method=tiktokConfList&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/tiktok/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=tiktokConfList&confKey=$2 last;
 		}
 
 #stream
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?$ /api?version=$1&method=addStream last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?$ /api?x-api-version=$1&x-api-method=addStream last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=modifyStream&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=modifyStream&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=removeStream&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=removeStream&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?version=$1&method=streamList&confKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/freePushEncoderPort/?([0-9]*)/?$ /api?version=$1&method=streamFreePushEncoderPort&encoderKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=streamList&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/stream/freePushEncoderPort/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=streamFreePushEncoderPort&encoderKey=$2 last;
 		}
 
 #Source TV Channels
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/?$ /api?version=$1&method=addSourceTVStream last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/?$ /api?x-api-version=$1&x-api-method=addSourceTVStream last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/([0-9]+)/?$ /api?version=$1&method=modifySourceTVStream&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifySourceTVStream&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/([0-9]+)/?$ /api?version=$1&method=removeSourceTVStream&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeSourceTVStream&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/?([0-9]*)/?$ /api?version=$1&method=sourceTVStreamList&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=sourceTVStreamList&confKey=$2 last;
 		}
 
 #AWS
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?version=$1&method=addAWSChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=addAWSChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?version=$1&method=modifyAWSChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyAWSChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?version=$1&method=removeAWSChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAWSChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?version=$1&method=awsChannelConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=awsChannelConfList last;
 		}
 
 #CDN77
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?version=$1&method=addCDN77ChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?x-api-version=$1&x-api-method=addCDN77ChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?version=$1&method=modifyCDN77ChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyCDN77ChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?version=$1&method=removeCDN77ChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeCDN77ChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?version=$1&method=cdn77ChannelConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?x-api-version=$1&x-api-method=cdn77ChannelConfList last;
 		}
 
 #RTMP
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/?$ /api?version=$1&method=addRTMPChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/?$ /api?x-api-version=$1&x-api-method=addRTMPChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/([0-9]+)/?$ /api?version=$1&method=modifyRTMPChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyRTMPChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/([0-9]+)/?$ /api?version=$1&method=removeRTMPChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeRTMPChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/?$ /api?version=$1&method=rtmpChannelConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/?$ /api?x-api-version=$1&x-api-method=rtmpChannelConfList last;
 		}
 
 #SRT
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/?$ /api?version=$1&method=addSRTChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/?$ /api?x-api-version=$1&x-api-method=addSRTChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/([0-9]+)/?$ /api?version=$1&method=modifySRTChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifySRTChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/([0-9]+)/?$ /api?version=$1&method=removeSRTChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeSRTChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/?$ /api?version=$1&method=srtChannelConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/srt/channel/?$ /api?x-api-version=$1&x-api-method=srtChannelConfList last;
 		}
 
 #HLS
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?version=$1&method=addHLSChannelConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?x-api-version=$1&x-api-method=addHLSChannelConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/([0-9]+)/?$ /api?version=$1&method=modifyHLSChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyHLSChannelConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/([0-9]+)/?$ /api?version=$1&method=removeHLSChannelConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeHLSChannelConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?version=$1&method=hlsChannelConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/hls/channel/?$ /api?x-api-version=$1&x-api-method=hlsChannelConfList last;
 		}
 
 #RequestStatistics
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?version=$1&method=addRequestStatistic last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?x-api-version=$1&x-api-method=addRequestStatistic last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?version=$1&method=requestStatisticList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/?$ /api?x-api-version=$1&x-api-method=requestStatisticList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perContent/?$ /api?version=$1&method=requestStatisticPerContentList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perContent/?$ /api?x-api-version=$1&x-api-method=requestStatisticPerContentList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perUser/?$ /api?version=$1&method=requestStatisticPerUserList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perUser/?$ /api?x-api-version=$1&x-api-method=requestStatisticPerUserList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perMonth/?$ /api?version=$1&method=requestStatisticPerMonthList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perMonth/?$ /api?x-api-version=$1&x-api-method=requestStatisticPerMonthList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perDay/?$ /api?version=$1&method=requestStatisticPerDayList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perDay/?$ /api?x-api-version=$1&x-api-method=requestStatisticPerDayList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perHour/?$ /api?version=$1&method=requestStatisticPerHourList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perHour/?$ /api?x-api-version=$1&x-api-method=requestStatisticPerHourList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perCountry/?$ /api?version=$1&method=requestStatisticPerCountryList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/request/perCountry/?$ /api?x-api-version=$1&x-api-method=requestStatisticPerCountryList last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/login/?$ /api?version=$1&method=loginStatisticList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/statistic/login/?$ /api?x-api-version=$1&x-api-method=loginStatisticList last;
 		}
 
 
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/?$ /api?version=$1&method=addFTPConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/?$ /api?x-api-version=$1&x-api-method=addFTPConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=modifyFTPConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyFTPConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/([0-9]+)/?$ /api?version=$1&method=removeFTPConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeFTPConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/?$ /api?version=$1&method=ftpConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/ftp/?$ /api?x-api-version=$1&x-api-method=ftpConfList last;
 		}
 
 		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/?$ /api?version=$1&method=addEMailConf last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/?$ /api?x-api-version=$1&x-api-method=addEMailConf last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=modifyEMailConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyEMailConf&confKey=$2 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/([0-9]+)/?$ /api?version=$1&method=removeEMailConf&confKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeEMailConf&confKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/?$ /api?version=$1&method=emailConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/email/?$ /api?x-api-version=$1&x-api-method=emailConfList last;
 		}
 	}
 

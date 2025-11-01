@@ -11,67 +11,67 @@
 		limit_req zone=mmsEncoderLimit burst=20;
 
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?version=$1&method=status last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?x-api-version=$1&x-api-method=status last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/info/?$ /encoder?version=$1&method=info last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/info/?$ /encoder?x-api-version=$1&x-api-method=info last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=encodeContent&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/encode/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=encodeContent&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/overlayImageOnVideo/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=overlayImageOnVideo&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/overlayImageOnVideo/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=overlayImageOnVideo&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/overlayTextOnVideo/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=overlayTextOnVideo&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/overlayTextOnVideo/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=overlayTextOnVideo&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/generateFrames/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=generateFrames&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/generateFrames/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=generateFrames&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/slideShow/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=slideShow&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/slideShow/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=slideShow&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&ingestionJobKey=$2&encodingJobKey=$3 last;
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?version=$1&method=liveRecorder&ingestionJobKey=-1&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=liveRecorder&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveRecorder/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=liveRecorder&ingestionJobKey=-1&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&ingestionJobKey=$2&encodingJobKey=$3 last;
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?version=$1&method=liveProxy&ingestionJobKey=-1&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=liveProxy&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=liveProxy&ingestionJobKey=-1&encodingJobKey=$2 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=liveGrid&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveGrid/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=liveGrid&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=videoSpeed&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/videoSpeed/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=videoSpeed&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/addSilentAudio/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=addSilentAudio&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/addSilentAudio/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=addSilentAudio&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/pictureInPicture/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=pictureInPicture&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/pictureInPicture/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=pictureInPicture&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/introOutroOverlay/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=introOutroOverlay&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/introOutroOverlay/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=introOutroOverlay&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = POST) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/cutFrameAccurate/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=cutFrameAccurate&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/cutFrameAccurate/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=cutFrameAccurate&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?version=$1&method=encodingProgress&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/progress/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=encodingProgress&encodingJobKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/status/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=encodingStatus&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/status/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=encodingStatus&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = DELETE) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=killEncodingJob&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=killEncodingJob&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 		if ($request_method = PUT) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/playlist/([0-9]+)/?$ /encoder?version=$1&method=changeLiveProxyPlaylist&encodingJobKey=$2 last;
-			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/overlayText/([0-9]+)/?$ /encoder?version=$1&method=changeLiveProxyOverlayText&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/playlist/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=changeLiveProxyPlaylist&encodingJobKey=$2 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/overlayText/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=changeLiveProxyOverlayText&encodingJobKey=$2 last;
 		}
 		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/filterNotification/([0-9]+)/([0-9]+)/?$ /encoder?version=$1&method=filterNotification&ingestionJobKey=$2&encodingJobKey=$3 last;
+			rewrite ^/catramms/(v[0-9]+)/encoder/filterNotification/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=filterNotification&ingestionJobKey=$2&encodingJobKey=$3 last;
 		}
 	}
 

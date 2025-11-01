@@ -1448,7 +1448,7 @@ install-mms-tomee-package()
 
 	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomee/webapps/ROOT/index.html
 
-	chown -R mms:mms /opt/catramms/apache-tomee-${VERSION}-webprofile
+	chown -R mms:mms /opt/catramms/apache-tomee-webprofile-${VERSION}
 
 	chmod u+x /opt/catramms/tomee/bin/*.sh
 
@@ -1609,7 +1609,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6464
+	catraMMSVersion=1.0.6473
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then

@@ -229,7 +229,7 @@ server {
 }
 
 
-#tomcat
+#tomee
 #in case of nginx load balancer
 server {
 	server_name mms-gui.restream.ovh;
