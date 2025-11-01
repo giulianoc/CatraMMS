@@ -21,7 +21,6 @@
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
-#include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 #include <exception>
 #include <memory>
@@ -33,7 +32,7 @@
 #include <unordered_set>
 
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
-	json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade
+	const json &configuration, const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade
 )
 {
 	_configuration = configuration;
@@ -94,15 +93,16 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 }
 
 pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
-	int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP,
+	int64_t userKey, const shared_ptr<Workspace>& requestWorkspace, const string& playerIP,
 
-	int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey, string encodingProfileLabel,
+	int64_t mediaItemKey, const string& uniqueName, int64_t encodingProfileKey, const string& encodingProfileLabel,
 
 	int64_t physicalPathKey,
 
 	int64_t ingestionJobKey, int64_t deliveryCode,
 
-	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry, string playerRegion,
+	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized,
+	const string& playerCountry, const string& playerRegion,
 
 	bool save,
 	// deliveryType:
@@ -127,9 +127,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	//
 	// 7. AWSCloudFront_Signed: delivered by AWS CloudFront with a signed URL without parameter (i.e.:
 	// https://d3mvdxwkjkh4kh.cloudfront.net//MMS_0000/47/000/000/280/18657840_source.mp4?Expires=3578439566&Signature=hiHYmI3~vu5dEhrI6G5xYNSgou1MpTqgNJI08EBinodNYLiqUWi33s4FNd31jARtKAJ~OSHEOKhLCWcE2JGtnEF~g2vasJdI4XWxNvo4G0Dd2R-4wGF2s5IPdhjj6jTkrJC7FXOnPfIve9vUvNdP~eovr~UCFN5jX7yy25b38qqXe5kUXjDHfj6-DMZmUC-uEGzSQT0SOB0Ihtvh9JaE9iBCIsxnwNIPdafMWZOZh9e1Ls70yIXP597-U9d4w~dFchDs3CasAn4ropikBOW3KrEFBCrBO~vdsFgMDHMAyARpqsoYK7WIxq8D3J369utKjNvD8qpVG9XQM6OH127k8g__&Key-Pair-Id=APKAUYWFOBAADUMU4IGK)
-	string deliveryType,
+	const string& deliveryType,
 
-	bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
+	bool warningIfMissingMediaItemKey, bool filteredByStatistic, const string& userId
 )
 {
 	string deliveryURL;
@@ -151,7 +151,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		}
 		else
 		{
-			if (uniqueName != "" && mediaItemKey == -1)
+			if (!uniqueName.empty() && mediaItemKey == -1)
 			{
 				// initialize mediaItemKey
 
@@ -163,7 +163,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				tie(mediaItemKey, ignore) = mediaItemKeyDetails;
 			}
 
-			if (encodingProfileKey == -1 && encodingProfileLabel != "")
+			if (encodingProfileKey == -1 && !encodingProfileLabel.empty())
 			{
 				// initialize encodingProfileKey
 
@@ -229,7 +229,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 					if (deliveryURI.ends_with(m3u8Suffix))
 					{
-						size_t endPathIndex = deliveryURI.find_last_of("/");
+						size_t endPathIndex = deliveryURI.find_last_of('/');
 						if (endPathIndex == string::npos)
 							uriToBeSigned = deliveryURI;
 						else
@@ -245,7 +245,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				);
 			}
 
-			if (save && deliveryFileName != "")
+			if (save && !deliveryFileName.empty())
 				deliveryURL.append("&deliveryFileName=").append(deliveryFileName);
 		}
 		else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
@@ -259,7 +259,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 				if (deliveryURI.ends_with(m3u8Suffix))
 				{
-					size_t endPathIndex = deliveryURI.find_last_of("/");
+					size_t endPathIndex = deliveryURI.find_last_of('/');
 					if (endPathIndex == string::npos)
 						uriToBeSigned = deliveryURI;
 					else
@@ -279,7 +279,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			deliveryURL = std::format("{}://{}/token_{},{}{}", _deliveryProtocol, deliveryHost, md5Base64, expirationTime, deliveryURI);
 		}
 
-		if (!filteredByStatistic && userId != "")
+		if (!filteredByStatistic && !userId.empty())
 		{
 			try
 			{
@@ -364,7 +364,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				json outputRoot = outputsRoot[outputIndex];
+				const json& outputRoot = outputsRoot[outputIndex];
 
 				string outputType;
 				int64_t localDeliveryCode = -1;
@@ -378,10 +378,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					{
 						auto [resourceURL, filePath, secureToken] = _mmsEngineDBFacade->cdn77_reservationDetails(ingestionJobKey, outputIndex);
 
-						if (filePath.size() > 0 && filePath.front() != '/')
-							filePath = "/" + filePath;
+						if (!filePath.empty() && filePath.front() != '/')
+							filePath.insert(filePath.begin(), '/');
 
-						if (secureToken != "")
+						if (!secureToken.empty())
 							playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds, playerIPToBeAuthorized ? playerIP : "");
 						else
 							playURL = std::format("https://{}{}", resourceURL, filePath);
@@ -409,7 +409,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						continue;
 					}
 
-					if (playURL == "")
+					if (playURL.empty())
 						continue;
 				}
 				else if (outputType == "CDN_AWS")
@@ -445,7 +445,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						continue;
 					}
 
-					if (playURL == "")
+					if (playURL.empty())
 						continue;
 				}
 				else if (outputType == "RTMP_Channel")
@@ -479,7 +479,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						continue;
 					}
 
-					if (playURL == "")
+					if (playURL.empty())
 						continue;
 				}
 				else if (outputType == "SRT_Channel")
@@ -511,7 +511,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						continue;
 					}
 
-					if (playURL == "")
+					if (playURL.empty())
 						continue;
 				}
 				else if (outputType == "HLS_Channel")
@@ -528,7 +528,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					", localDeliveryCode: {}",
 					ingestionJobKey, outputIndex, outputType, playURL, localDeliveryCode
 				);
-				outputDeliveryOptions.push_back(make_tuple(outputType, localDeliveryCode, playURL));
+				outputDeliveryOptions.emplace_back(outputType, localDeliveryCode, playURL);
 			}
 
 			string outputType;
@@ -536,7 +536,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			if (deliveryCode == -1) // requested delivery code (it is an input)
 			{
-				if (outputDeliveryOptions.size() == 0)
+				if (outputDeliveryOptions.empty())
 				{
 					string errorMessage = std::format(
 						"No outputDeliveryOptions, it cannot be delivered"
@@ -547,7 +547,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 					throw runtime_error(errorMessage);
 				}
-				else if (outputDeliveryOptions.size() > 1)
+				if (outputDeliveryOptions.size() > 1)
 				{
 					string errorMessage = std::format(
 						"Live authorization with several option. Just get the first"
@@ -568,7 +568,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				bool deliveryCodeFound = false;
 
-				for (tuple<string, int64_t, string> outputDeliveryOption : outputDeliveryOptions)
+				for (const tuple<string, int64_t, string>& outputDeliveryOption : outputDeliveryOptions)
 				{
 					int64_t localDeliveryCode;
 					tie(outputType, localDeliveryCode, playURL) = outputDeliveryOption;
@@ -638,7 +638,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 							if (deliveryURI.ends_with(m3u8Suffix))
 							{
-								size_t endPathIndex = deliveryURI.find_last_of("/");
+								size_t endPathIndex = deliveryURI.find_last_of('/');
 								if (endPathIndex == string::npos)
 									uriToBeSigned = deliveryURI;
 								else
@@ -666,7 +666,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						if (deliveryURI.size() >= m3u8Suffix.size() &&
 							0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 						{
-							size_t endPathIndex = deliveryURI.find_last_of("/");
+							size_t endPathIndex = deliveryURI.find_last_of('/');
 							if (endPathIndex == string::npos)
 								uriToBeSigned = deliveryURI;
 							else
@@ -705,7 +705,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB" ||
 					deliveryType == "MMS_URLWithTokenAsParam_Signed" || deliveryType == "AWSMMS_URLWithTokenAsParam_Signed")
 				{
-					if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "MMS_URLWithTokenAsParam_DB")
+					if (deliveryType == "MMS_URLWithTokenAsParam_DB" || deliveryType == "AWSMMS_URLWithTokenAsParam_DB")
 					{
 						int64_t authorizationKey = _mmsEngineDBFacade->createDeliveryAuthorization(
 							userKey, playerIPToBeAuthorized ? playerIP : "",
@@ -729,7 +729,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							// 	0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 							if (deliveryURI.ends_with(m3u8Suffix))
 							{
-								size_t endPathIndex = deliveryURI.find_last_of("/");
+								size_t endPathIndex = deliveryURI.find_last_of('/');
 								if (endPathIndex == string::npos)
 									uriToBeSigned = deliveryURI;
 								else
@@ -756,7 +756,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						if (deliveryURI.size() >= m3u8Suffix.size() &&
 							0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 						{
-							size_t endPathIndex = deliveryURI.find_last_of("/");
+							size_t endPathIndex = deliveryURI.find_last_of('/');
 							if (endPathIndex == string::npos)
 								uriToBeSigned = deliveryURI;
 							else
@@ -856,8 +856,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					deliveryCode, deliveryURI, ttlInSeconds, maxRetries, reuseAuthIfPresent
 				);
 
-				deliveryURL =
-					_deliveryProtocol + "://" + _deliveryHost_authorizationThroughParameter + deliveryURI + "?token=" + to_string(authorizationKey);
+				deliveryURL = std::format("{}://{}{}?token{}",
+					_deliveryProtocol, _deliveryHost_authorizationThroughParameter, deliveryURI, authorizationKey);
 			}
 			else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 			{
@@ -869,7 +869,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (deliveryURI.size() >= m3u8Suffix.size() &&
 						0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
 					{
-						size_t endPathIndex = deliveryURI.find_last_of("/");
+						size_t endPathIndex = deliveryURI.find_last_of('/');
 						if (endPathIndex == string::npos)
 							uriToBeSigned = deliveryURI;
 						else
@@ -880,8 +880,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
-				deliveryURL = _deliveryProtocol + "://" + _deliveryHost_authorizationThroughPath + "/token_" + md5Base64 + "," +
-							  to_string(expirationTime) + deliveryURI;
+				deliveryURL = std::format("{}://{}/token_{},{}{}", _deliveryProtocol, _deliveryHost_authorizationThroughPath,
+					md5Base64, expirationTime, deliveryURI);
 			}
 			/*
 			else
@@ -909,17 +909,17 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 }
 
 string MMSDeliveryAuthorization::getDeliveryHost(
-	shared_ptr<Workspace> requestWorkspace, string playerCountry, string playerRegion, string defaultDeliveryHost
+	const shared_ptr<Workspace>& requestWorkspace, const string& playerCountry, const string& playerRegion, const string& defaultDeliveryHost
 )
 {
 	string deliveryHost = defaultDeliveryHost;
-	if (playerCountry != "")
+	if (!playerCountry.empty())
 	{
 		// verifica se abbiamo externalDeliveries per questo specifico playerCountry-playerRegion
 		/*
 		{"HLS-live": {
 		"hostGroups": {
-			"group-1-<playerRegion>": [
+			"group-1": [
 				{ "host": "srv-1.cibortvlive.com", "running": true },
 				{ "host": "srv-2.cibortvlive.com", "running": true }
 			],
@@ -932,8 +932,8 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 				{ "host": "srv-4.cibortvlive.com", "running": false }
 			]
 		},
-		"countryMap": {
-			"US": "group-1",
+		"countryMap": {	// each location could be: country["-region"]
+			"US-PA": "group-1",
 			"CA": "group-1",
 			"BR": "group-2",
 			"AR": "group-2",
@@ -947,25 +947,14 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
 		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
 
-		string externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
-		json hostGroupRoot = nullptr;
-		if (playerRegion.empty())
-			hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
-		else
-		{
-			if (externalDeliveriesGroup == "default")
-				hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
-			else
-			{
-				// verifico se presente un gruppo <country>-<region>
-				hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, std::format("{}-{}", externalDeliveriesGroup, playerRegion), json::array());
-				if (hostGroupRoot.size() == 0)
-					hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
-				else // il gruppo <country>-<region> è presente
-					externalDeliveriesGroup = std::format("{}-{}", externalDeliveriesGroup, playerRegion);
-			}
-		}
-		if (hostGroupRoot.size() > 0)
+		string externalDeliveriesGroup;
+		if (!playerRegion.empty())
+			externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, std::format("{}-{}", playerCountry, playerRegion), "default");
+		if (externalDeliveriesGroup == "default")
+			externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
+
+		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
+		if (!hostGroupRoot.empty())
 		{
 			shared_ptr<HostBandwidthTracker> hostBandwidthTracker =
 				getHostBandwidthTracker(requestWorkspace->_workspaceKey, externalDeliveriesGroup, hostGroupRoot);
@@ -995,7 +984,8 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 	return deliveryHost;
 }
 
-shared_ptr<HostBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTracker(int64_t workspaceKey, string groupName, json hostGroupRoot)
+shared_ptr<HostBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTracker(int64_t workspaceKey, const string& groupName,
+	const json &hostGroupRoot)
 {
 	lock_guard<mutex> locker(_externalDeliveriesMutex);
 
@@ -1025,32 +1015,32 @@ unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesR
 
 	lock_guard<mutex> locker(_externalDeliveriesMutex);
 
-	if (_externalDeliveriesGroups.size() > 0)
+	if (!_externalDeliveriesGroups.empty())
 	{
 		unordered_set<string> hosts;
 		for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
 			hostBandwidthTracker->addRunningHosts(hosts);
 
-		for (string host : hosts)
+		for (const string& host : hosts)
 			hostsBandwidth.insert(make_pair(host, 0));
 	}
 
 	return hostsBandwidth;
 }
 
-void MMSDeliveryAuthorization::updateExternalDeliveriesBandwidthHosts(unordered_map<string, uint64_t> hostsBandwidth)
+void MMSDeliveryAuthorization::updateExternalDeliveriesBandwidthHosts(const unordered_map<string, uint64_t>& hostsBandwidth)
 {
 
 	lock_guard<mutex> locker(_externalDeliveriesMutex);
 
-	for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
+	for (const auto &hostBandwidthTracker : _externalDeliveriesGroups | views::values)
 	{
 		for (const auto &[host, hostBandwidth] : hostsBandwidth)
 			hostBandwidthTracker->updateBandwidth(host, hostBandwidth);
 	}
 }
 
-string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter)
+string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(const string& contentURI, const string& tokenParameter)
 {
 	string tokenComingFromURL;
 	try
@@ -1108,7 +1098,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 		string tsExtension(".ts");	   // hls
 		string m4sExtension(".m4s");   // dash
 		string m3u8Extension(".m3u8"); // m3u8
-		if ((secondPartOfToken != "")  // secondPartOfToken is the cookie
+		if (!secondPartOfToken.empty()  // secondPartOfToken is the cookie
 			&& (contentURI.ends_with(tsExtension) || contentURI.ends_with(m4sExtension) || contentURI.ends_with(m3u8Extension)))
 		{
 			// nel caso del manifest secondario, dovrebbe ricevere il cookie (secondPartOfToken) e quindi dovrebbe entrare qui
@@ -1131,7 +1121,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 			string encryptedToken = firstPartOfToken;
 			string cookie = secondPartOfToken;
 
-			if (cookie == "")
+			if (cookie.empty())
 			{
 				string errorMessage = std::format(
 					"cookie is wrong"
@@ -1266,30 +1256,23 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(stri
 			}
 			else // MMS_URLWithTokenAsParam_Signed || AWSMMS_URLWithTokenAsParam_Signed
 			{
-				string tokenSigned = firstPartOfToken;
+				const string& tokenSigned = firstPartOfToken;
 				checkSignedMMSPath(tokenSigned, contentURI);
 			}
 		}
-	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = "Not authorized";
-		SPDLOG_WARN(errorMessage);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
-		throw e;
+		throw;
 	}
 
 	return tokenComingFromURL;
 }
 
-int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string contentURI)
+int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const string& contentURI)
 {
 	int64_t tokenComingFromURL = -1;
 	try
@@ -1317,7 +1300,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 
 		startTokenIndex += tokenLabel.size();
 
-		size_t endTokenIndex = contentURI.find(",", startTokenIndex);
+		size_t endTokenIndex = contentURI.find(',', startTokenIndex);
 		if (endTokenIndex == string::npos)
 		{
 			string errorMessage = std::format(
@@ -1330,7 +1313,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 			throw runtime_error(errorMessage);
 		}
 
-		size_t endExpirationIndex = contentURI.find("/", endTokenIndex);
+		size_t endExpirationIndex = contentURI.find('/', endTokenIndex);
 		if (endExpirationIndex == string::npos)
 		{
 			string errorMessage = std::format(
@@ -1347,7 +1330,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 
 		string contentURIToBeVerified;
 
-		size_t endContentURIIndex = contentURI.find("?", endExpirationIndex);
+		size_t endContentURIIndex = contentURI.find('?', endExpirationIndex);
 		if (endContentURIIndex == string::npos)
 			contentURIToBeVerified = contentURI.substr(endExpirationIndex);
 		else
@@ -1355,25 +1338,19 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(string c
 
 		return checkSignedMMSPath(tokenSigned, contentURIToBeVerified);
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = "Not authorized";
-		SPDLOG_WARN(errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
-		throw e;
+		throw;
 	}
 
 	return tokenComingFromURL;
 }
 
-string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool secondaryManifest, string token, string cookie, string contentURI)
+string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool secondaryManifest, const string& token, const string& cookie,
+	const string& contentURI)
 {
 	try
 	{
@@ -1429,7 +1406,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 
 			tokenComingFromURL = token;
 
-			if (cookie == "")
+			if (cookie.empty())
 			{
 				if (StringUtils::isNumber(token)) // MMS_URLWithTokenAsParam_DB || AWSMMS_URLWithTokenAsParam_DB
 				{
@@ -1521,19 +1498,12 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 
 		return tokenComingFromURL;
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = "Not authorized";
-		SPDLOG_WARN(errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
-		throw e;
+		throw;
 	}
 }
 
@@ -1549,7 +1519,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 			tokenSigned, contentURIToBeVerified
 		);
 
-		size_t endTokenIndex = tokenSigned.find(",");
+		size_t endTokenIndex = tokenSigned.find(',');
 		if (endTokenIndex == string::npos)
 		{
 			string errorMessage = std::format(
@@ -1572,7 +1542,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 		if (contentURIToBeVerified.ends_with(m3u8Suffix))
 		{
 			{
-				size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+				size_t endPathIndex = contentURIToBeVerified.find_last_of('/');
 				if (endPathIndex != string::npos)
 					contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 			}
@@ -1593,7 +1563,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 				// we still try removing again the last directory to manage the scenario
 				// of multi bitrate encoding or multi audio tracks (one director for each audio)
 				{
-					size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+					size_t endPathIndex = contentURIToBeVerified.find_last_of('/');
 					if (endPathIndex != string::npos)
 						contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 				}
@@ -1648,7 +1618,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 					// potremmo essere nel caso 2 o caso 3
 
 					{
-						size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+						size_t endPathIndex = contentURIToBeVerified.find_last_of('/');
 						if (endPathIndex != string::npos)
 							contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 					}
@@ -1672,7 +1642,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 						// we still try removing again the last directory to manage
 						// the scenario of multi bitrate encoding
 						{
-							size_t endPathIndex = contentURIToBeVerified.find_last_of("/");
+							size_t endPathIndex = contentURIToBeVerified.find_last_of('/');
 							if (endPathIndex != string::npos)
 								contentURIToBeVerified = contentURIToBeVerified.substr(0, endPathIndex);
 						}
@@ -1748,25 +1718,18 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = "Not authorized";
-		SPDLOG_WARN(errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
 		SPDLOG_WARN(errorMessage);
 
-		throw e;
+		throw;
 	}
 
 	return tokenComingFromURL;
 }
 
-string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expirationTime)
+string MMSDeliveryAuthorization::getSignedMMSPath(const string& contentURI, time_t expirationTime)
 {
 	string token = std::format("{}{}", expirationTime, contentURI);
 	string md5Base64;
@@ -1775,20 +1738,17 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 		// MD5((unsigned char*) token.c_str(), token.size(), digest);
 		// md5Base64 = Convert::base64_encode(digest, MD5_DIGEST_LENGTH);
 		{
-			unsigned char *md5_digest;
 			unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
 
-			EVP_MD_CTX *mdctx;
-
 			// MD5_Init
-			mdctx = EVP_MD_CTX_new();
+			EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
 			EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
 
 			// MD5_Update
 			EVP_DigestUpdate(mdctx, (unsigned char *)token.c_str(), token.size());
 
 			// MD5_Final
-			md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+			auto *md5_digest = static_cast<unsigned char *>(OPENSSL_malloc(md5_digest_len));
 			EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
 
 			md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
@@ -1798,8 +1758,8 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 			EVP_MD_CTX_free(mdctx);
 		}
 
-		transform(
-			md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+		ranges::transform(
+			md5Base64, md5Base64.begin(),
 			[](unsigned char c)
 			{
 				if (c == '+')
@@ -1825,9 +1785,9 @@ string MMSDeliveryAuthorization::getSignedMMSPath(string contentURI, time_t expi
 }
 
 string MMSDeliveryAuthorization::getSignedCDN77URL(
-	string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
-	string filePath,	// /file/playlist/d.m3u8
-	string secureToken, long expirationInSeconds, string playerIP
+	const string& resourceURL, // i.e.: 1234456789.rsc.cdn77.org
+	const string& filePath,	// /file/playlist/d.m3u8
+	const string& secureToken, long expirationInSeconds, string playerIP
 )
 {
 	SPDLOG_INFO(
@@ -1854,7 +1814,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 				// because of hls/dash, anything included after the last slash (e.g. playlist/{chunk}) shouldn't be part of the path string,
 				// for which we generate the secure token. Because of that, everything included after the last slash is stripped.
 				// $strippedPath = substr($filePath, 0, strrpos($filePath, '/'));
-				size_t fileNameStart = filePath.find_last_of("/");
+				size_t fileNameStart = filePath.find_last_of('/');
 				if (fileNameStart == string::npos)
 				{
 					string errorMessage = std::format(
@@ -1927,7 +1887,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					EVP_DigestUpdate(mdctx, (unsigned char *)hashStr.c_str(), hashStr.size());
 
 					// MD5_Final
-					md5_digest = (unsigned char *)OPENSSL_malloc(md5_digest_len);
+					md5_digest = static_cast<unsigned char *>(OPENSSL_malloc(md5_digest_len));
 					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
 
 					/*
@@ -1997,8 +1957,8 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 
 				// $invalidChars = ['+','/'];
 				// $validChars = ['-','_'];
-				transform(
-					md5Base64.begin(), md5Base64.end(), md5Base64.begin(),
+				ranges::transform(
+					md5Base64, md5Base64.begin(),
 					[](unsigned char c)
 					{
 						if (c == '+')
@@ -2040,7 +2000,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 	}
 }
 
-string MMSDeliveryAuthorization::getAWSSignedURL(string playURL, int expirationInSeconds)
+string MMSDeliveryAuthorization::getAWSSignedURL(const string& playURL, int expirationInSeconds)
 {
 	string signedPlayURL;
 
@@ -2052,7 +2012,7 @@ string MMSDeliveryAuthorization::getAWSSignedURL(string playURL, int expirationI
 		// playURL is like:
 		// https://d1nue3l1x0sz90.cloudfront.net/out/v1/ca8fd629f9204ca38daf18f04187c694/index.m3u8
 		string prefix("https://");
-		if (!(playURL.size() >= prefix.size() && 0 == playURL.compare(0, prefix.size(), prefix) && playURL.find("/", prefix.size()) != string::npos))
+		if (!(playURL.size() >= prefix.size() && 0 == playURL.compare(0, prefix.size(), prefix) && playURL.find('/', prefix.size()) != string::npos))
 		{
 			string errorMessage = std::format(
 				"awsSignedURL. playURL wrong format"
@@ -2063,14 +2023,14 @@ string MMSDeliveryAuthorization::getAWSSignedURL(string playURL, int expirationI
 
 			throw runtime_error(errorMessage);
 		}
-		size_t uriStartIndex = playURL.find("/", prefix.size());
+		size_t uriStartIndex = playURL.find('/', prefix.size());
 		string cloudFrontHostName = playURL.substr(prefix.size(), uriStartIndex - prefix.size());
 		string uriPath = playURL.substr(uriStartIndex + 1);
 
 		AWSSigner awsSigner;
 		string signedPlayURL = awsSigner.calculateSignedURL(cloudFrontHostName, uriPath, _keyPairId, _privateKeyPEMPathName, expirationInSeconds);
 
-		if (signedPlayURL == "")
+		if (signedPlayURL.empty())
 		{
 			string errorMessage = std::format(
 				"awsSignedURL. no signedPlayURL found"
@@ -2082,7 +2042,7 @@ string MMSDeliveryAuthorization::getAWSSignedURL(string playURL, int expirationI
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"awsSigner failed"
@@ -2090,17 +2050,7 @@ string MMSDeliveryAuthorization::getAWSSignedURL(string playURL, int expirationI
 			e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"awsSigner failed"
-			", exception: {}",
-			e.what()
-		);
-
-		throw e;
+		throw;
 	}
 
 	return signedPlayURL;

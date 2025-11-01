@@ -27,32 +27,36 @@ using namespace std;
 class MMSDeliveryAuthorization
 {
   public:
-	MMSDeliveryAuthorization(json configuration, shared_ptr<MMSStorage> mmsStorage, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade);
+	MMSDeliveryAuthorization(
+		const json &configuration, const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade);
 
 	pair<string, string> createDeliveryAuthorization(
-		int64_t userKey, shared_ptr<Workspace> requestWorkspace, string playerIP, int64_t mediaItemKey, string uniqueName, int64_t encodingProfileKey,
-		string encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode, int ttlInSeconds, int maxRetries,
-		bool reuseAuthIfPresent, bool playerIPToBeAuthorized, string playerCountry, string playerRegion, bool save, string deliveryType,
-		bool warningIfMissingMediaItemKey, bool filteredByStatistic, string userId
+		int64_t userKey, const shared_ptr<Workspace> &requestWorkspace, const string &playerIP, int64_t mediaItemKey, const string &uniqueName,
+		int64_t encodingProfileKey, const string &encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode,
+		int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized, const string &playerCountry,
+		const string &playerRegion, bool save, const string &deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic,
+		const string &userId
 	);
 
-	string checkDeliveryAuthorizationThroughParameter(string contentURI, string tokenParameter);
+	string checkDeliveryAuthorizationThroughParameter(const string &contentURI, const string &tokenParameter);
 
-	int64_t checkDeliveryAuthorizationThroughPath(string contentURI);
+	int64_t checkDeliveryAuthorizationThroughPath(const string &contentURI);
 
-	string checkDeliveryAuthorizationOfAManifest(bool secondaryManifest, string token, string cookie, string contentURI);
+	string checkDeliveryAuthorizationOfAManifest(bool secondaryManifest, const string &token, const string &cookie, const string &contentURI);
 
-	int64_t checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified);
+	static int64_t checkSignedMMSPath(string tokenSigned, string contentURIToBeVerified);
 
 	static string getSignedCDN77URL(
-		string resourceURL, // i.e.: 1234456789.rsc.cdn77.org
-		string filePath,	// /file/playlist/d.m3u8
-		string secureToken, long expirationInSeconds, string clientIP = ""
+		const string &resourceURL,
+		// i.e.: 1234456789.rsc.cdn77.org
+		const string &filePath,
+		// /file/playlist/d.m3u8
+		const string &secureToken, long expirationInSeconds, string playerIP = ""
 	);
-	string getAWSSignedURL(string playURL, int expirationInSeconds);
+	string getAWSSignedURL(const string &playURL, int expirationInSeconds);
 
 	unordered_map<string, uint64_t> getExternalDeliveriesRunningHosts();
-	void updateExternalDeliveriesBandwidthHosts(unordered_map<string, uint64_t> hostsBandwidth);
+	void updateExternalDeliveriesBandwidthHosts(const unordered_map<string, uint64_t> &hostsBandwidth);
 
   private:
 	json _configuration;
@@ -72,9 +76,11 @@ class MMSDeliveryAuthorization
 	string _deliveryHost_authorizationThroughParameter;
 	string _deliveryHost_authorizationThroughPath;
 
-	string getSignedMMSPath(string contentURI, time_t expirationTime);
-	time_t getReusableExpirationTime(int ttlInSeconds);
-	string getDeliveryHost(shared_ptr<Workspace> requestWorkspace, string country, string region, string defaultDeliveryHost);
-	shared_ptr<HostBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, string groupName, json hostGroupRoot);
+	static string getSignedMMSPath(const string &contentURI, time_t expirationTime);
+	static time_t getReusableExpirationTime(int ttlInSeconds);
+	string getDeliveryHost(
+		const shared_ptr<Workspace> &requestWorkspace, const string &playerCountry, const string &playerRegion, const string &defaultDeliveryHost
+	);
+	shared_ptr<HostBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, const string &groupName, const json &hostGroupRoot);
 };
 #endif

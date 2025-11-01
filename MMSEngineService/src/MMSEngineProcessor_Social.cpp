@@ -2545,7 +2545,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 			Content-Length: 278
 			Content-Type: application/json; charset=UTF-8
 			X-Upload-Content-Length: 3000000
-			X-Upload-Content-Type: video/*
+			X-Upload-Content-Type: video/<asterisco>
 
 			{
 			  "snippet": {
