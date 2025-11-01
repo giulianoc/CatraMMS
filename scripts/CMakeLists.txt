@@ -29,6 +29,7 @@ set(SCRIPTs
     imageMagickHelper.sh
     nginx.sh
     tomcat.sh
+    tomee.sh
     setupALL.sh
     micro-service-deploy.sh
     micro-service.sh
