@@ -428,7 +428,7 @@ void API::mediaItemsList(
 		string sContentType = getQueryParameter(queryParameters, "contentType", string(), false);
 		bool contentTypePresent = false;
 		MMSEngineDBFacade::ContentType contentType;
-		if (sContentType != "")
+		if (!sContentType.empty())
 		{
 			contentType = MMSEngineDBFacade::toContentType(sContentType);
 			contentTypePresent = true;
