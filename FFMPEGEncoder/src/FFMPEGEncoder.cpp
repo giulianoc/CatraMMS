@@ -179,10 +179,10 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	// chrono::system_clock::time_point startManageRequestAndResponse =
 	// chrono::system_clock::now();
 
-	auto methodIt = queryParameters.find("method");
+	auto methodIt = queryParameters.find("x-api-method");
 	if (methodIt == queryParameters.end())
 	{
-		SPDLOG_ERROR("The 'method' parameter is not found");
+		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
 
 		string errorMessage = "Internal server error";
 
@@ -2281,10 +2281,10 @@ bool FFMPEGEncoder::basicAuthenticationRequired(const string &requestURI, const 
 {
 	bool basicAuthenticationRequired = true;
 
-	auto methodIt = queryParameters.find("method");
+	auto methodIt = queryParameters.find("x-api-method");
 	if (methodIt == queryParameters.end())
 	{
-		SPDLOG_ERROR("The 'method' parameter is not found");
+		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
 
 		return basicAuthenticationRequired;
 	}

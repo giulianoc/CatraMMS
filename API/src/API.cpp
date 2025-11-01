@@ -538,10 +538,10 @@ void API::manageRequestAndResponse(
 		);
 	}
 
-	auto methodIt = queryParameters.find("method");
+	auto methodIt = queryParameters.find("x-api-method");
 	if (methodIt == queryParameters.end())
 	{
-		string errorMessage = std::format("The 'method' parameter is not found");
+		string errorMessage = std::format("The 'x-api-method' parameter is not found");
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, 400, errorMessage);
@@ -551,7 +551,7 @@ void API::manageRequestAndResponse(
 	string method = methodIt->second;
 
 	string version;
-	auto versionIt = queryParameters.find("version");
+	auto versionIt = queryParameters.find("x-api-version");
 	if (versionIt != queryParameters.end())
 		version = versionIt->second;
 
@@ -2814,10 +2814,10 @@ bool API::basicAuthenticationRequired(const string &requestURI, const unordered_
 {
 	bool basicAuthenticationRequired = true;
 
-	auto methodIt = queryParameters.find("method");
+	auto methodIt = queryParameters.find("x-api-method");
 	if (methodIt == queryParameters.end())
 	{
-		SPDLOG_ERROR("The 'method' parameter is not found");
+		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
 
 		return basicAuthenticationRequired;
 	}
