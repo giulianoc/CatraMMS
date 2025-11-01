@@ -21,6 +21,7 @@ echo ""
 printf "${RED}"
 echo "git pull"
 printf "${NC}"
+git submodule foreach "git fetch origin && git checkout main && git pull origin main"
 git pull
 
 echo ""

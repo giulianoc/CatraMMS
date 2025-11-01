@@ -947,7 +947,7 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
 		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
 
-		string externalDeliveriesGroup;
+		string externalDeliveriesGroup = "default";
 		if (!playerRegion.empty())
 			externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, std::format("{}-{}", playerCountry, playerRegion), "default");
 		if (externalDeliveriesGroup == "default")
@@ -976,9 +976,10 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		"getDeliveryHost"
 		", playerCountry: {}"
 		", playerRegion: {}"
-		", externalDeliveries: {}"
 		", deliveryHost: {}",
-		playerCountry, playerRegion, JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot), deliveryHost
+		// ", externalDeliveries: {}",
+		playerCountry, playerRegion, deliveryHost
+		// JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot),
 	);
 
 	return deliveryHost;
