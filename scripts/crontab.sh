@@ -88,7 +88,7 @@ else
 	if [ $commandIndex -eq 1 ]
 	then
 		#first manage catalina.out file size if present
-		file=/var/catramms/logs/tomcat-gui/catalina.out
+		file=/var/catramms/logs/tomee-gui/catalina.out
 		if [ -f "$file" ]
 		then
 			fileSizeInMegaBytes=$(du -m "$file" | awk '{print $1}')
@@ -117,8 +117,8 @@ else
 
 		#serve per eliminare i file temporanei generati a causa di p:fileUpload non terminati.
 		#Quelli che terminano vengono automaticamente eliminati.
-		retentionOnFileByBlocks "/opt/catramms/tomcat/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f"
-		#find /opt/catramms/tomcat/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete -print >> $debugFilename
+		retentionOnFileByBlocks "/opt/catramms/tomee/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f"
+		#find /opt/catramms/tomee/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete -print >> $debugFilename
 
 		retentionOnFileByBlocks "/var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f"
 		#commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete -print"
