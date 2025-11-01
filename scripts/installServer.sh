@@ -635,9 +635,12 @@ create-directory-delivery()
 
 	mkdir -p /mnt/local-data/logs/mmsAPI
 	mkdir -p /mnt/local-data/logs/nginx
-	mkdir -p /mnt/local-data/logs/tomcat-gui
-	mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
-	mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+	#mkdir -p /mnt/local-data/logs/tomcat-gui
+	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+	mkdir -p /mnt/local-data/logs/tomee-gui
+	mkdir -p /mnt/local-data/logs/tomeeWorkDir/work
+	mkdir -p /mnt/local-data/logs/tomeeWorkDir/temp
 	mkdir -p /mnt/local-data/cache/nginx
 	if [ ! -e /var/catramms/logs ]; then
 		ln -s /mnt/local-data/logs /var/catramms
@@ -906,9 +909,9 @@ create-directory-integration()
 	chown -R mms:mms /var/catramms
 
 	#DA VERIFICARE
-	mkdir -p /mnt/local-data/logs/tomcat-gui
-	mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
-	mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+	#mkdir -p /mnt/local-data/logs/tomcat-gui
+	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
+	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
 	mkdir -p /mnt/local-data/logs/nginx
 	mkdir -p /mnt/local-data/cache/nginx
 	if [ ! -e /var/catramms/cache ]; then
@@ -1031,7 +1034,8 @@ install-mms-packages()
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
 			install-mms-nginx-package $architecture $moduleType
-			install-mms-tomcat-package $architecture
+			#install-mms-tomcat-package $architecture
+			install-mms-tomee-package $architecture
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
 			install-mms-CatraMMS-package $architecture
@@ -1054,7 +1058,8 @@ install-mms-packages()
 			install-mms-FFMpeg-package $architecture
 			install-mms-libpqxx-package $architecture
 			install-mms-nginx-package $architecture $moduleType
-			install-mms-tomcat-package $architecture
+			#install-mms-tomcat-package $architecture
+			install-mms-tomee-package $architecture
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
 			install-mms-CatraMMS-package $architecture
@@ -1129,8 +1134,11 @@ install-mms-packages()
 	if [ ! -e /home/mms/mmsTail.sh ]; then
 		ln -s /opt/catramms/CatraMMS/scripts/mmsTail.sh /home/mms
 	fi
-	if [ ! -e /home/mms/tomcat.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/tomcat.sh /home/mms
+	#if [ ! -e /home/mms/tomcat.sh ]; then
+	#	ln -s /opt/catramms/CatraMMS/scripts/tomcat.sh /home/mms
+	#fi
+	if [ ! -e /home/mms/tomee.sh ]; then
+		ln -s /opt/catramms/CatraMMS/scripts/tomee.sh /home/mms
 	fi
 	if [ ! -e /home/mms/printLogFileName.sh ]; then
 		ln -s /opt/catramms/CatraMMS/scripts/printLogFileName.sh /home/mms
@@ -1410,6 +1418,91 @@ install-mms-tomcat-package()
 	#favicon is selected by the <link ...> tag inside the xhtml of the project
 	#echo "cp /opt/catramms/tomcat/webapps/catramms/favicon_2.ico /opt/catramms/tomcat/webapps/ROOT/"
 }
+
+install-mms-tomee-package()
+{
+	architecture=$1
+
+	echo ""
+	tomeeVersion=10.1.2
+	echo -n "tomee version (i.e.: $tomeeVersion)? Look the version of webprofile at https://tomee.apache.org/download.html: "
+	read VERSION
+	if [ "$VERSION" == "" ]; then
+		VERSION=$tomeeVersion
+	fi
+	wget https://dlcdn.apache.org/tomee/tomee-${VERSION}/apache-tomee-${VERSION}-webprofile.tar.gz -P /tmp
+	tar -xvf /tmp/apache-tomee-${VERSION}-webprofile.tar.gz -C /opt/catramms
+	ln -rs /opt/catramms/apache-tomee-webprofile-${VERSION} /opt/catramms/tomee
+
+	rm -rf /opt/catramms/tomee/logs
+	ln -s /var/catramms/logs/tomee-gui /opt/catramms/tomee/logs
+
+	#/opt/catramms/tomee/work viene anche usato da tomee per salvare i chunks
+	#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
+	#in /var/catramms/logs/tomeeWorkDir
+	rm -rf /opt/catramms/tomee/work
+	ln -s /var/catramms/logs/tomeeWorkDir/work /opt/catramms/tomee/work
+	#/opt/catramms/tomee/temp viene anche usato da tomee per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
+	rm -rf /opt/catramms/tomee/temp
+	ln -s /var/catramms/logs/tomeeWorkDir/temp /opt/catramms/tomee/temp
+
+	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomee/webapps/ROOT/index.html
+
+	chown -R mms:mms /opt/catramms/apache-tomee-${VERSION}-webprofile
+
+	chmod u+x /opt/catramms/tomee/bin/*.sh
+
+	echo "[Unit]" > /etc/systemd/system/tomee.service
+	echo "Description=Tomee 10 servlet container" >> /etc/systemd/system/tomee.service
+	echo "After=network.target" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+	echo "[Service]" >> /etc/systemd/system/tomee.service
+	echo "Type=forking" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+	echo "User=mms" >> /etc/systemd/system/tomee.service
+	echo "Group=mms" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_BASE=/opt/catramms/tomee\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_HOME=/opt/catramms/tomee\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_PID=/var/catramms/pids/tomee.pid\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_OPTS=-Xms512M -Xmx4096M -server -XX:+UseParallelGC\"" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+	echo "ExecStart=/opt/catramms/tomee/bin/startup.sh" >> /etc/systemd/system/tomee.service
+	echo "ExecStop=/opt/catramms/tomee/bin/shutdown.sh" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+	echo "[Install]" >> /etc/systemd/system/tomee.service
+	echo "WantedBy=multi-user.target" >> /etc/systemd/system/tomee.service
+	echo "" >> /etc/systemd/system/tomee.service
+
+	#notify systemd that a new unit file exists
+	systemctl daemon-reload
+
+	systemctl enable --now tomee
+
+	echo "Make sure inside tomee/conf/server.xml we have:"
+	echo ""
+	echo "<Connector port=\"8080\" protocol=\"HTTP/1.1\""
+	echo "address=\"127.0.0.1\""
+	echo "connectionTimeout=\"20000\""
+	echo "URIEncoding=\"UTF-8\""
+	echo "redirectPort=\"8443\" />"
+	echo ""
+	echo "Make sure inside the Host tag we have:"
+	echo ""
+	echo "<Context path=\"/catramms\" docBase=\"catramms\" reloadable=\"true\">"
+	echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
+	echo "</Context>"
+	echo ""
+	echo "copiare catramms.war in /opt/catramms/tomee/webapps"
+	echo "far partire tomee in modo che crea la directory catramms"
+	echo "ln -s /opt/catramms/tomee/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomee/conf/catramms.properties"
+	#favicon is selected by the <link ...> tag inside the xhtml of the project
+	#echo "cp /opt/catramms/tomee/webapps/catramms/favicon_2.ico /opt/catramms/tomee/webapps/ROOT/"
+}
+
 
 install-mms-nginx-package()
 {

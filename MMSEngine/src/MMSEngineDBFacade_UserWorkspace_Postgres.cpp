@@ -59,7 +59,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 				res[0]["preferences"].is_null() ? nullptr
 				: JSONUtils::toJson(res[0]["preferences"].as<string>());
 		}
-		catch (exception& e)
+		catch (exception &e)
 		{
 			workspace->_preferences = nullptr;
 

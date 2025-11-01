@@ -23,7 +23,6 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
-// #include <openssl/md5.h>
 #include <exception>
 #include <memory>
 #include <openssl/bio.h>

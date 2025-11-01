@@ -934,8 +934,9 @@ mms_incrontab_check_locks()
 	incrontab -l | cut -f1 | while read path; do
 		#/var/catramms/storage/MMSRepository/MMSLive/6/5240
     channel=$(basename "$path")
+    maxAllowedConsecutiveLocks=3
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
-    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 2 && prevprev ~ /Lock attivo/ && prev ~ /Lock attivo/ && $0 ~ /Lock attivo/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')
+    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk -v maxAllowedConsecutiveLocks=$maxAllowedConsecutiveLocks 'BEGIN { alarm=0; } { if (NR > maxAllowedConsecutiveLocks && prevprev ~ /Lock attivo/ && prev ~ /Lock attivo/ && $0 ~ /Lock attivo/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')
 		if [ $alarm -eq 0 ]; then
 			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_locks, incrontab locks for channel $channel (filter ${dateFilter}) is fine" >> $debugFilename
 
@@ -949,7 +950,8 @@ mms_incrontab_check_locks()
 			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_locks, incrontab locks for channel $channel (filter ${dateFilter}) failed" >> $debugFilename
 
 			alarmNotificationPeriod=$((5 * 60))		#5 minuti
-			notify "$(hostname)" "alarm_incrontab_check_locks" "alarm_incrontab_check_locks_$channel" $alarmNotificationPeriod "3 consecutive locks for channel $channel (filter ${dateFilter})"
+			((consecutiveLocksNumber=maxAllowedConsecutiveLocks+1))
+			notify "$(hostname)" "alarm_incrontab_check_locks" "alarm_incrontab_check_locks_$channel" $alarmNotificationPeriod "$consecutiveLocksNumber consecutive locks for channel $channel (filter ${dateFilter})"
 			#return 1
 		fi
 	done
