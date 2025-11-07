@@ -11,8 +11,7 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
-#ifndef FFMPEGEncoder_h
-#define FFMPEGEncoder_h
+#pragma once
 
 #include "FFMPEGEncoderTask.h"
 #include "FFMpegWrapper.h"
@@ -27,11 +26,11 @@
 // see comment 2020-11-30
 #define __VECTOR__NO_LOCK_FOR_ENCODINGSTATUS
 
-class FFMPEGEncoder : public FastCGIAPI
+class FFMPEGEncoder final : public FastCGIAPI
 {
   public:
 	FFMPEGEncoder(
-		json configurationRoot,
+		const json& configurationRoot,
 		// string encoderCapabilityConfigurationPathName,
 
 		mutex *fcgiAcceptMutex,
@@ -53,19 +52,20 @@ class FFMPEGEncoder : public FastCGIAPI
 		mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset
 	);
 
-	~FFMPEGEncoder();
+	~FFMPEGEncoder() override;
 
 	void manageRequestAndResponse(
-		const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
-		const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
-		const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+		const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
+		const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
 	) override;
 
-	void checkAuthorization(const string& sThreadId, const string& userName, const string& password) override;
+	shared_ptr<AuthorizationDetails> checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password) override;
 
 	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
 
-	void sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage) override;
+	void sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage) override;
 
   private:
 	json _configurationRoot;
@@ -97,7 +97,7 @@ class FFMPEGEncoder : public FastCGIAPI
 	vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *_encodingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxEncodingsCapability;
-	int getMaxEncodingsCapability(void);
+	int getMaxEncodingsCapability();
 
 	mutex *_liveProxyMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
@@ -109,7 +109,7 @@ class FFMPEGEncoder : public FastCGIAPI
 	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveRecordingsCapability;
-	int getMaxLiveRecordingsCapability(void);
+	int getMaxLiveRecordingsCapability();
 
 	// int calculateCapabilitiesBasedOnOtherRunningProcesses(
 	// 	int configuredMaxEncodingsCapability,
@@ -154,17 +154,17 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	void liveRecorderThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+		shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
 	);
 
 	void liveProxyThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
 	);
 
 	void liveGridThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
 	);
 
 	void videoSpeedThread(
@@ -198,5 +198,3 @@ class FFMPEGEncoder : public FastCGIAPI
 
 	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, string label, string message, bool kill);
 };
-
-#endif

@@ -19,10 +19,8 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
-#include "PersistenceLock.h"
 #include "ProcessUtility.h"
 #include "SafeFileSystem.h"
-#include "StringUtils.h"
 #include "Validator.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
@@ -33,24 +31,39 @@
 #include <sstream>
 
 void API::ingestion(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, string apiKey,
-	shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "ingestion";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canIngestWorkflow)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canIngestWorkflow: {}",
+			apiAuthorizationDetails->canIngestWorkflow
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	json responseBodyRoot;
 	chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 	try
 	{
-
 		json requestBodyRoot = manageWorkflowVariables(requestBody, nullptr);
 
 		// string responseBody;
@@ -84,7 +97,7 @@ void API::ingestion(
 
 			Validator validator(_mmsEngineDBFacade, _configurationRoot);
 			// it starts from the root and validate recursively the entire body
-			validator.validateIngestedRootMetadata(workspace->_workspaceKey, requestBodyRoot);
+			validator.validateIngestedRootMetadata(apiAuthorizationDetails->workspace->_workspaceKey, requestBodyRoot);
 
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "type"))
 			{
@@ -101,10 +114,11 @@ void API::ingestion(
 
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
-				_mmsEngineDBFacade->addWorkflow(trans, workspace->_workspaceKey, userKey, rootType, rootLabel, rootHidden, requestBody.c_str());
+				_mmsEngineDBFacade->addWorkflow(trans, apiAuthorizationDetails->workspace->_workspaceKey, apiAuthorizationDetails->userKey, rootType, rootLabel, rootHidden,
+					requestBody);
 #else
 			int64_t ingestionRootKey =
-				_mmsEngineDBFacade->addIngestionRoot(conn, workspace->_workspaceKey, userKey, rootType, rootLabel, requestBody.c_str());
+				_mmsEngineDBFacade->addIngestionRoot(conn, apiAuthorizationDetails->workspace->_workspaceKey, apiAuthorizationDetails->userKey, rootType, rootLabel, requestBody.c_str());
 #endif
 			requestBodyRoot["ingestionRootKey"] = ingestionRootKey;
 
@@ -144,13 +158,13 @@ void API::ingestion(
 				int localDependOnSuccess = 1;
 #ifdef __POSTGRES__
 				ingestionGroupOfTasks(
-					trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					trans, apiAuthorizationDetails->userKey, apiAuthorizationDetails->password, apiAuthorizationDetails->workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
 #else
 				ingestionGroupOfTasks(
-					conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					conn, apiAuthorizationDetails->userKey, apiAuthorizationDetails->password, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
@@ -163,13 +177,13 @@ void API::ingestion(
 											  // dependOnIngestionJobKey is -1
 #ifdef __POSTGRES__
 				ingestionSingleTask(
-					trans, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					trans, apiAuthorizationDetails->userKey, apiAuthorizationDetails->password, apiAuthorizationDetails->workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
 #else
 				ingestionSingleTask(
-					conn, userKey, apiKey, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
+					conn, apiAuthorizationDetails->userKey, apiAuthorizationDetails->password, workspace, ingestionRootKey, taskRoot, dependOnIngestionJobKeysForStarting, localDependOnSuccess,
 					dependOnIngestionJobKeysForStarting, mapLabelAndIngestionJobKey,
 					/* responseBody, */ responseBodyTasksRoot
 				);
@@ -235,13 +249,7 @@ void API::ingestion(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw;
+		throw HTTPError(500);
 	}
 
 	try
@@ -266,17 +274,11 @@ void API::ingestion(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw;
+		throw HTTPError(500);
 	}
 }
 
-json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUsedRoot)
+json API::manageWorkflowVariables(const string_view& requestBody, json variablesValuesToBeUsedRoot)
 {
 	json requestBodyRoot;
 
@@ -349,7 +351,7 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 			if (variablesRoot.begin() != variablesRoot.end())
 			// if (variablesRoot.size() > 0)
 			{
-				string localRequestBody = requestBody;
+				string localRequestBody(requestBody);
 
 				SPDLOG_INFO("variables processing...");
 
@@ -579,18 +581,6 @@ json API::manageWorkflowVariables(string requestBody, json variablesValuesToBeUs
 			}
 		}
 	}
-	catch (runtime_error &e)
-	{
-		string errorMessage = std::format(
-			"requestBody json is not well format"
-			", requestBody: {}"
-			", e.what(): {}",
-			requestBody, e.what()
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
@@ -689,7 +679,7 @@ void API::manageReferencesInput(
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 		{
 			dependenciesToBeAddedToReferencesAt = JSONUtils::asString(parametersRoot, field, "");
-			if (dependenciesToBeAddedToReferencesAt != "")
+			if (!dependenciesToBeAddedToReferencesAt.empty())
 			{
 				if (dependenciesToBeAddedToReferencesAt == atTheBeginning)
 					dependenciesToBeAddedToReferencesAtIndex = 0;
@@ -703,7 +693,7 @@ void API::manageReferencesInput(
 						if (dependenciesToBeAddedToReferencesAtIndex > referencesRoot.size())
 							dependenciesToBeAddedToReferencesAtIndex = referencesRoot.size();
 					}
-					catch (exception e)
+					catch (exception& e)
 					{
 						string errorMessage = std::format(
 							"dependenciesToBeAddedToReferencesAt is not well format"
@@ -723,7 +713,7 @@ void API::manageReferencesInput(
 	// present, replace it with ReferenceIngestionJobKey
 	if (referencesSectionPresent)
 	{
-		bool referencesChanged = false;
+		// bool referencesChanged = false;
 
 		for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
 		{
@@ -734,7 +724,7 @@ void API::manageReferencesInput(
 			{
 				string referenceLabel = JSONUtils::asString(referenceRoot, field, "");
 
-				if (referenceLabel == "")
+				if (referenceLabel.empty())
 				{
 					string errorMessage = std::format(
 						"The 'label' value cannot be empty"
@@ -749,7 +739,7 @@ void API::manageReferencesInput(
 
 				vector<int64_t> ingestionJobKeys = mapLabelAndIngestionJobKey[referenceLabel];
 
-				if (ingestionJobKeys.size() == 0)
+				if (ingestionJobKeys.empty())
 				{
 					string errorMessage = std::format(
 						"The 'label' value is not found"
@@ -782,7 +772,7 @@ void API::manageReferencesInput(
 				field = "references";
 				parametersRoot[field] = referencesRoot;
 
-				referencesChanged = true;
+				// referencesChanged = true;
 
 				// The workflow specifies expliticily a reference (input for the
 				// task). Probable this is because the Reference is not part of
@@ -913,11 +903,11 @@ void API::manageReferencesInput(
 		}
 		else
 		{
-			for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
+			for (long long & referenceIndex : dependOnIngestionJobKeysOverallInput)
 			{
 				json referenceRoot;
 				string addedField = "ingestionJobKey";
-				referenceRoot[addedField] = dependOnIngestionJobKeysOverallInput.at(referenceIndex);
+				referenceRoot[addedField] = referenceIndex;
 
 				referencesRoot.push_back(referenceRoot);
 			}
@@ -963,7 +953,7 @@ void API::manageReferencesInput(
 // return: ingestionJobKey associated to this task
 #ifdef __POSTGRES__
 vector<int64_t> API::ingestionSingleTask(
-	PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &taskRoot,
+	PostgresConnTrans &trans, int64_t userKey, const string& apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &taskRoot,
 
 	// dependOnSuccess == 0 -> OnError
 	// dependOnSuccess == 1 -> OnSuccess
@@ -1115,7 +1105,7 @@ vector<int64_t> API::ingestionSingleTask(
 					parametersRoot.erase(encodingProfilesSetLabelField);
 				}
 
-				if (encodingProfilesSetKeys.size() == 0)
+				if (encodingProfilesSetKeys.empty())
 				{
 					string errorMessage = std::format(
 						"No EncodingProfileKey into the encodingProfilesSetKey"
@@ -1570,7 +1560,7 @@ json internalMMSRoot;
 
 			vector<int64_t> ingestionJobKeys = mapLabelAndIngestionJobKey[referenceLabel];
 
-			if (ingestionJobKeys.size() == 0)
+			if (ingestionJobKeys.empty())
 			{
 				string errorMessage = std::format(
 					"The 'label' value is not found"
@@ -1780,9 +1770,9 @@ JSONUtils::toString(parametersRoot)
 		if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
-		if (processingStartingFrom == "")
+		if (processingStartingFrom.empty())
 		{
-			tm tmUTCDateTime;
+			tm tmUTCDateTime{};
 			// char sProcessingStartingFrom[64];
 			string sProcessingStartingFrom;
 
@@ -1840,7 +1830,7 @@ JSONUtils::toString(parametersRoot)
 		", localDependOnIngestionJobKeyExecution: {}",
 		ingestionRootKey, taskLabel, localDependOnIngestionJobKeyExecution
 	);
-	if (taskLabel != "")
+	if (!taskLabel.empty())
 		(mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
 
 	{
@@ -1929,7 +1919,7 @@ JSONUtils::toString(parametersRoot)
 
 #ifdef __POSTGRES__
 vector<int64_t> API::ingestionGroupOfTasks(
-	PostgresConnTrans &trans, int64_t userKey, string apiKey, shared_ptr<Workspace> workspace, int64_t ingestionRootKey, json &groupOfTasksRoot,
+	PostgresConnTrans &trans, int64_t userKey, string apiKey, const shared_ptr<Workspace>& workspace, int64_t ingestionRootKey, json &groupOfTasksRoot,
 	vector<int64_t> dependOnIngestionJobKeysForStarting, int dependOnSuccess, vector<int64_t> dependOnIngestionJobKeysOverallInput,
 	unordered_map<string, vector<int64_t>> &mapLabelAndIngestionJobKey,
 	/* string& responseBody, */ json &responseBodyTasksRoot
@@ -2190,7 +2180,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 		{
 			referencesOutputRoot = parametersRoot[field];
 
-			referencesOutputPresent = referencesOutputRoot.size() > 0;
+			referencesOutputPresent = !referencesOutputRoot.empty();
 		}
 
 		// manage ReferenceOutputLabel, inside the References Tag, If present
@@ -2211,7 +2201,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 				{
 					string referenceLabel = JSONUtils::asString(referenceOutputRoot, field, "");
 
-					if (referenceLabel == "")
+					if (referenceLabel.empty())
 					{
 						string errorMessage = __FILEREF__ + "The 'label' value cannot be empty" + ", referenceLabel: " + referenceLabel;
 						SPDLOG_ERROR(errorMessage);
@@ -2221,7 +2211,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 
 					vector<int64_t> ingestionJobKeys = mapLabelAndIngestionJobKey[referenceLabel];
 
-					if (ingestionJobKeys.size() == 0)
+					if (ingestionJobKeys.empty())
 					{
 						string errorMessage = __FILEREF__ + "The 'label' value is not found" + ", referenceLabel: " + referenceLabel +
 											  ", groupOfTasksRoot: " + JSONUtils::toString(groupOfTasksRoot);
@@ -2270,15 +2260,15 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 			// add the inherit input) OR we want to add dependOnReferences to
 			// the Raferences tag
 
-			for (int referenceIndex = 0; referenceIndex < newDependOnIngestionJobKeysOverallInputBecauseOfTasks.size(); ++referenceIndex)
+			for (long long & newDependOnIngestionJobKeysOverallInputBecauseOfTask : newDependOnIngestionJobKeysOverallInputBecauseOfTasks)
 			{
 				json referenceOutputRoot;
 				field = "ingestionJobKey";
-				referenceOutputRoot[field] = newDependOnIngestionJobKeysOverallInputBecauseOfTasks.at(referenceIndex);
+				referenceOutputRoot[field] = newDependOnIngestionJobKeysOverallInputBecauseOfTask;
 
 				referencesOutputRoot.push_back(referenceOutputRoot);
 
-				referencesOutputIngestionJobKeys.push_back(newDependOnIngestionJobKeysOverallInputBecauseOfTasks.at(referenceIndex));
+				referencesOutputIngestionJobKeys.push_back(newDependOnIngestionJobKeysOverallInputBecauseOfTask);
 			}
 
 			SPDLOG_INFO(
@@ -2307,7 +2297,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 		field = "processingStartingFrom";
 		processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
-		if (processingStartingFrom == "")
+		if (processingStartingFrom.empty())
 		{
 			tm tmUTCDateTime;
 			// char sProcessingStartingFrom[64];
@@ -2400,7 +2390,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 		", localDependOnIngestionJobKeyExecution: {}",
 		ingestionRootKey, groupOfTaskLabel, localDependOnIngestionJobKeyExecution
 	);
-	if (groupOfTaskLabel != "")
+	if (!groupOfTaskLabel.empty())
 		(mapLabelAndIngestionJobKey[groupOfTaskLabel]).push_back(localDependOnIngestionJobKeyExecution);
 
 	{
@@ -2857,15 +2847,16 @@ void API::ingestionEvents(
 }
 
 void API::uploadedBinary(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestMethod,
-	unordered_map<string, string> queryParameters, shared_ptr<Workspace> workspace,
-	// unsigned long contentLength,
-	const unordered_map<string, string> &requestDetails
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "uploadedBinary";
 
-	// char* buffer = nullptr;
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	try
 	{
@@ -2901,9 +2892,9 @@ void API::uploadedBinary(
 
 		// Content-Range: bytes 0-99999/100000
 		bool contentRangePresent = false;
-		long long contentRangeStart = -1;
-		long long contentRangeEnd = -1;
-		long long contentRangeSize = -1;
+		uint64_t contentRangeStart = -1;
+		uint64_t contentRangeEnd = -1;
+		uint64_t contentRangeSize = -1;
 		double uploadingProgress = 0.0;
 		auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
 		if (contentRangeIt != requestDetails.end())
@@ -2929,13 +2920,13 @@ void API::uploadedBinary(
 			}
 		}
 
-		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(workspace);
+		string workspaceIngestionRepository = _mmsStorage->getWorkspaceIngestionRepository(apiAuthorizationDetails->workspace);
 		string destBinaryPathName = workspaceIngestionRepository + "/" + to_string(ingestionJobKey) + "_source";
 		bool segmentedContent = false;
 		try
 		{
 			json parametersRoot = _mmsEngineDBFacade->ingestionJob_columnAsJson(
-				workspace->_workspaceKey, "metaDataContent", ingestionJobKey,
+				apiAuthorizationDetails->workspace->_workspaceKey, "metaDataContent", ingestionJobKey,
 				// 2022-12-18: l'ingestionJob potrebbe essere stato
 				// appena aggiunto
 				true
@@ -2954,17 +2945,7 @@ void API::uploadedBinary(
 		catch (DBRecordNotFound &e)
 		{
 			string errorMessage = string("ingestionJob_MetadataContent failed") +
-								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
-								  ", destBinaryPathName: " + destBinaryPathName + ", e.what: " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("ingestionJob_MetadataContent failed") +
-								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+								  ", workspace->_workspaceKey: " + to_string(apiAuthorizationDetails->workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName + ", e.what: " + e.what();
 			SPDLOG_ERROR(errorMessage);
@@ -2974,7 +2955,7 @@ void API::uploadedBinary(
 		catch (exception &e)
 		{
 			string errorMessage = string("ingestionJob_MetadataContent failed") +
-								  ", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) +
+								  ", workspace->_workspaceKey: " + to_string(apiAuthorizationDetails->workspace->_workspaceKey) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceBinaryPathFile: " + sourceBinaryPathFile +
 								  ", destBinaryPathName: " + destBinaryPathName;
 			SPDLOG_ERROR(errorMessage);
@@ -2997,20 +2978,6 @@ void API::uploadedBinary(
 				);
 
 				MMSStorage::move(ingestionJobKey, sourceBinaryPathFile, destBinaryPathName);
-			}
-			catch (runtime_error &e)
-			{
-				string errorMessage = std::format(
-					"Error to move file"
-					", ingestionJobKey: {}"
-					", sourceBinaryPathFile: {}"
-					", destBinaryPathName: {}"
-					", e.what: {}",
-					ingestionJobKey, sourceBinaryPathFile, destBinaryPathName, e.what()
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
 			}
 			catch (exception &e)
 			{
@@ -3310,22 +3277,6 @@ void API::uploadedBinary(
 		string responseBody;
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 	}
-	catch (runtime_error e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception e)
 	{
 		SPDLOG_ERROR(
@@ -3334,13 +3285,7 @@ void API::uploadedBinary(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
@@ -3661,21 +3606,6 @@ void API::fileUploadProgressCheck()
 					throw runtime_error(errorMessage);
 				}
 			}
-			catch (runtime_error e)
-			{
-				SPDLOG_ERROR(
-					"Call for upload progress failed"
-					", ingestionJobKey: {}"
-					", progressId: {}"
-					", binaryVirtualHostName: {}"
-					", binaryListenHost: {}"
-					", callFailures: {}"
-					", exception: {}",
-					itr->_ingestionJobKey, itr->_progressId, itr->_binaryVirtualHostName, itr->_binaryListenHost, itr->_callFailures, e.what()
-				);
-
-				itr->_callFailures = itr->_callFailures + 1;
-			}
 			catch (exception e)
 			{
 				SPDLOG_ERROR(
@@ -3699,39 +3629,44 @@ void API::fileUploadProgressCheck()
 }
 
 void API::ingestionRootsStatus(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "ingestionRootsStatus";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
 	{
 		int64_t ingestionRootKey = -1;
 		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-		if (ingestionRootKeyIt != queryParameters.end() && ingestionRootKeyIt->second != "")
+		if (ingestionRootKeyIt != queryParameters.end() && !ingestionRootKeyIt->second.empty())
 			ingestionRootKey = stoll(ingestionRootKeyIt->second);
 
 		int64_t mediaItemKey = -1;
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt != queryParameters.end() && mediaItemKeyIt->second != "")
+		if (mediaItemKeyIt != queryParameters.end() && !mediaItemKeyIt->second.empty())
 			mediaItemKey = stoll(mediaItemKeyIt->second);
 
 		int start = 0;
 		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 			start = stoll(startIt->second);
 
 		int rows = 10;
 		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
@@ -3766,7 +3701,7 @@ void API::ingestionRootsStatus(
 
 		string label;
 		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
+		if (labelIt != queryParameters.end() && !labelIt->second.empty())
 		{
 			label = labelIt->second;
 
@@ -3784,7 +3719,7 @@ void API::ingestionRootsStatus(
 
 		string status = "all";
 		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && statusIt->second != "")
+		if (statusIt != queryParameters.end() && !statusIt->second.empty())
 		{
 			status = statusIt->second;
 		}
@@ -3793,7 +3728,7 @@ void API::ingestionRootsStatus(
 
 		bool asc = true;
 		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && ascIt->second != "")
+		if (ascIt != queryParameters.end() && !ascIt->second.empty())
 		{
 			if (ascIt->second == "true")
 				asc = true;
@@ -3803,7 +3738,7 @@ void API::ingestionRootsStatus(
 
 		bool ingestionJobOutputs = true;
 		auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
-		if (ingestionJobOutputsIt != queryParameters.end() && ingestionJobOutputsIt->second != "")
+		if (ingestionJobOutputsIt != queryParameters.end() && !ingestionJobOutputsIt->second.empty())
 		{
 			if (ingestionJobOutputsIt->second == "true")
 				ingestionJobOutputs = true;
@@ -3813,7 +3748,7 @@ void API::ingestionRootsStatus(
 
 		bool dependencyInfo = true;
 		auto dependencyInfoIt = queryParameters.find("dependencyInfo");
-		if (dependencyInfoIt != queryParameters.end() && dependencyInfoIt->second != "")
+		if (dependencyInfoIt != queryParameters.end() && !dependencyInfoIt->second.empty())
 		{
 			if (dependencyInfoIt->second == "true")
 				dependencyInfo = true;
@@ -3823,7 +3758,7 @@ void API::ingestionRootsStatus(
 
 		{
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
-				workspace, ingestionRootKey, mediaItemKey, start, rows,
+				apiAuthorizationDetails->workspace, ingestionRootKey, mediaItemKey, start, rows,
 				// startAndEndIngestionDatePresent,
 				startIngestionDate, endIngestionDate, label, status, asc, dependencyInfo, ingestionJobOutputs, hiddenToo,
 				// 2022-12-18: IngestionRoot dovrebbe essere stato aggiunto
@@ -3845,40 +3780,37 @@ void API::ingestionRootsStatus(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::ingestionRootMetaDataContent(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "ingestionRootMetaDataContent";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
 	{
 		int64_t ingestionRootKey = -1;
 		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-		if (ingestionRootKeyIt == queryParameters.end() || ingestionRootKeyIt->second == "")
+		if (ingestionRootKeyIt == queryParameters.end() || ingestionRootKeyIt->second.empty())
 		{
 			string errorMessage = "The 'ingestionRootKey' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3886,21 +3818,21 @@ void API::ingestionRootMetaDataContent(
 
 		bool processedMetadata = false;
 		auto processedMetadataIt = queryParameters.find("processedMetadata");
-		if (processedMetadataIt != queryParameters.end() && processedMetadataIt->second != "")
+		if (processedMetadataIt != queryParameters.end() && !processedMetadataIt->second.empty())
 			processedMetadata = (processedMetadataIt->second == "true" ? true : false);
 
 		{
 			string ingestionRootMetaDataContent;
 			if (processedMetadata)
 				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_columnAsString(
-					workspace->_workspaceKey, "processedMetaDataContent", ingestionRootKey,
+					apiAuthorizationDetails->workspace->_workspaceKey, "processedMetaDataContent", ingestionRootKey,
 					// 2022-12-18: IngestionJobKey dovrebbe essere stato
 					// aggiunto da tempo
 					false
 				);
 			else
 				ingestionRootMetaDataContent = _mmsEngineDBFacade->ingestionRoot_columnAsString(
-					workspace->_workspaceKey, "metaDataContent", ingestionRootKey,
+					apiAuthorizationDetails->workspace->_workspaceKey, "metaDataContent", ingestionRootKey,
 					// 2022-12-18: IngestionJobKey dovrebbe essere stato
 					// aggiunto da tempo
 					false
@@ -3918,23 +3850,6 @@ void API::ingestionRootMetaDataContent(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, ingestionRootMetaDataContent);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -3944,49 +3859,48 @@ void API::ingestionRootMetaDataContent(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::ingestionJobsStatus(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "ingestionJobsStatus";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
 	{
 		int64_t ingestionJobKey = -1;
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt != queryParameters.end() && ingestionJobKeyIt->second != "")
+		if (ingestionJobKeyIt != queryParameters.end() && !ingestionJobKeyIt->second.empty())
 		{
 			ingestionJobKey = stoll(ingestionJobKeyIt->second);
 		}
 
 		int start = 0;
 		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
 			start = stoll(startIt->second);
 		}
 
 		int rows = 10;
 		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
@@ -4029,7 +3943,7 @@ void API::ingestionJobsStatus(
 
 		bool labelLike = true;
 		auto labelLikeIt = queryParameters.find("labelLike");
-		if (labelLikeIt != queryParameters.end() && labelLikeIt->second != "")
+		if (labelLikeIt != queryParameters.end() && !labelLikeIt->second.empty())
 		{
 			labelLike = (labelLikeIt->second == "true" ? true : false);
 		}
@@ -4051,14 +3965,14 @@ void API::ingestionJobsStatus(
 
 		string ingestionType;
 		auto ingestionTypeIt = queryParameters.find("ingestionType");
-		if (ingestionTypeIt != queryParameters.end() && ingestionTypeIt->second != "")
+		if (ingestionTypeIt != queryParameters.end() && !ingestionTypeIt->second.empty())
 		{
 			ingestionType = ingestionTypeIt->second;
 		}
 
 		bool asc = true;
 		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && ascIt->second != "")
+		if (ascIt != queryParameters.end() && !ascIt->second.empty())
 		{
 			if (ascIt->second == "true")
 				asc = true;
@@ -4068,7 +3982,7 @@ void API::ingestionJobsStatus(
 
 		bool ingestionJobOutputs = true;
 		auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
-		if (ingestionJobOutputsIt != queryParameters.end() && ingestionJobOutputsIt->second != "")
+		if (ingestionJobOutputsIt != queryParameters.end() && !ingestionJobOutputsIt->second.empty())
 		{
 			if (ingestionJobOutputsIt->second == "true")
 				ingestionJobOutputs = true;
@@ -4078,7 +3992,7 @@ void API::ingestionJobsStatus(
 
 		bool dependencyInfo = true;
 		auto dependencyInfoIt = queryParameters.find("dependencyInfo");
-		if (dependencyInfoIt != queryParameters.end() && dependencyInfoIt->second != "")
+		if (dependencyInfoIt != queryParameters.end() && !dependencyInfoIt->second.empty())
 		{
 			if (dependencyInfoIt->second == "true")
 				dependencyInfo = true;
@@ -4089,7 +4003,7 @@ void API::ingestionJobsStatus(
 		// used in case of live-proxy
 		string configurationLabel;
 		auto configurationLabelIt = queryParameters.find("configurationLabel");
-		if (configurationLabelIt != queryParameters.end() && configurationLabelIt->second != "")
+		if (configurationLabelIt != queryParameters.end() && !configurationLabelIt->second.empty())
 		{
 			configurationLabel = configurationLabelIt->second;
 
@@ -4108,7 +4022,7 @@ void API::ingestionJobsStatus(
 		// used in case of live-grid
 		string outputChannelLabel;
 		auto outputChannelLabelIt = queryParameters.find("outputChannelLabel");
-		if (outputChannelLabelIt != queryParameters.end() && outputChannelLabelIt->second != "")
+		if (outputChannelLabelIt != queryParameters.end() && !outputChannelLabelIt->second.empty())
 		{
 			outputChannelLabel = outputChannelLabelIt->second;
 
@@ -4127,7 +4041,7 @@ void API::ingestionJobsStatus(
 		// used in case of live-recorder
 		int64_t recordingCode = -1;
 		auto recordingCodeIt = queryParameters.find("recordingCode");
-		if (recordingCodeIt != queryParameters.end() && recordingCodeIt->second != "")
+		if (recordingCodeIt != queryParameters.end() && !recordingCodeIt->second.empty())
 		{
 			recordingCode = stoll(recordingCodeIt->second);
 		}
@@ -4135,7 +4049,7 @@ void API::ingestionJobsStatus(
 		// used in case of broadcaster
 		bool broadcastIngestionJobKeyNotNull = false;
 		auto broadcastIngestionJobKeyNotNullIt = queryParameters.find("broadcastIngestionJobKeyNotNull");
-		if (broadcastIngestionJobKeyNotNullIt != queryParameters.end() && broadcastIngestionJobKeyNotNullIt->second != "")
+		if (broadcastIngestionJobKeyNotNullIt != queryParameters.end() && !broadcastIngestionJobKeyNotNullIt->second.empty())
 		{
 			if (broadcastIngestionJobKeyNotNullIt->second == "true")
 				broadcastIngestionJobKeyNotNull = true;
@@ -4145,7 +4059,7 @@ void API::ingestionJobsStatus(
 
 		string jsonParametersCondition;
 		auto jsonParametersConditionIt = queryParameters.find("jsonParametersCondition");
-		if (jsonParametersConditionIt != queryParameters.end() && jsonParametersConditionIt->second != "")
+		if (jsonParametersConditionIt != queryParameters.end() && !jsonParametersConditionIt->second.empty())
 		{
 			jsonParametersCondition = jsonParametersConditionIt->second;
 
@@ -4163,14 +4077,14 @@ void API::ingestionJobsStatus(
 
 		string status = "all";
 		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && statusIt->second != "")
+		if (statusIt != queryParameters.end() && !statusIt->second.empty())
 		{
 			status = statusIt->second;
 		}
 
 		bool fromMaster = false;
 		auto fromMasterIt = queryParameters.find("fromMaster");
-		if (fromMasterIt != queryParameters.end() && fromMasterIt->second != "")
+		if (fromMasterIt != queryParameters.end() && !fromMasterIt->second.empty())
 		{
 			if (fromMasterIt->second == "true")
 				fromMaster = true;
@@ -4180,7 +4094,7 @@ void API::ingestionJobsStatus(
 
 		{
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
-				workspace, ingestionJobKey, start, rows, label, labelLike,
+				apiAuthorizationDetails->workspace, ingestionJobKey, start, rows, label, labelLike,
 				/* startAndEndIngestionDatePresent, */ startIngestionDate, endIngestionDate, startScheduleDate, ingestionType, configurationLabel,
 				outputChannelLabel, recordingCode, broadcastIngestionJobKeyNotNull, jsonParametersCondition, asc, status, dependencyInfo,
 				ingestionJobOutputs, fromMaster
@@ -4191,23 +4105,6 @@ void API::ingestionJobsStatus(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -4217,40 +4114,48 @@ void API::ingestionJobsStatus(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::cancelIngestionJob(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "API::cancelIngestionJob";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCancelIngestionJob)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", cancelIngestionJob: {}",
+			apiAuthorizationDetails->canCancelIngestionJob
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
 		int64_t ingestionJobKey = -1;
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
 		{
 			string errorMessage = "The 'ingestionJobKey' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4294,7 +4199,7 @@ void API::cancelIngestionJob(
 		 */
 		bool forceCancel = false;
 		auto forceCancelIt = queryParameters.find("forceCancel");
-		if (forceCancelIt != queryParameters.end() && forceCancelIt->second != "")
+		if (forceCancelIt != queryParameters.end() && !forceCancelIt->second.empty())
 		{
 			if (forceCancelIt->second == "true")
 				forceCancel = true;
@@ -4303,7 +4208,7 @@ void API::cancelIngestionJob(
 		}
 
 		MMSEngineDBFacade::IngestionStatus ingestionStatus = _mmsEngineDBFacade->ingestionJob_Status(
-			workspace->_workspaceKey, ingestionJobKey,
+			apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey,
 			// 2022-12-18: meglio avere una info sicura
 			true
 		);
@@ -4317,8 +4222,6 @@ void API::cancelIngestionJob(
 				ingestionJobKey, MMSEngineDBFacade::toString(ingestionStatus)
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4338,40 +4241,6 @@ void API::cancelIngestionJob(
 		string responseBody;
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
-	catch (DBRecordNotFound &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -4381,40 +4250,48 @@ void API::cancelIngestionJob(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::updateIngestionJob(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
-	unordered_map<string, string> queryParameters, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updateIngestionJob";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditMedia: {}",
+			apiAuthorizationDetails->canEditMedia
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
 		int64_t ingestionJobKey = -1;
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
 		{
 			string errorMessage = "'ingestionJobKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4426,11 +4303,11 @@ void API::updateIngestionJob(
 				"ingestionJob_IngestionTypeStatus"
 				", workspace->_workspaceKey: {}"
 				", ingestionJobKey: {}",
-				workspace->_workspaceKey, ingestionJobKey
+				apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey
 			);
 
 			auto [ingestionType, ingestionStatus] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(
-				workspace->_workspaceKey, ingestionJobKey,
+				apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey,
 				// 2022-12-18: meglio avere una informazione sicura
 				true
 			);
@@ -4548,20 +4425,20 @@ void API::updateIngestionJob(
 						"Update IngestionJob"
 						", workspaceKey: {}"
 						", ingestionJobKey: {}",
-						workspace->_workspaceKey, ingestionJobKey
+						apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey
 					);
 
 					_mmsEngineDBFacade->updateIngestionJob_LiveRecorder(
-						workspace->_workspaceKey, ingestionJobKey, ingestionJobLabelModified, newIngestionJobLabel, channelLabelModified,
+						apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey, ingestionJobLabelModified, newIngestionJobLabel, channelLabelModified,
 						newChannelLabel, recordingPeriodStartModified, newRecordingPeriodStart, recordingPeriodEndModified, newRecordingPeriodEnd,
-						recordingVirtualVODModified, newRecordingVirtualVOD, admin
+						recordingVirtualVODModified, newRecordingVirtualVOD, apiAuthorizationDetails->admin
 					);
 
 					SPDLOG_INFO(
 						"IngestionJob updated"
 						", workspaceKey: {}"
 						", ingestionJobKey: {}",
-						workspace->_workspaceKey, ingestionJobKey
+						apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey
 					);
 				}
 			}
@@ -4573,63 +4450,17 @@ void API::updateIngestionJob(
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (DBRecordNotFound &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"{} failed"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
@@ -4640,28 +4471,38 @@ void API::updateIngestionJob(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::ingestionJobSwitchToEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
-	unordered_map<string, string> queryParameters, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "ingestionJobSwitchToEncoder";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditMedia: {}",
+			apiAuthorizationDetails->canEditMedia
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -4684,11 +4525,11 @@ void API::ingestionJobSwitchToEncoder(
 			", newPushEncoderKey: {}"
 			", newPushPublicEncoderName: {}"
 			", newEncodersPoolLabel: {}",
-			workspace->_workspaceKey, ingestionJobKey, newPushEncoderKey, newPushPublicEncoderName, newEncodersPoolLabel
+			apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey, newPushEncoderKey, newPushPublicEncoderName, newEncodersPoolLabel
 		);
 
 		auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
-			workspace->_workspaceKey, ingestionJobKey,
+			apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey,
 			// 2022-12-18: meglio avere una informazione sicura
 			true
 		);
@@ -4717,14 +4558,14 @@ void API::ingestionJobSwitchToEncoder(
 				// ingestionJobKey is referring a Broadcaster / Live Channel
 
 				// verifica se newPushEncoderKey sia uno degli encoder gestiti dal workspace
-				if (!_mmsEngineDBFacade->encoderWorkspaceMapping_isPresent(workspace->_workspaceKey, newPushEncoderKey))
+				if (!_mmsEngineDBFacade->encoderWorkspaceMapping_isPresent(apiAuthorizationDetails->workspace->_workspaceKey, newPushEncoderKey))
 				{
 					string errorMessage = std::format(
 						"EncoderKey is not managed by the workspaceKey"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", newPushEncoderKey: {}",
-						ingestionJobKey, workspace->_workspaceKey, newPushEncoderKey
+						ingestionJobKey, apiAuthorizationDetails->workspace->_workspaceKey, newPushEncoderKey
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -4781,7 +4622,7 @@ void API::ingestionJobSwitchToEncoder(
 				{
 					auto [broadcastIngestionType, broadcastIngestionStatus, broadcastMetadataContentRoot] =
 						_mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
-							workspace->_workspaceKey, broadcastIngestionJobKey,
+							apiAuthorizationDetails->workspace->_workspaceKey, broadcastIngestionJobKey,
 							// 2022-12-18: meglio avere una informazione sicura
 							true
 						);
@@ -4831,7 +4672,7 @@ void API::ingestionJobSwitchToEncoder(
 						string broadcasterStreamConfigurationLabel = JSONUtils::asString(metadataContentRoot, "configurationLabel");
 
 						string newOutputUdpUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
-							workspace->_workspaceKey, ingestionJobKey, broadcasterStreamConfigurationLabel, newPushEncoderKey,
+							apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey, broadcasterStreamConfigurationLabel, newPushEncoderKey,
 							newPushPublicEncoderName, false
 						);
 
@@ -4868,7 +4709,7 @@ void API::ingestionJobSwitchToEncoder(
 				// modifica ingestionJob->metadataContentRoot in modo che l'engine faccia partire l'encodingJob su newEncodersPoolLabel
 
 				auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
-					workspace->_workspaceKey, ingestionJobKey,
+					apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey,
 					// 2022-12-18: meglio avere una informazione sicura
 					true
 				);
@@ -4942,37 +4783,6 @@ void API::ingestionJobSwitchToEncoder(
 		string responseBody;
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
-	catch (DBRecordNotFound &e)
-	{
-		SPDLOG_ERROR(
-			"{} failed"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -4981,29 +4791,27 @@ void API::ingestionJobSwitchToEncoder(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::changeLiveProxyPlaylist(
-	const string& sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request,
-	const shared_ptr<Workspace>& workspace,
-	const unordered_map<string, string>& queryParameters, const string& requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "changeLiveProxyPlaylist";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -5042,11 +4850,11 @@ void API::changeLiveProxyPlaylist(
 				"ingestionJob_IngestionTypeStatusMetadataContent"
 				", workspace->_workspaceKey: {}"
 				", broadcasterIngestionJobKey: {}",
-				workspace->_workspaceKey, broadcasterIngestionJobKey
+				apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey
 			);
 
 			auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
-				workspace->_workspaceKey, broadcasterIngestionJobKey,
+				apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey,
 				// 2022-12-18: meglio avere una informazione sicura
 				true
 			);
@@ -5127,7 +4935,7 @@ void API::changeLiveProxyPlaylist(
 							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
 
 						broadcastDefaultStreamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
-							workspace, broadcasterIngestionJobKey, broadcastDefaultConfigurationLabel, "",
+							apiAuthorizationDetails->workspace, broadcasterIngestionJobKey, broadcastDefaultConfigurationLabel, "",
 							"", // useVideoTrackFromPhysicalPathName,
 								// useVideoTrackFromPhysicalDeliveryURL
 							maxWidth, userAgent, otherInputOptions, "", filtersRoot
@@ -5188,7 +4996,7 @@ void API::changeLiveProxyPlaylist(
 									bool warningIfMissing = false;
 									tie(ignore, vodContentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
 										_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-											workspace->_workspaceKey, broadcastDefaultPhysicalPathKey, warningIfMissing,
+											apiAuthorizationDetails->workspace->_workspaceKey, broadcastDefaultPhysicalPathKey, warningIfMissing,
 											// 2022-12-18: MIK dovrebbe
 											// essere stato aggiunto da
 											// tempo
@@ -5212,7 +5020,7 @@ void API::changeLiveProxyPlaylist(
 
 									tie(sourcePhysicalDeliveryURL, ignore) = _mmsDeliveryAuthorization->createDeliveryAuthorization(
 										-1, // userKey,
-										workspace,
+										apiAuthorizationDetails->workspace,
 										"", // clientIPAddress,
 
 										-1, // mediaItemKey,
@@ -5242,9 +5050,9 @@ void API::changeLiveProxyPlaylist(
 									);
 								}
 
-								sources.push_back(make_tuple(
+								sources.emplace_back(
 									broadcastDefaultPhysicalPathKey, broadcastDefaultTitle, sourcePhysicalPathName, sourcePhysicalDeliveryURL
-								));
+								);
 							}
 						}
 
@@ -5304,7 +5112,7 @@ void API::changeLiveProxyPlaylist(
 
 								pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
 									-1, // userKey,
-									workspace,
+									apiAuthorizationDetails->workspace,
 									"", // clientIPAddress,
 
 									-1, // mediaItemKey,
@@ -5425,19 +5233,15 @@ void API::changeLiveProxyPlaylist(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"{} failed"
 				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
 				api, broadcasterIngestionJobKey, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 500, errorMessage);
-
-			throw;
+			throw runtime_error(errorMessage);
 		}
 
 		// check/build the new playlist
@@ -5486,7 +5290,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							json streamInputRoot = newReceivedPlaylistItemRoot["streamInput"];
 
-							streamInputRoot["filters"] = getReviewedFiltersRoot(streamInputRoot["filters"], workspace, -1);
+							streamInputRoot["filters"] = getReviewedFiltersRoot(streamInputRoot["filters"], apiAuthorizationDetails->workspace, -1);
 
 							newReceivedPlaylistItemRoot["streamInput"] = streamInputRoot;
 						}
@@ -5494,7 +5298,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							json vodInputRoot = newReceivedPlaylistItemRoot["vodInput"];
 
-							vodInputRoot["filters"] = getReviewedFiltersRoot(vodInputRoot["filters"], workspace, -1);
+							vodInputRoot["filters"] = getReviewedFiltersRoot(vodInputRoot["filters"], apiAuthorizationDetails->workspace, -1);
 
 							// field = "sources";
 							json sourcesRoot = JSONUtils::asJson(vodInputRoot, "sources", json(), true);
@@ -5579,7 +5383,7 @@ void API::changeLiveProxyPlaylist(
 									bool warningIfMissing = false;
 									tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
 										mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-											workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+											apiAuthorizationDetails->workspace->_workspaceKey, physicalPathKey, warningIfMissing,
 											// 2022-12-18: MIK dovrebbe
 											// essere stato aggiunto da
 											// tempo
@@ -5603,7 +5407,7 @@ void API::changeLiveProxyPlaylist(
 
 									pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
 										-1, // userKey,
-										workspace,
+										apiAuthorizationDetails->workspace,
 										"", // clientIPAddress,
 
 										-1, // mediaItemKey,
@@ -5656,7 +5460,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							json countdownInputRoot = newReceivedPlaylistItemRoot["countdownInput"];
 
-							countdownInputRoot["filters"] = getReviewedFiltersRoot(countdownInputRoot["filters"], workspace, -1);
+							countdownInputRoot["filters"] = getReviewedFiltersRoot(countdownInputRoot["filters"], apiAuthorizationDetails->workspace, -1);
 
 							// field = "physicalPathKey";
 							if (!JSONUtils::isMetadataPresent(countdownInputRoot, "physicalPathKey"))
@@ -5683,7 +5487,7 @@ void API::changeLiveProxyPlaylist(
 								bool warningIfMissing = false;
 								tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
 									mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-										workspace->_workspaceKey, physicalPathKey, warningIfMissing,
+										apiAuthorizationDetails->workspace->_workspaceKey, physicalPathKey, warningIfMissing,
 										// 2022-12-18: MIK dovrebbe
 										// essere stato aggiunto da
 										// tempo
@@ -5713,7 +5517,7 @@ void API::changeLiveProxyPlaylist(
 						{
 							json directURLInputRoot = newReceivedPlaylistItemRoot["directURLInput"];
 
-							directURLInputRoot["filters"] = getReviewedFiltersRoot(directURLInputRoot["filters"], workspace, -1);
+							directURLInputRoot["filters"] = getReviewedFiltersRoot(directURLInputRoot["filters"], apiAuthorizationDetails->workspace, -1);
 
 							newReceivedPlaylistItemRoot["directURLInput"] = directURLInputRoot;
 						}
@@ -5757,10 +5561,10 @@ void API::changeLiveProxyPlaylist(
 			// precedenti a 'now - X days' (just a retention)
 			{
 				int32_t playlistItemsRetentionInHours = 3 * 24;
-				if (workspace->_preferences != nullptr
-					&& workspace->_preferences.contains("api") && workspace->_preferences["api"].is_object())
+				if (apiAuthorizationDetails->workspace->_preferences != nullptr
+					&& apiAuthorizationDetails->workspace->_preferences.contains("api") && apiAuthorizationDetails->workspace->_preferences["api"].is_object())
 				{
-					const json &apiRoot = workspace->_preferences["api"];
+					const json &apiRoot = apiAuthorizationDetails->workspace->_preferences["api"];
 					if (apiRoot.contains("liveProxy") && apiRoot["liveProxy"].is_object())
 					{
 						const json &liveProxyRoot = apiRoot["liveProxy"];
@@ -6195,19 +5999,15 @@ void API::changeLiveProxyPlaylist(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"{} failed"
 				", broadcasterIngestionJobKey: {}"
 				", e.what(): {}",
 				api, broadcasterIngestionJobKey, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 500, errorMessage);
-
-			throw;
+			throw runtime_error(errorMessage);
 		}
 
 		// 2021-12-22: For sure we will have the BroadcastIngestionJob.
@@ -6223,11 +6023,11 @@ void API::changeLiveProxyPlaylist(
 				", workspace->_workspaceKey: {}"
 				", broadcasterIngestionJobKey: {}"
 				", broadcastIngestionJobKey: {}",
-				workspace->_workspaceKey, broadcasterIngestionJobKey, broadcastIngestionJobKey
+				apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey, broadcastIngestionJobKey
 			);
 
 			auto [ingestionType, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeMetadataContent(
-				workspace->_workspaceKey, broadcastIngestionJobKey,
+				apiAuthorizationDetails->workspace->_workspaceKey, broadcastIngestionJobKey,
 				// 2022-12-18: meglio avere una informazione sicura
 				true
 			);
@@ -6343,7 +6143,7 @@ void API::changeLiveProxyPlaylist(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"{} failed"
 				", broadcasterIngestionJobKey: {}"
 				", ffmpegEncoderURL: {}"
@@ -6351,13 +6151,9 @@ void API::changeLiveProxyPlaylist(
 				", e.what(): {}",
 				api, broadcasterIngestionJobKey, ffmpegEncoderURL, response.str(), e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 500, errorMessage);
-
-			throw;
+			throw runtime_error(errorMessage);
 		}
 	}
 	catch (exception &e)
@@ -6368,34 +6164,36 @@ void API::changeLiveProxyPlaylist(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		throw;
+		throw HTTPError(500);
 	}
 }
 
 void API::changeLiveProxyOverlayText(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "changeLiveProxyOverlayText";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
 	{
 		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second == "")
+		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
 		{
 			string errorMessage = "'ingestionJobKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6410,11 +6208,11 @@ void API::changeLiveProxyOverlayText(
 					"ingestionJobQuery"
 					", workspace->_workspaceKey: {}"
 					", broadcasterIngestionJobKey: {}",
-					workspace->_workspaceKey, broadcasterIngestionJobKey
+					apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey
 				);
 
 				auto [ingestionType, ingestionStatus] =
-					_mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(workspace->_workspaceKey, broadcasterIngestionJobKey, false);
+					_mmsEngineDBFacade->ingestionJob_IngestionTypeStatus(apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey, false);
 
 				if (ingestionType != MMSEngineDBFacade::IngestionType::LiveProxy)
 				{
@@ -6481,75 +6279,27 @@ void API::changeLiveProxyOverlayText(
 				vector<string> otherHeaders;
 				CurlWrapper::httpPutStringAndGetJson(
 					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
-					requestBody,
+					string(requestBody),
 					"text/plain", // contentType
 					otherHeaders, std::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 				);
 			}
 		}
-		catch (DBRecordNotFound &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		string responseBody;
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
@@ -6560,13 +6310,12 @@ void API::changeLiveProxyOverlayText(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		throw e;
+		throw HTTPError(500);
 	}
 }
 
 // LO STESSO METODO E' IN MMSEngineProcessor.cpp
-json API::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey)
+json API::getReviewedFiltersRoot(json filtersRoot, const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey)
 {
 	if (filtersRoot == nullptr)
 		return filtersRoot;

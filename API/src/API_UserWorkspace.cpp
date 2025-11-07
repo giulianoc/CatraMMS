@@ -23,9 +23,15 @@
 #include <stdexcept>
 #include <vector>
 
-void API::registerUser(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
+void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters)
 {
 	string api = "registerUser";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -39,8 +45,6 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 		{
 			string errorMessage = "registerUser is not enabled";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -67,8 +71,6 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 			);
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
@@ -83,9 +85,6 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 					field
 				);
 				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 		}
@@ -103,9 +102,6 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 				email
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
@@ -116,7 +112,7 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 		string country = JSONUtils::asString(metadataRoot, "country", "");
 		string timezone = JSONUtils::asString(metadataRoot, "timezone", "CET");
 
-		if (shareWorkspaceCode == "")
+		if (shareWorkspaceCode.empty())
 		{
 			MMSEngineDBFacade::EncodingPriority encodingPriority;
 			MMSEngineDBFacade::EncodingPeriod encodingPeriod;
@@ -124,9 +120,9 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 			int maxStorageInMB;
 
 			string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
-			if (workspaceName == "")
+			if (workspaceName.empty())
 			{
-				if (name != "")
+				if (!name.empty())
 					workspaceName = name;
 				else
 					workspaceName = email;
@@ -189,38 +185,16 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 					workspaceName, email, userKey, confirmationCode
 				);
 			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					"API failed"
-					", API: {}"
-					", requestBody: {}"
-					", e.what(): {}",
-					api, requestBody, e.what()
-				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
-				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
 					", requestBody: {}"
 					", e.what(): {}",
 					api, requestBody, e.what()
 				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
 				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 500, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 
@@ -236,25 +210,6 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 					);
 
 					_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, _sharedEncodersPoolLabel, _sharedEncodersLabel);
-				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"API failed"
-						", API: {}"
-						", requestBody: {}"
-						", e.what(): {}",
-						api, requestBody, e.what()
-					);
-
-					// string errorMessage = string("Internal server error: ") + e.what();
-					// SPDLOG_ERROR(errorMessage);
-
-					// 2021-09-30: we do not raise an exception because this association
-					// is not critical for the account
-					// sendError(request, 500, errorMessage);
-
-					// throw runtime_error(errorMessage);
 				}
 				catch (exception &e)
 				{
@@ -287,25 +242,6 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 
 					for (int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
 						_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1), hlsChannelIndex + 1, -1, -1, "SHARED");
-				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"API failed"
-						", API: {}"
-						", requestBody: {}"
-						", e.what(): {}",
-						api, requestBody, e.what()
-					);
-
-					// string errorMessage = string("Internal server error: ") + e.what();
-					// SPDLOG_ERROR(errorMessage);
-
-					// 2021-09-30: we do not raise an exception because this association
-					// is not critical for the account
-					// sendError(request, 500, errorMessage);
-
-					// throw runtime_error(errorMessage);
 				}
 				catch (exception &e)
 				{
@@ -356,37 +292,16 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 					email, userKey, confirmationCode
 				);
 			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					"API failed"
-					", API: {}"
-					", requestBody: {}"
-					", e.what(): {}",
-					api, requestBody, e.what()
-				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
-				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 500, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
 					", requestBody: {}"
 					", e.what(): {}",
 					api, requestBody, e.what()
 				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
 				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 500, errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -441,84 +356,65 @@ void API::registerUser(string sThreadId, int64_t requestIdentifier, bool respons
 			// bool useMMSCCToo = true;
 			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::createWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
-	unordered_map<string, string> queryParameters, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "createWorkspace";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateRemoveWorkspace)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canCreateRemoveWorkspace: {}",
+			apiAuthorizationDetails->canCreateRemoveWorkspace
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, 403, errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
 
 	try
 	{
@@ -566,12 +462,12 @@ void API::createWorkspace(
 
 #ifdef __POSTGRES__
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = _mmsEngineDBFacade->createWorkspace(
-				userKey, workspaceName, "" /* notes */, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
+				apiAuthorizationDetails->userKey, workspaceName, "" /* notes */, MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
 				"", // string deliveryURL,
 				encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				"",	   // string languageCode,
 				"CET", // default timezone
-				admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+				apiAuthorizationDetails->admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 			);
 #else
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = _mmsEngineDBFacade->createWorkspace(
@@ -579,7 +475,7 @@ void API::createWorkspace(
 				"", // string deliveryURL,
 				encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				"", // string languageCode,
-				admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
+				apiAuthorizationDetails->admin, chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 			);
 #endif
 
@@ -588,43 +484,22 @@ void API::createWorkspace(
 				", workspaceName: {}"
 				", userKey: {}"
 				", confirmationCode: {}",
-				workspaceName, userKey, get<1>(workspaceKeyAndConfirmationCode)
+				workspaceName, apiAuthorizationDetails->userKey, get<1>(workspaceKeyAndConfirmationCode)
 			);
 
 			workspaceKey = get<0>(workspaceKeyAndConfirmationCode);
 			confirmationCode = get<1>(workspaceKeyAndConfirmationCode);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -642,36 +517,15 @@ void API::createWorkspace(
 
 				_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, _sharedEncodersPoolLabel, _sharedEncodersLabel);
 			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					"API failed"
-					", API: {}"
-					", requestBody: {}"
-					", e.what(): {}",
-					api, requestBody, e.what()
-				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
-				SPDLOG_ERROR(errorMessage);
-
-				// 2021-09-30: we do not raise an exception because this association
-				// is not critical for the account
-				// sendError(request, 500, errorMessage);
-
-				// throw runtime_error(errorMessage);
-			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
 					", requestBody: {}"
 					", e.what(): {}",
 					api, requestBody, e.what()
 				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
 				SPDLOG_ERROR(errorMessage);
 
 				// 2021-09-30: we do not raise an exception because this association
@@ -693,36 +547,15 @@ void API::createWorkspace(
 				for (int hlsChannelIndex = 0; hlsChannelIndex < _defaultSharedHLSChannelsNumber; hlsChannelIndex++)
 					_mmsEngineDBFacade->addHLSChannelConf(workspaceKey, to_string(hlsChannelIndex + 1), hlsChannelIndex + 1, -1, -1, "SHARED");
 			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					"API failed"
-					", API: {}"
-					", requestBody: {}"
-					", e.what(): {}",
-					api, requestBody, e.what()
-				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
-				SPDLOG_ERROR(errorMessage);
-
-				// 2021-09-30: we do not raise an exception because this association
-				// is not critical for the account
-				// sendError(request, 500, errorMessage);
-
-				// throw runtime_error(errorMessage);
-			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
 					", requestBody: {}"
 					", e.what(): {}",
 					api, requestBody, e.what()
 				);
-
-				string errorMessage = std::format("Internal server error: {}", e.what());
 				SPDLOG_ERROR(errorMessage);
 
 				// 2021-09-30: we do not raise an exception because this association
@@ -737,7 +570,7 @@ void API::createWorkspace(
 		{
 			json registrationRoot;
 			// registrationRoot["workspaceKey"] = workspaceKey;
-			registrationRoot["userKey"] = userKey;
+			registrationRoot["userKey"] = apiAuthorizationDetails->userKey;
 			registrationRoot["workspaceKey"] = workspaceKey;
 			registrationRoot["confirmationCode"] = confirmationCode;
 
@@ -745,13 +578,13 @@ void API::createWorkspace(
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 
-			pair<string, string> emailAddressAndName = _mmsEngineDBFacade->getUserDetails(userKey);
+			pair<string, string> emailAddressAndName = _mmsEngineDBFacade->getUserDetails(apiAuthorizationDetails->userKey);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
 				confirmationURL += (":" + to_string(_guiPort));
 			confirmationURL +=
-				("/catramms/conf/yourWorkspaces.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(userKey) +
+				("/catramms/conf/yourWorkspaces.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(apiAuthorizationDetails->userKey) +
 				 "&confirmationCode=" + confirmationCode);
 
 			SPDLOG_INFO(
@@ -760,7 +593,7 @@ void API::createWorkspace(
 				", userKey: {}"
 				", confirmationCode: {}"
 				", confirmationURL: {}",
-				workspaceKey, userKey, confirmationCode, confirmationURL
+				workspaceKey, apiAuthorizationDetails->userKey, confirmationCode, confirmationURL
 			);
 
 			string tosCommaSeparated = emailAddressAndName.first;
@@ -785,85 +618,63 @@ void API::createWorkspace(
 			// bool useMMSCCToo = true;
 			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::shareWorkspace_(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "shareWorkspace";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canShareWorkspace)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canShareWorkspace: {}",
+			apiAuthorizationDetails->canShareWorkspace
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -880,8 +691,6 @@ void API::shareWorkspace_(
 				requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -908,8 +717,6 @@ void API::shareWorkspace_(
 				string errorMessage = std::format("Json field is not present or it is null", ", Json field: {}", field);
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 500, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 		}
@@ -931,8 +738,6 @@ void API::shareWorkspace_(
 				email
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -969,8 +774,6 @@ void API::shareWorkspace_(
 			string errorMessage = "registerUser is not enabled";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
@@ -1006,12 +809,12 @@ void API::shareWorkspace_(
 					", userKey: {}"
 					", email: {}"
 					", codeType: {}",
-					workspace->_workspaceKey, userKey, email,
+					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email,
 					MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace)
 				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
-					workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
+					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel
 				);
@@ -1030,7 +833,7 @@ void API::shareWorkspace_(
 					", userKey: {}"
 					", confirmationCode: {}"
 					", confirmationURL: {}",
-					workspace->_workspaceKey, email, userKey, shareWorkspaceCode, confirmationURL
+					apiAuthorizationDetails->workspace->_workspaceKey, email, userKey, shareWorkspaceCode, confirmationURL
 				);
 
 				json registrationRoot;
@@ -1046,7 +849,7 @@ void API::shareWorkspace_(
 
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-				emailBody.push_back(std::format("<p>&emsp;&emsp;&emsp;&emsp;the '{}' workspace has been shared successfully</p>", workspace->_name));
+				emailBody.push_back(std::format("<p>&emsp;&emsp;&emsp;&emsp;the '{}' workspace has been shared successfully</p>", apiAuthorizationDetails->workspace->_name));
 				emailBody.push_back(
 					string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the user key <b>") + to_string(userKey) + "</b> and the confirmation code <b>" +
 					shareWorkspaceCode + "</b> to be used to confirm the sharing of the Workspace</p>"
@@ -1077,11 +880,11 @@ void API::shareWorkspace_(
 					", userKey: -1"
 					", email: {}"
 					", codeType: {}",
-					workspace->_workspaceKey, email, MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::ShareWorkspace)
+					apiAuthorizationDetails->workspace->_workspaceKey, email, MMSEngineDBFacade::toString(MMSEngineDBFacade::CodeType::ShareWorkspace)
 				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
-					workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace, admin, createRemoveWorkspace, ingestWorkflow,
+					apiAuthorizationDetails->workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace, admin, createRemoveWorkspace, ingestWorkflow,
 					createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob,
 					editEncodersPool, applicationRecorder, createRemoveLiveChannel
 				);
@@ -1098,7 +901,7 @@ void API::shareWorkspace_(
 					", email: {}"
 					", shareWorkspaceCode: {}"
 					", shareWorkspaceURL: {}",
-					workspace->_workspaceKey, email, shareWorkspaceCode, shareWorkspaceURL
+					apiAuthorizationDetails->workspace->_workspaceKey, email, shareWorkspaceCode, shareWorkspaceURL
 				);
 
 				json registrationRoot;
@@ -1113,7 +916,7 @@ void API::shareWorkspace_(
 
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + email + ",</p>");
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the <b>" + workspace->_name + "</b> workspace was shared with you</p>"));
+				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;the <b>" + apiAuthorizationDetails->workspace->_name + "</b> workspace was shared with you</p>"));
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Here follows the share workspace code <b>") + shareWorkspaceCode + "</b></p>");
 				emailBody.push_back(
 					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + shareWorkspaceURL +
@@ -1132,83 +935,50 @@ void API::shareWorkspace_(
 				// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 			}
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::workspaceList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "workspaceList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -1219,47 +989,37 @@ void API::workspaceList(
 			costDetails = true;
 
 		{
-			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(userKey, admin, costDetails);
+			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(apiAuthorizationDetails->userKey, apiAuthorizationDetails->admin, costDetails);
 
 			string responseBody = JSONUtils::toString(workspaceListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::confirmRegistration(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "confirmRegistration";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -1270,8 +1030,6 @@ void API::confirmRegistration(
 		{
 			string errorMessage = "The 'confirmationeCode' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1321,71 +1079,41 @@ void API::confirmRegistration(
 			// bool useMMSCCToo = true;
 			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
-void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
+void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "login";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}",
@@ -1410,8 +1138,6 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 			);
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
@@ -1433,8 +1159,6 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 							field
 						);
 						SPDLOG_ERROR(errorMessage);
-
-						sendError(request, 400, errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1475,54 +1199,16 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 						userKey, email
 					);
 				}
-				catch (LoginFailed &e)
-				{
-					SPDLOG_ERROR(
-						"API failed"
-						", API: {}"
-						", requestBody: {}"
-						", e.what(): {}",
-						api, requestBody, e.what()
-					);
-
-					string errorMessage = e.what();
-					SPDLOG_ERROR(errorMessage);
-
-					sendError(request, 401, errorMessage); // unauthorized
-
-					throw runtime_error(errorMessage);
-				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"API failed"
-						", API: {}"
-						", requestBody: {}"
-						", e.what(): {}",
-						api, requestBody, e.what()
-					);
-
-					string errorMessage = std::format("Internal server error: {}", e.what());
-					SPDLOG_ERROR(errorMessage);
-
-					sendError(request, 500, errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					string errorMessage = std::format(
 						"API failed"
 						", API: {}"
 						", requestBody: {}"
 						", e.what(): {}",
 						api, requestBody, e.what()
 					);
-
-					string errorMessage = std::format("Internal server error: {}", e.what());
 					SPDLOG_ERROR(errorMessage);
-
-					sendError(request, 500, errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1536,8 +1222,6 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 					{
 						string errorMessage = std::format("Json field is not present or it is null", ", Json field: {}", field);
 						SPDLOG_ERROR(errorMessage);
-
-						sendError(request, 400, errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1645,37 +1329,16 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 					{
 						userAlreadyRegistered = false;
 					}
-					catch (runtime_error &e)
-					{
-						SPDLOG_ERROR(
-							"API failed"
-							", API: {}"
-							", requestBody: {}"
-							", e.what(): {}",
-							api, requestBody, e.what()
-						);
-
-						string errorMessage = std::format("Internal server error: {}", e.what());
-						SPDLOG_ERROR(errorMessage);
-
-						sendError(request, 500, errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						string errorMessage = std::format(
 							"API failed"
 							", API: {}"
 							", requestBody: {}"
 							", e.what(): {}",
 							api, requestBody, e.what()
 						);
-
-						string errorMessage = std::format("Internal server error: {}", e.what());
 						SPDLOG_ERROR(errorMessage);
-
-						sendError(request, 500, errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1741,63 +1404,23 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 						);
 					}
 				}
-				catch (LoginFailed &e)
-				{
-					SPDLOG_ERROR(
-						"API failed"
-						", API: {}"
-						", requestBody: {}"
-						", e.what(): {}",
-						api, requestBody, e.what()
-					);
-
-					string errorMessage = e.what();
-					SPDLOG_ERROR(errorMessage);
-
-					sendError(request, 401, errorMessage); // unauthorized
-
-					throw runtime_error(errorMessage);
-				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"API failed"
-						", API: {}"
-						", ldapURL: {}"
-						", ldapCertificatePathName: {}"
-						", ldapManagerUserName: {}"
-						", e.what(): {}",
-						api, _ldapURL, _ldapCertificatePathName, _ldapManagerUserName, e.what()
-					);
-
-					string errorMessage = std::format("Internal server error: {}", e.what());
-					SPDLOG_ERROR(errorMessage);
-
-					sendError(request, 500, errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					string errorMessage = std::format(
 						"API failed"
 						", API: {}"
 						", requestBody: {}"
 						", e.what(): {}",
 						api, requestBody, e.what()
 					);
-
-					string errorMessage = std::format("Internal server error: {}", e.what());
 					SPDLOG_ERROR(errorMessage);
-
-					sendError(request, 500, errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 		}
 
-		if (remoteClientIPAddress != "")
+		if (!remoteClientIPAddress.empty())
 		{
 			try
 			{
@@ -1808,23 +1431,6 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 					userKey, remoteClientIPAddress
 				);
 				_mmsEngineDBFacade->saveLoginStatistics(userKey, remoteClientIPAddress);
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					"Saving Login Statistics failed"
-					", userKey: {}"
-					", remoteClientIPAddress: {}"
-					", e.what(): {}",
-					userKey, remoteClientIPAddress, e.what()
-				);
-
-				// string errorMessage = string("Internal server error: ") + e.what();
-				// SPDLOG_ERROR(errorMessage);
-
-				// sendError(request, 500, errorMessage);
-
-				// throw runtime_error(errorMessage);
 			}
 			catch (exception &e)
 			{
@@ -1866,77 +1472,45 @@ void API::login(string sThreadId, int64_t requestIdentifier, bool responseBodyCo
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::updateUser(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updateUser";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1975,8 +1549,6 @@ void API::updateUser(
 				requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2034,7 +1606,7 @@ void API::updateUser(
 				timezoneChanged = true;
 			}
 
-			if (admin)
+			if (apiAuthorizationDetails->admin)
 			{
 				field = "insolvent";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
@@ -2044,7 +1616,7 @@ void API::updateUser(
 				}
 			}
 
-			if (admin)
+			if (apiAuthorizationDetails->admin)
 			{
 				field = "expirationDate";
 				if (JSONUtils::isMetadataPresent(metadataRoot, field))
@@ -2085,11 +1657,11 @@ void API::updateUser(
 				", userKey: {}"
 				", name: {}"
 				", email: {}",
-				userKey, name, email
+				apiAuthorizationDetails->userKey, name, email
 			);
 
 			json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
-				admin, _ldapEnabled, userKey, nameChanged, name, emailChanged, email, countryChanged, country, timezoneChanged, timezone,
+				apiAuthorizationDetails->admin, _ldapEnabled, apiAuthorizationDetails->userKey, nameChanged, name, emailChanged, email, countryChanged, country, timezoneChanged, timezone,
 				insolventChanged, insolvent, expirationDateChanged, expirationUtcDate, passwordChanged, newPassword, oldPassword
 			);
 
@@ -2098,84 +1670,50 @@ void API::updateUser(
 				", userKey: {}"
 				", name: {}"
 				", email: {}",
-				userKey, name, email
+				apiAuthorizationDetails->userKey, name, email
 			);
 
 			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
-void API::createTokenToResetPassword(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, unordered_map<string, string> queryParameters
-)
+void API::createTokenToResetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters)
 {
 	string api = "createTokenToResetPassword";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -2188,8 +1726,6 @@ void API::createTokenToResetPassword(
 		{
 			string errorMessage = "The 'email' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2219,37 +1755,16 @@ void API::createTokenToResetPassword(
 
 			resetPasswordToken = _mmsEngineDBFacade->createResetPasswordToken(userKey);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
+			throw runtime_error(errorMessage	);
 		}
 
 		try
@@ -2284,71 +1799,41 @@ void API::createTokenToResetPassword(
 			// bool useMMSCCToo = true;
 			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
-void API::resetPassword(string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, string requestBody)
+void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters)
 {
 	string api = "resetPassword";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2375,29 +1860,23 @@ void API::resetPassword(string sThreadId, int64_t requestIdentifier, bool respon
 			);
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 500, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
 		resetPasswordToken = JSONUtils::asString(metadataRoot, "resetPasswordToken", "");
-		if (resetPasswordToken == "")
+		if (resetPasswordToken.empty())
 		{
 			string errorMessage = "The 'resetPasswordToken' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
-		if (newPassword == "")
+		if (newPassword.empty())
 		{
 			string errorMessage = "The 'newPassword' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2416,37 +1895,16 @@ void API::resetPassword(string sThreadId, int64_t requestIdentifier, bool respon
 			name = details.first;
 			email = details.second;
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2474,84 +1932,51 @@ void API::resetPassword(string sThreadId, int64_t requestIdentifier, bool respon
 			// bool useMMSCCToo = true;
 			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::updateWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
-	string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updateWorkspace";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -2630,8 +2055,6 @@ void API::updateWorkspace(
 				requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2808,8 +2231,6 @@ void API::updateWorkspace(
 						);
 						SPDLOG_ERROR(errorMessage);
 
-						sendError(request, 400, errorMessage);
-
 						throw runtime_error(errorMessage);
 					}
 				}
@@ -2864,12 +2285,12 @@ void API::updateWorkspace(
 				"Updating WorkspaceDetails"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 #ifdef __POSTGRES__
 			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
-				userKey, workspace->_workspaceKey, notesChanged, newNotes, enabledChanged, newEnabled, nameChanged, newName,
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, notesChanged, newNotes, enabledChanged, newEnabled, nameChanged, newName,
 				maxEncodingPriorityChanged, newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged,
 				newMaxIngestionsNumber, languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, preferencesChanged, newPreferences,
 				externalDeliveriesChanged, newExternalDeliveries, expirationDateChanged, newExpirationUtcDate,
@@ -2889,7 +2310,7 @@ void API::updateWorkspace(
 			bool maxStorageInMBChanged = false;
 			int64_t newMaxStorageInMB = 0;
 			json workspaceDetailRoot = _mmsEngineDBFacade->updateWorkspaceDetails(
-				userKey, workspace->_workspaceKey, enabledChanged, newEnabled, nameChanged, newName, maxEncodingPriorityChanged,
+				userKey, apiAuthorizationDetails->workspace->_workspaceKey, enabledChanged, newEnabled, nameChanged, newName, maxEncodingPriorityChanged,
 				newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged, newMaxIngestionsNumber,
 				maxStorageInMBChanged, newMaxStorageInMB, languageCodeChanged, newLanguageCode, expirationDateChanged, newExpirationUtcDate,
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
@@ -2901,91 +2322,58 @@ void API::updateWorkspace(
 				"WorkspaceDetails updated"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			string responseBody = JSONUtils::toString(workspaceDetailRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::setWorkspaceAsDefault(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "setWorkspaceAsDefault";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -2997,8 +2385,6 @@ void API::setWorkspaceAsDefault(
 			string errorMessage = "The 'workspaceKeyToBeSetAsDefault' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		workspaceKeyToBeSetAsDefault = stoll(workspaceKeyToBeSetAsDefaultIt->second);
@@ -3009,108 +2395,81 @@ void API::setWorkspaceAsDefault(
 				"setWorkspaceAsDefault"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
-			_mmsEngineDBFacade->setWorkspaceAsDefault(userKey, workspace->_workspaceKey, workspaceKeyToBeSetAsDefault);
+			_mmsEngineDBFacade->setWorkspaceAsDefault(apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, workspaceKeyToBeSetAsDefault);
 
 			string responseBody;
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::deleteWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "deleteWorkspace";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", userKey: {}",
-		api, workspace->_workspaceKey, userKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey, apiAuthorizationDetails->userKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateRemoveWorkspace)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canCreateRemoveWorkspace: {}",
+			apiAuthorizationDetails->canCreateRemoveWorkspace
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
 		if (_noFileSystemAccess)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"{} failed, no rights to execute this method"
 				", _noFileSystemAccess: {}",
 				api, _noFileSystemAccess
 			);
-
-			string errorMessage = std::format("Internal server error: no rights to execute this method");
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3121,17 +2480,17 @@ void API::deleteWorkspace(
 				"Delete Workspace from DB"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato rimosso
-			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(userKey, workspace->_workspaceKey);
+			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey);
 
 			SPDLOG_INFO(
 				"Workspace from DB deleted"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			if (usersRemoved.size() > 0)
@@ -3149,7 +2508,7 @@ void API::deleteWorkspace(
 					vector<string> emailBody;
 					emailBody.push_back(string("<p>Dear ") + name + ",</p>");
 					emailBody.push_back(string(
-						"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name +
+						"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + apiAuthorizationDetails->workspace->_name +
 						") was removed and</p>"
 					));
 					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
@@ -3166,35 +2525,15 @@ void API::deleteWorkspace(
 				}
 			}
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3205,98 +2544,76 @@ void API::deleteWorkspace(
 				"Delete Workspace from Storage"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
-			_mmsStorage->deleteWorkspace(workspace);
+			_mmsStorage->deleteWorkspace(apiAuthorizationDetails->workspace);
 
 			SPDLOG_INFO(
 				"Workspace from Storage deleted"
 				", workspaceKey: {}",
-				workspace->_workspaceKey
+				apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", userKey: {}"
-			", workspace->_workspaceKey: {}"
-			", e.what(): {}",
-			api, userKey, workspace->_workspaceKey, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", userKey: {}"
 			", workspace->_workspaceKey: {}"
 			", e.what(): {}",
-			api, userKey, workspace->_workspaceKey, e.what()
+			api, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::unshareWorkspace(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "unshareWorkspace";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", userKey: {}",
-		api, workspace->_workspaceKey, userKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey, apiAuthorizationDetails->userKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canShareWorkspace)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canShareWorkspace: {}",
+			apiAuthorizationDetails->canShareWorkspace
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -3306,17 +2623,17 @@ void API::unshareWorkspace(
 				"Unshare Workspace"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato unshared
-			auto [userToBeRemoved, name, eMailAddress] = _mmsEngineDBFacade->unshareWorkspace(userKey, workspace->_workspaceKey);
+			auto [userToBeRemoved, name, eMailAddress] = _mmsEngineDBFacade->unshareWorkspace(apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey);
 
 			SPDLOG_INFO(
 				"Workspace from DB unshared"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			if (userToBeRemoved)
@@ -3327,7 +2644,7 @@ void API::unshareWorkspace(
 				vector<string> emailBody;
 				emailBody.push_back(string("<p>Dear ") + name + ",</p>");
 				emailBody.push_back(string(
-					"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + workspace->_name +
+					"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + apiAuthorizationDetails->workspace->_name +
 					") was unshared and</p>"
 				));
 				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
@@ -3345,82 +2662,49 @@ void API::unshareWorkspace(
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", userKey: {}"
-			", workspace->_workspaceKey: {}"
-			", e.what(): {}",
-			api, userKey, workspace->_workspaceKey, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", userKey: {}"
 			", workspace->_workspaceKey: {}"
 			", e.what(): {}",
-			api, userKey, workspace->_workspaceKey, e.what()
+			api, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::workspaceUsage(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
-	json workspaceUsageRoot;
 
 	string api = "workspaceUsage";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	try
 	{
+		json workspaceUsageRoot;
 		string field;
 
 		{
@@ -3434,7 +2718,8 @@ void API::workspaceUsage(
 		{
 			int64_t workSpaceUsageInBytes;
 
-			pair<int64_t, int64_t> workSpaceUsageInBytesAndMaxStorageInMB = _mmsEngineDBFacade->getWorkspaceUsage(workspace->_workspaceKey);
+			pair<int64_t, int64_t> workSpaceUsageInBytesAndMaxStorageInMB = _mmsEngineDBFacade->getWorkspaceUsage(
+				apiAuthorizationDetails->workspace->_workspaceKey);
 			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
@@ -3450,18 +2735,6 @@ void API::workspaceUsage(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"getWorkspaceUsage exception"
-			", e.what(): {}",
-			e.what()
-		);
-
-		sendError(request, 500, e.what());
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -3469,10 +2742,7 @@ void API::workspaceUsage(
 			", e.what(): {}",
 			e.what()
 		);
-
-		sendError(request, 500, e.what());
-
-		throw e;
+		throw HTTPError(500);
 	}
 }
 
@@ -3531,7 +2801,7 @@ void API::emailFormatCheck(string email)
 
 	string localPart = email.substr(0, endOfLocalPartIndex);
 	string domainPart = email.substr(endOfLocalPartIndex + 1);
-	if (localPart == "" || domainPart.find(".") == string::npos)
+	if (localPart.empty() || domainPart.find('.') == string::npos)
 	{
 		string errorMessage = std::format(
 			"Wrong email format"

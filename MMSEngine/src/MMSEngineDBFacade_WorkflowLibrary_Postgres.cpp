@@ -4,7 +4,7 @@
 #include <random>
 
 int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
-	int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey, string jsonWorkflow, bool admin
+	int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey, const string_view& jsonWorkflow, bool admin
 )
 {
 	int64_t workflowLibraryKey;
@@ -53,7 +53,8 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 }
 
 int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
-	PostgresConnTrans &trans, int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey, string jsonWorkflow, bool admin
+	PostgresConnTrans &trans, int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey,
+	const string_view& jsonWorkflow, bool admin
 )
 {
 	int64_t workflowLibraryKey;

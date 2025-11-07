@@ -14,25 +14,41 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "StringUtils.h"
 #include "Validator.h"
 #include "spdlog/spdlog.h"
 #include <format>
 #include <regex>
 
 void API::addYouTubeConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addYouTubeConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -106,16 +122,12 @@ void API::addYouTubeConf(
 				accessToken = JSONUtils::asString(requestBodyRoot, field, "");
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -154,19 +166,9 @@ void API::addYouTubeConf(
 				}
 			}
 
-			json youTubeRoot = _mmsEngineDBFacade->addYouTubeConf(workspace->_workspaceKey, label, tokenType, refreshToken, accessToken);
+			json youTubeRoot = _mmsEngineDBFacade->addYouTubeConf(apiAuthorizationDetails->workspace->_workspaceKey, label, tokenType, refreshToken, accessToken);
 
 			sResponse = JSONUtils::toString(youTubeRoot);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addYouTubeConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -176,27 +178,10 @@ void API::addYouTubeConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -208,28 +193,40 @@ void API::addYouTubeConf(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyYouTubeConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyYouTubeConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -274,16 +271,11 @@ void API::modifyYouTubeConf(
 				accessTokenModified = true;
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -328,22 +320,12 @@ void API::modifyYouTubeConf(
 			}
 
 			json youTubeRoot = _mmsEngineDBFacade->modifyYouTubeConf(
-				confKey, workspace->_workspaceKey, label, labelModified, tokenType, tokenTypeModified, refreshToken, refreshTokenModified,
+				confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, labelModified, tokenType, tokenTypeModified, refreshToken, refreshTokenModified,
 				accessToken, accessTokenModified
 			);
 
 			sResponse = JSONUtils::toString(youTubeRoot);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyYouTubeConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -352,27 +334,10 @@ void API::modifyYouTubeConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -384,88 +349,49 @@ void API::modifyYouTubeConf(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeYouTubeConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeYouTubeConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeYouTubeConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeYouTubeConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeYouTubeConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeYouTubeConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -476,70 +402,40 @@ void API::removeYouTubeConf(
 			api, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::youTubeConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "youTubeConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		string label = getQueryParameter(queryParameters, "label", string(), false);
 
 		{
-			json youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(workspace->_workspaceKey, label);
+			json youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(apiAuthorizationDetails->workspace->_workspaceKey, label);
 
 			string responseBody = JSONUtils::toString(youTubeConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -548,29 +444,39 @@ void API::youTubeConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addFacebookConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addFacebookConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -609,16 +515,11 @@ void API::addFacebookConf(
 			}
 			userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -627,19 +528,9 @@ void API::addFacebookConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = _mmsEngineDBFacade->addFacebookConf(workspace->_workspaceKey, label, userAccessToken);
+			int64_t confKey = _mmsEngineDBFacade->addFacebookConf(apiAuthorizationDetails->workspace->_workspaceKey, label, userAccessToken);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addFacebookConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -649,28 +540,11 @@ void API::addFacebookConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -680,29 +554,39 @@ void API::addFacebookConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyFacebookConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyFacebookConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -741,80 +625,23 @@ void API::modifyFacebookConf(
 			}
 			userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->modifyFacebookConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, userAccessToken);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyFacebookConf(confKey, workspace->_workspaceKey, label, userAccessToken);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyFacebookConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyFacebookConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -825,89 +652,48 @@ void API::modifyFacebookConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeFacebookConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeFacebookConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeFacebookConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeFacebookConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeFacebookConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeFacebookConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -917,83 +703,46 @@ void API::removeFacebookConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::facebookConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "facebookConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		int64_t confKey = -1;
-		auto confKeyIt = queryParameters.find("confKey");
-		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
-		{
-			confKey = stoll(confKeyIt->second);
-			if (confKey == 0)
-				confKey = -1;
-		}
+		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		if (confKey == 0)
+			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-		{
-			auto labelIt = queryParameters.find("label");
-			if (labelIt != queryParameters.end() && labelIt->second != "")
-			{
-				label = labelIt->second;
-
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after unescape, this char will be changed to space and we do not want it
-				string plus = "\\+";
-				string plusDecoded = " ";
-				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-				label = CurlWrapper::unescape(firstDecoding);
-			}
-		}
+			label = getMapParameter(queryParameters, "label", string(), false);
 
 		{
-			json facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(workspace->_workspaceKey, confKey, label);
+			json facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(facebookConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1002,29 +751,39 @@ void API::facebookConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addTwitchConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addTwitchConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1063,16 +822,11 @@ void API::addTwitchConf(
 			}
 			refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1081,19 +835,9 @@ void API::addTwitchConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = _mmsEngineDBFacade->addTwitchConf(workspace->_workspaceKey, label, refreshToken);
+			int64_t confKey = _mmsEngineDBFacade->addTwitchConf(apiAuthorizationDetails->workspace->_workspaceKey, label, refreshToken);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addTwitchConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -1108,23 +852,6 @@ void API::addTwitchConf(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1134,29 +861,39 @@ void API::addTwitchConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyTwitchConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyTwitchConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1195,80 +932,23 @@ void API::modifyTwitchConf(
 			}
 			refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->modifyTwitchConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, refreshToken);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyTwitchConf(confKey, workspace->_workspaceKey, label, refreshToken);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyTwitchConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyTwitchConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1279,89 +959,48 @@ void API::modifyTwitchConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeTwitchConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeTwitchConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeTwitchConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeTwitchConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeTwitchConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeTwitchConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1371,83 +1010,46 @@ void API::removeTwitchConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::twitchConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "twitchConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		int64_t confKey = -1;
-		auto confKeyIt = queryParameters.find("confKey");
-		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
-		{
-			confKey = stoll(confKeyIt->second);
-			if (confKey == 0)
-				confKey = -1;
-		}
+		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		if (confKey == 0)
+			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-		{
-			auto labelIt = queryParameters.find("label");
-			if (labelIt != queryParameters.end() && labelIt->second != "")
-			{
-				label = labelIt->second;
-
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after unescape, this char will be changed to space and we do not want it
-				string plus = "\\+";
-				string plusDecoded = " ";
-				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-				label = CurlWrapper::unescape(firstDecoding);
-			}
-		}
+			label = getMapParameter(queryParameters, "label", string(), false);
 
 		{
-			json twitchConfListRoot = _mmsEngineDBFacade->getTwitchConfList(workspace->_workspaceKey, confKey, label);
+			json twitchConfListRoot = _mmsEngineDBFacade->getTwitchConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(twitchConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1456,28 +1058,27 @@ void API::twitchConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addTiktokConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addTiktokConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -1517,16 +1118,12 @@ void API::addTiktokConf(
 			}
 			token = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1535,19 +1132,9 @@ void API::addTiktokConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = _mmsEngineDBFacade->addTiktokConf(workspace->_workspaceKey, label, token);
+			int64_t confKey = _mmsEngineDBFacade->addTiktokConf(apiAuthorizationDetails->workspace->_workspaceKey, label, token);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addTiktokConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -1562,23 +1149,6 @@ void API::addTiktokConf(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1588,28 +1158,27 @@ void API::addTiktokConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyTiktokConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyTiktokConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -1649,80 +1218,25 @@ void API::modifyTiktokConf(
 			}
 			token = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
+		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}",
+				requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		catch (exception &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
-			SPDLOG_ERROR(errorMessage);
 
-			throw runtime_error(errorMessage);
-		}
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		_mmsEngineDBFacade->modifyTiktokConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, token);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyTiktokConf(confKey, workspace->_workspaceKey, label, token);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyTiktokConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyTiktokConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1733,89 +1247,37 @@ void API::modifyTiktokConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeTiktokConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeTiktokConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeTiktokConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeTiktokConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeTiktokConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeTiktokConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1825,83 +1287,46 @@ void API::removeTiktokConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::tiktokConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "tiktokConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		int64_t confKey = -1;
-		auto confKeyIt = queryParameters.find("confKey");
-		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
-		{
-			confKey = stoll(confKeyIt->second);
-			if (confKey == 0)
-				confKey = -1;
-		}
+		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		if (confKey == 0)
+			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-		{
-			auto labelIt = queryParameters.find("label");
-			if (labelIt != queryParameters.end() && labelIt->second != "")
-			{
-				label = labelIt->second;
-
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after unescape, this char will be changed to space and we do not want it
-				string plus = "\\+";
-				string plusDecoded = " ";
-				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-				label = CurlWrapper::unescape(firstDecoding);
-			}
-		}
+			label = getMapParameter(queryParameters, "label", string(), false);
 
 		{
-			json tiktokConfListRoot = _mmsEngineDBFacade->getTiktokConfList(workspace->_workspaceKey, confKey, label);
+			json tiktokConfListRoot = _mmsEngineDBFacade->getTiktokConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(tiktokConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1910,29 +1335,39 @@ void API::tiktokConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addStream(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addStream";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -2074,16 +1509,11 @@ void API::addStream(
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				userData = requestBodyRoot[field];
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2093,23 +1523,13 @@ void API::addStream(
 		try
 		{
 			json streamRoot = _mmsEngineDBFacade->addStream(
-				workspace->_workspaceKey, label, sourceType, encodersPoolKey, url, pushProtocol, pushEncoderKey, pushPublicEncoderName,
+				apiAuthorizationDetails->workspace->_workspaceKey, label, sourceType, encodersPoolKey, url, pushProtocol, pushEncoderKey, pushPublicEncoderName,
 				pushServerPort, pushUri, pushListenTimeout, captureLiveVideoDeviceNumber, captureLiveVideoInputFormat, captureLiveFrameRate,
 				captureLiveWidth, captureLiveHeight, captureLiveAudioDeviceNumber, captureLiveChannelsNumber, tvSourceTVConfKey, type, description,
 				name, region, country, imageMediaItemKey, imageUniqueName, position, userData
 			);
 
 			sResponse = JSONUtils::toString(streamRoot);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -2124,23 +1544,6 @@ void API::addStream(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -2150,29 +1553,39 @@ void API::addStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyStream(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyStream";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -2458,16 +1871,11 @@ void API::modifyStream(
 				userDataToBeModified = true;
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2476,39 +1884,19 @@ void API::modifyStream(
 		string sResponse;
 		try
 		{
-			int64_t confKey = -1;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
-				confKey = stoll(confKeyIt->second);
+			int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+			string labelKey = getMapParameter(queryParameters, "label", string(), false);
 
-			string labelKey;
-			auto labelIt = queryParameters.find("label");
-			if (labelIt != queryParameters.end() && labelIt->second != "")
-			{
-				labelKey = labelIt->second;
-
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after unescape, this char will be changed to space and we do not want it
-				string plus = "\\+";
-				string plusDecoded = " ";
-				string firstDecoding = regex_replace(labelKey, regex(plus), plusDecoded);
-
-				labelKey = CurlWrapper::unescape(firstDecoding);
-			}
-
-			if (confKey == -1 && labelKey == "")
+			if (confKey == -1 && labelKey.empty())
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
 				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 400, errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
 			json streamRoot = _mmsEngineDBFacade->modifyStream(
-				confKey, labelKey, workspace->_workspaceKey, labelToBeModified, label, sourceTypeToBeModified, sourceType,
+				confKey, labelKey, apiAuthorizationDetails->workspace->_workspaceKey, labelToBeModified, label, sourceTypeToBeModified, sourceType,
 				encodersPoolKeyToBeModified, encodersPoolKey, urlToBeModified, url, pushProtocolToBeModified, pushProtocol,
 				pushEncoderKeyToBeModified, pushEncoderKey, pushPublicEncoderNameToBeModified, pushPublicEncoderName, pushServerPortToBeModified,
 				pushServerPort, pushUriToBeModified, pushUri, pushListenTimeoutToBeModified, pushListenTimeout,
@@ -2522,16 +1910,6 @@ void API::modifyStream(
 
 			sResponse = JSONUtils::toString(streamRoot);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -2540,27 +1918,10 @@ void API::modifyStream(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -2571,78 +1932,57 @@ void API::modifyStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeStream(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeStream";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
 		string sResponse;
 		try
 		{
-			int64_t confKey = -1;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
-				confKey = stoll(confKeyIt->second);
-
-			string label;
-			auto labelIt = queryParameters.find("label");
-			if (labelIt != queryParameters.end() && labelIt->second != "")
-			{
-				label = labelIt->second;
-
-				// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-				//	That  because if we have really a + char (%2B into the string), and we do the replace
-				//	after unescape, this char will be changed to space and we do not want it
-				string plus = "\\+";
-				string plusDecoded = " ";
-				string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-				label = CurlWrapper::unescape(firstDecoding);
-			}
-
-			if (confKey == -1 && label == "")
+			int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+			string label = getMapParameter(queryParameters, "label", string(), false);
+			if (confKey == -1 && label.empty())
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 
-			_mmsEngineDBFacade->removeStream(workspace->_workspaceKey, confKey, label);
+			_mmsEngineDBFacade->removeStream(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -2652,27 +1992,11 @@ void API::removeStream(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -2681,227 +2005,83 @@ void API::removeStream(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::streamList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "streamList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		int64_t confKey = -1;
-		auto confKeyIt = queryParameters.find("confKey");
-		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
+		int64_t confKey = getMapParameter(queryParameters, "confKey", 0, false);
+		int32_t start = getMapParameter(queryParameters, "start", 0, false);
+		int32_t rows = getMapParameter(queryParameters, "rows", 30, false);
+		if (rows > _maxPageSize)
 		{
-			confKey = stoll(confKeyIt->second);
-			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
-			//	it is changed to -1, the return is all the rows. Because of that it was commented
-			// if (liveURLKey == 0)
-			// 	liveURLKey = -1;
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage =
+				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		string label = getMapParameter(queryParameters, "label", string(""), false);
+		bool labelLike = getMapParameter(queryParameters, "labelLike", true, false);
+		string url = getMapParameter(queryParameters, "url", string(""), false);
+		string sourceType = getMapParameter(queryParameters, "sourceType", string(""), false);
+		if (sourceType != "IP_PULL" && sourceType != "IP_PUSH" && sourceType != "CaptureLive" && sourceType != "TV")
 		{
-			start = stoll(startIt->second);
-		}
-
-		int rows = 30;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
-
-				// rows = _maxPageSize;
-
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
-
-		bool labelLike = true;
-		auto labelLikeIt = queryParameters.find("labelLike");
-		if (labelLikeIt != queryParameters.end() && labelLikeIt->second != "")
-		{
-			labelLike = (labelLikeIt->second == "true" ? true : false);
-		}
-
-		string url;
-		auto urlIt = queryParameters.find("url");
-		if (urlIt != queryParameters.end() && urlIt->second != "")
-		{
-			url = urlIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(url, regex(plus), plusDecoded);
-
-			url = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string sourceType;
-		auto sourceTypeIt = queryParameters.find("sourceType");
-		if (sourceTypeIt != queryParameters.end() && sourceTypeIt->second != "")
-		{
-			if (sourceTypeIt->second == "IP_PULL" || sourceTypeIt->second == "IP_PUSH" || sourceTypeIt->second == "CaptureLive" ||
-				sourceTypeIt->second == "TV")
-				sourceType = sourceTypeIt->second;
-			else
-				SPDLOG_WARN(
-					"streamList: 'sourceType' parameter is unknown"
-					", sourceType: {}",
-					sourceTypeIt->second
-				);
-		}
-
-		string type;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
-		{
-			type = typeIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(type, regex(plus), plusDecoded);
-
-			type = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string name;
-		auto nameIt = queryParameters.find("name");
-		if (nameIt != queryParameters.end() && nameIt->second != "")
-		{
-			name = nameIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(name, regex(plus), plusDecoded);
-
-			name = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string region;
-		auto regionIt = queryParameters.find("region");
-		if (regionIt != queryParameters.end() && regionIt->second != "")
-		{
-			region = regionIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(region, regex(plus), plusDecoded);
-
-			region = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string country;
-		auto countryIt = queryParameters.find("country");
-		if (countryIt != queryParameters.end() && countryIt->second != "")
-		{
-			country = countryIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(country, regex(plus), plusDecoded);
-
-			country = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string labelOrder;
-		auto labelOrderIt = queryParameters.find("labelOrder");
-		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
-		{
-			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
-				labelOrder = labelOrderIt->second;
-			else
-				SPDLOG_WARN(
-					"liveURLList: 'labelOrder' parameter is unknown"
-					", labelOrder: {}",
-					labelOrderIt->second
-				);
-		}
-
-		{
-
-			json streamListRoot = _mmsEngineDBFacade->getStreamList(
-				workspace->_workspaceKey, confKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
+			SPDLOG_WARN(
+				"streamList: 'sourceType' parameter is unknown"
+				", sourceType: {}",
+				sourceType
 			);
-
-			string responseBody = JSONUtils::toString(streamListRoot);
-
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sourceType = "";
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
+		string type = getMapParameter(queryParameters, "type", string(""), false);
+		string name = getMapParameter(queryParameters, "name", string(""), false);
+		string region = getMapParameter(queryParameters, "region", string(""), false);
+		string country = getMapParameter(queryParameters, "country", string(""), false);
+		string labelOrder = getMapParameter(queryParameters, "labelOrder", string(""), false);
+		if (labelOrder != "asc" && labelOrder != "desc")
+		{
+			SPDLOG_WARN(
+				"liveURLList: 'labelOrder' parameter is unknown"
+				", labelOrder: {}",
+				labelOrder
+			);
+			labelOrder = "";
+		}
+
+		json streamListRoot = _mmsEngineDBFacade->getStreamList(
+			apiAuthorizationDetails->workspace->_workspaceKey, confKey, start, rows, label, labelLike,
+			url, sourceType, type, name, region, country, labelOrder
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
+		string responseBody = JSONUtils::toString(streamListRoot);
 
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2911,67 +2091,37 @@ void API::streamList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::streamFreePushEncoderPort(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "streamFreePushEncoderPort";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		int64_t encoderKey = -1;
-		auto encoderKeyIt = queryParameters.find("encoderKey");
-		if (encoderKeyIt == queryParameters.end() || encoderKeyIt->second == "")
-		{
-			string errorMessage = string("The 'encoderKey' parameter is not found");
-			SPDLOG_ERROR(errorMessage);
+		const int64_t encoderKey = getMapParameter(queryParameters, "encoderKey", -1, true);
 
-			sendError(request, 500, errorMessage);
+		const json streamFreePushEncoderPortRoot = _mmsEngineDBFacade->getStreamFreePushEncoderPort(encoderKey);
 
-			throw runtime_error(errorMessage);
-		}
-		encoderKey = stoll(encoderKeyIt->second);
+		const string responseBody = JSONUtils::toString(streamFreePushEncoderPortRoot);
 
-		{
-			json streamFreePushEncoderPortRoot = _mmsEngineDBFacade->getStreamFreePushEncoderPort(encoderKey);
-
-			string responseBody = JSONUtils::toString(streamFreePushEncoderPortRoot);
-
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
-		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2981,29 +2131,39 @@ void API::streamFreePushEncoderPort(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addSourceTVStream(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addSourceTVStream";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -3121,16 +2281,11 @@ void API::addSourceTVStream(
 			field = "deliverySystem";
 			deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -3146,16 +2301,6 @@ void API::addSourceTVStream(
 
 			sResponse = JSONUtils::toString(sourceTVStreamRoot);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addSourceTVStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -3164,27 +2309,10 @@ void API::addSourceTVStream(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -3195,29 +2323,39 @@ void API::addSourceTVStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifySourceTVStream(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifySourceTVStream";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -3397,87 +2535,30 @@ void API::modifySourceTVStream(
 				deliverySystemToBeModified = true;
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			json sourceTVStreamRoot = _mmsEngineDBFacade->modifySourceTVStream(
-				confKey, typeToBeModified, type, serviceIdToBeModified, serviceId, networkIdToBeModified, networkId, transportStreamIdToBeModified,
-				transportStreamId, nameToBeModified, name, satelliteToBeModified, satellite, frequencyToBeModified, frequency, lnbToBeModified, lnb,
-				videoPidToBeModified, videoPid, audioPidsToBeModified, audioPids, audioItalianPidToBeModified, audioItalianPid,
-				audioEnglishPidToBeModified, audioEnglishPid, teletextPidToBeModified, teletextPid, modulationToBeModified, modulation,
-				polarizationToBeModified, polarization, symbolRateToBeModified, symbolRate, bandwidthInHzToBeModified, bandwidthInHz,
-				countryToBeModified, country, deliverySystemToBeModified, deliverySystem
-			);
-
-			sResponse = JSONUtils::toString(sourceTVStreamRoot);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifySourceTVStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifySourceTVStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
+		json sourceTVStreamRoot = _mmsEngineDBFacade->modifySourceTVStream(
+			confKey, typeToBeModified, type, serviceIdToBeModified, serviceId, networkIdToBeModified, networkId, transportStreamIdToBeModified,
+			transportStreamId, nameToBeModified, name, satelliteToBeModified, satellite, frequencyToBeModified, frequency, lnbToBeModified, lnb,
+			videoPidToBeModified, videoPid, audioPidsToBeModified, audioPids, audioItalianPidToBeModified, audioItalianPid,
+			audioEnglishPidToBeModified, audioEnglishPid, teletextPidToBeModified, teletextPid, modulationToBeModified, modulation,
+			polarizationToBeModified, polarization, symbolRateToBeModified, symbolRate, bandwidthInHzToBeModified, bandwidthInHz,
+			countryToBeModified, country, deliverySystemToBeModified, deliverySystem
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
+		string sResponse = JSONUtils::toString(sourceTVStreamRoot);
 
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3488,89 +2569,48 @@ void API::modifySourceTVStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeSourceTVStream(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeSourceTVStream";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeSourceTVStream(confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeSourceTVStream(confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeSourceTVStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeSourceTVStream failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -3580,149 +2620,61 @@ void API::removeSourceTVStream(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::sourceTVStreamList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "sourceTVStreamList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
-		int64_t confKey = -1;
-		auto confKeyIt = queryParameters.find("confKey");
-		if (confKeyIt != queryParameters.end() && confKeyIt->second != "")
+		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int32_t start = getMapParameter(queryParameters, "start", static_cast<int32_t>(0), false);
+		int32_t rows = getMapParameter(queryParameters, "rows", static_cast<int32_t>(30), false);
+		if (rows > _maxPageSize)
 		{
-			confKey = stoll(confKeyIt->second);
-			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
-			//	it is changed to -1, the return is all the rows. Because of that it was commented
-			// if (liveURLKey == 0)
-			// 	liveURLKey = -1;
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage =
+				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
-
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		string type = getMapParameter(queryParameters, "type", string(""), false);
+		int64_t serviceId = getMapParameter(queryParameters, "serviceId", static_cast<int64_t>(-1), false);
+		string name = getMapParameter(queryParameters, "name", string(""), false);
+		string lnb = getMapParameter(queryParameters, "lnb", string(""), false);
+		int64_t frequency = getMapParameter(queryParameters, "frequency", static_cast<int64_t>(-1), false);
+		int32_t videoPid = getMapParameter(queryParameters, "videoPid", static_cast<int32_t>(-1), false);
+		string audioPids = getMapParameter(queryParameters, "audioPids", string(""), false);
+		string nameOrder = getMapParameter(queryParameters, "nameOrder", string(""), false);
+		if (nameOrder != "asc" && nameOrder != "desc")
 		{
-			start = stoll(startIt->second);
-		}
-
-		int rows = 30;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
-
-				// rows = _maxPageSize;
-
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		string type;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
-			type = typeIt->second;
-
-		int64_t serviceId = -1;
-		auto serviceIdIt = queryParameters.find("serviceId");
-		if (serviceIdIt != queryParameters.end() && serviceIdIt->second != "")
-			serviceId = stoll(serviceIdIt->second);
-
-		string name;
-		auto nameIt = queryParameters.find("name");
-		if (nameIt != queryParameters.end() && nameIt->second != "")
-		{
-			name = nameIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(name, regex(plus), plusDecoded);
-
-			name = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string lnb;
-		auto lnbIt = queryParameters.find("lnb");
-		if (lnbIt != queryParameters.end() && lnbIt->second != "")
-		{
-			lnb = lnbIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(lnb, regex(plus), plusDecoded);
-
-			lnb = CurlWrapper::unescape(firstDecoding);
-		}
-
-		int64_t frequency = -1;
-		auto frequencyIt = queryParameters.find("frequency");
-		if (frequencyIt != queryParameters.end() && frequencyIt->second != "")
-			frequency = stoll(frequencyIt->second);
-
-		int videoPid = -1;
-		auto videoPidIt = queryParameters.find("videoPid");
-		if (videoPidIt != queryParameters.end() && videoPidIt->second != "")
-			videoPid = stoi(videoPidIt->second);
-
-		string audioPids;
-		auto audioPidsIt = queryParameters.find("audioPids");
-		if (audioPidsIt != queryParameters.end() && audioPidsIt->second != "")
-		{
-			audioPids = audioPidsIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(audioPids, regex(plus), plusDecoded);
-
-			audioPids = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string nameOrder;
-		auto nameOrderIt = queryParameters.find("nameOrder");
-		if (nameOrderIt != queryParameters.end() && nameOrderIt->second != "")
-		{
-			if (nameOrderIt->second == "asc" || nameOrderIt->second == "desc")
-				nameOrder = nameOrderIt->second;
-			else
-				SPDLOG_WARN(
-					"tvChannelList: 'nameOrder' parameter is unknown"
-					", nameOrder: {}",
-					nameOrderIt->second
-				);
+			SPDLOG_WARN(
+				"tvChannelList: 'nameOrder' parameter is unknown"
+				", nameOrder: {}",
+				nameOrder
+			);
+			nameOrder = "";
 		}
 
 		{
@@ -3735,22 +2687,6 @@ void API::sourceTVStreamList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -3759,29 +2695,39 @@ void API::sourceTVStreamList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addAWSChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addAWSChannelConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -3865,16 +2811,11 @@ void API::addAWSChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -3883,19 +2824,9 @@ void API::addAWSChannelConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = _mmsEngineDBFacade->addAWSChannelConf(workspace->_workspaceKey, label, channelId, rtmpURL, playURL, type);
+			int64_t confKey = _mmsEngineDBFacade->addAWSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, label, channelId, rtmpURL, playURL, type);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addAWSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -3905,28 +2836,11 @@ void API::addAWSChannelConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -3936,29 +2850,39 @@ void API::addAWSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyAWSChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyAWSChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -4042,80 +2966,23 @@ void API::modifyAWSChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->modifyAWSChannelConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, channelId, rtmpURL, playURL, type);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyAWSChannelConf(confKey, workspace->_workspaceKey, label, channelId, rtmpURL, playURL, type);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyAWSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyAWSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -4126,89 +2993,47 @@ void API::modifyAWSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeAWSChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeAWSChannelConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		_mmsEngineDBFacade->removeAWSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeAWSChannelConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeAWSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeAWSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -4218,68 +3043,50 @@ void API::removeAWSChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::awsChannelConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "awsChannelConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
 		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		const bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
+		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		if (sType != "")
 		{
-			if (typeIt->second == "SHARED")
+			if (sType == "SHARED")
 				type = 1;
-			else if (typeIt->second == "DEDICATED")
+			else if (sType == "DEDICATED")
 				type = 2;
 		}
 		{
-			json awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
+			json awsChannelConfListRoot = _mmsEngineDBFacade->getAWSChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(awsChannelConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -4288,29 +3095,39 @@ void API::awsChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addCDN77ChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addCDN77ChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -4422,16 +3239,11 @@ void API::addCDN77ChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4441,20 +3253,10 @@ void API::addCDN77ChannelConf(
 		try
 		{
 			int64_t confKey = _mmsEngineDBFacade->addCDN77ChannelConf(
-				workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
+				apiAuthorizationDetails->workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
 			);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addCDN77ChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -4464,27 +3266,10 @@ void API::addCDN77ChannelConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -4495,29 +3280,39 @@ void API::addCDN77ChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyCDN77ChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyCDN77ChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -4639,82 +3434,25 @@ void API::modifyCDN77ChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyCDN77ChannelConf(
-				confKey, workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
-			);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyCDN77ChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
+		_mmsEngineDBFacade->modifyCDN77ChannelConf(
+			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4725,89 +3463,48 @@ void API::modifyCDN77ChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeCDN77ChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeCDN77ChannelConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeCDN77ChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeCDN77ChannelConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeCDN77ChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeCDN77ChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -4817,27 +3514,26 @@ void API::removeCDN77ChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::cdn77ChannelConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "cdn77ChannelConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -4846,38 +3542,21 @@ void API::cdn77ChannelConfList(
 		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
+		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		if (sType != "")
 		{
-			if (typeIt->second == "SHARED")
+			if (sType == "SHARED")
 				type = 1;
-			else if (typeIt->second == "DEDICATED")
+			else if (sType == "DEDICATED")
 				type = 2;
 		}
 		{
-			json cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
+			json cdn77ChannelConfListRoot = _mmsEngineDBFacade->getCDN77ChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -4887,29 +3566,39 @@ void API::cdn77ChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addRTMPChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addRTMPChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -4979,16 +3668,11 @@ void API::addRTMPChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4998,19 +3682,9 @@ void API::addRTMPChannelConf(
 		try
 		{
 			int64_t confKey =
-				_mmsEngineDBFacade->addRTMPChannelConf(workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type);
+				_mmsEngineDBFacade->addRTMPChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addRTMPChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -5020,27 +3694,10 @@ void API::addRTMPChannelConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5051,29 +3708,39 @@ void API::addRTMPChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyRTMPChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyRTMPChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -5187,82 +3854,25 @@ void API::modifyRTMPChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyRTMPChannelConf(
-				confKey, workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type
-			);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyRTMPChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyRTMPChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
+		_mmsEngineDBFacade->modifyRTMPChannelConf(
+			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5273,89 +3883,48 @@ void API::modifyRTMPChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeRTMPChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeRTMPChannelConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeRTMPChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeRTMPChannelConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeRTMPChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeRTMPChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5365,27 +3934,26 @@ void API::removeRTMPChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::rtmpChannelConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "rtmpChannelConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -5394,39 +3962,22 @@ void API::rtmpChannelConfList(
 		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
+		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		if (sType != "")
 		{
-			if (typeIt->second == "SHARED")
+			if (sType == "SHARED")
 				type = 1;
-			else if (typeIt->second == "DEDICATED")
+			else if (sType == "DEDICATED")
 				type = 2;
 		}
 
 		{
-			json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
+			json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5436,29 +3987,39 @@ void API::rtmpChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addSRTChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addSRTChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -5527,7 +4088,9 @@ void API::addSRTChannelConf(
 		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -5537,19 +4100,9 @@ void API::addSRTChannelConf(
 		try
 		{
 			int64_t confKey =
-				_mmsEngineDBFacade->addSRTChannelConf(workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
+				_mmsEngineDBFacade->addSRTChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addSRTChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -5559,27 +4112,10 @@ void API::addSRTChannelConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5590,29 +4126,39 @@ void API::addSRTChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifySRTChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifySRTChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -5726,80 +4272,23 @@ void API::modifySRTChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->modifySRTChannelConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifySRTChannelConf(confKey, workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifySRTChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifySRTChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5810,89 +4299,48 @@ void API::modifySRTChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeSRTChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeSRTChannelConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeSRTChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeSRTChannelConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeSRTChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeSRTChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5902,27 +4350,26 @@ void API::removeSRTChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::srtChannelConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "srtChannelConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -5931,39 +4378,22 @@ void API::srtChannelConfList(
 		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
+		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		if (sType != "")
 		{
-			if (typeIt->second == "SHARED")
+			if (sType == "SHARED")
 				type = 1;
-			else if (typeIt->second == "DEDICATED")
+			else if (sType == "DEDICATED")
 				type = 2;
 		}
 
 		{
-			json srtChannelConfListRoot = _mmsEngineDBFacade->getSRTChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
+			json srtChannelConfListRoot = _mmsEngineDBFacade->getSRTChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(srtChannelConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -5973,29 +4403,39 @@ void API::srtChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addHLSChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addHLSChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -6057,16 +4497,11 @@ void API::addHLSChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -6076,19 +4511,9 @@ void API::addHLSChannelConf(
 		try
 		{
 			int64_t confKey =
-				_mmsEngineDBFacade->addHLSChannelConf(workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type);
+				_mmsEngineDBFacade->addHLSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addHLSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -6098,27 +4523,10 @@ void API::addHLSChannelConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -6129,29 +4537,39 @@ void API::addHLSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyHLSChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyHLSChannelConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -6235,82 +4653,25 @@ void API::modifyHLSChannelConf(
 			}
 			type = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyHLSChannelConf(
-				confKey, workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type
-			);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyHLSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyHLSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
+		_mmsEngineDBFacade->modifyHLSChannelConf(
+			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type
 		);
 
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -6321,89 +4682,48 @@ void API::modifyHLSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeHLSChannelConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeHLSChannelConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeHLSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeHLSChannelConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeHLSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeHLSChannelConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -6413,27 +4733,26 @@ void API::removeHLSChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::hlsChannelConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "hlsChannelConfList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -6442,40 +4761,23 @@ void API::hlsChannelConfList(
 		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType;
-		auto typeIt = queryParameters.find("type");
-		if (typeIt != queryParameters.end() && typeIt->second != "")
+		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		if (sType != "")
 		{
-			if (typeIt->second == "SHARED")
+			if (sType == "SHARED")
 				type = 1;
-			else if (typeIt->second == "DEDICATED")
+			else if (sType == "DEDICATED")
 				type = 2;
 		}
 
 		{
-			json hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(workspace->_workspaceKey, -1, label, labelLike, type);
+			json hlsChannelConfListRoot = _mmsEngineDBFacade->getHLSChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
 
 			string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -6484,29 +4786,39 @@ void API::hlsChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addFTPConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addFTPConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -6605,16 +4917,11 @@ void API::addFTPConf(
 			}
 			remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -6623,19 +4930,9 @@ void API::addFTPConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = _mmsEngineDBFacade->addFTPConf(workspace->_workspaceKey, label, server, port, userName, password, remoteDirectory);
+			int64_t confKey = _mmsEngineDBFacade->addFTPConf(apiAuthorizationDetails->workspace->_workspaceKey, label, server, port, userName, password, remoteDirectory);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addFTPConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -6645,28 +4942,11 @@ void API::addFTPConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -6676,29 +4956,39 @@ void API::addFTPConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyFTPConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyFTPConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -6797,80 +5087,23 @@ void API::modifyFTPConf(
 			}
 			remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->modifyFTPConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, server, port, userName, password, remoteDirectory);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyFTPConf(confKey, workspace->_workspaceKey, label, server, port, userName, password, remoteDirectory);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyFTPConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyFTPConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -6881,89 +5114,48 @@ void API::modifyFTPConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeFTPConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeFTPConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeFTPConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeFTPConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeFTPConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeFTPConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -6973,55 +5165,38 @@ void API::removeFTPConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::ftpConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "ftpConfList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
 		{
 
-			json ftpConfListRoot = _mmsEngineDBFacade->getFTPConfList(workspace->_workspaceKey);
+			json ftpConfListRoot = _mmsEngineDBFacade->getFTPConfList(apiAuthorizationDetails->workspace->_workspaceKey);
 
 			string responseBody = JSONUtils::toString(ftpConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -7030,29 +5205,39 @@ void API::ftpConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addEMailConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addEMailConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -7121,16 +5306,11 @@ void API::addEMailConf(
 			}
 			message = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -7139,19 +5319,9 @@ void API::addEMailConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = _mmsEngineDBFacade->addEMailConf(workspace->_workspaceKey, label, addresses, subject, message);
+			int64_t confKey = _mmsEngineDBFacade->addEMailConf(apiAuthorizationDetails->workspace->_workspaceKey, label, addresses, subject, message);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addEMailConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -7161,28 +5331,11 @@ void API::addEMailConf(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -7192,29 +5345,39 @@ void API::addEMailConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyEMailConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyEMailConf";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -7283,80 +5446,23 @@ void API::modifyEMailConf(
 			}
 			message = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string("requestBody json is not well format") + ", requestBody: " + requestBody;
+			string errorMessage = std::format("requestBody json is not well format"
+				", requestBody: {}"
+				", e.what(): {}", requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->modifyEMailConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, addresses, subject, message);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->modifyEMailConf(confKey, workspace->_workspaceKey, label, addresses, subject, message);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyEMailConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyEMailConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -7367,89 +5473,48 @@ void API::modifyEMailConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeEMailConf(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEMailConf";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditConfiguration: {}",
+			apiAuthorizationDetails->canEditConfiguration
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
-		string sResponse;
-		try
-		{
-			int64_t confKey;
-			auto confKeyIt = queryParameters.find("confKey");
-			if (confKeyIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'confKey' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
 
-				sendError(request, 400, errorMessage);
+		_mmsEngineDBFacade->removeEMailConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
-				throw runtime_error(errorMessage);
-			}
-			confKey = stoll(confKeyIt->second);
-
-			_mmsEngineDBFacade->removeEMailConf(workspace->_workspaceKey, confKey);
-
-			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeEMailConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeEMailConf failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
+		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -7459,55 +5524,38 @@ void API::removeEMailConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::emailConfList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "emailConfList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
 		{
 
-			json emailConfListRoot = _mmsEngineDBFacade->getEMailConfList(workspace->_workspaceKey);
+			json emailConfListRoot = _mmsEngineDBFacade->getEMailConfList(apiAuthorizationDetails->workspace->_workspaceKey);
 
 			string responseBody = JSONUtils::toString(emailConfListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = string("Internal server error: ") + e.what();
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -7516,12 +5564,6 @@ void API::emailConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

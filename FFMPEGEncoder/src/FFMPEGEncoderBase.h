@@ -1,6 +1,5 @@
 
-#ifndef FFMPEGEncoderBase_h
-#define FFMPEGEncoderBase_h
+#pragma once
 
 #include "ProcessUtility.h"
 #include <cstdint>
@@ -232,5 +231,3 @@ class FFMPEGEncoderBase
 
 	long getAddContentIngestionJobKey(int64_t ingestionJobKey, string ingestionResponse);
 };
-
-#endif

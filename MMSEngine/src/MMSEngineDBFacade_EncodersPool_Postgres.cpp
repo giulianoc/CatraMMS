@@ -313,42 +313,17 @@ MMSEngineDBFacade::encoder_LabelPublicServerNameInternalServerName(int64_t encod
 
 		return make_tuple(label, publicServerName, internalServerName);
 	}
-	catch (DBRecordNotFound &e)
-	{
-		/*
-		SPDLOG_ERROR(
-			"NotFound"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-		*/
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			"exception"
-			", encoderKey: {}"
-			", fromMaster: {}",
-			encoderKey, fromMaster
-		);
-
-		throw e;
+		if (!dynamic_cast<DBRecordNotFound *>(&e))
+			SPDLOG_ERROR(
+				"runtime_error"
+				", encoderKey: {}"
+				", fromMaster: {}"
+				", exceptionMessage: {}",
+				encoderKey, fromMaster, e.what()
+			);
+		throw;
 	}
 }
 
@@ -362,124 +337,20 @@ string MMSEngineDBFacade::encoder_columnAsString(string columnName, int64_t enco
 
 		return (*sqlResultSet)[0][0].as<string>(string());
 	}
-	catch (DBRecordNotFound &e)
-	{
-		/*
-		SPDLOG_ERROR(
-			"NotFound"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-		*/
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			"exception"
-			", encoderKey: {}"
-			", fromMaster: {}",
-			encoderKey, fromMaster
-		);
+		if (!dynamic_cast<DBRecordNotFound*>(&e))
+			SPDLOG_ERROR(
+				"runtime_error"
+				", encoderKey: {}"
+				", fromMaster: {}"
+				", exceptionMessage: {}",
+				encoderKey, fromMaster, e.what()
+			);
 
-		throw e;
+		throw;
 	}
 }
-
-/*
-string MMSEngineDBFacade::encoder_PublicServerName(int64_t encoderKey, bool fromMaster)
-{
-	try
-	{
-		vector<string> requestedColumns = {"mms_encoder:.publicServerName"};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
-
-		return (*sqlResultSet)[0][0].as<string>("");
-	}
-	catch (DBRecordNotFound &e)
-	{
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", encoderKey: {}"
-			", fromMaster: {}",
-			encoderKey, fromMaster
-		);
-
-		throw e;
-	}
-}
-
-string MMSEngineDBFacade::encoder_InternalServerName(int64_t encoderKey, bool fromMaster)
-{
-	try
-	{
-		vector<string> requestedColumns = {"mms_encoder:.internalServerName"};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = encoderQuery(requestedColumns, encoderKey, fromMaster);
-
-		return (*sqlResultSet)[0][0].as<string>("");
-	}
-	catch (DBRecordNotFound &e)
-	{
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"runtime_error"
-			", encoderKey: {}"
-			", fromMaster: {}"
-			", exceptionMessage: {}",
-			encoderKey, fromMaster, e.what()
-		);
-
-		throw e;
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"exception"
-			", encoderKey: {}"
-			", fromMaster: {}",
-			encoderKey, fromMaster
-		);
-
-		throw e;
-	}
-}
-*/
 
 shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 	vector<string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex, int rows, string orderBy, bool notFoundAsException,
@@ -1385,37 +1256,29 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, string protocol, string 
 			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
 		);
 	}
-	catch (ServerNotReachable e)
+	catch (exception& e)
 	{
-		SPDLOG_ERROR(
-			"Encoder is not reachable, is it down?"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			ffmpegEncoderURL, e.what()
-		);
-
-		isRunning = false;
-	}
-	catch (runtime_error e)
-	{
-		SPDLOG_ERROR(
-			"Status URL failed (exception)"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			ffmpegEncoderURL, e.what()
-		);
-
-		isRunning = false;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Status URL failed (exception)"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			ffmpegEncoderURL, e.what()
-		);
-
+		if (dynamic_cast<CurlWrapper::ServerNotReachable*>(&e))
+			SPDLOG_ERROR(
+				"Encoder is not reachable, is it down?"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				ffmpegEncoderURL, e.what()
+			);
+		else if (dynamic_cast<runtime_error*>(&e))
+			SPDLOG_ERROR(
+				"Status URL failed (exception)"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				ffmpegEncoderURL, e.what()
+			);
+		else
+			SPDLOG_ERROR(
+				"Status URL failed (exception)"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				ffmpegEncoderURL, e.what()
+			);
 		isRunning = false;
 	}
 
@@ -1440,37 +1303,29 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, string protocol
 		string field = "cpuUsage";
 		cpuUsage = JSONUtils::asInt(infoResponseRoot, field, 0);
 	}
-	catch (ServerNotReachable e)
+	catch (exception& e)
 	{
-		SPDLOG_ERROR(
-			"Encoder is not reachable, is it down?"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			ffmpegEncoderURL, e.what()
-		);
-
-		isRunning = false;
-	}
-	catch (runtime_error e)
-	{
-		SPDLOG_ERROR(
-			"Status URL failed (exception)"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			ffmpegEncoderURL, e.what()
-		);
-
-		isRunning = false;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Status URL failed (exception)"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			ffmpegEncoderURL, e.what()
-		);
-
+		if (dynamic_cast<CurlWrapper::ServerNotReachable*>(&e))
+			SPDLOG_ERROR(
+				"Encoder is not reachable, is it down?"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				ffmpegEncoderURL, e.what()
+			);
+		else if (dynamic_cast<runtime_error*>(&e))
+			SPDLOG_ERROR(
+				"Status URL failed (exception)"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				ffmpegEncoderURL, e.what()
+			);
+		else
+			SPDLOG_ERROR(
+				"Status URL failed (exception)"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				ffmpegEncoderURL, e.what()
+			);
 		isRunning = false;
 	}
 

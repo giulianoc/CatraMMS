@@ -24,7 +24,7 @@ LiveGrid::~LiveGrid()
 	// _liveProxyData->_channelLabel = "";
 }
 
-void LiveGrid::encodeContent(string requestBody)
+void LiveGrid::encodeContent(const string_view& requestBody)
 {
 	string api = "liveGrid";
 

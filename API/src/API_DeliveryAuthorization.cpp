@@ -2,18 +2,35 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
-#include "StringUtils.h"
 #include <format>
 #include <regex>
 
 void API::createDeliveryAuthorization(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
-	shared_ptr<Workspace> requestWorkspace, string clientIPAddress, unordered_map<string, string> queryParameters
+const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "createDeliveryAuthorization";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO("Received {}", api);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canDeliveryAuthorization)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", deliveryAuthorization: {}",
+			apiAuthorizationDetails->canDeliveryAuthorization
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
+
+	string clientIPAddress = getClientIPAddress(requestDetails);
 
 	try
 	{
@@ -26,78 +43,30 @@ void API::createDeliveryAuthorization(
 			playerIP = getQueryParameter(queryParameters, "playerIP", clientIPAddress, false);
 		bool playerIPToBeAuthorized = getQueryParameter(queryParameters, "playerIPToBeAuthorized", false, false);
 
-		string playerCountry = getQueryParameter(queryParameters, "playerCountry", "", false);
-		string playerRegion = getQueryParameter(queryParameters, "playerRegion", "", false);
+		string playerCountry = getQueryParameter(queryParameters, "playerCountry", string(), false);
+		string playerRegion = getQueryParameter(queryParameters, "playerRegion", string(), false);
 
-		int64_t physicalPathKey = -1;
-		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
-		if (physicalPathKeyIt != queryParameters.end())
-			physicalPathKey = stoll(physicalPathKeyIt->second);
+		int64_t physicalPathKey = getMapParameter(queryParameters, "physicalPathKey", static_cast<int64_t>(-1), false);
+		int64_t mediaItemKey = getMapParameter(queryParameters, "mediaItemKey", static_cast<int64_t>(-1), false);
+		if (mediaItemKey == 0)
+			mediaItemKey = -1;
 
-		int64_t mediaItemKey = -1;
-		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt != queryParameters.end())
-		{
-			mediaItemKey = stoll(mediaItemKeyIt->second);
-			if (mediaItemKey == 0)
-				mediaItemKey = -1;
-		}
+		string uniqueName = getQueryParameter(queryParameters, "uniqueName", string(), false);
 
-		string uniqueName;
-		auto uniqueNameIt = queryParameters.find("uniqueName");
-		if (uniqueNameIt != queryParameters.end())
-		{
-			uniqueName = uniqueNameIt->second;
+		int64_t encodingProfileKey = getMapParameter(queryParameters, "encodingProfileKey", static_cast<int64_t>(-1), false);
+		if (encodingProfileKey == 0)
+			encodingProfileKey = -1;
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(uniqueName, regex(plus), plusDecoded);
-
-			uniqueName = CurlWrapper::unescape(firstDecoding);
-		}
-
-		int64_t encodingProfileKey = -1;
-		auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
-		if (encodingProfileKeyIt != queryParameters.end())
-		{
-			encodingProfileKey = stoll(encodingProfileKeyIt->second);
-			if (encodingProfileKey == 0)
-				encodingProfileKey = -1;
-		}
-
-		string encodingProfileLabel;
-		auto encodingProfileLabelIt = queryParameters.find("encodingProfileLabel");
-		if (encodingProfileLabelIt != queryParameters.end())
-		{
-			encodingProfileLabel = encodingProfileLabelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(encodingProfileLabel, regex(plus), plusDecoded);
-
-			encodingProfileLabel = CurlWrapper::unescape(firstDecoding);
-		}
+		string encodingProfileLabel = getQueryParameter(queryParameters, "encodingProfileLabel", string(), false);
 
 		// this is for live authorization
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt != queryParameters.end())
-			ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t ingestionJobKey = getMapParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), false);
 
 		// this is for live authorization
-		int64_t deliveryCode = -1;
-		auto deliveryCodeIt = queryParameters.find("deliveryCode");
-		if (deliveryCodeIt != queryParameters.end())
-			deliveryCode = stoll(deliveryCodeIt->second);
+		int64_t deliveryCode = getMapParameter(queryParameters, "deliveryCode", static_cast<int64_t>(-1), false);
 
 		if (physicalPathKey == -1 &&
-			((mediaItemKey == -1 && uniqueName == "")
+			((mediaItemKey == -1 && uniqueName.empty())
 			) // || (encodingProfileKey == -1 && encodingProfileLabel == "")) commentato perchè profile -1 indica 'source profile'
 			&& ingestionJobKey == -1)
 		{
@@ -105,67 +74,27 @@ void API::createDeliveryAuthorization(
 								  "ingestionJobKey parameters have to be present";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
-		int ttlInSeconds = _defaultTTLInSeconds;
-		auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
-		if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
-			ttlInSeconds = stol(ttlInSecondsIt->second);
+		int32_t ttlInSeconds = getMapParameter(queryParameters, "ttlInSeconds", _defaultTTLInSeconds, false);
+		int32_t maxRetries = getMapParameter(queryParameters, "maxRetries", _defaultMaxRetries, false);
 
-		int maxRetries = _defaultMaxRetries;
-		auto maxRetriesIt = queryParameters.find("maxRetries");
-		if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
-			maxRetries = stol(maxRetriesIt->second);
+		bool reuseAuthIfPresent = getMapParameter(queryParameters, "reuseAuthIfPresent", true, false);
+		bool redirect = getMapParameter(queryParameters, "redirect", _defaultRedirect, false);
+		bool save = getMapParameter(queryParameters, "save", false, false);
 
-		bool reuseAuthIfPresent = true;
-		auto reuseAuthIfPresentIt = queryParameters.find("reuseAuthIfPresent");
-		if (reuseAuthIfPresentIt != queryParameters.end())
-			reuseAuthIfPresent = reuseAuthIfPresentIt->second == "true";
+		string deliveryType = getQueryParameter(queryParameters, "deliveryType", string(), false);
 
-		bool redirect = _defaultRedirect;
-		auto redirectIt = queryParameters.find("redirect");
-		if (redirectIt != queryParameters.end())
-			redirect = redirectIt->second == "true";
+		bool filteredByStatistic = getMapParameter(queryParameters, "filteredByStatistic", false, false);
 
-		bool save = false;
-		auto saveIt = queryParameters.find("save");
-		if (saveIt != queryParameters.end())
-			save = saveIt->second == "true";
-
-		string deliveryType;
-		auto deliveryTypeIt = queryParameters.find("deliveryType");
-		if (deliveryTypeIt != queryParameters.end())
-			deliveryType = deliveryTypeIt->second;
-
-		bool filteredByStatistic = false;
-		auto filteredByStatisticIt = queryParameters.find("filteredByStatistic");
-		if (filteredByStatisticIt != queryParameters.end())
-			filteredByStatistic = filteredByStatisticIt->second == "true";
-
-		string userId;
-		auto userIdIt = queryParameters.find("userId");
-		if (userIdIt != queryParameters.end())
-		{
-			userId = userIdIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
-
-			userId = CurlWrapper::unescape(firstDecoding);
-		}
+		string userId = getQueryParameter(queryParameters, "userId", string(), false);
 
 		try
 		{
 			bool warningIfMissingMediaItemKey = false;
 			pair<string, string> deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-				userKey, requestWorkspace, playerIP,
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace, playerIP,
 
 				mediaItemKey, uniqueName, encodingProfileKey, encodingProfileLabel,
 
@@ -216,62 +145,17 @@ void API::createDeliveryAuthorization(
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
-		catch (MediaItemKeyNotFound &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"{} failed"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
@@ -281,24 +165,36 @@ void API::createDeliveryAuthorization(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::createBulkOfDeliveryAuthorization(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
-	shared_ptr<Workspace> requestWorkspace, string clientIPAddress, unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "createBulkOfDeliveryAuthorization";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO("Received {}", api);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canDeliveryAuthorization)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", deliveryAuthorization: {}",
+			apiAuthorizationDetails->canDeliveryAuthorization
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
+
+	string clientIPAddress = getClientIPAddress(requestDetails);
 
 	try
 	{
@@ -330,8 +226,6 @@ void API::createBulkOfDeliveryAuthorization(
 		{
 			SPDLOG_ERROR(e.what());
 
-			sendError(request, 400, e.what());
-
 			throw runtime_error(e.what());
 		}
 
@@ -345,20 +239,11 @@ void API::createBulkOfDeliveryAuthorization(
 			if (playerIP == clientIPAddress)
 				playerIP = getQueryParameter(queryParameters, "playerIP", clientIPAddress, false);
 
-			int ttlInSeconds = _defaultTTLInSeconds;
-			auto ttlInSecondsIt = queryParameters.find("ttlInSeconds");
-			if (ttlInSecondsIt != queryParameters.end() && ttlInSecondsIt->second != "")
-				ttlInSeconds = stol(ttlInSecondsIt->second);
+			int32_t ttlInSeconds = getMapParameter(queryParameters, "ttlInSeconds", _defaultTTLInSeconds, false);
 
-			int maxRetries = _defaultMaxRetries;
-			auto maxRetriesIt = queryParameters.find("maxRetries");
-			if (maxRetriesIt != queryParameters.end() && maxRetriesIt->second != "")
-				maxRetries = stol(maxRetriesIt->second);
+			int32_t maxRetries = getMapParameter(queryParameters, "maxRetries", _defaultMaxRetries, false);
 
-			bool reuseAuthIfPresent = true;
-			auto reuseAuthIfPresentIt = queryParameters.find("reuseAuthIfPresent");
-			if (reuseAuthIfPresentIt != queryParameters.end())
-				reuseAuthIfPresent = reuseAuthIfPresentIt->second == "true";
+			bool reuseAuthIfPresent = getMapParameter(queryParameters, "reuseAuthIfPresent", true, false);
 
 			bool save = false;
 
@@ -401,7 +286,7 @@ void API::createBulkOfDeliveryAuthorization(
 						{
 							bool warningIfMissingMediaItemKey = true;
 							deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-								userKey, requestWorkspace, playerIP,
+								apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace, playerIP,
 
 								mediaItemKey,
 								"", // uniqueName,
@@ -418,30 +303,6 @@ void API::createBulkOfDeliveryAuthorization(
 								"",	   // playerRegion
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
-						}
-						catch (MediaItemKeyNotFound &e)
-						{
-							SPDLOG_WARN(
-								"createDeliveryAuthorization failed"
-								", mediaItemKey: {}"
-								", encodingProfileKey: {}"
-								", e.what(): {}",
-								mediaItemKey, encodingProfileKey, e.what()
-							);
-
-							continue;
-						}
-						catch (runtime_error &e)
-						{
-							SPDLOG_ERROR(
-								"createDeliveryAuthorization failed"
-								", mediaItemKey: {}"
-								", encodingProfileKey: {}"
-								", e.what(): {}",
-								mediaItemKey, encodingProfileKey, e.what()
-							);
-
-							continue;
 						}
 						catch (exception &e)
 						{
@@ -517,7 +378,7 @@ void API::createBulkOfDeliveryAuthorization(
 						{
 							bool warningIfMissingMediaItemKey = true;
 							deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-								userKey, requestWorkspace, playerIP,
+								apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace, playerIP,
 
 								-1, // mediaItemKey,
 								uniqueName, encodingProfileKey, encodingProfileLabel,
@@ -533,30 +394,6 @@ void API::createBulkOfDeliveryAuthorization(
 								"",	   // playerRegion
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
-						}
-						catch (MediaItemKeyNotFound &e)
-						{
-							SPDLOG_ERROR(
-								"createDeliveryAuthorization failed"
-								", uniqueName: {}"
-								", encodingProfileKey: {}"
-								", e.what(): {}",
-								uniqueName, encodingProfileKey, e.what()
-							);
-
-							continue;
-						}
-						catch (runtime_error &e)
-						{
-							SPDLOG_ERROR(
-								"createDeliveryAuthorization failed"
-								", uniqueName: {}"
-								", encodingProfileKey: {}"
-								", e.what(): {}",
-								uniqueName, encodingProfileKey, e.what()
-							);
-
-							continue;
 						}
 						catch (exception &e)
 						{
@@ -621,7 +458,7 @@ void API::createBulkOfDeliveryAuthorization(
 					{
 						bool warningIfMissingMediaItemKey = false;
 						deliveryAuthorizationDetails = _mmsDeliveryAuthorization->createDeliveryAuthorization(
-							userKey, requestWorkspace, playerIP,
+							apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace, playerIP,
 
 							-1, // mediaItemKey,
 							"", // uniqueName,
@@ -638,30 +475,6 @@ void API::createBulkOfDeliveryAuthorization(
 							"",	   // playerRegion
 							save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 						);
-					}
-					catch (MediaItemKeyNotFound &e)
-					{
-						SPDLOG_ERROR(
-							"createDeliveryAuthorization failed"
-							", ingestionJobKey: {}"
-							", deliveryCode: {}"
-							", e.what(): {}",
-							ingestionJobKey, deliveryCode, e.what()
-						);
-
-						continue;
-					}
-					catch (runtime_error &e)
-					{
-						SPDLOG_ERROR(
-							"createDeliveryAuthorization failed"
-							", ingestionJobKey: {}"
-							", deliveryCode: {}"
-							", e.what(): {}",
-							ingestionJobKey, deliveryCode, e.what()
-						);
-
-						continue;
 					}
 					catch (exception &e)
 					{
@@ -702,49 +515,18 @@ void API::createBulkOfDeliveryAuthorization(
 				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", e.what(): {}",
 				api, e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
@@ -754,12 +536,6 @@ void API::createBulkOfDeliveryAuthorization(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

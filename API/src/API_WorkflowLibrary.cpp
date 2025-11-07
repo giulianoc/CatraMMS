@@ -20,37 +20,26 @@
 #include <sstream>
 
 void API::workflowsAsLibraryList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "workflowsAsLibraryList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
-		json workflowListRoot = _mmsEngineDBFacade->getWorkflowsAsLibraryList(workspace->_workspaceKey);
+		json workflowListRoot = _mmsEngineDBFacade->getWorkflowsAsLibraryList(apiAuthorizationDetails->workspace->_workspaceKey);
 
 		string responseBody = JSONUtils::toString(workflowListRoot);
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -60,22 +49,21 @@ void API::workflowsAsLibraryList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::workflowAsLibraryContent(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "workflowAsLibraryContent";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -88,31 +76,13 @@ void API::workflowAsLibraryContent(
 			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
 
-		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(workspace->_workspaceKey, workflowLibraryKey);
+		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(apiAuthorizationDetails->workspace->_workspaceKey, workflowLibraryKey);
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, workflowLibraryContent);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -122,22 +92,21 @@ void API::workflowAsLibraryContent(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::saveWorkflowAsLibrary(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "saveWorkflowAsLibrary";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -158,7 +127,7 @@ void API::saveWorkflowAsLibrary(
 
 				Validator validator(_mmsEngineDBFacade, _configurationRoot);
 				// it starts from the root and validate recursively the entire body
-				validator.validateIngestedRootMetadata(workspace->_workspaceKey, requestBodyRoot);
+				validator.validateIngestedRootMetadata(apiAuthorizationDetails->workspace->_workspaceKey, requestBodyRoot);
 
 				string field = "label";
 				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -184,16 +153,14 @@ void API::saveWorkflowAsLibrary(
 				}
 				workflowAsLibraryScope = workflowAsLibraryScopeIt->second;
 
-				if (workflowAsLibraryScope == "MMS" && !admin)
+				if (workflowAsLibraryScope == "MMS" && !apiAuthorizationDetails->admin)
 				{
 					string errorMessage = std::format(
 						"APIKey does not have the permission to add/update MMS WorkflowAsLibrary"
 						", admin: {}",
-						admin
+						apiAuthorizationDetails->admin
 					);
 					SPDLOG_ERROR(errorMessage);
-
-					// sendError(request, 403, errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -205,8 +172,8 @@ void API::saveWorkflowAsLibrary(
 				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
 
 			int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
-				workflowAsLibraryScope == "MMS" ? -1 : userKey, workflowAsLibraryScope == "MMS" ? -1 : workspace->_workspaceKey, workflowLabel,
-				thumbnailMediaItemKey, requestBody, admin
+				workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->userKey, workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->workspace->_workspaceKey, workflowLabel,
+				thumbnailMediaItemKey, requestBody, apiAuthorizationDetails->admin
 			);
 
 			responseBody =
@@ -215,23 +182,6 @@ void API::saveWorkflowAsLibrary(
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -242,22 +192,21 @@ void API::saveWorkflowAsLibrary(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeWorkflowAsLibrary(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeWorkflowAsLibrary";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -268,8 +217,6 @@ void API::removeWorkflowAsLibrary(
 		{
 			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -282,22 +229,18 @@ void API::removeWorkflowAsLibrary(
 			string errorMessage = "'scope' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		workflowAsLibraryScope = workflowAsLibraryScopeIt->second;
 
-		if (workflowAsLibraryScope == "MMS" && !admin)
+		if (workflowAsLibraryScope == "MMS" && !apiAuthorizationDetails->admin)
 		{
 			string errorMessage = std::format(
 				"APIKey does not have the permission to add/update MMS WorkflowAsLibrary"
 				", admin: {}",
-				admin
+				apiAuthorizationDetails->admin
 			);
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -305,19 +248,9 @@ void API::removeWorkflowAsLibrary(
 		try
 		{
 			_mmsEngineDBFacade->removeWorkflowAsLibrary(
-				workflowAsLibraryScope == "MMS" ? -1 : userKey, workflowAsLibraryScope == "MMS" ? -1 : workspace->_workspaceKey, workflowLibraryKey,
-				admin
+				workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->userKey, workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->workspace->_workspaceKey, workflowLibraryKey,
+				apiAuthorizationDetails->admin
 			);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -327,28 +260,12 @@ void API::removeWorkflowAsLibrary(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		string responseBody;
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -358,12 +275,6 @@ void API::removeWorkflowAsLibrary(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

@@ -116,13 +116,12 @@ if(APPLE)
 else()
   # ImageMagick, inside the deploy dir, is a link to the real version:
   # ImageMagick -> ImageMagick-7.0.10
-  include_directories(
-    "${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/include/ImageMagick-7")
+  include_directories("${IMAGEMAGICK_INCLUDE_DIR}")
 endif()
 
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
-link_directories("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
+link_directories("${IMAGEMAGICK_LIB_DIR}")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")

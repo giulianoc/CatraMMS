@@ -11,7 +11,6 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
-#include "AWSSigner.h"
 #include "Convert.h"
 #include "CurlWrapper.h"
 #include "Encrypt.h"
@@ -19,10 +18,8 @@
 #include "LdapWrapper.h"
 #include "StringUtils.h"
 #include "System.h"
-#include "Validator.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 #include <format>
 #include <fstream>
@@ -40,9 +37,9 @@
 #include "API.h"
 
 API::API(
-	bool noFileSystemAccess, json configurationRoot, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage,
-	shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-	shared_ptr<atomic<uint64_t>> avgBandwidthUsage
+	const bool noFileSystemAccess, const json& configurationRoot, const shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const shared_ptr<MMSStorage>& mmsStorage,
+	const shared_ptr<MMSDeliveryAuthorization>& mmsDeliveryAuthorization, mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
+	const shared_ptr<atomic<uint64_t>>& avgBandwidthUsage
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
 	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization), _bandwidthStats()
@@ -50,6 +47,1106 @@ API::API(
 	_configurationRoot = configurationRoot;
 	_avgBandwidthUsage = avgBandwidthUsage;
 
+	loadConfiguration(configurationRoot, fileUploadProgressData);
+
+	registerHandler<API>("login", &API::login);
+	registerHandler<API>("registerUser", &API::registerUser);
+	registerHandler<API>("updateUser", &API::updateUser);
+	registerHandler<API>("createTokenToResetPassword", &API::createTokenToResetPassword);
+	registerHandler<API>("resetPassword", &API::resetPassword);
+	registerHandler<API>("updateWorkspace", &API::updateWorkspace);
+	registerHandler<API>("setWorkspaceAsDefault", &API::setWorkspaceAsDefault);
+	registerHandler<API>("createWorkspace", &API::createWorkspace);
+	registerHandler<API>("deleteWorkspace", &API::deleteWorkspace);
+	registerHandler<API>("unshareWorkspace", &API::unshareWorkspace);
+	registerHandler<API>("workspaceUsage", &API::workspaceUsage);
+	registerHandler<API>("shareWorkspace", &API::shareWorkspace_);
+	registerHandler<API>("workspaceList", &API::workspaceList);
+	registerHandler<API>("addInvoice", &API::addInvoice);
+	registerHandler<API>("invoiceList", &API::invoiceList);
+	registerHandler<API>("confirmRegistration", &API::confirmRegistration);
+	registerHandler<API>("addEncoder", &API::addEncoder);
+	registerHandler<API>("removeEncoder", &API::removeEncoder);
+	registerHandler<API>("modifyEncoder", &API::modifyEncoder);
+	registerHandler<API>("encoderList", &API::encoderList);
+	registerHandler<API>("encodersPoolList", &API::encodersPoolList);
+	registerHandler<API>("addEncodersPool", &API::addEncodersPool);
+	registerHandler<API>("modifyEncodersPool", &API::modifyEncodersPool);
+	registerHandler<API>("removeEncodersPool", &API::removeEncodersPool);
+	registerHandler<API>("addAssociationWorkspaceEncoder", &API::addAssociationWorkspaceEncoder);
+	registerHandler<API>("removeAssociationWorkspaceEncoder", &API::removeAssociationWorkspaceEncoder);
+	registerHandler<API>("createDeliveryAuthorization", &API::createDeliveryAuthorization);
+	registerHandler<API>("createBulkOfDeliveryAuthorization", &API::createBulkOfDeliveryAuthorization);
+	registerHandler<API>("ingestion", &API::ingestion);
+	registerHandler<API>("ingestionRootsStatus", &API::ingestionRootsStatus);
+	registerHandler<API>("ingestionRootMetaDataContent", &API::ingestionRootMetaDataContent);
+	registerHandler<API>("ingestionJobsStatus", &API::ingestionJobsStatus);
+	registerHandler<API>("cancelIngestionJob", &API::cancelIngestionJob);
+	registerHandler<API>("updateIngestionJob", &API::updateIngestionJob);
+	registerHandler<API>("ingestionJobSwitchToEncoder", &API::ingestionJobSwitchToEncoder);
+	registerHandler<API>("encodingJobsStatus", &API::encodingJobsStatus);
+	registerHandler<API>("encodingJobPriority", &API::encodingJobPriority);
+	registerHandler<API>("killOrCancelEncodingJob", &API::killOrCancelEncodingJob);
+	registerHandler<API>("changeLiveProxyPlaylist", &API::changeLiveProxyPlaylist);
+	registerHandler<API>("changeLiveProxyOverlayText", &API::changeLiveProxyOverlayText);
+	registerHandler<API>("mediaItemsList", &API::mediaItemsList);
+	registerHandler<API>("updateMediaItem", &API::updateMediaItem);
+	registerHandler<API>("updatePhysicalPath", &API::updatePhysicalPath);
+	registerHandler<API>("tagsList", &API::tagsList);
+	registerHandler<API>("uploadedBinary", &API::uploadedBinary);
+	registerHandler<API>("addUpdateEncodingProfilesSet", &API::addUpdateEncodingProfilesSet);
+	registerHandler<API>("encodingProfilesSetsList", &API::encodingProfilesSetsList);
+	registerHandler<API>("addEncodingProfile", &API::addEncodingProfile);
+	registerHandler<API>("removeEncodingProfile", &API::removeEncodingProfile);
+	registerHandler<API>("removeEncodingProfilesSet", &API::removeEncodingProfilesSet);
+	registerHandler<API>("encodingProfilesList", &API::encodingProfilesList);
+	registerHandler<API>("workflowsAsLibraryList", &API::workflowsAsLibraryList);
+	registerHandler<API>("workflowAsLibraryContent", &API::workflowAsLibraryContent);
+	registerHandler<API>("saveWorkflowAsLibrary", &API::saveWorkflowAsLibrary);
+	registerHandler<API>("removeWorkflowAsLibrary", &API::removeWorkflowAsLibrary);
+	registerHandler<API>("mmsSupport", &API::mmsSupport);
+	registerHandler<API>("addYouTubeConf", &API::addYouTubeConf);
+	registerHandler<API>("modifyYouTubeConf", &API::modifyYouTubeConf);
+	registerHandler<API>("removeYouTubeConf", &API::removeYouTubeConf);
+	registerHandler<API>("youTubeConfList", &API::youTubeConfList);
+	registerHandler<API>("addFacebookConf", &API::addFacebookConf);
+	registerHandler<API>("modifyFacebookConf", &API::modifyFacebookConf);
+	registerHandler<API>("removeFacebookConf", &API::removeFacebookConf);
+	registerHandler<API>("facebookConfList", &API::facebookConfList);
+	registerHandler<API>("addTwitchConf", &API::addTwitchConf);
+	registerHandler<API>("modifyTwitchConf", &API::modifyTwitchConf);
+	registerHandler<API>("removeTwitchConf", &API::removeTwitchConf);
+	registerHandler<API>("twitchConfList", &API::twitchConfList);
+	registerHandler<API>("addStream", &API::addStream);
+	registerHandler<API>("modifyStream", &API::modifyStream);
+	registerHandler<API>("removeStream", &API::removeStream);
+	registerHandler<API>("streamList", &API::streamList);
+	registerHandler<API>("streamFreePushEncoderPort", &API::streamFreePushEncoderPort);
+	registerHandler<API>("addSourceTVStream", &API::addSourceTVStream);
+	registerHandler<API>("modifySourceTVStream", &API::modifySourceTVStream);
+	registerHandler<API>("removeSourceTVStream", &API::removeSourceTVStream);
+	registerHandler<API>("sourceTVStreamList", &API::sourceTVStreamList);
+	registerHandler<API>("addAWSChannelConf", &API::addAWSChannelConf);
+	registerHandler<API>("modifyAWSChannelConf", &API::modifyAWSChannelConf);
+	registerHandler<API>("removeAWSChannelConf", &API::removeAWSChannelConf);
+	registerHandler<API>("awsChannelConfList", &API::awsChannelConfList);
+	registerHandler<API>("addCDN77ChannelConf", &API::addCDN77ChannelConf);
+	registerHandler<API>("modifyCDN77ChannelConf", &API::modifyCDN77ChannelConf);
+	registerHandler<API>("removeCDN77ChannelConf", &API::removeCDN77ChannelConf);
+	registerHandler<API>("cdn77ChannelConfList", &API::cdn77ChannelConfList);
+	registerHandler<API>("addRTMPChannelConf", &API::addRTMPChannelConf);
+	registerHandler<API>("modifyRTMPChannelConf", &API::modifyRTMPChannelConf);
+	registerHandler<API>("removeRTMPChannelConf", &API::removeRTMPChannelConf);
+	registerHandler<API>("rtmpChannelConfList", &API::rtmpChannelConfList);
+	registerHandler<API>("addSRTChannelConf", &API::addSRTChannelConf);
+	registerHandler<API>("modifySRTChannelConf", &API::modifySRTChannelConf);
+	registerHandler<API>("removeSRTChannelConf", &API::removeSRTChannelConf);
+	registerHandler<API>("srtChannelConfList", &API::srtChannelConfList);
+	registerHandler<API>("addHLSChannelConf", &API::addHLSChannelConf);
+	registerHandler<API>("modifyHLSChannelConf", &API::modifyHLSChannelConf);
+	registerHandler<API>("removeHLSChannelConf", &API::removeHLSChannelConf);
+	registerHandler<API>("hlsChannelConfList", &API::hlsChannelConfList);
+	registerHandler<API>("addFTPConf", &API::addFTPConf);
+	registerHandler<API>("modifyFTPConf", &API::modifyFTPConf);
+	registerHandler<API>("removeFTPConf", &API::removeFTPConf);
+	registerHandler<API>("ftpConfList", &API::ftpConfList);
+	registerHandler<API>("addEMailConf", &API::addEMailConf);
+	registerHandler<API>("modifyEMailConf", &API::modifyEMailConf);
+	registerHandler<API>("removeEMailConf", &API::removeEMailConf);
+	registerHandler<API>("emailConfList", &API::emailConfList);
+	registerHandler<API>("loginStatisticList", &API::loginStatisticList);
+	registerHandler<API>("addRequestStatistic", &API::addRequestStatistic);
+	registerHandler<API>("requestStatisticList", &API::requestStatisticList);
+	registerHandler<API>("requestStatisticPerContentList", &API::requestStatisticPerContentList);
+	registerHandler<API>("requestStatisticPerUserList", &API::requestStatisticPerUserList);
+	registerHandler<API>("requestStatisticPerMonthList", &API::requestStatisticPerMonthList);
+	registerHandler<API>("requestStatisticPerDayList", &API::requestStatisticPerDayList);
+	registerHandler<API>("requestStatisticPerHourList", &API::requestStatisticPerHourList);
+	registerHandler<API>("requestStatisticPerCountryList", &API::requestStatisticPerCountryList);
+}
+
+API::~API() = default;
+
+void API::manageRequestAndResponse(
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+	const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
+	const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
+)
+{
+	bool basicAuthenticationPresent = authorizationDetails != nullptr;
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
+	if (basicAuthenticationPresent)
+	{
+		SPDLOG_INFO(
+			"Received manageRequestAndResponse"
+			", requestURI: {}"
+			", requestMethod: {}"
+			", contentLength: {}"
+			", userKey: {}"
+			", workspace->_name: {}"
+			", requestBody: {}"
+			", admin: {}"
+			", createRemoveWorkspace: {}"
+			", ingestWorkflow: {}"
+			", createProfiles: {}"
+			", deliveryAuthorization: {}"
+			", shareWorkspace: {}"
+			", editMedia: {}"
+			", editConfiguration: {}"
+			", killEncoding: {}"
+			", cancelIngestionJob: {}"
+			", editEncodersPool: {}"
+			", applicationRecorder: {}"
+			", createRemoveLiveChannel: {}",
+			requestURI, requestMethod, contentLength, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_name,
+			requestBody, apiAuthorizationDetails->admin, apiAuthorizationDetails->canCreateRemoveWorkspace,
+			apiAuthorizationDetails->canIngestWorkflow, apiAuthorizationDetails->canCreateProfiles,
+			apiAuthorizationDetails->canDeliveryAuthorization, apiAuthorizationDetails->canShareWorkspace,
+			apiAuthorizationDetails->canEditMedia, apiAuthorizationDetails->canEditConfiguration,
+			apiAuthorizationDetails->canKillEncoding, apiAuthorizationDetails->canCancelIngestionJob,
+			apiAuthorizationDetails->canEditEncodersPool, apiAuthorizationDetails->canApplicationRecorder,
+			apiAuthorizationDetails->canCreateRemoveLiveChannel
+		);
+	}
+
+	if (!basicAuthenticationPresent)
+	{
+		SPDLOG_INFO(
+			"Received manageRequestAndResponse"
+			", requestURI: {}"
+			", requestMethod: {}"
+			", contentLength: {}",
+			requestURI, requestMethod, contentLength
+		);
+	}
+
+	try
+	{
+		if (handleRequest(sThreadId, requestIdentifier, request, authorizationDetails, requestURI, requestMethod, requestBody,
+			responseBodyCompressed, requestDetails, queryParameters, false))
+		{
+			const string method = getQueryParameter(queryParameters, "x-api-method", "", true);
+			if (method == "status")
+			{
+				try
+				{
+					json statusRoot;
+
+					statusRoot["status"] = "API server up and running";
+					// statusRoot["version-api"] = version;
+
+					string sJson = JSONUtils::toString(statusRoot);
+
+					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, sJson);
+				}
+				catch (exception &e)
+				{
+					SPDLOG_ERROR(
+						"status failed"
+						", requestBody: {}"
+						", e.what(): {}",
+						requestBody, e.what()
+					);
+
+					throw HTTPError(500);
+				}
+			}
+			else if (method == "avgBandwidthUsage")
+			{
+				try
+				{
+					json statusRoot;
+
+					statusRoot["avgBandwidthUsage"] = _avgBandwidthUsage->load(memory_order_relaxed);
+
+					sendSuccess(
+						sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
+					);
+				}
+				catch (exception &e)
+				{
+					SPDLOG_ERROR(
+						"avgBandwidthUsage failed"
+						", requestBody: {}"
+						", e.what(): {}",
+						requestBody, e.what()
+					);
+
+					throw HTTPError(500);
+				}
+			}
+			else if (method == "binaryAuthorization")
+			{
+				// since we are here, for sure user is authorized
+
+				auto binaryVirtualHostNameIt = queryParameters.find("binaryVirtualHostName");
+				auto binaryListenHostIt = queryParameters.find("binaryListenHost");
+
+				// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
+				auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
+				auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+				if (binaryVirtualHostNameIt != queryParameters.end() && binaryListenHostIt != queryParameters.end() && progressIdIt != requestDetails.end() &&
+					originalURIIt != requestDetails.end())
+				{
+					size_t ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
+					if (ingestionJobKeyIndex != string::npos)
+					{
+						try
+						{
+							struct FileUploadProgressData::RequestData requestData;
+
+							requestData._progressId = progressIdIt->second;
+							requestData._binaryListenHost = binaryListenHostIt->second;
+							requestData._binaryVirtualHostName = binaryVirtualHostNameIt->second;
+							// requestData._binaryListenIp = binaryVirtualHostNameIt->second;
+							requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
+							requestData._lastPercentageUpdated = 0;
+							requestData._callFailures = 0;
+
+							// Content-Range: bytes 0-99999/100000
+							requestData._contentRangePresent = false;
+							requestData._contentRangeStart = -1;
+							requestData._contentRangeEnd = -1;
+							requestData._contentRangeSize = -1;
+							auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
+							if (contentRangeIt != requestDetails.end())
+							{
+								string_view contentRange = contentRangeIt->second;
+								try
+								{
+									parseContentRange(contentRange, requestData._contentRangeStart, requestData._contentRangeEnd,
+										requestData._contentRangeSize);
+
+									requestData._contentRangePresent = true;
+								}
+								catch (exception &e)
+								{
+									SPDLOG_ERROR(
+										"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
+										", contentRange: {}",
+										contentRange
+									);
+									throw HTTPError(500);
+								}
+							}
+
+							SPDLOG_INFO(
+								"Content-Range details"
+								", contentRangePresent: {}"
+								", contentRangeStart: {}"
+								", contentRangeEnd: {}"
+								", contentRangeSize: {}",
+								requestData._contentRangePresent, requestData._contentRangeStart, requestData._contentRangeEnd, requestData._contentRangeSize
+							);
+
+							lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
+
+							_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
+							SPDLOG_INFO(
+								"Added upload file progress to be monitored"
+								", _progressId: {}"
+								", _binaryVirtualHostName: {}"
+								", _binaryListenHost: {}",
+								requestData._progressId, requestData._binaryVirtualHostName, requestData._binaryListenHost
+							);
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"ProgressId not found"
+								", progressIdIt->second: {}",
+								progressIdIt->second
+							);
+						}
+					}
+				}
+
+				string responseBody;
+				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+			}
+			else if (method == "deliveryAuthorizationThroughParameter")
+			{
+				// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
+				try
+				{
+					auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
+					auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+					if (tokenIt == requestDetails.end() || originalURIIt == requestDetails.end())
+					{
+						string errorMessage = std::format(
+							"deliveryAuthorization, not authorized"
+							", token: {}"
+							", URI: {}",
+							(tokenIt != requestDetails.end() ? tokenIt->second : "null"),
+							(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+						);
+						SPDLOG_WARN(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					string contentURI = originalURIIt->second;
+					size_t endOfURIIndex = contentURI.find_last_of("?");
+					if (endOfURIIndex == string::npos)
+					{
+						string errorMessage = std::format(
+							"Wrong URI format"
+							", contentURI: {}",
+							contentURI
+						);
+						SPDLOG_WARN(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					contentURI = contentURI.substr(0, endOfURIIndex);
+
+					string tokenParameter = tokenIt->second;
+
+					SPDLOG_INFO(
+						"Calling checkDeliveryAuthorizationThroughParameter"
+						", contentURI: {}"
+						", tokenParameter: {}",
+						contentURI, tokenParameter
+					);
+
+					_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+
+					string responseBody;
+					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+				}
+				catch (runtime_error &e)
+				{
+					string errorMessage = string("Not authorized");
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(403);
+				}
+				catch (exception &e)
+				{
+					string errorMessage = string("Not authorized: exception managing token");
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(500);
+				}
+			}
+			else if (method == "deliveryAuthorizationThroughPath")
+			{
+				// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
+				try
+				{
+					auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+					if (originalURIIt == requestDetails.end())
+					{
+						string errorMessage = std::format(
+							"deliveryAuthorization, not authorized"
+							", URI: {}",
+							(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+						);
+						SPDLOG_WARN(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					string contentURI = originalURIIt->second;
+
+					/* log incluso in checkDeliveryAuthorizationThroughPath
+					SPDLOG_INFO(
+						"deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
+						", contentURI: {}",
+						contentURI
+					);
+					*/
+
+					_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
+
+					string responseBody;
+					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+				}
+				catch (runtime_error &e)
+				{
+					string errorMessage = string("Not authorized");
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(403);
+				}
+				catch (exception &e)
+				{
+					string errorMessage = string("Not authorized: exception managing token");
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(500);
+				}
+			}
+			else if (method == "manageHTTPStreamingManifest_authorizationThroughParameter")
+			{
+				try
+				{
+					if (_noFileSystemAccess)
+					{
+						string errorMessage = std::format(
+							"no rights to execute this method"
+							", _noFileSystemAccess: {}",
+							_noFileSystemAccess
+						);
+						SPDLOG_ERROR(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					auto tokenIt = queryParameters.find("token");
+					if (tokenIt == queryParameters.end())
+					{
+						string errorMessage = string("Not authorized: token parameter not present");
+						SPDLOG_WARN(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					// we could have:
+					//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
+					//			es: /MMS_0000/1/001/472/152/8063642_2/8063642_1653439.m3u8?token=9163
+					//			es: /MMS_0000/1/001/470/566/8055007_2/8055007_1652158.m3u8?token=ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161
+					//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
+					//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+					//			es:
+					/// MMS_0000/1/001/472/152/8063642_2/360p/8063642_1653439.m3u8?token=Nw2npoRhfMLZC-GiRuZHpI~jGKBRA-NE-OARj~o68En4XFUriOSuXqexke21OTVd
+					bool secondaryManifest;
+					string tokenComingFromURL;
+
+					bool isNumber = StringUtils::isNumber(tokenIt->second);
+					if (isNumber || tokenIt->second.find(",") != string::npos)
+					{
+						secondaryManifest = false;
+						// tokenComingFromURL = stoll(tokenIt->second);
+						tokenComingFromURL = tokenIt->second;
+					}
+					else
+					{
+						secondaryManifest = true;
+						// tokenComingFromURL will be initialized in the next statement
+					}
+					SPDLOG_INFO(
+						"manageHTTPStreamingManifest"
+						", analizing the token {}"
+						", isNumber: {}"
+						", tokenIt->second: {}"
+						", secondaryManifest: {}",
+						tokenIt->second, isNumber, tokenIt->second, secondaryManifest
+					);
+
+					string contentURI;
+					{
+						size_t endOfURIIndex = requestURI.find_last_of("?");
+						if (endOfURIIndex == string::npos)
+						{
+							string errorMessage = std::format(
+								"Wrong URI format"
+								", requestURI: {}",
+								requestURI
+							);
+							SPDLOG_INFO(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						contentURI = requestURI.substr(0, endOfURIIndex);
+					}
+
+					if (secondaryManifest)
+					{
+						auto cookieIt = queryParameters.find("cookie");
+						if (cookieIt == queryParameters.end())
+						{
+							string errorMessage = string("The 'cookie' parameter is not found");
+							SPDLOG_ERROR(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+						string cookie = cookieIt->second;
+
+						string token = tokenIt->second;
+
+						tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
+
+						/*
+						string tokenParameter = std::format("{}---{}", tokenIt->second, cookie);
+						SPDLOG_INFO(
+							"Calling checkDeliveryAuthorizationThroughParameter"
+							", contentURI: {}"
+							", tokenParameter: {}",
+							contentURI, tokenParameter
+						);
+						tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+						*/
+					}
+					else
+					{
+						// cookie parameter is added inside catramms.nginx
+						string mmsInfoCookie;
+						auto cookieIt = queryParameters.find("cookie");
+						if (cookieIt != queryParameters.end())
+							mmsInfoCookie = cookieIt->second;
+
+						tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(
+							secondaryManifest, tokenComingFromURL, mmsInfoCookie, contentURI
+						);
+					}
+
+					// manifest authorized
+
+					{
+						string contentType;
+
+						string m3u8Extension(".m3u8");
+						if (contentURI.ends_with(m3u8Extension))
+							contentType = "Content-type: application/x-mpegURL";
+						else // dash
+							contentType = "Content-type: application/dash+xml";
+						string cookieName = "mmsInfo";
+
+						string responseBody;
+						{
+							fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
+
+							SPDLOG_INFO(
+								"Reading manifest file"
+								", manifestPathFileName: {}",
+								manifestPathFileName.string()
+							);
+
+							if (!fs::exists(manifestPathFileName))
+							{
+								string errorMessage = std::format(
+									"manifest file not existing"
+									", manifestPathFileName: {}",
+									manifestPathFileName.string()
+								);
+								SPDLOG_ERROR(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+
+							if (contentURI.ends_with(m3u8Extension))
+							{
+								std::ifstream manifestFile;
+
+								manifestFile.open(manifestPathFileName.string(), ios::in);
+								if (!manifestFile.is_open())
+								{
+									string errorMessage = std::format(
+										"Not authorized: manifest file not opened"
+										", manifestPathFileName: {}",
+										manifestPathFileName.string()
+									);
+									SPDLOG_INFO(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+
+								string manifestLine;
+								string tsExtension = ".ts";
+								string m3u8Extension = ".m3u8";
+								string m3u8ExtXMedia = "#EXT-X-MEDIA";
+								string endLine = "\n";
+								while (getline(manifestFile, manifestLine))
+								{
+									if (manifestLine[0] != '#' && manifestLine.ends_with(tsExtension))
+									{
+										/*
+										SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
+											+ ", manifestLine: " + manifestLine
+											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+										);
+										*/
+										string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
+										responseBody += (manifestLine + "?token=" + auth + endLine);
+									}
+									else if (manifestLine[0] != '#' && manifestLine.ends_with(m3u8Extension))
+									{
+										// scenario where we have several .m3u8 manifest files
+										/*
+										SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
+											+ ", manifestLine: " + manifestLine
+											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+										);
+										*/
+										string auth = Encrypt::opensslEncrypt(std::format("{}+++{}", manifestLine, tokenComingFromURL));
+										responseBody += std::format("{}?token={}{}", manifestLine, auth, endLine);
+									}
+									else if (manifestLine.starts_with(m3u8ExtXMedia))
+									{
+										// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES,
+										// DEFAULT=YES,URI="eng/1247999_384641.m3u8"
+										string temp = "URI=\"";
+										size_t uriStartIndex = manifestLine.find(temp);
+										if (uriStartIndex != string::npos)
+										{
+											uriStartIndex += temp.size();
+											size_t uriEndIndex = uriStartIndex;
+											while (manifestLine[uriEndIndex] != '\"' && uriEndIndex < manifestLine.size())
+												uriEndIndex++;
+											if (manifestLine[uriEndIndex] == '\"')
+											{
+												string uri = manifestLine.substr(uriStartIndex, uriEndIndex - uriStartIndex);
+												/*
+												SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
+													+ ", uri: " + uri
+													+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+												);
+												*/
+												string auth = Encrypt::opensslEncrypt(uri + "+++" + tokenComingFromURL);
+												string tokenParameter = string("?token=") + auth;
+
+												manifestLine.insert(uriEndIndex, tokenParameter);
+											}
+										}
+
+										responseBody += (manifestLine + endLine);
+									}
+									else
+									{
+										responseBody += (manifestLine + endLine);
+									}
+								}
+								manifestFile.close();
+							}
+							else // dash
+							{
+		#if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
+								SPDLOG_INFO("libxml define OK");
+		#else
+								SPDLOG_INFO("libxml define KO");
+		#endif
+
+								/*
+								<?xml version="1.0" encoding="utf-8"?>
+								<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+										xmlns="urn:mpeg:dash:schema:mpd:2011"
+										xmlns:xlink="http://www.w3.org/1999/xlink"
+										xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011
+								http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+										profiles="urn:mpeg:dash:profile:isoff-live:2011"
+										type="dynamic"
+										minimumUpdatePeriod="PT10S"
+										suggestedPresentationDelay="PT10S"
+										availabilityStartTime="2020-02-03T15:11:56Z"
+										publishTime="2020-02-04T08:54:57Z"
+										timeShiftBufferDepth="PT1M0.0S"
+										minBufferTime="PT20.0S">
+										<ProgramInformation>
+										</ProgramInformation>
+										<Period id="0" start="PT0.0S">
+												<AdaptationSet id="0" contentType="video" segmentAlignment="true" bitstreamSwitching="true">
+														<Representation id="0" mimeType="video/mp4" codecs="avc1.640029" bandwidth="1494920" width="1024"
+								height="576" frameRate="25/1"> <SegmentTemplate timescale="12800" initialization="init-stream$RepresentationID$.m4s"
+								media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="815616000" d="128000"
+								r="5" />
+																		</SegmentTimeline>
+																</SegmentTemplate>
+														</Representation>
+												</AdaptationSet>
+												<AdaptationSet id="1" contentType="audio" segmentAlignment="true" bitstreamSwitching="true">
+														<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.5" bandwidth="95545"
+								audioSamplingRate="48000"> <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011"
+								value="2" /> <SegmentTemplate timescale="48000" initialization="init-stream$RepresentationID$.m4s"
+								media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="3058557246" d="479232" />
+																				<S d="481280" />
+																				<S d="479232" r="1" />
+																				<S d="481280" />
+																				<S d="479232" />
+																		</SegmentTimeline>
+																</SegmentTemplate>
+														</Representation>
+												</AdaptationSet>
+										</Period>
+								</MPD>
+								*/
+								xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
+								if (doc == nullptr)
+								{
+									string errorMessage = std::format(
+										"xmlParseFile failed"
+										", manifestPathFileName: {}",
+										manifestPathFileName.string()
+									);
+									SPDLOG_INFO(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+
+								// xmlNode* rootElement = xmlDocGetRootElement(doc);
+
+								/* Create xpath evaluation context */
+								xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
+								if (xpathCtx == nullptr)
+								{
+									xmlFreeDoc(doc);
+
+									string errorMessage = std::format(
+										"xmlXPathNewContext failed"
+										", manifestPathFileName: {}",
+										manifestPathFileName.string()
+									);
+									SPDLOG_INFO(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+
+								if (xmlXPathRegisterNs(xpathCtx, BAD_CAST "xmlns", BAD_CAST "urn:mpeg:dash:schema:mpd:2011") != 0)
+								{
+									xmlXPathFreeContext(xpathCtx);
+									xmlFreeDoc(doc);
+
+									string errorMessage = std::format(
+										"xmlXPathRegisterNs xmlns:xsi"
+										", manifestPathFileName: {}",
+										manifestPathFileName.string()
+									);
+									SPDLOG_INFO(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								/*
+								if(xmlXPathRegisterNs(xpathCtx,
+									BAD_CAST "xmlns:xlink",
+									BAD_CAST "http://www.w3.org/1999/xlink") != 0)
+								{
+									xmlXPathFreeContext(xpathCtx);
+									xmlFreeDoc(doc);
+
+									string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
+										+ ", manifestPathFileName: " + manifestPathFileName.string()
+										;
+									SPDLOG_INFO(__FILEREF__ + errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								if(xmlXPathRegisterNs(xpathCtx,
+									BAD_CAST "xsi:schemaLocation",
+									BAD_CAST "http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd") != 0)
+								{
+									xmlXPathFreeContext(xpathCtx);
+									xmlFreeDoc(doc);
+
+									string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
+										+ ", manifestPathFileName: " + manifestPathFileName.string()
+										;
+									SPDLOG_INFO(__FILEREF__ + errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+								*/
+
+								// Evaluate xpath expression
+								const char *xpathExpr = "//xmlns:Period/xmlns:AdaptationSet/xmlns:Representation/xmlns:SegmentTemplate";
+								xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST xpathExpr, xpathCtx);
+								if (xpathObj == nullptr)
+								{
+									xmlXPathFreeContext(xpathCtx);
+									xmlFreeDoc(doc);
+
+									string errorMessage = std::format(
+										"xmlXPathEvalExpression failed"
+										", manifestPathFileName: {}",
+										manifestPathFileName.string()
+									);
+									SPDLOG_INFO(errorMessage);
+
+									throw runtime_error(errorMessage);
+								}
+
+								xmlNodeSetPtr nodes = xpathObj->nodesetval;
+								SPDLOG_INFO(
+									"processing mpd manifest file"
+									", manifestPathFileName: {}"
+									", nodesNumber: {}",
+									manifestPathFileName.string(), nodes->nodeNr
+								);
+								for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
+								{
+									if (nodes->nodeTab[nodeIndex] == nullptr)
+									{
+										xmlXPathFreeContext(xpathCtx);
+										xmlFreeDoc(doc);
+
+										string errorMessage = std::format(
+											"nodes->nodeTab[nodeIndex] is null"
+											", manifestPathFileName: {}"
+											", nodeIndex: {}",
+											manifestPathFileName.string(), nodeIndex
+										);
+										SPDLOG_INFO(errorMessage);
+
+										throw runtime_error(errorMessage);
+									}
+
+									const char *mediaAttributeName = "media";
+									const char *initializationAttributeName = "initialization";
+									xmlChar *mediaValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName);
+									xmlChar *initializationValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName);
+									if (mediaValue == (xmlChar *)nullptr || initializationValue == (xmlChar *)nullptr)
+									{
+										xmlXPathFreeContext(xpathCtx);
+										xmlFreeDoc(doc);
+
+										string errorMessage = std::format(
+											"xmlGetProp failed"
+											", manifestPathFileName: {}",
+											manifestPathFileName.string()
+										);
+										SPDLOG_INFO(errorMessage);
+
+										throw runtime_error(errorMessage);
+									}
+
+									string auth = Encrypt::opensslEncrypt(string((char *)mediaValue) + "+++" + tokenComingFromURL);
+									string newMediaAttributeValue = string((char *)mediaValue) + "?token=" + auth;
+									// xmlAttrPtr
+									xmlSetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName, BAD_CAST newMediaAttributeValue.c_str());
+
+									string newInitializationAttributeValue = string((char *)initializationValue) + "?token=" + auth;
+									// xmlAttrPtr
+									xmlSetProp(
+										nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName, BAD_CAST newInitializationAttributeValue.c_str()
+									);
+
+									// const char *value = "ssss";
+									// xmlNodeSetContent(nodes->nodeTab[nodeIndex], BAD_CAST value);
+
+									/*
+									 * All the elements returned by an XPath query are pointers to
+									 * elements from the tree *except* namespace nodes where the XPath
+									 * semantic is different from the implementation in libxml2 tree.
+									 * As a result when a returned node set is freed when
+									 * xmlXPathFreeObject() is called, that routine must check the
+									 * element type. But node from the returned set may have been removed
+									 * by xmlNodeSetContent() resulting in access to freed data.
+									 * This can be exercised by running
+									 *       valgrind xpath2 test3.xml '//discarded' discarded
+									 * There is 2 ways around it:
+									 *   - make a copy of the pointers to the nodes from the result set
+									 *     then call xmlXPathFreeObject() and then modify the nodes
+									 * or
+									 *   - remove the reference to the modified nodes from the node set
+									 *     as they are processed, if they are not namespace nodes.
+									 */
+									// if (nodes->nodeTab[nodeIndex]->type != XML_NAMESPACE_DECL)
+									// 	nodes->nodeTab[nodeIndex] = NULL;
+								}
+
+								/* Cleanup of XPath data */
+								xmlXPathFreeObject(xpathObj);
+								xmlXPathFreeContext(xpathCtx);
+
+								/* dump the resulting document */
+								{
+									xmlChar *xmlbuff;
+									int buffersize;
+									xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
+									SPDLOG_INFO(
+										"dumping mpd manifest file"
+										", manifestPathFileName: {}"
+										", buffersize: {}",
+										manifestPathFileName.string(), buffersize
+									);
+
+									responseBody = (char *)xmlbuff;
+
+									xmlFree(xmlbuff);
+									// xmlDocDump(stdout, doc);
+								}
+
+								/* free the document */
+								xmlFreeDoc(doc);
+
+								/*
+								std::ifstream manifestFile(manifestPathFileName);
+								std::stringstream buffer;
+								buffer << manifestFile.rdbuf();
+
+								responseBody = buffer.str();
+								*/
+							}
+						}
+
+						string cookieValue = Encrypt::opensslEncrypt(tokenComingFromURL);
+						string cookiePath;
+						{
+							size_t cookiePathIndex = contentURI.find_last_of("/");
+							if (cookiePathIndex == string::npos)
+							{
+								string errorMessage = std::format(
+									"Wrong URI format"
+									", contentURI: {}",
+									contentURI
+								);
+								SPDLOG_INFO(errorMessage);
+
+								throw runtime_error(errorMessage);
+							}
+							cookiePath = contentURI.substr(0, cookiePathIndex);
+						}
+
+						bool enableCorsGETHeader = true;
+						string originHeader;
+						{
+							auto originIt = requestDetails.find("HTTP_ORIGIN");
+							if (originIt != requestDetails.end())
+								originHeader = originIt->second;
+						}
+						if (secondaryManifest)
+							sendSuccess(
+								sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType, "",
+								"", "", enableCorsGETHeader, originHeader
+							);
+						else
+							sendSuccess(
+								sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType,
+								cookieName, cookieValue, cookiePath, enableCorsGETHeader, originHeader
+							);
+					}
+				}
+				catch (runtime_error &e)
+				{
+					string errorMessage = string("Not authorized");
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(403);
+				}
+				catch (exception &e)
+				{
+					string errorMessage = string("Not authorized: exception managing token");
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(500);
+				}
+			}
+			else
+			{
+				string errorMessage = std::format(
+					"No API is matched"
+					", requestURI: {}"
+					", method: {}"
+					", requestMethod: {}",
+					requestURI, method, requestMethod
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw HTTPError(400);
+			}
+		}
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"manage request failed"
+			", requestBody: {}"
+			", e.what(): {}",
+			requestBody, e.what()
+		);
+
+		int htmlResponseCode = 500;
+		if (dynamic_cast<HTTPError*>(&e))
+			htmlResponseCode = dynamic_cast<HTTPError*>(&e)->httpErrorCode;
+		string errorMessage = getHtmlStandardMessage(htmlResponseCode);
+
+		SPDLOG_ERROR(errorMessage);
+
+		sendError(request, htmlResponseCode, errorMessage);
+
+		throw runtime_error(string(errorMessage));
+	}
+}
+
+shared_ptr<FastCGIAPI::AuthorizationDetails> API::checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password)
+{
+	auto apiAuthorizationDetails = make_shared<APIAuthorizationDetails>();
+	try
+	{
+		const tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+			userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(
+				password,
+				// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
+			false
+			);
+
+		apiAuthorizationDetails->userName = userName;
+		apiAuthorizationDetails->password = password;
+		apiAuthorizationDetails->userKey = get<0>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->workspace = get<1>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->admin = get<2>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canCreateRemoveWorkspace = get<3>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canIngestWorkflow = get<4>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canCreateProfiles = get<5>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canDeliveryAuthorization = get<6>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canShareWorkspace = get<7>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canEditMedia = get<8>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canEditConfiguration = get<9>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canKillEncoding = get<10>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canCancelIngestionJob = get<11>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canEditEncodersPool = get<12>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canApplicationRecorder = get<13>(userKeyWorkspaceAndFlags);
+		apiAuthorizationDetails->canCreateRemoveLiveChannel = get<14>(userKeyWorkspaceAndFlags);
+		return apiAuthorizationDetails;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_INFO(
+			"_mmsEngineDBFacade->checkAPIKey failed"
+			", _requestIdentifier: {}"
+			", threadId: {}"
+			", apiKey: {}",
+			_requestIdentifier, sThreadId, password
+		);
+
+		throw HTTPError(401);
+	}
+
+	if (apiAuthorizationDetails->userKey != StringUtils::toInt64(userName))
+	{
+		SPDLOG_INFO(
+			"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
+			", _requestIdentifier: {}"
+			", threadId: {}"
+			", username of basic authorization (userKey): {}"
+			", userKey associated to the APIKey: {}"
+			", apiKey: {}",
+			_requestIdentifier, sThreadId, userName, apiAuthorizationDetails->userKey, password
+		);
+
+		throw HTTPError(401);
+	}
+}
+
+bool API::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
+{
+	bool basicAuthenticationRequired = true;
+
+	string method = getMapParameter(queryParameters, "x-api-method", string(), false);
+	if (method.empty())
+	{
+		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
+
+		return basicAuthenticationRequired;
+	}
+
+	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword" ||
+		method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
+		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" || method == "avgBandwidthUsage" ||
+		method == "status" // often used as healthy check
+	)
+		basicAuthenticationRequired = false;
+
+	// This is the authorization asked when the deliveryURL is received by nginx
+	// Here the token is checked and it is not needed any basic authorization
+	if (requestURI == "/catramms/delivery/authorization")
+		basicAuthenticationRequired = false;
+
+	return basicAuthenticationRequired;
+}
+
+void API::loadConfiguration(json configurationRoot, FileUploadProgressData *fileUploadProgressData)
+{
 	string encodingPriority = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPriority", "low");
 	SPDLOG_INFO(
 		"Configuration item"
@@ -480,2438 +1577,12 @@ API::API(
 	}
 }
 
-API::~API() = default;
-
-void API::manageRequestAndResponse(
-	const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
-	const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
-	const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
-)
-{
-
-	int64_t userKey;
-	shared_ptr<Workspace> workspace;
-	bool admin;
-	bool createRemoveWorkspace;
-	bool ingestWorkflow;
-	bool createProfiles;
-	bool deliveryAuthorization;
-	bool shareWorkspace;
-	bool editMedia;
-	bool editConfiguration;
-	bool killEncoding;
-	bool cancelIngestionJob_;
-	bool editEncodersPool;
-	bool applicationRecorder;
-	bool createRemoveLiveChannel;
-
-	if (basicAuthenticationPresent)
-	{
-		tie(userKey, workspace, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-			editConfiguration, killEncoding, cancelIngestionJob_, editEncodersPool, applicationRecorder, createRemoveLiveChannel) =
-			_userKeyWorkspaceAndFlags;
-
-		SPDLOG_INFO(
-			"Received manageRequestAndResponse"
-			", requestURI: {}"
-			", requestMethod: {}"
-			", contentLength: {}"
-			", userKey: {}"
-			", workspace->_name: {}"
-			", requestBody: {}"
-			", admin: {}"
-			", createRemoveWorkspace: {}"
-			", ingestWorkflow: {}"
-			", createProfiles: {}"
-			", deliveryAuthorization: {}"
-			", shareWorkspace: {}"
-			", editMedia: {}"
-			", editConfiguration: {}"
-			", killEncoding: {}"
-			", cancelIngestionJob: {}"
-			", editEncodersPool: {}"
-			", applicationRecorder: {}"
-			", createRemoveLiveChannel: {}",
-			requestURI, requestMethod, contentLength, userKey, workspace->_name, requestBody, admin, createRemoveWorkspace, ingestWorkflow,
-			createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob_, editEncodersPool,
-			applicationRecorder, createRemoveLiveChannel
-		);
-	}
-
-	auto methodIt = queryParameters.find("x-api-method");
-	if (methodIt == queryParameters.end())
-	{
-		string errorMessage = std::format("The 'x-api-method' parameter is not found");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 400, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	string method = methodIt->second;
-
-	string version;
-	auto versionIt = queryParameters.find("x-api-version");
-	if (versionIt != queryParameters.end())
-		version = versionIt->second;
-
-	if (!basicAuthenticationPresent)
-	{
-		SPDLOG_INFO(
-			"Received manageRequestAndResponse"
-			", requestURI: {}"
-			", requestMethod: {}"
-			", contentLength: {}"
-			", method: {}"
-			// next is to avoid to log the password
-			", requestBody: {}",
-			requestURI, requestMethod, contentLength, method, (method == "login" ? "..." : requestBody)
-		);
-	}
-
-	if (method == "status")
-	{
-		try
-		{
-			json statusRoot;
-
-			statusRoot["status"] = "API server up and running";
-			statusRoot["version-api"] = version;
-
-			string sJson = JSONUtils::toString(statusRoot);
-
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, sJson);
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"status failed"
-				", requestBody: {}"
-				", e.what(): {}",
-				requestBody, e.what()
-			);
-
-			string errorMessage = string("Internal server error");
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else if (method == "avgBandwidthUsage")
-	{
-		try
-		{
-			json statusRoot;
-
-			statusRoot["avgBandwidthUsage"] = _avgBandwidthUsage->load(memory_order_relaxed);
-
-			sendSuccess(
-				sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
-			);
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"avgBandwidthUsage failed"
-				", requestBody: {}"
-				", e.what(): {}",
-				requestBody, e.what()
-			);
-
-			string errorMessage = string("Internal server error");
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	else if (method == "binaryAuthorization")
-	{
-		// since we are here, for sure user is authorized
-
-		auto binaryVirtualHostNameIt = queryParameters.find("binaryVirtualHostName");
-		auto binaryListenHostIt = queryParameters.find("binaryListenHost");
-
-		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
-		auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-		if (binaryVirtualHostNameIt != queryParameters.end() && binaryListenHostIt != queryParameters.end() && progressIdIt != requestDetails.end() &&
-			originalURIIt != requestDetails.end())
-		{
-			size_t ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
-			if (ingestionJobKeyIndex != string::npos)
-			{
-				try
-				{
-					struct FileUploadProgressData::RequestData requestData;
-
-					requestData._progressId = progressIdIt->second;
-					requestData._binaryListenHost = binaryListenHostIt->second;
-					requestData._binaryVirtualHostName = binaryVirtualHostNameIt->second;
-					// requestData._binaryListenIp = binaryVirtualHostNameIt->second;
-					requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
-					requestData._lastPercentageUpdated = 0;
-					requestData._callFailures = 0;
-
-					// Content-Range: bytes 0-99999/100000
-					requestData._contentRangePresent = false;
-					requestData._contentRangeStart = -1;
-					requestData._contentRangeEnd = -1;
-					requestData._contentRangeSize = -1;
-					auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
-					if (contentRangeIt != requestDetails.end())
-					{
-						string contentRange = contentRangeIt->second;
-						try
-						{
-							parseContentRange(
-								contentRange, requestData._contentRangeStart, requestData._contentRangeEnd, requestData._contentRangeSize
-							);
-
-							requestData._contentRangePresent = true;
-						}
-						catch (exception &e)
-						{
-							string errorMessage = std::format(
-								"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
-								", contentRange: {}",
-								contentRange
-							);
-							SPDLOG_ERROR(errorMessage);
-
-							sendError(request, 500, errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-
-					SPDLOG_INFO(
-						"Content-Range details"
-						", contentRangePresent: {}"
-						", contentRangeStart: {}"
-						", contentRangeEnd: {}"
-						", contentRangeSize: {}",
-						requestData._contentRangePresent, requestData._contentRangeStart, requestData._contentRangeEnd, requestData._contentRangeSize
-					);
-
-					lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
-
-					_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
-					SPDLOG_INFO(
-						"Added upload file progress to be monitored"
-						", _progressId: {}"
-						", _binaryVirtualHostName: {}"
-						", _binaryListenHost: {}",
-						requestData._progressId, requestData._binaryVirtualHostName, requestData._binaryListenHost
-					);
-				}
-				catch (exception &e)
-				{
-					SPDLOG_ERROR(
-						"ProgressId not found"
-						", progressIdIt->second: {}",
-						progressIdIt->second
-					);
-				}
-			}
-		}
-
-		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
-	}
-	else if (method == "deliveryAuthorizationThroughParameter")
-	{
-		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
-		try
-		{
-			auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-			auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-			if (tokenIt == requestDetails.end() || originalURIIt == requestDetails.end())
-			{
-				string errorMessage = std::format(
-					"deliveryAuthorization, not authorized"
-					", token: {}"
-					", URI: {}",
-					(tokenIt != requestDetails.end() ? tokenIt->second : "null"),
-					(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-				);
-				SPDLOG_WARN(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			string contentURI = originalURIIt->second;
-			size_t endOfURIIndex = contentURI.find_last_of("?");
-			if (endOfURIIndex == string::npos)
-			{
-				string errorMessage = std::format(
-					"Wrong URI format"
-					", contentURI: {}",
-					contentURI
-				);
-				SPDLOG_WARN(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			contentURI = contentURI.substr(0, endOfURIIndex);
-
-			string tokenParameter = tokenIt->second;
-
-			SPDLOG_INFO(
-				"Calling checkDeliveryAuthorizationThroughParameter"
-				", contentURI: {}"
-				", tokenParameter: {}",
-				contentURI, tokenParameter
-			);
-
-			_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
-
-			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
-		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("Not authorized");
-			SPDLOG_WARN(errorMessage);
-
-			string responseBody;
-			sendError(request, 403, errorMessage);
-		}
-		catch (exception &e)
-		{
-			string errorMessage = string("Not authorized: exception managing token");
-			SPDLOG_WARN(errorMessage);
-
-			sendError(request, 500, errorMessage);
-		}
-	}
-	else if (method == "deliveryAuthorizationThroughPath")
-	{
-		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
-		try
-		{
-			auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-			if (originalURIIt == requestDetails.end())
-			{
-				string errorMessage = std::format(
-					"deliveryAuthorization, not authorized"
-					", URI: {}",
-					(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-				);
-				SPDLOG_WARN(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string contentURI = originalURIIt->second;
-
-			/* log incluso in checkDeliveryAuthorizationThroughPath
-			SPDLOG_INFO(
-				"deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
-				", contentURI: {}",
-				contentURI
-			);
-			*/
-
-			_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
-
-			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
-		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("Not authorized");
-			SPDLOG_WARN(errorMessage);
-
-			string responseBody;
-			sendError(request, 403, errorMessage);
-		}
-		catch (exception &e)
-		{
-			string errorMessage = string("Not authorized: exception managing token");
-			SPDLOG_WARN(errorMessage);
-
-			sendError(request, 500, errorMessage);
-		}
-	}
-	else if (method == "manageHTTPStreamingManifest_authorizationThroughParameter")
-	{
-		try
-		{
-			if (_noFileSystemAccess)
-			{
-				string errorMessage = std::format(
-					"no rights to execute this method"
-					", _noFileSystemAccess: {}",
-					_noFileSystemAccess
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			auto tokenIt = queryParameters.find("token");
-			if (tokenIt == queryParameters.end())
-			{
-				string errorMessage = string("Not authorized: token parameter not present");
-				SPDLOG_WARN(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-
-			// we could have:
-			//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
-			//			es: /MMS_0000/1/001/472/152/8063642_2/8063642_1653439.m3u8?token=9163
-			//			es: /MMS_0000/1/001/470/566/8055007_2/8055007_1652158.m3u8?token=ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161
-			//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
-			//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
-			//			es:
-			/// MMS_0000/1/001/472/152/8063642_2/360p/8063642_1653439.m3u8?token=Nw2npoRhfMLZC-GiRuZHpI~jGKBRA-NE-OARj~o68En4XFUriOSuXqexke21OTVd
-			bool secondaryManifest;
-			string tokenComingFromURL;
-
-			bool isNumber = StringUtils::isNumber(tokenIt->second);
-			if (isNumber || tokenIt->second.find(",") != string::npos)
-			{
-				secondaryManifest = false;
-				// tokenComingFromURL = stoll(tokenIt->second);
-				tokenComingFromURL = tokenIt->second;
-			}
-			else
-			{
-				secondaryManifest = true;
-				// tokenComingFromURL will be initialized in the next statement
-			}
-			SPDLOG_INFO(
-				"manageHTTPStreamingManifest"
-				", analizing the token {}"
-				", isNumber: {}"
-				", tokenIt->second: {}"
-				", secondaryManifest: {}",
-				tokenIt->second, isNumber, tokenIt->second, secondaryManifest
-			);
-
-			string contentURI;
-			{
-				size_t endOfURIIndex = requestURI.find_last_of("?");
-				if (endOfURIIndex == string::npos)
-				{
-					string errorMessage = std::format(
-						"Wrong URI format"
-						", requestURI: {}",
-						requestURI
-					);
-					SPDLOG_INFO(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				contentURI = requestURI.substr(0, endOfURIIndex);
-			}
-
-			if (secondaryManifest)
-			{
-				auto cookieIt = queryParameters.find("cookie");
-				if (cookieIt == queryParameters.end())
-				{
-					string errorMessage = string("The 'cookie' parameter is not found");
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				string cookie = cookieIt->second;
-
-				string token = tokenIt->second;
-
-				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
-
-				/*
-				string tokenParameter = std::format("{}---{}", tokenIt->second, cookie);
-				SPDLOG_INFO(
-					"Calling checkDeliveryAuthorizationThroughParameter"
-					", contentURI: {}"
-					", tokenParameter: {}",
-					contentURI, tokenParameter
-				);
-				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
-				*/
-			}
-			else
-			{
-				// cookie parameter is added inside catramms.nginx
-				string mmsInfoCookie;
-				auto cookieIt = queryParameters.find("cookie");
-				if (cookieIt != queryParameters.end())
-					mmsInfoCookie = cookieIt->second;
-
-				tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(
-					secondaryManifest, tokenComingFromURL, mmsInfoCookie, contentURI
-				);
-			}
-
-			// manifest authorized
-
-			{
-				string contentType;
-
-				string m3u8Extension(".m3u8");
-				if (contentURI.ends_with(m3u8Extension))
-					contentType = "Content-type: application/x-mpegURL";
-				else // dash
-					contentType = "Content-type: application/dash+xml";
-				string cookieName = "mmsInfo";
-
-				string responseBody;
-				{
-					fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
-
-					SPDLOG_INFO(
-						"Reading manifest file"
-						", manifestPathFileName: {}",
-						manifestPathFileName.string()
-					);
-
-					if (!fs::exists(manifestPathFileName))
-					{
-						string errorMessage = std::format(
-							"manifest file not existing"
-							", manifestPathFileName: {}",
-							manifestPathFileName.string()
-						);
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					if (contentURI.ends_with(m3u8Extension))
-					{
-						std::ifstream manifestFile;
-
-						manifestFile.open(manifestPathFileName.string(), ios::in);
-						if (!manifestFile.is_open())
-						{
-							string errorMessage = std::format(
-								"Not authorized: manifest file not opened"
-								", manifestPathFileName: {}",
-								manifestPathFileName.string()
-							);
-							SPDLOG_INFO(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-
-						string manifestLine;
-						string tsExtension = ".ts";
-						string m3u8Extension = ".m3u8";
-						string m3u8ExtXMedia = "#EXT-X-MEDIA";
-						string endLine = "\n";
-						while (getline(manifestFile, manifestLine))
-						{
-							if (manifestLine[0] != '#' && manifestLine.ends_with(tsExtension))
-							{
-								/*
-								SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
-									+ ", manifestLine: " + manifestLine
-									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-								);
-								*/
-								string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
-								responseBody += (manifestLine + "?token=" + auth + endLine);
-							}
-							else if (manifestLine[0] != '#' && manifestLine.ends_with(m3u8Extension))
-							{
-								// scenario where we have several .m3u8 manifest files
-								/*
-								SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
-									+ ", manifestLine: " + manifestLine
-									+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-								);
-								*/
-								string auth = Encrypt::opensslEncrypt(std::format("{}+++{}", manifestLine, tokenComingFromURL));
-								responseBody += std::format("{}?token={}{}", manifestLine, auth, endLine);
-							}
-							else if (manifestLine.starts_with(m3u8ExtXMedia))
-							{
-								// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES,
-								// DEFAULT=YES,URI="eng/1247999_384641.m3u8"
-								string temp = "URI=\"";
-								size_t uriStartIndex = manifestLine.find(temp);
-								if (uriStartIndex != string::npos)
-								{
-									uriStartIndex += temp.size();
-									size_t uriEndIndex = uriStartIndex;
-									while (manifestLine[uriEndIndex] != '\"' && uriEndIndex < manifestLine.size())
-										uriEndIndex++;
-									if (manifestLine[uriEndIndex] == '\"')
-									{
-										string uri = manifestLine.substr(uriStartIndex, uriEndIndex - uriStartIndex);
-										/*
-										SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
-											+ ", uri: " + uri
-											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-										);
-										*/
-										string auth = Encrypt::opensslEncrypt(uri + "+++" + tokenComingFromURL);
-										string tokenParameter = string("?token=") + auth;
-
-										manifestLine.insert(uriEndIndex, tokenParameter);
-									}
-								}
-
-								responseBody += (manifestLine + endLine);
-							}
-							else
-							{
-								responseBody += (manifestLine + endLine);
-							}
-						}
-						manifestFile.close();
-					}
-					else // dash
-					{
-#if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
-						SPDLOG_INFO("libxml define OK");
-#else
-						SPDLOG_INFO("libxml define KO");
-#endif
-
-						/*
-						<?xml version="1.0" encoding="utf-8"?>
-						<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-								xmlns="urn:mpeg:dash:schema:mpd:2011"
-								xmlns:xlink="http://www.w3.org/1999/xlink"
-								xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011
-						http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
-								profiles="urn:mpeg:dash:profile:isoff-live:2011"
-								type="dynamic"
-								minimumUpdatePeriod="PT10S"
-								suggestedPresentationDelay="PT10S"
-								availabilityStartTime="2020-02-03T15:11:56Z"
-								publishTime="2020-02-04T08:54:57Z"
-								timeShiftBufferDepth="PT1M0.0S"
-								minBufferTime="PT20.0S">
-								<ProgramInformation>
-								</ProgramInformation>
-								<Period id="0" start="PT0.0S">
-										<AdaptationSet id="0" contentType="video" segmentAlignment="true" bitstreamSwitching="true">
-												<Representation id="0" mimeType="video/mp4" codecs="avc1.640029" bandwidth="1494920" width="1024"
-						height="576" frameRate="25/1"> <SegmentTemplate timescale="12800" initialization="init-stream$RepresentationID$.m4s"
-						media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="815616000" d="128000"
-						r="5" />
-																</SegmentTimeline>
-														</SegmentTemplate>
-												</Representation>
-										</AdaptationSet>
-										<AdaptationSet id="1" contentType="audio" segmentAlignment="true" bitstreamSwitching="true">
-												<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.5" bandwidth="95545"
-						audioSamplingRate="48000"> <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011"
-						value="2" /> <SegmentTemplate timescale="48000" initialization="init-stream$RepresentationID$.m4s"
-						media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="3058557246" d="479232" />
-																		<S d="481280" />
-																		<S d="479232" r="1" />
-																		<S d="481280" />
-																		<S d="479232" />
-																</SegmentTimeline>
-														</SegmentTemplate>
-												</Representation>
-										</AdaptationSet>
-								</Period>
-						</MPD>
-						*/
-						xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
-						if (doc == nullptr)
-						{
-							string errorMessage = std::format(
-								"xmlParseFile failed"
-								", manifestPathFileName: {}",
-								manifestPathFileName.string()
-							);
-							SPDLOG_INFO(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-
-						// xmlNode* rootElement = xmlDocGetRootElement(doc);
-
-						/* Create xpath evaluation context */
-						xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
-						if (xpathCtx == nullptr)
-						{
-							xmlFreeDoc(doc);
-
-							string errorMessage = std::format(
-								"xmlXPathNewContext failed"
-								", manifestPathFileName: {}",
-								manifestPathFileName.string()
-							);
-							SPDLOG_INFO(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-
-						if (xmlXPathRegisterNs(xpathCtx, BAD_CAST "xmlns", BAD_CAST "urn:mpeg:dash:schema:mpd:2011") != 0)
-						{
-							xmlXPathFreeContext(xpathCtx);
-							xmlFreeDoc(doc);
-
-							string errorMessage = std::format(
-								"xmlXPathRegisterNs xmlns:xsi"
-								", manifestPathFileName: {}",
-								manifestPathFileName.string()
-							);
-							SPDLOG_INFO(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						/*
-						if(xmlXPathRegisterNs(xpathCtx,
-							BAD_CAST "xmlns:xlink",
-							BAD_CAST "http://www.w3.org/1999/xlink") != 0)
-						{
-							xmlXPathFreeContext(xpathCtx);
-							xmlFreeDoc(doc);
-
-							string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							SPDLOG_INFO(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						if(xmlXPathRegisterNs(xpathCtx,
-							BAD_CAST "xsi:schemaLocation",
-							BAD_CAST "http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd") != 0)
-						{
-							xmlXPathFreeContext(xpathCtx);
-							xmlFreeDoc(doc);
-
-							string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
-								+ ", manifestPathFileName: " + manifestPathFileName.string()
-								;
-							SPDLOG_INFO(__FILEREF__ + errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						*/
-
-						// Evaluate xpath expression
-						const char *xpathExpr = "//xmlns:Period/xmlns:AdaptationSet/xmlns:Representation/xmlns:SegmentTemplate";
-						xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST xpathExpr, xpathCtx);
-						if (xpathObj == nullptr)
-						{
-							xmlXPathFreeContext(xpathCtx);
-							xmlFreeDoc(doc);
-
-							string errorMessage = std::format(
-								"xmlXPathEvalExpression failed"
-								", manifestPathFileName: {}",
-								manifestPathFileName.string()
-							);
-							SPDLOG_INFO(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-
-						xmlNodeSetPtr nodes = xpathObj->nodesetval;
-						SPDLOG_INFO(
-							"processing mpd manifest file"
-							", manifestPathFileName: {}"
-							", nodesNumber: {}",
-							manifestPathFileName.string(), nodes->nodeNr
-						);
-						for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
-						{
-							if (nodes->nodeTab[nodeIndex] == nullptr)
-							{
-								xmlXPathFreeContext(xpathCtx);
-								xmlFreeDoc(doc);
-
-								string errorMessage = std::format(
-									"nodes->nodeTab[nodeIndex] is null"
-									", manifestPathFileName: {}"
-									", nodeIndex: {}",
-									manifestPathFileName.string(), nodeIndex
-								);
-								SPDLOG_INFO(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-
-							const char *mediaAttributeName = "media";
-							const char *initializationAttributeName = "initialization";
-							xmlChar *mediaValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName);
-							xmlChar *initializationValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName);
-							if (mediaValue == (xmlChar *)nullptr || initializationValue == (xmlChar *)nullptr)
-							{
-								xmlXPathFreeContext(xpathCtx);
-								xmlFreeDoc(doc);
-
-								string errorMessage = std::format(
-									"xmlGetProp failed"
-									", manifestPathFileName: {}",
-									manifestPathFileName.string()
-								);
-								SPDLOG_INFO(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-
-							string auth = Encrypt::opensslEncrypt(string((char *)mediaValue) + "+++" + tokenComingFromURL);
-							string newMediaAttributeValue = string((char *)mediaValue) + "?token=" + auth;
-							// xmlAttrPtr
-							xmlSetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName, BAD_CAST newMediaAttributeValue.c_str());
-
-							string newInitializationAttributeValue = string((char *)initializationValue) + "?token=" + auth;
-							// xmlAttrPtr
-							xmlSetProp(
-								nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName, BAD_CAST newInitializationAttributeValue.c_str()
-							);
-
-							// const char *value = "ssss";
-							// xmlNodeSetContent(nodes->nodeTab[nodeIndex], BAD_CAST value);
-
-							/*
-							 * All the elements returned by an XPath query are pointers to
-							 * elements from the tree *except* namespace nodes where the XPath
-							 * semantic is different from the implementation in libxml2 tree.
-							 * As a result when a returned node set is freed when
-							 * xmlXPathFreeObject() is called, that routine must check the
-							 * element type. But node from the returned set may have been removed
-							 * by xmlNodeSetContent() resulting in access to freed data.
-							 * This can be exercised by running
-							 *       valgrind xpath2 test3.xml '//discarded' discarded
-							 * There is 2 ways around it:
-							 *   - make a copy of the pointers to the nodes from the result set
-							 *     then call xmlXPathFreeObject() and then modify the nodes
-							 * or
-							 *   - remove the reference to the modified nodes from the node set
-							 *     as they are processed, if they are not namespace nodes.
-							 */
-							// if (nodes->nodeTab[nodeIndex]->type != XML_NAMESPACE_DECL)
-							// 	nodes->nodeTab[nodeIndex] = NULL;
-						}
-
-						/* Cleanup of XPath data */
-						xmlXPathFreeObject(xpathObj);
-						xmlXPathFreeContext(xpathCtx);
-
-						/* dump the resulting document */
-						{
-							xmlChar *xmlbuff;
-							int buffersize;
-							xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
-							SPDLOG_INFO(
-								"dumping mpd manifest file"
-								", manifestPathFileName: {}"
-								", buffersize: {}",
-								manifestPathFileName.string(), buffersize
-							);
-
-							responseBody = (char *)xmlbuff;
-
-							xmlFree(xmlbuff);
-							// xmlDocDump(stdout, doc);
-						}
-
-						/* free the document */
-						xmlFreeDoc(doc);
-
-						/*
-						std::ifstream manifestFile(manifestPathFileName);
-						std::stringstream buffer;
-						buffer << manifestFile.rdbuf();
-
-						responseBody = buffer.str();
-						*/
-					}
-				}
-
-				string cookieValue = Encrypt::opensslEncrypt(tokenComingFromURL);
-				string cookiePath;
-				{
-					size_t cookiePathIndex = contentURI.find_last_of("/");
-					if (cookiePathIndex == string::npos)
-					{
-						string errorMessage = std::format(
-							"Wrong URI format"
-							", contentURI: {}",
-							contentURI
-						);
-						SPDLOG_INFO(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					cookiePath = contentURI.substr(0, cookiePathIndex);
-				}
-
-				bool enableCorsGETHeader = true;
-				string originHeader;
-				{
-					auto originIt = requestDetails.find("HTTP_ORIGIN");
-					if (originIt != requestDetails.end())
-						originHeader = originIt->second;
-				}
-				if (secondaryManifest)
-					sendSuccess(
-						sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType, "",
-						"", "", enableCorsGETHeader, originHeader
-					);
-				else
-					sendSuccess(
-						sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType,
-						cookieName, cookieValue, cookiePath, enableCorsGETHeader, originHeader
-					);
-			}
-		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string("Not authorized");
-			SPDLOG_WARN(errorMessage);
-
-			string responseBody;
-			sendError(request, 403, errorMessage);
-		}
-		catch (exception &e)
-		{
-			string errorMessage = string("Not authorized: exception managing token");
-			SPDLOG_WARN(errorMessage);
-
-			sendError(request, 500, errorMessage);
-		}
-	}
-	else if (method == "login")
-	{
-		login(sThreadId, requestIdentifier, responseBodyCompressed, request, requestBody);
-	}
-	else if (method == "registerUser")
-	{
-		registerUser(sThreadId, requestIdentifier, responseBodyCompressed, request, requestBody);
-	}
-	else if (method == "updateUser")
-	{
-		updateUser(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, requestBody, admin);
-	}
-	else if (method == "createTokenToResetPassword")
-	{
-		createTokenToResetPassword(sThreadId, requestIdentifier, responseBodyCompressed, request, queryParameters);
-	}
-	else if (method == "resetPassword")
-	{
-		resetPassword(sThreadId, requestIdentifier, responseBodyCompressed, request, requestBody);
-	}
-	else if (method == "updateWorkspace")
-	{
-		updateWorkspace(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, requestBody);
-	}
-	else if (method == "setWorkspaceAsDefault")
-	{
-		setWorkspaceAsDefault(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, requestBody);
-	}
-	else if (method == "createWorkspace")
-	{
-		if (!admin && !createRemoveWorkspace)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", createRemoveWorkspace: {}",
-				createRemoveWorkspace
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		createWorkspace(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, queryParameters, requestBody, admin);
-	}
-	else if (method == "deleteWorkspace")
-	{
-		if (!admin && !createRemoveWorkspace)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", createRemoveWorkspace: {}",
-				createRemoveWorkspace
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		deleteWorkspace(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace);
-	}
-	else if (method == "unshareWorkspace")
-	{
-		if (!admin && !shareWorkspace)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", shareWorkspace: {}",
-				shareWorkspace
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		unshareWorkspace(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace);
-	}
-	else if (method == "workspaceUsage")
-	{
-		workspaceUsage(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace);
-	}
-	else if (method == "shareWorkspace")
-	{
-		if (!admin && !shareWorkspace)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", shareWorkspace: {}",
-				shareWorkspace
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		shareWorkspace_(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "workspaceList")
-	{
-		workspaceList(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace, queryParameters, admin);
-	}
-	else if (method == "addInvoice")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addInvoice(sThreadId, requestIdentifier, responseBodyCompressed, request, queryParameters, requestBody);
-	}
-	else if (method == "invoiceList")
-	{
-		invoiceList(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, queryParameters, admin);
-	}
-	else if (method == "confirmRegistration")
-	{
-		confirmRegistration(sThreadId, requestIdentifier, responseBodyCompressed, request, queryParameters);
-	}
-	else if (method == "addEncoder")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, requestBody);
-	}
-	else if (method == "removeEncoder")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "modifyEncoder")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "encoderList")
-	{
-		encoderList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, admin, queryParameters);
-	}
-	else if (method == "encodersPoolList")
-	{
-		encodersPoolList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, admin, queryParameters);
-	}
-	else if (method == "addEncodersPool")
-	{
-		if (!admin && !editEncodersPool)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editEncodersPool: {}",
-				editEncodersPool
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addEncodersPool(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, requestBody);
-	}
-	else if (method == "modifyEncodersPool")
-	{
-		if (!admin && !editEncodersPool)
-		{
-			string errorMessage = string(
-				"APIKey does not have the permission"
-				", editEncodersPool: {}",
-				editEncodersPool
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyEncodersPool(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeEncodersPool")
-	{
-		if (!admin && !editEncodersPool)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editEncodersPool: {}",
-				editEncodersPool
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeEncodersPool(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addAssociationWorkspaceEncoder")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addAssociationWorkspaceEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "removeAssociationWorkspaceEncoder")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeAssociationWorkspaceEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "createDeliveryAuthorization")
-	{
-		if (!admin && !deliveryAuthorization)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", deliveryAuthorization: {}",
-				deliveryAuthorization
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		string clientIPAddress = getClientIPAddress(requestDetails);
-
-		createDeliveryAuthorization(
-			sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace, clientIPAddress, queryParameters
-		);
-	}
-	else if (method == "createBulkOfDeliveryAuthorization")
-	{
-		if (!admin && !deliveryAuthorization)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", deliveryAuthorization: {}",
-				deliveryAuthorization
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		string clientIPAddress = getClientIPAddress(requestDetails);
-
-		createBulkOfDeliveryAuthorization(
-			sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace, clientIPAddress, queryParameters, requestBody
-		);
-	}
-	else if (method == "ingestion")
-	{
-		if (!admin && !ingestWorkflow)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", ingestWorkflow: {}",
-				ingestWorkflow
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		ingestion(sThreadId, requestIdentifier, responseBodyCompressed, request, stoll(userName), password, workspace, queryParameters, requestBody);
-	}
-	else if (method == "ingestionRootsStatus")
-	{
-		ingestionRootsStatus(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "ingestionRootMetaDataContent")
-	{
-		ingestionRootMetaDataContent(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "ingestionJobsStatus")
-	{
-		ingestionJobsStatus(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "cancelIngestionJob")
-	{
-		if (!admin && !cancelIngestionJob_)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", cancelIngestionJob: {}",
-				cancelIngestionJob_
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		cancelIngestionJob(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "updateIngestionJob")
-	{
-		if (!admin && !editMedia)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editMedia: {}",
-				editMedia
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		updateIngestionJob(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, requestBody, admin);
-	}
-	else if (method == "ingestionJobSwitchToEncoder")
-	{
-		if (!admin && !editMedia)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editMedia: {}",
-				editMedia
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		ingestionJobSwitchToEncoder(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, admin);
-	}
-	else if (method == "encodingJobsStatus")
-	{
-		encodingJobsStatus(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "encodingJobPriority")
-	{
-		encodingJobPriority(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "killOrCancelEncodingJob")
-	{
-		if (!admin && !killEncoding)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", killEncoding: {}",
-				killEncoding
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		killOrCancelEncodingJob(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "changeLiveProxyPlaylist")
-	{
-		changeLiveProxyPlaylist(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "changeLiveProxyOverlayText")
-	{
-		changeLiveProxyOverlayText(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "mediaItemsList")
-	{
-		mediaItemsList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody, admin);
-	}
-	else if (method == "updateMediaItem")
-	{
-		if (!admin && !editMedia)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editMedia: {}",
-				editMedia
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		updateMediaItem(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, requestBody, admin);
-	}
-	else if (method == "updatePhysicalPath")
-	{
-		if (!admin && !editMedia)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editMedia: {}",
-				editMedia
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		updatePhysicalPath(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, userKey, queryParameters, requestBody, admin);
-	}
-	else if (method == "tagsList")
-	{
-		tagsList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "uploadedBinary")
-	{
-		uploadedBinary(
-			sThreadId, requestIdentifier, responseBodyCompressed, request, requestMethod, queryParameters, workspace, // contentLength,
-			requestDetails
-		);
-	}
-	else if (method == "addUpdateEncodingProfilesSet")
-	{
-		if (!admin && !createProfiles)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", createProfiles: {}",
-				createProfiles
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addUpdateEncodingProfilesSet(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "encodingProfilesSetsList")
-	{
-		encodingProfilesSetsList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addEncodingProfile")
-	{
-		if (!admin && !createProfiles)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", createProfiles: {}",
-				createProfiles
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addEncodingProfile(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeEncodingProfile")
-	{
-		if (!admin && !createProfiles)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", createProfiles: {}",
-				createProfiles
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeEncodingProfile(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "removeEncodingProfilesSet")
-	{
-		if (!admin && !createProfiles)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", createProfiles: {}",
-				createProfiles
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeEncodingProfilesSet(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "encodingProfilesList")
-	{
-		encodingProfilesList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "workflowsAsLibraryList")
-	{
-		workflowsAsLibraryList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "workflowAsLibraryContent")
-	{
-		workflowAsLibraryContent(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "saveWorkflowAsLibrary")
-	{
-		saveWorkflowAsLibrary(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace, queryParameters, requestBody, admin);
-	}
-	else if (method == "removeWorkflowAsLibrary")
-	{
-		removeWorkflowAsLibrary(sThreadId, requestIdentifier, responseBodyCompressed, request, userKey, workspace, queryParameters, admin);
-	}
-	else if (method == "mmsSupport")
-	{
-		mmsSupport(sThreadId, requestIdentifier, responseBodyCompressed, request, stoll(userName), password, workspace, queryParameters, requestBody);
-	}
-	else if (method == "addYouTubeConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addYouTubeConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyYouTubeConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyYouTubeConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeYouTubeConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeYouTubeConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "youTubeConfList")
-	{
-		youTubeConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addFacebookConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addFacebookConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyFacebookConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyFacebookConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeFacebookConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeFacebookConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "facebookConfList")
-	{
-		facebookConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addTwitchConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addTwitchConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyTwitchConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyTwitchConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeTwitchConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeTwitchConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "twitchConfList")
-	{
-		twitchConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addStream")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addStream(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyStream")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyStream(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeStream")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeStream(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "streamList")
-	{
-		streamList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "streamFreePushEncoderPort")
-	{
-		streamFreePushEncoderPort(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addSourceTVStream")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addSourceTVStream(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifySourceTVStream")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifySourceTVStream(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeSourceTVStream")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeSourceTVStream(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "sourceTVStreamList")
-	{
-		sourceTVStreamList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addAWSChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addAWSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyAWSChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyAWSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeAWSChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeAWSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "awsChannelConfList")
-	{
-		awsChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addCDN77ChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addCDN77ChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyCDN77ChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyCDN77ChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeCDN77ChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeCDN77ChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "cdn77ChannelConfList")
-	{
-		cdn77ChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addRTMPChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addRTMPChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyRTMPChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyRTMPChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeRTMPChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeRTMPChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "rtmpChannelConfList")
-	{
-		rtmpChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addSRTChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addSRTChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifySRTChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifySRTChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeSRTChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeSRTChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "srtChannelConfList")
-	{
-		srtChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addHLSChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addHLSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyHLSChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyHLSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeHLSChannelConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeHLSChannelConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "hlsChannelConfList")
-	{
-		hlsChannelConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addFTPConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addFTPConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyFTPConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyFTPConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeFTPConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeFTPConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "ftpConfList")
-	{
-		ftpConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace);
-	}
-	else if (method == "addEMailConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addEMailConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "modifyEMailConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		modifyEMailConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "removeEMailConf")
-	{
-		if (!admin && !editConfiguration)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", editConfiguration: {}",
-				editConfiguration
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		removeEMailConf(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "emailConfList")
-	{
-		emailConfList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace);
-	}
-	else if (method == "loginStatisticList")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		loginStatisticList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "addRequestStatistic")
-	{
-		if (!admin)
-		{
-			string errorMessage = std::format(
-				"APIKey does not have the permission"
-				", admin: {}",
-				admin
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 403, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		addRequestStatistic(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters, requestBody);
-	}
-	else if (method == "requestStatisticList")
-	{
-		requestStatisticList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "requestStatisticPerContentList")
-	{
-		requestStatisticPerContentList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "requestStatisticPerUserList")
-	{
-		requestStatisticPerUserList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "requestStatisticPerMonthList")
-	{
-		requestStatisticPerMonthList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "requestStatisticPerDayList")
-	{
-		requestStatisticPerDayList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	}
-	else if (method == "requestStatisticPerHourList")
-		requestStatisticPerHourList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	else if (method == "requestStatisticPerCountryList")
-		requestStatisticPerCountryList(sThreadId, requestIdentifier, responseBodyCompressed, request, workspace, queryParameters);
-	else
-	{
-		string errorMessage = std::format(
-			"No API is matched"
-			", requestURI: {}"
-			", method: {}"
-			", requestMethod: {}",
-			requestURI, method, requestMethod
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 400, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-}
-
-void API::checkAuthorization(const string& sThreadId, const string& userName, const string& password)
-{
-	string userKey = userName;
-	string apiKey = password;
-
-	try
-	{
-		_userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(
-			apiKey,
-			// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
-			false
-		);
-	}
-	catch (APIKeyNotFoundOrExpired &e)
-	{
-		SPDLOG_INFO(
-			"_mmsEngineDBFacade->checkAPIKey failed"
-			", _requestIdentifier: {}"
-			", threadId: {}"
-			", apiKey: {}",
-			_requestIdentifier, sThreadId, apiKey
-		);
-
-		throw CheckAuthorizationFailed();
-	}
-	catch (exception &e)
-	{
-		SPDLOG_INFO(
-			"_mmsEngineDBFacade->checkAPIKey failed"
-			", _requestIdentifier: {}"
-			", threadId: {}"
-			", apiKey: {}",
-			_requestIdentifier, sThreadId, apiKey
-		);
-
-		throw CheckAuthorizationFailed();
-	}
-
-	if (get<0>(_userKeyWorkspaceAndFlags) != stoll(userName))
-	{
-		SPDLOG_INFO(
-			"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
-			", _requestIdentifier: {}"
-			", threadId: {}"
-			", username of basic authorization (userKey): {}"
-			", userKey associated to the APIKey: {}"
-			", apiKey: {}",
-			_requestIdentifier, sThreadId, userKey, get<0>(_userKeyWorkspaceAndFlags), apiKey
-		);
-
-		throw CheckAuthorizationFailed();
-	}
-}
-
-bool API::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
-{
-	bool basicAuthenticationRequired = true;
-
-	auto methodIt = queryParameters.find("x-api-method");
-	if (methodIt == queryParameters.end())
-	{
-		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
-
-		return basicAuthenticationRequired;
-	}
-	string method = methodIt->second;
-
-	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword" ||
-		method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
-		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" || method == "avgBandwidthUsage" ||
-		method == "status" // often used as healthy check
-	)
-		basicAuthenticationRequired = false;
-
-	// This is the authorization asked when the deliveryURL is received by nginx
-	// Here the token is checked and it is not needed any basic authorization
-	if (requestURI == "/catramms/delivery/authorization")
-		basicAuthenticationRequired = false;
-
-	return basicAuthenticationRequired;
-}
-
-void API::parseContentRange(string contentRange, long long &contentRangeStart, long long &contentRangeEnd, long long &contentRangeSize)
-{
-	// Content-Range: bytes 0-99999/100000
-
-	contentRangeStart = -1;
-	contentRangeEnd = -1;
-	contentRangeSize = -1;
-
-	try
-	{
-		string prefix("bytes ");
-		if (!(contentRange.size() >= prefix.size() && 0 == contentRange.compare(0, prefix.size(), prefix)))
-		{
-			string errorMessage = std::format(
-				"Content-Range does not start with 'bytes '"
-				", contentRange: {}",
-				contentRange
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		int startIndex = prefix.size();
-		int endIndex = contentRange.find("-", startIndex);
-		if (endIndex == string::npos)
-		{
-			string errorMessage = std::format(
-				"Content-Range does not have '-'"
-				", contentRange: {}",
-				contentRange
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		contentRangeStart = stoll(contentRange.substr(startIndex, endIndex - startIndex));
-
-		endIndex++;
-		int sizeIndex = contentRange.find("/", endIndex);
-		if (sizeIndex == string::npos)
-		{
-			string errorMessage = std::format(
-				"Content-Range does not have '/'"
-				", contentRange: {}",
-				contentRange
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		contentRangeEnd = stoll(contentRange.substr(endIndex, sizeIndex - endIndex));
-
-		sizeIndex++;
-		contentRangeSize = stoll(contentRange.substr(sizeIndex));
-	}
-	catch (exception &e)
-	{
-		string errorMessage = std::format(
-			"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
-			", contentRange: {}",
-			contentRange
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-}
-
 void API::mmsSupport(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey, string apiKey,
-	shared_ptr<Workspace> workspace, unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "mmsSupport";
@@ -2928,19 +1599,7 @@ void API::mmsSupport(
 		string subject;
 		string text;
 
-		json metadataRoot;
-		try
-		{
-			metadataRoot = JSONUtils::toJson(requestBody);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(e.what());
-
-			sendError(request, 400, e.what());
-
-			throw runtime_error(e.what());
-		}
+		json metadataRoot = JSONUtils::toJson(requestBody);
 
 		vector<string> mandatoryFields = {"UserEmailAddress", "Subject", "Text"};
 		for (string field : mandatoryFields)
@@ -2954,9 +1613,7 @@ void API::mmsSupport(
 				);
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
-				throw runtime_error(errorMessage);
+				throw HTTPError(400);
 			}
 		}
 
@@ -2964,16 +1621,17 @@ void API::mmsSupport(
 		subject = JSONUtils::asString(metadataRoot, "Subject", "");
 		text = JSONUtils::asString(metadataRoot, "Text", "");
 
-		try
 		{
+			shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 			vector<string> emailBody;
-			emailBody.push_back(string("<p>UserKey: ") + to_string(userKey) + "</p>");
-			emailBody.push_back(string("<p>WorkspaceKey: ") + to_string(workspace->_workspaceKey) + "</p>");
-			emailBody.push_back(string("<p>APIKey: ") + apiKey + "</p>");
-			emailBody.push_back(string("<p></p>"));
-			emailBody.push_back(string("<p>From: ") + userEmailAddress + "</p>");
-			emailBody.push_back(string("<p></p>"));
-			emailBody.push_back(string("<p>") + text + "</p>");
+			emailBody.push_back(std::format("<p>UserKey: {}</p>", apiAuthorizationDetails->userKey));
+			emailBody.push_back(std::format("<p>WorkspaceKey: {}</p>", apiAuthorizationDetails->workspace->_workspaceKey));
+			emailBody.push_back(std::format("<p>APIKey: {}</p>", apiAuthorizationDetails->password));
+			emailBody.push_back("<p></p>");
+			emailBody.push_back(std::format("<p>From: {}</p>", userEmailAddress));
+			emailBody.push_back("<p></p>");
+			emailBody.push_back(std::format("<p>{}</p>", text));
 
 			string tosCommaSeparated = "support@catramms-cloud.com";
 			CurlWrapper::sendEmail(
@@ -2988,48 +1646,6 @@ void API::mmsSupport(
 			string responseBody;
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"{} failed"
-				", e.what(): {}",
-				api, e.what()
-			);
-
-			string errorMessage = string("Internal server error");
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
@@ -3041,16 +1657,11 @@ void API::mmsSupport(
 			api, requestBody, e.what()
 		);
 
-		string errorMessage = string("Internal server error");
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
-void API::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
+void API::sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage)
 {
 	json responseBodyRoot;
 	responseBodyRoot["status"] = to_string(htmlResponseCode);
@@ -3132,7 +1743,7 @@ void API::bandwidthUsageThread()
 				}
 			}
 		}
-		catch (exception e)
+		catch (exception& e)
 		{
 			SPDLOG_ERROR(
 				"System::getBandwidthInMbps failed"
@@ -3152,7 +1763,7 @@ void API::bandwidthUsageThread()
 				runningHostsBandwidth.size()
 			);
 
-			if (runningHostsBandwidth.size() > 0)
+			if (!runningHostsBandwidth.empty())
 			{
 				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
 				{
@@ -3160,7 +1771,7 @@ void API::bandwidthUsageThread()
 					{
 						string bandwidthUsageURL =
 							std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
-						int bandwidthUsageTimeoutInSeconds = 2;
+						const int bandwidthUsageTimeoutInSeconds = 2;
 						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
 
 						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "avgBandwidthUsage");
@@ -3179,7 +1790,7 @@ void API::bandwidthUsageThread()
 				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(runningHostsBandwidth);
 			}
 		}
-		catch (exception e)
+		catch (exception& e)
 		{
 			SPDLOG_ERROR(
 				"System::getBandwidthInMbps failed"
@@ -3194,7 +1805,7 @@ void API::bandwidthUsageThread()
 			// addSample logs when a new day is started
 			_bandwidthStats.addSample(avgBandwidthUsage, chrono::system_clock::now());
 		}
-		catch (exception e)
+		catch (exception& e)
 		{
 			SPDLOG_ERROR(
 				"System::getBandwidthInMbps failed"

@@ -78,7 +78,7 @@ message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
 #else()
 ## ImageMagick, inside the deploy dir, is a link to the real version:
 ## ImageMagick -> ImageMagick-7.0.10
-include_directories("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/include/ImageMagick-7")
+include_directories("${IMAGEMAGICK_INCLUDE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 #endif()
 
@@ -88,9 +88,9 @@ include_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
+include_directories("${IMAGEMAGICK_INCLUDE_DIR}")
+include_directories("${OPENCV_INCLUDE_DIR}")
 if(APPLE)
-    include_directories("${OPENCV_INCLUDE_DIR}")
-    include_directories("${IMAGEMAGICK_INCLUDE_DIR}")
     include_directories("${AWSSDK_INCLUDE_DIR}")
     include_directories("${AWSCRT_INCLUDE_DIR}")
     include_directories("${AWSCOMMON_INCLUDE_DIR}")

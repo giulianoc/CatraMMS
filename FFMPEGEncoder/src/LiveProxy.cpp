@@ -30,7 +30,7 @@ LiveProxy::~LiveProxy()
 	_liveProxyData->_killedBecauseOfNotWorking = false;
 }
 
-void LiveProxy::encodeContent(string requestBody)
+void LiveProxy::encodeContent(const string_view& requestBody)
 {
 	string api = "liveProxy";
 

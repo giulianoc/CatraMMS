@@ -12,53 +12,54 @@
  */
 
 #include "JSONUtils.h"
-#include <regex>
 
 #include "API.h"
 #include "spdlog/spdlog.h"
 
 void API::updateMediaItem(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
-	unordered_map<string, string> queryParameters, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updateMediaItem";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditMedia: {}",
+			apiAuthorizationDetails->canEditMedia
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
 		int64_t mediaItemKey = -1;
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second == "")
+		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second.empty())
 		{
 			string errorMessage = "'mediaItemKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		mediaItemKey = stoll(mediaItemKeyIt->second);
 
-		json metadataRoot;
-		try
-		{
-			metadataRoot = JSONUtils::toJson(requestBody);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(e.what());
-
-			sendError(request, 400, e.what());
-
-			throw runtime_error(e.what());
-		}
+		json metadataRoot = JSONUtils::toJson(requestBody);
 
 		bool titleModified = false;
 		string newTitle;
@@ -119,104 +120,82 @@ void API::updateMediaItem(
 				"Updating MediaItem"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			json mediaItemRoot = _mmsEngineDBFacade->updateMediaItem(
-				workspace->_workspaceKey, mediaItemKey, titleModified, newTitle, userDataModified, newUserData, retentionInMinutesModified,
-				newRetentionInMinutes, tagsModified, newTagsRoot, uniqueNameModified, newUniqueName, crossReferencesRoot, admin
+				apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey, titleModified, newTitle, userDataModified, newUserData, retentionInMinutesModified,
+				newRetentionInMinutes, tagsModified, newTagsRoot, uniqueNameModified, newUniqueName, crossReferencesRoot, apiAuthorizationDetails->admin
 			);
 
 			SPDLOG_INFO(
 				"MediaItem updated"
 				", workspaceKey: {}"
 				", mediaItemKey: {}",
-				workspace->_workspaceKey, mediaItemKey
+				apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey
 			);
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::updatePhysicalPath(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, int64_t userKey,
-	unordered_map<string, string> queryParameters, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updatePhysicalPath";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditMedia: {}",
+			apiAuthorizationDetails->canEditMedia
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -224,12 +203,10 @@ void API::updatePhysicalPath(
 
 		int64_t mediaItemKey = -1;
 		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second == "")
+		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second.empty())
 		{
 			string errorMessage = "'mediaItemKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -237,30 +214,16 @@ void API::updatePhysicalPath(
 
 		int64_t physicalPathKey = -1;
 		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
-		if (physicalPathKeyIt == queryParameters.end() || physicalPathKeyIt->second == "")
+		if (physicalPathKeyIt == queryParameters.end() || physicalPathKeyIt->second.empty())
 		{
 			string errorMessage = "'physicalPathKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 		physicalPathKey = stoll(physicalPathKeyIt->second);
 
-		json metadataRoot;
-		try
-		{
-			metadataRoot = JSONUtils::toJson(requestBody);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(e.what());
-
-			sendError(request, 400, e.what());
-
-			throw runtime_error(e.what());
-		}
+		json metadataRoot = JSONUtils::toJson(requestBody);
 
 		{
 			vector<string> mandatoryFields = {"RetentionInMinutes"};
@@ -275,8 +238,6 @@ void API::updatePhysicalPath(
 					);
 					SPDLOG_ERROR(errorMessage);
 
-					sendError(request, 400, errorMessage);
-
 					throw runtime_error(errorMessage);
 				}
 			}
@@ -290,102 +251,69 @@ void API::updatePhysicalPath(
 				"Updating MediaItem"
 				", userKey: {}"
 				", workspaceKey: {}",
-				userKey, workspace->_workspaceKey
+				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
 			json mediaItemRoot =
-				_mmsEngineDBFacade->updatePhysicalPath(workspace->_workspaceKey, mediaItemKey, physicalPathKey, newRetentionInMinutes, admin);
+				_mmsEngineDBFacade->updatePhysicalPath(apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey, physicalPathKey, newRetentionInMinutes, apiAuthorizationDetails->admin);
 
 			SPDLOG_INFO(
 				"PhysicalPath updated"
 				", workspaceKey: {}"
 				", mediaItemKey: {}"
 				", physicalPathKey: {}",
-				workspace->_workspaceKey, mediaItemKey, physicalPathKey
+				apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey, physicalPathKey
 			);
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"API failed"
-				", API: {}"
-				", requestBody: {}"
-				", e.what(): {}",
-				api, requestBody, e.what()
-			);
-
-			string errorMessage = std::format("Internal server error: {}", e.what());
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
 				", requestBody: {}"
 				", e.what(): {}",
 				api, requestBody, e.what()
 			);
-
-			string errorMessage = "Internal server error";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 500, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::mediaItemsList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "mediaItemsList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -442,7 +370,7 @@ void API::mediaItemsList(
 		 */
 		int liveRecordingChunk = 0;
 		auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
-		if (liveRecordingChunkIt != queryParameters.end() && liveRecordingChunkIt->second != "")
+		if (liveRecordingChunkIt != queryParameters.end() && !liveRecordingChunkIt->second.empty())
 		{
 			if (liveRecordingChunkIt->second == "true")
 				liveRecordingChunk = 1;
@@ -474,10 +402,10 @@ void API::mediaItemsList(
 			int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
 
 			json ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
-				workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
+				apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
 				// startAndEndIngestionDatePresent,
 				startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
-				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, admin,
+				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, apiAuthorizationDetails->admin,
 				// 2022-12-18: false because from API(get)
 				false
 			);
@@ -492,68 +420,51 @@ void API::mediaItemsList(
 			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAPI).count()
 		);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::tagsList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "tagsList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
 	{
 		int start = 0;
 		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
 			start = stoll(startIt->second);
 		}
 
 		int rows = 10;
 		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
@@ -578,7 +489,7 @@ void API::tagsList(
 		bool contentTypePresent = false;
 		MMSEngineDBFacade::ContentType contentType;
 		auto contentTypeIt = queryParameters.find("contentType");
-		if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
+		if (contentTypeIt != queryParameters.end() && !contentTypeIt->second.empty())
 		{
 			contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
 
@@ -587,7 +498,7 @@ void API::tagsList(
 
 		string tagNameFilter;
 		auto tagNameFilterIt = queryParameters.find("tagNameFilter");
-		if (tagNameFilterIt != queryParameters.end() && tagNameFilterIt->second != "")
+		if (tagNameFilterIt != queryParameters.end() && !tagNameFilterIt->second.empty())
 			tagNameFilter = tagNameFilterIt->second;
 
 		/*
@@ -598,7 +509,7 @@ void API::tagsList(
 		 */
 		int liveRecordingChunk = 0;
 		auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
-		if (liveRecordingChunkIt != queryParameters.end() && liveRecordingChunkIt->second != "")
+		if (liveRecordingChunkIt != queryParameters.end() && !liveRecordingChunkIt->second.empty())
 		{
 			if (liveRecordingChunkIt->second == "true")
 				liveRecordingChunk = 1;
@@ -608,7 +519,7 @@ void API::tagsList(
 
 		{
 			json tagsRoot = _mmsEngineDBFacade->getTagsList(
-				workspace->_workspaceKey, start, rows, liveRecordingChunk, contentTypePresent, contentType, tagNameFilter,
+				apiAuthorizationDetails->workspace->_workspaceKey, start, rows, liveRecordingChunk, contentTypePresent, contentType, tagNameFilter,
 				// 2022-12-18: false because from API(get)
 				false
 			);
@@ -618,38 +529,16 @@ void API::tagsList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

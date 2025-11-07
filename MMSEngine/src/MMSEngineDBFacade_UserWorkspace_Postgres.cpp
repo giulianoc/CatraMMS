@@ -1882,7 +1882,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 }
 
 tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-MMSEngineDBFacade::checkAPIKey(const string& apiKey, bool fromMaster)
+MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
 {
 	shared_ptr<Workspace> workspace;
 	int64_t userKey;
@@ -1931,9 +1931,9 @@ MMSEngineDBFacade::checkAPIKey(const string& apiKey, bool fromMaster)
 			}
 			else
 			{
-				string errorMessage =
-					__FILEREF__ + "apiKey is not present or it is expired" + ", apiKey: " + apiKey + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				SPDLOG_ERROR("apiKey is not present or it is expired"
+					", apiKey: {}"
+					", sqlStatement: {}", apiKey, sqlStatement);
 
 				throw APIKeyNotFoundOrExpired();
 			}

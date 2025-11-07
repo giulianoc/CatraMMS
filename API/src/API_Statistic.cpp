@@ -18,18 +18,34 @@
 #include <regex>
 
 void API::addRequestStatistic(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addRequestStatistic";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -93,7 +109,7 @@ void API::addRequestStatistic(
 			}
 			title = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
+		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
@@ -105,35 +121,14 @@ void API::addRequestStatistic(
 
 			throw runtime_error(errorMessage);
 		}
-		catch (exception &e)
-		{
-			string errorMessage = std::format(
-				"requestBody json is not well format"
-				", requestBody: {}",
-				requestBody
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 
 		string sResponse;
 		try
 		{
 			json statisticRoot =
-				_mmsEngineDBFacade->addRequestStatistic(workspace->_workspaceKey, ipAddress, userId, physicalPathKey, confStreamKey, title);
+				_mmsEngineDBFacade->addRequestStatistic(apiAuthorizationDetails->workspace->_workspaceKey, ipAddress, userId, physicalPathKey, confStreamKey, title);
 
 			sResponse = JSONUtils::toString(statisticRoot);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addRequestStatistic failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -148,53 +143,36 @@ void API::addRequestStatistic(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -202,9 +180,7 @@ void API::requestStatisticList(
 		int start = 0;
 		auto startIt = queryParameters.find("start");
 		if (startIt != queryParameters.end() && startIt->second != "")
-		{
 			start = stoll(startIt->second);
-		}
 
 		int rows = 30;
 		auto rowsIt = queryParameters.find("rows");
@@ -269,8 +245,6 @@ void API::requestStatisticList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -282,15 +256,13 @@ void API::requestStatisticList(
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		endStatisticDate = endStatisticDateIt->second;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticList(
-				workspace->_workspaceKey, userId, title, startStatisticDate, endStatisticDate, start, rows
+				apiAuthorizationDetails->workspace->_workspaceKey, userId, title, startStatisticDate, endStatisticDate, start, rows
 			);
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
@@ -298,51 +270,35 @@ void API::requestStatisticList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticPerContentList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerContentList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -350,9 +306,7 @@ void API::requestStatisticPerContentList(
 		int start = 0;
 		auto startIt = queryParameters.find("start");
 		if (startIt != queryParameters.end() && startIt->second != "")
-		{
 			start = stoll(startIt->second);
-		}
 
 		int rows = 30;
 		auto rowsIt = queryParameters.find("rows");
@@ -418,8 +372,6 @@ void API::requestStatisticPerContentList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -430,8 +382,6 @@ void API::requestStatisticPerContentList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -449,7 +399,7 @@ void API::requestStatisticPerContentList(
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerContentList(
-				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
+				apiAuthorizationDetails->workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
 				totalNumFoundToBeCalculated, start, rows
 			);
 
@@ -458,51 +408,35 @@ void API::requestStatisticPerContentList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticPerUserList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerUserList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -577,8 +511,6 @@ void API::requestStatisticPerUserList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -589,8 +521,6 @@ void API::requestStatisticPerUserList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -608,7 +538,7 @@ void API::requestStatisticPerUserList(
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerUserList(
-				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
+				apiAuthorizationDetails->workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
 				totalNumFoundToBeCalculated, start, rows
 			);
 
@@ -617,51 +547,35 @@ void API::requestStatisticPerUserList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticPerMonthList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerMonthList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -736,8 +650,6 @@ void API::requestStatisticPerMonthList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -748,8 +660,6 @@ void API::requestStatisticPerMonthList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -767,7 +677,7 @@ void API::requestStatisticPerMonthList(
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerMonthList(
-				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
+				apiAuthorizationDetails->workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
 				totalNumFoundToBeCalculated, start, rows
 			);
 
@@ -776,51 +686,35 @@ void API::requestStatisticPerMonthList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticPerDayList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerDayList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -895,8 +789,6 @@ void API::requestStatisticPerDayList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -907,8 +799,6 @@ void API::requestStatisticPerDayList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -926,7 +816,7 @@ void API::requestStatisticPerDayList(
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerDayList(
-				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
+				apiAuthorizationDetails->workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
 				totalNumFoundToBeCalculated, start, rows
 			);
 
@@ -935,51 +825,35 @@ void API::requestStatisticPerDayList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticPerHourList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerHourList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -1054,8 +928,6 @@ void API::requestStatisticPerHourList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -1066,8 +938,6 @@ void API::requestStatisticPerHourList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1085,7 +955,7 @@ void API::requestStatisticPerHourList(
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerHourList(
-				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
+				apiAuthorizationDetails->workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
 				totalNumFoundToBeCalculated, start, rows
 			);
 
@@ -1094,51 +964,35 @@ void API::requestStatisticPerHourList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::requestStatisticPerCountryList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerCountryList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -1213,8 +1067,6 @@ void API::requestStatisticPerCountryList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -1225,8 +1077,6 @@ void API::requestStatisticPerCountryList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1244,7 +1094,7 @@ void API::requestStatisticPerCountryList(
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerCountryList(
-				workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
+				apiAuthorizationDetails->workspace->_workspaceKey, title, userId, startStatisticDate, endStatisticDate, minimalNextRequestDistanceInSeconds,
 				totalNumFoundToBeCalculated, start, rows
 			);
 
@@ -1253,52 +1103,47 @@ void API::requestStatisticPerCountryList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::loginStatisticList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "loginStatisticList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1340,8 +1185,6 @@ void API::loginStatisticList(
 			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		startStatisticDate = startStatisticDateIt->second;
@@ -1352,8 +1195,6 @@ void API::loginStatisticList(
 		{
 			string errorMessage = "'endStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1367,36 +1208,15 @@ void API::loginStatisticList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

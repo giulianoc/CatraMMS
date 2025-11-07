@@ -1066,44 +1066,28 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 			throw runtime_error(errorMessage);
 		}
 	}
-	catch (ServerNotReachable e)
+	catch (exception& e)
 	{
-		SPDLOG_ERROR(
-			"Encoder is not reachable, is it down?"
-			", _proxyIdentifier: {}"
-			", encodingJobKey: {}"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
-		);
+		if (dynamic_cast<CurlWrapper::ServerNotReachable*>(&e))
+			SPDLOG_ERROR(
+				"Encoder is not reachable, is it down?"
+				", _proxyIdentifier: {}"
+				", encodingJobKey: {}"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
+			);
+		else
+			SPDLOG_ERROR(
+				"Status URL failed"
+				", _proxyIdentifier: {}"
+				", encodingJobKey: {}"
+				", ffmpegEncoderURL: {}"
+				", exception: {}",
+				_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
+			);
 
-		throw EncoderNotReachable();
-	}
-	catch (runtime_error e)
-	{
-		SPDLOG_ERROR(
-			"Status URL failed"
-			", _proxyIdentifier: {}"
-			", encodingJobKey: {}"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Status URL failed"
-			", _proxyIdentifier: {}"
-			", encodingJobKey: {}"
-			", ffmpegEncoderURL: {}"
-			", exception: {}",
-			_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 
 	return make_tuple(
@@ -1401,7 +1385,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 						lastRealTimeBitRate = realTimeBitRate;
 						lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
 					}
-					catch (runtime_error &e)
+					catch (exception &e)
 					{
 						SPDLOG_ERROR(
 							"updateEncodingRealTimeInfo failed"
@@ -1414,20 +1398,6 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 							", e.what: {}",
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
 							numberOfRestartBecauseOfFailure, e.what()
-						);
-					}
-					catch (exception &e)
-					{
-						SPDLOG_ERROR(
-							"updateEncodingRealTimeInfo failed"
-							", ingestionJobKey: {}"
-							", encodingJobKey: {}"
-							", encodingPid: {}"
-							", realTimeFrameRate: {}"
-							", realTimeBitRate: {}"
-							", numberOfRestartBecauseOfFailure: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
-							numberOfRestartBecauseOfFailure
 						);
 					}
 				}
@@ -1610,30 +1580,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							continue;
 						}
 					}
-					catch (DBRecordNotFound &e)
-					{
-						SPDLOG_ERROR(
-							"encodingJob_Parameters failed"
-							", _ingestionJobKey: {}"
-							", _encodingJobKey: {}"
-							", e.what(): {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-						);
-
-						throw e;
-					}
-					catch (runtime_error &e)
-					{
-						SPDLOG_ERROR(
-							"encodingJob_Parameters failed"
-							", _ingestionJobKey: {}"
-							", _encodingJobKey: {}"
-							", e.what(): {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-						);
-
-						throw e;
-					}
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
@@ -1644,7 +1590,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 						);
 
-						throw e;
+						throw;
 					}
 				}
 
@@ -1911,16 +1857,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					);
 					_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
 				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"updateEncodingJobProgress failed"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}"
-						", e.what(): {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-					);
-				}
 				catch (exception &e)
 				{
 					SPDLOG_ERROR(
@@ -2004,7 +1940,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						urlNotFound
 					);
 				}
-				catch (EncoderNotReachable &e)
+				catch (exception &e)
 				{
 					encoderNotReachableFailures++;
 
@@ -2022,27 +1958,10 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						", encoderNotReachableFailures: {}"
 						", _maxEncoderNotReachableFailures: {}"
 						", _currentUsedFFMpegEncoderHost: {}"
-						", _currentUsedFFMpegEncoderKey: {}",
+						", _currentUsedFFMpegEncoderKey: {}"
+						", e.what: {}",
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encoderNotReachableFailures, _maxEncoderNotReachableFailures,
-						_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
-					);
-
-					continue;
-				}
-				catch (...)
-				{
-					encoderNotReachableFailures++;
-
-					SPDLOG_ERROR(
-						"getEncodingStatus failed"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}"
-						", encoderNotReachableFailures: {}"
-						", _maxEncoderNotReachableFailures: {}"
-						", _currentUsedFFMpegEncoderHost: {}"
-						", _currentUsedFFMpegEncoderKey: {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encoderNotReachableFailures, _maxEncoderNotReachableFailures,
-						_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey
+						_currentUsedFFMpegEncoderHost, _currentUsedFFMpegEncoderKey, e.what()
 					);
 
 					continue;
@@ -2211,16 +2130,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							urlForbidden, urlNotFound, completedWithError, encodingErrorMessage
 						);
 				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"management of the getEncodingJob result failed"
-						", ingestionJobKey: {}"
-						", encodingJobKey: {}"
-						", e.what(): {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-					);
-				}
 				catch (exception &e)
 				{
 					SPDLOG_ERROR(
@@ -2270,16 +2179,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					}
 
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfErrorMessage);
-				}
-				catch (runtime_error &e)
-				{
-					SPDLOG_ERROR(
-						"appendIngestionJobErrorMessage failed"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}"
-						", e.what(): {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
-					);
 				}
 				catch (exception &e)
 				{
@@ -2368,7 +2267,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			// is finished or not. This task will come back by the MMS system
 			throw e;
 		}
-		catch (EncoderNotFound e)
+		catch (EncoderNotFound& e)
 		{
 			SPDLOG_ERROR(
 				"Encoder not found"
@@ -2438,7 +2337,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			// is finished or not. This task will come back by the MMS system
 			throw e;
 		}
-		catch (runtime_error e)
+		catch (runtime_error& e)
 		{
 			string error = e.what();
 			if (error.find(NoEncodingAvailable().what()) != string::npos)
@@ -2507,7 +2406,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				// throw e;
 			}
 		}
-		catch (exception e)
+		catch (exception& e)
 		{
 			SPDLOG_ERROR(
 				"Encoding URL failed (exception)"

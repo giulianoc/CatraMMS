@@ -1303,7 +1303,7 @@ class MMSEngineDBFacade
 #endif
 
 	tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-	checkAPIKey(const string &apiKey, bool fromMaster);
+	checkAPIKey(const string_view &apiKey, const bool fromMaster);
 
 	json login(string eMailAddress, string password);
 
@@ -1463,7 +1463,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	int64_t addWorkflow(
-		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden, string metaDataContent
+		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden,
+		const string_view& metaDataContent
 	);
 #else
 	int64_t addIngestionRoot(
@@ -1630,7 +1631,8 @@ class MMSEngineDBFacade
 	void updateMediaItem(int64_t mediaItemKey, string processorMMSForRetention);
 
 	int64_t
-	addUpdateWorkflowAsLibrary(int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey, string jsonWorkflow, bool admin);
+	addUpdateWorkflowAsLibrary(int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey,
+		const string_view& jsonWorkflow, bool admin);
 
 	void removeWorkflowAsLibrary(int64_t userKey, int64_t workspaceKey, int64_t workflowLibraryKey, bool admin);
 
@@ -2688,7 +2690,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	int64_t addUpdateWorkflowAsLibrary(
-		PostgresConnTrans &trans, int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey, string jsonWorkflow, bool admin
+		PostgresConnTrans &trans, int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey,
+		const string_view& jsonWorkflow, bool admin
 	);
 #else
 	int64_t addUpdateWorkflowAsLibrary(

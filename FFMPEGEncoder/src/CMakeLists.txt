@@ -109,7 +109,7 @@ endif()
 
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
-link_directories("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
+link_directories("${IMAGEMAGICK_LIB_DIR}")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/lib64")
 link_directories("${PROJECT_SOURCE_DIR}/../deploy/ffmpeg/lib")

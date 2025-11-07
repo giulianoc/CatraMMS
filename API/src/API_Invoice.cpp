@@ -17,17 +17,32 @@
 #include <regex>
 
 void API::addInvoice(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, unordered_map<string, string> queryParameters,
-	string requestBody
-)
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters)
 {
 	string api = "addInvoice";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -86,24 +101,13 @@ void API::addInvoice(
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 				expirationDate = JSONUtils::asString(requestBodyRoot, field, "");
 		}
-		catch (runtime_error &e)
+		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format",
 				", requestBody: {}"
 				", e.what(): {}",
 				requestBody, e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (exception &e)
-		{
-			string errorMessage = std::format(
-				"requestBody json is not well format"
-				", requestBody: {}",
-				requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -126,16 +130,6 @@ void API::addInvoice(
 
 			sResponse = JSONUtils::toString(response);
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addInvoice failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -144,53 +138,36 @@ void API::addInvoice(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::invoiceList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, int64_t userKey,
-	unordered_map<string, string> queryParameters, bool admin
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "invoiceList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -198,14 +175,14 @@ void API::invoiceList(
 	{
 		int start = 0;
 		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
 			start = stoll(startIt->second);
 		}
 
 		int rows = 30;
 		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
@@ -229,7 +206,7 @@ void API::invoiceList(
 
 		{
 #ifdef __POSTGRES__
-			json invoiceListRoot = _mmsEngineDBFacade->getInvoicesList(userKey, admin, start, rows);
+			json invoiceListRoot = _mmsEngineDBFacade->getInvoicesList(apiAuthorizationDetails->userKey, apiAuthorizationDetails->admin, start, rows);
 
 			string responseBody = JSONUtils::toString(invoiceListRoot);
 #else
@@ -239,36 +216,15 @@ void API::invoiceList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = "Internal server error";
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

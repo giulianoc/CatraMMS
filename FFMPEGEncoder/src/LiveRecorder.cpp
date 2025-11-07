@@ -33,7 +33,7 @@ LiveRecorder::~LiveRecorder()
 	_liveRecording->_killedBecauseOfNotWorking = false;
 }
 
-void LiveRecorder::encodeContent(string requestBody)
+void LiveRecorder::encodeContent(const string_view& requestBody)
 {
 	string api = "liveRecorder";
 

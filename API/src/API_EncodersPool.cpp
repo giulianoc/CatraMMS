@@ -19,18 +19,34 @@
 #include <regex>
 
 void API::addEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addEncoder";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -40,7 +56,7 @@ void API::addEncoder(
 		string protocol;
 		string publicServerName;
 		string internalServerName;
-		int port;
+		int port{};
 
 		try
 		{
@@ -121,24 +137,13 @@ void API::addEncoder(
 					port = 443;
 			}
 		}
-		catch (runtime_error &e)
+		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
 				", requestBody: {}"
 				", e.what(): {}",
 				requestBody, e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		catch (exception &e)
-		{
-			string errorMessage = std::format(
-				"requestBody json is not well format"
-				", requestBody: {}",
-				requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -152,16 +157,6 @@ void API::addEncoder(
 
 			sResponse = (string("{ ") + "\"EncoderKey\": " + to_string(encoderKey) + "}");
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addEncoder failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -170,60 +165,54 @@ void API::addEncoder(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = fmt::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyEncoder";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -315,18 +304,6 @@ void API::modifyEncoder(
 			else
 				portToBeModified = false;
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = std::format(
-				"requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}",
-				requestBody, e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
@@ -349,8 +326,6 @@ void API::modifyEncoder(
 			{
 				string errorMessage = "The 'encoderKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 400, errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -363,16 +338,6 @@ void API::modifyEncoder(
 
 			sResponse = (string("{ ") + "\"encoderKey\": " + to_string(encoderKey) + "}");
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyEncoder failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -381,59 +346,53 @@ void API::modifyEncoder(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEncoder";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -447,8 +406,6 @@ void API::removeEncoder(
 				string errorMessage = "The 'encoderKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 			encoderKey = stoll(encoderKeyIt->second);
@@ -456,16 +413,6 @@ void API::removeEncoder(
 			_mmsEngineDBFacade->removeEncoder(encoderKey);
 
 			sResponse = (string("{ ") + "\"encoderKey\": " + to_string(encoderKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeEncoder failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -475,63 +422,47 @@ void API::removeEncoder(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::encoderList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, bool admin,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encoderList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
 		int64_t encoderKey = -1;
 		auto encoderKeyIt = queryParameters.find("encoderKey");
-		if (encoderKeyIt != queryParameters.end() && encoderKeyIt->second != "")
+		if (encoderKeyIt != queryParameters.end() && !encoderKeyIt->second.empty())
 		{
 			encoderKey = stoll(encoderKeyIt->second);
 			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
@@ -542,14 +473,14 @@ void API::encoderList(
 
 		int start = 0;
 		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
 			start = stoll(startIt->second);
 		}
 
 		int rows = 30;
 		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
@@ -569,7 +500,7 @@ void API::encoderList(
 
 		string label;
 		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
+		if (labelIt != queryParameters.end() && !labelIt->second.empty())
 		{
 			label = labelIt->second;
 
@@ -585,7 +516,7 @@ void API::encoderList(
 
 		string serverName;
 		auto serverNameIt = queryParameters.find("serverName");
-		if (serverNameIt != queryParameters.end() && serverNameIt->second != "")
+		if (serverNameIt != queryParameters.end() && !serverNameIt->second.empty())
 		{
 			serverName = serverNameIt->second;
 
@@ -601,14 +532,14 @@ void API::encoderList(
 
 		int port = -1;
 		auto portIt = queryParameters.find("port");
-		if (portIt != queryParameters.end() && portIt->second != "")
+		if (portIt != queryParameters.end() && !portIt->second.empty())
 		{
 			port = stoi(portIt->second);
 		}
 
 		string labelOrder;
 		auto labelOrderIt = queryParameters.find("labelOrder");
-		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
+		if (labelOrderIt != queryParameters.end() && !labelOrderIt->second.empty())
 		{
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
@@ -626,8 +557,8 @@ void API::encoderList(
 			runningInfo = (runningInfoIt->second == "true" ? true : false);
 
 		bool allEncoders = false;
-		int64_t workspaceKey = workspace->_workspaceKey;
-		if (admin)
+		int64_t workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey;
+		if (apiAuthorizationDetails->admin)
 		{
 			// in case of admin, from the GUI, it is needed to:
 			// - get the list of all encoders
@@ -638,13 +569,13 @@ void API::encoderList(
 				allEncoders = (allEncodersIt->second == "true" ? true : false);
 
 			auto workspaceKeyIt = queryParameters.find("workspaceKey");
-			if (workspaceKeyIt != queryParameters.end() && workspaceKeyIt->second != "")
+			if (workspaceKeyIt != queryParameters.end() && !workspaceKeyIt->second.empty())
 				workspaceKey = stoll(workspaceKeyIt->second);
 		}
 
 		{
 			json encoderListRoot = _mmsEngineDBFacade->getEncoderList(
-				admin, start, rows, allEncoders, workspaceKey, runningInfo, encoderKey, label, serverName, port, labelOrder
+				apiAuthorizationDetails->admin, start, rows, allEncoders, workspaceKey, runningInfo, encoderKey, label, serverName, port, labelOrder
 			);
 
 			string responseBody = JSONUtils::toString(encoderListRoot);
@@ -652,72 +583,56 @@ void API::encoderList(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::encodersPoolList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace, bool admin,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encoderList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
 	{
 		int64_t encodersPoolKey = -1;
 		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
-		if (encodersPoolKeyIt != queryParameters.end() && encodersPoolKeyIt->second != "")
+		if (encodersPoolKeyIt != queryParameters.end() && !encodersPoolKeyIt->second.empty())
 		{
 			encodersPoolKey = stoll(encodersPoolKeyIt->second);
 		}
 
 		int start = 0;
 		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
 			start = stoll(startIt->second);
 		}
 
 		int rows = 30;
 		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
 		{
 			rows = stoll(rowsIt->second);
 			if (rows > _maxPageSize)
@@ -741,7 +656,7 @@ void API::encodersPoolList(
 
 		string label;
 		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
+		if (labelIt != queryParameters.end() && !labelIt->second.empty())
 		{
 			label = labelIt->second;
 
@@ -757,7 +672,7 @@ void API::encodersPoolList(
 
 		string labelOrder;
 		auto labelOrderIt = queryParameters.find("labelOrder");
-		if (labelOrderIt != queryParameters.end() && labelOrderIt->second != "")
+		if (labelOrderIt != queryParameters.end() && !labelOrderIt->second.empty())
 		{
 			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
 				labelOrder = labelOrderIt->second;
@@ -771,60 +686,55 @@ void API::encodersPoolList(
 
 		{
 			json encodersPoolListRoot =
-				_mmsEngineDBFacade->getEncodersPoolList(start, rows, workspace->_workspaceKey, encodersPoolKey, label, labelOrder);
+				_mmsEngineDBFacade->getEncodersPoolList(start, rows, apiAuthorizationDetails->workspace->_workspaceKey, encodersPoolKey, label, labelOrder);
 
 			string responseBody = JSONUtils::toString(encodersPoolListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addEncodersPool(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addEncodersPool";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditEncodersPool: {}",
+			apiAuthorizationDetails->canEditEncodersPool
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -860,18 +770,6 @@ void API::addEncodersPool(
 				}
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = std::format(
-				"requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}",
-				requestBody, e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
@@ -887,19 +785,9 @@ void API::addEncodersPool(
 		string sResponse;
 		try
 		{
-			int64_t encodersPoolKey = _mmsEngineDBFacade->addEncodersPool(workspace->_workspaceKey, label, encoderKeys);
+			int64_t encodersPoolKey = _mmsEngineDBFacade->addEncodersPool(apiAuthorizationDetails->workspace->_workspaceKey, label, encoderKeys);
 
 			sResponse = (string("{ ") + "\"EncodersPoolKey\": " + to_string(encodersPoolKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addEncodersPool failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -909,60 +797,54 @@ void API::addEncodersPool(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::modifyEncodersPool(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyEncodersPool";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
+	{
+		string errorMessage = string(
+			"APIKey does not have the permission"
+			", canEditEncodersPool: {}",
+			apiAuthorizationDetails->canEditEncodersPool
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -975,8 +857,6 @@ void API::modifyEncodersPool(
 		{
 			string errorMessage = "The 'encodersPoolKey' parameter is not found";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1011,18 +891,6 @@ void API::modifyEncodersPool(
 				}
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = std::format(
-				"requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}",
-				requestBody, e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
@@ -1039,19 +907,9 @@ void API::modifyEncodersPool(
 		string sResponse;
 		try
 		{
-			_mmsEngineDBFacade->modifyEncodersPool(encodersPoolKey, workspace->_workspaceKey, label, encoderKeys);
+			_mmsEngineDBFacade->modifyEncodersPool(encodersPoolKey, apiAuthorizationDetails->workspace->_workspaceKey, label, encoderKeys);
 
 			sResponse = (string("{ ") + "\"EncodersPoolKey\": " + to_string(encodersPoolKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->modifyEncodersPool failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -1061,59 +919,53 @@ void API::modifyEncodersPool(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeEncodersPool(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEncodersPool";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditEncodersPool: {}",
+			apiAuthorizationDetails->canEditEncodersPool
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1127,8 +979,6 @@ void API::removeEncodersPool(
 				string errorMessage = "The 'encodersPoolKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 			encodersPoolKey = stoll(encodersPoolKeyIt->second);
@@ -1136,16 +986,6 @@ void API::removeEncodersPool(
 			_mmsEngineDBFacade->removeEncodersPool(encodersPoolKey);
 
 			sResponse = (string("{ ") + "\"encodersPoolKey\": " + to_string(encodersPoolKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeEncodersPool failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -1155,57 +995,52 @@ void API::removeEncodersPool(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addAssociationWorkspaceEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addAssociationWorkspaceEncoder";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1219,8 +1054,6 @@ void API::addAssociationWorkspaceEncoder(
 				string errorMessage = "The 'workspaceKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 			workspaceKey = stoll(workspaceKeyIt->second);
@@ -1231,8 +1064,6 @@ void API::addAssociationWorkspaceEncoder(
 			{
 				string errorMessage = "The 'encoderKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
-
-				sendError(request, 400, errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1242,16 +1073,6 @@ void API::addAssociationWorkspaceEncoder(
 
 			sResponse = (string("{ ") + "\"workspaceKey\": " + to_string(workspaceKey) + ", \"encoderKey\": " + to_string(encoderKey) + "}");
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -1260,57 +1081,52 @@ void API::addAssociationWorkspaceEncoder(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeAssociationWorkspaceEncoder(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeAssociationWorkspaceEncoder";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1324,8 +1140,6 @@ void API::removeAssociationWorkspaceEncoder(
 				string errorMessage = "The 'workspaceKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 			workspaceKey = stoll(workspaceKeyIt->second);
@@ -1337,8 +1151,6 @@ void API::removeAssociationWorkspaceEncoder(
 				string errorMessage = "The 'encoderKey' parameter is not found";
 				SPDLOG_ERROR(errorMessage);
 
-				sendError(request, 400, errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 			encoderKey = stoll(encoderKeyIt->second);
@@ -1346,16 +1158,6 @@ void API::removeAssociationWorkspaceEncoder(
 			_mmsEngineDBFacade->removeAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 
 			sResponse = (string("{ ") + "\"workspaceKey\": " + to_string(workspaceKey) + ", \"encoderKey\": " + to_string(encoderKey) + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -1365,41 +1167,20 @@ void API::removeAssociationWorkspaceEncoder(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
 		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }

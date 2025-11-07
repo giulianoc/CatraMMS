@@ -12,7 +12,7 @@ class LiveProxy : public FFMPEGEncoderTask
 	);
 	~LiveProxy();
 
-	void encodeContent(string requestBody);
+	void encodeContent(const string_view& requestBody);
 
   private:
 	shared_ptr<LiveProxyAndGrid> _liveProxyData;

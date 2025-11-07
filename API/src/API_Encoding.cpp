@@ -24,17 +24,22 @@
 #include <sstream>
 
 void API::encodingJobsStatus(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encodingJobsStatus";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -159,7 +164,7 @@ void API::encodingJobsStatus(
 
 		{
 			json encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
-				workspace, encodingJobKey, start, rows,
+				apiAuthorizationDetails->workspace, encodingJobKey, start, rows,
 				// startAndEndIngestionDatePresent,
 				startIngestionDate, endIngestionDate,
 				// startAndEndEncodingDatePresent,
@@ -171,23 +176,6 @@ void API::encodingJobsStatus(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -197,28 +185,27 @@ void API::encodingJobsStatus(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::encodingJobPriority(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encodingJobPriority";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
 
 	try
@@ -252,12 +239,12 @@ void API::encodingJobPriority(
 		{
 			if (newEncodingJobPriorityPresent)
 			{
-				_mmsEngineDBFacade->updateEncodingJobPriority(workspace, encodingJobKey, newEncodingJobPriority);
+				_mmsEngineDBFacade->updateEncodingJobPriority(apiAuthorizationDetails->workspace, encodingJobKey, newEncodingJobPriority);
 			}
 
 			if (tryEncodingAgain)
 			{
-				_mmsEngineDBFacade->updateEncodingJobTryAgain(workspace, encodingJobKey);
+				_mmsEngineDBFacade->updateEncodingJobTryAgain(apiAuthorizationDetails->workspace, encodingJobKey);
 			}
 
 			if (!newEncodingJobPriorityPresent && !tryEncodingAgain)
@@ -275,23 +262,6 @@ void API::encodingJobPriority(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -301,29 +271,39 @@ void API::encodingJobPriority(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::killOrCancelEncodingJob(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "killOrCancelEncodingJob";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canKillEncoding)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canKillEncoding: {}",
+			apiAuthorizationDetails->canKillEncoding
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -743,40 +723,6 @@ void API::killOrCancelEncodingJob(
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
-	catch (DBRecordNotFound &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -786,27 +732,26 @@ void API::killOrCancelEncodingJob(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::encodingProfilesSetsList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encodingProfilesSetsList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -831,28 +776,12 @@ void API::encodingProfilesSetsList(
 		{
 
 			json encodingProfilesSetListRoot =
-				_mmsEngineDBFacade->getEncodingProfilesSetList(workspace->_workspaceKey, encodingProfilesSetKey, contentTypePresent, contentType);
+				_mmsEngineDBFacade->getEncodingProfilesSetList(apiAuthorizationDetails->workspace->_workspaceKey, encodingProfilesSetKey, contentTypePresent, contentType);
 
 			string responseBody = JSONUtils::toString(encodingProfilesSetListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -862,27 +791,26 @@ void API::encodingProfilesSetsList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::encodingProfilesList(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encodingProfilesList";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
 	try
@@ -922,28 +850,12 @@ void API::encodingProfilesList(
 
 		{
 			json encodingProfileListRoot =
-				_mmsEngineDBFacade->getEncodingProfileList(workspace->_workspaceKey, encodingProfileKey, contentTypePresent, contentType, label);
+				_mmsEngineDBFacade->getEncodingProfileList(apiAuthorizationDetails->workspace->_workspaceKey, encodingProfileKey, contentTypePresent, contentType, label);
 
 			string responseBody = JSONUtils::toString(encodingProfileListRoot);
 
 			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 		}
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -953,29 +865,39 @@ void API::encodingProfilesList(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addUpdateEncodingProfilesSet(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addUpdateEncodingProfilesSet";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateProfiles)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canCreateProfiles: {}",
+			apiAuthorizationDetails->canCreateProfiles
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -984,8 +906,6 @@ void API::addUpdateEncodingProfilesSet(
 		{
 			string errorMessage = "'contentType' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1017,7 +937,7 @@ void API::addUpdateEncodingProfilesSet(
 			bool removeEncodingProfilesIfPresent = true;
 #ifdef __POSTGRES__
 			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(
-				workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent
+				apiAuthorizationDetails->workspace->_workspaceKey, contentType, label, removeEncodingProfilesIfPresent
 			);
 #else
 			int64_t encodingProfilesSetKey = _mmsEngineDBFacade->addEncodingProfilesSetIfNotAlreadyPresent(
@@ -1034,7 +954,7 @@ void API::addUpdateEncodingProfilesSet(
 
 #ifdef __POSTGRES__
 				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
-					workspace->_workspaceKey, profileLabel, contentType, encodingProfilesSetKey
+					apiAuthorizationDetails->workspace->_workspaceKey, profileLabel, contentType, encodingProfilesSetKey
 				);
 #else
 				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
@@ -1067,23 +987,6 @@ void API::addUpdateEncodingProfilesSet(
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1093,29 +996,39 @@ void API::addUpdateEncodingProfilesSet(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::addEncodingProfile(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters, string requestBody
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addEncodingProfile";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestBody: {}",
-		api, workspace->_workspaceKey, requestBody
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateProfiles)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canCreateProfiles: {}",
+			apiAuthorizationDetails->canCreateProfiles
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1124,8 +1037,6 @@ void API::addEncodingProfile(
 		{
 			string errorMessage = "'contentType' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1194,20 +1105,10 @@ void API::addEncodingProfile(
 			}
 
 			int64_t encodingProfileKey =
-				_mmsEngineDBFacade->addEncodingProfile(workspace->_workspaceKey, profileLabel, contentType, deliveryTechnology, jsonEncodingProfile);
+				_mmsEngineDBFacade->addEncodingProfile(apiAuthorizationDetails->workspace->_workspaceKey, profileLabel, contentType, deliveryTechnology, jsonEncodingProfile);
 
 			responseBody =
 				(string("{ ") + "\"encodingProfileKey\": " + to_string(encodingProfileKey) + ", \"label\": \"" + profileLabel + "\" " + "}");
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->addEncodingProfile failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
 		}
 		catch (exception &e)
 		{
@@ -1217,27 +1118,10 @@ void API::addEncodingProfile(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1248,28 +1132,38 @@ void API::addEncodingProfile(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeEncodingProfile(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEncodingProfile";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateProfiles)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canCreateProfiles: {}",
+			apiAuthorizationDetails->canCreateProfiles
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1279,25 +1173,13 @@ void API::removeEncodingProfile(
 			string errorMessage = "'encodingProfileKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		int64_t encodingProfileKey = stoll(encodingProfileKeyIt->second);
 
 		try
 		{
-			_mmsEngineDBFacade->removeEncodingProfile(workspace->_workspaceKey, encodingProfileKey);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeEncodingProfile failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
+			_mmsEngineDBFacade->removeEncodingProfile(apiAuthorizationDetails->workspace->_workspaceKey, encodingProfileKey);
 		}
 		catch (exception &e)
 		{
@@ -1307,28 +1189,12 @@ void API::removeEncodingProfile(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		string responseBody;
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1338,28 +1204,38 @@ void API::removeEncodingProfile(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
 void API::removeEncodingProfilesSet(
-	string sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, shared_ptr<Workspace> workspace,
-	unordered_map<string, string> queryParameters
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEncodingProfilesSet";
 
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
-		api, workspace->_workspaceKey
+		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateProfiles)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canCreateProfiles: {}",
+			apiAuthorizationDetails->canCreateProfiles
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw HTTPError(403);
+	}
 
 	try
 	{
@@ -1369,25 +1245,13 @@ void API::removeEncodingProfilesSet(
 			string errorMessage = "'encodingProfilesSetKey' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
-			sendError(request, 400, errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 		int64_t encodingProfilesSetKey = stoll(encodingProfilesSetKeyIt->second);
 
 		try
 		{
-			_mmsEngineDBFacade->removeEncodingProfilesSet(workspace->_workspaceKey, encodingProfilesSetKey);
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				"_mmsEngineDBFacade->removeEncodingProfilesSet failed"
-				", e.what(): {}",
-				e.what()
-			);
-
-			throw e;
+			_mmsEngineDBFacade->removeEncodingProfilesSet(apiAuthorizationDetails->workspace->_workspaceKey, encodingProfilesSetKey);
 		}
 		catch (exception &e)
 		{
@@ -1397,28 +1261,12 @@ void API::removeEncodingProfilesSet(
 				e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		string responseBody;
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", e.what(): {}",
-			api, e.what()
-		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
 	}
 	catch (exception &e)
 	{
@@ -1428,13 +1276,7 @@ void API::removeEncodingProfilesSet(
 			", e.what(): {}",
 			api, e.what()
 		);
-
-		string errorMessage = std::format("Internal server error: {}", e.what());
-		SPDLOG_ERROR(errorMessage);
-
-		sendError(request, 500, errorMessage);
-
-		throw runtime_error(errorMessage);
+		throw HTTPError(500);
 	}
 }
 
@@ -1466,19 +1308,6 @@ void API::killEncodingJob(
 			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"killEncoding URL failed"
-			", encodingJobKey: {}"
-			", ffmpegEncoderURL: {}"
-			", exception: {}"
-			", response.str(): {}",
-			encodingJobKey, ffmpegEncoderURL, e.what(), response.str()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -1490,6 +1319,6 @@ void API::killEncodingJob(
 			encodingJobKey, ffmpegEncoderURL, e.what(), response.str()
 		);
 
-		throw e;
+		throw;
 	}
 }

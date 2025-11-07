@@ -1,6 +1,5 @@
 
-#ifndef FFMPEGEncoderTask_h
-#define FFMPEGEncoderTask_h
+#pragma once
 
 #include "FFMPEGEncoderBase.h"
 
@@ -100,4 +99,3 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	);
 };
 
-#endif

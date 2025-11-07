@@ -89,7 +89,8 @@ void MMSEngineDBFacade::endWorkflow(PostgresConnTrans &trans, bool commit, int64
 }
 
 int64_t MMSEngineDBFacade::addWorkflow(
-	PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden, string metaDataContent
+	PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string rootType, string rootLabel, bool rootHidden,
+	const string_view& metaDataContent
 )
 {
 	int64_t ingestionRootKey;

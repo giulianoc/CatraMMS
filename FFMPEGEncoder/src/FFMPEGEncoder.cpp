@@ -22,13 +22,11 @@
 #include "FFMPEGEncoderDaemons.h"
 #include "FFMpegFilters.h"
 #include "GenerateFrames.h"
-#include "GetCpuUsage.h"
 #include "IntroOutroOverlay.h"
 #include "JSONUtils.h"
 #include "LiveGrid.h"
 #include "LiveProxy.h"
 #include "LiveRecorder.h"
-#include "LiveRecorderDaemons.h"
 #include "MMSStorage.h"
 #include "OverlayImageOnVideo.h"
 #include "OverlayTextOnVideo.h"
@@ -38,20 +36,18 @@
 #include "StringUtils.h"
 #include "System.h"
 #include "VideoSpeed.h"
-#include "spdlog/fmt/bundled/core.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/spdlog.h"
 #include <fstream>
-#include <sstream>
 
 // extern char** environ;
 
 FFMPEGEncoder::FFMPEGEncoder(
 
-	json configurationRoot,
+	const json& configurationRoot,
 	// string encoderCapabilityConfigurationPathName,
 
 	mutex *fcgiAcceptMutex,
@@ -161,7 +157,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 	*_lastEncodingCompletedCheck = chrono::system_clock::now();
 }
 
-FFMPEGEncoder::~FFMPEGEncoder() {}
+FFMPEGEncoder::~FFMPEGEncoder() = default;
 
 // 2020-06-11: FFMPEGEncoder is just one thread, so make sure
 // manageRequestAndResponse is very fast because
@@ -171,9 +167,10 @@ FFMPEGEncoder::~FFMPEGEncoder() {}
 // solo thread!!!
 
 void FFMPEGEncoder::manageRequestAndResponse(
-	const string &sThreadId, int64_t requestIdentifier, bool responseBodyCompressed, FCGX_Request &request, const string &requestURI,
-	const string &requestMethod, const unordered_map<string, string> &queryParameters, bool basicAuthenticationPresent, const string &userName,
-	const string &password, unsigned long contentLength, const string &requestBody, const unordered_map<string, string> &requestDetails
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+	const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
+	const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
 )
 {
 	// chrono::system_clock::time_point startManageRequestAndResponse =
@@ -916,7 +913,8 @@ void FFMPEGEncoder::manageRequestAndResponse(
 						", requestBody: {}",
 						ingestionJobKey, encodingJobKey, requestBody
 					);
-					thread liveProxyThread(&FFMPEGEncoder::liveProxyThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey, requestBody);
+					thread liveProxyThread(&FFMPEGEncoder::liveProxyThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey,
+						requestBody);
 					liveProxyThread.detach();
 				}
 				/*
@@ -1900,7 +1898,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		int64_t encodingJobKey = stoll(encodingJobKeyIt->second);
 
-		string newOverlayText = requestBody;
+		string newOverlayText(requestBody);
 
 		bool encodingFound = false;
 
@@ -2257,12 +2255,9 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	*/
 }
 
-void FFMPEGEncoder::checkAuthorization(const string& sThreadId, const string& userName, const string& password)
+shared_ptr<FastCGIAPI::AuthorizationDetails> FFMPEGEncoder::checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password)
 {
-	string userKey = userName;
-	string apiKey = password;
-
-	if (userKey != _encoderUser || apiKey != _encoderPassword)
+	if (userName != _encoderUser || userName != _encoderPassword)
 	{
 		SPDLOG_ERROR(
 			"Username/password of the basic authorization are wrong"
@@ -2270,11 +2265,17 @@ void FFMPEGEncoder::checkAuthorization(const string& sThreadId, const string& us
 			", threadId: {}"
 			", userKey: {}"
 			", apiKey: {}",
-			_requestIdentifier, sThreadId, userKey, apiKey
+			_requestIdentifier, sThreadId, userName, password
 		);
 
-		throw CheckAuthorizationFailed();
+		throw HTTPError(401);
 	}
+
+	auto authorizationDetails = make_shared<AuthorizationDetails>();
+	authorizationDetails->userName = userName;
+	authorizationDetails->password = password;
+
+	return authorizationDetails;
 }
 
 bool FFMPEGEncoder::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
@@ -2642,7 +2643,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 
 void FFMPEGEncoder::liveRecorderThread(
 	// FCGX_Request& request,
-	shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+	shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
 )
 {
 	try
@@ -2697,7 +2698,8 @@ void FFMPEGEncoder::liveRecorderThread(
 
 void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
-	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey,
+	const string_view& requestBody
 )
 {
 	try
@@ -2752,7 +2754,7 @@ void FFMPEGEncoder::liveProxyThread(
 
 void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,
-	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, string requestBody
+	shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
 )
 {
 	try
@@ -3254,7 +3256,7 @@ void FFMPEGEncoder::termProcess(
 	}
 }
 
-void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, string errorMessage)
+void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage)
 {
 	json responseBodyRoot;
 	responseBodyRoot["status"] = to_string(htmlResponseCode);

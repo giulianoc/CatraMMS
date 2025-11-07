@@ -12,7 +12,7 @@ class LiveRecorder : public FFMPEGEncoderTask
 	);
 	~LiveRecorder();
 
-	void encodeContent(string requestBody);
+	void encodeContent(const string_view& requestBody);
 
   private:
 	shared_ptr<LiveRecording> _liveRecording;

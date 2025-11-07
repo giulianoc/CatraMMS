@@ -48,7 +48,7 @@ endif()
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
-link_directories ("${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/lib")
+link_directories ("${IMAGEMAGICK_LIB_DIR}")
 if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
 	link_directories ("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
 endif()
