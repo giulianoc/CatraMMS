@@ -903,7 +903,7 @@ void API::manageReferencesInput(
 		}
 		else
 		{
-			for (long long & referenceIndex : dependOnIngestionJobKeysOverallInput)
+			for (int64_t & referenceIndex : dependOnIngestionJobKeysOverallInput)
 			{
 				json referenceRoot;
 				string addedField = "ingestionJobKey";
@@ -2260,7 +2260,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 			// add the inherit input) OR we want to add dependOnReferences to
 			// the Raferences tag
 
-			for (long long & newDependOnIngestionJobKeysOverallInputBecauseOfTask : newDependOnIngestionJobKeysOverallInputBecauseOfTasks)
+			for (int64_t & newDependOnIngestionJobKeysOverallInputBecauseOfTask : newDependOnIngestionJobKeysOverallInputBecauseOfTasks)
 			{
 				json referenceOutputRoot;
 				field = "ingestionJobKey";
