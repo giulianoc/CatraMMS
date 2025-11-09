@@ -199,10 +199,10 @@ string EncoderProxy::faceIdentification()
 	string sourcePhysicalPath;
 	{
 		string field = "faceIdentificationCascadeName";
-		faceIdentificationCascadeName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, 0);
+		faceIdentificationCascadeName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, string());
 
 		field = "sourcePhysicalPath";
-		sourcePhysicalPath = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
+		sourcePhysicalPath = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, string());
 	}
 
 	string cascadePathName = _computerVisionCascadePath + "/" + faceIdentificationCascadeName + ".xml";
