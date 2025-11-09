@@ -2050,7 +2050,8 @@ void API::streamList(
 		bool labelLike = getMapParameter(queryParameters, "labelLike", true, false);
 		string url = getMapParameter(queryParameters, "url", string(""), false);
 		string sourceType = getMapParameter(queryParameters, "sourceType", string(""), false);
-		if (sourceType != "IP_PULL" && sourceType != "IP_PUSH" && sourceType != "CaptureLive" && sourceType != "TV")
+		if (sourceType != "" && sourceType != "IP_PULL" && sourceType != "IP_PUSH"
+			&& sourceType != "CaptureLive" && sourceType != "TV")
 		{
 			SPDLOG_WARN(
 				"streamList: 'sourceType' parameter is unknown"

@@ -814,9 +814,10 @@ json MMSEngineDBFacade::getStreamList(
 			sqlWhere += std::format("and LOWER(name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
 		if (!region.empty())
 			sqlWhere += std::format("and region like {} ", trans.transaction->quote("%" + region + "%"));
-		if (country != "")
+		if (!country.empty())
 			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.transaction->quote("%" + country + "%"));
 
+		SPDLOG_ERROR("sqlWhere: {}", sqlWhere);
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Stream {}", sqlWhere);
@@ -963,20 +964,13 @@ json MMSEngineDBFacade::getStreamList(
 								else
 									streamRoot[field] = internalServerName;
 							}
-							catch (DBRecordNotFound &e)
-							{
-								SPDLOG_ERROR(
-									"getStreamList. getEncoderDetails failed"
-									", pushEncoderKey: {}",
-									pushEncoderKey
-								);
-							}
 							catch (exception &e)
 							{
 								SPDLOG_ERROR(
 									"getStreamList. getEncoderDetails failed"
-									", pushEncoderKey: {}",
-									pushEncoderKey
+									", pushEncoderKey: {}"
+									", exception: {}",
+									pushEncoderKey, e.what()
 								);
 							}
 						}
