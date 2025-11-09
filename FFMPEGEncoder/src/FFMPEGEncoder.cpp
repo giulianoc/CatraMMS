@@ -847,7 +847,8 @@ void FFMPEGEncoder::liveRecorder(
 					ingestionJobKey, encodingJobKey, requestBody
 				);
 				thread liveRecorderThread(
-					&FFMPEGEncoder::liveRecorderThread, this, selectedLiveRecording, ingestionJobKey, encodingJobKey, requestBody
+					&FFMPEGEncoder::liveRecorderThread, this, selectedLiveRecording, ingestionJobKey, encodingJobKey,
+					string(requestBody)
 				);
 				liveRecorderThread.detach();
 
@@ -1063,7 +1064,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 					ingestionJobKey, encodingJobKey, requestBody
 				);
 				thread liveProxyThread(&FFMPEGEncoder::liveProxyThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey,
-					requestBody);
+					string(requestBody));
 				liveProxyThread.detach();
 			}
 			else if (method == "liveGrid")
@@ -1075,7 +1076,8 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 					", requestBody: {}",
 					ingestionJobKey, encodingJobKey, requestBody
 				);
-				thread liveGridThread(&FFMPEGEncoder::liveGridThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey, requestBody);
+				thread liveGridThread(&FFMPEGEncoder::liveGridThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey,
+					string(requestBody));
 				liveGridThread.detach();
 			}
 
