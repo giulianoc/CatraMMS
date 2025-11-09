@@ -297,7 +297,7 @@ int main(int argc, char **argv)
 			);
 
 			apis.push_back(api);
-			apiThreads.push_back(thread(&API::operator(), api));
+			apiThreads.emplace_back(&API::operator(), api);
 		}
 
 		// shutdown should be managed in some way:
@@ -305,8 +305,8 @@ int main(int argc, char **argv)
 		// - mod_fastcgi ???
 		if (threadsNumber > 0)
 		{
-			thread fileUploadProgressThread(&API::fileUploadProgressCheck, apis[0]);
-			thread bandwidthUsage(&API::bandwidthUsageThread, apis[0]);
+			thread fileUploadProgressThread(&API::fileUploadProgressCheckThread, apis[0]);
+			thread _bandwidthUsage(&API::bandwidthUsageThread, apis[0]);
 
 			apiThreads[0].join();
 

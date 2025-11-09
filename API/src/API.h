@@ -82,7 +82,7 @@ class API final : public FastCGIAPI
 
 	void sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage) override;
 
-	void fileUploadProgressCheck();
+	void fileUploadProgressCheckThread();
 	void stopUploadFileProgressThread();
 
 	void bandwidthUsageThread();
@@ -301,6 +301,54 @@ class API final : public FastCGIAPI
 	);
 
 	void mmsSupport(
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	);
+
+	void status(
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	);
+
+	void avgBandwidthUsage(
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	);
+
+	void binaryAuthorization(
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	);
+
+	void deliveryAuthorizationThroughParameter(
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	);
+
+	void deliveryAuthorizationThroughPath(
+		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody,
+		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	);
+
+	void manageHTTPStreamingManifest_authorizationThroughParameter(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,

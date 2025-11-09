@@ -4,6 +4,8 @@
 
 #include "FFMPEGEncoderBase.h"
 
+#include <shared_mutex>
+
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -28,7 +30,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
   public:
 	FFMPEGEncoderDaemons(
 		json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
-		mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, mutex *cpuUsageMutex,
+		mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, shared_mutex *cpuUsageMutex,
 		deque<int> *cpuUsage
 	);
 	~FFMPEGEncoderDaemons();
@@ -41,7 +43,9 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 
 	void stopCPUUsageThread();
 
-  private:
+	static void termProcess(const shared_ptr<FFMPEGEncoderBase::Encoding> &selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill);
+
+private:
 	bool _monitorThreadShutdown;
 	bool _cpuUsageThreadShutdown;
 	int _monitorCheckInSeconds;
@@ -54,10 +58,9 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
 	mutex *_liveProxyMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
-	mutex *_cpuUsageMutex;
+	shared_mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;
 
-	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill);
 };
 
 #endif

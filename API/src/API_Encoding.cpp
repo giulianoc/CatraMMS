@@ -185,7 +185,7 @@ void API::encodingJobsStatus(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -271,7 +271,7 @@ void API::encodingJobPriority(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -732,7 +732,7 @@ void API::killOrCancelEncodingJob(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -791,7 +791,7 @@ void API::encodingProfilesSetsList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -865,7 +865,7 @@ void API::encodingProfilesList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -996,7 +996,7 @@ void API::addUpdateEncodingProfilesSet(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1132,7 +1132,7 @@ void API::addEncodingProfile(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1204,7 +1204,7 @@ void API::removeEncodingProfile(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1276,7 +1276,7 @@ void API::removeEncodingProfilesSet(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 

@@ -180,7 +180,7 @@ void API::addEncoder(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -361,7 +361,7 @@ void API::modifyEncoder(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -436,7 +436,7 @@ void API::removeEncoder(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -592,7 +592,7 @@ void API::encoderList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -702,7 +702,7 @@ void API::encodersPoolList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -812,7 +812,7 @@ void API::addEncodersPool(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -934,7 +934,7 @@ void API::modifyEncodersPool(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1009,7 +1009,7 @@ void API::removeEncodersPool(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1095,7 +1095,7 @@ void API::addAssociationWorkspaceEncoder(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1181,6 +1181,6 @@ void API::removeAssociationWorkspaceEncoder(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }

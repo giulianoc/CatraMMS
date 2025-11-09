@@ -147,7 +147,7 @@ void API::addYouTubeConf(
 
 			if (tokenType == "RefreshToken")
 			{
-				if (refreshToken == "")
+				if (refreshToken.empty())
 				{
 					string errorMessage = "The 'refreshToken' is not valid (empty)";
 					SPDLOG_ERROR(errorMessage);
@@ -157,7 +157,7 @@ void API::addYouTubeConf(
 			}
 			else // if (tokenType == "AccessToken")
 			{
-				if (accessToken == "")
+				if (accessToken.empty())
 				{
 					string errorMessage = "The 'accessToken' is not valid (empty)";
 					SPDLOG_ERROR(errorMessage);
@@ -193,7 +193,7 @@ void API::addYouTubeConf(
 			api, requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -299,7 +299,7 @@ void API::modifyYouTubeConf(
 
 				if (tokenType == "RefreshToken")
 				{
-					if (!refreshTokenModified || refreshToken == "")
+					if (!refreshTokenModified || refreshToken.empty())
 					{
 						string errorMessage = string("The 'refreshToken' is not valid");
 						SPDLOG_ERROR(errorMessage);
@@ -349,7 +349,7 @@ void API::modifyYouTubeConf(
 			api, requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -402,7 +402,7 @@ void API::removeYouTubeConf(
 			api, e.what()
 		);
 
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -444,7 +444,7 @@ void API::youTubeConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -554,7 +554,7 @@ void API::addFacebookConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -652,7 +652,7 @@ void API::modifyFacebookConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -703,7 +703,7 @@ void API::removeFacebookConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -751,7 +751,7 @@ void API::facebookConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -861,7 +861,7 @@ void API::addTwitchConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -959,7 +959,7 @@ void API::modifyTwitchConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1010,7 +1010,7 @@ void API::removeTwitchConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1058,7 +1058,7 @@ void API::twitchConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1158,7 +1158,7 @@ void API::addTiktokConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1247,7 +1247,7 @@ void API::modifyTiktokConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1287,7 +1287,7 @@ void API::removeTiktokConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1335,7 +1335,7 @@ void API::tiktokConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1553,7 +1553,7 @@ void API::addStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1932,7 +1932,7 @@ void API::modifyStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2005,7 +2005,7 @@ void API::removeStream(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2091,7 +2091,7 @@ void API::streamList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2131,7 +2131,7 @@ void API::streamFreePushEncoderPort(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2323,7 +2323,7 @@ void API::addSourceTVStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2569,7 +2569,7 @@ void API::modifySourceTVStream(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2620,7 +2620,7 @@ void API::removeSourceTVStream(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2695,7 +2695,7 @@ void API::sourceTVStreamList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2850,7 +2850,7 @@ void API::addAWSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2993,7 +2993,7 @@ void API::modifyAWSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3043,7 +3043,7 @@ void API::removeAWSChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3095,7 +3095,7 @@ void API::awsChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3280,7 +3280,7 @@ void API::addCDN77ChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3463,7 +3463,7 @@ void API::modifyCDN77ChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3514,7 +3514,7 @@ void API::removeCDN77ChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3566,7 +3566,7 @@ void API::cdn77ChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3708,7 +3708,7 @@ void API::addRTMPChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3883,7 +3883,7 @@ void API::modifyRTMPChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3934,7 +3934,7 @@ void API::removeRTMPChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3987,7 +3987,7 @@ void API::rtmpChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4126,7 +4126,7 @@ void API::addSRTChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4299,7 +4299,7 @@ void API::modifySRTChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4350,7 +4350,7 @@ void API::removeSRTChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4403,7 +4403,7 @@ void API::srtChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4537,7 +4537,7 @@ void API::addHLSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4682,7 +4682,7 @@ void API::modifyHLSChannelConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4733,7 +4733,7 @@ void API::removeHLSChannelConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4786,7 +4786,7 @@ void API::hlsChannelConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4956,7 +4956,7 @@ void API::addFTPConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5114,7 +5114,7 @@ void API::modifyFTPConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5165,7 +5165,7 @@ void API::removeFTPConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5205,7 +5205,7 @@ void API::ftpConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5345,7 +5345,7 @@ void API::addEMailConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5473,7 +5473,7 @@ void API::modifyEMailConf(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5524,7 +5524,7 @@ void API::removeEMailConf(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -5564,6 +5564,6 @@ void API::emailConfList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }

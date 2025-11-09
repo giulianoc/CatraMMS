@@ -14,7 +14,7 @@
 
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
-	mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, mutex *cpuUsageMutex, deque<int> *cpuUsage
+	mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, shared_mutex *cpuUsageMutex, deque<int> *cpuUsage
 )
 	: FFMPEGEncoderBase(configurationRoot)
 {
@@ -2282,7 +2282,7 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 
 		try
 		{
-			lock_guard<mutex> locker(*_cpuUsageMutex);
+			unique_lock locker(*_cpuUsageMutex);
 
 			_cpuUsage->pop_back();
 			_cpuUsage->push_front(_getCpuUsage.getCpuUsage());
@@ -2290,14 +2290,14 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 
 			if (++counter % 100 == 0)
 			{
-				string lastCPUUsage;
-				for (int cpuUsage : *_cpuUsage)
-					lastCPUUsage += (to_string(cpuUsage) + " ");
-
 				SPDLOG_INFO(
 					"cpuUsageThread"
 					", lastCPUUsage: {}",
-					lastCPUUsage
+					accumulate(
+						begin(*_cpuUsage), end(*_cpuUsage), string(),
+						[](const string &s, int cpuUsage)
+						{ return (s.empty() ? std::format("{}", cpuUsage) : std::format("{}, {}", s, cpuUsage)); }
+					)
 				);
 			}
 		}
@@ -2326,7 +2326,7 @@ void FFMPEGEncoderDaemons::stopCPUUsageThread()
 
 // questo metodo è duplicato anche in FFMPEGEncoder
 void FFMPEGEncoderDaemons::termProcess(
-	shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill
+	const shared_ptr<FFMPEGEncoderBase::Encoding>& selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill
 )
 {
 	try

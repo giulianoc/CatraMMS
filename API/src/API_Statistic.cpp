@@ -153,7 +153,7 @@ void API::addRequestStatistic(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -279,7 +279,7 @@ void API::requestStatisticList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -417,7 +417,7 @@ void API::requestStatisticPerContentList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -556,7 +556,7 @@ void API::requestStatisticPerUserList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -695,7 +695,7 @@ void API::requestStatisticPerMonthList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -834,7 +834,7 @@ void API::requestStatisticPerDayList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -973,7 +973,7 @@ void API::requestStatisticPerHourList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1112,7 +1112,7 @@ void API::requestStatisticPerCountryList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1217,6 +1217,6 @@ void API::loginStatisticList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }

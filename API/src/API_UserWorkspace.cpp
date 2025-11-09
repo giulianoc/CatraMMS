@@ -380,7 +380,7 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -642,7 +642,7 @@ void API::createWorkspace(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -959,7 +959,7 @@ void API::shareWorkspace_(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1005,7 +1005,7 @@ void API::workspaceList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1101,7 +1101,7 @@ void API::confirmRegistration(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1496,7 +1496,7 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1701,7 +1701,7 @@ void API::updateUser(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1821,7 +1821,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -1956,7 +1956,7 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2353,7 +2353,7 @@ void API::updateWorkspace(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2427,7 +2427,7 @@ void API::setWorkspaceAsDefault(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2582,7 +2582,7 @@ void API::deleteWorkspace(
 			api, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2686,7 +2686,7 @@ void API::unshareWorkspace(
 			api, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -2742,7 +2742,7 @@ void API::workspaceUsage(
 			", e.what(): {}",
 			e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 

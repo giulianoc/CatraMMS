@@ -163,7 +163,7 @@ void API::updateMediaItem(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -293,7 +293,7 @@ void API::updatePhysicalPath(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -430,7 +430,7 @@ void API::mediaItemsList(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -539,6 +539,6 @@ void API::tagsList(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }

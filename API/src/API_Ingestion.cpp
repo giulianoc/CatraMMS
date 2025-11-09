@@ -249,7 +249,7 @@ void API::ingestion(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 
 	try
@@ -274,7 +274,7 @@ void API::ingestion(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3285,7 +3285,7 @@ void API::uploadedBinary(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3296,9 +3296,8 @@ void API::stopUploadFileProgressThread()
 	this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
 }
 
-void API::fileUploadProgressCheck()
+void API::fileUploadProgressCheckThread()
 {
-
 	while (!_fileUploadProgressThreadShutdown)
 	{
 		this_thread::sleep_for(chrono::seconds(_progressUpdatePeriodInSeconds));
@@ -3313,7 +3312,7 @@ void API::fileUploadProgressCheck()
 			if (itr->_callFailures >= _maxProgressCallFailures)
 			{
 				SPDLOG_ERROR(
-					"fileUploadProgressCheck: remove entry because of too many call failures"
+					"fileUploadProgressCheckThread: remove entry because of too many call failures"
 					", ingestionJobKey: {}"
 					", progressId: {}"
 					", binaryVirtualHostName: {}"
@@ -3333,12 +3332,6 @@ void API::fileUploadProgressCheck()
 				string progressURL = std::format("http://:{}:{}{}", itr->_binaryListenHost, _webServerPort, _progressURI);
 				string progressIdHeader = std::format("X-Progress-ID: {}", itr->_progressId);
 				string hostHeader = std::format("Host: {}", itr->_binaryVirtualHostName);
-				/*
-				string progressURL = string("http://:") + itr->_binaryListenHost + ":"
-					+ to_string(_webServerPort) + _progressURI;
-				string progressIdHeader = string("X-Progress-ID: ") + itr->_progressId;
-				string hostHeader = string("Host: ") + itr->_binaryVirtualHostName;
-				*/
 
 				SPDLOG_INFO(
 					"Call for upload progress"
@@ -3385,12 +3378,12 @@ void API::fileUploadProgressCheck()
 
 						double absoluteProgress;
 						if (itr->_contentRangePresent)
-							absoluteProgress = ((double)absoluteReceived / (double)absoluteSize) * 100;
+							absoluteProgress = (static_cast<double>(absoluteReceived) / static_cast<double>(absoluteSize)) * 100;
 
 						// this is to have one decimal in the percentage
 						double absoluteUploadingPercentage;
 						if (itr->_contentRangePresent)
-							absoluteUploadingPercentage = ((double)((int)(absoluteProgress * 10))) / 10;
+							absoluteUploadingPercentage = static_cast<double>(static_cast<int>(absoluteProgress * 10)) / 10;
 
 						if (itr->_contentRangePresent)
 						{
@@ -3461,7 +3454,7 @@ void API::fileUploadProgressCheck()
 					else if (state == "error")
 					{
 						SPDLOG_ERROR(
-							"fileUploadProgressCheck: remove entry because state is 'error'"
+							"fileUploadProgressCheckThread: remove entry because state is 'error'"
 							", ingestionJobKey: {}"
 							", progressId: {}"
 							", binaryVirtualHostName: {}"
@@ -3606,7 +3599,7 @@ void API::fileUploadProgressCheck()
 					throw runtime_error(errorMessage);
 				}
 			}
-			catch (exception e)
+			catch (exception& e)
 			{
 				SPDLOG_ERROR(
 					"Call for upload progress failed"
@@ -3623,7 +3616,7 @@ void API::fileUploadProgressCheck()
 			}
 
 			if (!iteratorAlreadyUpdated)
-				itr++;
+				++itr;
 		}
 	}
 }
@@ -3780,7 +3773,7 @@ void API::ingestionRootsStatus(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -3859,7 +3852,7 @@ void API::ingestionRootMetaDataContent(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4114,7 +4107,7 @@ void API::ingestionJobsStatus(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4250,7 +4243,7 @@ void API::cancelIngestionJob(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4471,7 +4464,7 @@ void API::updateIngestionJob(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -4791,7 +4784,7 @@ void API::ingestionJobSwitchToEncoder(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -6164,7 +6157,7 @@ void API::changeLiveProxyPlaylist(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -6310,7 +6303,7 @@ void API::changeLiveProxyOverlayText(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 

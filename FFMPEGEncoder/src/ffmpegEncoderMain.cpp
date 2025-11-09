@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
 		mutex fcgiAcceptMutex;
 
-		mutex cpuUsageMutex;
+		shared_mutex cpuUsageMutex;
 		deque<int> cpuUsage;
 		int numberOfLastCPUUsageToBeChecked = 3;
 		for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked; cpuUsageIndex++)

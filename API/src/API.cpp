@@ -49,6 +49,13 @@ API::API(
 
 	loadConfiguration(configurationRoot, fileUploadProgressData);
 
+	registerHandler<API>("status", &API::status);
+	registerHandler<API>("avgBandwidthUsage", &API::avgBandwidthUsage);
+	registerHandler<API>("binaryAuthorization", &API::binaryAuthorization);
+	registerHandler<API>("deliveryAuthorizationThroughParameter", &API::deliveryAuthorizationThroughParameter);
+	registerHandler<API>("deliveryAuthorizationThroughPath", &API::deliveryAuthorizationThroughPath);
+	registerHandler<API>("manageHTTPStreamingManifest_authorizationThroughParameter", &API::manageHTTPStreamingManifest_authorizationThroughParameter);
+
 	registerHandler<API>("login", &API::login);
 	registerHandler<API>("registerUser", &API::registerUser);
 	registerHandler<API>("updateUser", &API::updateUser);
@@ -224,817 +231,8 @@ void API::manageRequestAndResponse(
 
 	try
 	{
-		if (handleRequest(sThreadId, requestIdentifier, request, authorizationDetails, requestURI, requestMethod, requestBody,
-			responseBodyCompressed, requestDetails, queryParameters, false))
-		{
-			const string method = getQueryParameter(queryParameters, "x-api-method", "", true);
-			if (method == "status")
-			{
-				try
-				{
-					json statusRoot;
-
-					statusRoot["status"] = "API server up and running";
-					// statusRoot["version-api"] = version;
-
-					string sJson = JSONUtils::toString(statusRoot);
-
-					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, sJson);
-				}
-				catch (exception &e)
-				{
-					SPDLOG_ERROR(
-						"status failed"
-						", requestBody: {}"
-						", e.what(): {}",
-						requestBody, e.what()
-					);
-
-					throw HTTPError(500);
-				}
-			}
-			else if (method == "avgBandwidthUsage")
-			{
-				try
-				{
-					json statusRoot;
-
-					statusRoot["avgBandwidthUsage"] = _avgBandwidthUsage->load(memory_order_relaxed);
-
-					sendSuccess(
-						sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
-					);
-				}
-				catch (exception &e)
-				{
-					SPDLOG_ERROR(
-						"avgBandwidthUsage failed"
-						", requestBody: {}"
-						", e.what(): {}",
-						requestBody, e.what()
-					);
-
-					throw HTTPError(500);
-				}
-			}
-			else if (method == "binaryAuthorization")
-			{
-				// since we are here, for sure user is authorized
-
-				auto binaryVirtualHostNameIt = queryParameters.find("binaryVirtualHostName");
-				auto binaryListenHostIt = queryParameters.find("binaryListenHost");
-
-				// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
-				auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-				auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-				if (binaryVirtualHostNameIt != queryParameters.end() && binaryListenHostIt != queryParameters.end() && progressIdIt != requestDetails.end() &&
-					originalURIIt != requestDetails.end())
-				{
-					size_t ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
-					if (ingestionJobKeyIndex != string::npos)
-					{
-						try
-						{
-							struct FileUploadProgressData::RequestData requestData;
-
-							requestData._progressId = progressIdIt->second;
-							requestData._binaryListenHost = binaryListenHostIt->second;
-							requestData._binaryVirtualHostName = binaryVirtualHostNameIt->second;
-							// requestData._binaryListenIp = binaryVirtualHostNameIt->second;
-							requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
-							requestData._lastPercentageUpdated = 0;
-							requestData._callFailures = 0;
-
-							// Content-Range: bytes 0-99999/100000
-							requestData._contentRangePresent = false;
-							requestData._contentRangeStart = -1;
-							requestData._contentRangeEnd = -1;
-							requestData._contentRangeSize = -1;
-							auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
-							if (contentRangeIt != requestDetails.end())
-							{
-								string_view contentRange = contentRangeIt->second;
-								try
-								{
-									parseContentRange(contentRange, requestData._contentRangeStart, requestData._contentRangeEnd,
-										requestData._contentRangeSize);
-
-									requestData._contentRangePresent = true;
-								}
-								catch (exception &e)
-								{
-									SPDLOG_ERROR(
-										"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
-										", contentRange: {}",
-										contentRange
-									);
-									throw HTTPError(500);
-								}
-							}
-
-							SPDLOG_INFO(
-								"Content-Range details"
-								", contentRangePresent: {}"
-								", contentRangeStart: {}"
-								", contentRangeEnd: {}"
-								", contentRangeSize: {}",
-								requestData._contentRangePresent, requestData._contentRangeStart, requestData._contentRangeEnd, requestData._contentRangeSize
-							);
-
-							lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
-
-							_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
-							SPDLOG_INFO(
-								"Added upload file progress to be monitored"
-								", _progressId: {}"
-								", _binaryVirtualHostName: {}"
-								", _binaryListenHost: {}",
-								requestData._progressId, requestData._binaryVirtualHostName, requestData._binaryListenHost
-							);
-						}
-						catch (exception &e)
-						{
-							SPDLOG_ERROR(
-								"ProgressId not found"
-								", progressIdIt->second: {}",
-								progressIdIt->second
-							);
-						}
-					}
-				}
-
-				string responseBody;
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
-			}
-			else if (method == "deliveryAuthorizationThroughParameter")
-			{
-				// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
-				try
-				{
-					auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-					auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-					if (tokenIt == requestDetails.end() || originalURIIt == requestDetails.end())
-					{
-						string errorMessage = std::format(
-							"deliveryAuthorization, not authorized"
-							", token: {}"
-							", URI: {}",
-							(tokenIt != requestDetails.end() ? tokenIt->second : "null"),
-							(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-						);
-						SPDLOG_WARN(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					string contentURI = originalURIIt->second;
-					size_t endOfURIIndex = contentURI.find_last_of("?");
-					if (endOfURIIndex == string::npos)
-					{
-						string errorMessage = std::format(
-							"Wrong URI format"
-							", contentURI: {}",
-							contentURI
-						);
-						SPDLOG_WARN(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					contentURI = contentURI.substr(0, endOfURIIndex);
-
-					string tokenParameter = tokenIt->second;
-
-					SPDLOG_INFO(
-						"Calling checkDeliveryAuthorizationThroughParameter"
-						", contentURI: {}"
-						", tokenParameter: {}",
-						contentURI, tokenParameter
-					);
-
-					_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
-
-					string responseBody;
-					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
-				}
-				catch (runtime_error &e)
-				{
-					string errorMessage = string("Not authorized");
-					SPDLOG_WARN(errorMessage);
-
-					throw HTTPError(403);
-				}
-				catch (exception &e)
-				{
-					string errorMessage = string("Not authorized: exception managing token");
-					SPDLOG_WARN(errorMessage);
-
-					throw HTTPError(500);
-				}
-			}
-			else if (method == "deliveryAuthorizationThroughPath")
-			{
-				// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
-				try
-				{
-					auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-					if (originalURIIt == requestDetails.end())
-					{
-						string errorMessage = std::format(
-							"deliveryAuthorization, not authorized"
-							", URI: {}",
-							(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-						);
-						SPDLOG_WARN(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					string contentURI = originalURIIt->second;
-
-					/* log incluso in checkDeliveryAuthorizationThroughPath
-					SPDLOG_INFO(
-						"deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
-						", contentURI: {}",
-						contentURI
-					);
-					*/
-
-					_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
-
-					string responseBody;
-					sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
-				}
-				catch (runtime_error &e)
-				{
-					string errorMessage = string("Not authorized");
-					SPDLOG_WARN(errorMessage);
-
-					throw HTTPError(403);
-				}
-				catch (exception &e)
-				{
-					string errorMessage = string("Not authorized: exception managing token");
-					SPDLOG_WARN(errorMessage);
-
-					throw HTTPError(500);
-				}
-			}
-			else if (method == "manageHTTPStreamingManifest_authorizationThroughParameter")
-			{
-				try
-				{
-					if (_noFileSystemAccess)
-					{
-						string errorMessage = std::format(
-							"no rights to execute this method"
-							", _noFileSystemAccess: {}",
-							_noFileSystemAccess
-						);
-						SPDLOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					auto tokenIt = queryParameters.find("token");
-					if (tokenIt == queryParameters.end())
-					{
-						string errorMessage = string("Not authorized: token parameter not present");
-						SPDLOG_WARN(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-
-					// we could have:
-					//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
-					//			es: /MMS_0000/1/001/472/152/8063642_2/8063642_1653439.m3u8?token=9163
-					//			es: /MMS_0000/1/001/470/566/8055007_2/8055007_1652158.m3u8?token=ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161
-					//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
-					//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
-					//			es:
-					/// MMS_0000/1/001/472/152/8063642_2/360p/8063642_1653439.m3u8?token=Nw2npoRhfMLZC-GiRuZHpI~jGKBRA-NE-OARj~o68En4XFUriOSuXqexke21OTVd
-					bool secondaryManifest;
-					string tokenComingFromURL;
-
-					bool isNumber = StringUtils::isNumber(tokenIt->second);
-					if (isNumber || tokenIt->second.find(",") != string::npos)
-					{
-						secondaryManifest = false;
-						// tokenComingFromURL = stoll(tokenIt->second);
-						tokenComingFromURL = tokenIt->second;
-					}
-					else
-					{
-						secondaryManifest = true;
-						// tokenComingFromURL will be initialized in the next statement
-					}
-					SPDLOG_INFO(
-						"manageHTTPStreamingManifest"
-						", analizing the token {}"
-						", isNumber: {}"
-						", tokenIt->second: {}"
-						", secondaryManifest: {}",
-						tokenIt->second, isNumber, tokenIt->second, secondaryManifest
-					);
-
-					string contentURI;
-					{
-						size_t endOfURIIndex = requestURI.find_last_of("?");
-						if (endOfURIIndex == string::npos)
-						{
-							string errorMessage = std::format(
-								"Wrong URI format"
-								", requestURI: {}",
-								requestURI
-							);
-							SPDLOG_INFO(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						contentURI = requestURI.substr(0, endOfURIIndex);
-					}
-
-					if (secondaryManifest)
-					{
-						auto cookieIt = queryParameters.find("cookie");
-						if (cookieIt == queryParameters.end())
-						{
-							string errorMessage = string("The 'cookie' parameter is not found");
-							SPDLOG_ERROR(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-						string cookie = cookieIt->second;
-
-						string token = tokenIt->second;
-
-						tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
-
-						/*
-						string tokenParameter = std::format("{}---{}", tokenIt->second, cookie);
-						SPDLOG_INFO(
-							"Calling checkDeliveryAuthorizationThroughParameter"
-							", contentURI: {}"
-							", tokenParameter: {}",
-							contentURI, tokenParameter
-						);
-						tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
-						*/
-					}
-					else
-					{
-						// cookie parameter is added inside catramms.nginx
-						string mmsInfoCookie;
-						auto cookieIt = queryParameters.find("cookie");
-						if (cookieIt != queryParameters.end())
-							mmsInfoCookie = cookieIt->second;
-
-						tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(
-							secondaryManifest, tokenComingFromURL, mmsInfoCookie, contentURI
-						);
-					}
-
-					// manifest authorized
-
-					{
-						string contentType;
-
-						string m3u8Extension(".m3u8");
-						if (contentURI.ends_with(m3u8Extension))
-							contentType = "Content-type: application/x-mpegURL";
-						else // dash
-							contentType = "Content-type: application/dash+xml";
-						string cookieName = "mmsInfo";
-
-						string responseBody;
-						{
-							fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
-
-							SPDLOG_INFO(
-								"Reading manifest file"
-								", manifestPathFileName: {}",
-								manifestPathFileName.string()
-							);
-
-							if (!fs::exists(manifestPathFileName))
-							{
-								string errorMessage = std::format(
-									"manifest file not existing"
-									", manifestPathFileName: {}",
-									manifestPathFileName.string()
-								);
-								SPDLOG_ERROR(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-
-							if (contentURI.ends_with(m3u8Extension))
-							{
-								std::ifstream manifestFile;
-
-								manifestFile.open(manifestPathFileName.string(), ios::in);
-								if (!manifestFile.is_open())
-								{
-									string errorMessage = std::format(
-										"Not authorized: manifest file not opened"
-										", manifestPathFileName: {}",
-										manifestPathFileName.string()
-									);
-									SPDLOG_INFO(errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-
-								string manifestLine;
-								string tsExtension = ".ts";
-								string m3u8Extension = ".m3u8";
-								string m3u8ExtXMedia = "#EXT-X-MEDIA";
-								string endLine = "\n";
-								while (getline(manifestFile, manifestLine))
-								{
-									if (manifestLine[0] != '#' && manifestLine.ends_with(tsExtension))
-									{
-										/*
-										SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
-											+ ", manifestLine: " + manifestLine
-											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-										);
-										*/
-										string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
-										responseBody += (manifestLine + "?token=" + auth + endLine);
-									}
-									else if (manifestLine[0] != '#' && manifestLine.ends_with(m3u8Extension))
-									{
-										// scenario where we have several .m3u8 manifest files
-										/*
-										SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
-											+ ", manifestLine: " + manifestLine
-											+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-										);
-										*/
-										string auth = Encrypt::opensslEncrypt(std::format("{}+++{}", manifestLine, tokenComingFromURL));
-										responseBody += std::format("{}?token={}{}", manifestLine, auth, endLine);
-									}
-									else if (manifestLine.starts_with(m3u8ExtXMedia))
-									{
-										// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES,
-										// DEFAULT=YES,URI="eng/1247999_384641.m3u8"
-										string temp = "URI=\"";
-										size_t uriStartIndex = manifestLine.find(temp);
-										if (uriStartIndex != string::npos)
-										{
-											uriStartIndex += temp.size();
-											size_t uriEndIndex = uriStartIndex;
-											while (manifestLine[uriEndIndex] != '\"' && uriEndIndex < manifestLine.size())
-												uriEndIndex++;
-											if (manifestLine[uriEndIndex] == '\"')
-											{
-												string uri = manifestLine.substr(uriStartIndex, uriEndIndex - uriStartIndex);
-												/*
-												SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
-													+ ", uri: " + uri
-													+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
-												);
-												*/
-												string auth = Encrypt::opensslEncrypt(uri + "+++" + tokenComingFromURL);
-												string tokenParameter = string("?token=") + auth;
-
-												manifestLine.insert(uriEndIndex, tokenParameter);
-											}
-										}
-
-										responseBody += (manifestLine + endLine);
-									}
-									else
-									{
-										responseBody += (manifestLine + endLine);
-									}
-								}
-								manifestFile.close();
-							}
-							else // dash
-							{
-		#if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
-								SPDLOG_INFO("libxml define OK");
-		#else
-								SPDLOG_INFO("libxml define KO");
-		#endif
-
-								/*
-								<?xml version="1.0" encoding="utf-8"?>
-								<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-										xmlns="urn:mpeg:dash:schema:mpd:2011"
-										xmlns:xlink="http://www.w3.org/1999/xlink"
-										xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011
-								http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
-										profiles="urn:mpeg:dash:profile:isoff-live:2011"
-										type="dynamic"
-										minimumUpdatePeriod="PT10S"
-										suggestedPresentationDelay="PT10S"
-										availabilityStartTime="2020-02-03T15:11:56Z"
-										publishTime="2020-02-04T08:54:57Z"
-										timeShiftBufferDepth="PT1M0.0S"
-										minBufferTime="PT20.0S">
-										<ProgramInformation>
-										</ProgramInformation>
-										<Period id="0" start="PT0.0S">
-												<AdaptationSet id="0" contentType="video" segmentAlignment="true" bitstreamSwitching="true">
-														<Representation id="0" mimeType="video/mp4" codecs="avc1.640029" bandwidth="1494920" width="1024"
-								height="576" frameRate="25/1"> <SegmentTemplate timescale="12800" initialization="init-stream$RepresentationID$.m4s"
-								media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="815616000" d="128000"
-								r="5" />
-																		</SegmentTimeline>
-																</SegmentTemplate>
-														</Representation>
-												</AdaptationSet>
-												<AdaptationSet id="1" contentType="audio" segmentAlignment="true" bitstreamSwitching="true">
-														<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.5" bandwidth="95545"
-								audioSamplingRate="48000"> <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011"
-								value="2" /> <SegmentTemplate timescale="48000" initialization="init-stream$RepresentationID$.m4s"
-								media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="3058557246" d="479232" />
-																				<S d="481280" />
-																				<S d="479232" r="1" />
-																				<S d="481280" />
-																				<S d="479232" />
-																		</SegmentTimeline>
-																</SegmentTemplate>
-														</Representation>
-												</AdaptationSet>
-										</Period>
-								</MPD>
-								*/
-								xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
-								if (doc == nullptr)
-								{
-									string errorMessage = std::format(
-										"xmlParseFile failed"
-										", manifestPathFileName: {}",
-										manifestPathFileName.string()
-									);
-									SPDLOG_INFO(errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-
-								// xmlNode* rootElement = xmlDocGetRootElement(doc);
-
-								/* Create xpath evaluation context */
-								xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
-								if (xpathCtx == nullptr)
-								{
-									xmlFreeDoc(doc);
-
-									string errorMessage = std::format(
-										"xmlXPathNewContext failed"
-										", manifestPathFileName: {}",
-										manifestPathFileName.string()
-									);
-									SPDLOG_INFO(errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-
-								if (xmlXPathRegisterNs(xpathCtx, BAD_CAST "xmlns", BAD_CAST "urn:mpeg:dash:schema:mpd:2011") != 0)
-								{
-									xmlXPathFreeContext(xpathCtx);
-									xmlFreeDoc(doc);
-
-									string errorMessage = std::format(
-										"xmlXPathRegisterNs xmlns:xsi"
-										", manifestPathFileName: {}",
-										manifestPathFileName.string()
-									);
-									SPDLOG_INFO(errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-								/*
-								if(xmlXPathRegisterNs(xpathCtx,
-									BAD_CAST "xmlns:xlink",
-									BAD_CAST "http://www.w3.org/1999/xlink") != 0)
-								{
-									xmlXPathFreeContext(xpathCtx);
-									xmlFreeDoc(doc);
-
-									string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
-										+ ", manifestPathFileName: " + manifestPathFileName.string()
-										;
-									SPDLOG_INFO(__FILEREF__ + errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-								if(xmlXPathRegisterNs(xpathCtx,
-									BAD_CAST "xsi:schemaLocation",
-									BAD_CAST "http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd") != 0)
-								{
-									xmlXPathFreeContext(xpathCtx);
-									xmlFreeDoc(doc);
-
-									string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
-										+ ", manifestPathFileName: " + manifestPathFileName.string()
-										;
-									SPDLOG_INFO(__FILEREF__ + errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-								*/
-
-								// Evaluate xpath expression
-								const char *xpathExpr = "//xmlns:Period/xmlns:AdaptationSet/xmlns:Representation/xmlns:SegmentTemplate";
-								xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST xpathExpr, xpathCtx);
-								if (xpathObj == nullptr)
-								{
-									xmlXPathFreeContext(xpathCtx);
-									xmlFreeDoc(doc);
-
-									string errorMessage = std::format(
-										"xmlXPathEvalExpression failed"
-										", manifestPathFileName: {}",
-										manifestPathFileName.string()
-									);
-									SPDLOG_INFO(errorMessage);
-
-									throw runtime_error(errorMessage);
-								}
-
-								xmlNodeSetPtr nodes = xpathObj->nodesetval;
-								SPDLOG_INFO(
-									"processing mpd manifest file"
-									", manifestPathFileName: {}"
-									", nodesNumber: {}",
-									manifestPathFileName.string(), nodes->nodeNr
-								);
-								for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
-								{
-									if (nodes->nodeTab[nodeIndex] == nullptr)
-									{
-										xmlXPathFreeContext(xpathCtx);
-										xmlFreeDoc(doc);
-
-										string errorMessage = std::format(
-											"nodes->nodeTab[nodeIndex] is null"
-											", manifestPathFileName: {}"
-											", nodeIndex: {}",
-											manifestPathFileName.string(), nodeIndex
-										);
-										SPDLOG_INFO(errorMessage);
-
-										throw runtime_error(errorMessage);
-									}
-
-									const char *mediaAttributeName = "media";
-									const char *initializationAttributeName = "initialization";
-									xmlChar *mediaValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName);
-									xmlChar *initializationValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName);
-									if (mediaValue == (xmlChar *)nullptr || initializationValue == (xmlChar *)nullptr)
-									{
-										xmlXPathFreeContext(xpathCtx);
-										xmlFreeDoc(doc);
-
-										string errorMessage = std::format(
-											"xmlGetProp failed"
-											", manifestPathFileName: {}",
-											manifestPathFileName.string()
-										);
-										SPDLOG_INFO(errorMessage);
-
-										throw runtime_error(errorMessage);
-									}
-
-									string auth = Encrypt::opensslEncrypt(string((char *)mediaValue) + "+++" + tokenComingFromURL);
-									string newMediaAttributeValue = string((char *)mediaValue) + "?token=" + auth;
-									// xmlAttrPtr
-									xmlSetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName, BAD_CAST newMediaAttributeValue.c_str());
-
-									string newInitializationAttributeValue = string((char *)initializationValue) + "?token=" + auth;
-									// xmlAttrPtr
-									xmlSetProp(
-										nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName, BAD_CAST newInitializationAttributeValue.c_str()
-									);
-
-									// const char *value = "ssss";
-									// xmlNodeSetContent(nodes->nodeTab[nodeIndex], BAD_CAST value);
-
-									/*
-									 * All the elements returned by an XPath query are pointers to
-									 * elements from the tree *except* namespace nodes where the XPath
-									 * semantic is different from the implementation in libxml2 tree.
-									 * As a result when a returned node set is freed when
-									 * xmlXPathFreeObject() is called, that routine must check the
-									 * element type. But node from the returned set may have been removed
-									 * by xmlNodeSetContent() resulting in access to freed data.
-									 * This can be exercised by running
-									 *       valgrind xpath2 test3.xml '//discarded' discarded
-									 * There is 2 ways around it:
-									 *   - make a copy of the pointers to the nodes from the result set
-									 *     then call xmlXPathFreeObject() and then modify the nodes
-									 * or
-									 *   - remove the reference to the modified nodes from the node set
-									 *     as they are processed, if they are not namespace nodes.
-									 */
-									// if (nodes->nodeTab[nodeIndex]->type != XML_NAMESPACE_DECL)
-									// 	nodes->nodeTab[nodeIndex] = NULL;
-								}
-
-								/* Cleanup of XPath data */
-								xmlXPathFreeObject(xpathObj);
-								xmlXPathFreeContext(xpathCtx);
-
-								/* dump the resulting document */
-								{
-									xmlChar *xmlbuff;
-									int buffersize;
-									xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
-									SPDLOG_INFO(
-										"dumping mpd manifest file"
-										", manifestPathFileName: {}"
-										", buffersize: {}",
-										manifestPathFileName.string(), buffersize
-									);
-
-									responseBody = (char *)xmlbuff;
-
-									xmlFree(xmlbuff);
-									// xmlDocDump(stdout, doc);
-								}
-
-								/* free the document */
-								xmlFreeDoc(doc);
-
-								/*
-								std::ifstream manifestFile(manifestPathFileName);
-								std::stringstream buffer;
-								buffer << manifestFile.rdbuf();
-
-								responseBody = buffer.str();
-								*/
-							}
-						}
-
-						string cookieValue = Encrypt::opensslEncrypt(tokenComingFromURL);
-						string cookiePath;
-						{
-							size_t cookiePathIndex = contentURI.find_last_of("/");
-							if (cookiePathIndex == string::npos)
-							{
-								string errorMessage = std::format(
-									"Wrong URI format"
-									", contentURI: {}",
-									contentURI
-								);
-								SPDLOG_INFO(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-							cookiePath = contentURI.substr(0, cookiePathIndex);
-						}
-
-						bool enableCorsGETHeader = true;
-						string originHeader;
-						{
-							auto originIt = requestDetails.find("HTTP_ORIGIN");
-							if (originIt != requestDetails.end())
-								originHeader = originIt->second;
-						}
-						if (secondaryManifest)
-							sendSuccess(
-								sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType, "",
-								"", "", enableCorsGETHeader, originHeader
-							);
-						else
-							sendSuccess(
-								sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType,
-								cookieName, cookieValue, cookiePath, enableCorsGETHeader, originHeader
-							);
-					}
-				}
-				catch (runtime_error &e)
-				{
-					string errorMessage = string("Not authorized");
-					SPDLOG_WARN(errorMessage);
-
-					throw HTTPError(403);
-				}
-				catch (exception &e)
-				{
-					string errorMessage = string("Not authorized: exception managing token");
-					SPDLOG_WARN(errorMessage);
-
-					throw HTTPError(500);
-				}
-			}
-			else
-			{
-				string errorMessage = std::format(
-					"No API is matched"
-					", requestURI: {}"
-					", method: {}"
-					", requestMethod: {}",
-					requestURI, method, requestMethod
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw HTTPError(400);
-			}
-		}
+		handleRequest(sThreadId, requestIdentifier, request, authorizationDetails, requestURI, requestMethod, requestBody,
+			responseBodyCompressed, requestDetails, queryParameters, true);
 	}
 	catch (exception &e)
 	{
@@ -1046,15 +244,896 @@ void API::manageRequestAndResponse(
 		);
 
 		int htmlResponseCode = 500;
+		string errorMessage;
 		if (dynamic_cast<HTTPError*>(&e))
+		{
 			htmlResponseCode = dynamic_cast<HTTPError*>(&e)->httpErrorCode;
-		string errorMessage = getHtmlStandardMessage(htmlResponseCode);
+			errorMessage = e.what();
+		}
+		else
+			errorMessage = getHtmlStandardMessage(htmlResponseCode);
 
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, htmlResponseCode, errorMessage);
 
-		throw runtime_error(string(errorMessage));
+		throw;
+	}
+}
+
+void API::mmsSupport(
+	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody,
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "mmsSupport";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		string userEmailAddress;
+		string subject;
+		string text;
+
+		json metadataRoot = JSONUtils::toJson(requestBody);
+
+		vector<string> mandatoryFields = {"UserEmailAddress", "Subject", "Text"};
+		for (string field : mandatoryFields)
+		{
+			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			{
+				string errorMessage = std::format(
+					"Json field is not present or it is null"
+					", Json field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw HTTPError(400);
+			}
+		}
+
+		userEmailAddress = JSONUtils::asString(metadataRoot, "UserEmailAddress", "");
+		subject = JSONUtils::asString(metadataRoot, "Subject", "");
+		text = JSONUtils::asString(metadataRoot, "Text", "");
+
+		{
+			shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+
+			vector<string> emailBody;
+			emailBody.push_back(std::format("<p>UserKey: {}</p>", apiAuthorizationDetails->userKey));
+			emailBody.push_back(std::format("<p>WorkspaceKey: {}</p>", apiAuthorizationDetails->workspace->_workspaceKey));
+			emailBody.push_back(std::format("<p>APIKey: {}</p>", apiAuthorizationDetails->password));
+			emailBody.push_back("<p></p>");
+			emailBody.push_back(std::format("<p>From: {}</p>", userEmailAddress));
+			emailBody.push_back("<p></p>");
+			emailBody.push_back(std::format("<p>{}</p>", text));
+
+			string tosCommaSeparated = "support@catramms-cloud.com";
+			CurlWrapper::sendEmail(
+				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				_emailUserName,	   // i.e.: info@catramms-cloud.com
+				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
+			);
+			// EMailSender emailSender(_logger, _configuration);
+			// bool useMMSCCToo = true;
+			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+
+			string responseBody;
+			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+		}
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw;
+	}
+}
+
+void API::status(
+	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+	const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "status";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		json statusRoot;
+
+		statusRoot["status"] = "API server up and running";
+		// statusRoot["version-api"] = version;
+
+		string sJson = JSONUtils::toString(statusRoot);
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, sJson);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw;
+	}
+}
+
+void API::avgBandwidthUsage(
+	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+	const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "avgBandwidthUsage";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		json statusRoot;
+
+		statusRoot["avgBandwidthUsage"] = _avgBandwidthUsage->load(memory_order_relaxed);
+
+		sendSuccess(
+			sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, JSONUtils::toString(statusRoot)
+		);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw;
+	}
+}
+
+void API::manageHTTPStreamingManifest_authorizationThroughParameter(
+	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+	const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "manageHTTPStreamingManifest_authorizationThroughParameter";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		if (_noFileSystemAccess)
+		{
+			string errorMessage = std::format(
+				"no rights to execute this method"
+				", _noFileSystemAccess: {}",
+				_noFileSystemAccess
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		auto tokenIt = queryParameters.find("token");
+		if (tokenIt == queryParameters.end())
+		{
+			string errorMessage = string("Not authorized: token parameter not present");
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		// we could have:
+		//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
+		//			es: /MMS_0000/1/001/472/152/8063642_2/8063642_1653439.m3u8?token=9163
+		//			es: /MMS_0000/1/001/470/566/8055007_2/8055007_1652158.m3u8?token=ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161
+		//		- secondary manifest (that has to be treated as a .ts delivery), token parameter:
+		//			<encryption of 'manifestLine+++token'>---<cookie: encription of 'token'>
+		//			es:
+		/// MMS_0000/1/001/472/152/8063642_2/360p/8063642_1653439.m3u8?token=Nw2npoRhfMLZC-GiRuZHpI~jGKBRA-NE-OARj~o68En4XFUriOSuXqexke21OTVd
+		bool secondaryManifest;
+		string tokenComingFromURL;
+
+		bool isNumber = StringUtils::isNumber(tokenIt->second);
+		if (isNumber || tokenIt->second.find(",") != string::npos)
+		{
+			secondaryManifest = false;
+			// tokenComingFromURL = stoll(tokenIt->second);
+			tokenComingFromURL = tokenIt->second;
+		}
+		else
+		{
+			secondaryManifest = true;
+			// tokenComingFromURL will be initialized in the next statement
+		}
+		SPDLOG_INFO(
+			"manageHTTPStreamingManifest"
+			", analizing the token {}"
+			", isNumber: {}"
+			", tokenIt->second: {}"
+			", secondaryManifest: {}",
+			tokenIt->second, isNumber, tokenIt->second, secondaryManifest
+		);
+
+		string contentURI;
+		{
+			size_t endOfURIIndex = requestURI.find_last_of('?');
+			if (endOfURIIndex == string::npos)
+			{
+				string errorMessage = std::format(
+					"Wrong URI format"
+					", requestURI: {}",
+					requestURI
+				);
+				SPDLOG_INFO(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			contentURI = requestURI.substr(0, endOfURIIndex);
+		}
+
+		if (secondaryManifest)
+		{
+			auto cookieIt = queryParameters.find("cookie");
+			if (cookieIt == queryParameters.end())
+			{
+				string errorMessage = string("The 'cookie' parameter is not found");
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			string cookie = cookieIt->second;
+
+			string token = tokenIt->second;
+
+			tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
+
+			/*
+			string tokenParameter = std::format("{}---{}", tokenIt->second, cookie);
+			SPDLOG_INFO(
+				"Calling checkDeliveryAuthorizationThroughParameter"
+				", contentURI: {}"
+				", tokenParameter: {}",
+				contentURI, tokenParameter
+			);
+			tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+			*/
+		}
+		else
+		{
+			// cookie parameter is added inside catramms.nginx
+			string mmsInfoCookie;
+			auto cookieIt = queryParameters.find("cookie");
+			if (cookieIt != queryParameters.end())
+				mmsInfoCookie = cookieIt->second;
+
+			tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(
+				secondaryManifest, tokenComingFromURL, mmsInfoCookie, contentURI
+			);
+		}
+
+		// manifest authorized
+
+		{
+			string contentType;
+
+			string m3u8Extension(".m3u8");
+			if (contentURI.ends_with(m3u8Extension))
+				contentType = "Content-type: application/x-mpegURL";
+			else // dash
+				contentType = "Content-type: application/dash+xml";
+			string cookieName = "mmsInfo";
+
+			string responseBody;
+			{
+				fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
+
+				SPDLOG_INFO(
+					"Reading manifest file"
+					", manifestPathFileName: {}",
+					manifestPathFileName.string()
+				);
+
+				if (!fs::exists(manifestPathFileName))
+				{
+					string errorMessage = std::format(
+						"manifest file not existing"
+						", manifestPathFileName: {}",
+						manifestPathFileName.string()
+					);
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+
+				if (contentURI.ends_with(m3u8Extension))
+				{
+					std::ifstream manifestFile;
+
+					manifestFile.open(manifestPathFileName.string(), ios::in);
+					if (!manifestFile.is_open())
+					{
+						string errorMessage = std::format(
+							"Not authorized: manifest file not opened"
+							", manifestPathFileName: {}",
+							manifestPathFileName.string()
+						);
+						SPDLOG_INFO(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					string manifestLine;
+					string tsExtension = ".ts";
+					string m3u8Extension = ".m3u8";
+					string m3u8ExtXMedia = "#EXT-X-MEDIA";
+					string endLine = "\n";
+					while (getline(manifestFile, manifestLine))
+					{
+						if (manifestLine[0] != '#' && manifestLine.ends_with(tsExtension))
+						{
+							/*
+							SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
+								+ ", manifestLine: " + manifestLine
+								+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+							);
+							*/
+							string auth = Encrypt::opensslEncrypt(manifestLine + "+++" + tokenComingFromURL);
+							responseBody += (manifestLine + "?token=" + auth + endLine);
+						}
+						else if (manifestLine[0] != '#' && manifestLine.ends_with(m3u8Extension))
+						{
+							// scenario where we have several .m3u8 manifest files
+							/*
+							SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
+								+ ", manifestLine: " + manifestLine
+								+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+							);
+							*/
+							string auth = Encrypt::opensslEncrypt(std::format("{}+++{}", manifestLine, tokenComingFromURL));
+							responseBody += std::format("{}?token={}{}", manifestLine, auth, endLine);
+						}
+						else if (manifestLine.starts_with(m3u8ExtXMedia))
+						{
+							// #EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio",LANGUAGE="eng",NAME="eng",AUTOSELECT=YES,
+							// DEFAULT=YES,URI="eng/1247999_384641.m3u8"
+							string temp = "URI=\"";
+							size_t uriStartIndex = manifestLine.find(temp);
+							if (uriStartIndex != string::npos)
+							{
+								uriStartIndex += temp.size();
+								size_t uriEndIndex = uriStartIndex;
+								while (manifestLine[uriEndIndex] != '\"' && uriEndIndex < manifestLine.size())
+									uriEndIndex++;
+								if (manifestLine[uriEndIndex] == '\"')
+								{
+									string uri = manifestLine.substr(uriStartIndex, uriEndIndex - uriStartIndex);
+									/*
+									SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
+										+ ", uri: " + uri
+										+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
+									);
+									*/
+									string auth = Encrypt::opensslEncrypt(uri + "+++" + tokenComingFromURL);
+									string tokenParameter = string("?token=") + auth;
+
+									manifestLine.insert(uriEndIndex, tokenParameter);
+								}
+							}
+
+							responseBody += (manifestLine + endLine);
+						}
+						else
+						{
+							responseBody += (manifestLine + endLine);
+						}
+					}
+					manifestFile.close();
+				}
+				else // dash
+				{
+#if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
+					SPDLOG_INFO("libxml define OK");
+#else
+					SPDLOG_INFO("libxml define KO");
+#endif
+
+					/*
+					<?xml version="1.0" encoding="utf-8"?>
+					<MPD xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+							xmlns="urn:mpeg:dash:schema:mpd:2011"
+							xmlns:xlink="http://www.w3.org/1999/xlink"
+							xsi:schemaLocation="urn:mpeg:DASH:schema:MPD:2011
+					http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"
+							profiles="urn:mpeg:dash:profile:isoff-live:2011"
+							type="dynamic"
+							minimumUpdatePeriod="PT10S"
+							suggestedPresentationDelay="PT10S"
+							availabilityStartTime="2020-02-03T15:11:56Z"
+							publishTime="2020-02-04T08:54:57Z"
+							timeShiftBufferDepth="PT1M0.0S"
+							minBufferTime="PT20.0S">
+							<ProgramInformation>
+							</ProgramInformation>
+							<Period id="0" start="PT0.0S">
+									<AdaptationSet id="0" contentType="video" segmentAlignment="true" bitstreamSwitching="true">
+											<Representation id="0" mimeType="video/mp4" codecs="avc1.640029" bandwidth="1494920" width="1024"
+					height="576" frameRate="25/1"> <SegmentTemplate timescale="12800" initialization="init-stream$RepresentationID$.m4s"
+					media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="815616000" d="128000"
+					r="5" />
+															</SegmentTimeline>
+													</SegmentTemplate>
+											</Representation>
+									</AdaptationSet>
+									<AdaptationSet id="1" contentType="audio" segmentAlignment="true" bitstreamSwitching="true">
+											<Representation id="1" mimeType="audio/mp4" codecs="mp4a.40.5" bandwidth="95545"
+					audioSamplingRate="48000"> <AudioChannelConfiguration schemeIdUri="urn:mpeg:dash:23003:3:audio_channel_configuration:2011"
+					value="2" /> <SegmentTemplate timescale="48000" initialization="init-stream$RepresentationID$.m4s"
+					media="chunk-stream$RepresentationID$-$Number%05d$.m4s" startNumber="6373"> <SegmentTimeline> <S t="3058557246" d="479232" />
+																	<S d="481280" />
+																	<S d="479232" r="1" />
+																	<S d="481280" />
+																	<S d="479232" />
+															</SegmentTimeline>
+													</SegmentTemplate>
+											</Representation>
+									</AdaptationSet>
+							</Period>
+					</MPD>
+					*/
+					xmlDocPtr doc = xmlParseFile(manifestPathFileName.string().c_str());
+					if (doc == nullptr)
+					{
+						string errorMessage = std::format(
+							"xmlParseFile failed"
+							", manifestPathFileName: {}",
+							manifestPathFileName.string()
+						);
+						SPDLOG_INFO(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					// xmlNode* rootElement = xmlDocGetRootElement(doc);
+
+					/* Create xpath evaluation context */
+					xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
+					if (xpathCtx == nullptr)
+					{
+						xmlFreeDoc(doc);
+
+						string errorMessage = std::format(
+							"xmlXPathNewContext failed"
+							", manifestPathFileName: {}",
+							manifestPathFileName.string()
+						);
+						SPDLOG_INFO(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					if (xmlXPathRegisterNs(xpathCtx, BAD_CAST "xmlns", BAD_CAST "urn:mpeg:dash:schema:mpd:2011") != 0)
+					{
+						xmlXPathFreeContext(xpathCtx);
+						xmlFreeDoc(doc);
+
+						string errorMessage = std::format(
+							"xmlXPathRegisterNs xmlns:xsi"
+							", manifestPathFileName: {}",
+							manifestPathFileName.string()
+						);
+						SPDLOG_INFO(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					/*
+					if(xmlXPathRegisterNs(xpathCtx,
+						BAD_CAST "xmlns:xlink",
+						BAD_CAST "http://www.w3.org/1999/xlink") != 0)
+					{
+						xmlXPathFreeContext(xpathCtx);
+						xmlFreeDoc(doc);
+
+						string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
+							+ ", manifestPathFileName: " + manifestPathFileName.string()
+							;
+						SPDLOG_INFO(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					if(xmlXPathRegisterNs(xpathCtx,
+						BAD_CAST "xsi:schemaLocation",
+						BAD_CAST "http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd") != 0)
+					{
+						xmlXPathFreeContext(xpathCtx);
+						xmlFreeDoc(doc);
+
+						string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
+							+ ", manifestPathFileName: " + manifestPathFileName.string()
+							;
+						SPDLOG_INFO(__FILEREF__ + errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+					*/
+
+					// Evaluate xpath expression
+					const char *xpathExpr = "//xmlns:Period/xmlns:AdaptationSet/xmlns:Representation/xmlns:SegmentTemplate";
+					xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST xpathExpr, xpathCtx);
+					if (xpathObj == nullptr)
+					{
+						xmlXPathFreeContext(xpathCtx);
+						xmlFreeDoc(doc);
+
+						string errorMessage = std::format(
+							"xmlXPathEvalExpression failed"
+							", manifestPathFileName: {}",
+							manifestPathFileName.string()
+						);
+						SPDLOG_INFO(errorMessage);
+
+						throw runtime_error(errorMessage);
+					}
+
+					xmlNodeSetPtr nodes = xpathObj->nodesetval;
+					SPDLOG_INFO(
+						"processing mpd manifest file"
+						", manifestPathFileName: {}"
+						", nodesNumber: {}",
+						manifestPathFileName.string(), nodes->nodeNr
+					);
+					for (int nodeIndex = 0; nodeIndex < nodes->nodeNr; nodeIndex++)
+					{
+						if (nodes->nodeTab[nodeIndex] == nullptr)
+						{
+							xmlXPathFreeContext(xpathCtx);
+							xmlFreeDoc(doc);
+
+							string errorMessage = std::format(
+								"nodes->nodeTab[nodeIndex] is null"
+								", manifestPathFileName: {}"
+								", nodeIndex: {}",
+								manifestPathFileName.string(), nodeIndex
+							);
+							SPDLOG_INFO(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						const char *mediaAttributeName = "media";
+						const char *initializationAttributeName = "initialization";
+						xmlChar *mediaValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName);
+						xmlChar *initializationValue = xmlGetProp(nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName);
+						if (mediaValue == (xmlChar *)nullptr || initializationValue == (xmlChar *)nullptr)
+						{
+							xmlXPathFreeContext(xpathCtx);
+							xmlFreeDoc(doc);
+
+							string errorMessage = std::format(
+								"xmlGetProp failed"
+								", manifestPathFileName: {}",
+								manifestPathFileName.string()
+							);
+							SPDLOG_INFO(errorMessage);
+
+							throw runtime_error(errorMessage);
+						}
+
+						string auth = Encrypt::opensslEncrypt(string((char *)mediaValue) + "+++" + tokenComingFromURL);
+						string newMediaAttributeValue = string((char *)mediaValue) + "?token=" + auth;
+						// xmlAttrPtr
+						xmlSetProp(nodes->nodeTab[nodeIndex], BAD_CAST mediaAttributeName, BAD_CAST newMediaAttributeValue.c_str());
+
+						string newInitializationAttributeValue = string((char *)initializationValue) + "?token=" + auth;
+						// xmlAttrPtr
+						xmlSetProp(
+							nodes->nodeTab[nodeIndex], BAD_CAST initializationAttributeName, BAD_CAST newInitializationAttributeValue.c_str()
+						);
+
+						// const char *value = "ssss";
+						// xmlNodeSetContent(nodes->nodeTab[nodeIndex], BAD_CAST value);
+
+						/*
+						 * All the elements returned by an XPath query are pointers to
+						 * elements from the tree *except* namespace nodes where the XPath
+						 * semantic is different from the implementation in libxml2 tree.
+						 * As a result when a returned node set is freed when
+						 * xmlXPathFreeObject() is called, that routine must check the
+						 * element type. But node from the returned set may have been removed
+						 * by xmlNodeSetContent() resulting in access to freed data.
+						 * This can be exercised by running
+						 *       valgrind xpath2 test3.xml '//discarded' discarded
+						 * There is 2 ways around it:
+						 *   - make a copy of the pointers to the nodes from the result set
+						 *     then call xmlXPathFreeObject() and then modify the nodes
+						 * or
+						 *   - remove the reference to the modified nodes from the node set
+						 *     as they are processed, if they are not namespace nodes.
+						 */
+						// if (nodes->nodeTab[nodeIndex]->type != XML_NAMESPACE_DECL)
+						// 	nodes->nodeTab[nodeIndex] = NULL;
+					}
+
+					/* Cleanup of XPath data */
+					xmlXPathFreeObject(xpathObj);
+					xmlXPathFreeContext(xpathCtx);
+
+					/* dump the resulting document */
+					{
+						xmlChar *xmlbuff;
+						int buffersize;
+						xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
+						SPDLOG_INFO(
+							"dumping mpd manifest file"
+							", manifestPathFileName: {}"
+							", buffersize: {}",
+							manifestPathFileName.string(), buffersize
+						);
+
+						responseBody = (char *)xmlbuff;
+
+						xmlFree(xmlbuff);
+						// xmlDocDump(stdout, doc);
+					}
+
+					/* free the document */
+					xmlFreeDoc(doc);
+
+					/*
+					std::ifstream manifestFile(manifestPathFileName);
+					std::stringstream buffer;
+					buffer << manifestFile.rdbuf();
+
+					responseBody = buffer.str();
+					*/
+				}
+			}
+
+			string cookieValue = Encrypt::opensslEncrypt(tokenComingFromURL);
+			string cookiePath;
+			{
+				size_t cookiePathIndex = contentURI.find_last_of("/");
+				if (cookiePathIndex == string::npos)
+				{
+					string errorMessage = std::format(
+						"Wrong URI format"
+						", contentURI: {}",
+						contentURI
+					);
+					SPDLOG_INFO(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				cookiePath = contentURI.substr(0, cookiePathIndex);
+			}
+
+			bool enableCorsGETHeader = true;
+			string originHeader;
+			{
+				auto originIt = requestDetails.find("HTTP_ORIGIN");
+				if (originIt != requestDetails.end())
+					originHeader = originIt->second;
+			}
+			if (secondaryManifest)
+				sendSuccess(
+					sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType, "",
+					"", "", enableCorsGETHeader, originHeader
+				);
+			else
+				sendSuccess(
+					sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType,
+					cookieName, cookieValue, cookiePath, enableCorsGETHeader, originHeader
+				);
+		}
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw HTTPError(403);
+	}
+}
+
+void API::sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage)
+{
+	json responseBodyRoot;
+	responseBodyRoot["status"] = to_string(htmlResponseCode);
+	responseBodyRoot["error"] = errorMessage;
+
+	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
+}
+
+void API::stopBandwidthUsageThread()
+{
+	_bandwidthUsageThreadShutdown = true;
+
+	this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
+}
+
+void API::bandwidthUsageThread()
+{
+	while (!_bandwidthUsageThreadShutdown)
+	{
+		// non serve lo sleep perchè lo sleep è già all'interno di System::getBandwidthInBytes
+		// this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
+
+		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
+		double avgBandwidthUsage = 0;
+		try
+		{
+			// impieghera' 15 secs
+			// Ritorna la banda media secondo i parametri specificati ed anche i picchi
+			map<string, pair<uint64_t, uint64_t>> peakInBytes;
+			map<string, pair<uint64_t, uint64_t>> avgBandwidth = System::getAvgAndPeakBandwidthInBytes(peakInBytes, 2, 5);
+
+			bool deliveryExternalNetworkInterfaceFound = false;
+			for (const auto &[iface, stats] : avgBandwidth)
+			{
+				auto [rx, tx] = stats;
+				SPDLOG_INFO(
+					"bandwidthUsageThread, avgBandwidthInMbps"
+					", iface: {}"
+					", rx: {} ({}Mbps)"
+					", tx: {} ({}Mbps)",
+					iface, rx, static_cast<uint32_t>((rx * 8) / 1000000), tx, static_cast<uint32_t>((tx * 8) / 1000000)
+				);
+				if (_deliveryExternalNetworkInterface == iface)
+				{
+					avgBandwidthUsage = tx;
+					deliveryExternalNetworkInterfaceFound = true;
+					// break; commentato in modo da avere sempre il log della banda usata da tutte le reti (public e internal)
+				}
+			}
+			if (!deliveryExternalNetworkInterfaceFound)
+				SPDLOG_WARN(
+					"bandwidthUsageThread, getAvgAndPeakBandwidthInBytes"
+					", deliveryExternalNetworkInterface not found"
+					", _deliveryExternalNetworkInterface: {}",
+					_deliveryExternalNetworkInterface
+				);
+			else
+				_avgBandwidthUsage->store(avgBandwidthUsage, memory_order_relaxed);
+			SPDLOG_INFO(
+				"bandwidthUsageThread, avgBandwidthInMbps"
+				", avgBandwidthUsage: @{}@Mbps",
+				static_cast<uint32_t>((avgBandwidthUsage * 8) / 1000000)
+			);
+
+			// loggo il picco
+			for (const auto &[iface, stats] : peakInBytes)
+			{
+				if (_deliveryExternalNetworkInterface == iface)
+				{
+					auto [peakRx, peakTx] = stats;
+					// messaggio usato da servicesStatusLibrary::mms_delivery_check_bandwidth_usage
+					SPDLOG_INFO(
+						"bandwidthUsageThread, peakBandwidthInMbps"
+						", iface: {}"
+						", peakTx: @{}@Mbps",
+						iface, static_cast<uint32_t>((peakTx * 8) / 1000000)
+					);
+					break;
+				}
+			}
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
+
+		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
+		try
+		{
+			unordered_map<string, uint64_t> runningHostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesRunningHosts();
+
+			SPDLOG_INFO(
+				"bandwidthUsageThread, avgBandwidthInMbps"
+				", runningHostsBandwidth.size: {}",
+				runningHostsBandwidth.size()
+			);
+
+			if (!runningHostsBandwidth.empty())
+			{
+				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
+				{
+					try
+					{
+						string bandwidthUsageURL =
+							std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
+						constexpr int bandwidthUsageTimeoutInSeconds = 2;
+						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
+
+						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "avgBandwidthUsage");
+					}
+					catch (exception &e)
+					{
+						// se una culr fallisce comunque andiamo avanti
+						SPDLOG_ERROR(
+							"bandwidthUsage failed"
+							", exception: {}",
+							e.what()
+						);
+					}
+				}
+
+				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(runningHostsBandwidth);
+			}
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
+
+		// inizializziamo la struttura BandwidthStats
+		try
+		{
+			// addSample logs when a new day is started
+			_bandwidthStats.addSample(avgBandwidthUsage, chrono::system_clock::now());
+		}
+		catch (exception& e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
 	}
 }
 
@@ -1122,7 +1201,7 @@ bool API::basicAuthenticationRequired(const string &requestURI, const unordered_
 {
 	bool basicAuthenticationRequired = true;
 
-	string method = getMapParameter(queryParameters, "x-api-method", string(), false);
+	const string method = getMapParameter(queryParameters, "x-api-method", string(), false);
 	if (method.empty())
 	{
 		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
@@ -1577,241 +1656,3 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 	}
 }
 
-void API::mmsSupport(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
-)
-{
-	string api = "mmsSupport";
-
-	SPDLOG_INFO(
-		"Received {}"
-		", requestBody: {}",
-		api, requestBody
-	);
-
-	try
-	{
-		string userEmailAddress;
-		string subject;
-		string text;
-
-		json metadataRoot = JSONUtils::toJson(requestBody);
-
-		vector<string> mandatoryFields = {"UserEmailAddress", "Subject", "Text"};
-		for (string field : mandatoryFields)
-		{
-			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
-			{
-				string errorMessage = std::format(
-					"Json field is not present or it is null"
-					", Json field: {}",
-					field
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw HTTPError(400);
-			}
-		}
-
-		userEmailAddress = JSONUtils::asString(metadataRoot, "UserEmailAddress", "");
-		subject = JSONUtils::asString(metadataRoot, "Subject", "");
-		text = JSONUtils::asString(metadataRoot, "Text", "");
-
-		{
-			shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
-
-			vector<string> emailBody;
-			emailBody.push_back(std::format("<p>UserKey: {}</p>", apiAuthorizationDetails->userKey));
-			emailBody.push_back(std::format("<p>WorkspaceKey: {}</p>", apiAuthorizationDetails->workspace->_workspaceKey));
-			emailBody.push_back(std::format("<p>APIKey: {}</p>", apiAuthorizationDetails->password));
-			emailBody.push_back("<p></p>");
-			emailBody.push_back(std::format("<p>From: {}</p>", userEmailAddress));
-			emailBody.push_back("<p></p>");
-			emailBody.push_back(std::format("<p>{}</p>", text));
-
-			string tosCommaSeparated = "support@catramms-cloud.com";
-			CurlWrapper::sendEmail(
-				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
-				_emailUserName,	   // i.e.: info@catramms-cloud.com
-				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
-			);
-			// EMailSender emailSender(_logger, _configuration);
-			// bool useMMSCCToo = true;
-			// emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
-
-			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
-		}
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestBody, e.what()
-		);
-
-		throw HTTPError(500);
-	}
-}
-
-void API::sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage)
-{
-	json responseBodyRoot;
-	responseBodyRoot["status"] = to_string(htmlResponseCode);
-	responseBodyRoot["error"] = errorMessage;
-
-	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
-}
-
-void API::stopBandwidthUsageThread()
-{
-	_bandwidthUsageThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
-}
-
-void API::bandwidthUsageThread()
-{
-	while (!_bandwidthUsageThreadShutdown)
-	{
-		// non serve lo sleep perchè lo sleep è già all'interno di System::getBandwidthInBytes
-		// this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
-
-		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
-		double avgBandwidthUsage = 0;
-		try
-		{
-			// impieghera' 15 secs
-			// Ritorna la banda media secondo i parametri specificati ed anche i picchi
-			map<string, pair<uint64_t, uint64_t>> peakInBytes;
-			map<string, pair<uint64_t, uint64_t>> avgBandwidth = System::getAvgAndPeakBandwidthInBytes(peakInBytes, 2, 5);
-
-			bool deliveryExternalNetworkInterfaceFound = false;
-			for (const auto &[iface, stats] : avgBandwidth)
-			{
-				auto [rx, tx] = stats;
-				SPDLOG_INFO(
-					"bandwidthUsageThread, avgBandwidthInMbps"
-					", iface: {}"
-					", rx: {} ({}Mbps)"
-					", tx: {} ({}Mbps)",
-					iface, rx, static_cast<uint32_t>((rx * 8) / 1000000), tx, static_cast<uint32_t>((tx * 8) / 1000000)
-				);
-				if (_deliveryExternalNetworkInterface == iface)
-				{
-					avgBandwidthUsage = tx;
-					deliveryExternalNetworkInterfaceFound = true;
-					// break; commentato in modo da avere sempre il log della banda usata da tutte le reti (public e internal)
-				}
-			}
-			if (!deliveryExternalNetworkInterfaceFound)
-				SPDLOG_WARN(
-					"bandwidthUsageThread, getAvgAndPeakBandwidthInBytes"
-					", deliveryExternalNetworkInterface not found"
-					", _deliveryExternalNetworkInterface: {}",
-					_deliveryExternalNetworkInterface
-				);
-			else
-				_avgBandwidthUsage->store(avgBandwidthUsage, memory_order_relaxed);
-			SPDLOG_INFO(
-				"bandwidthUsageThread, avgBandwidthInMbps"
-				", avgBandwidthUsage: @{}@Mbps",
-				static_cast<uint32_t>((avgBandwidthUsage * 8) / 1000000)
-			);
-
-			// loggo il picco
-			for (const auto &[iface, stats] : peakInBytes)
-			{
-				if (_deliveryExternalNetworkInterface == iface)
-				{
-					auto [peakRx, peakTx] = stats;
-					// messaggio usato da servicesStatusLibrary::mms_delivery_check_bandwidth_usage
-					SPDLOG_INFO(
-						"bandwidthUsageThread, peakBandwidthInMbps"
-						", iface: {}"
-						", peakTx: @{}@Mbps",
-						iface, static_cast<uint32_t>((peakTx * 8) / 1000000)
-					);
-					break;
-				}
-			}
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR(
-				"System::getBandwidthInMbps failed"
-				", exception: {}",
-				e.what()
-			);
-		}
-
-		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
-		try
-		{
-			unordered_map<string, uint64_t> runningHostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesRunningHosts();
-
-			SPDLOG_INFO(
-				"bandwidthUsageThread, avgBandwidthInMbps"
-				", runningHostsBandwidth.size: {}",
-				runningHostsBandwidth.size()
-			);
-
-			if (!runningHostsBandwidth.empty())
-			{
-				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
-				{
-					try
-					{
-						string bandwidthUsageURL =
-							std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
-						const int bandwidthUsageTimeoutInSeconds = 2;
-						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
-
-						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "avgBandwidthUsage");
-					}
-					catch (exception &e)
-					{
-						// se una culr fallisce comunque andiamo avanti
-						SPDLOG_ERROR(
-							"bandwidthUsage failed"
-							", exception: {}",
-							e.what()
-						);
-					}
-				}
-
-				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(runningHostsBandwidth);
-			}
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR(
-				"System::getBandwidthInMbps failed"
-				", exception: {}",
-				e.what()
-			);
-		}
-
-		// inizializziamo la struttura BandwidthStats
-		try
-		{
-			// addSample logs when a new day is started
-			_bandwidthStats.addSample(avgBandwidthUsage, chrono::system_clock::now());
-		}
-		catch (exception& e)
-		{
-			SPDLOG_ERROR(
-				"System::getBandwidthInMbps failed"
-				", exception: {}",
-				e.what()
-			);
-		}
-	}
-}

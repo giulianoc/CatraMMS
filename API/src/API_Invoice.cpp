@@ -153,7 +153,7 @@ void API::addInvoice(
 			api, requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -225,6 +225,6 @@ void API::invoiceList(
 			api, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(500);
+		throw;
 	}
 }

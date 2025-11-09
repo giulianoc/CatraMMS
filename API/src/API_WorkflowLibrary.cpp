@@ -49,7 +49,7 @@ void API::workflowsAsLibraryList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -92,7 +92,7 @@ void API::workflowAsLibraryContent(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -192,7 +192,7 @@ void API::saveWorkflowAsLibrary(
 			", e.what(): {}",
 			api, requestBody, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -275,6 +275,6 @@ void API::removeWorkflowAsLibrary(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }

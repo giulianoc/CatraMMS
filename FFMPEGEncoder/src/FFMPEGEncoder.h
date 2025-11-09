@@ -17,6 +17,7 @@
 #include "FFMpegWrapper.h"
 #include "FastCGIAPI.h"
 #include <deque>
+#include <shared_mutex>
 
 // 2021-08-22: in case the VECTOR is used, we will set the size of the vector to
 // a big value and use the _maxXXXXCapacity configuration variable to manage
@@ -35,7 +36,7 @@ class FFMPEGEncoder final : public FastCGIAPI
 
 		mutex *fcgiAcceptMutex,
 
-		mutex *cpuUsageMutex, deque<int> *cpuUsage,
+		shared_mutex *cpuUsageMutex, deque<int> *cpuUsage,
 
 		// mutex* lastEncodingAcceptedTimeMutex,
 		chrono::system_clock::time_point *lastEncodingAcceptedTime,
@@ -70,7 +71,7 @@ class FFMPEGEncoder final : public FastCGIAPI
   private:
 	json _configurationRoot;
 
-	mutex *_cpuUsageMutex;
+	shared_mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;
 	// bool						_cpuUsageThreadShutdown;
 
@@ -82,34 +83,34 @@ class FFMPEGEncoder final : public FastCGIAPI
 	// overloading the process 	To solve this issue, we will force to wait at
 	// lease 5 seconds to accept a second encoding request. 	That will allow
 	// the cpuUsage to be updated for the next encoding request
-	int _intervalInSecondsBetweenEncodingAcceptForInternalEncoder;
-	int _intervalInSecondsBetweenEncodingAcceptForExternalEncoder;
+	int _intervalInSecondsBetweenEncodingAcceptForInternalEncoder{};
+	int _intervalInSecondsBetweenEncodingAcceptForExternalEncoder{};
 	chrono::system_clock::time_point *_lastEncodingAcceptedTime;
 
 	string _encoderUser;
 	string _encoderPassword;
 
-	int _cpuUsageThresholdForEncoding;
-	int _cpuUsageThresholdForProxy;
-	int _cpuUsageThresholdForRecording;
+	int _cpuUsageThresholdForEncoding{};
+	int _cpuUsageThresholdForProxy{};
+	int _cpuUsageThresholdForRecording{};
 
 	mutex *_encodingMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *_encodingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxEncodingsCapability;
-	int getMaxEncodingsCapability();
+	int getMaxEncodingsCapability() const;
 
 	mutex *_liveProxyMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveProxiesCapability;
-	int getMaxLiveProxiesCapability(int64_t ingestionJobKey);
+	int getMaxLiveProxiesCapability(int64_t ingestionJobKey) const;
 
 	mutex *_liveRecordingMutex;
 	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
 	// commented because retrieved dinamically
 	// int							_maxLiveRecordingsCapability;
-	int getMaxLiveRecordingsCapability();
+	int getMaxLiveRecordingsCapability() const;
 
 	// int calculateCapabilitiesBasedOnOtherRunningProcesses(
 	// 	int configuredMaxEncodingsCapability,
@@ -118,83 +119,246 @@ class FFMPEGEncoder final : public FastCGIAPI
 	// );
 
 	mutex *_encodingCompletedMutex;
-	int _encodingCompletedRetentionInSeconds;
+	int _encodingCompletedRetentionInSeconds{};
 	map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *_encodingCompletedMap;
 	chrono::system_clock::time_point *_lastEncodingCompletedCheck;
 
 	mutex *_tvChannelsPortsMutex;
 	long *_tvChannelPort_CurrentOffset;
 
-	int64_t _mmsAPITimeoutInSeconds;
+	int64_t _mmsAPITimeoutInSeconds{};
+
+	void status(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void info(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void videoSpeed(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void encodeContent(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void cutFrameAccurate(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void overlayImageOnVideo(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void overlayTextOnVideo(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void generateFrames(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void slideShow(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void addSilentAudio(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void pictureInPicture(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void introOutroOverlay(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void liveRecorder(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void liveProxy(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void liveGrid(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void encodingStatus(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void filterNotification(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void killEncodingJob(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void changeLiveProxyPlaylist(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void changeLiveProxyOverlayText(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void encodingProgress(
+		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void liveProxy_liveGrid(
+		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
+
+	void requestManagement(
+		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void encodeContentThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
 	);
 
 	void overlayImageOnVideoThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
 	);
 
 	void overlayTextOnVideoThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
 	);
 
 	void generateFramesThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
 	);
 
 	void slideShowThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
-	);
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
+	) const;
 
 	void liveRecorderThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
-	);
+		const shared_ptr<FFMPEGEncoderBase::LiveRecording> &liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
+	) const;
 
 	void liveProxyThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
-	);
+		const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
+	) const;
 
 	void liveGridThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
-	);
+		const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
+	) const;
 
 	void videoSpeedThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
-	);
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
+	) const;
 
 	void addSilentAudioThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
-	);
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
+	) const;
 
 	void pictureInPictureThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
 	);
 
 	void introOutroOverlayThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
 	);
 
 	void cutFrameAccurateThread(
 		// FCGX_Request& request,
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json metadataRoot
-	);
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
+	) const;
 
-	string buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, string filterName, json ingestedParametersRoot);
+	static string buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, const string& filterName, json ingestedParametersRoot);
 
-	void encodingCompletedRetention();
+	void encodingCompletedRetention() const;
 
-	void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, string label, string message, bool kill);
+	// void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, string label, string message, bool kill);
+
+	void loadConfiguration(json configurationRoot);
 };

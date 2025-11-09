@@ -165,7 +165,7 @@ const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
 
@@ -536,6 +536,266 @@ void API::createBulkOfDeliveryAuthorization(
 			", e.what(): {}",
 			api, e.what()
 		);
-		throw HTTPError(500);
+		throw;
 	}
 }
+
+void API::binaryAuthorization(
+	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+	const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "binaryAuthorization";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		// since we are here, for sure user is authorized
+
+		auto binaryVirtualHostNameIt = queryParameters.find("binaryVirtualHostName");
+		auto binaryListenHostIt = queryParameters.find("binaryListenHost");
+
+		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
+		auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
+		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+		if (binaryVirtualHostNameIt != queryParameters.end()
+			&& binaryListenHostIt != queryParameters.end()
+			&& progressIdIt != requestDetails.end()
+			&& originalURIIt != requestDetails.end())
+		{
+			size_t ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
+			if (ingestionJobKeyIndex != string::npos)
+			{
+				try
+				{
+					struct FileUploadProgressData::RequestData requestData;
+
+					requestData._progressId = progressIdIt->second;
+					requestData._binaryListenHost = binaryListenHostIt->second;
+					requestData._binaryVirtualHostName = binaryVirtualHostNameIt->second;
+					// requestData._binaryListenIp = binaryVirtualHostNameIt->second;
+					requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
+					requestData._lastPercentageUpdated = 0;
+					requestData._callFailures = 0;
+
+					// Content-Range: bytes 0-99999/100000
+					requestData._contentRangePresent = false;
+					requestData._contentRangeStart = -1;
+					requestData._contentRangeEnd = -1;
+					requestData._contentRangeSize = -1;
+					auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
+					if (contentRangeIt != requestDetails.end())
+					{
+						string_view contentRange = contentRangeIt->second;
+						try
+						{
+							parseContentRange(contentRange, requestData._contentRangeStart, requestData._contentRangeEnd,
+								requestData._contentRangeSize);
+
+							requestData._contentRangePresent = true;
+						}
+						catch (exception &e)
+						{
+							string errorMessage = std::format(
+								"Content-Range is not well done. Expected format: 'Content-Range: bytes <start>-<end>/<size>'"
+								", contentRange: {}",
+								contentRange
+							);
+							SPDLOG_ERROR(errorMessage);
+							throw runtime_error(errorMessage);
+						}
+					}
+
+					SPDLOG_INFO(
+						"Content-Range details"
+						", contentRangePresent: {}"
+						", contentRangeStart: {}"
+						", contentRangeEnd: {}"
+						", contentRangeSize: {}",
+						requestData._contentRangePresent, requestData._contentRangeStart, requestData._contentRangeEnd, requestData._contentRangeSize
+					);
+
+					lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
+
+					_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
+					SPDLOG_INFO(
+						"Added upload file progress to be monitored"
+						", _progressId: {}"
+						", _binaryVirtualHostName: {}"
+						", _binaryListenHost: {}",
+						requestData._progressId, requestData._binaryVirtualHostName, requestData._binaryListenHost
+					);
+				}
+				catch (exception &e)
+				{
+					SPDLOG_ERROR(
+						"ProgressId not found"
+						", progressIdIt->second: {}",
+						progressIdIt->second
+					);
+				}
+			}
+		}
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw;
+	}
+}
+
+void API::deliveryAuthorizationThroughParameter(
+	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+	const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "deliveryAuthorizationThroughParameter";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
+
+		auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
+		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+		if (tokenIt == requestDetails.end() || originalURIIt == requestDetails.end())
+		{
+			string errorMessage = std::format(
+				"deliveryAuthorization, not authorized"
+				", token: {}"
+				", URI: {}",
+				(tokenIt != requestDetails.end() ? tokenIt->second : "null"),
+				(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string contentURI = originalURIIt->second;
+		size_t endOfURIIndex = contentURI.find_last_of("?");
+		if (endOfURIIndex == string::npos)
+		{
+			string errorMessage = std::format(
+				"Wrong URI format"
+				", contentURI: {}",
+				contentURI
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		contentURI = contentURI.substr(0, endOfURIIndex);
+
+		string tokenParameter = tokenIt->second;
+
+		SPDLOG_INFO(
+			"Calling checkDeliveryAuthorizationThroughParameter"
+			", contentURI: {}"
+			", tokenParameter: {}",
+			contentURI, tokenParameter
+		);
+
+		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw HTTPError(403);
+	}
+}
+
+void API::deliveryAuthorizationThroughPath(
+	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+	const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
+)
+{
+	string api = "deliveryAuthorizationThroughPath";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestBody: {}",
+		api, requestBody
+	);
+
+	try
+	{
+		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
+
+		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
+		if (originalURIIt == requestDetails.end())
+		{
+			string errorMessage = std::format(
+				"deliveryAuthorization, not authorized"
+				", URI: {}",
+				(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+			);
+			SPDLOG_WARN(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		string contentURI = originalURIIt->second;
+
+		/* log incluso in checkDeliveryAuthorizationThroughPath
+		SPDLOG_INFO(
+			"deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
+			", contentURI: {}",
+			contentURI
+		);
+		*/
+
+		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
+
+		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200);
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestBody: {}"
+			", e.what(): {}",
+			api, requestBody, e.what()
+		);
+
+		throw HTTPError(403);
+	}
+}
+
