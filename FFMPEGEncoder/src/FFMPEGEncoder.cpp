@@ -2346,15 +2346,17 @@ void FFMPEGEncoder::encodingProgress(
 
 shared_ptr<FastCGIAPI::AuthorizationDetails> FFMPEGEncoder::checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password)
 {
-	if (userName != _encoderUser || userName != _encoderPassword)
+	if (userName != _encoderUser || password != _encoderPassword)
 	{
 		SPDLOG_ERROR(
 			"Username/password of the basic authorization are wrong"
 			", _requestIdentifier: {}"
 			", threadId: {}"
-			", userKey: {}"
-			", apiKey: {}",
-			_requestIdentifier, sThreadId, userName, password
+			", userName: {}"
+			", _encoderUser: {}"
+			", password: {}"
+			", _encoderPassword: {}",
+			_requestIdentifier, sThreadId, userName, _encoderUser, password, _encoderPassword
 		);
 
 		throw HTTPError(401);
