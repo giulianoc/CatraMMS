@@ -1302,9 +1302,10 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["pid"] = 0;
 				// killedByUser true implica una uscita dal loop in EncoderProxy (nell'engine). Nel caso in cui pero' il kill era stato fatto
 				// solo per eseguire un restart dell'EncoderProxy verso un nuovo encoder, mettiamo killedByUser a false
-				responseBodyRoot["killedByUser"] = selectedEncodingCompleted->_killedByUser && selectedEncodingCompleted->_killToRestartByEngine
-													   ? false
-													   : selectedEncodingCompleted->_killedByUser;
+				responseBodyRoot["killedByUser"] =
+					selectedEncodingCompleted->_killedByUser && selectedEncodingCompleted->_killToRestartByEngine
+					? false
+					: selectedEncodingCompleted->_killedByUser;
 				responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_urlForbidden;
 				responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_urlNotFound;
 				responseBodyRoot["completedWithError"] = selectedEncodingCompleted->_completedWithError;
@@ -1465,8 +1466,8 @@ void FFMPEGEncoder::encodingStatus(
 			", encodingCompleted: {}"
 			", responseBody: {}"
 			", @MMS statistics@ - duration encodingStatus (secs): @{}@",
-			ingestionJobKey, encodingJobKey, encodingFound, liveProxyFound, liveRecordingFound, encodingCompleted, JSONUtils::toString(json(responseBody)),
-			to_string(chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count())
+			ingestionJobKey, encodingJobKey, encodingFound, liveProxyFound, liveRecordingFound, encodingCompleted,
+			responseBody, chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()
 		);
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
