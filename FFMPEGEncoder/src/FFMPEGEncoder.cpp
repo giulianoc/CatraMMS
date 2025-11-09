@@ -2610,7 +2610,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 void FFMPEGEncoder::liveRecorderThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::LiveRecording> &liveRecording, const int64_t ingestionJobKey, const int64_t encodingJobKey,
-	const string_view& requestBody
+	const string requestBody
 ) const
 {
 	try
@@ -2635,7 +2635,7 @@ void FFMPEGEncoder::liveRecorderThread(
 void FFMPEGEncoder::liveProxyThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxyData, const int64_t ingestionJobKey, const int64_t encodingJobKey,
-	const string_view& requestBody
+	const string requestBody
 ) const
 {
 	try
@@ -2660,7 +2660,7 @@ void FFMPEGEncoder::liveProxyThread(
 void FFMPEGEncoder::liveGridThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxyData, const int64_t ingestionJobKey, const int64_t encodingJobKey,
-	const string_view& requestBody
+	const string requestBody
 ) const
 {
 	try

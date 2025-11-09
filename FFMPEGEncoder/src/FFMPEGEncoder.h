@@ -316,17 +316,20 @@ class FFMPEGEncoder final : public FastCGIAPI
 
 	void liveRecorderThread(
 		// FCGX_Request& request,
-		const shared_ptr<FFMPEGEncoderBase::LiveRecording> &liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
+		const shared_ptr<FFMPEGEncoderBase::LiveRecording> &liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey,
+		string requestBody
 	) const;
 
 	void liveProxyThread(
 		// FCGX_Request& request,
-		const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxy, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
+		const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey,
+		string requestBody
 	) const;
 
 	void liveGridThread(
 		// FCGX_Request& request,
-		const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, const string_view& requestBody
+		const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> &liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey,
+		string requestBody
 	) const;
 
 	void videoSpeedThread(

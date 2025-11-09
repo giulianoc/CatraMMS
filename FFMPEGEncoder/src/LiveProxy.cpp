@@ -540,6 +540,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 
 		string eWhat = e.what();
 		SPDLOG_ERROR(eWhat);
+		SPDLOG_ERROR(requestBody);
 		string errorMessage = std::format(
 			"{} API failed (runtime_error)"
 			", ingestionJobKey: {}"
