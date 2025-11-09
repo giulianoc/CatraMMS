@@ -2526,7 +2526,7 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	json getStreamList(
-		PostgresConnTrans &trans, int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label, bool labelLike, string url,
+		PostgresConnTrans &trans, int64_t workspaceKey, int64_t confKey, int start, int rows, string label, bool labelLike, string url,
 		string sourceType, string type, string name, string region, string country, string labelOrder, bool fromMaster = false
 	);
 #else

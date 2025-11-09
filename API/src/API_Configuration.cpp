@@ -2029,9 +2029,9 @@ void API::streamList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", 0, false);
-		int32_t start = getMapParameter(queryParameters, "start", 0, false);
-		int32_t rows = getMapParameter(queryParameters, "rows", 30, false);
+		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int32_t start = getMapParameter(queryParameters, "start", static_cast<int32_t>(0), false);
+		int32_t rows = getMapParameter(queryParameters, "rows", static_cast<int32_t>(30), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user

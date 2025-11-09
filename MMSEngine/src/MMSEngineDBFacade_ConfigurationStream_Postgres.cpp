@@ -627,7 +627,7 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 }
 
 json MMSEngineDBFacade::getStreamList(
-	int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label, bool labelLike, string url, string sourceType, string type,
+	int64_t workspaceKey, int64_t confKey, int start, int rows, string label, bool labelLike, string url, string sourceType, string type,
 	string name, string region, string country,
 	string labelOrder, // "" or "asc" or "desc"
 	bool fromMaster
@@ -651,7 +651,7 @@ json MMSEngineDBFacade::getStreamList(
 	try
 	{
 		streamListRoot = MMSEngineDBFacade::getStreamList(
-			trans, workspaceKey, liveURLKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
+			trans, workspaceKey, confKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
 		);
 	}
 	catch (exception const &e)
@@ -682,7 +682,7 @@ json MMSEngineDBFacade::getStreamList(
 }
 
 json MMSEngineDBFacade::getStreamList(
-	PostgresConnTrans &trans, int64_t workspaceKey, int64_t liveURLKey, int start, int rows, string label, bool labelLike, string url,
+	PostgresConnTrans &trans, int64_t workspaceKey, int64_t confKey, int start, int rows, string label, bool labelLike, string url,
 	string sourceType, string type, string name, string region, string country,
 	string labelOrder, // "" or "asc" or "desc"
 	bool fromMaster
@@ -698,7 +698,7 @@ json MMSEngineDBFacade::getStreamList(
 		SPDLOG_INFO(
 			"getStreamList"
 			", workspaceKey: {}"
-			", liveURLKey: {}"
+			", confKey: {}"
 			", start: {}"
 			", rows: {}"
 			", label: {}"
@@ -710,7 +710,7 @@ json MMSEngineDBFacade::getStreamList(
 			", region: {}"
 			", country: {}"
 			", labelOrder: {}",
-			workspaceKey, liveURLKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
+			workspaceKey, confKey, start, rows, label, labelLike, url, sourceType, type, name, region, country, labelOrder
 		);
 
 		{
@@ -721,10 +721,10 @@ json MMSEngineDBFacade::getStreamList(
 				requestParametersRoot[field] = workspaceKey;
 			}
 
-			if (liveURLKey != -1)
+			if (confKey != -1)
 			{
-				field = "liveURLKey";
-				requestParametersRoot[field] = liveURLKey;
+				field = "confKey";
+				requestParametersRoot[field] = confKey;
 			}
 
 			{
@@ -795,8 +795,8 @@ json MMSEngineDBFacade::getStreamList(
 		}
 
 		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
-		if (liveURLKey != -1)
-			sqlWhere += std::format("and confKey = {} ", liveURLKey);
+		if (confKey != -1)
+			sqlWhere += std::format("and confKey = {} ", confKey);
 		if (!label.empty())
 		{
 			if (labelLike)
