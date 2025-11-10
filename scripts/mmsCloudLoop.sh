@@ -13,6 +13,16 @@ debugFilename=/tmp/mmsCloudLoop.log
 
 debug=1
 
+if [ ! -f "$debugFilename" ]; then
+	echo "" > $debugFilename
+else
+	filesize=$(stat -c %s $debugFilename)
+	if [ $filesize -gt 10000000 ]
+	then
+		echo "" > $debugFilename
+	fi
+fi
+
 source /opt/catrasoftware/CatraMMS/scripts/servicesStatusLibrary.sh
 
 while [ 1 ]
