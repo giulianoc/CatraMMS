@@ -54,7 +54,8 @@ mms-account-creation()
 		#che si giustifica guardando lo script nginx.sh
 		#Inoltre bisogna aggiungere /bin/kill perchè lo script crontab.sh, durante la rotazione dei log file di nginx, esegue la kill
 		#su nginx (che gira come root) per fargli ricreare i file di log
-		#Inoltre bisogna aggiungere /usr/bin/certbot per il comando del rinnovo del certificato
+		#Inoltre bisogna aggiungere /usr/bin/certbot per il comando del rinnovo del certificato (da quando abbiamo il rinnovo automatico
+		#probabilmente non serve piu)
 
 		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill, /usr/bin/certbot" > "/etc/sudoers.d/mms-nginx-commands"
 		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
@@ -1557,14 +1558,34 @@ install-mms-nginx-package()
 		#serve certbot per la configurazione del certificato)
 		apt install -y certbot python3-certbot-nginx
 	
-		echo "creeremo un certificato il cui dominio sarà validato tramite un record TXT che dovremo configurare nel DNS."
+		#METODO MANUALE, NON PIU USATO
+		#echo "creeremo un certificato il cui dominio sarà validato tramite un record TXT che dovremo configurare nel DNS."
+		#echo -n "Scrivi il nome del server (i.e.: srv-1.cibortvlive.com)? "
+		#read servername
+		#echo "Dopo aver fatto la configurazione DNS (https://www.cloudns.net/profile) aspettare qualche minuto che si sia propagato"
+		#echo "Se vuoi verificare che il record sia visibile, il comando è:"
+		#echo "dig TXT _acme-challenge.$servername +short oppure tramite sito https://dnschecker.org"
+		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
+		#certbot certonly --manual --preferred-challenges dns -d $servername
+
+		#METODO AUTOMATICO
 		echo -n "Scrivi il nome del server (i.e.: srv-1.cibortvlive.com)? "
 		read servername
-		echo "Dopo aver fatto la configurazione DNS (https://www.cloudns.net/profile) aspettare qualche minuto che si sia propagato"
-		echo "Se vuoi verificare che il record sia visibile, il comando è:"
-		echo "dig TXT _acme-challenge.$servername +short oppure tramite sito https://dnschecker.org"
-		#Questo è piu semplice che validare il dominio tramite nginx (plugin o site)
-		certbot certonly --manual --preferred-challenges dns -d $servername
+		# Cartella dove certbot scriverà i token di validazione. Infatti certbot chiamerà l'url:
+		# http://us1-blade53-5.cibortvlive.com/.well-known/acme-challenge/<token>
+		chown -R mms:mms /var/www/html
+		#nginx è già partito? Se non funziona scrivere che il comando sotto deve essere eseguito a fine istallazione
+		#Questo comando serve anche ad attivare un scheduled task to automatically renew this certificate in the background
+		#Per vedere il timer attivo:
+		#     sudo systemctl list-timers | grep certbot
+		#  dovresti vedere qualcosa tipo: Sun 2025-10-26 08:00:00 UTC  ...  certbot.timer  certbot.service
+		#Puoi anche controllare lo stato con:
+		# 		sudo systemctl status certbot.timer
+		certbot certonly --webroot -w /var/www/html -d $servername
+		#Il comando sotto server a dire a certbot di ricaricare la conf di nginx una volta che il certificato viene rinnovato
+		#in modo che nginx usi il nuovo certificato
+		echo "deploy-hook = sudo -u mms /home/mms/nginx.sh reload sudo" >> /etc/letsencrypt/cli.ini
+		
 		#per avere la lista dei certificati
 		#certbot certificates
 		#per rimuovere un certificato (verrà mostrata la lista dei certificati e devi selezionarne uno)
@@ -1738,6 +1759,7 @@ firewall-rules()
 		#dovremmo aggiungere la relativa sezione su catramms.nginx che dovrebbe redirigere o autorizzare la richiesta
 		#ufw allow 80 		#HTTP Per ora commentato perchè le richieste saranno su https
 		ufw allow 443 	#HTTPS/SSL
+		ufw allow 80 	#HTTP per permettere a certbot di aggiornare il certificato
 	elif [ "$moduleType" == "api-and-delivery" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
