@@ -17,7 +17,7 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
-Validator::Validator(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
+Validator::Validator(const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const json& configuration)
 {
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 
@@ -31,9 +31,9 @@ Validator::Validator(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json confi
 
 Validator::Validator(const Validator &orig) {}
 
-Validator::~Validator() {}
+Validator::~Validator() = default;
 
-void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
+void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& root)
 {
 	string field = "type";
 	if (!JSONUtils::isMetadataPresent(root, field))
@@ -74,7 +74,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 
 		throw runtime_error(errorMessage);
 	}
-	json taskRoot = root[field];
+	const json& taskRoot = root[field];
 
 	field = "type";
 	if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -107,7 +107,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, json root)
 	}
 }
 
-void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfTasksRoot, bool validateDependenciesToo)
+void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& groupOfTasksRoot, bool validateDependenciesToo)
 {
 	string field = "parameters";
 	if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
@@ -158,7 +158,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfT
 
 	for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
 	{
-		json taskRoot = tasksRoot[taskIndex];
+		const json& taskRoot = tasksRoot[taskIndex];
 
 		field = "type";
 		if (!JSONUtils::isMetadataPresent(taskRoot, field))
@@ -190,7 +190,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json groupOfT
 	validateEvents(workspaceKey, groupOfTasksRoot, validateDependenciesToo);
 }
 
-void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json parametersRoot)
+void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& parametersRoot)
 {
 	string field = "executionType";
 	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -218,7 +218,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, json paramete
 	}
 }
 
-void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot, bool validateDependenciesToo)
+void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTasksRoot, bool validateDependenciesToo)
 {
 	string field = "onSuccess";
 	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
@@ -369,7 +369,7 @@ void Validator::validateEvents(int64_t workspaceKey, json taskOrGroupOfTasksRoot
 }
 
 vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
-Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool validateDependenciesToo)
+Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot, bool validateDependenciesToo)
 {
 	MMSEngineDBFacade::IngestionType ingestionType;
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies;
@@ -415,7 +415,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateAddContentMetadata(label, parametersRoot);
 	}
 	else if (type == "Add-Silent-Audio")
@@ -438,7 +438,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateAddSilentAudioMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Remove-Content")
@@ -461,7 +461,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateRemoveContentMetadata(workspaceKey, label, parametersRoot, dependencies);
 	}
 	else if (type == "Encode")
@@ -484,7 +484,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateEncodeMetadata(workspaceKey, label, parametersRoot, dependencies);
 	}
 	else if (type == "Frame")
@@ -507,7 +507,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateFrameMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Periodical-Frames")
@@ -530,7 +530,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Motion-JPEG-by-Periodical-Frames")
@@ -553,7 +553,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "I-Frames")
@@ -576,7 +576,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Motion-JPEG-by-I-Frames")
@@ -599,7 +599,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Slideshow")
@@ -622,7 +622,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateSlideshowMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Concat-Demuxer")
@@ -645,7 +645,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Cut")
@@ -668,7 +668,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Overlay-Image-On-Video")
@@ -691,7 +691,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Overlay-Text-On-Video")
@@ -714,7 +714,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Email-Notification")
@@ -737,7 +737,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateEmailNotificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Check-Streaming")
@@ -760,7 +760,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateCheckStreamingMetadata(workspaceKey, label, parametersRoot);
 	}
 	else if (type == "Media-Cross-Reference")
@@ -783,7 +783,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "FTP-Delivery")
@@ -806,7 +806,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "HTTP-Callback")
@@ -829,7 +829,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Local-Copy")
@@ -852,7 +852,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateLocalCopyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Extract-Tracks")
@@ -875,7 +875,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateExtractTracksMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Post-On-Facebook")
@@ -898,7 +898,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Post-On-YouTube")
@@ -921,7 +921,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Face-Recognition")
@@ -944,7 +944,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Face-Identification")
@@ -967,7 +967,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Live-Recorder")
@@ -990,7 +990,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Change-File-Format")
@@ -1013,7 +1013,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Video-Speed")
@@ -1036,7 +1036,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Picture-In-Picture")
@@ -1059,7 +1059,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Intro-Outro-Overlay")
@@ -1082,7 +1082,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateIntroOutroOverlayMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Live-Proxy")
@@ -1105,7 +1105,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "YouTube-Live-Broadcast")
@@ -1128,7 +1128,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Facebook-Live-Broadcast")
@@ -1151,7 +1151,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateFacebookLiveBroadcastMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "VOD-Proxy")
@@ -1174,7 +1174,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateVODProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Countdown")
@@ -1197,7 +1197,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateCountdownMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Live-Grid")
@@ -1220,7 +1220,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateLiveGridMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Live-Cut")
@@ -1243,7 +1243,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateLiveCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Workflow-As-Library")
@@ -1266,7 +1266,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 			throw runtime_error(errorMessage);
 		}
 
-		json parametersRoot = taskRoot[field];
+		const json& parametersRoot = taskRoot[field];
 		validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else
@@ -1283,7 +1283,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, json taskRoot, bool 
 }
 
 vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
-Validator::validateSingleTaskMetadata(int64_t workspaceKey, MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot)
+Validator::validateSingleTaskMetadata(int64_t workspaceKey, const MMSEngineDBFacade::IngestionType ingestionType, const json& parametersRoot)
 {
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies;
 
@@ -1449,7 +1449,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, MMSEngineDBFacade::I
 	return dependencies;
 }
 
-void Validator::validateAddContentMetadata(string label, json parametersRoot)
+void Validator::validateAddContentMetadata(const string& label, const json& parametersRoot)
 {
 	vector<string> mandatoryFields = {// "sourceURL",     it is optional in case of push
 									  "fileFormat"
@@ -1510,7 +1510,7 @@ void Validator::validateAddContentMetadata(string label, json parametersRoot)
 	field = "crossReference";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		json crossReferenceRoot = parametersRoot[field];
+		const json& crossReferenceRoot = parametersRoot[field];
 
 		// in AddContent MediaItemKey has to be present
 		bool mediaItemKeyMandatory = true;
@@ -1528,7 +1528,7 @@ void Validator::validateAddContentMetadata(string label, json parametersRoot)
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 
@@ -1551,7 +1551,7 @@ void Validator::validateAddContentMetadata(string label, json parametersRoot)
 }
 
 void Validator::validateAddSilentAudioMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -1630,13 +1630,13 @@ void Validator::validateAddSilentAudioMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateRemoveContentMetadata(
-	int64_t workspaceKey, string label, json parametersRoot,
+	int64_t workspaceKey, const string& label, const json& parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -1684,13 +1684,13 @@ void Validator::validateRemoveContentMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateEncodeMetadata(
-	int64_t workspaceKey, string label, json parametersRoot,
+	int64_t workspaceKey, const string& label, const json& parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -1777,13 +1777,13 @@ void Validator::validateEncodeMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateFrameMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -1858,13 +1858,13 @@ void Validator::validateFrameMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validatePeriodicalFramesMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -1957,13 +1957,13 @@ void Validator::validatePeriodicalFramesMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateIFramesMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2036,13 +2036,13 @@ void Validator::validateIFramesMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateSlideshowMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2129,13 +2129,13 @@ void Validator::validateSlideshowMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateConcatDemuxerMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2242,13 +2242,13 @@ void Validator::validateConcatDemuxerMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateCutMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2391,13 +2391,13 @@ void Validator::validateCutMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateOverlayImageOnVideoMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2407,7 +2407,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 	string field = "references";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		json referencesRoot = parametersRoot[field];
+		// json referencesRoot = parametersRoot[field];
 		// before the check was
 		//	if (referencesRoot.size() != 2)
 		// This was changed to > 2 because it could be used
@@ -2490,13 +2490,13 @@ void Validator::validateOverlayImageOnVideoMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateOverlayTextOnVideoMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2523,29 +2523,39 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	}
 
 	{
-		json drawTextDetailsRoot = parametersRoot["drawTextDetails"];
+		const json& drawTextDetailsRoot = parametersRoot["drawTextDetails"];
 
-		vector<string> mandatoryFields = {"text"};
-		for (string mandatoryField : mandatoryFields)
+		if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, "text")
+			&& !JSONUtils::isMetadataPresent(drawTextDetailsRoot, "timecode"))
 		{
-			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
-			{
-				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
+			string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
 
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", Field: {}"
-					", sParametersRoot: {}"
-					", label: {}",
-					mandatoryField, sParametersRoot, label
-				);
+			string errorMessage = std::format(
+				"text or timecode has to be present"
+				", sParametersRoot: {}"
+				", label: {}",
+				sParametersRoot, label
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string field = "timecode";
+		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		{
+			string timecode = JSONUtils::asString(drawTextDetailsRoot, field, "");
+
+			if (!isTimecodeValid(timecode))
+			{
+				string errorMessage = string("Unknown timecode") + ", timecode: " + timecode + ", label: " + label;
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		string field = "fontType";
+		field = "fontType";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
 			string fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
@@ -2708,13 +2718,13 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateEmailNotificationMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -2830,12 +2840,12 @@ void Validator::validateEmailNotificationMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
-void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string label, json parametersRoot)
+void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const string& label, const json& parametersRoot)
 {
 	// see sample in directory samples
 
@@ -2927,13 +2937,13 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, string labe
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateMediaCrossReferenceMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3004,13 +3014,13 @@ void Validator::validateMediaCrossReferenceMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateFTPDeliveryMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3084,13 +3094,13 @@ void Validator::validateFTPDeliveryMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateHTTPCallbackMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3212,13 +3222,13 @@ void Validator::validateHTTPCallbackMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateLocalCopyMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3303,13 +3313,13 @@ void Validator::validateLocalCopyMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateExtractTracksMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3334,8 +3344,8 @@ void Validator::validateExtractTracksMetadata(
 	}
 
 	string field = "Tracks";
-	json tracksRoot = parametersRoot[field];
-	if (tracksRoot.size() == 0)
+	const json& tracksRoot = parametersRoot[field];
+	if (tracksRoot.empty())
 	{
 		string errorMessage =
 			__FILEREF__ + "No correct number of Tracks" + ", tracksRoot.size: " + to_string(tracksRoot.size()) + ", label: " + label;
@@ -3343,10 +3353,8 @@ void Validator::validateExtractTracksMetadata(
 
 		throw runtime_error(errorMessage);
 	}
-	for (int trackIndex = 0; trackIndex < tracksRoot.size(); trackIndex++)
+	for (const auto& trackRoot : tracksRoot)
 	{
-		json trackRoot = tracksRoot[trackIndex];
-
 		field = "TrackType";
 		if (!JSONUtils::isMetadataPresent(trackRoot, field))
 		{
@@ -3453,13 +3461,13 @@ void Validator::validateExtractTracksMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validatePostOnFacebookMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3567,13 +3575,13 @@ void Validator::validatePostOnFacebookMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validatePostOnYouTubeMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3680,13 +3688,13 @@ void Validator::validatePostOnYouTubeMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateFaceRecognitionMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3813,13 +3821,13 @@ void Validator::validateFaceRecognitionMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateFaceIdentificationMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -3943,13 +3951,13 @@ void Validator::validateFaceIdentificationMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateLiveRecorderMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -4002,7 +4010,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 
 	field = "schedule";
-	json recordingPeriodRoot = parametersRoot[field];
+	const json& recordingPeriodRoot = parametersRoot[field];
 	field = "start";
 	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
 	{
@@ -4098,13 +4106,13 @@ void Validator::validateLiveRecorderMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateLiveProxyMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -4152,7 +4160,7 @@ void Validator::validateLiveProxyMetadata(
 	}
 	else
 	{
-		json proxyPeriodRoot = parametersRoot[field];
+		const json& proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4206,7 +4214,7 @@ void Validator::validateLiveProxyMetadata(
 	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
 
-	if (outputsRoot.size() == 0)
+	if (outputsRoot.empty())
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4222,12 +4230,8 @@ void Validator::validateLiveProxyMetadata(
 		throw runtime_error(errorMessage);
 	}
 
-	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-	{
-		json outputRoot = outputsRoot[outputIndex];
-
+	for (const auto& outputRoot : outputsRoot)
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
-	}
 
 	field = "processingStartingFrom";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -4240,13 +4244,13 @@ void Validator::validateLiveProxyMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateYouTubeLiveBroadcastMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -4333,7 +4337,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 			);
 			if (validateDependenciesToo)
 			{
-				if (dependencies.size() == 0)
+				if (dependencies.empty())
 				{
 					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast" +
 										  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
@@ -4387,7 +4391,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 	}
 
 	{
-		json proxyPeriodRoot = parametersRoot[field];
+		const json& proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4430,13 +4434,13 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateFacebookLiveBroadcastMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -4618,7 +4622,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	}
 
 	{
-		json proxyPeriodRoot = parametersRoot[field];
+		const json& proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4666,13 +4670,13 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateVODProxyMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -4695,7 +4699,7 @@ void Validator::validateVODProxyMetadata(
 			// It is not important the number of References but how many media items it refers.
 			// For example ReferenceIngestionJobKey is just one Reference but it could reference
 			// a log of media items in case the IngestionJob generates a log of media contents
-			if (dependencies.size() < 1)
+			if (dependencies.empty())
 			{
 				string errorMessage = std::format(
 					"Field is present but it does not refer enough elements (1)"
@@ -4745,7 +4749,7 @@ void Validator::validateVODProxyMetadata(
 	}
 	else
 	{
-		json proxyPeriodRoot = parametersRoot[field];
+		const json& proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -4804,7 +4808,7 @@ void Validator::validateVODProxyMetadata(
 	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
 
-	if (outputsRoot.size() == 0)
+	if (outputsRoot.empty())
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4820,10 +4824,8 @@ void Validator::validateVODProxyMetadata(
 		throw runtime_error(errorMessage);
 	}
 
-	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+	for (const auto& outputRoot : outputsRoot)
 	{
-		json outputRoot = outputsRoot[outputIndex];
-
 		// check that, in case of an Image, the encoding profile is mandatory
 		if (referenceContentType == MMSEngineDBFacade::ContentType::Image)
 		{
@@ -4859,13 +4861,13 @@ void Validator::validateVODProxyMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateCountdownMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -4948,7 +4950,7 @@ void Validator::validateCountdownMetadata(
 		throw runtime_error(errorMessage);
 	}
 	{
-		json proxyPeriodRoot = parametersRoot[field];
+		const json& proxyPeriodRoot = parametersRoot[field];
 
 		time_t utcProxyPeriodStart = -1;
 		time_t utcProxyPeriodEnd = -1;
@@ -5002,7 +5004,7 @@ void Validator::validateCountdownMetadata(
 	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
 
-	if (outputsRoot.size() == 0)
+	if (outputsRoot.empty())
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5018,12 +5020,8 @@ void Validator::validateCountdownMetadata(
 		throw runtime_error(errorMessage);
 	}
 
-	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-	{
-		json outputRoot = outputsRoot[outputIndex];
-
+	for (const auto& outputRoot : outputsRoot)
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
-	}
 
 	field = "processingStartingFrom";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5036,13 +5034,13 @@ void Validator::validateCountdownMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateWorkflowAsLibraryMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5088,13 +5086,13 @@ void Validator::validateWorkflowAsLibraryMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateChangeFileFormatMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5221,13 +5219,13 @@ void Validator::validateChangeFileFormatMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateVideoSpeedMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5360,13 +5358,13 @@ void Validator::validateVideoSpeedMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validatePictureInPictureMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5455,13 +5453,13 @@ void Validator::validatePictureInPictureMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateIntroOutroOverlayMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5613,7 +5611,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 }
 
 void Validator::validateLiveGridMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5639,7 +5637,7 @@ void Validator::validateLiveGridMetadata(
 	}
 
 	string field = "inputConfigurationLabels";
-	json inputConfigurationLabelsRoot = parametersRoot[field];
+	const json& inputConfigurationLabelsRoot = parametersRoot[field];
 	if (inputConfigurationLabelsRoot.size() < 2)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong, it should contains at least 2 configuration labels" + ", Field: " + field +
@@ -5702,7 +5700,7 @@ void Validator::validateLiveGridMetadata(
 	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
 
-	if (outputsRoot.size() == 0)
+	if (outputsRoot.empty())
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5718,12 +5716,8 @@ void Validator::validateLiveGridMetadata(
 		throw runtime_error(errorMessage);
 	}
 
-	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
-	{
-		json outputRoot = outputsRoot[outputIndex];
-
+	for (const auto& outputRoot : outputsRoot)
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, true);
-	}
 
 	field = "processingStartingFrom";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -5736,13 +5730,13 @@ void Validator::validateLiveGridMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::validateLiveCutMetadata(
-	int64_t workspaceKey, string label, json parametersRoot, bool validateDependenciesToo,
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 )
 {
@@ -5801,7 +5795,7 @@ void Validator::validateLiveCutMetadata(
 
 		throw runtime_error(errorMessage);
 	}
-	json cutPeriodRoot = parametersRoot[field];
+	const json& cutPeriodRoot = parametersRoot[field];
 	field = "start";
 	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
 	{
@@ -5865,31 +5859,29 @@ void Validator::validateLiveCutMetadata(
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseUtcStringToUtcInSecs would generate  'sscanf failed')
-		if (processingStartingFrom != "")
+		if (!processingStartingFrom.empty())
 			Datetime::parseUtcStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
 void Validator::fillDependencies(
-	int64_t workspaceKey, string label, json parametersRoot,
+	int64_t workspaceKey, const string& label, const json& parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies,
 	bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey, bool encodingProfileFieldsToBeManaged
-)
+) const
 {
 	string field = "references";
-	json referencesRoot = parametersRoot[field];
+	const json& referencesRoot = parametersRoot[field];
 
-	for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
+	for (auto referenceRoot : referencesRoot)
 	{
-		json referenceRoot = referencesRoot[referenceIndex];
-
 		field = "stopIfReferenceProcessingError";
 		bool stopIfReferenceProcessingError = JSONUtils::asBool(referenceRoot, field, false);
 
 		int64_t referenceMediaItemKey = -1;
 		int64_t referencePhysicalPathKey = -1;
 		int64_t referenceIngestionJobKey = -1;
-		string referenceUniqueName = "";
+		string referenceUniqueName;
 		bool referenceLabel = false;
 
 		field = "mediaItemKey";
@@ -6065,9 +6057,9 @@ void Validator::fillDependencies(
 									label, referencePhysicalPathKey, MMSEngineDBFacade::toString(referenceContentType)
 								);
 
-								dependencies.push_back(make_tuple(
+								dependencies.emplace_back(
 									referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey, stopIfReferenceProcessingError
-								));
+								);
 							}
 							else if (referenceMediaItemKey != -1)
 							{
@@ -6080,9 +6072,9 @@ void Validator::fillDependencies(
 									label, referenceMediaItemKey, MMSEngineDBFacade::toString(referenceContentType)
 								);
 
-								dependencies.push_back(make_tuple(
+								dependencies.emplace_back(
 									referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey, stopIfReferenceProcessingError
-								));
+								);
 							}
 							else // referenceLabel
 								;
@@ -6110,9 +6102,9 @@ void Validator::fillDependencies(
 									label, referenceMediaItemKey, MMSEngineDBFacade::toString(referenceContentType)
 								);
 
-								dependencies.push_back(make_tuple(
+								dependencies.emplace_back(
 									referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey, stopIfReferenceProcessingError
-								));
+								);
 							}
 							else // referenceLabel
 								;
@@ -6120,7 +6112,7 @@ void Validator::fillDependencies(
 					}
 				}
 			}
-			else if (referenceUniqueName != "")
+			else if (!referenceUniqueName.empty())
 			{
 				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType = _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 					workspaceKey, referenceUniqueName, warningIfMissing,
@@ -6254,8 +6246,7 @@ void Validator::fillDependencies(
 					label, referencePhysicalPathKey, MMSEngineDBFacade::toString(referenceContentType)
 				);
 
-				dependencies.push_back(
-					make_tuple(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey, stopIfReferenceProcessingError)
+				dependencies.emplace_back(referencePhysicalPathKey, referenceContentType, DependencyType::PhysicalPathKey, stopIfReferenceProcessingError
 				);
 			}
 			else if (referenceMediaItemKey != -1)
@@ -6268,8 +6259,7 @@ void Validator::fillDependencies(
 					", DependencyType::MediaItemKey",
 					label, referenceMediaItemKey, MMSEngineDBFacade::toString(referenceContentType)
 				);
-				dependencies.push_back(
-					make_tuple(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey, stopIfReferenceProcessingError)
+				dependencies.emplace_back(referenceMediaItemKey, referenceContentType, DependencyType::MediaItemKey, stopIfReferenceProcessingError
 				);
 			}
 			else // referenceLabel
@@ -6286,7 +6276,7 @@ void Validator::fillDependencies(
 	);
 }
 
-void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, vector<pair<int64_t, int64_t>> &referencesOutput)
+void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parametersRoot, vector<pair<int64_t, int64_t>> &referencesOutput) const
 {
 
 	string field = "referencesOutput";
@@ -6304,16 +6294,14 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 
 		return;
 	}
-	json referencesOutputRoot = parametersRoot[field];
+	const json& referencesOutputRoot = parametersRoot[field];
 
-	for (int referenceIndex = 0; referenceIndex < referencesOutputRoot.size(); referenceIndex++)
+	for (const auto& referenceOutputRoot : referencesOutputRoot)
 	{
-		json referenceOutputRoot = referencesOutputRoot[referenceIndex];
-
 		int64_t referenceMediaItemKey = -1;
 		int64_t referencePhysicalPathKey = -1;
 		int64_t referenceIngestionJobKey = -1;
-		string referenceUniqueName = "";
+		string referenceUniqueName;
 
 		field = "mediaItemKey";
 		if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
@@ -6374,7 +6362,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 						true
 					);
 
-					referencesOutput.push_back(make_pair(referenceMediaItemKey, localPhysicalPathKey));
+					referencesOutput.emplace_back(referenceMediaItemKey, localPhysicalPathKey);
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
@@ -6403,7 +6391,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 					tie(localMediaItemKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
 						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
 
-					referencesOutput.push_back(make_pair(localMediaItemKey, referencePhysicalPathKey));
+					referencesOutput.emplace_back(localMediaItemKey, referencePhysicalPathKey);
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
@@ -6427,7 +6415,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 					true
 				);
 
-				if (mediaItemsDetails.size() == 0)
+				if (mediaItemsDetails.empty())
 				{
 					SPDLOG_WARN(
 						"No media items found"
@@ -6444,11 +6432,11 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 					{
 						tie(localMediaItemKey, localPhysicalPathKey, ignore) = mediaItemKeyPhysicalPathKeyAndContentType;
 
-						referencesOutput.push_back(make_pair(localMediaItemKey, localPhysicalPathKey));
+						referencesOutput.emplace_back(localMediaItemKey, localPhysicalPathKey);
 					}
 				}
 			}
-			else if (referenceUniqueName != "")
+			else if (!referenceUniqueName.empty())
 			{
 				try
 				{
@@ -6470,7 +6458,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 						true
 					);
 
-					referencesOutput.push_back(make_pair(localMediaItemKey, localPhysicalPathKey));
+					referencesOutput.emplace_back(localMediaItemKey, localPhysicalPathKey);
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
@@ -6504,7 +6492,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, json parametersRoot, 
 	}
 }
 
-bool Validator::isVideoAudioFileFormat(string fileFormat)
+bool Validator::isVideoAudioFileFormat(const string& fileFormat)
 {
 	// see https://en.wikipedia.org/wiki/Video_file_format
 	vector<string> suffixes = {"webm", "mkv", "flv", "vob", "ogv", "ogg", "avi", "mov",	 "wmv",	  "m3u8-tar.gz", "streaming-to-mp4",
@@ -6514,7 +6502,7 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
 	string lowerCaseFileFormat;
 	lowerCaseFileFormat.resize(fileFormat.size());
 	transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c) { return tolower(c); });
-	for (string suffix : suffixes)
+	for (const string& suffix : suffixes)
 	{
 		if (lowerCaseFileFormat == suffix)
 			return true;
@@ -6523,7 +6511,7 @@ bool Validator::isVideoAudioFileFormat(string fileFormat)
 	return false;
 }
 
-bool Validator::isImageFileFormat(string fileFormat)
+bool Validator::isImageFileFormat(const string& fileFormat)
 {
 	// see https://en.wikipedia.org/wiki/Video_file_format
 	vector<string> suffixes = {"jpg", "jpeg", "tif", "tiff", "bmp", "gif", "png", "tga"};
@@ -6531,7 +6519,7 @@ bool Validator::isImageFileFormat(string fileFormat)
 	string lowerCaseFileFormat;
 	lowerCaseFileFormat.resize(fileFormat.size());
 	transform(fileFormat.begin(), fileFormat.end(), lowerCaseFileFormat.begin(), [](unsigned char c) { return tolower(c); });
-	for (string suffix : suffixes)
+	for (const string& suffix : suffixes)
 	{
 		if (lowerCaseFileFormat == suffix)
 			return true;
@@ -6540,11 +6528,11 @@ bool Validator::isImageFileFormat(string fileFormat)
 	return false;
 }
 
-bool Validator::isCutTypeValid(string cutType)
+bool Validator::isCutTypeValid(const string& cutType)
 {
 	vector<string> validCutTypes = {"KeyFrameSeeking", "FrameAccurateWithEncoding", "FrameAccurateWithoutEncoding", "KeyFrameSeekingInterval"};
 
-	for (string validCutType : validCutTypes)
+	for (const string& validCutType : validCutTypes)
 	{
 		if (cutType == validCutType)
 			return true;
@@ -6553,11 +6541,11 @@ bool Validator::isCutTypeValid(string cutType)
 	return false;
 }
 
-bool Validator::isAddSilentTypeValid(string addType)
+bool Validator::isAddSilentTypeValid(const string& addType)
 {
 	vector<string> validAddTypes = {"entireTrack", "begin", "end"};
 
-	for (string validAddType : validAddTypes)
+	for (const string& validAddType : validAddTypes)
 	{
 		if (addType == validAddType)
 			return true;
@@ -6566,11 +6554,11 @@ bool Validator::isAddSilentTypeValid(string addType)
 	return false;
 }
 
-bool Validator::isFacebookNodeTypeValid(string nodeType)
+bool Validator::isFacebookNodeTypeValid(const string& nodeType)
 {
 	vector<string> validNodeTypes = {"Page", "User", "Event", "Group"};
 
-	for (string validNodeType : validNodeTypes)
+	for (const string& validNodeType : validNodeTypes)
 	{
 		if (validNodeType == nodeType)
 			return true;
@@ -6579,11 +6567,11 @@ bool Validator::isFacebookNodeTypeValid(string nodeType)
 	return false;
 }
 
-bool Validator::isFacebookLiveTypeValid(string liveType)
+bool Validator::isFacebookLiveTypeValid(const string& liveType)
 {
 	vector<string> validLiveTypes = {"LiveNow", "LiveScheduled"};
 
-	for (string validLiveType : validLiveTypes)
+	for (const string& validLiveType : validLiveTypes)
 	{
 		if (validLiveType == liveType)
 			return true;
@@ -6592,11 +6580,11 @@ bool Validator::isFacebookLiveTypeValid(string liveType)
 	return false;
 }
 
-bool Validator::isYouTubeLiveBroadcastSourceTypeValid(string sourceType)
+bool Validator::isYouTubeLiveBroadcastSourceTypeValid(const string& sourceType)
 {
 	vector<string> validSourceTypes = {"Live", "MediaItem"};
 
-	for (string validSourceType : validSourceTypes)
+	for (const string& validSourceType : validSourceTypes)
 	{
 		if (sourceType == validSourceType)
 			return true;
@@ -6605,11 +6593,11 @@ bool Validator::isYouTubeLiveBroadcastSourceTypeValid(string sourceType)
 	return false;
 }
 
-bool Validator::isFacebookLiveBroadcastSourceTypeValid(string sourceType)
+bool Validator::isFacebookLiveBroadcastSourceTypeValid(const string& sourceType)
 {
 	vector<string> validSourceTypes = {"Live", "MediaItem"};
 
-	for (string validSourceType : validSourceTypes)
+	for (const string& validSourceType : validSourceTypes)
 	{
 		if (sourceType == validSourceType)
 			return true;
@@ -6618,11 +6606,11 @@ bool Validator::isFacebookLiveBroadcastSourceTypeValid(string sourceType)
 	return false;
 }
 
-bool Validator::isYouTubePrivacyStatusValid(string privacyStatus)
+bool Validator::isYouTubePrivacyStatusValid(const string& privacyStatus)
 {
 	vector<string> validPrivacyStatuss = {"private", "public", "unlisted"};
 
-	for (string validPrivacyStatus : validPrivacyStatuss)
+	for (const string& validPrivacyStatus : validPrivacyStatuss)
 	{
 		if (privacyStatus == validPrivacyStatus)
 			return true;
@@ -6631,11 +6619,11 @@ bool Validator::isYouTubePrivacyStatusValid(string privacyStatus)
 	return false;
 }
 
-bool Validator::isYouTubeTokenTypeValid(string tokenType)
+bool Validator::isYouTubeTokenTypeValid(const string& tokenType)
 {
 	vector<string> validTokenTypes = {"RefreshToken", "AccessToken"};
 
-	for (string validTokenType : validTokenTypes)
+	for (const string& validTokenType : validTokenTypes)
 	{
 		if (tokenType == validTokenType)
 			return true;
@@ -6644,7 +6632,24 @@ bool Validator::isYouTubeTokenTypeValid(string tokenType)
 	return false;
 }
 
-bool Validator::isFontTypeValid(string fontType)
+bool Validator::isTimecodeValid(const string& timecode)
+{
+	vector<string> validTimecodes = {
+		"none",
+		"editorialTimecode",
+		"ptsTimecode"
+	};
+
+	for (const string& validTimecode : validTimecodes)
+	{
+		if (timecode == validTimecode)
+			return true;
+	}
+
+	return false;
+}
+
+bool Validator::isFontTypeValid(const string& fontType)
 {
 	vector<string> validFontTypes = {
 		"cac_champagne.ttf",
@@ -6664,7 +6669,7 @@ bool Validator::isFontTypeValid(string fontType)
 		"Sofia-Regular.otf"
 	};
 
-	for (string validFontType : validFontTypes)
+	for (const string& validFontType : validFontTypes)
 	{
 		if (fontType == validFontType)
 			return true;
@@ -6673,11 +6678,11 @@ bool Validator::isFontTypeValid(string fontType)
 	return false;
 }
 
-bool Validator::isColorValid(string color)
+bool Validator::isColorValid(const string& color)
 {
 	vector<string> validColors = {"black", "blue", "gray", "green", "orange", "purple", "red", "violet", "white", "yellow"};
 
-	for (string validColor : validColors)
+	for (const string& validColor : validColors)
 	{
 		if (color == validColor)
 			return true;
@@ -6690,13 +6695,13 @@ bool Validator::isColorValid(string color)
 	return false;
 }
 
-bool Validator::isFaceRecognitionCascadeNameValid(string faceRecognitionCascadeName)
+bool Validator::isFaceRecognitionCascadeNameValid(const string& faceRecognitionCascadeName)
 {
 	vector<string> validCascadeNames = {
 		"haarcascade_frontalface_alt", "haarcascade_frontalface_alt2", "haarcascade_frontalface_alt_tree", "haarcascade_frontalface_default"
 	};
 
-	for (string validCascadeName : validCascadeNames)
+	for (const string& validCascadeName : validCascadeNames)
 	{
 		if (faceRecognitionCascadeName == validCascadeName)
 			return true;
@@ -6705,11 +6710,11 @@ bool Validator::isFaceRecognitionCascadeNameValid(string faceRecognitionCascadeN
 	return false;
 }
 
-bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
+bool Validator::isFaceRecognitionOutputValid(const string& faceRecognitionOutput)
 {
 	vector<string> validOutputs = {"VideoWithHighlightedFaces", "ImagesToBeUsedInDeepLearnedModel", "FrameContainingFace"};
 
-	for (string validOutput : validOutputs)
+	for (const string& validOutput : validOutputs)
 	{
 		if (faceRecognitionOutput == validOutput)
 			return true;
@@ -6718,11 +6723,11 @@ bool Validator::isFaceRecognitionOutputValid(string faceRecognitionOutput)
 	return false;
 }
 
-bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
+bool Validator::isLiveRecorderOutputValid(const string& liveRecorderOutputFormat)
 {
 	vector<string> outputFormats = {"ts"};
 
-	for (string outputFormat : outputFormats)
+	for (const string& outputFormat : outputFormats)
 	{
 		if (liveRecorderOutputFormat == outputFormat)
 			return true;
@@ -6731,7 +6736,7 @@ bool Validator::isLiveRecorderOutputValid(string liveRecorderOutputFormat)
 	return false;
 }
 
-bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
+bool Validator::isLiveProxyOutputTypeValid(const string& liveProxyOutputType)
 {
 	vector<string> outputTypes = {
 		"RTMP_Channel", "SRT_Channel", "CDN_AWS", "CDN_CDN77",
@@ -6740,7 +6745,7 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 		// "DASH"
 	};
 
-	for (string outputType : outputTypes)
+	for (const string& outputType : outputTypes)
 	{
 		if (liveProxyOutputType == outputType)
 			return true;
@@ -6749,11 +6754,11 @@ bool Validator::isLiveProxyOutputTypeValid(string liveProxyOutputType)
 	return false;
 }
 
-bool Validator::isLiveGridOutputTypeValid(string liveGridOutputType)
+bool Validator::isLiveGridOutputTypeValid(const string& liveGridOutputType)
 {
 	vector<string> outputTypes = {"SRT", "HLS_Channel"};
 
-	for (string outputType : outputTypes)
+	for (const string& outputType : outputTypes)
 	{
 		if (liveGridOutputType == outputType)
 			return true;
@@ -6762,11 +6767,11 @@ bool Validator::isLiveGridOutputTypeValid(string liveGridOutputType)
 	return false;
 }
 
-bool Validator::isVideoSpeedTypeValid(string speedType)
+bool Validator::isVideoSpeedTypeValid(const string& speedType)
 {
 	vector<string> suffixes = {"SlowDown", "SpeedUp"};
 
-	for (string suffix : suffixes)
+	for (const string& suffix : suffixes)
 	{
 		if (speedType == suffix)
 			return true;
@@ -6775,11 +6780,11 @@ bool Validator::isVideoSpeedTypeValid(string speedType)
 	return false;
 }
 
-bool Validator::isWorkflowAsLibraryTypeValid(string workflowAsLibraryType)
+bool Validator::isWorkflowAsLibraryTypeValid(const string& workflowAsLibraryType)
 {
 	vector<string> types = {"MMS", "User"};
 
-	for (string type : types)
+	for (const string& type : types)
 	{
 		if (workflowAsLibraryType == type)
 			return true;
@@ -6788,7 +6793,7 @@ bool Validator::isWorkflowAsLibraryTypeValid(string workflowAsLibraryType)
 	return false;
 }
 
-void Validator::validateCrossReference(string label, json crossReferenceRoot, bool mediaItemKeyMandatory)
+void Validator::validateCrossReference(const string& label, const json& crossReferenceRoot, bool mediaItemKeyMandatory)
 {
 	if (mediaItemKeyMandatory)
 	{
@@ -6893,7 +6898,7 @@ void Validator::validateCrossReference(string label, json crossReferenceRoot, bo
 	}
 }
 
-void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::ContentType contentType, json encodingProfilesSetRoot)
+void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::ContentType contentType, const json& encodingProfilesSetRoot)
 {
 	vector<string> mandatoryFields = {"label", "Profiles"};
 	for (string mandatoryField : mandatoryFields)
@@ -6930,7 +6935,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::Conte
 	*/
 }
 
-void Validator::validateEncodingProfileRootMetadata(MMSEngineDBFacade::ContentType contentType, json encodingProfileRoot)
+void Validator::validateEncodingProfileRootMetadata(MMSEngineDBFacade::ContentType contentType, const json& encodingProfileRoot)
 {
 	if (contentType == MMSEngineDBFacade::ContentType::Video)
 		validateEncodingProfileRootVideoMetadata(encodingProfileRoot);
@@ -6940,7 +6945,7 @@ void Validator::validateEncodingProfileRootMetadata(MMSEngineDBFacade::ContentTy
 		validateEncodingProfileRootImageMetadata(encodingProfileRoot);
 }
 
-void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoot)
+void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingProfileRoot)
 {
 	{
 		vector<string> mandatoryFields = {"label", "fileFormat", "video", "audio"};
@@ -7005,7 +7010,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 		string field = "bitRates";
 		json videoBitRatesRoot = encodingProfileVideoRoot[field];
 
-		if (videoBitRatesRoot.size() == 0)
+		if (videoBitRatesRoot.empty())
 		{
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7016,10 +7021,8 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 		}
 
 		vector<string> mandatoryFields = {"width", "height", "kBitRate"};
-		for (int bitRateIndex = 0; bitRateIndex < videoBitRatesRoot.size(); bitRateIndex++)
+		for (auto bitRateRoot : videoBitRatesRoot)
 		{
-			json bitRateRoot = videoBitRatesRoot[bitRateIndex];
-
 			for (string mandatoryField : mandatoryFields)
 			{
 				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
@@ -7069,7 +7072,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 		string field = "bitRates";
 		json audioBitRatesRoot = encodingProfileAudioRoot[field];
 
-		if (audioBitRatesRoot.size() == 0)
+		if (audioBitRatesRoot.empty())
 		{
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7080,10 +7083,8 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 		}
 
 		vector<string> mandatoryFields = {"kBitRate"};
-		for (int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
+		for (auto bitRateRoot : audioBitRatesRoot)
 		{
-			json bitRateRoot = audioBitRatesRoot[bitRateIndex];
-
 			for (string mandatoryField : mandatoryFields)
 			{
 				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
@@ -7105,7 +7106,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(json encodingProfileRoo
 	}
 }
 
-void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoot)
+void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingProfileRoot)
 {
 	{
 		vector<string> mandatoryFields = {"label", "fileFormat", "audio"};
@@ -7170,7 +7171,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 		string field = "bitRates";
 		json audioBitRatesRoot = encodingProfileAudioRoot[field];
 
-		if (audioBitRatesRoot.size() == 0)
+		if (audioBitRatesRoot.empty())
 		{
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7181,10 +7182,8 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 		}
 
 		vector<string> mandatoryFields = {"kBitRate"};
-		for (int bitRateIndex = 0; bitRateIndex < audioBitRatesRoot.size(); bitRateIndex++)
+		for (auto bitRateRoot : audioBitRatesRoot)
 		{
-			json bitRateRoot = audioBitRatesRoot[bitRateIndex];
-
 			for (string mandatoryField : mandatoryFields)
 			{
 				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
@@ -7206,7 +7205,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(json encodingProfileRoo
 	}
 }
 
-void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoot)
+void Validator::validateEncodingProfileRootImageMetadata(const json& encodingProfileRoot)
 {
 	{
 		vector<string> mandatoryFields = {"label", "fileFormat", "Image"};
@@ -7244,7 +7243,7 @@ void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoo
 
 	{
 		string field = "Image";
-		json encodingProfileImageRoot = encodingProfileRoot[field];
+		const json& encodingProfileImageRoot = encodingProfileRoot[field];
 
 		vector<string> mandatoryFields = {"width", "height", "aspectRatio", "interlaceType"};
 		for (string mandatoryField : mandatoryFields)
@@ -7267,7 +7266,7 @@ void Validator::validateEncodingProfileRootImageMetadata(json encodingProfileRoo
 	}
 }
 
-void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, json outputRoot, bool encodingMandatory)
+void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& label, const json& outputRoot, bool encodingMandatory)
 {
 
 	string field = "outputType";
@@ -7326,7 +7325,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, string label, j
 
 	if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
 	{
-		json drawTextDetailsRoot = outputRoot["drawTextDetails"];
+		const json& drawTextDetailsRoot = outputRoot["drawTextDetails"];
 
 		vector<string> mandatoryFields = {"text"};
 		for (string mandatoryField : mandatoryFields)
