@@ -228,9 +228,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVOD = false;
 			}
 
-			field = "outputs";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
-				outputsRoot = parametersRoot[field];
+			outputsRoot = JSONUtils::asJson(parametersRoot, "outputs", json::array());
 
 			if (JSONUtils::isMetadataPresent(parametersRoot, "framesToBeDetected"))
 			{
@@ -337,13 +335,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
-		SPDLOG_INFO("AAAAAAA"
-			", monitorHLS: {}"
-			", liveRecorderVirtualVOD: {}"
-			", utcTimeOverlay: {}"
-			", outputsRoot: {}",
-			monitorHLS, liveRecorderVirtualVOD, utcTimeOverlay, JSONUtils::toString(outputsRoot)
-			);
 		// in case we have monitorHLS and/or liveRecorderVirtualVOD,
 		// this will be "translated" in one entry added to the outputsRoot
 		int monitorVirtualVODOutputRootIndex = -1;
@@ -405,14 +396,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 			monitorVirtualVODOutputRootIndex = outputsRoot.size() - 1;
 		}
 
-		SPDLOG_INFO("AAAAAAA 2"
-			", monitorHLS: {}"
-			", liveRecorderVirtualVOD: {}"
-			", utcTimeOverlay: {}"
-			", outputsRoot: {}",
-			monitorHLS, liveRecorderVirtualVOD, utcTimeOverlay, JSONUtils::toString(outputsRoot)
-			);
-
 		if (utcTimeOverlay)
 		{
 			for (auto& outputRoot: outputsRoot)
@@ -420,34 +403,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 				json filtersRoot = JSONUtils::asJson(outputRoot, "filters", json::object());
 				json videoFiltersRoot = JSONUtils::asJson(filtersRoot, "video", json::array());
 
-				json drawTextFilterRoot;
-				drawTextFilterRoot["type"] = "drawtext";
-				{
-					drawTextFilterRoot["timecode"] = "ptsTimecode";
-					drawTextFilterRoot["textPosition_X_InPixel"] = "center";
-					drawTextFilterRoot["textPosition_Y_InPixel"] = "center";
-					drawTextFilterRoot["fontType"] = "OpenSans-ExtraBold.ttf";
-					drawTextFilterRoot["fontSize"] = 48;
-					drawTextFilterRoot["fontColor"] = "orange";
-					drawTextFilterRoot["textPercentageOpacity"] = 100;
-					drawTextFilterRoot["shadowX"] = 0;
-					drawTextFilterRoot["shadowY"] = 0;
-					drawTextFilterRoot["boxEnable"] = false;
-				}
-
-				videoFiltersRoot.push_back(drawTextFilterRoot);
+				videoFiltersRoot.push_back(FFMpegFilters::createTimecodeDrawTextFilter());
 				filtersRoot["video"] = videoFiltersRoot;
 				outputRoot["filters"] = filtersRoot;
 			}
 		}
-
-		SPDLOG_INFO("AAAAAAA 2"
-			", monitorHLS: {}"
-			", liveRecorderVirtualVOD: {}"
-			", utcTimeOverlay: {}"
-			", outputsRoot: {}",
-			monitorHLS, liveRecorderVirtualVOD, utcTimeOverlay, JSONUtils::toString(outputsRoot)
-			);
 
 		if (monitorHLS || liveRecorderVirtualVOD || utcTimeOverlay)
 		{
