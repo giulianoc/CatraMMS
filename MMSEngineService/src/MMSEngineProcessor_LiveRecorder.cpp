@@ -337,6 +337,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 		}
 
+		SPDLOG_INFO("AAAAAAA"
+			", monitorHLS: {}"
+			", liveRecorderVirtualVOD: {}"
+			", utcTimeOverlay: {}"
+			", outputsRoot: {}",
+			monitorHLS, liveRecorderVirtualVOD, utcTimeOverlay, JSONUtils::toString(outputsRoot)
+			);
 		// in case we have monitorHLS and/or liveRecorderVirtualVOD,
 		// this will be "translated" in one entry added to the outputsRoot
 		int monitorVirtualVODOutputRootIndex = -1;
@@ -398,6 +405,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 			monitorVirtualVODOutputRootIndex = outputsRoot.size() - 1;
 		}
 
+		SPDLOG_INFO("AAAAAAA 2"
+			", monitorHLS: {}"
+			", liveRecorderVirtualVOD: {}"
+			", utcTimeOverlay: {}"
+			", outputsRoot: {}",
+			monitorHLS, liveRecorderVirtualVOD, utcTimeOverlay, JSONUtils::toString(outputsRoot)
+			);
+
 		if (utcTimeOverlay)
 		{
 			for (auto& outputRoot: outputsRoot)
@@ -425,6 +440,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 				outputRoot["filters"] = filtersRoot;
 			}
 		}
+
+		SPDLOG_INFO("AAAAAAA 2"
+			", monitorHLS: {}"
+			", liveRecorderVirtualVOD: {}"
+			", utcTimeOverlay: {}"
+			", outputsRoot: {}",
+			monitorHLS, liveRecorderVirtualVOD, utcTimeOverlay, JSONUtils::toString(outputsRoot)
+			);
 
 		if (monitorHLS || liveRecorderVirtualVOD || utcTimeOverlay)
 		{
