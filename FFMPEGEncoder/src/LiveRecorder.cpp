@@ -247,7 +247,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			);
 			tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
 
-			if (tvMulticastIP == "")
+			if (tvMulticastIP.empty())
 			{
 				*_tvChannelPort_CurrentOffset = getFreeTvChannelPortOffset(_tvChannelsPortsMutex, *_tvChannelPort_CurrentOffset);
 
@@ -348,10 +348,8 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 		// _liveRecording->_liveRecorderOutputRoots.clear();
 		{
-			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+			for (const auto& outputRoot : outputsRoot)
 			{
-				json outputRoot = outputsRoot[outputIndex];
-
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 

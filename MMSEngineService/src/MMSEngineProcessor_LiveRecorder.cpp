@@ -1,13 +1,14 @@
 
 #include "Datetime.h"
+#include "FFMpegFilters.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "StringUtils.h"
 
 void MMSEngineProcessor::manageLiveRecorder(
-	int64_t ingestionJobKey, string ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace,
-	json parametersRoot
+	int64_t ingestionJobKey, const string& ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
+	const shared_ptr<Workspace>& workspace, json parametersRoot
 )
 {
 	try
@@ -26,7 +27,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 		string encodersPoolLabel;
 		string pullUrl;
 		int64_t pushEncoderKey = -1;
-		bool pushPublicEncoderName = false;
 		int pushListenTimeout = -1;
 		int captureVideoDeviceNumber = -1;
 		string captureVideoInputFormat;
@@ -37,28 +37,23 @@ void MMSEngineProcessor::manageLiveRecorder(
 		int captureChannelsNumber = -1;
 		int64_t tvSourceTVConfKey = -1;
 
-		int64_t recordingCode;
-
 		string recordingPeriodStart;
 		string recordingPeriodEnd;
-		bool autoRenew;
-		string outputFileFormat;
 
 		bool liveRecorderVirtualVOD = false;
 		string virtualVODHlsChannelConfigurationLabel;
-		int liveRecorderVirtualVODMaxDurationInMinutes = 30;
 		int64_t virtualVODEncodingProfileKey = -1;
-		// int virtualVODSegmentDurationInSeconds = 10;
+
+		bool utcTimeOverlay;
 
 		bool monitorHLS = false;
 		string monitorHlsChannelConfigurationLabel;
-		// int monitorPlaylistEntriesNumber = 0;
-		// int monitorSegmentDurationInSeconds = 0;
 		int64_t monitorEncodingProfileKey = -1;
 
 		json outputsRoot = nullptr;
 		json framesToBeDetectedRoot = nullptr;
 		{
+			bool pushPublicEncoderName = false;
 			{
 				field = "configurationLabel";
 				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -77,7 +72,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 						captureChannelsNumber, tvSourceTVConfKey) = _mmsEngineDBFacade->stream_aLot(workspace->_workspaceKey, configurationLabel);
 
 					// default is IP_PULL
-					if (streamSourceType == "")
+					if (streamSourceType.empty())
 						streamSourceType = "IP_PULL";
 				}
 			}
@@ -85,6 +80,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 			// EncodersPool override the one included in ChannelConf if present
 			field = "encodersPool";
 			encodersPoolLabel = JSONUtils::asString(parametersRoot, field, encodersPoolLabel);
+
+			utcTimeOverlay = JSONUtils::asBool(parametersRoot, "utcTimeOverlay", false);
 
 			// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
 			// l'encodersPool o l'encoderKey in caso di IP_PUSH che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
@@ -113,7 +110,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 
 			field = "schedule";
-			json recordingPeriodRoot = parametersRoot[field];
+			const json& recordingPeriodRoot = parametersRoot[field];
 
 			field = "start";
 			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
@@ -137,16 +134,10 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
 
-			field = "autoRenew";
-			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
-
-			field = "outputFileFormat";
-			outputFileFormat = JSONUtils::asString(parametersRoot, field, "ts");
-
 			field = "monitorHLS";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				json monitorHLSRoot = parametersRoot[field];
+				const json& monitorHLSRoot = parametersRoot[field];
 
 				monitorHLS = true;
 
@@ -195,15 +186,12 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "liveRecorderVirtualVOD";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 			{
-				json virtualVODRoot = parametersRoot[field];
+				const json& virtualVODRoot = parametersRoot[field];
 
 				liveRecorderVirtualVOD = true;
 
 				field = "hlsChannelConfigurationLabel";
 				virtualVODHlsChannelConfigurationLabel = JSONUtils::asString(virtualVODRoot, field, "");
-
-				field = "maxDuration";
-				liveRecorderVirtualVODMaxDurationInMinutes = JSONUtils::asInt(virtualVODRoot, field, 30);
 
 				// field = "segmentDurationInSeconds";
 				// virtualVODSegmentDurationInSeconds =
@@ -218,7 +206,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				{
 					string encodingProfileLabel = JSONUtils::asString(virtualVODRoot, labelField, "");
 
-					MMSEngineDBFacade::ContentType contentType;
+					MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
 					if (JSONUtils::isMetadataPresent(virtualVODRoot, contentTypeField))
 					{
 						contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(virtualVODRoot, contentTypeField, ""));
@@ -240,22 +228,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVOD = false;
 			}
 
-			field = "recordingCode";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
-			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			recordingCode = JSONUtils::asInt64(parametersRoot, field, 0);
-
 			field = "outputs";
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
-			else if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs"))
-				outputsRoot = parametersRoot["Outputs"];
 
 			if (JSONUtils::isMetadataPresent(parametersRoot, "framesToBeDetected"))
 			{
@@ -369,7 +344,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		{
 			string monitorVirtualVODHlsChannelConfigurationLabel;
 			{
-				if (virtualVODHlsChannelConfigurationLabel != "")
+				if (!virtualVODHlsChannelConfigurationLabel.empty())
 					monitorVirtualVODHlsChannelConfigurationLabel = virtualVODHlsChannelConfigurationLabel;
 				else
 					monitorVirtualVODHlsChannelConfigurationLabel = monitorHlsChannelConfigurationLabel;
@@ -406,21 +381,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			field = "hlsChannelConfigurationLabel";
 			localOutputRoot[field] = monitorVirtualVODHlsChannelConfigurationLabel;
 
-			// next fields will be initialized in EncoderVideoAudioProxy.cpp
-			// when we will know the HLS Channel Configuration Label
-			/*
-			field = "otherOutputOptions";
-			localOutputRoot[field] = otherOutputOptions;
-
-			field = "manifestDirectoryPath";
-			localOutputRoot[field] = monitorManifestDirectoryPath;
-
-			field = "manifestFileName";
-			localOutputRoot[field] = monitorManifestFileName;
-			*/
-
-			field = "filters";
-			localOutputRoot[field] = nullptr;
+			localOutputRoot["filters"] = nullptr;
 
 			{
 				field = "encodingProfileKey";
@@ -440,6 +401,35 @@ void MMSEngineProcessor::manageLiveRecorder(
 			parametersRoot[field] = outputsRoot;
 
 			_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
+		}
+
+		if (utcTimeOverlay)
+		{
+			for (auto& outputRoot: outputsRoot)
+			{
+				json filtersRoot = JSONUtils::asJson(outputRoot, "filters", json::object());
+				json videoFiltersRoot = JSONUtils::asJson(filtersRoot, "video", json::array());
+
+				json drawTextFilterRoot;
+				drawTextFilterRoot["type"] = "drawtext";
+				{
+					drawTextFilterRoot["timecode"] = "ptsTimecode";
+					drawTextFilterRoot["textPosition_X_InPixel"] = "center";
+					drawTextFilterRoot["textPosition_Y_InPixel"] = "center";
+					drawTextFilterRoot["fontType"] = "OpenSans-ExtraBold.ttf";
+					drawTextFilterRoot["fontSize"] = 48;
+					drawTextFilterRoot["fontColor"] = "orange";
+					drawTextFilterRoot["textPercentageOpacity"] = 100;
+					drawTextFilterRoot["shadowX"] = 0;
+					drawTextFilterRoot["shadowY"] = 0;
+					drawTextFilterRoot["boxEnable"] = false;
+				}
+
+				videoFiltersRoot.push_back(drawTextFilterRoot);
+				filtersRoot["video"] = videoFiltersRoot;
+				outputRoot["filters"] = filtersRoot;
+			}
+			parametersRoot["outputs"] = outputsRoot;
 		}
 
 		json localOutputsRoot = getReviewedOutputsRoot(outputsRoot, workspace, ingestionJobKey, false);
@@ -495,7 +485,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					// encodedFileName is not ""
 				removeLinuxPathIfExist
 			);
-			size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
+			size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of('/');
 			if (directoryEndIndex == string::npos)
 			{
 				string errorMessage = string() + "No directory found in the staging asset path name" +
@@ -574,7 +564,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		}
 
 		int64_t liveRecorderVirtualVODImageMediaItemKey = -1;
-		if (liveRecorderVirtualVOD && _liveRecorderVirtualVODImageLabel != "")
+		if (liveRecorderVirtualVOD && !_liveRecorderVirtualVODImageLabel.empty())
 		{
 			try
 			{
@@ -586,7 +576,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				);
 				tie(liveRecorderVirtualVODImageMediaItemKey, ignore) = mediaItemDetails;
 			}
-			catch (MediaItemKeyNotFound e)
+			catch (MediaItemKeyNotFound& e)
 			{
 				_logger->warn(
 					string() + "No associated VirtualVODImage to the Workspace" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -595,7 +585,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				liveRecorderVirtualVODImageMediaItemKey = -1;
 			}
-			catch (exception e)
+			catch (exception& e)
 			{
 				SPDLOG_ERROR(
 					string() +

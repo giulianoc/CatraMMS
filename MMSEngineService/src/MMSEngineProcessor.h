@@ -232,8 +232,8 @@ class MMSEngineProcessor
 	);
 
 	void manageLiveRecorder(
-		int64_t ingestionJobKey, string ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace,
-		json parametersRoot
+		int64_t ingestionJobKey, const string &ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
+		const shared_ptr<Workspace> &workspace, json parametersRoot
 	);
 
 	void manageLiveProxy(
