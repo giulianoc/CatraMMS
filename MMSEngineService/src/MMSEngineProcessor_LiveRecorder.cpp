@@ -396,11 +396,6 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			outputsRoot.push_back(localOutputRoot);
 			monitorVirtualVODOutputRootIndex = outputsRoot.size() - 1;
-
-			field = "outputs";
-			parametersRoot[field] = outputsRoot;
-
-			_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
 		}
 
 		if (utcTimeOverlay)
@@ -429,7 +424,13 @@ void MMSEngineProcessor::manageLiveRecorder(
 				filtersRoot["video"] = videoFiltersRoot;
 				outputRoot["filters"] = filtersRoot;
 			}
+		}
+
+		if (monitorHLS || liveRecorderVirtualVOD || utcTimeOverlay)
+		{
+			// in questo scenario outputs è cambiato, per cui aggiorniamo il DB
 			parametersRoot["outputs"] = outputsRoot;
+			_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
 		}
 
 		json localOutputsRoot = getReviewedOutputsRoot(outputsRoot, workspace, ingestionJobKey, false);
@@ -450,7 +451,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					// encodedFileName is not ""
 				removeLinuxPathIfExist
 			);
-			size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of("/");
+			size_t directoryEndIndex = stagingLiveRecordingAssetPathName.find_last_of('/');
 			if (directoryEndIndex == string::npos)
 			{
 				string errorMessage = string() + "No directory found in the staging asset path name" +
