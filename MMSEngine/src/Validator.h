@@ -142,7 +142,7 @@ class Validator final
 	void validateOverlayTextOnVideoMetadata(
 		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
 		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-	);
+	) const;
 
 	void validateEmailNotificationMetadata(
 		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,

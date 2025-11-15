@@ -2498,7 +2498,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 void Validator::validateOverlayTextOnVideoMetadata(
 	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-)
+) const
 {
 	// see sample in directory samples
 
@@ -2525,20 +2525,24 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	{
 		const json& drawTextDetailsRoot = parametersRoot["drawTextDetails"];
 
-		if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, "text")
-			&& !JSONUtils::isMetadataPresent(drawTextDetailsRoot, "timecode"))
+		vector<string> mandatoryFields = {"text"};
+		for (string mandatoryField : mandatoryFields)
 		{
-			string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
+			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
+			{
+				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
 
-			string errorMessage = std::format(
-				"text or timecode has to be present"
-				", sParametersRoot: {}"
-				", label: {}",
-				sParametersRoot, label
-			);
-			SPDLOG_ERROR(errorMessage);
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}"
+					", sParametersRoot: {}"
+					", label: {}",
+					mandatoryField, sParametersRoot, label
+				);
+				SPDLOG_ERROR(errorMessage);
 
-			throw runtime_error(errorMessage);
+				throw runtime_error(errorMessage);
+			}
 		}
 
 		string field = "timecode";
