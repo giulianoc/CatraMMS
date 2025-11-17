@@ -11,6 +11,7 @@
 #include "spdlog/spdlog.h"
 #include <filesystem>
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 FFMPEGEncoderTask::FFMPEGEncoderTask(
@@ -1406,3 +1407,90 @@ int FFMPEGEncoderTask::progressDownloadCallback(
 	return 0;
 }
 */
+
+
+
+void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
+{
+	// è possibile accedere a: _encodingJobKey, _encoding->_lastErrorMessage, _killedByUser,
+	// _encoding->_killToRestartByEngine, _urlForbidden, _urlNotFound
+
+	SPDLOG_INFO("AAAAAAA, ffmpegLine: {}", ffmpegLine);
+
+	const string line(ffmpegLine);
+
+	// progress
+	{
+		// Regex per parsing progress
+		static const regex progressRe{
+			R"(frame=\s*(\d+).+?fps=\s*([\d\.]+).+?q=\s*([\d\.\-]+).+?size=\s*(\d+)kB.+?time=\s*([0-9:\.]+).+?bitrate=\s*([\d\.]+)kbits/s.+?speed=\s*([\d\.]+)x)",
+			std::regex::icase
+		};
+
+		std::smatch m;
+		if (!std::regex_search(line, m, progressRe))
+			return;
+
+		_encoding->_progress.frame  = std::stoi(m[1]);
+		_encoding->_progress.fps    = std::stod(m[2]);
+		_encoding->_progress.q      = std::stod(m[3]);
+		_encoding->_progress.sizeKB = std::stoul(m[4]);
+
+		const std::string timestamp = m[5];
+		// NEW: converte "HH:MM:SS.xxx" → milliseconds
+		{
+			int h, m;
+			double sec;
+
+			sscanf(timestamp.c_str(), "%d:%d:%lf", &h, &m, &sec);
+
+			long long totalMs =
+				  h * 3600 * 1000
+				+ m * 60 * 1000
+				+ static_cast<long long>(sec * 1000.0);
+
+			_encoding->_progress.timeMs = std::chrono::milliseconds(totalMs);
+		}
+
+		// bitrate dinamico (FFmpeg)
+		double ffmpegBitrate = std::stod(m[6]);
+		_encoding->_progress.speed = std::stod(m[7]);
+
+		// NEW: calcolo del bitrate reale
+		if (_encoding->_progress.timeMs.count() > 0) {
+			double kb = static_cast<double>(_encoding->_progress.sizeKB);
+			double seconds = _encoding->_progress.timeMs.count() / 1000.0;
+			double realBps = (kb * 8.0) / seconds; // kilobytes -> kilobits
+			double realKbps = realBps * 1000.0;
+
+			// Media ponderata per stabilità:
+			_encoding->_progress.bitrateKbps = (ffmpegBitrate * 0.6) + (realBps * 0.4);
+		} else {
+			_encoding->_progress.bitrateKbps = ffmpegBitrate;
+		}
+	}
+
+	// detect errors
+	/*
+	{
+		// Error patterns
+		static const std::vector<std::pair<std::string, bool>> errorPatterns = {
+			{"Invalid data found", true}, {"Error while decoding", true},
+			{"Connection refused", true}, {"Connection timed out", true},
+			{"Network is unreachable", true}, {"Protocol not found", true},
+			{"No such file", true}, {"Broken pipe", true},
+			{"Unknown encoder", true}, {"Invalid argument", true}
+		};
+
+		for (auto &[pattern, fatal] : errorPatterns) {
+			if (ffmpegLine.find(pattern) != std::string::npos) {
+				onError_({ ffmpegLine, fatal });
+			}
+		}
+
+		// catch-all generico
+		if (std::regex_search(line, std::regex("error", std::regex::icase)))
+			onError_({ line, true });
+	}
+	*/
+}

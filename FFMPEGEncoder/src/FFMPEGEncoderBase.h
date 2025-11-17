@@ -22,22 +22,36 @@
 
 class FFMPEGEncoderBase
 {
-
   public:
 	struct Encoding
 	{
-		bool _available;
+		struct Progress {
+			int frame = 0;
+			double fps = 0;
+			double q = 0;
+			size_t sizeKB = 0;
+
+			std::chrono::milliseconds timeMs{0};
+			double bitrateKbps = 0;
+			double speed = 0;
+
+			bool finished = false;   // NEW: true quando “progress=end”
+		};
+
+		bool _available{};
 		ProcessUtility::ProcessId _childProcessId;
-		int64_t _encodingJobKey;
+		int64_t _encodingJobKey{};
 		shared_ptr<FFMpegWrapper> _ffmpeg;
-		bool _ffmpegTerminatedSuccessful;
-		bool _killToRestartByEngine;
+		bool _ffmpegTerminatedSuccessful{};
+		bool _killToRestartByEngine{};
 
 		mutex _errorMessagesMutex;
 		queue<string> _errorMessages;
 		string _lastErrorMessage;
 
-		void pushErrorMessage(string errorMessage)
+		Progress _progress;
+
+		void pushErrorMessage(const string& errorMessage)
 		{
 			lock_guard<mutex> locker(_errorMessagesMutex);
 			_errorMessages.push(errorMessage);
@@ -63,23 +77,23 @@ class FFMPEGEncoderBase
 	struct LiveProxyAndGrid : public Encoding
 	{
 		string _method;					 // liveProxy, liveGrid or awaitingTheBeginning
-		bool _killedBecauseOfNotWorking; // by monitorThread
+		bool _killedBecauseOfNotWorking{}; // by monitorThread
 
 		// string					_liveGridOutputType;	// only for LiveGrid
 		json _outputsRoot;
 
-		bool _monitoringRealTimeInfoEnabled; // frame/size/time
-		uintmax_t _outputFfmpegFileSize;
-		long _realTimeFrame;
-		long _realTimeSize;
-		long _realTimeFrameRate;
-		double _realTimeBitRate;
-		double _realTimeTimeInMilliSeconds;
+		bool _monitoringRealTimeInfoEnabled{}; // frame/size/time
+		uintmax_t _outputFfmpegFileSize{};
+		long _realTimeFrame{};
+		long _realTimeSize{};
+		long _realTimeFrameRate{};
+		double _realTimeBitRate{};
+		double _realTimeTimeInMilliSeconds{};
 		chrono::system_clock::time_point _realTimeLastChange;
 
-		long _numberOfRestartBecauseOfFailure;
+		long _numberOfRestartBecauseOfFailure{};
 
-		int64_t _ingestionJobKey;
+		int64_t _ingestionJobKey{};
 		json _encodingParametersRoot;
 		json _ingestedParametersRoot;
 
@@ -88,9 +102,9 @@ class FFMPEGEncoderBase
 
 		chrono::system_clock::time_point _proxyStart;
 
-		shared_ptr<LiveProxyAndGrid> cloneForMonitor()
+		[[nodiscard]] shared_ptr<LiveProxyAndGrid> cloneForMonitor() const
 		{
-			shared_ptr<LiveProxyAndGrid> liveProxyAndGrid = make_shared<LiveProxyAndGrid>();
+			auto liveProxyAndGrid = make_shared<LiveProxyAndGrid>();
 
 			liveProxyAndGrid->_available = _available;
 			liveProxyAndGrid->_childProcessId = _childProcessId;
@@ -126,23 +140,23 @@ class FFMPEGEncoderBase
 
 	struct LiveRecording : public Encoding
 	{
-		bool _killedBecauseOfNotWorking; // by monitorThread
+		bool _killedBecauseOfNotWorking{}; // by monitorThread
 
-		bool _monitoringEnabled;
+		bool _monitoringEnabled{};
 
-		bool _monitoringRealTimeInfoEnabled; // frame/size/time
-		uintmax_t _outputFfmpegFileSize;
-		long _realTimeFrame;
-		long _realTimeSize;
-		long _realTimeFrameRate;
-		double _realTimeBitRate;
-		double _realTimeTimeInMilliSeconds;
+		bool _monitoringRealTimeInfoEnabled{}; // frame/size/time
+		uintmax_t _outputFfmpegFileSize{};
+		long _realTimeFrame{};
+		long _realTimeSize{};
+		long _realTimeFrameRate{};
+		double _realTimeBitRate{};
+		double _realTimeTimeInMilliSeconds{};
 		chrono::system_clock::time_point _realTimeLastChange;
 
-		long _numberOfRestartBecauseOfFailure;
+		long _numberOfRestartBecauseOfFailure{};
 
-		int64_t _ingestionJobKey;
-		bool _externalEncoder;
+		int64_t _ingestionJobKey{};
+		bool _externalEncoder{};
 		json _encodingParametersRoot;
 		json _ingestedParametersRoot;
 		string _streamSourceType;
@@ -151,21 +165,21 @@ class FFMPEGEncoderBase
 		string _segmentListFileName;
 		string _recordedFileNamePrefix;
 		string _lastRecordedAssetFileName;
-		double _lastRecordedAssetDurationInSeconds;
-		int64_t _lastRecordedSegmentUtcStartTimeInMillisecs;
+		double _lastRecordedAssetDurationInSeconds{};
+		int64_t _lastRecordedSegmentUtcStartTimeInMillisecs{};
 		string _channelLabel;
 		string _segmenterType;
 		chrono::system_clock::time_point _recordingStart;
 
-		bool _virtualVOD;
+		bool _virtualVOD{};
 		string _monitorVirtualVODManifestDirectoryPath; // used to build virtualVOD
 		string _monitorVirtualVODManifestFileName;		// used to build virtualVOD
 		string _virtualVODStagingContentsPath;
-		int64_t _liveRecorderVirtualVODImageMediaItemKey;
+		int64_t _liveRecorderVirtualVODImageMediaItemKey{};
 
-		shared_ptr<LiveRecording> cloneForMonitorAndVirtualVOD()
+		[[nodiscard]] shared_ptr<LiveRecording> cloneForMonitorAndVirtualVOD() const
 		{
-			shared_ptr<LiveRecording> liveRecording = make_shared<LiveRecording>();
+			auto liveRecording = make_shared<LiveRecording>();
 
 			liveRecording->_available = _available;
 			liveRecording->_childProcessId = _childProcessId;
@@ -222,7 +236,7 @@ class FFMPEGEncoderBase
 	};
 
   public:
-	FFMPEGEncoderBase(json configurationRoot);
+	explicit FFMPEGEncoderBase(json configurationRoot);
 	~FFMPEGEncoderBase();
 
   protected:

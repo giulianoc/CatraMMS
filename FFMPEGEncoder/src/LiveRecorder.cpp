@@ -418,6 +418,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			", liveURL: {}",
 			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_streamSourceType, liveURL
 		);
+		/*
 		_liveRecording->_ffmpeg->liveRecorder2(
 			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_externalEncoder,
 			_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName, _liveRecording->_recordedFileNamePrefix,
@@ -436,6 +437,27 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 			framesToBeDetectedRoot,
 
+			_liveRecording->_childProcessId, &(_liveRecording->_recordingStart), &(_liveRecording->_numberOfRestartBecauseOfFailure)
+		);
+		*/
+		_liveRecording->_ffmpeg->liveRecorder(
+			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_externalEncoder,
+			_liveRecording->_chunksTranscoderStagingContentsPath + _liveRecording->_segmentListFileName, _liveRecording->_recordedFileNamePrefix,
+
+			otherInputOptions,
+
+			_liveRecording->_streamSourceType, StringUtils::trimTabToo(liveURL), pushListenTimeout, captureLive_videoDeviceNumber,
+			captureLive_videoInputFormat, captureLive_frameRate, captureLive_width, captureLive_height, captureLive_audioDeviceNumber,
+			captureLive_channelsNumber,
+
+			utcTimeOverlay, userAgent, utcRecordingPeriodStart, utcRecordingPeriodEnd,
+
+			segmentDurationInSeconds, outputFileFormat, _liveRecording->_segmenterType,
+
+			outputsRoot,
+
+			framesToBeDetectedRoot,
+			[&](const string_view& line) {ffmpegLineCallback(line); },
 			_liveRecording->_childProcessId, &(_liveRecording->_recordingStart), &(_liveRecording->_numberOfRestartBecauseOfFailure)
 		);
 
