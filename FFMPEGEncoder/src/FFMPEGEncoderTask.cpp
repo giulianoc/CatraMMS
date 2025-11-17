@@ -1551,7 +1551,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					break;
 				}
 				default:
-					SPDLOG_ERROR("ffmpegLineCallback, line not managed"
+					SPDLOG_WARN("ffmpegLineCallback, line not managed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
@@ -1573,7 +1573,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			}
 		}
 		else
-			SPDLOG_ERROR("ffmpegLineCallback, line not managed"
+			SPDLOG_WARN("ffmpegLineCallback, line not managed"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
 				", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
