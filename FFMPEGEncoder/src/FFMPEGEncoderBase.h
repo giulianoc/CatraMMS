@@ -3,6 +3,7 @@
 
 #include "ProcessUtility.h"
 #include <cstdint>
+#include <shared_mutex>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
@@ -26,16 +27,33 @@ class FFMPEGEncoderBase
 	struct Encoding
 	{
 		struct Progress {
-			int frame = 0;
-			double fps = 0;
-			double q = 0;
-			size_t sizeKB = 0;
+			inline static const std::vector<string> errorPatterns = {
+				"Invalid data found",
+				"Error while decoding",
+				"Connection refused",
+				"Connection timed out",
+				"Network is unreachable",
+				"Protocol not found",
+				"No such file",
+				"Broken pipe",
+				"Unknown encoder",
+				"Invalid argument"
+			};
 
-			std::chrono::milliseconds timeMs{0};
-			double bitrateKbps = 0;
-			double speed = 0;
+			int32_t frame = 0;
+			double framePerSeconds = 0;
+			chrono::milliseconds outTimeMilliSecs{};
+			double speed{};
+			int32_t dropFrames{};
+			int32_t dupFrames{};
+			double stream_0_0_q{};
+			size_t totalSizeKBps{};
+			double bitRateKbps{};
+			double avgBitRateKbps{};	// calculated by us
 
-			bool finished = false;   // NEW: true quando “progress=end”
+			bool finished{}; // progress=end
+
+			queue<string> _errorMessages;
 		};
 
 		bool _available{};
@@ -49,6 +67,7 @@ class FFMPEGEncoderBase
 		queue<string> _errorMessages;
 		string _lastErrorMessage;
 
+		shared_mutex _progressMutex;
 		Progress _progress;
 
 		void pushErrorMessage(const string& errorMessage)
