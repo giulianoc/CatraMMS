@@ -98,6 +98,11 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 	encodingCompleted->_urlNotFound = _urlNotFound;
 	encodingCompleted->_timestamp = chrono::system_clock::now();
 
+	{
+		shared_lock lock(_encoding->_progressMutex);
+		encodingCompleted->_progress = _encoding->_progress;
+	}
+
 	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
 
 	SPDLOG_INFO(
@@ -1412,170 +1417,211 @@ int FFMPEGEncoderTask::progressDownloadCallback(
 
 void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 {
-	// è possibile accedere a: _encodingJobKey, _encoding->_lastErrorMessage, _killedByUser,
-	// _encoding->_killToRestartByEngine, _urlForbidden, _urlNotFound
+	// gestire _urlForbidden, _urlNotFound
+	// gestire try catch
 
-
-	unique_lock locker(_encoding->_progressMutex);
-
-	// detect errors
-	bool error = false;
-
-	if (ffmpegLine.find("error") != std::string::npos)
+	try
 	{
-		_encoding->_progress._errorMessages.push(std::format("error: {}", ffmpegLine));
-		SPDLOG_ERROR("ffmpegLineCallback, error detected"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
-		error = true;
-	}
-	else
-	{
-		for (auto &pattern : FFMPEGEncoderBase::Encoding::Progress::errorPatterns)
+		unique_lock locker(_encoding->_progressMutex);
+
+		// append su file
+		if (!ffmpegLine.empty())
 		{
-			if (ffmpegLine.find(pattern) != std::string::npos)
+			if (!_encoding->_progress.ffmpegOutputLogFile)
 			{
-				_encoding->_progress._errorMessages.push(std::format("{}: {}", pattern, ffmpegLine));
-				SPDLOG_ERROR("ffmpegLineCallback, {} detected"
-					", ingestionJobKey: {}"
-					", encodingJobKey: {}"
-					", ffmpegLine: {}", pattern, _ingestionJobKey, _encodingJobKey, ffmpegLine);
-				error = true;
-			}
-		}
-	}
-
-	if (!error)
-	{
-		auto pos = ffmpegLine.find('=');
-		if (pos != string_view::npos)
-		{
-			std::string_view key   = StringUtils::trim(ffmpegLine.substr(0, pos));
-			std::string_view value = StringUtils::trim(ffmpegLine.substr(pos + 1));
-			bool realBitRateChanged = false;
-			switch (hash_case(key))
-			{
-				case "frame"_case:
+				string ffmpegOutputLogPathFileName = std::format("{}/{}_{}_{}", _ffmpegTempDir, _encoding->_method, _ingestionJobKey, _encodingJobKey);
+				_encoding->_progress.ffmpegOutputLogFile.open(ffmpegOutputLogPathFileName, ofstream::binary | ofstream::trunc);
+				if (!_encoding->_progress.ffmpegOutputLogFile)
 				{
-					_encoding->_progress.processedFrames = stoi(string(value));
-					break;
-				}
-				case "fps"_case:
-				{
-					_encoding->_progress.framePerSeconds = stod(string(value));
-					break;
-				}
-				case "speed"_case:
-				{
-					if (value.back() == 'x')
-						value.remove_suffix(1);
-					_encoding->_progress.speed = std::stod(string(value));
-					break;
-				}
-				case "drop_frames"_case:
-				{
-					_encoding->_progress.dropFrames = stoi(string(value));
-					break;
-				}
-				case "dup_frames"_case:
-				{
-					_encoding->_progress.dupFrames = stoi(string(value));
-					break;
-				}
-				case "stream_0_0_q"_case:
-				{
-					_encoding->_progress.stream_0_0_q = std::stod(string(value));
-					break;
-				}
-				case "out_time"_case:
-				{
-					// usiamo out_time_ms already in millisecs
-					/*
-					// formato: HH:MM:SS.xxx
-					int h = std::stoi(string(value.substr(0, 2)));
-					int m = std::stoi(string(value.substr(3, 2)));
-					int s = std::stoi(string(value.substr(6, 2)));
-					int ms = std::stoi(string(value.substr(9)));
-					_encoding->_progress.out_time = std::chrono::milliseconds(
-						(static_cast<int64_t>(h) * 3600000LL) +
-						(static_cast<int64_t>(m) * 60000LL) +
-						(static_cast<int64_t>(s) * 1000LL) +
-						ms);
-					*/
-					break;
-				}
-				case "out_time_us"_case: // timestamp dell'output in microsecondi (1.000.000), usiamo out_time_ms in millisecs
-					break;
-				case "out_time_ms"_case:
-				{
-					/*
-					// formato: HH:MM:SS.xxx
-					int h = std::stoi(string(value.substr(0, 2)));
-					int m = std::stoi(string(value.substr(3, 2)));
-					int s = std::stoi(string(value.substr(6, 2)));
-					int ms = std::stoi(string(value.substr(9)));
-					_encoding->_progress.out_time = std::chrono::milliseconds(
-						(static_cast<int64_t>(h) * 3600000LL) +
-						(static_cast<int64_t>(m) * 60000LL) +
-						(static_cast<int64_t>(s) * 1000LL) +
-						ms);
-					*/
-					_encoding->_progress.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
-					realBitRateChanged = true;
-					break;
-				}
-				case "total_size"_case:
-				{
-					if (value != "N/A")
-					{
-						_encoding->_progress.totalSizeKBps = stoul(string(value));
-						realBitRateChanged = true;
-					}
-					break;
-				}
-				case "bitrate"_case:
-				{
-					// value is in kbits/s
-					if (value != "N/A")
-					{
-						_encoding->_progress.bitRateKbps = stod(std::string(value));
-						realBitRateChanged = true;
-					}
-					break;
-				}
-				case "progress"_case:
-				{
-					if (value == "end")
-						_encoding->_progress.finished = true;
-					break;
-				}
-				default:
-					SPDLOG_WARN("ffmpegLineCallback, line not managed"
+					SPDLOG_ERROR(
+						"ffmpegLineCallback, open file failed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
-						", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
-					break;
+						", ffmpegOutputLogPathFileName: {}",
+						_ingestionJobKey, _encodingJobKey, ffmpegOutputLogPathFileName
+					);
+				}
 			}
-
-			// NEW: calcolo del bitrate reale
-			if (realBitRateChanged && _encoding->_progress.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_progress.totalSizeKBps > 0)
-			{
-				double seconds = _encoding->_progress.processedOutputTimestampMilliSecs.count() / 1000.0;
-				double realBps = (_encoding->_progress.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
-				double realKbps = realBps * 1000.0;
-
-				// Media ponderata per stabilità:
-				if (_encoding->_progress.bitRateKbps > 0.0)
-					_encoding->_progress.avgBitRateKbps = (_encoding->_progress.bitRateKbps * 0.6) + (realKbps * 0.4);
-				else
-					_encoding->_progress.avgBitRateKbps = realKbps;
-			}
+			else
+				_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
 		}
 		else
-			SPDLOG_WARN("ffmpegLineCallback, line not managed"
-				", ingestionJobKey: {}"
-				", encodingJobKey: {}"
-				", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+		{
+			// ffmpegLine vuoto indica fine scrittura su file
+			if (_encoding->_progress.ffmpegOutputLogFile)
+				_encoding->_progress.ffmpegOutputLogFile.close();
+		}
+
+		// detect errors
+		bool error = false;
+		{
+			if (ffmpegLine.find("error") != std::string::npos)
+			{
+				_encoding->_progress.pushErrorMessage(std::format("error: {}", ffmpegLine));
+				SPDLOG_ERROR("ffmpegLineCallback, error detected"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+				error = true;
+			}
+			else
+			{
+				for (auto &pattern : FFMPEGEncoderBase::Encoding::Progress::errorPatterns)
+				{
+					if (ffmpegLine.find(pattern) != std::string::npos)
+					{
+						_encoding->_progress.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
+						SPDLOG_ERROR("ffmpegLineCallback, {} detected"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", ffmpegLine: {}", pattern, _ingestionJobKey, _encodingJobKey, ffmpegLine);
+						error = true;
+					}
+				}
+			}
+		}
+
+		if (!error)
+		{
+			auto pos = ffmpegLine.find('=');
+			if (pos != string_view::npos)
+			{
+				std::string_view key   = StringUtils::trim(ffmpegLine.substr(0, pos));
+				std::string_view value = StringUtils::trim(ffmpegLine.substr(pos + 1));
+				bool realBitRateChanged = false;
+				switch (hash_case(key))
+				{
+					case "frame"_case:
+					{
+						_encoding->_progress.processedFrames = stoi(string(value));
+						break;
+					}
+					case "fps"_case:
+					{
+						_encoding->_progress.framePerSeconds = stod(string(value));
+						break;
+					}
+					case "speed"_case:
+					{
+						if (value.back() == 'x')
+							value.remove_suffix(1);
+						_encoding->_progress.speed = std::stod(string(value));
+						break;
+					}
+					case "drop_frames"_case:
+					{
+						_encoding->_progress.dropFrames = stoi(string(value));
+						break;
+					}
+					case "dup_frames"_case:
+					{
+						_encoding->_progress.dupFrames = stoi(string(value));
+						break;
+					}
+					case "stream_0_0_q"_case:
+					{
+						_encoding->_progress.stream_0_0_q = std::stod(string(value));
+						break;
+					}
+					case "out_time"_case:
+					{
+						// usiamo out_time_ms already in millisecs
+						/*
+						// formato: HH:MM:SS.xxx
+						int h = std::stoi(string(value.substr(0, 2)));
+						int m = std::stoi(string(value.substr(3, 2)));
+						int s = std::stoi(string(value.substr(6, 2)));
+						int ms = std::stoi(string(value.substr(9)));
+						_encoding->_progress.out_time = std::chrono::milliseconds(
+							(static_cast<int64_t>(h) * 3600000LL) +
+							(static_cast<int64_t>(m) * 60000LL) +
+							(static_cast<int64_t>(s) * 1000LL) +
+							ms);
+						*/
+						break;
+					}
+					case "out_time_us"_case: // timestamp dell'output in microsecondi (1.000.000), usiamo out_time_ms in millisecs
+						break;
+					case "out_time_ms"_case:
+					{
+						/*
+						// formato: HH:MM:SS.xxx
+						int h = std::stoi(string(value.substr(0, 2)));
+						int m = std::stoi(string(value.substr(3, 2)));
+						int s = std::stoi(string(value.substr(6, 2)));
+						int ms = std::stoi(string(value.substr(9)));
+						_encoding->_progress.out_time = std::chrono::milliseconds(
+							(static_cast<int64_t>(h) * 3600000LL) +
+							(static_cast<int64_t>(m) * 60000LL) +
+							(static_cast<int64_t>(s) * 1000LL) +
+							ms);
+						*/
+						_encoding->_progress.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
+						realBitRateChanged = true;
+						break;
+					}
+					case "total_size"_case:
+					{
+						if (value != "N/A")
+						{
+							_encoding->_progress.totalSizeKBps = stoul(string(value));
+							realBitRateChanged = true;
+						}
+						break;
+					}
+					case "bitrate"_case:
+					{
+						// value is in kbits/s
+						if (value != "N/A")
+						{
+							_encoding->_progress.bitRateKbps = stod(std::string(value));
+							realBitRateChanged = true;
+						}
+						break;
+					}
+					case "progress"_case:
+					{
+						if (value == "end")
+							_encoding->_progress.finished = true;
+						break;
+					}
+					default:
+						SPDLOG_WARN("ffmpegLineCallback, line not managed"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+						break;
+				}
+
+				// NEW: calcolo del bitrate reale
+				if (realBitRateChanged && _encoding->_progress.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_progress.totalSizeKBps > 0)
+				{
+					double seconds = _encoding->_progress.processedOutputTimestampMilliSecs.count() / 1000.0;
+					double realBps = (_encoding->_progress.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
+					double realKbps = realBps * 1000.0;
+
+					// Media ponderata per stabilità:
+					if (_encoding->_progress.bitRateKbps > 0.0)
+						_encoding->_progress.avgBitRateKbps = (_encoding->_progress.bitRateKbps * 0.6) + (realKbps * 0.4);
+					else
+						_encoding->_progress.avgBitRateKbps = realKbps;
+				}
+			}
+			else
+				SPDLOG_WARN("ffmpegLineCallback, line not managed"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+		}
+	}
+	catch (exception& e)
+	{
+		SPDLOG_ERROR(
+			"ffmpegLineCallback, exception"
+			", ingestionJobKey: {}"
+			", encodingJobKey: {}"
+			", exception: {}",
+			_ingestionJobKey, _encodingJobKey, e.what()
+		);
 	}
 }

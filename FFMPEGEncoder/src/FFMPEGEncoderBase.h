@@ -3,6 +3,7 @@
 
 #include "ProcessUtility.h"
 #include <cstdint>
+#include <fstream>
 #include <shared_mutex>
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
@@ -39,9 +40,12 @@ class FFMPEGEncoderBase
 				"Unknown encoder",
 				"Invalid argument"
 			};
+			static constexpr int32_t maxErrorsStored = 50;
 
-			int32_t processedFrames = 0;
-			double framePerSeconds = 0;
+			ofstream ffmpegOutputLogFile;
+
+			int32_t processedFrames{};
+			double framePerSeconds{};
 			chrono::milliseconds processedOutputTimestampMilliSecs{};
 			double speed{}; // Utile per capire se il server sta performando bene
 			int32_t dropFrames{};
@@ -54,8 +58,84 @@ class FFMPEGEncoderBase
 			bool finished{}; // progress=end
 
 			queue<string> _errorMessages;
+
+			Progress() = default;
+			// Copy assignment operator that ignores ffmpegOutputLogFile
+			Progress& operator=(const Progress& other)
+			{
+				if (this == &other)
+					return *this;
+
+				processedFrames = other.processedFrames;
+				framePerSeconds = other.framePerSeconds;
+				processedOutputTimestampMilliSecs = other.processedOutputTimestampMilliSecs;
+				speed = other.speed;
+				dropFrames = other.dropFrames;
+				dupFrames = other.dupFrames;
+				stream_0_0_q = other.stream_0_0_q;
+				totalSizeKBps = other.totalSizeKBps;
+				bitRateKbps = other.bitRateKbps;
+				avgBitRateKbps = other.avgBitRateKbps;
+				finished = other.finished;
+				_errorMessages = other._errorMessages;
+
+				// ffmpegOutputLogFile non viene copiato perchè non è copiabile (La sua copy-constructor è deleted)
+
+				return *this;
+			}
+
+			void pushErrorMessage(const string& errorMessage)
+			{
+				if (_errorMessages.size() >= maxErrorsStored)
+					_errorMessages.pop();
+				_errorMessages.push(errorMessage);
+			}
+
+			void reset()
+			{
+				processedFrames = 0;
+				framePerSeconds = 0.0;
+				processedOutputTimestampMilliSecs = chrono::milliseconds(0);
+				speed = 0.0;
+				dropFrames = 0;
+				dupFrames = 0;
+				stream_0_0_q = 0.0;
+				totalSizeKBps = 0;
+				bitRateKbps = 0.0;
+				avgBitRateKbps = 0.0;
+				finished = false;
+
+				while (!_errorMessages.empty())
+					_errorMessages.pop();
+			}
+
+			json toJson()
+			{
+				json progressRoot;
+				progressRoot["processedFrames"] = processedFrames;
+				progressRoot["framePerSeconds"] = framePerSeconds;
+				progressRoot["processedOutputTimestampMilliSecs"] = processedOutputTimestampMilliSecs.count();
+				progressRoot["speed"] = speed;
+				progressRoot["dropFrames"] = dropFrames;
+				progressRoot["dupFrames"] = dupFrames;
+				progressRoot["stream_0_0_q"] = stream_0_0_q;
+				progressRoot["totalSizeKBps"] = totalSizeKBps;
+				progressRoot["bitRateKbps"] = bitRateKbps;
+				progressRoot["avgBitRateKbps"] = avgBitRateKbps;
+				progressRoot["finished"] = finished;
+
+				json errorMessagesRoot = json::array();
+				auto tmp = _errorMessages;   // copia della queue
+				while (!tmp.empty()) {
+					errorMessagesRoot.push_back(tmp.front());
+					tmp.pop();
+				}
+				progressRoot["errorMessages"] = errorMessagesRoot;
+				return progressRoot;
+			}
 		};
 
+		string _method;
 		bool _available{};
 		ProcessUtility::ProcessId _childProcessId;
 		int64_t _encodingJobKey{};
@@ -69,6 +149,23 @@ class FFMPEGEncoderBase
 
 		shared_mutex _progressMutex;
 		Progress _progress;
+
+		void initEncoding(const int64_t encodingJobKey, const string_view& method)
+		{
+			_available = false;
+			_method = method;
+			_childProcessId.reset(); // not running
+			_killToRestartByEngine = false;
+			_encodingJobKey = encodingJobKey;
+			_ffmpegTerminatedSuccessful = false;
+		}
+
+		void resetEncoding()
+		{
+			_available = true;
+			_childProcessId.reset(); // not running
+			_progress.reset();
+		}
 
 		void pushErrorMessage(const string& errorMessage)
 		{
@@ -95,7 +192,6 @@ class FFMPEGEncoderBase
 
 	struct LiveProxyAndGrid : public Encoding
 	{
-		string _method;					 // liveProxy, liveGrid or awaitingTheBeginning
 		bool _killedBecauseOfNotWorking{}; // by monitorThread
 
 		// string					_liveGridOutputType;	// only for LiveGrid
@@ -252,6 +348,8 @@ class FFMPEGEncoderBase
 		bool _urlForbidden;
 		bool _urlNotFound;
 		chrono::system_clock::time_point _timestamp;
+
+		Encoding::Progress _progress;
 	};
 
   public:

@@ -363,5 +363,5 @@ class FFMPEGEncoder final : public FastCGIAPI
 
 	// void termProcess(shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t encodingJobKey, string label, string message, bool kill);
 
-	void loadConfiguration(json configurationRoot);
+	void loadConfiguration(const json &configurationRoot);
 };

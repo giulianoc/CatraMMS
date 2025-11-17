@@ -597,11 +597,7 @@ void FFMPEGEncoder::requestManagement(
 			// as soon as possible, altrimenti tutti quelli in coda entrano per essere gestiti
 			*_lastEncodingAcceptedTime = chrono::system_clock::now();
 
-			selectedEncoding->_available = false;
-			selectedEncoding->_childProcessId.reset(); // not running
-			selectedEncoding->_killToRestartByEngine = false;
-			selectedEncoding->_encodingJobKey = encodingJobKey;
-			selectedEncoding->_ffmpegTerminatedSuccessful = false;
+			selectedEncoding->initEncoding(encodingJobKey, method);
 
 			SPDLOG_INFO(
 				"Creating {} thread"
@@ -678,8 +674,7 @@ void FFMPEGEncoder::requestManagement(
 			}
 			else
 			{
-				selectedEncoding->_available = true;
-				selectedEncoding->_childProcessId.reset(); // not running
+				selectedEncoding->resetEncoding();
 
 				string errorMessage = std::format(
 					"wrong method"
@@ -695,8 +690,7 @@ void FFMPEGEncoder::requestManagement(
 		}
 		catch (exception &e)
 		{
-			selectedEncoding->_available = true;
-			selectedEncoding->_childProcessId.reset(); // not running
+			selectedEncoding->resetEncoding();
 
 			string errorMessage = std::format(
 				"{} failed"
@@ -833,11 +827,8 @@ void FFMPEGEncoder::liveRecorder(
 				// because segment file is not present).
 				// For this reason, _recordingStart is initialized to make sure monitoring does not perform his checks before recorder is not
 				// really started. _recordingStart will be initialized correctly into the liveRecorderThread method
+				selectedLiveRecording->initEncoding(encodingJobKey, api);
 				selectedLiveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(60);
-				selectedLiveRecording->_available = false;
-				selectedLiveRecording->_childProcessId.reset(); // not running
-				selectedLiveRecording->_killToRestartByEngine = false;
-				selectedLiveRecording->_encodingJobKey = encodingJobKey;
 
 				SPDLOG_INFO(
 					"Creating liveRecorder thread"
@@ -857,8 +848,7 @@ void FFMPEGEncoder::liveRecorder(
 			}
 			catch (exception &e)
 			{
-				selectedLiveRecording->_available = true;
-				selectedLiveRecording->_childProcessId.reset(); // not running
+				selectedLiveRecording->resetEncoding();
 
 				string errorMessage = std::format(
 					"liveRecorder failed"
@@ -1048,11 +1038,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 			}
 			*/
 
-			selectedLiveProxy->_available = false;
-			selectedLiveProxy->_childProcessId.reset(); // not running
-			selectedLiveProxy->_killToRestartByEngine = false;
-			selectedLiveProxy->_encodingJobKey = encodingJobKey;
-			selectedLiveProxy->_method = method;
+			selectedLiveProxy->initEncoding(encodingJobKey, method);
 
 			if (method == "liveProxy")
 			{
@@ -1086,8 +1072,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 		}
 		catch (exception &e)
 		{
-			selectedLiveProxy->_available = true;
-			selectedLiveProxy->_childProcessId.reset(); // not running
+			selectedLiveProxy->resetEncoding();
 
 			string errorMessage = std::format(
 				"liveProxyThread failed"
@@ -1161,7 +1146,7 @@ void FFMPEGEncoder::encodingStatus(
 			chrono::system_clock::time_point endLockTime = chrono::system_clock::now();
 			encodingCompletedMutexDuration = chrono::duration_cast<chrono::seconds>(endLockTime - startLockTime).count();
 
-			map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it = _encodingCompletedMap->find(encodingJobKey);
+			auto it = _encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 			{
 				encodingCompleted = true;
@@ -1173,7 +1158,7 @@ void FFMPEGEncoder::encodingStatus(
 		{
 			// next block is to make the lock free as soon as the check is done
 			{
-				for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding : *_encodingsCapability)
+				for (const shared_ptr<FFMPEGEncoderBase::Encoding>& encoding : *_encodingsCapability)
 				{
 					if (encoding->_encodingJobKey == encodingJobKey)
 					{
@@ -1210,7 +1195,7 @@ void FFMPEGEncoder::encodingStatus(
 					 *structure, WE MAY AVOID THE USING OF THE LOCK
 					 *
 					 */
-					for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
+					for (const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>& liveProxy : *_liveProxiesCapability)
 					{
 						if (liveProxy->_encodingJobKey == encodingJobKey)
 						{
@@ -1224,7 +1209,7 @@ void FFMPEGEncoder::encodingStatus(
 
 				if (!liveProxyFound)
 				{
-					for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording : *_liveRecordingsCapability)
+					for (const shared_ptr<FFMPEGEncoderBase::LiveRecording>& liveRecording : *_liveRecordingsCapability)
 					{
 						if (liveRecording->_encodingJobKey == encodingJobKey)
 						{
@@ -1273,23 +1258,13 @@ void FFMPEGEncoder::encodingStatus(
 			// it should never happen
 			json responseBodyRoot;
 
-			string field = "ingestionJobKey";
-			responseBodyRoot[field] = ingestionJobKey;
-
-			field = "encodingJobKey";
-			responseBodyRoot[field] = encodingJobKey;
-
-			field = "pid";
-			responseBodyRoot[field] = 0;
-
-			field = "killedByUser";
-			responseBodyRoot[field] = false;
-
-			field = "encodingFinished";
-			responseBodyRoot[field] = true;
-
-			field = "encodingProgress";
-			responseBodyRoot[field] = 100.0;
+			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
+			responseBodyRoot["encodingJobKey"] = encodingJobKey;
+			responseBodyRoot["pid"] = 0;
+			responseBodyRoot["killedByUser"] = false;
+			responseBodyRoot["encodingFinished"] = true;
+			responseBodyRoot["encodingProgress"] = 100.0;
+			responseBodyRoot["progress"] = nullptr;
 
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
@@ -1314,6 +1289,7 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
 				responseBodyRoot["encodingFinished"] = true;
 				responseBodyRoot["encodingProgress"] = 100.0;
+				responseBodyRoot["progress"] = selectedEncodingCompleted->_progress.toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1358,29 +1334,16 @@ void FFMPEGEncoder::encodingStatus(
 							", e.what(): {}",
 							ingestionJobKey, encodingJobKey, e.what()
 						);
-
-						// sendError(request, 500,
-						// errorMessage);
-
-						// throw e;
-						// return;
 					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"_ffmpeg->getEncodingProgress failed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", e.what(): {}",
 							ingestionJobKey, encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
-
-						// sendError(request, 500,
-						// errorMessage);
-
-						// throw e;
-						// return;
 					}
 				}
 
@@ -1404,6 +1367,10 @@ void FFMPEGEncoder::encodingStatus(
 				}
 				else
 					responseBodyRoot["encodingProgress"] = encodingProgress;
+				{
+					shared_lock lock(selectedEncoding->_progressMutex);
+					responseBodyRoot["progress"] = selectedEncoding->_progress.toJson();
+				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1426,6 +1393,10 @@ void FFMPEGEncoder::encodingStatus(
 				// 2020-06-11: it's a live, it does not have
 				// sense the encoding progress
 				responseBodyRoot["encodingProgress"] = nullptr;
+				{
+					shared_lock lock(selectedLiveProxy->_progressMutex);
+					responseBodyRoot["progress"] = selectedLiveProxy->_progress.toJson();
+				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1451,6 +1422,10 @@ void FFMPEGEncoder::encodingStatus(
 				//	it is calculated in
 				// EncoderVideoAudioProxy.cpp
 				responseBodyRoot["encodingProgress"] = nullptr;
+				{
+					shared_lock lock(selectedLiveRecording->_progressMutex);
+					responseBodyRoot["progress"] = selectedLiveRecording->_progress.toJson();
+				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1514,7 +1489,7 @@ void FFMPEGEncoder::filterNotification(
 		{
 			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-			map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it = _encodingCompletedMap->find(encodingJobKey);
+			auto it = _encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 				encodingCompleted = true;
 		}
@@ -1705,7 +1680,7 @@ void FFMPEGEncoder::killEncodingJob(
 		shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding;
 
 		{
-			for (shared_ptr<FFMPEGEncoderBase::Encoding> encoding : *_encodingsCapability)
+			for (const shared_ptr<FFMPEGEncoderBase::Encoding>& encoding : *_encodingsCapability)
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 				{
@@ -1720,7 +1695,7 @@ void FFMPEGEncoder::killEncodingJob(
 
 		if (!encodingFound)
 		{
-			for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
+			for (const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>& liveProxy : *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -1735,7 +1710,7 @@ void FFMPEGEncoder::killEncodingJob(
 
 		if (!encodingFound && !liveProxyFound)
 		{
-			for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording : *_liveRecordingsCapability)
+			for (const shared_ptr<FFMPEGEncoderBase::LiveRecording>& liveRecording : *_liveRecordingsCapability)
 			{
 				if (liveRecording->_encodingJobKey == encodingJobKey)
 				{
@@ -1894,7 +1869,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 
 			shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> selectedLiveProxy;
 
-			for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
+			for (const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>& liveProxy : *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -2006,7 +1981,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 
 			shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> selectedLiveProxy;
 
-			for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
+			for (const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>& liveProxy : *_liveProxiesCapability)
 			{
 				if (liveProxy->_encodingJobKey == encodingJobKey)
 				{
@@ -2123,7 +2098,7 @@ void FFMPEGEncoder::encodingProgress(
 		{
 			lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-			map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>>::iterator it = _encodingCompletedMap->find(encodingJobKey);
+			auto it = _encodingCompletedMap->find(encodingJobKey);
 			if (it != _encodingCompletedMap->end())
 			{
 				encodingCompleted = true;
@@ -2988,7 +2963,7 @@ void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, const
 	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
 }
 
-void FFMPEGEncoder::loadConfiguration(json configurationRoot)
+void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 {
 	_configurationRoot = configurationRoot;
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
