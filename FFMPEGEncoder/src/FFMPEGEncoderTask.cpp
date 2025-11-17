@@ -1424,7 +1424,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 	{
 		unique_lock locker(_encoding->_progressMutex);
 
-		// append su file
+		// su questo fille di log scrivo gli errori e tutto cio che non è gestito
 		if (!ffmpegLine.empty())
 		{
 			if (!_encoding->_progress.ffmpegOutputLogFile)
@@ -1442,11 +1442,6 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						_ingestionJobKey, _encodingJobKey, ffmpegOutputLogPathFileName
 					);
 				}
-			}
-			else
-			{
-				_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-				_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
 			}
 		}
 		else
@@ -1467,6 +1462,11 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					", encodingJobKey: {}"
 					", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
 				error = true;
+				if (_encoding->_progress.ffmpegOutputLogFile)
+				{
+					_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+					_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+				}
 			}
 			else
 			{
@@ -1480,6 +1480,11 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 							", encodingJobKey: {}"
 							", ffmpegLine: {}", pattern, _ingestionJobKey, _encodingJobKey, ffmpegLine);
 						error = true;
+						if (_encoding->_progress.ffmpegOutputLogFile)
+						{
+							_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+							_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+						}
 					}
 				}
 			}
@@ -1594,7 +1599,12 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
-						break;
+					if (_encoding->_progress.ffmpegOutputLogFile)
+					{
+						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+					}
+					break;
 				}
 
 				// NEW: calcolo del bitrate reale
@@ -1612,10 +1622,18 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 				}
 			}
 			else
+			{
 				SPDLOG_WARN("ffmpegLineCallback, line not managed"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
 					", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+
+				if (_encoding->_progress.ffmpegOutputLogFile)
+				{
+					_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+					_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+				}
+			}
 		}
 	}
 	catch (exception& e)
