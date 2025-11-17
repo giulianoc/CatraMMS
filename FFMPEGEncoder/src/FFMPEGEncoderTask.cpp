@@ -1417,9 +1417,19 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 
 	SPDLOG_INFO("AAAAAAA, ffmpegLine: {}", ffmpegLine);
 
+	auto pos = ffmpegLine.find('=');
+	if (pos != std::string_view::npos)
+	{
+		std::string_view key   = StringUtils::trim(ffmpegLine.substr(0, pos));
+		std::string_view value = StringUtils::trim(ffmpegLine.substr(pos + 1));
+		SPDLOG_INFO("AAAAAAA, key: {}, value: {}", key, value);
+
+	}
+
 	const string line(ffmpegLine);
 
 	// progress
+	/*
 	{
 		// Regex per parsing progress
 		static const regex progressRe{
@@ -1469,6 +1479,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			_encoding->_progress.bitrateKbps = ffmpegBitrate;
 		}
 	}
+	*/
 
 	// detect errors
 	/*
