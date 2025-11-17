@@ -1458,7 +1458,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			{
 				case "frame"_case:
 				{
-					_encoding->_progress.frame = stoi(string(value));
+					_encoding->_progress.processedFrames = stoi(string(value));
 					break;
 				}
 				case "fps"_case:
@@ -1488,8 +1488,26 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					_encoding->_progress.stream_0_0_q = std::stod(string(value));
 					break;
 				}
-				// case "out_time"_case:	// format: HH:MM:SS.xxx
-				case "out_time_ms"_case: // directly in millisecs
+				case "out_time"_case:
+				{
+					// usiamo out_time_ms already in millisecs
+					/*
+					// formato: HH:MM:SS.xxx
+					int h = std::stoi(string(value.substr(0, 2)));
+					int m = std::stoi(string(value.substr(3, 2)));
+					int s = std::stoi(string(value.substr(6, 2)));
+					int ms = std::stoi(string(value.substr(9)));
+					_encoding->_progress.out_time = std::chrono::milliseconds(
+						(static_cast<int64_t>(h) * 3600000LL) +
+						(static_cast<int64_t>(m) * 60000LL) +
+						(static_cast<int64_t>(s) * 1000LL) +
+						ms);
+					*/
+					break;
+				}
+				case "out_time_us"_case: // timestamp dell'output in microsecondi (1.000.000), usiamo out_time_ms in millisecs
+					break;
+				case "out_time_ms"_case:
 				{
 					/*
 					// formato: HH:MM:SS.xxx
@@ -1503,7 +1521,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						(static_cast<int64_t>(s) * 1000LL) +
 						ms);
 					*/
-					_encoding->_progress.outTimeMilliSecs = chrono::milliseconds(stoul(string(value)));
+					_encoding->_progress.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
 					realBitRateChanged = true;
 					break;
 				}
@@ -1541,9 +1559,9 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			}
 
 			// NEW: calcolo del bitrate reale
-			if (realBitRateChanged && _encoding->_progress.outTimeMilliSecs.count() > 0 && _encoding->_progress.totalSizeKBps > 0)
+			if (realBitRateChanged && _encoding->_progress.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_progress.totalSizeKBps > 0)
 			{
-				double seconds = _encoding->_progress.outTimeMilliSecs.count() / 1000.0;
+				double seconds = _encoding->_progress.processedOutputTimestampMilliSecs.count() / 1000.0;
 				double realBps = (_encoding->_progress.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
 				double realKbps = realBps * 1000.0;
 

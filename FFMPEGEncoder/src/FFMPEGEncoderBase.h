@@ -40,10 +40,10 @@ class FFMPEGEncoderBase
 				"Invalid argument"
 			};
 
-			int32_t frame = 0;
+			int32_t processedFrames = 0;
 			double framePerSeconds = 0;
-			chrono::milliseconds outTimeMilliSecs{};
-			double speed{};
+			chrono::milliseconds processedOutputTimestampMilliSecs{};
+			double speed{}; // Utile per capire se il server sta performando bene
 			int32_t dropFrames{};
 			int32_t dupFrames{};
 			double stream_0_0_q{};
