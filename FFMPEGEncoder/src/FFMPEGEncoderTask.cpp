@@ -1466,6 +1466,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 				{
 					_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
 					_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+					_encoding->_progress.ffmpegOutputLogFile.flush();
 				}
 			}
 			else
@@ -1484,6 +1485,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						{
 							_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
 							_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+							_encoding->_progress.ffmpegOutputLogFile.flush();
 						}
 					}
 				}
@@ -1603,6 +1605,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					{
 						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
 						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_progress.ffmpegOutputLogFile.flush();
 					}
 					break;
 				}
@@ -1632,6 +1635,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 				{
 					_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
 					_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+					_encoding->_progress.ffmpegOutputLogFile.flush();
 				}
 			}
 		}

@@ -418,6 +418,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			", liveURL: {}",
 			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_streamSourceType, liveURL
 		);
+		// TODO
 		/*
 		_liveRecording->_ffmpeg->liveRecorder2(
 			_liveRecording->_ingestionJobKey, _encodingJobKey, _liveRecording->_externalEncoder,

@@ -162,6 +162,8 @@ class FFMPEGEncoderBase
 
 		void resetEncoding()
 		{
+			unique_lock lock(_progressMutex);
+
 			_available = true;
 			_childProcessId.reset(); // not running
 			_progress.reset();
