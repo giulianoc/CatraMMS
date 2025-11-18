@@ -1662,8 +1662,9 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			"ffmpegLineCallback, exception"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
+			", ffmpegLine: {}"
 			", exception: {}",
-			_ingestionJobKey, _encodingJobKey, e.what()
+			_ingestionJobKey, _encodingJobKey, ffmpegLine, e.what()
 		);
 	}
 }
