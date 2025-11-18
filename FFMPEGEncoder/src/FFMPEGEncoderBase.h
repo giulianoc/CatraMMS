@@ -51,6 +51,7 @@ class FFMPEGEncoderBase
 			int32_t dropFrames{};
 			int32_t dupFrames{};
 			double stream_0_0_q{};
+			double stream_1_0_q{};
 			size_t totalSizeKBps{};
 			double bitRateKbps{};
 			double avgBitRateKbps{};	// calculated by us
@@ -73,6 +74,7 @@ class FFMPEGEncoderBase
 				dropFrames = other.dropFrames;
 				dupFrames = other.dupFrames;
 				stream_0_0_q = other.stream_0_0_q;
+				stream_1_0_q = other.stream_1_0_q;
 				totalSizeKBps = other.totalSizeKBps;
 				bitRateKbps = other.bitRateKbps;
 				avgBitRateKbps = other.avgBitRateKbps;
@@ -100,6 +102,7 @@ class FFMPEGEncoderBase
 				dropFrames = 0;
 				dupFrames = 0;
 				stream_0_0_q = 0.0;
+				stream_1_0_q = 0.0;
 				totalSizeKBps = 0;
 				bitRateKbps = 0.0;
 				avgBitRateKbps = 0.0;
@@ -119,6 +122,7 @@ class FFMPEGEncoderBase
 				progressRoot["dropFrames"] = dropFrames;
 				progressRoot["dupFrames"] = dupFrames;
 				progressRoot["stream_0_0_q"] = stream_0_0_q;
+				progressRoot["stream_1_0_q"] = stream_1_0_q;
 				progressRoot["totalSizeKBps"] = totalSizeKBps;
 				progressRoot["bitRateKbps"] = bitRateKbps;
 				progressRoot["avgBitRateKbps"] = avgBitRateKbps;

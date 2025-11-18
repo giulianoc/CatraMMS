@@ -1498,8 +1498,15 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			auto pos = ffmpegLine.find('=');
 			if (pos != string_view::npos)
 			{
-				std::string_view key   = StringUtils::trim(ffmpegLine.substr(0, pos));
-				std::string_view value = StringUtils::trim(ffmpegLine.substr(pos + 1));
+				string_view key = StringUtils::trim(ffmpegLine.substr(0, pos));
+				string_view value = StringUtils::trim(ffmpegLine.substr(pos + 1));
+				if (value.find('=') != string_view::npos)
+				{
+					// Questo if per gestire casi come:
+					// frame=11 11 fps= 11 q=28.0 q=28.0 size=N/A time=00:00:00.36 bitrate=N/A dup=2 drop=0 speed=0.358x
+					// In questo caso inizializziamo una key vuote in modo che vada nel default dello switch sotto
+					key = ffmpegLine.substr(0, 0);
+				}
 				bool realBitRateChanged = false;
 				switch (hash_case(key))
 				{
@@ -1533,6 +1540,11 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					case "stream_0_0_q"_case:
 					{
 						_encoding->_progress.stream_0_0_q = std::stod(string(value));
+						break;
+					}
+					case "stream_1_0_q"_case:
+					{
+						_encoding->_progress.stream_1_0_q = std::stod(string(value));
 						break;
 					}
 					case "out_time"_case:
@@ -1598,17 +1610,20 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						break;
 					}
 					default:
+					{
 						SPDLOG_WARN("ffmpegLineCallback, line not managed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
-					if (_encoding->_progress.ffmpegOutputLogFile)
-					{
-						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-						_encoding->_progress.ffmpegOutputLogFile.flush();
+
+						if (_encoding->_progress.ffmpegOutputLogFile)
+						{
+							_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+							_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+							_encoding->_progress.ffmpegOutputLogFile.flush();
+						}
+						break;
 					}
-					break;
 				}
 
 				// NEW: calcolo del bitrate reale
