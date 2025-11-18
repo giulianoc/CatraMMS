@@ -1522,9 +1522,12 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					}
 					case "speed"_case:
 					{
-						if (value.back() == 'x')
-							value.remove_suffix(1);
-						_encoding->_progress.speed = std::stod(string(value));
+						if (value != "N/A")
+						{
+							if (value.back() == 'x')
+								value.remove_suffix(1);
+							_encoding->_progress.speed = std::stod(string(value));
+						}
 						break;
 					}
 					case "drop_frames"_case:
@@ -1580,8 +1583,11 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 							(static_cast<int64_t>(s) * 1000LL) +
 							ms);
 						*/
-						_encoding->_progress.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
-						realBitRateChanged = true;
+						if (value != "N/A")
+						{
+							_encoding->_progress.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
+							realBitRateChanged = true;
+						}
 						break;
 					}
 					case "total_size"_case:
