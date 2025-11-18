@@ -1429,8 +1429,9 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 		{
 			if (!_encoding->_progress.ffmpegOutputLogFile)
 			{
-				string ffmpegOutputLogPathFileName = std::format("{}/{}_{}_{}.log", _encoding->_ffmpeg->_ffmpegTempDir,
-					_encoding->_method, _ingestionJobKey, _encodingJobKey);
+				string ffmpegOutputLogPathFileName = _encoding->_ffmpeg->getOutputFfmpegPathFileName();
+				// string ffmpegOutputLogPathFileName = std::format("{}/{}_{}_{}.log", _encoding->_ffmpeg->_ffmpegTempDir,
+				// 	_encoding->_method, _ingestionJobKey, _encodingJobKey);
 				_encoding->_progress.ffmpegOutputLogFile.open(ffmpegOutputLogPathFileName, ofstream::binary | ofstream::trunc);
 				if (!_encoding->_progress.ffmpegOutputLogFile)
 				{
