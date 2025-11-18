@@ -72,6 +72,7 @@ add_executable(updateGEOInfo ${SOURCES} ${HEADERS})
 
 target_link_libraries(updateGEOInfo MMSEngine)
 target_link_libraries(updateGEOInfo FFMpegWrapper)
+target_link_libraries(updateGEOInfo FFMpegEngine)
 target_link_libraries(updateGEOInfo StringUtils)
 target_link_libraries(updateGEOInfo PostgresHelper)
 target_link_libraries(updateGEOInfo ProcessUtility)
