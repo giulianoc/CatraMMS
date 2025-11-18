@@ -61,3 +61,6 @@
 [submodule "CatraLibraries/SafeFileSystem"]
 	path = CatraLibraries/SafeFileSystem
 	url = https://github.com/giulianoc/SafeFileSystem.git
+[submodule "CatraLibraries/FFMpegEngine"]
+	path = CatraLibraries/FFMpegEngine
+	url = https://github.com/giulianoc/FFMpegEngine.git
