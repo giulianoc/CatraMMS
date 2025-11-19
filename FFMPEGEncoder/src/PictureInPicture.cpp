@@ -15,7 +15,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -40,7 +40,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -59,7 +59,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -83,7 +83,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", Field: {}",
-						_ingestionJobKey, _encodingJobKey, field
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -102,7 +102,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", directoryPathName: {}",
-							_ingestionJobKey, _encodingJobKey, directoryPathName
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -122,7 +122,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", Field: {}",
-						_ingestionJobKey, _encodingJobKey, field
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -131,7 +131,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
-					_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, mainSourceFileExtension, mainSourcePhysicalDeliveryURL,
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, mainSourceFileExtension, mainSourcePhysicalDeliveryURL,
 					mainSourceAssetPathName
 				);
 			}
@@ -145,7 +145,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", Field: {}",
-						_ingestionJobKey, _encodingJobKey, field
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -164,7 +164,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", directoryPathName: {}",
-							_ingestionJobKey, _encodingJobKey, directoryPathName
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -184,7 +184,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", Field: {}",
-						_ingestionJobKey, _encodingJobKey, field
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -193,7 +193,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				string overlaySourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 				overlaySourceAssetPathName = downloadMediaFromMMS(
-					_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, overlaySourceFileExtension, overlaySourcePhysicalDeliveryURL,
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, overlaySourceFileExtension, overlaySourcePhysicalDeliveryURL,
 					overlaySourceAssetPathName
 				);
 			}
@@ -206,7 +206,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -225,7 +225,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -247,7 +247,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -263,7 +263,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -279,7 +279,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -308,7 +308,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 			encodingProfileDetailsRoot,
 
-			encodedStagingAssetPathName, _encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
+			encodedStagingAssetPathName, _encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
@@ -318,7 +318,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
 			", encodedStagingAssetPathName: {}",
-			_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, encodedStagingAssetPathName
 		);
 
 		if (externalEncoder)
@@ -329,7 +329,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", mainSourceAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, mainSourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, mainSourceAssetPathName
 				);
 				fs::remove_all(mainSourceAssetPathName);
 			}
@@ -340,7 +340,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", overlaySourceAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, overlaySourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, overlaySourceAssetPathName
 				);
 				fs::remove_all(overlaySourceAssetPathName);
 			}
@@ -350,7 +350,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
-				_ingestionJobKey, _encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
 				mainSourceFileExtension, encodedStagingAssetPathName, workflowLabel,
 				"External Transcoder", // ingester
 				encodingProfileKey
@@ -367,7 +367,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -386,7 +386,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -407,7 +407,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

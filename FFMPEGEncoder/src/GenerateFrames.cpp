@@ -20,7 +20,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	bool externalEncoder = false;
@@ -52,7 +52,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
 				", Field: {}",
-				_ingestionJobKey, _encodingJobKey, field
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -72,7 +72,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -121,7 +121,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			}
 
 			sourceAssetPathName = downloadMediaFromMMS(
-				_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
 			);
 		}
 		else
@@ -134,7 +134,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -150,7 +150,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -159,10 +159,10 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
-		string imageBaseFileName = to_string(_ingestionJobKey);
+		string imageBaseFileName = to_string(_encoding->_ingestionJobKey);
 
 		_encoding->_ffmpeg->generateFramesToIngest(
-			_ingestionJobKey, _encodingJobKey, imagesDirectory, imageBaseFileName, startTimeInSeconds, maxFramesNumber, videoFilter, periodInSeconds,
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, imagesDirectory, imageBaseFileName, startTimeInSeconds, maxFramesNumber, videoFilter, periodInSeconds,
 			mjpeg, imageWidth, imageHeight, sourceAssetPathName, videoDurationInMilliSeconds, _encoding->_childProcessId
 		);
 
@@ -197,7 +197,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 						json generatedFrameRoot;
 						generatedFrameRoot["ingestionJobLabel"] = ingestionJobLabel;
-						generatedFrameRoot["ingestionJobKey"] = _ingestionJobKey;
+						generatedFrameRoot["ingestionJobKey"] = _encoding->_ingestionJobKey;
 						generatedFrameRoot["generatedFrameIndex"] = generatedFrameIndex;
 
 						mmsDataRoot["generatedFrame"] = generatedFrameRoot;
@@ -236,13 +236,13 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", generatedFrameFileName: {}"
 							", addContentTitle: {}"
 							", outputFileFormat: {}",
-							_ingestionJobKey, _encodingJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
 							outputFileFormat
 						);
 
 						addContentIngestionJobKeys.push_back(generateFrames_ingestFrame(
-							_ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle, userDataRoot,
-							outputFileFormat, ingestedParametersRoot, encodingParametersRoot
+							_encoding->_ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							userDataRoot, outputFileFormat, ingestedParametersRoot, encodingParametersRoot
 						));
 					}
 					catch (runtime_error &e)
@@ -257,7 +257,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", addContentTitle: {}"
 							", outputFileFormat: {}"
 							", e.what(): {}",
-							_encodingJobKey, _ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							_encoding->_encodingJobKey, _encoding->_ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
 							outputFileFormat, e.what()
 						);
 
@@ -275,7 +275,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", addContentTitle: {}"
 							", outputFileFormat: {}"
 							", e.what(): {}",
-							_encodingJobKey, _ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
+							_encoding->_encodingJobKey, _encoding->_ingestionJobKey, externalEncoder, imagesDirectory, entry.path().filename().string(), addContentTitle,
 							outputFileFormat, e.what()
 						);
 
@@ -300,7 +300,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", e.what(): {}",
-						_ingestionJobKey, _encodingJobKey, e.what()
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -316,7 +316,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", e.what(): {}",
-						_ingestionJobKey, _encodingJobKey, e.what()
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -333,7 +333,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					"Remove"
 					", _ingestionJobKey: {}"
 					", imagesDirectory: {}",
-					_ingestionJobKey, imagesDirectory
+					_encoding->_ingestionJobKey, imagesDirectory
 				);
 				fs::remove_all(imagesDirectory);
 			}
@@ -349,7 +349,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", Field: {}",
-						_ingestionJobKey, _encodingJobKey, field
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -385,7 +385,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				long addContentFinished = 0;
 				long addContentToBeWaited = addContentIngestionJobKeys.size();
 
-				while (addContentIngestionJobKeys.size() > 0 &&
+				while (!addContentIngestionJobKeys.empty() &&
 					   chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
 				{
 					int64_t addContentIngestionJobKey = *(addContentIngestionJobKeys.begin());
@@ -395,7 +395,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					vector<string> otherHeaders;
 					json ingestionRoot = CurlWrapper::httpGetJson(
 						mmsIngestionJobURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), otherHeaders,
-						std::format(", ingestionJobKey: {}", _ingestionJobKey),
+						std::format(", ingestionJobKey: {}", _encoding->_ingestionJobKey),
 						3 // maxRetryNumber
 					);
 
@@ -407,7 +407,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -423,7 +423,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -436,7 +436,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						string errorMessage = fmt::format(
 							"Wrong ingestionJobs number"
 							", _ingestionJobKey: {}",
-							_ingestionJobKey
+							_encoding->_ingestionJobKey
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -453,7 +453,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -469,7 +469,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", addContentIngestionJobKey: {}"
 							", ingestionJobStatus: {}",
-							_ingestionJobKey, addContentIngestionJobKey, ingestionJobStatus
+							_encoding->_ingestionJobKey, addContentIngestionJobKey, ingestionJobStatus
 						);
 
 						addContentIngestionJobKeys.erase(addContentIngestionJobKeys.begin());
@@ -485,7 +485,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", addContentIngestionJobKey: {}"
 							", ingestionJobStatus: {}"
 							", secondsToSleep: {}",
-							_ingestionJobKey, addContentIngestionJobKey, ingestionJobStatus, secondsToSleep
+							_encoding->_ingestionJobKey, addContentIngestionJobKey, ingestionJobStatus, secondsToSleep
 						);
 
 						this_thread::sleep_for(chrono::seconds(secondsToSleep));
@@ -499,7 +499,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", addContentFinished: {}"
 					", maxSecondsWaiting: {}"
 					", elapsedInSeconds: {}",
-					_ingestionJobKey, addContentToBeWaited, addContentFinished, maxSecondsWaiting,
+					_encoding->_ingestionJobKey, addContentToBeWaited, addContentFinished, maxSecondsWaiting,
 					chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startWaiting).count()
 				);
 			}
@@ -508,7 +508,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				string errorMessage = fmt::format(
 					"waiting addContent ingestion failed"
 					", _ingestionJobKey: {}",
-					_ingestionJobKey
+					_encoding->_ingestionJobKey
 				);
 				SPDLOG_ERROR(errorMessage);
 			}
@@ -519,14 +519,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
 			", _completedWithError: {}",
-			_ingestionJobKey, _encodingJobKey, _completedWithError
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _completedWithError
 		);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
 		if (externalEncoder)
 		{
-			if (imagesDirectory != "" && fs::exists(imagesDirectory))
+			if (!imagesDirectory.empty() && fs::exists(imagesDirectory))
 			{
 				SPDLOG_INFO(
 					"Remove"
@@ -545,7 +545,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -558,7 +558,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 	{
 		if (externalEncoder)
 		{
-			if (imagesDirectory != "" && fs::exists(imagesDirectory))
+			if (!imagesDirectory.empty() && fs::exists(imagesDirectory))
 			{
 				SPDLOG_INFO(
 					"Remove"
@@ -577,7 +577,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -592,7 +592,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 	{
 		if (externalEncoder)
 		{
-			if (imagesDirectory != "" && fs::exists(imagesDirectory))
+			if (!imagesDirectory.empty() && fs::exists(imagesDirectory))
 			{
 				SPDLOG_INFO(
 					"Remove"
@@ -611,7 +611,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -625,8 +625,9 @@ void GenerateFrames::encodeContent(json metadataRoot)
 }
 
 int64_t GenerateFrames::generateFrames_ingestFrame(
-	int64_t ingestionJobKey, bool externalEncoder, string imagesDirectory, string generatedFrameFileName, string addContentTitle, json userDataRoot,
-	string outputFileFormat, json ingestedParametersRoot, json encodingParametersRoot
+	int64_t ingestionJobKey, bool externalEncoder, const string& imagesDirectory, const string& generatedFrameFileName,
+	const string& addContentTitle, json userDataRoot,
+	string outputFileFormat, json ingestedParametersRoot, const json& encodingParametersRoot
 )
 {
 	string workflowMetadata;
@@ -674,7 +675,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -695,7 +696,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"Ingestion workflow failed"
@@ -706,20 +707,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Ingestion workflow failed"
-			", ingestionJobKey: {}"
-			", mmsWorkflowIngestionURL: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 
 	if (addContentIngestionJobKey == -1)
@@ -759,7 +747,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -776,7 +764,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			3 // maxRetryNumber
 		);
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"Ingestion binary failed"
@@ -787,20 +775,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Ingestion binary failed"
-			", ingestionJobKey: {}"
-			", mmsBinaryURL: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 
 	return addContentIngestionJobKey;

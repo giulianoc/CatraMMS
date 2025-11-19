@@ -7,22 +7,13 @@
 #include "spdlog/spdlog.h"
 
 LiveGrid::LiveGrid(
-	shared_ptr<LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
+	const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
 )
-	: FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex, encodingCompletedMap)
+	: FFMPEGEncoderTask(liveProxyData, configurationRoot, encodingCompletedMutex, encodingCompletedMap)
 {
 	_liveProxyData = liveProxyData;
 };
-
-LiveGrid::~LiveGrid()
-{
-	_liveProxyData->_method = "";
-	_liveProxyData->_ingestionJobKey = 0;
-	_liveProxyData->_killedBecauseOfNotWorking = false;
-	// _liveProxyData->_liveGridOutputType = "";
-	// _liveProxyData->_channelLabel = "";
-}
 
 void LiveGrid::encodeContent(const string_view& requestBody)
 {
@@ -33,7 +24,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, requestBody
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, requestBody
 	);
 
 	try
@@ -41,7 +32,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		_liveProxyData->_killedBecauseOfNotWorking = false;
 		json metadataRoot = JSONUtils::toJson(requestBody);
 
-		_liveProxyData->_ingestionJobKey = _ingestionJobKey; // JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		_liveProxyData->_ingestionJobKey = _encoding->_ingestionJobKey; // JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
@@ -88,7 +79,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 								", _encodingJobKey: {}"
 								", manifestDirectoryPath: {}"
 								", e.what(): {}",
-								_liveProxyData->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+								_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
 							SPDLOG_ERROR(errorMessage);
 
@@ -102,7 +93,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 								", _encodingJobKey: {}"
 								", manifestDirectoryPath: {}"
 								", e.what(): {}",
-								_liveProxyData->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+								_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
 							SPDLOG_ERROR(errorMessage);
 
@@ -117,7 +108,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			_liveProxyData->_proxyStart = chrono::system_clock::now();
 
 			_liveProxyData->_ffmpeg->liveGrid(
-				_liveProxyData->_ingestionJobKey, _encodingJobKey, externalEncoder, userAgent, inputChannelsRoot, gridColumns, gridWidth, gridHeight,
+				_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, externalEncoder, userAgent, inputChannelsRoot, gridColumns, gridWidth, gridHeight,
 				_liveProxyData->_outputsRoot, _liveProxyData->_childProcessId
 			);
 		}
@@ -126,7 +117,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			"_ffmpeg->liveGridBy... finished"
 			", ingestionJobKey: {}"
 			", _encodingJobKey: {}",
-			_liveProxyData->_ingestionJobKey, _encodingJobKey
+			_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey
 			// + ", _liveProxyData->_channelLabel: " + _liveProxyData->_channelLabel
 		);
 	}
@@ -140,7 +131,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -169,7 +160,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -191,7 +182,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -213,7 +204,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -234,7 +225,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

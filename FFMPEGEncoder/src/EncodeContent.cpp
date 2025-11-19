@@ -16,7 +16,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	bool externalEncoder = false;
@@ -67,7 +67,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
 				", Field: {}",
-				_ingestionJobKey, _encodingJobKey, field
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -87,7 +87,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -106,7 +106,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -126,7 +126,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -142,7 +142,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -151,7 +151,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
-				_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
 			);
 		}
 		else
@@ -164,7 +164,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -183,7 +183,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -197,13 +197,13 @@ void EncodeContent::encodeContent(json metadataRoot)
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
 			", sourceAssetPathName: {}",
-			_ingestionJobKey, _encodingJobKey, sourceAssetPathName
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 		);
 
 		_encoding->_ffmpeg->encodeContent(
 			sourceAssetPathName, durationInMilliSeconds, encodedStagingAssetPathName, encodingProfileDetailsRoot,
 			contentType == MMSEngineDBFacade::ContentType::Video, videoTracksRoot, audioTracksRoot, videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
-			filtersRoot, physicalPathKey, _encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
+			filtersRoot, physicalPathKey, _encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
@@ -214,7 +214,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			", _encodingJobKey: {}"
 			", sourceAssetPathName: {}"
 			", encodedStagingAssetPathName: {}",
-			_ingestionJobKey, _encodingJobKey, sourceAssetPathName, encodedStagingAssetPathName
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName, encodedStagingAssetPathName
 		);
 
 		if (externalEncoder)
@@ -225,7 +225,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", sourceAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 				);
 				fs::remove_all(sourceAssetPathName);
 			}
@@ -238,7 +238,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -254,7 +254,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -265,8 +265,8 @@ void EncodeContent::encodeContent(json metadataRoot)
 			string workflowLabel =
 				"Add Variant " + to_string(sourceMediaItemKey) + " - " + to_string(encodingProfileKey) + " (encoding from external transcoder)";
 			uploadLocalMediaToMMS(
-				_ingestionJobKey, _encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot, sourceFileExtension,
-				encodedStagingAssetPathName, workflowLabel,
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
+				sourceFileExtension, encodedStagingAssetPathName, workflowLabel,
 				"External Transcoder", // ingester
 				encodingProfileKey, sourceMediaItemKey
 			);
@@ -283,7 +283,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", Field: {}",
-						_ingestionJobKey, _encodingJobKey, field
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -298,9 +298,9 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _encodingJobKey: {}"
 					", encodedStagingAssetPathName: {}"
 					", encodedNFSStagingAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName
 				);
-				int64_t moveElapsedInSeconds = MMSStorage::move(_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName);
+				int64_t moveElapsedInSeconds = MMSStorage::move(_encoding->_ingestionJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName);
 				SPDLOG_INFO(
 					"moved file"
 					", _ingestionJobKey: {}"
@@ -308,7 +308,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", encodedStagingAssetPathName: {}"
 					", encodedNFSStagingAssetPathName: {}"
 					", moveElapsedInSeconds: {}",
-					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, moveElapsedInSeconds
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, encodedStagingAssetPathName, encodedNFSStagingAssetPathName, moveElapsedInSeconds
 				);
 			}
 		}
@@ -324,7 +324,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", sourceAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 				);
 				fs::remove_all(sourceAssetPathName);
 			}
@@ -341,7 +341,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::remove_all(directoryPathName);
 				}
@@ -356,7 +356,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -376,7 +376,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", sourceAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 				);
 				fs::remove_all(sourceAssetPathName);
 			}
@@ -393,7 +393,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::remove_all(directoryPathName);
 				}
@@ -408,7 +408,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -429,7 +429,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", sourceAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, sourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 				);
 				fs::remove_all(sourceAssetPathName);
 			}
@@ -446,7 +446,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::remove_all(directoryPathName);
 				}
@@ -461,7 +461,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

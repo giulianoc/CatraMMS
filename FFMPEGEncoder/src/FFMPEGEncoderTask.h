@@ -24,7 +24,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
   public:
 	FFMPEGEncoderTask(
-		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json& configurationRoot,
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const json& configurationRoot,
 		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap
 	);
 	~FFMPEGEncoderTask();
@@ -36,11 +36,11 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	string _tvChannelConfigurationDirectory;
 
 	void addEncodingCompleted();
-	void removeEncodingCompletedIfPresent();
+	void removeEncodingCompletedIfPresent() const;
 
 	int64_t ingestContentByPushingBinary(
 		int64_t ingestionJobKey, string workflowMetadata, string fileFormat, string binaryPathFileName, int64_t binaryFileSizeInBytes,
-		int64_t userKey, string apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
+		int64_t userKey, const string &apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 	);
 
 	int progressDownloadCallback(
@@ -50,8 +50,6 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
   protected:
 	shared_ptr<FFMPEGEncoderBase::Encoding> _encoding;
-	int64_t _ingestionJobKey;
-	int64_t _encodingJobKey;
 
 	bool _completedWithError;
 	bool _killedByUser;
@@ -68,8 +66,8 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
 		// in case of a new content
 		string sourceURL, // if empty it means binary is ingested later (PUSH)
-		string title, json userDataRoot,
-		json ingestedParametersRoot, // it could be also nullValue
+		string title, const json& userDataRoot,
+		const json& ingestedParametersRoot, // it could be also nullValue
 
 		int64_t encodingProfileKey,
 
@@ -77,8 +75,9 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	);
 
 	void uploadLocalMediaToMMS(
-		int64_t ingestionJobKey, int64_t encodingJobKey, json ingestedParametersRoot, json encodingProfileDetailsRoot, json encodingParametersRoot,
-		string sourceFileExtension, string encodedStagingAssetPathName, string workflowLabel, string ingester, int64_t encodingProfileKey,
+		int64_t ingestionJobKey, int64_t encodingJobKey, json ingestedParametersRoot, const json &encodingProfileDetailsRoot,
+		const json &encodingParametersRoot, string sourceFileExtension, const string &encodedStagingAssetPathName, const string &workflowLabel,
+		const string &ingester, int64_t encodingProfileKey,
 		int64_t variantOfMediaItemKey = -1 // in case Media is a variant of a MediaItem already present
 	);
 
@@ -95,7 +94,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 		bool toBeAdded
 	);
 
-	pair<string, string> getTVMulticastFromDvblastConfigurationFile(
+	[[nodiscard]] pair<string, string> getTVMulticastFromDvblastConfigurationFile(
 		int64_t ingestionJobKey, int64_t encodingJobKey, string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
 		int64_t tvBandwidthInMhz, string tvModulation
 	) const;

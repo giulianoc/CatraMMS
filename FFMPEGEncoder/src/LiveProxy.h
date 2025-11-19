@@ -6,17 +6,14 @@ class LiveProxy : public FFMPEGEncoderTask
 
   public:
 	LiveProxy(
-		shared_ptr<LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
+		const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,
 		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap, mutex *tvChannelsPortsMutex,
 		long *tvChannelPort_CurrentOffset
 	);
-	~LiveProxy();
 
 	void encodeContent(const string_view &requestBody);
 
   private:
-	shared_ptr<LiveProxyAndGrid> _liveProxyData;
-
 	mutex *_tvChannelsPortsMutex;
 	long *_tvChannelPort_CurrentOffset;
 };

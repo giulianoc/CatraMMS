@@ -15,7 +15,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -57,7 +57,7 @@ void SlideShow::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -73,7 +73,7 @@ void SlideShow::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -89,7 +89,7 @@ void SlideShow::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -108,7 +108,7 @@ void SlideShow::encodeContent(json metadataRoot)
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
 								", directoryPathName: {}",
-								_ingestionJobKey, _encodingJobKey, directoryPathName
+								_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 							);
 							fs::create_directories(directoryPathName);
 							fs::permissions(
@@ -121,7 +121,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					}
 
 					imagesPathNames.push_back(downloadMediaFromMMS(
-						_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL,
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL,
 						sourceTranscoderStagingAssetPathName
 					));
 				}
@@ -149,7 +149,7 @@ void SlideShow::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -165,7 +165,7 @@ void SlideShow::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -181,7 +181,7 @@ void SlideShow::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", Field: {}",
-							_ingestionJobKey, _encodingJobKey, field
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -200,7 +200,7 @@ void SlideShow::encodeContent(json metadataRoot)
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
 								", directoryPathName: {}",
-								_ingestionJobKey, _encodingJobKey, directoryPathName
+								_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 							);
 							fs::create_directories(directoryPathName);
 							fs::permissions(
@@ -213,7 +213,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					}
 
 					audiosPathNames.push_back(downloadMediaFromMMS(
-						_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL,
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL,
 						sourceTranscoderStagingAssetPathName
 					));
 				}
@@ -235,7 +235,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -254,7 +254,7 @@ void SlideShow::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -276,7 +276,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -288,7 +288,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];
 
 		_encoding->_ffmpeg->slideShow(
-			_ingestionJobKey, _encodingJobKey, durationOfEachSlideInSeconds, frameRateMode, encodingProfileDetailsRoot, imagesPathNames,
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, durationOfEachSlideInSeconds, frameRateMode, encodingProfileDetailsRoot, imagesPathNames,
 			audiosPathNames, shortestAudioDurationInSeconds, encodedStagingAssetPathName, _encoding->_childProcessId
 		);
 
@@ -298,7 +298,7 @@ void SlideShow::encodeContent(json metadataRoot)
 			"slideShow finished"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}",
-			_ingestionJobKey, _encodingJobKey
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey
 		);
 
 		if (externalEncoder)
@@ -310,7 +310,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", imagePathName: {}",
-					_ingestionJobKey, _encodingJobKey, imagePathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, imagePathName
 				);
 				fs::remove_all(imagePathName);
 			}
@@ -322,7 +322,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", audioPathName: {}",
-					_ingestionJobKey, _encodingJobKey, audioPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, audioPathName
 				);
 				fs::remove_all(audioPathName);
 			}
@@ -335,7 +335,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -348,7 +348,7 @@ void SlideShow::encodeContent(json metadataRoot)
 			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
-				_ingestionJobKey, _encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
 				targetFileFormat, // sourceFileExtension,
 				encodedStagingAssetPathName, workflowLabel,
 				"External Transcoder", // ingester
@@ -366,7 +366,7 @@ void SlideShow::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -385,7 +385,7 @@ void SlideShow::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -406,7 +406,7 @@ void SlideShow::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

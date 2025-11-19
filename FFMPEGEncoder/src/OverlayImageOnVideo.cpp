@@ -15,7 +15,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -45,7 +45,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -68,7 +68,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -87,7 +87,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -107,7 +107,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -126,7 +126,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", directoryPathName: {}",
-						_ingestionJobKey, _encodingJobKey, directoryPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 					);
 					fs::create_directories(directoryPathName);
 					fs::permissions(
@@ -146,7 +146,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -162,7 +162,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -171,7 +171,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			string sourceVideoPhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			sourceVideoAssetPathName = downloadMediaFromMMS(
-				_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, sourceVideoFileExtension, sourceVideoPhysicalDeliveryURL,
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceVideoFileExtension, sourceVideoPhysicalDeliveryURL,
 				sourceVideoAssetPathName
 			);
 		}
@@ -185,7 +185,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -201,7 +201,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -217,7 +217,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", Field: {}",
-					_ingestionJobKey, _encodingJobKey, field
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -228,7 +228,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpeg->overlayImageOnVideo(
 			externalEncoder, sourceVideoAssetPathName, videoDurationInMilliSeconds, mmsSourceImageAssetPathName, imagePosition_X_InPixel,
-			imagePosition_Y_InPixel, encodedStagingAssetPathName, encodingProfileDetailsRoot, _encodingJobKey, _ingestionJobKey,
+			imagePosition_Y_InPixel, encodedStagingAssetPathName, encodingProfileDetailsRoot, _encoding->_encodingJobKey, _encoding->_ingestionJobKey,
 			_encoding->_childProcessId
 		);
 
@@ -241,7 +241,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			", sourceVideoAssetPathName: {}"
 			", mmsSourceImageAssetPathName: {}"
 			", encodedStagingAssetPathName: {}",
-			_ingestionJobKey, _encodingJobKey, sourceVideoAssetPathName, mmsSourceImageAssetPathName, encodedStagingAssetPathName
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceVideoAssetPathName, mmsSourceImageAssetPathName, encodedStagingAssetPathName
 		);
 
 		if (externalEncoder)
@@ -252,7 +252,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", sourceVideoAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, sourceVideoAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceVideoAssetPathName
 				);
 				fs::remove_all(sourceVideoAssetPathName);
 			}
@@ -262,7 +262,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
-				_ingestionJobKey, _encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
+				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
 				sourceVideoFileExtension, encodedStagingAssetPathName, workflowLabel,
 				"External Transcoder", // ingester
 				encodingProfileKey
@@ -279,7 +279,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -298,7 +298,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -319,7 +319,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

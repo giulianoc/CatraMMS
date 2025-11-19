@@ -4,77 +4,66 @@
 #include "Datetime.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
-#include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
 LiveProxy::LiveProxy(
-	shared_ptr<LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
+	const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap, mutex *tvChannelsPortsMutex,
 	long *tvChannelPort_CurrentOffset
 )
-	: FFMPEGEncoderTask(liveProxyData, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex, encodingCompletedMap)
+	: FFMPEGEncoderTask(liveProxyData, configurationRoot, encodingCompletedMutex, encodingCompletedMap)
 {
-	_liveProxyData = liveProxyData;
+	_encoding = liveProxyData;
 	_tvChannelsPortsMutex = tvChannelsPortsMutex;
 	_tvChannelPort_CurrentOffset = tvChannelPort_CurrentOffset;
 };
 
-LiveProxy::~LiveProxy()
-{
-	_liveProxyData->_encodingParametersRoot = nullptr;
-	_liveProxyData->_method = "";
-	_liveProxyData->_ingestionJobKey = 0;
-	// _liveProxyData->_channelLabel = "";
-	// _liveProxyData->_liveProxyOutputRoots.clear();
-	_liveProxyData->_killedBecauseOfNotWorking = false;
-}
-
 void LiveProxy::encodeContent(const string_view& requestBody)
 {
 	string api = "liveProxy";
+
+	shared_ptr<LiveProxyAndGrid> liveProxyData = dynamic_pointer_cast<LiveProxyAndGrid>(_encoding);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, requestBody
+		api, liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, requestBody
 	);
 
 	try
 	{
-		_liveProxyData->_killedBecauseOfNotWorking = false;
+		liveProxyData->_killedBecauseOfNotWorking = false;
 		json metadataRoot = JSONUtils::toJson(requestBody);
 
-		_liveProxyData->_ingestionJobKey = _ingestionJobKey; // JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-
-		_liveProxyData->_encodingParametersRoot = metadataRoot["encodingParametersRoot"];
-		_liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
+		liveProxyData->_encodingParametersRoot = metadataRoot["encodingParametersRoot"];
+		liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
-		long maxStreamingDurationInMinutes = JSONUtils::asInt64(_liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInMinutes", -1);
+		long maxStreamingDurationInMinutes = JSONUtils::asInt64(liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInMinutes", -1);
 
-		_liveProxyData->_monitoringRealTimeInfoEnabled =
-			JSONUtils::asBool(_liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-		_liveProxyData->_outputFfmpegFileSize = 0;
-		_liveProxyData->_realTimeFrame = -1;
-		_liveProxyData->_realTimeSize = -1;
-		_liveProxyData->_realTimeFrameRate = -1;
-		_liveProxyData->_realTimeBitRate = -1;
-		_liveProxyData->_realTimeTimeInMilliSeconds = -1.0;
-		_liveProxyData->_realTimeLastChange = chrono::system_clock::now();
+		liveProxyData->_monitoringRealTimeInfoEnabled =
+			JSONUtils::asBool(liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+		liveProxyData->_outputFfmpegFileSize = 0;
+		liveProxyData->_realTimeFrame = -1;
+		liveProxyData->_realTimeSize = -1;
+		liveProxyData->_realTimeFrameRate = -1;
+		liveProxyData->_realTimeBitRate = -1;
+		liveProxyData->_realTimeTimeInMilliSeconds = -1.0;
+		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
 		// 0 perchè liveProxy2 incrementa su un restart
-		_liveProxyData->_numberOfRestartBecauseOfFailure = 0;
+		liveProxyData->_numberOfRestartBecauseOfFailure = 0;
 
-		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
+		liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
-			for (int outputIndex = 0; outputIndex < _liveProxyData->_outputsRoot.size(); outputIndex++)
+			for (int outputIndex = 0; outputIndex < liveProxyData->_outputsRoot.size(); outputIndex++)
 			{
-				json outputRoot = _liveProxyData->_outputsRoot[outputIndex];
+				json outputRoot = liveProxyData->_outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
@@ -102,7 +91,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 								", _encodingJobKey: {}"
 								", manifestDirectoryPath: {}"
 								", e.what(): {}",
-								_liveProxyData->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+								liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
 							SPDLOG_ERROR(errorMessage);
 
@@ -116,7 +105,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 								", _encodingJobKey: {}"
 								", manifestDirectoryPath: {}"
 								", e.what(): {}",
-								_liveProxyData->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
+								liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
 							SPDLOG_ERROR(errorMessage);
 
@@ -127,11 +116,11 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			}
 		}
 
-		_liveProxyData->_inputsRoot = encodingParametersRoot["inputsRoot"];
+		liveProxyData->_inputsRoot = encodingParametersRoot["inputsRoot"];
 
-		for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+		for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 		{
-			json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+			json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				continue;
@@ -160,7 +149,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 
 				// in case there is already a serviceId running, we will use the same multicastIP-Port
 				pair<string, string> tvMulticast = getTVMulticastFromDvblastConfigurationFile(
-					_liveProxyData->_ingestionJobKey, _encodingJobKey, tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInHz / 1000000,
+					liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInHz / 1000000,
 					tvModulation
 				);
 				tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
@@ -196,24 +185,24 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				streamInputRoot["tvMulticastIP"] = tvMulticastIP;
 				streamInputRoot["tvMulticastPort"] = tvMulticastPort;
 				inputRoot["streamInput"] = streamInputRoot;
-				_liveProxyData->_inputsRoot[inputIndex] = inputRoot;
+				liveProxyData->_inputsRoot[inputIndex] = inputRoot;
 
 				createOrUpdateTVDvbLastConfigurationFile(
-					_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency, tvSymbolRate,
+					liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency, tvSymbolRate,
 					tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, true
 				);
 			}
 		}
 
 		{
-			// setting of _liveProxyData->_proxyStart
-			// Based on _liveProxyData->_proxyStart, the monitor thread starts the checkings
+			// setting of liveProxyData->_proxyStart
+			// Based on liveProxyData->_proxyStart, the monitor thread starts the checkings
 			// In case of IP_PUSH, the checks should be done after the ffmpeg server
 			// receives the stream and we do not know what it happens.
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-			if (_liveProxyData->_inputsRoot.size() > 0) // it has to be > 0
+			if (liveProxyData->_inputsRoot.size() > 0) // it has to be > 0
 			{
-				json inputRoot = _liveProxyData->_inputsRoot[0];
+				json inputRoot = liveProxyData->_inputsRoot[0];
 
 				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcScheduleStart", -1);
 				// if (utcProxyPeriodStart == -1)
@@ -232,25 +221,25 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 						if (utcProxyPeriodStart != -1)
 						{
 							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
-								_liveProxyData->_proxyStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
+								liveProxyData->_proxyStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
 							else
-								_liveProxyData->_proxyStart =
+								liveProxyData->_proxyStart =
 									chrono::system_clock::from_time_t(utcProxyPeriodStart) + chrono::seconds(pushListenTimeout);
 						}
 						else
-							_liveProxyData->_proxyStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
+							liveProxyData->_proxyStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
 					}
 					else
 					{
 						if (utcProxyPeriodStart != -1)
 						{
 							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
-								_liveProxyData->_proxyStart = chrono::system_clock::now();
+								liveProxyData->_proxyStart = chrono::system_clock::now();
 							else
-								_liveProxyData->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+								liveProxyData->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
 						}
 						else
-							_liveProxyData->_proxyStart = chrono::system_clock::now();
+							liveProxyData->_proxyStart = chrono::system_clock::now();
 					}
 				}
 				else
@@ -258,25 +247,25 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					if (utcProxyPeriodStart != -1)
 					{
 						if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
-							_liveProxyData->_proxyStart = chrono::system_clock::now();
+							liveProxyData->_proxyStart = chrono::system_clock::now();
 						else
-							_liveProxyData->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+							liveProxyData->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
 					}
 					else
-						_liveProxyData->_proxyStart = chrono::system_clock::now();
+						liveProxyData->_proxyStart = chrono::system_clock::now();
 				}
 			}
 
-			_liveProxyData->_ffmpeg->liveProxy2(
-				_liveProxyData->_ingestionJobKey, _encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
-				&(_liveProxyData->_inputsRootMutex), &(_liveProxyData->_inputsRoot), _liveProxyData->_outputsRoot, _liveProxyData->_childProcessId,
-				&(_liveProxyData->_proxyStart), &(_liveProxyData->_numberOfRestartBecauseOfFailure)
+			liveProxyData->_ffmpeg->liveProxy2(
+				liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
+				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot, liveProxyData->_childProcessId,
+				&(liveProxyData->_proxyStart), &(liveProxyData->_numberOfRestartBecauseOfFailure)
 			);
 		}
 
-		for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+		for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 		{
-			json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+			json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 				continue;
@@ -301,7 +290,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				{
 					// remove configuration from dvblast configuration file
 					createOrUpdateTVDvbLastConfigurationFile(
-						_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
+						liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
 						tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
 					);
 				}
@@ -312,17 +301,17 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			"_ffmpeg->liveProxy finished"
 			", ingestionJobKey: {}"
 			", _encodingJobKey: {}",
-			_liveProxyData->_ingestionJobKey, _encodingJobKey
-			// + ", _liveProxyData->_channelLabel: " + _liveProxyData->_channelLabel
+			liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey
+			// + ", liveProxyData->_channelLabel: " + liveProxyData->_channelLabel
 		);
 	}
 	catch (FFMpegEncodingKilledByUser &e)
 	{
-		if (_liveProxyData->_inputsRoot != nullptr)
+		if (liveProxyData->_inputsRoot != nullptr)
 		{
-			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
@@ -347,7 +336,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					{
 						// remove configuration from dvblast configuration file
 						createOrUpdateTVDvbLastConfigurationFile(
-							_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
+							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
 							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
 						);
 					}
@@ -363,12 +352,12 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
 		// used by FFMPEGEncoderTask
-		if (_liveProxyData->_killedBecauseOfNotWorking)
+		if (liveProxyData->_killedBecauseOfNotWorking)
 		{
 			// it was killed just because it was not working and not because of user
 			// In this case the process has to be restarted soon
@@ -383,11 +372,11 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 	}
 	catch (FFMpegURLForbidden &e)
 	{
-		if (_liveProxyData->_inputsRoot != nullptr)
+		if (liveProxyData->_inputsRoot != nullptr)
 		{
-			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
@@ -412,7 +401,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					{
 						// remove configuration from dvblast configuration file
 						createOrUpdateTVDvbLastConfigurationFile(
-							_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
+							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
 							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
 						);
 					}
@@ -428,13 +417,13 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 		_urlForbidden = true;
 
@@ -442,11 +431,11 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 	}
 	catch (FFMpegURLNotFound &e)
 	{
-		if (_liveProxyData->_inputsRoot != nullptr)
+		if (liveProxyData->_inputsRoot != nullptr)
 		{
-			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
@@ -471,7 +460,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					{
 						// remove configuration from dvblast configuration file
 						createOrUpdateTVDvbLastConfigurationFile(
-							_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
+							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
 							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
 						);
 					}
@@ -487,13 +476,13 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 		_urlNotFound = true;
 
@@ -501,11 +490,11 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 	}
 	catch (runtime_error &e)
 	{
-		if (_liveProxyData->_inputsRoot != nullptr)
+		if (liveProxyData->_inputsRoot != nullptr)
 		{
-			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
@@ -530,7 +519,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					{
 						// remove configuration from dvblast configuration file
 						createOrUpdateTVDvbLastConfigurationFile(
-							_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
+							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
 							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
 						);
 					}
@@ -547,24 +536,24 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			", encodingJobKey: {}"
 			", API: {}"
 			", requestBody: {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _liveProxyData->_ingestionJobKey,
-			_encodingJobKey, api, requestBody
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey,
+			liveProxyData->_encodingJobKey, api, requestBody
 		);
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		if (_liveProxyData->_inputsRoot != nullptr)
+		if (liveProxyData->_inputsRoot != nullptr)
 		{
-			for (int inputIndex = 0; inputIndex < _liveProxyData->_inputsRoot.size(); inputIndex++)
+			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
 			{
-				json inputRoot = _liveProxyData->_inputsRoot[inputIndex];
+				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
 				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
 					continue;
@@ -589,7 +578,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					{
 						// remove configuration from dvblast configuration file
 						createOrUpdateTVDvbLastConfigurationFile(
-							_liveProxyData->_ingestionJobKey, _encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
+							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
 							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
 						);
 					}
@@ -605,13 +594,13 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		liveProxyData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

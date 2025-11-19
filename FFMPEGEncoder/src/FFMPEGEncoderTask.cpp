@@ -15,7 +15,7 @@
 #include <sstream>
 
 FFMPEGEncoderTask::FFMPEGEncoderTask(
-	const shared_ptr<Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json& configurationRoot,
+	const shared_ptr<Encoding> &encoding, const json& configurationRoot,
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
 )
 	: FFMPEGEncoderBase(configurationRoot)
@@ -23,8 +23,6 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 	try
 	{
 		_encoding = encoding;
-		_ingestionJobKey = ingestionJobKey;
-		_encodingJobKey = encodingJobKey;
 		_encodingCompletedMutex = encodingCompletedMutex;
 		_encodingCompletedMap = encodingCompletedMap;
 
@@ -59,9 +57,6 @@ FFMPEGEncoderTask::~FFMPEGEncoderTask()
 	try
 	{
 		addEncodingCompleted();
-
-		_encoding->_childProcessId.reset(); // set to 0 just to be sure because it is already set info the FFMpeg lib
-		_encoding->_available = true;		// this is the last setting making the encoding available again
 	}
 	catch (exception &e)
 	{
@@ -77,7 +72,7 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 
 	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
 
-	encodingCompleted->_encodingJobKey = _encodingJobKey;
+	encodingCompleted->_encodingJobKey = _encoding->_encodingJobKey;
 	encodingCompleted->_completedWithError = _completedWithError;
 	encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
 	encodingCompleted->_killedByUser = _killedByUser;
@@ -87,8 +82,8 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 	encodingCompleted->_timestamp = chrono::system_clock::now();
 
 	{
-		shared_lock lock(_encoding->_progressMutex);
-		encodingCompleted->_progress = _encoding->_progress;
+		shared_lock lock(_encoding->_dataMutex);
+		encodingCompleted->_progress = _encoding->_data;
 	}
 
 	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
@@ -98,16 +93,16 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 		", ingestionJobKey: {}"
 		", encodingJobKey: {}"
 		", encodingCompletedMap size: {}",
-		_ingestionJobKey, _encodingJobKey, _encodingCompletedMap->size()
+		_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encodingCompletedMap->size()
 	);
 }
 
-void FFMPEGEncoderTask::removeEncodingCompletedIfPresent()
+void FFMPEGEncoderTask::removeEncodingCompletedIfPresent() const
 {
 
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	map<int64_t, shared_ptr<EncodingCompleted>>::iterator it = _encodingCompletedMap->find(_encodingJobKey);
+	auto it = _encodingCompletedMap->find(_encoding->_encodingJobKey);
 	if (it != _encodingCompletedMap->end())
 	{
 		_encodingCompletedMap->erase(it);
@@ -117,14 +112,16 @@ void FFMPEGEncoderTask::removeEncodingCompletedIfPresent()
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
 			", encodingCompletedMap size: {}",
-			_ingestionJobKey, _encodingJobKey, _encodingCompletedMap->size()
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encodingCompletedMap->size()
 		);
 	}
 }
 
 void FFMPEGEncoderTask::uploadLocalMediaToMMS(
-	int64_t ingestionJobKey, int64_t encodingJobKey, json ingestedParametersRoot, json encodingProfileDetailsRoot, json encodingParametersRoot,
-	string sourceFileExtension, string encodedStagingAssetPathName, string workflowLabel, string ingester, int64_t encodingProfileKey,
+	int64_t ingestionJobKey, int64_t encodingJobKey, json ingestedParametersRoot, const json& encodingProfileDetailsRoot,
+	const json& encodingParametersRoot,
+	string sourceFileExtension, const string& encodedStagingAssetPathName, const string& workflowLabel, const string& ingester,
+	int64_t encodingProfileKey,
 	int64_t variantOfMediaItemKey // in case Media is a variant of a MediaItem already present
 )
 {
@@ -290,7 +287,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	*/
 
 	{
-		size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
+		size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of('/');
 		if (endOfDirectoryIndex != string::npos)
 		{
 			string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
@@ -458,7 +455,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	int64_t ingestionJobKey, string workflowMetadata, string fileFormat, string binaryPathFileName, int64_t binaryFileSizeInBytes, int64_t userKey,
-	string apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
+	const string& apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 )
 {
 	SPDLOG_INFO(
@@ -532,7 +529,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 				{
 					localBinaryPathFileName = binaryPathFileName + ".tar.gz";
 
-					size_t endOfPathIndex = localBinaryPathFileName.find_last_of("/");
+					size_t endOfPathIndex = localBinaryPathFileName.find_last_of('/');
 					if (endOfPathIndex == string::npos)
 					{
 						string errorMessage = std::format(
@@ -655,8 +652,8 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 
 	// in case of a new content
 	string sourceURL, // if empty it means binary is ingested later (PUSH)
-	string title, json userDataRoot,
-	json ingestedParametersRoot, // it could be also nullValue
+	string title, const json& userDataRoot,
+	const json& ingestedParametersRoot, // it could be also nullValue
 	int64_t encodingProfileKey,
 
 	int64_t variantOfMediaItemKey // in case of a variant, otherwise -1
@@ -716,14 +713,14 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			field = "ingester";
 			addContentParametersRoot[field] = ingester;
 
-			if (sourceURL != "")
+			if (!sourceURL.empty())
 			{
 				// string sourceURL = string("move") + "://" + imagesDirectory + "/" + generatedFrameFileName;
 				field = "sourceURL";
 				addContentParametersRoot[field] = sourceURL;
 			}
 
-			if (title != "")
+			if (!title.empty())
 			{
 				field = "title";
 				addContentParametersRoot[field] = title;
@@ -785,14 +782,14 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 
 struct FFMpegProgressData
 {
-	int64_t _ingestionJobKey;
+	int64_t _ingestionJobKey{};
 	chrono::system_clock::time_point _lastTimeProgressUpdate;
-	double _lastPercentageUpdated;
+	double _lastPercentageUpdated{};
 };
 static int progressDownloadCallback2(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
 
-	FFMpegProgressData *progressData = (FFMpegProgressData *)clientp;
+	auto *progressData = static_cast<FFMpegProgressData *>(clientp);
 
 	int progressUpdatePeriodInSeconds = 15;
 
@@ -1009,7 +1006,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 		string localModulation;
 
 		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
-		if (tvModulation != "")
+		if (!tvModulation.empty())
 		{
 			if (tvModulation == "PSK/8")
 				localModulation = "psk_8";
@@ -1126,7 +1123,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 
 		bool configurationAlreadyPresent = false;
 		bool wroteFirstLine = false;
-		for (string configuration : vConfiguration)
+		for (const string& configuration : vConfiguration)
 		{
 			if (toBeAdded)
 			{
@@ -1204,7 +1201,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 		string localModulation;
 
 		// dvblast modulation: qpsk|psk_8|apsk_16|apsk_32
-		if (tvModulation != "")
+		if (!tvModulation.empty())
 		{
 			if (tvModulation == "PSK/8")
 				localModulation = "psk_8";
@@ -1309,25 +1306,25 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 {
 	try
 	{
-		unique_lock locker(_encoding->_progressMutex);
+		unique_lock locker(_encoding->_dataMutex);
 
 		// su questo file di log scrivo gli errori e tutto cio che non è gestito
 		if (!ffmpegLine.empty())
 		{
-			if (!_encoding->_progress.ffmpegOutputLogFile)
+			if (!_encoding->_data.ffmpegOutputLogFile)
 			{
 				string ffmpegOutputLogPathFileName = _encoding->_ffmpeg->getOutputFfmpegPathFileName();
 				// string ffmpegOutputLogPathFileName = std::format("{}/{}_{}_{}.log", _encoding->_ffmpeg->_ffmpegTempDir,
 				// 	_encoding->_method, _ingestionJobKey, _encodingJobKey);
-				_encoding->_progress.ffmpegOutputLogFile.open(ffmpegOutputLogPathFileName, ofstream::binary | ofstream::trunc);
-				if (!_encoding->_progress.ffmpegOutputLogFile)
+				_encoding->_data.ffmpegOutputLogFile.open(ffmpegOutputLogPathFileName, ofstream::binary | ofstream::trunc);
+				if (!_encoding->_data.ffmpegOutputLogFile)
 				{
 					SPDLOG_ERROR(
 						"ffmpegLineCallback, open file failed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", ffmpegOutputLogPathFileName: {}",
-						_ingestionJobKey, _encodingJobKey, ffmpegOutputLogPathFileName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegOutputLogPathFileName
 					);
 				}
 			}
@@ -1335,8 +1332,8 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 		else
 		{
 			// ffmpegLine vuoto indica fine scrittura su file
-			if (_encoding->_progress.ffmpegOutputLogFile)
-				_encoding->_progress.ffmpegOutputLogFile.close();
+			if (_encoding->_data.ffmpegOutputLogFile)
+				_encoding->_data.ffmpegOutputLogFile.close();
 		}
 
 		// detect errors
@@ -1345,21 +1342,21 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			const string ffmpegLineLower = StringUtils::lowerCase(ffmpegLine);
 
 			// known errors
-			for (auto &pattern : FFMPEGEncoderBase::Encoding::Progress::errorPatterns)
+			for (auto &pattern : FFMPEGEncoderBase::Encoding::Data::errorPatterns)
 			{
 				if (ffmpegLineLower.find(pattern) != std::string::npos)
 				{
-					_encoding->_progress.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
+					_encoding->_data.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
 					SPDLOG_ERROR("ffmpegLineCallback, {} detected"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
-						", ffmpegLine: {}", pattern, _ingestionJobKey, _encodingJobKey, ffmpegLine);
+						", ffmpegLine: {}", pattern, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 					error = true;
-					if (_encoding->_progress.ffmpegOutputLogFile)
+					if (_encoding->_data.ffmpegOutputLogFile)
 					{
-						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-						_encoding->_progress.ffmpegOutputLogFile.flush();
+						_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_data.ffmpegOutputLogFile.flush();
 					}
 				}
 			}
@@ -1368,17 +1365,17 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 				// generic error
 				if (ffmpegLineLower.find("error") != std::string::npos)
 				{
-					_encoding->_progress.pushErrorMessage(std::format("error: {}", ffmpegLine));
+					_encoding->_data.pushErrorMessage(std::format("error: {}", ffmpegLine));
 					SPDLOG_ERROR("ffmpegLineCallback, error detected"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
-						", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+						", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 					error = true;
-					if (_encoding->_progress.ffmpegOutputLogFile)
+					if (_encoding->_data.ffmpegOutputLogFile)
 					{
-						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-						_encoding->_progress.ffmpegOutputLogFile.flush();
+						_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_data.ffmpegOutputLogFile.flush();
 					}
 				}
 			}
@@ -1403,12 +1400,12 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 				{
 					case "frame"_case:
 					{
-						_encoding->_progress.processedFrames = stoi(string(value));
+						_encoding->_data.processedFrames = stoi(string(value));
 						break;
 					}
 					case "fps"_case:
 					{
-						_encoding->_progress.framePerSeconds = stod(string(value));
+						_encoding->_data.framePerSeconds = stod(string(value));
 						break;
 					}
 					case "speed"_case:
@@ -1417,28 +1414,28 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						{
 							if (value.back() == 'x')
 								value.remove_suffix(1);
-							_encoding->_progress.speed = std::stod(string(value));
+							_encoding->_data.speed = std::stod(string(value));
 						}
 						break;
 					}
 					case "drop_frames"_case:
 					{
-						_encoding->_progress.dropFrames = stoi(string(value));
+						_encoding->_data.dropFrames = stoi(string(value));
 						break;
 					}
 					case "dup_frames"_case:
 					{
-						_encoding->_progress.dupFrames = stoi(string(value));
+						_encoding->_data.dupFrames = stoi(string(value));
 						break;
 					}
 					case "stream_0_0_q"_case:
 					{
-						_encoding->_progress.stream_0_0_q = std::stod(string(value));
+						_encoding->_data.stream_0_0_q = std::stod(string(value));
 						break;
 					}
 					case "stream_1_0_q"_case:
 					{
-						_encoding->_progress.stream_1_0_q = std::stod(string(value));
+						_encoding->_data.stream_1_0_q = std::stod(string(value));
 						break;
 					}
 					case "out_time"_case:
@@ -1476,7 +1473,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						*/
 						if (value != "N/A")
 						{
-							_encoding->_progress.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
+							_encoding->_data.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
 							realBitRateChanged = true;
 						}
 						break;
@@ -1485,7 +1482,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					{
 						if (value != "N/A")
 						{
-							_encoding->_progress.totalSizeKBps = stoul(string(value));
+							_encoding->_data.totalSizeKBps = stoul(string(value));
 							realBitRateChanged = true;
 						}
 						break;
@@ -1495,7 +1492,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						// value is in kbits/s
 						if (value != "N/A")
 						{
-							_encoding->_progress.bitRateKbps = stod(std::string(value));
+							_encoding->_data.bitRateKbps = stod(std::string(value));
 							realBitRateChanged = true;
 						}
 						break;
@@ -1503,7 +1500,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					case "progress"_case:
 					{
 						if (value == "end")
-							_encoding->_progress.finished = true;
+							_encoding->_data.finished = true;
 						break;
 					}
 					default:
@@ -1511,30 +1508,30 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 						SPDLOG_WARN("ffmpegLineCallback, line not managed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
-							", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+							", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 
-						if (_encoding->_progress.ffmpegOutputLogFile)
+						if (_encoding->_data.ffmpegOutputLogFile)
 						{
-							_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-							_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-							_encoding->_progress.ffmpegOutputLogFile.flush();
+							_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+							_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
+							_encoding->_data.ffmpegOutputLogFile.flush();
 						}
 						break;
 					}
 				}
 
 				// NEW: calcolo del bitrate reale
-				if (realBitRateChanged && _encoding->_progress.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_progress.totalSizeKBps > 0)
+				if (realBitRateChanged && _encoding->_data.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_data.totalSizeKBps > 0)
 				{
-					double seconds = _encoding->_progress.processedOutputTimestampMilliSecs.count() / 1000.0;
-					double realBps = (_encoding->_progress.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
+					double seconds = _encoding->_data.processedOutputTimestampMilliSecs.count() / 1000.0;
+					double realBps = (_encoding->_data.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
 					double realKbps = realBps * 1000.0;
 
 					// Media ponderata per stabilità:
-					if (_encoding->_progress.bitRateKbps > 0.0)
-						_encoding->_progress.avgBitRateKbps = (_encoding->_progress.bitRateKbps * 0.6) + (realKbps * 0.4);
+					if (_encoding->_data.bitRateKbps > 0.0)
+						_encoding->_data.avgBitRateKbps = (_encoding->_data.bitRateKbps * 0.6) + (realKbps * 0.4);
 					else
-						_encoding->_progress.avgBitRateKbps = realKbps;
+						_encoding->_data.avgBitRateKbps = realKbps;
 				}
 			}
 			else
@@ -1542,13 +1539,13 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 				SPDLOG_WARN("ffmpegLineCallback, line not managed"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
-					", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+					", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 
-				if (_encoding->_progress.ffmpegOutputLogFile)
+				if (_encoding->_data.ffmpegOutputLogFile)
 				{
-					_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-					_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-					_encoding->_progress.ffmpegOutputLogFile.flush();
+					_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+					_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
+					_encoding->_data.ffmpegOutputLogFile.flush();
 				}
 			}
 		}
@@ -1561,7 +1558,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 			", encodingJobKey: {}"
 			", ffmpegLine: {}"
 			", exception: {}",
-			_ingestionJobKey, _encodingJobKey, ffmpegLine, e.what()
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine, e.what()
 		);
 	}
 }

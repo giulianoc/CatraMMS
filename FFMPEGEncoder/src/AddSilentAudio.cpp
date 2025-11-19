@@ -15,7 +15,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
 		", requestBody: {}",
-		api, _ingestionJobKey, _encodingJobKey, JSONUtils::toString(metadataRoot)
+		api, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, JSONUtils::toString(metadataRoot)
 	);
 
 	try
@@ -63,7 +63,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", directoryPathName: {}",
-							_ingestionJobKey, _encodingJobKey, directoryPathName
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -88,7 +88,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", directoryPathName: {}",
-							_ingestionJobKey, _encodingJobKey, directoryPathName
+							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, directoryPathName
 						);
 						fs::create_directories(directoryPathName);
 						fs::permissions(
@@ -103,7 +103,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 				string sourcePhysicalDeliveryURL = JSONUtils::asString(sourceRoot, "sourcePhysicalDeliveryURL", "");
 
 				sourceAssetPathName = downloadMediaFromMMS(
-					_ingestionJobKey, _encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
 				);
 			}
 			else
@@ -121,7 +121,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 					encodingProfileDetailsRoot,
 
-					encodedStagingAssetPathName, _encodingJobKey, _ingestionJobKey, _encoding->_childProcessId
+					encodedStagingAssetPathName, _encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId
 				);
 
 				_encoding->_ffmpegTerminatedSuccessful = true;
@@ -131,7 +131,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", encodedStagingAssetPathName: {}",
-					_ingestionJobKey, _encodingJobKey, encodedStagingAssetPathName
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, encodedStagingAssetPathName
 				);
 			}
 			catch (FFMpegEncodingKilledByUser &e)
@@ -149,7 +149,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", stopIfReferenceProcessingError: {}",
-						_ingestionJobKey, _encodingJobKey, stopIfReferenceProcessingError
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, stopIfReferenceProcessingError
 					);
 
 					continue;
@@ -166,7 +166,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", stopIfReferenceProcessingError: {}",
-						_ingestionJobKey, _encodingJobKey, stopIfReferenceProcessingError
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, stopIfReferenceProcessingError
 					);
 
 					continue;
@@ -181,7 +181,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", sourceAssetPathName: {}",
-						_ingestionJobKey, _encodingJobKey, sourceAssetPathName
+						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 					);
 					fs::remove_all(sourceAssetPathName);
 				}
@@ -191,8 +191,8 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 				int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
 
 				uploadLocalMediaToMMS(
-					_ingestionJobKey, _encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,
-					sourceFileExtension, encodedStagingAssetPathName, workflowLabel,
+					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot,
+					encodingParametersRoot, sourceFileExtension, encodedStagingAssetPathName, workflowLabel,
 					"External Transcoder", // ingester
 					encodingProfileKey
 				);
@@ -209,7 +209,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -228,7 +228,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -249,7 +249,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _ingestionJobKey, _encodingJobKey, api,
+			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

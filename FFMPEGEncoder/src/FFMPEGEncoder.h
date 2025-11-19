@@ -273,7 +273,8 @@ class FFMPEGEncoder final : public FastCGIAPI
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
 		const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		const unordered_map<string, string>& queryParameters
+	) const;
 
 	void liveProxy_liveGrid(
 		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
@@ -292,22 +293,22 @@ class FFMPEGEncoder final : public FastCGIAPI
 	void encodeContentThread(
 		// FCGX_Request& request,
 		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
-	);
+	) const;
 
 	void overlayImageOnVideoThread(
 		// FCGX_Request& request,
 		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
-	);
+	) const;
 
 	void overlayTextOnVideoThread(
 		// FCGX_Request& request,
 		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
-	);
+	) const;
 
 	void generateFramesThread(
 		// FCGX_Request& request,
 		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
-	);
+	) const;
 
 	void slideShowThread(
 		// FCGX_Request& request,
@@ -345,12 +346,12 @@ class FFMPEGEncoder final : public FastCGIAPI
 	void pictureInPictureThread(
 		// FCGX_Request& request,
 		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
-	);
+	) const;
 
 	void introOutroOverlayThread(
 		// FCGX_Request& request,
 		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json &metadataRoot
-	);
+	) const;
 
 	void cutFrameAccurateThread(
 		// FCGX_Request& request,

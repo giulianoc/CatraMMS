@@ -6,10 +6,9 @@ class LiveGrid : public FFMPEGEncoderTask
 
   public:
 	LiveGrid(
-		shared_ptr<LiveProxyAndGrid> liveProxyData, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
+		const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,
 		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
 	);
-	~LiveGrid();
 
 	void encodeContent(const string_view& requestBody);
 

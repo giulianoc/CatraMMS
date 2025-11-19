@@ -674,7 +674,7 @@ void FFMPEGEncoder::requestManagement(
 			}
 			else
 			{
-				selectedEncoding->resetEncoding();
+				selectedEncoding->reset();
 
 				string errorMessage = std::format(
 					"wrong method"
@@ -690,7 +690,7 @@ void FFMPEGEncoder::requestManagement(
 		}
 		catch (exception &e)
 		{
-			selectedEncoding->resetEncoding();
+			selectedEncoding->reset();
 
 			string errorMessage = std::format(
 				"{} failed"
@@ -832,7 +832,7 @@ void FFMPEGEncoder::liveRecorder(
 			}
 			catch (exception &e)
 			{
-				selectedLiveRecording->resetEncoding();
+				selectedLiveRecording->reset();
 
 				string errorMessage = std::format(
 					"liveRecorder failed"
@@ -980,45 +980,26 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 			 * 2021-09-15: liveProxy cannot wait. Scenario: received a lot of requests that fail Those requests set _lastEncodingAcceptedTime
 			and delay a lot the requests that would work fine Consider that Live-Proxy is a Task where FFMPEGEncoder
 			 * could receive a lot of close requests
-			lock_guard<mutex>
-			locker(*_lastEncodingAcceptedTimeMutex);
-			// Make some time after the acception of the
-			previous encoding request
-			// in order to give time to the cpuUsage
-			variable to be correctly updated
-			chrono::system_clock::time_point now =
-			chrono::system_clock::now(); if (now -
-			*_lastEncodingAcceptedTime <
-					chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+			lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+			// Make some time after the acception of the previous encoding request
+			// in order to give time to the cpuUsage variable to be correctly updated
+			chrono::system_clock::time_point now = chrono::system_clock::now();
+			if (now - *_lastEncodingAcceptedTime < chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
 			{
-					int secondsToWait =
-							chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count()
-			- chrono::duration_cast<chrono::seconds>( now -
-			*_lastEncodingAcceptedTime).count(); string
-			errorMessage = string("Too early to accept a new
-			encoding request")
-							+ ",
-			encodingJobKey: " + to_string(encodingJobKey)
-							+ ", seconds
-			since the last request: "
-									+
-			to_string(chrono::duration_cast<chrono::seconds>(
-			now -
-			*_lastEncodingAcceptedTime).count())
-							+ ",
-			secondsToWait: " + to_string(secondsToWait)
-							+ ", " +
-			NoEncodingAvailable().what();
+				int secondsToWait = chrono::seconds(_intervalInSecondsBetweenEncodingAccept).count() -
+					chrono::duration_cast<chrono::seconds>(now - *_lastEncodingAcceptedTime).count();
+				string errorMessage = string("Too early to accept a new encoding request")
+						+ ", encodingJobKey: " + to_string(encodingJobKey)
+						+ ", seconds since the last request: " + to_string(chrono::duration_cast<chrono::seconds>(now -
+							*_lastEncodingAcceptedTime).count())
+						+ ", secondsToWait: " + to_string(secondsToWait)
+						+ ", " + NoEncodingAvailable().what();
+				warn(__FILEREF__ + errorMessage);
 
-					warn(__FILEREF__ +
-			errorMessage);
+				sendError(request, 400, errorMessage);
 
-					sendError(request, 400,
-			errorMessage);
-
-					// throw
-			runtime_error(noEncodingAvailableMessage);
-					return;
+				// throw runtime_error(noEncodingAvailableMessage);
+				return;
 			}
 			*/
 
@@ -1056,7 +1037,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 		}
 		catch (exception &e)
 		{
-			selectedLiveProxy->resetEncoding();
+			selectedLiveProxy->reset();
 
 			string errorMessage = std::format(
 				"liveProxyThread failed"
@@ -1352,8 +1333,8 @@ void FFMPEGEncoder::encodingStatus(
 				else
 					responseBodyRoot["encodingProgress"] = encodingProgress;
 				{
-					shared_lock lock(selectedEncoding->_progressMutex);
-					responseBodyRoot["progress"] = selectedEncoding->_progress.toJson();
+					shared_lock lock(selectedEncoding->_dataMutex);
+					responseBodyRoot["progress"] = selectedEncoding->_data.toJson();
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1378,8 +1359,8 @@ void FFMPEGEncoder::encodingStatus(
 				// sense the encoding progress
 				responseBodyRoot["encodingProgress"] = nullptr;
 				{
-					shared_lock lock(selectedLiveProxy->_progressMutex);
-					responseBodyRoot["progress"] = selectedLiveProxy->_progress.toJson();
+					shared_lock lock(selectedLiveProxy->_dataMutex);
+					responseBodyRoot["progress"] = selectedLiveProxy->_data.toJson();
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1407,8 +1388,8 @@ void FFMPEGEncoder::encodingStatus(
 				// EncoderVideoAudioProxy.cpp
 				responseBodyRoot["encodingProgress"] = nullptr;
 				{
-					shared_lock lock(selectedLiveRecording->_progressMutex);
-					responseBodyRoot["progress"] = selectedLiveRecording->_progress.toJson();
+					shared_lock lock(selectedLiveRecording->_dataMutex);
+					responseBodyRoot["progress"] = selectedLiveRecording->_data.toJson();
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -2036,7 +2017,7 @@ void FFMPEGEncoder::encodingProgress(
 	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
 	const unordered_map<string, string>& requestDetails,
 	const unordered_map<string, string>& queryParameters
-)
+) const
 {
 	string api = "encodingProgress";
 
@@ -2362,16 +2343,21 @@ bool FFMPEGEncoder::basicAuthenticationRequired(const string &requestURI, const 
 void FFMPEGEncoder::encodeContentThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json &metadataRoot
-)
+) const
 {
 	try
 	{
-		EncodeContent encodeContent(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
+		EncodeContent encodeContent(encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		encodeContent.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2383,18 +2369,23 @@ void FFMPEGEncoder::encodeContentThread(
 void FFMPEGEncoder::overlayImageOnVideoThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json &metadataRoot
-)
+) const
 {
 	try
 	{
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
 		OverlayImageOnVideo overlayImageOnVideo(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
+			encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		overlayImageOnVideo.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2406,18 +2397,23 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 void FFMPEGEncoder::overlayTextOnVideoThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json &metadataRoot
-)
+) const
 {
 	try
 	{
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
 		OverlayTextOnVideo overlayTextOnVideo(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
+			encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		overlayTextOnVideo.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2429,16 +2425,21 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 void FFMPEGEncoder::generateFramesThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json &metadataRoot
-)
+) const
 {
 	try
 	{
-		GenerateFrames generateFrames(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
+		GenerateFrames generateFrames(encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		generateFrames.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 	}
 }
 
@@ -2448,12 +2449,17 @@ void FFMPEGEncoder::slideShowThread(
 {
 	try
 	{
-		SlideShow slideShow(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
+		SlideShow slideShow(encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		slideShow.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 	}
 }
 
@@ -2464,12 +2470,17 @@ void FFMPEGEncoder::videoSpeedThread(
 {
 	try
 	{
-		VideoSpeed videoSpeed(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
+		VideoSpeed videoSpeed(encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		videoSpeed.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2485,12 +2496,17 @@ void FFMPEGEncoder::addSilentAudioThread(
 {
 	try
 	{
-		AddSilentAudio addSilentAudio(encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
+		AddSilentAudio addSilentAudio(encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		addSilentAudio.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2502,18 +2518,23 @@ void FFMPEGEncoder::addSilentAudioThread(
 void FFMPEGEncoder::pictureInPictureThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json &metadataRoot
-)
+) const
 {
 	try
 	{
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
 		PictureInPicture pictureInPicture(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
+			encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		pictureInPicture.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2525,19 +2546,23 @@ void FFMPEGEncoder::pictureInPictureThread(
 void FFMPEGEncoder::introOutroOverlayThread(
 	// FCGX_Request& request,
 	const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json &metadataRoot
-)
+) const
 {
 	try
 	{
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
 		IntroOutroOverlay introOutroOverlay(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
+			encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		introOutroOverlay.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
 
+		encoding->reset();
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
 		// is removed (this is checked in EncoderVideoAudioProxy) throw
@@ -2552,14 +2577,19 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 {
 	try
 	{
+		encoding->_ingestionJobKey = ingestionJobKey;
+		encoding->_encodingJobKey = encodingJobKey;
 		CutFrameAccurate cutFrameAccurate(
-			encoding, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
+			encoding, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap
 		);
 		cutFrameAccurate.encodeContent(metadataRoot);
+		encoding->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		encoding->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2576,15 +2606,20 @@ void FFMPEGEncoder::liveRecorderThread(
 {
 	try
 	{
+		liveRecording->_ingestionJobKey = ingestionJobKey;
+		liveRecording->_encodingJobKey = encodingJobKey;
 		LiveRecorder liveRecorder(
-			liveRecording, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _tvChannelsPortsMutex,
+			liveRecording, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _tvChannelsPortsMutex,
 			_tvChannelPort_CurrentOffset
 		);
 		liveRecorder.encodeContent(requestBody);
+		liveRecording->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		liveRecording->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2601,15 +2636,20 @@ void FFMPEGEncoder::liveProxyThread(
 {
 	try
 	{
+		liveProxyData->_ingestionJobKey = ingestionJobKey;
+		liveProxyData->_encodingJobKey = encodingJobKey;
 		LiveProxy liveProxy(
-			liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _tvChannelsPortsMutex,
+			liveProxyData, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap, _tvChannelsPortsMutex,
 			_tvChannelPort_CurrentOffset
 		);
 		liveProxy.encodeContent(requestBody);
+		liveProxyData->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		liveProxyData->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file
@@ -2626,12 +2666,17 @@ void FFMPEGEncoder::liveGridThread(
 {
 	try
 	{
-		LiveGrid liveGrid(liveProxyData, ingestionJobKey, encodingJobKey, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
+		liveProxyData->_ingestionJobKey = ingestionJobKey;
+		liveProxyData->_encodingJobKey = encodingJobKey;
+		LiveGrid liveGrid(liveProxyData, _configurationRoot, _encodingCompletedMutex, _encodingCompletedMap);
 		liveGrid.encodeContent(requestBody);
+		liveProxyData->reset();
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(e.what());
+
+		liveProxyData->reset();
 
 		// this method run on a detached thread, we will not generate
 		// exception The ffmpeg method will make sure the encoded file

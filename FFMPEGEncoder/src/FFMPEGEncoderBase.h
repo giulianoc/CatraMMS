@@ -27,7 +27,53 @@ class FFMPEGEncoderBase
   public:
 	struct Encoding
 	{
-		struct Progress {
+		virtual ~Encoding() = default;
+
+		void initEncoding(const int64_t encodingJobKey, const string_view& method)
+		{
+			_available = false;
+			_method = method;
+			_childProcessId.reset(); // not running
+			_killToRestartByEngine = false;
+			_encodingJobKey = encodingJobKey;
+			_ffmpegTerminatedSuccessful = false;
+		}
+
+		virtual void reset()
+		{
+			unique_lock lock(_dataMutex);
+
+			_available = true;
+			_ingestionJobKey = 0;
+			_encodingJobKey = 0;
+			_method = "";
+			_childProcessId.reset(); // not running
+			_data.reset();
+		}
+
+		void pushErrorMessage(const string& errorMessage)
+		{
+			lock_guard<mutex> locker(_errorMessagesMutex);
+			_errorMessages.push(errorMessage);
+
+			_lastErrorMessage = errorMessage;
+		}
+
+		string popErrorMessage()
+		{
+			string errorMessage;
+
+			lock_guard<mutex> locker(_errorMessagesMutex);
+
+			if (!_errorMessages.empty())
+			{
+				errorMessage = _errorMessages.front();
+				_errorMessages.pop();
+			}
+			return errorMessage;
+		}
+
+		struct Data {
 			// lower case
 			inline static const std::vector<string> errorPatterns = {
 				"invalid data found",
@@ -42,7 +88,7 @@ class FFMPEGEncoderBase
 				"invalid argument",
 				"403 forbidden", // url forbidden
 				"non-monotonous dts in output stream",
-				"404 Not Found",	// url not found
+				"404 not found"	// url not found
 			};
 			static constexpr int32_t maxErrorsStored = 50;
 
@@ -64,9 +110,9 @@ class FFMPEGEncoderBase
 
 			queue<string> _errorMessages;
 
-			Progress() = default;
+			Data() = default;
 			// Copy assignment operator that ignores ffmpegOutputLogFile
-			Progress& operator=(const Progress& other)
+			Data& operator=(const Data& other)
 			{
 				if (this == &other)
 					return *this;
@@ -142,10 +188,13 @@ class FFMPEGEncoderBase
 				return progressRoot;
 			}
 		};
+		shared_mutex _dataMutex;
+		Data _data;
 
 		string _method;
 		bool _available{};
 		ProcessUtility::ProcessId _childProcessId;
+		int64_t _ingestionJobKey{};
 		int64_t _encodingJobKey{};
 		shared_ptr<FFMpegWrapper> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful{};
@@ -154,53 +203,9 @@ class FFMPEGEncoderBase
 		mutex _errorMessagesMutex;
 		queue<string> _errorMessages;
 		string _lastErrorMessage;
-
-		shared_mutex _progressMutex;
-		Progress _progress;
-
-		void initEncoding(const int64_t encodingJobKey, const string_view& method)
-		{
-			_available = false;
-			_method = method;
-			_childProcessId.reset(); // not running
-			_killToRestartByEngine = false;
-			_encodingJobKey = encodingJobKey;
-			_ffmpegTerminatedSuccessful = false;
-		}
-
-		void resetEncoding()
-		{
-			unique_lock lock(_progressMutex);
-
-			_available = true;
-			_childProcessId.reset(); // not running
-			_progress.reset();
-		}
-
-		void pushErrorMessage(const string& errorMessage)
-		{
-			lock_guard<mutex> locker(_errorMessagesMutex);
-			_errorMessages.push(errorMessage);
-
-			_lastErrorMessage = errorMessage;
-		}
-
-		string popErrorMessage()
-		{
-			string errorMessage;
-
-			lock_guard<mutex> locker(_errorMessagesMutex);
-
-			if (!_errorMessages.empty())
-			{
-				errorMessage = _errorMessages.front();
-				_errorMessages.pop();
-			}
-			return errorMessage;
-		}
 	};
 
-	struct LiveProxyAndGrid : public Encoding
+	struct LiveProxyAndGrid final : public Encoding
 	{
 		bool _killedBecauseOfNotWorking{}; // by monitorThread
 
@@ -218,7 +223,6 @@ class FFMPEGEncoderBase
 
 		long _numberOfRestartBecauseOfFailure{};
 
-		int64_t _ingestionJobKey{};
 		json _encodingParametersRoot;
 		json _ingestedParametersRoot;
 
@@ -261,6 +265,14 @@ class FFMPEGEncoderBase
 
 			return liveProxyAndGrid;
 		}
+
+		void reset() override
+		{
+			_encodingParametersRoot = nullptr;
+			_killedBecauseOfNotWorking = false;
+
+			Encoding::reset();
+		}
 	};
 
 	struct LiveRecording : public Encoding
@@ -280,7 +292,6 @@ class FFMPEGEncoderBase
 
 		long _numberOfRestartBecauseOfFailure{};
 
-		int64_t _ingestionJobKey{};
 		bool _externalEncoder{};
 		json _encodingParametersRoot;
 		json _ingestedParametersRoot;
@@ -301,6 +312,15 @@ class FFMPEGEncoderBase
 		string _monitorVirtualVODManifestFileName;		// used to build virtualVOD
 		string _virtualVODStagingContentsPath;
 		int64_t _liveRecorderVirtualVODImageMediaItemKey{};
+
+		void reset() override
+		{
+			_encodingParametersRoot = nullptr;
+			_channelLabel = "";
+			_killedBecauseOfNotWorking = false;
+
+			Encoding::reset();
+		}
 
 		[[nodiscard]] shared_ptr<LiveRecording> cloneForMonitorAndVirtualVOD() const
 		{
@@ -359,7 +379,7 @@ class FFMPEGEncoderBase
 		bool _urlNotFound;
 		chrono::system_clock::time_point _timestamp;
 
-		Encoding::Progress _progress;
+		Encoding::Data _progress;
 	};
 
   public:
