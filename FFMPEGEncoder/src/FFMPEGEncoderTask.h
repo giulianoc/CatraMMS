@@ -24,7 +24,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
   public:
 	FFMPEGEncoderTask(
-		shared_ptr<FFMPEGEncoderBase::Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
+		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const json& configurationRoot,
 		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap
 	);
 	~FFMPEGEncoderTask();
@@ -63,7 +63,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
 	void ffmpegLineCallback(const string_view& ffmpegLine);
 
-	string buildAddContentIngestionWorkflow(
+	static string buildAddContentIngestionWorkflow(
 		int64_t ingestionJobKey, string label, string fileFormat, string ingester,
 
 		// in case of a new content
@@ -82,12 +82,12 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 		int64_t variantOfMediaItemKey = -1 // in case Media is a variant of a MediaItem already present
 	);
 
-	string downloadMediaFromMMS(
-		int64_t ingestionJobKey, int64_t encodingJobKey, shared_ptr<FFMpegWrapper> ffmpeg, string sourceFileExtension,
-		string sourcePhysicalDeliveryURL, string destAssetPathName
+	static string downloadMediaFromMMS(
+		int64_t ingestionJobKey, int64_t encodingJobKey, const shared_ptr<FFMpegWrapper> &ffmpeg, const string &sourceFileExtension,
+		const string &sourcePhysicalDeliveryURL, const string &destAssetPathName
 	);
 
-	long getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset);
+	long getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset) const;
 
 	void createOrUpdateTVDvbLastConfigurationFile(
 		int64_t ingestionJobKey, int64_t encodingJobKey, string multicastIP, string multicastPort, string tvType, int64_t tvServiceId,
@@ -98,6 +98,6 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	pair<string, string> getTVMulticastFromDvblastConfigurationFile(
 		int64_t ingestionJobKey, int64_t encodingJobKey, string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
 		int64_t tvBandwidthInMhz, string tvModulation
-	);
+	) const;
 };
 

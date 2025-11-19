@@ -6,7 +6,7 @@ class LiveRecorder : public FFMPEGEncoderTask
 
   public:
 	LiveRecorder(
-		shared_ptr<LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot,
+		const shared_ptr<LiveRecording> &liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const json& configurationRoot,
 		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap, mutex *tvChannelsPortsMutex,
 		long *tvChannelPort_CurrentOffset
 	);

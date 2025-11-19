@@ -15,8 +15,8 @@
 #include <sstream>
 
 FFMPEGEncoderTask::FFMPEGEncoderTask(
-	shared_ptr<Encoding> encoding, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot, mutex *encodingCompletedMutex,
-	map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
+	const shared_ptr<Encoding> &encoding, const int64_t ingestionJobKey, const int64_t encodingJobKey, const json& configurationRoot,
+	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
 )
 	: FFMPEGEncoderBase(configurationRoot)
 {
@@ -46,12 +46,6 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		_encoding->_errorMessages = {}; // clear
 		removeEncodingCompletedIfPresent();
 	}
-	catch (runtime_error &e)
-	{
-		// error(__FILEREF__ + "threadsStatistic addThread failed"
-		// 	+ ", exception: " + e.what()
-		// );
-	}
 	catch (exception &e)
 	{
 		// error(__FILEREF__ + "threadsStatistic addThread failed"
@@ -68,12 +62,6 @@ FFMPEGEncoderTask::~FFMPEGEncoderTask()
 
 		_encoding->_childProcessId.reset(); // set to 0 just to be sure because it is already set info the FFMpeg lib
 		_encoding->_available = true;		// this is the last setting making the encoding available again
-	}
-	catch (runtime_error &e)
-	{
-		// error(__FILEREF__ + "threadsStatistic removeThread failed"
-		// 	+ ", exception: " + e.what()
-		// );
 	}
 	catch (exception &e)
 	{
@@ -500,7 +488,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"Ingestion workflow failed (runtime_error)"
@@ -511,20 +499,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Ingestion workflow failed (runtime_error)"
-			", ingestionJobKey: {}"
-			", mmsWorkflowIngestionURL: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 
 	if (addContentIngestionJobKey == -1)
@@ -616,8 +591,9 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 					string errorMessage = std::format(
 						"tar command failed"
 						", ingestionJobKey: {}"
-						", executeCommand: {}",
-						ingestionJobKey, executeCommand
+						", executeCommand: {}"
+						", exception: {}",
+						ingestionJobKey, executeCommand, e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -644,7 +620,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			fs::remove_all(localBinaryPathFileName);
 		}
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"Ingestion binary failed"
@@ -668,33 +644,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			*/
 		}
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Ingestion binary failed"
-			", ingestionJobKey: {}"
-			", mmsBinaryURL: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, mmsBinaryURL, workflowMetadata, e.what()
-		);
-
-		if (fileFormat == "hls")
-		{
-			// it is useless to remove the generated tar.gz file because the parent staging directory
-			// will be removed. Also here we should add a bool above to be sure the tar was successful
-			/*
-			info(__FILEREF__ + "remove"
-				+ ", localBinaryPathFileName: " + localBinaryPathFileName
-			);
-			bool exceptionInCaseOfError = false;
-			fs::remove_all(localBinaryPathFileName, exceptionInCaseOfError);
-			*/
-		}
-
-		throw e;
+		throw;
 	}
 
 	return addContentIngestionJobKey;
@@ -819,7 +769,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 
 		return workflowMetadata;
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"buildAddContentIngestionWorkflow failed"
@@ -829,19 +779,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			ingestionJobKey, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"buildAddContentIngestionWorkflow failed"
-			", ingestionJobKey: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 }
 
@@ -904,8 +842,8 @@ static int progressDownloadCallback2(void *clientp, curl_off_t dltotal, curl_off
 }
 
 string FFMPEGEncoderTask::downloadMediaFromMMS(
-	int64_t ingestionJobKey, int64_t encodingJobKey, shared_ptr<FFMpegWrapper> ffmpeg, string sourceFileExtension, string sourcePhysicalDeliveryURL,
-	string destAssetPathName
+	int64_t ingestionJobKey, int64_t encodingJobKey, const shared_ptr<FFMpegWrapper> &ffmpeg, const string &sourceFileExtension,
+	const string& sourcePhysicalDeliveryURL, const string &destAssetPathName
 )
 {
 	string localDestAssetPathName = destAssetPathName;
@@ -957,7 +895,7 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 	return localDestAssetPathName;
 }
 
-long FFMPEGEncoderTask::getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset)
+long FFMPEGEncoderTask::getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset) const
 {
 	lock_guard<mutex> locker(*tvChannelsPortsMutex);
 
@@ -1243,7 +1181,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFile(
 	int64_t ingestionJobKey, int64_t encodingJobKey, string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
 	int64_t tvBandwidthInMhz, string tvModulation
-)
+) const
 {
 	string multicastIP;
 	string multicastPort;
@@ -1367,64 +1305,13 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 	return make_pair(multicastIP, multicastPort);
 }
 
-/*
-int FFMPEGEncoderTask::progressDownloadCallback(
-	int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal, double dlnow,
-	double ultotal, double ulnow
-)
-{
-
-	int progressUpdatePeriodInSeconds = 15;
-
-	chrono::system_clock::time_point now = chrono::system_clock::now();
-
-	if (dltotal != 0 && (dltotal == dlnow || now - lastTimeProgressUpdate >= chrono::seconds(progressUpdatePeriodInSeconds)))
-	{
-		double progress = (dlnow / dltotal) * 100;
-		// int downloadingPercentage = floorf(progress * 100) / 100;
-		// this is to have one decimal in the percentage
-		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
-
-		info(
-			__FILEREF__ + "Download still running" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-			", downloadingPercentage: " + to_string(downloadingPercentage) + ", dltotal: " + to_string(dltotal) + ", dlnow: " + to_string(dlnow) +
-			", ultotal: " + to_string(ultotal) + ", ulnow: " + to_string(ulnow)
-		);
-
-		lastTimeProgressUpdate = now;
-
-		if (lastPercentageUpdated != downloadingPercentage)
-		{
-			info(
-				__FILEREF__ + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-				", downloadingPercentage: " + to_string(downloadingPercentage)
-			);
-			// downloadingStoppedByUser = _mmsEngineDBFacade->updateIngestionJobSourceDownloadingInProgress (
-			//     ingestionJobKey, downloadingPercentage);
-
-			lastPercentageUpdated = downloadingPercentage;
-		}
-
-		// if (downloadingStoppedByUser)
-		//     return 1;   // stop downloading
-	}
-
-	return 0;
-}
-*/
-
-
-
 void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 {
-	// gestire _urlForbidden, _urlNotFound
-	// gestire try catch
-
 	try
 	{
 		unique_lock locker(_encoding->_progressMutex);
 
-		// su questo fille di log scrivo gli errori e tutto cio che non è gestito
+		// su questo file di log scrivo gli errori e tutto cio che non è gestito
 		if (!ffmpegLine.empty())
 		{
 			if (!_encoding->_progress.ffmpegOutputLogFile)
@@ -1455,39 +1342,43 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 		// detect errors
 		bool error = false;
 		{
-			if (ffmpegLine.find("error") != std::string::npos)
+			const string ffmpegLineLower = StringUtils::lowerCase(ffmpegLine);
+
+			// known errors
+			for (auto &pattern : FFMPEGEncoderBase::Encoding::Progress::errorPatterns)
 			{
-				_encoding->_progress.pushErrorMessage(std::format("error: {}", ffmpegLine));
-				SPDLOG_ERROR("ffmpegLineCallback, error detected"
-					", ingestionJobKey: {}"
-					", encodingJobKey: {}"
-					", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
-				error = true;
-				if (_encoding->_progress.ffmpegOutputLogFile)
+				if (ffmpegLineLower.find(pattern) != std::string::npos)
 				{
-					_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-					_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-					_encoding->_progress.ffmpegOutputLogFile.flush();
+					_encoding->_progress.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
+					SPDLOG_ERROR("ffmpegLineCallback, {} detected"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", ffmpegLine: {}", pattern, _ingestionJobKey, _encodingJobKey, ffmpegLine);
+					error = true;
+					if (_encoding->_progress.ffmpegOutputLogFile)
+					{
+						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_progress.ffmpegOutputLogFile.flush();
+					}
 				}
 			}
-			else
+			if (!error)
 			{
-				for (auto &pattern : FFMPEGEncoderBase::Encoding::Progress::errorPatterns)
+				// generic error
+				if (ffmpegLineLower.find("error") != std::string::npos)
 				{
-					if (ffmpegLine.find(pattern) != std::string::npos)
+					_encoding->_progress.pushErrorMessage(std::format("error: {}", ffmpegLine));
+					SPDLOG_ERROR("ffmpegLineCallback, error detected"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", ffmpegLine: {}", _ingestionJobKey, _encodingJobKey, ffmpegLine);
+					error = true;
+					if (_encoding->_progress.ffmpegOutputLogFile)
 					{
-						_encoding->_progress.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
-						SPDLOG_ERROR("ffmpegLineCallback, {} detected"
-							", ingestionJobKey: {}"
-							", encodingJobKey: {}"
-							", ffmpegLine: {}", pattern, _ingestionJobKey, _encodingJobKey, ffmpegLine);
-						error = true;
-						if (_encoding->_progress.ffmpegOutputLogFile)
-						{
-							_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-							_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
-							_encoding->_progress.ffmpegOutputLogFile.flush();
-						}
+						_encoding->_progress.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_progress.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_progress.ffmpegOutputLogFile.flush();
 					}
 				}
 			}

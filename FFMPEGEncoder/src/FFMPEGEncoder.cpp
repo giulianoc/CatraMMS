@@ -787,38 +787,22 @@ void FFMPEGEncoder::liveRecorder(
 				 * 2021-09-15: live-recorder cannot wait. Scenario: received a lot of requests that fail
 				 * Those requests set _lastEncodingAcceptedTime and delay a lot the requests that would work fine
 				 * Consider that Live-Recorder is a Task where FFMPEGEncoder could receive a lot of close requests
-				lock_guard<mutex>
-				locker(*_lastEncodingAcceptedTimeMutex);
-				// Make some time after the acception of the
-				previous encoding request
-				// in order to give time to the cpuUsage
-				variable to be correctly updated
-				chrono::system_clock::time_point now =
-				chrono::system_clock::now(); if (now -
-				*_lastEncodingAcceptedTime <
-						chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
+				lock_guard<mutex> locker(*_lastEncodingAcceptedTimeMutex);
+				// Make some time after the acception of the previous encoding request in order to give time to the cpuUsage
+				// variable to be correctly updated
+				chrono::system_clock::time_point now = chrono::system_clock::now();
+				if (now - *_lastEncodingAcceptedTime < chrono::seconds(_intervalInSecondsBetweenEncodingAccept))
 				{
-						string errorMessage =
-				string("Too early to accept a new encoding
-				request")
-								+ ", seconds
-				since the last request: "
-										+
-				to_string(chrono::duration_cast<chrono::seconds>(
-				now -
-				*_lastEncodingAcceptedTime).count())
-								+ ", " +
-				NoEncodingAvailable().what();
+					string errorMessage = string("Too early to accept a new encoding request")
+						+ ", seconds since the last request: " + to_string(chrono::duration_cast<chrono::seconds>(
+							now - *_lastEncodingAcceptedTime).count())
+						+ ", " + NoEncodingAvailable().what();
+					warn(__FILEREF__ + errorMessage);
 
-						warn(__FILEREF__ +
-				errorMessage);
+					sendError(request, 400, errorMessage);
 
-						sendError(request, 400,
-				errorMessage);
-
-						// throw
-				runtime_error(noEncodingAvailableMessage);
-						return;
+					// throw runtime_error(noEncodingAvailableMessage);
+					return;
 				}
 				*/
 

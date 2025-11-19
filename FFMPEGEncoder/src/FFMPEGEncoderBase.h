@@ -28,17 +28,21 @@ class FFMPEGEncoderBase
 	struct Encoding
 	{
 		struct Progress {
+			// lower case
 			inline static const std::vector<string> errorPatterns = {
-				"Invalid data found",
-				"Error while decoding",
-				"Connection refused",
-				"Connection timed out",
-				"Network is unreachable",
-				"Protocol not found",
-				"No such file",
-				"Broken pipe",
-				"Unknown encoder",
-				"Invalid argument"
+				"invalid data found",
+				"error while decoding",
+				"connection refused",
+				"connection timed out",
+				"network is unreachable",
+				"protocol not found",
+				"no such file",
+				"broken pipe",
+				"unknown encoder",
+				"invalid argument",
+				"403 forbidden", // url forbidden
+				"non-monotonous dts in output stream",
+				"404 Not Found",	// url not found
 			};
 			static constexpr int32_t maxErrorsStored = 50;
 

@@ -8,7 +8,8 @@
 #include "spdlog/spdlog.h"
 
 LiveRecorder::LiveRecorder(
-	shared_ptr<LiveRecording> liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, json configurationRoot, mutex *encodingCompletedMutex,
+	const shared_ptr<LiveRecording> &liveRecording, int64_t ingestionJobKey, int64_t encodingJobKey, const json& configurationRoot,
+	mutex *encodingCompletedMutex,
 	map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap, mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset
 )
 	: FFMPEGEncoderTask(liveRecording, ingestionJobKey, encodingJobKey, configurationRoot, encodingCompletedMutex, encodingCompletedMap)
@@ -369,23 +370,9 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch (runtime_error &e)
-						{
-							string errorMessage = std::format(
-								"remove directory failed"
-								", ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", manifestDirectoryPath: {}"
-								", e.what(): {}",
-								_liveRecording->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
-							);
-							SPDLOG_ERROR(errorMessage);
-
-							// throw e;
-						}
 						catch (exception &e)
 						{
-							string errorMessage = std::format(
+							SPDLOG_ERROR(
 								"remove directory failed"
 								", ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -393,7 +380,6 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 								", e.what(): {}",
 								_liveRecording->_ingestionJobKey, _encodingJobKey, manifestDirectoryPath, e.what()
 							);
-							SPDLOG_ERROR(errorMessage);
 
 							// throw e;
 						}
