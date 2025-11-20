@@ -483,187 +483,6 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			fs::remove_all(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName);
 		}
 	}
-	catch (FFMpegEncodingKilledByUser &e)
-	{
-		if (liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-			);
-		}
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
-		{
-			SPDLOG_INFO(
-				"remove"
-				", segmentListPathName: {}",
-				liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName
-			);
-			fs::remove_all(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName);
-		}
-
-		string eWhat = e.what();
-		SPDLOG_ERROR(
-			"{} API failed (EncodingKilledByUser)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-
-		// used by FFMPEGEncoderTask
-		if (liveRecording->_killedBecauseOfNotWorking)
-		{
-			// it was killed just because it was not working and not because of user
-			// In this case the process has to be restarted soon
-			_killedByUser = false;
-			_completedWithError = true;
-			liveRecording->_killedBecauseOfNotWorking = false;
-		}
-		else
-		{
-			_killedByUser = true;
-		}
-
-		throw e;
-	}
-	catch (FFMpegURLForbidden &e)
-	{
-		if (liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-			);
-		}
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
-		{
-			SPDLOG_INFO(
-				"remove"
-				", segmentListPathName: {}",
-				liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName
-			);
-			fs::remove_all(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName);
-		}
-
-		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (URLForbidden)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		// used by FFMPEGEncoderTask
-		liveRecording->pushErrorMessage(errorMessage);
-		_completedWithError = true;
-
-		throw e;
-	}
-	catch (FFMpegURLNotFound &e)
-	{
-		if (liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-			);
-		}
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
-		{
-			SPDLOG_INFO(
-				"remove"
-				", segmentListPathName: {}",
-				liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName
-			);
-			fs::remove_all(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName);
-		}
-
-		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (URLNotFound)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		// used by FFMPEGEncoderTask
-		liveRecording->pushErrorMessage(errorMessage);
-		_completedWithError = true;
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		if (liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized
-		)
-		{
-			// remove configuration from dvblast configuration file
-			createOrUpdateTVDvbLastConfigurationFile(
-				liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency, tvSymbolRate,
-				tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-			);
-		}
-
-		// here we have the deletion of the segments directory
-		// The monitor directory was removed inside the ffmpeg method
-		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
-		{
-			SPDLOG_INFO(
-				"remove"
-				", segmentListPathName: {}",
-				liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName
-			);
-			fs::remove_all(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName);
-		}
-
-		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (runtime_error)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		// used by FFMPEGEncoderTask
-		liveRecording->pushErrorMessage(errorMessage);
-		_completedWithError = true;
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		if (liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized
@@ -689,8 +508,8 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (exception)"
+		const string errorMessage = std::format(
+			"{} API failed"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
 			", API: {}"
@@ -701,10 +520,25 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		// used by FFMPEGEncoderTask
-		liveRecording->pushErrorMessage(errorMessage);
-		_completedWithError = true;
+		if (dynamic_cast<FFMpegEncodingKilledByUser*>(&e))
+		{
+			if (liveRecording->_killedBecauseOfNotWorking)
+			{
+				// it was killed just because it was not working and not because of user
+				// In this case the process has to be restarted soon
+				_killedByUser = false;
+				_completedWithError = true;
+				liveRecording->_killedBecauseOfNotWorking = false;
+			}
+			else
+				_killedByUser = true;
+		}
+		else
+		{
+			liveRecording->pushErrorMessage(errorMessage);
+			_completedWithError = true;
+		}
 
-		throw e;
+		throw;
 	}
 }

@@ -83,23 +83,9 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 							);
 							fs::remove_all(manifestDirectoryPath);
 						}
-						catch (runtime_error &e)
-						{
-							string errorMessage = std::format(
-								"remove directory failed"
-								", ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", manifestDirectoryPath: {}"
-								", e.what(): {}",
-								liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, manifestDirectoryPath, e.what()
-							);
-							SPDLOG_ERROR(errorMessage);
-
-							// throw e;
-						}
 						catch (exception &e)
 						{
-							string errorMessage = std::format(
+							SPDLOG_ERROR(
 								"remove directory failed"
 								", ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -107,9 +93,8 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 								", e.what(): {}",
 								liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
-							SPDLOG_ERROR(errorMessage);
 
-							// throw e;
+							// throw;
 						}
 					}
 				}
@@ -154,7 +139,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				);
 				tie(tvMulticastIP, tvMulticastPort) = tvMulticast;
 
-				if (tvMulticastIP == "")
+				if (tvMulticastIP.empty())
 				{
 					*_tvChannelPort_CurrentOffset = getFreeTvChannelPortOffset(_tvChannelsPortsMutex, *_tvChannelPort_CurrentOffset);
 
@@ -176,10 +161,9 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				// overrun_nonfatal=1 prevents ffmpeg from exiting,
 				//		it can recover in most circumstances.
 				// fifo_size=50000000 uses a 50MB udp input buffer (default 5MB)
-				string newURL = string("udp://@") + tvMulticastIP + ":" + tvMulticastPort
+				string newURL = std::format("udp://@{}:{}", tvMulticastIP, tvMulticastPort);
 					// 2022-12-08: the below parameters are added inside the liveProxy2 method
 					// + "?overrun_nonfatal=1&fifo_size=50000000"
-					;
 
 				streamInputRoot["url"] = newURL;
 				streamInputRoot["tvMulticastIP"] = tvMulticastIP;
@@ -200,7 +184,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			// In case of IP_PUSH, the checks should be done after the ffmpeg server
 			// receives the stream and we do not know what it happens.
 			// For this reason, in this scenario, we have to set _proxyStart in the worst scenario
-			if (liveProxyData->_inputsRoot.size() > 0) // it has to be > 0
+			if (!liveProxyData->_inputsRoot.empty()) // it has to be > 0
 			{
 				json inputRoot = liveProxyData->_inputsRoot[0];
 
@@ -256,10 +240,19 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				}
 			}
 
+			/*
 			liveProxyData->_ffmpeg->liveProxy2(
 				liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
 				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot, liveProxyData->_childProcessId,
 				&(liveProxyData->_proxyStart), &(liveProxyData->_numberOfRestartBecauseOfFailure)
+			);
+			*/
+			liveProxyData->_ffmpeg->liveProxy(
+				liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
+				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot, liveProxyData->_childProcessId,
+				&(liveProxyData->_proxyStart),
+				[&](const string_view& line) {ffmpegLineCallback(line); },
+				&(liveProxyData->_numberOfRestartBecauseOfFailure)
 			);
 		}
 
@@ -305,248 +298,6 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			// + ", liveProxyData->_channelLabel: " + liveProxyData->_channelLabel
 		);
 	}
-	catch (FFMpegEncodingKilledByUser &e)
-	{
-		if (liveProxyData->_inputsRoot != nullptr)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
-			{
-				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				json streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
-							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-						);
-					}
-				}
-			}
-		}
-
-		string eWhat = e.what();
-		SPDLOG_ERROR(
-			"{} API failed (EncodingKilledByUser)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-
-		// used by FFMPEGEncoderTask
-		if (liveProxyData->_killedBecauseOfNotWorking)
-		{
-			// it was killed just because it was not working and not because of user
-			// In this case the process has to be restarted soon
-			_completedWithError = true;
-		}
-		else
-		{
-			_killedByUser = true;
-		}
-
-		throw e;
-	}
-	catch (FFMpegURLForbidden &e)
-	{
-		if (liveProxyData->_inputsRoot != nullptr)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
-			{
-				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				json streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
-							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-						);
-					}
-				}
-			}
-		}
-
-		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (URLForbidden)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		// used by FFMPEGEncoderTask
-		liveProxyData->pushErrorMessage(errorMessage);
-		_completedWithError = true;
-		_urlForbidden = true;
-
-		throw e;
-	}
-	catch (FFMpegURLNotFound &e)
-	{
-		if (liveProxyData->_inputsRoot != nullptr)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
-			{
-				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				json streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
-							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-						);
-					}
-				}
-			}
-		}
-
-		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (URLNotFound)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
-			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		// used by FFMPEGEncoderTask
-		liveProxyData->pushErrorMessage(errorMessage);
-		_completedWithError = true;
-		_urlNotFound = true;
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		if (liveProxyData->_inputsRoot != nullptr)
-		{
-			for (int inputIndex = 0; inputIndex < liveProxyData->_inputsRoot.size(); inputIndex++)
-			{
-				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
-
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
-					continue;
-				json streamInputRoot = inputRoot["streamInput"];
-
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
-				if (streamSourceType == "TV")
-				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
-
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
-
-					if (tvServiceId != -1) // this is just to be sure variables are initialized
-					{
-						// remove configuration from dvblast configuration file
-						createOrUpdateTVDvbLastConfigurationFile(
-							liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, tvMulticastIP, tvMulticastPort, tvType, tvServiceId, tvFrequency,
-							tvSymbolRate, tvBandwidthInHz / 1000000, tvModulation, tvVideoPid, tvAudioItalianPid, false
-						);
-					}
-				}
-			}
-		}
-
-		string eWhat = e.what();
-		SPDLOG_ERROR(eWhat);
-		SPDLOG_ERROR(requestBody);
-		string errorMessage = std::format(
-			"{} API failed (runtime_error)"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", API: {}"
-			", requestBody: {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveProxyData->_ingestionJobKey,
-			liveProxyData->_encodingJobKey, api, requestBody
-		);
-		SPDLOG_ERROR(errorMessage);
-
-		// used by FFMPEGEncoderTask
-		liveProxyData->pushErrorMessage(errorMessage);
-		_completedWithError = true;
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		if (liveProxyData->_inputsRoot != nullptr)
@@ -587,8 +338,8 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		}
 
 		string eWhat = e.what();
-		string errorMessage = std::format(
-			"{} API failed (exception)"
+		const string errorMessage = std::format(
+			"{} API failed (EncodingKilledByUser)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
 			", API: {}"
@@ -599,10 +350,36 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		// used by FFMPEGEncoderTask
-		liveProxyData->pushErrorMessage(errorMessage);
-		_completedWithError = true;
+		if (dynamic_cast<FFMpegEncodingKilledByUser*>(&e))
+		{
+			// used by FFMPEGEncoderTask
+			if (liveProxyData->_killedBecauseOfNotWorking)
+			{
+				// it was killed just because it was not working and not because of user
+				// In this case the process has to be restarted soon
+				_completedWithError = true;
+			}
+			else
+				_killedByUser = true;
+		}
+		else if (dynamic_cast<FFMpegURLForbidden*>(&e))
+		{
+			liveProxyData->pushErrorMessage(errorMessage);
+			_completedWithError = true;
+			_urlForbidden = true;
+		}
+		else if (dynamic_cast<FFMpegURLNotFound*>(&e))
+		{
+			liveProxyData->pushErrorMessage(errorMessage);
+			_completedWithError = true;
+			_urlNotFound = true;
+		}
+		else
+		{
+			liveProxyData->pushErrorMessage(errorMessage);
+			_completedWithError = true;
+		}
 
-		throw e;
+		throw;
 	}
 }
