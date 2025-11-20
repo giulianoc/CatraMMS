@@ -1513,7 +1513,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 									cleanffmpegLine.push_back(c);
 							}
 						}
-						
+
 						SPDLOG_WARN("ffmpegLineCallback, line not managed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
