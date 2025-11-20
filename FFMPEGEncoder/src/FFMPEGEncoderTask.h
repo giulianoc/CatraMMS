@@ -41,7 +41,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	int64_t ingestContentByPushingBinary(
 		int64_t ingestionJobKey, string workflowMetadata, string fileFormat, string binaryPathFileName, int64_t binaryFileSizeInBytes,
 		int64_t userKey, const string &apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
-	);
+	) const;
 
 	int progressDownloadCallback(
 		int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal,
@@ -59,7 +59,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	long _tvChannelPort_Start;
 	long _tvChannelPort_MaxNumberOfOffsets;
 
-	void ffmpegLineCallback(const string_view& ffmpegLine);
+	void ffmpegLineCallback(const string_view& ffmpegLine) const;
 
 	static string buildAddContentIngestionWorkflow(
 		int64_t ingestionJobKey, string label, string fileFormat, string ingester,

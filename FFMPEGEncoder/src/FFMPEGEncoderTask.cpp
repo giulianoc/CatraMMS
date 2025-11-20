@@ -456,7 +456,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	int64_t ingestionJobKey, string workflowMetadata, string fileFormat, string binaryPathFileName, int64_t binaryFileSizeInBytes, int64_t userKey,
 	const string& apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
-)
+) const
 {
 	SPDLOG_INFO(
 		"Received ingestContentByPushingBinary"
@@ -1302,7 +1302,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 	return make_pair(multicastIP, multicastPort);
 }
 
-void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
+void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 {
 	try
 	{
@@ -1505,14 +1505,23 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine)
 					}
 					default:
 					{
+						string cleanffmpegLine;
+						{
+							cleanffmpegLine.reserve(ffmpegLine.size());
+							for (char c : ffmpegLine) {
+								if (c != '\r')   // elimina il carriage return
+									cleanffmpegLine.push_back(c);
+							}
+						}
+						
 						SPDLOG_WARN("ffmpegLineCallback, line not managed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
-							", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
+							", cleanffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, cleanffmpegLine);
 
 						if (_encoding->_data.ffmpegOutputLogFile)
 						{
-							_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+							_encoding->_data.ffmpegOutputLogFile.write(cleanffmpegLine.data(), cleanffmpegLine.size());
 							_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
 							_encoding->_data.ffmpegOutputLogFile.flush();
 						}

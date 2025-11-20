@@ -390,5 +390,5 @@ class FFMPEGEncoderBase
 	int64_t _mmsAPITimeoutInSeconds;
 	int64_t _mmsBinaryTimeoutInSeconds;
 
-	long getAddContentIngestionJobKey(int64_t ingestionJobKey, string ingestionResponse);
+	static long getAddContentIngestionJobKey(int64_t ingestionJobKey, string ingestionResponse);
 };
