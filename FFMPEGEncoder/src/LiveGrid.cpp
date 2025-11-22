@@ -108,8 +108,9 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			_liveProxyData->_proxyStart = chrono::system_clock::now();
 
 			_liveProxyData->_ffmpeg->liveGrid(
-				_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, externalEncoder, userAgent, inputChannelsRoot, gridColumns, gridWidth, gridHeight,
-				_liveProxyData->_outputsRoot, _liveProxyData->_childProcessId
+				_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, externalEncoder, userAgent, inputChannelsRoot, gridColumns, gridWidth,
+				gridHeight, _liveProxyData->_outputsRoot, _liveProxyData->_childProcessId,
+				[&](const string_view& line) {ffmpegLineCallback(line); }
 			);
 		}
 

@@ -288,8 +288,10 @@ void SlideShow::encodeContent(json metadataRoot)
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];
 
 		_encoding->_ffmpeg->slideShow(
-			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, durationOfEachSlideInSeconds, frameRateMode, encodingProfileDetailsRoot, imagesPathNames,
-			audiosPathNames, shortestAudioDurationInSeconds, encodedStagingAssetPathName, _encoding->_childProcessId
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, durationOfEachSlideInSeconds, frameRateMode,
+			encodingProfileDetailsRoot, imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
+			encodedStagingAssetPathName, _encoding->_childProcessId,
+			[&](const string_view& line) {ffmpegLineCallback(line); }
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

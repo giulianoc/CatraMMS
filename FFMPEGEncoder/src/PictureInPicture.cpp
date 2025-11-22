@@ -308,7 +308,8 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 			encodingProfileDetailsRoot,
 
-			encodedStagingAssetPathName, _encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId
+			encodedStagingAssetPathName, _encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId,
+			[&](const string_view& line) {ffmpegLineCallback(line); }
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

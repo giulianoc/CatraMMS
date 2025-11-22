@@ -149,7 +149,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				FFMpegWrapper ffmpeg(_configurationRoot);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight,
-					childProcessId
+					childProcessId, nullptr
 				);
 
 				{

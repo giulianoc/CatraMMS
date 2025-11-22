@@ -192,7 +192,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 			JSONUtils::asString(ingestedParametersRoot, "startTime", ""), JSONUtils::asString(encodingParametersRoot, "endTime", ""),
 			JSONUtils::asInt(ingestedParametersRoot, "framesNumber", -1), encodedStagingAssetPathName,
 
-			_encoding->_childProcessId
+			_encoding->_childProcessId, [&](const string_view& line) {ffmpegLineCallback(line); }
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

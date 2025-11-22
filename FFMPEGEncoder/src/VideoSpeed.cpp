@@ -202,7 +202,8 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 			encodingProfileDetailsRoot,
 
-			encodedStagingAssetPathName, _encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId
+			encodedStagingAssetPathName, _encoding->_encodingJobKey, _encoding->_ingestionJobKey,
+			_encoding->_childProcessId, nullptr
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
