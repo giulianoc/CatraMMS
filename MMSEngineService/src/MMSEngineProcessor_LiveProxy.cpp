@@ -68,7 +68,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			// EncodersPool override the one included in ChannelConf if present
 			taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, "encodersPool", "");
 
-		SPDLOG_INFO("AAAAAA");
 			// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
 			// l'encodersPool o l'encoderKey in caso di IP_PUSH che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
 			// In questo modo è possibile cambiare tramite API l'encoder per fare uno switch di un ingestionJob da un encoder ad un'altro
@@ -95,7 +94,6 @@ void MMSEngineProcessor::manageLiveProxy(
 				_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
 			}
 
-		SPDLOG_INFO("AAAAAA");
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, "defaultBroadcast", false);
 
 			if (JSONUtils::isMetadataPresent(parametersRoot, "timePeriod"))
@@ -129,7 +127,6 @@ void MMSEngineProcessor::manageLiveProxy(
 				}
 			}
 
-		SPDLOG_INFO("AAAAAA");
 			maxWidth = JSONUtils::asInt(parametersRoot, "maxWidth", -1);
 
 			userAgent = JSONUtils::asString(parametersRoot, "userAgent", "");
@@ -153,7 +150,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
 				outputsRoot = parametersRoot["outputs"];
 		}
-		SPDLOG_INFO("AAAAAA");
 		string useVideoTrackFromPhysicalPathName;
 		string useVideoTrackFromPhysicalDeliveryURL;
 		if (useVideoTrackFromMediaItemKey != -1)
@@ -179,7 +175,6 @@ void MMSEngineProcessor::manageLiveProxy(
 				tie(sourcePhysicalPathKey, useVideoTrackFromPhysicalPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 			}
 
-		SPDLOG_INFO("AAAAAA");
 			// calculate delivery URL in case of an external encoder
 			{
 				tie(useVideoTrackFromPhysicalDeliveryURL, ignore) = _mmsDeliveryAuthorization->createDeliveryAuthorization(
@@ -214,7 +209,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 		}
 
-		SPDLOG_INFO("AAAAAA");
 		json localOutputsRoot = getReviewedOutputsRoot(outputsRoot, workspace, ingestionJobKey, false);
 
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
@@ -240,13 +234,11 @@ void MMSEngineProcessor::manageLiveProxy(
 			if (JSONUtils::isMetadataPresent(parametersRoot, field))
 				filtersRoot = parametersRoot[field];
 
-		SPDLOG_INFO("AAAAAA");
 			json streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace, ingestionJobKey, configurationLabel, useVideoTrackFromPhysicalPathName, useVideoTrackFromPhysicalDeliveryURL, maxWidth,
 				userAgent, otherInputOptions, taskEncodersPoolLabel, filtersRoot
 			);
 
-		SPDLOG_INFO("AAAAAA");
 			json inputRoot;
 			{
 				inputRoot["streamInput"] = streamInputRoot;
@@ -265,7 +257,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			inputsRoot = localInputsRoot;
 		}
 
-		SPDLOG_INFO("AAAAAA");
 		_mmsEngineDBFacade->addEncoding_LiveProxyJob(
 			workspace, ingestionJobKey,
 			inputsRoot,			 // used by FFMPEGEncoder
@@ -278,7 +269,6 @@ void MMSEngineProcessor::manageLiveProxy(
 			localOutputsRoot,							 // used by FFMPEGEncoder
 			_mmsWorkflowIngestionURL
 		);
-		SPDLOG_INFO("AAAAAA");
 	}
 	catch (exception &e)
 	{

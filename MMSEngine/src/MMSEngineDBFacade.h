@@ -2413,9 +2413,9 @@ class MMSEngineDBFacade
 	static int64_t parseRetention(string retention);
 
 	json getStreamInputRoot(
-		shared_ptr<Workspace> workspace, int64_t ingestionJobKey, string configurationLabel, string useVideoTrackFromPhysicalPathName,
-		string useVideoTrackFromPhysicalDeliveryURL, int maxWidth, string userAgent, string otherInputOptions, string taskEncodersPoolLabel,
-		json filtersRoot
+		const shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, const string &configurationLabel,
+		const string &useVideoTrackFromPhysicalPathName, const string &useVideoTrackFromPhysicalDeliveryURL, int maxWidth, const string &userAgent,
+		const string &otherInputOptions, const string &taskEncodersPoolLabel, const json &filtersRoot
 	);
 	pair<int64_t, string> getStreamInputPushDetails(int64_t workspaceKey, int64_t ingestionJobKey, string configurationLabel);
 	string getStreamPushServerUrl(

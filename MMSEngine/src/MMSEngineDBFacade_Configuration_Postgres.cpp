@@ -882,9 +882,11 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 
 // this method is added here just because it is called by both API and MMSServiceProcessor
 json MMSEngineDBFacade::getStreamInputRoot(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, string configurationLabel, string useVideoTrackFromPhysicalPathName,
-	string useVideoTrackFromPhysicalDeliveryURL, int maxWidth, string userAgent, string otherInputOptions, string taskEncodersPoolLabel,
-	json filtersRoot
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, const string& configurationLabel,
+	const string& useVideoTrackFromPhysicalPathName,
+	const string& useVideoTrackFromPhysicalDeliveryURL, int maxWidth, const string& userAgent, const string& otherInputOptions,
+	const string& taskEncodersPoolLabel,
+	const json& filtersRoot
 )
 {
 	json streamInputRoot;
@@ -905,13 +907,14 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		int captureChannelsNumber = -1;
 		int64_t tvSourceTVConfKey = -1;
 
+		SPDLOG_INFO("AAAAAA");
 		{
 			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, ignore, ignore, pushListenTimeout, captureVideoDeviceNumber,
 				captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber, captureChannelsNumber,
 				tvSourceTVConfKey) = stream_aLot(workspace->_workspaceKey, configurationLabel);
 
 			// default is IP_PULL
-			if (streamSourceType == "")
+			if (streamSourceType.empty())
 				streamSourceType = "IP_PULL";
 		}
 
@@ -927,6 +930,7 @@ json MMSEngineDBFacade::getStreamInputRoot(
 
 		int64_t pushEncoderKey = -1;
 
+		SPDLOG_INFO("AAAAAA: {}", streamSourceType);
 		if (streamSourceType == "IP_PULL")
 		{
 			url = pullUrl;
@@ -951,142 +955,60 @@ json MMSEngineDBFacade::getStreamInputRoot(
 
 			tie(tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInHz, tvModulation, tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
 		}
+		SPDLOG_INFO("AAAAAA");
 
-		string field = "confKey";
-		streamInputRoot[field] = confKey;
-
-		field = "configurationLabel";
-		streamInputRoot[field] = configurationLabel;
-
-		field = "useVideoTrackFromPhysicalPathName";
-		streamInputRoot[field] = useVideoTrackFromPhysicalPathName;
-
-		field = "useVideoTrackFromPhysicalDeliveryURL";
-		streamInputRoot[field] = useVideoTrackFromPhysicalDeliveryURL;
-
-		field = "streamSourceType";
-		streamInputRoot[field] = streamSourceType;
-
-		field = "pushEncoderKey";
-		streamInputRoot[field] = pushEncoderKey;
-
-		// field = "pushEncoderName";
-		// streamInputRoot[field] = pushEncoderName;
-
-		// The taskEncodersPoolLabel (parameter of the Task/IngestionJob) overrides the one included
-		// in ChannelConf if present
-		field = "encodersPoolLabel";
-		if (taskEncodersPoolLabel != "")
-			streamInputRoot[field] = taskEncodersPoolLabel;
+		streamInputRoot["confKey"] = confKey;
+		streamInputRoot["configurationLabel"] = configurationLabel;
+		streamInputRoot["useVideoTrackFromPhysicalPathName"] = useVideoTrackFromPhysicalPathName;
+		streamInputRoot["useVideoTrackFromPhysicalDeliveryURL"] = useVideoTrackFromPhysicalDeliveryURL;
+		streamInputRoot["streamSourceType"] = streamSourceType;
+		streamInputRoot["pushEncoderKey"] = pushEncoderKey;
+		// The taskEncodersPoolLabel (parameter of the Task/IngestionJob) overrides the one included in ChannelConf if present
+		if (!taskEncodersPoolLabel.empty())
+			streamInputRoot["encodersPoolLabel"] = taskEncodersPoolLabel;
 		else
-			streamInputRoot[field] = encodersPoolLabel;
-
-		field = "url";
-		streamInputRoot[field] = url;
-
-		field = "filters";
-		streamInputRoot[field] = filtersRoot;
-
+			streamInputRoot["encodersPoolLabel"] = encodersPoolLabel;
+		streamInputRoot["url"] = url;
+		streamInputRoot["filters"] = filtersRoot;
 		if (maxWidth != -1)
-		{
-			field = "maxWidth";
-			streamInputRoot[field] = maxWidth;
-		}
-
-		if (userAgent != "")
-		{
-			field = "userAgent";
-			streamInputRoot[field] = userAgent;
-		}
-
-		if (otherInputOptions != "")
-		{
-			field = "otherInputOptions";
-			streamInputRoot[field] = otherInputOptions;
-		}
-
+			streamInputRoot["maxWidth"] = maxWidth;
+		if (!userAgent.empty())
+			streamInputRoot["userAgent"] = userAgent;
+		if (!otherInputOptions.empty())
+			streamInputRoot["otherInputOptions"] = otherInputOptions;
 		if (streamSourceType == "IP_PUSH")
-		{
-			field = "pushListenTimeout";
-			streamInputRoot[field] = pushListenTimeout;
-		}
-
+			streamInputRoot["pushListenTimeout"] = pushListenTimeout;
 		if (streamSourceType == "CaptureLive")
 		{
-			field = "captureVideoDeviceNumber";
-			streamInputRoot[field] = captureVideoDeviceNumber;
-
-			field = "captureVideoInputFormat";
-			streamInputRoot[field] = captureVideoInputFormat;
-
-			field = "captureFrameRate";
-			streamInputRoot[field] = captureFrameRate;
-
-			field = "captureWidth";
-			streamInputRoot[field] = captureWidth;
-
-			field = "captureHeight";
-			streamInputRoot[field] = captureHeight;
-
-			field = "captureAudioDeviceNumber";
-			streamInputRoot[field] = captureAudioDeviceNumber;
-
-			field = "captureChannelsNumber";
-			streamInputRoot[field] = captureChannelsNumber;
+			streamInputRoot["captureVideoDeviceNumber"] = captureVideoDeviceNumber;
+			streamInputRoot["captureVideoInputFormat"] = captureVideoInputFormat;
+			streamInputRoot["captureFrameRate"] = captureFrameRate;
+			streamInputRoot["captureWidth"] = captureWidth;
+			streamInputRoot["captureHeight"] = captureHeight;
+			streamInputRoot["captureAudioDeviceNumber"] = captureAudioDeviceNumber;
+			streamInputRoot["captureChannelsNumber"] = captureChannelsNumber;
 		}
-
 		if (streamSourceType == "TV")
 		{
-			field = "tvType";
-			streamInputRoot[field] = tvType;
-
-			field = "tvServiceId";
-			streamInputRoot[field] = tvServiceId;
-
-			field = "tvFrequency";
-			streamInputRoot[field] = tvFrequency;
-
-			field = "tvSymbolRate";
-			streamInputRoot[field] = tvSymbolRate;
-
-			field = "tvBandwidthInHz";
-			streamInputRoot[field] = tvBandwidthInHz;
-
-			field = "tvModulation";
-			streamInputRoot[field] = tvModulation;
-
-			field = "tvVideoPid";
-			streamInputRoot[field] = tvVideoPid;
-
-			field = "tvAudioItalianPid";
-			streamInputRoot[field] = tvAudioItalianPid;
+			streamInputRoot["tvType"] = tvType;
+			streamInputRoot["tvServiceId"] = tvServiceId;
+			streamInputRoot["tvFrequency"] = tvFrequency;
+			streamInputRoot["tvSymbolRate"] = tvSymbolRate;
+			streamInputRoot["tvBandwidthInHz"] = tvBandwidthInHz;
+			streamInputRoot["tvModulation"] = tvModulation;
+			streamInputRoot["tvVideoPid"] = tvVideoPid;
+			streamInputRoot["tvAudioItalianPid"] = tvAudioItalianPid;
 		}
-	}
-	catch (DBRecordNotFound &e)
-	{
-		SPDLOG_ERROR(
-			"getStreamInputRoot failed"
-			", e.what(): {}",
-			e.what()
-		);
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"getStreamInputRoot failed"
-			", e.what(): {}",
-			e.what()
-		);
-
-		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("getStreamInputRoot failed");
+		SPDLOG_ERROR(
+			"getStreamInputRoot failed"
+			", e.what(): {}",
+			e.what()
+		);
 
-		throw e;
+		throw;
 	}
 
 	return streamInputRoot;
