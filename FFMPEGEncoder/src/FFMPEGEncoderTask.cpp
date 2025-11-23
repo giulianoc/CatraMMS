@@ -66,57 +66,6 @@ FFMPEGEncoderTask::~FFMPEGEncoderTask()
 	}
 }
 
-void FFMPEGEncoderTask::addEncodingCompleted()
-{
-	lock_guard<mutex> locker(*_encodingCompletedMutex);
-
-	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
-
-	encodingCompleted->_encodingJobKey = _encoding->_encodingJobKey;
-	encodingCompleted->_completedWithError = _completedWithError;
-	encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
-	encodingCompleted->_killedByUser = _killedByUser;
-	encodingCompleted->_killToRestartByEngine = _encoding->_killToRestartByEngine;
-	encodingCompleted->_urlForbidden = _urlForbidden;
-	encodingCompleted->_urlNotFound = _urlNotFound;
-	encodingCompleted->_timestamp = chrono::system_clock::now();
-
-	{
-		shared_lock lock(_encoding->_dataMutex);
-		encodingCompleted->_progress = _encoding->_data;
-	}
-
-	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
-
-	SPDLOG_INFO(
-		"addEncodingCompleted"
-		", ingestionJobKey: {}"
-		", encodingJobKey: {}"
-		", encodingCompletedMap size: {}",
-		_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encodingCompletedMap->size()
-	);
-}
-
-void FFMPEGEncoderTask::removeEncodingCompletedIfPresent() const
-{
-
-	lock_guard<mutex> locker(*_encodingCompletedMutex);
-
-	auto it = _encodingCompletedMap->find(_encoding->_encodingJobKey);
-	if (it != _encodingCompletedMap->end())
-	{
-		_encodingCompletedMap->erase(it);
-
-		SPDLOG_INFO(
-			"removeEncodingCompletedIfPresent"
-			", _ingestionJobKey: {}"
-			", _encodingJobKey: {}"
-			", encodingCompletedMap size: {}",
-			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encodingCompletedMap->size()
-		);
-	}
-}
-
 void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	int64_t ingestionJobKey, int64_t encodingJobKey, json ingestedParametersRoot, const json& encodingProfileDetailsRoot,
 	const json& encodingParametersRoot,
@@ -1306,18 +1255,22 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 {
 	try
 	{
-		unique_lock locker(_encoding->_dataMutex);
+		unique_lock locker(_encoding->_callbackDataMutex);
+
+		// la prima chiamata ricevuta setta finished a false
+		if (!_encoding->_callbackData.finished)
+			_encoding->_callbackData.finished = false;
 
 		// su questo file di log scrivo gli errori e tutto cio che non è gestito
 		if (!ffmpegLine.empty())
 		{
-			if (!_encoding->_data.ffmpegOutputLogFile)
+			if (!_encoding->_callbackData.ffmpegOutputLogFile)
 			{
 				string ffmpegOutputLogPathFileName = _encoding->_ffmpeg->getOutputFfmpegPathFileName();
 				// string ffmpegOutputLogPathFileName = std::format("{}/{}_{}_{}.log", _encoding->_ffmpeg->_ffmpegTempDir,
 				// 	_encoding->_method, _ingestionJobKey, _encodingJobKey);
-				_encoding->_data.ffmpegOutputLogFile.open(ffmpegOutputLogPathFileName, ofstream::binary | ofstream::trunc);
-				if (!_encoding->_data.ffmpegOutputLogFile)
+				_encoding->_callbackData.ffmpegOutputLogFile.open(ffmpegOutputLogPathFileName, ofstream::binary | ofstream::trunc);
+				if (!_encoding->_callbackData.ffmpegOutputLogFile)
 				{
 					SPDLOG_ERROR(
 						"ffmpegLineCallback, open file failed"
@@ -1332,8 +1285,8 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 		else
 		{
 			// ffmpegLine vuoto indica fine scrittura su file
-			if (_encoding->_data.ffmpegOutputLogFile)
-				_encoding->_data.ffmpegOutputLogFile.close();
+			if (_encoding->_callbackData.ffmpegOutputLogFile)
+				_encoding->_callbackData.ffmpegOutputLogFile.close();
 		}
 
 		// detect errors
@@ -1342,21 +1295,21 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 			const string ffmpegLineLower = StringUtils::lowerCase(ffmpegLine);
 
 			// known errors
-			for (auto &pattern : FFMPEGEncoderBase::Encoding::Data::errorPatterns)
+			for (auto &pattern : FFMpegEngine::CallbackData::errorPatterns)
 			{
 				if (ffmpegLineLower.find(pattern) != std::string::npos)
 				{
-					_encoding->_data.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
+					_encoding->_callbackData.pushErrorMessage(std::format("{}: {}", pattern, ffmpegLine));
 					SPDLOG_ERROR("ffmpegLineCallback, {} detected"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", ffmpegLine: {}", pattern, _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 					error = true;
-					if (_encoding->_data.ffmpegOutputLogFile)
+					if (_encoding->_callbackData.ffmpegOutputLogFile)
 					{
-						_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-						_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
-						_encoding->_data.ffmpegOutputLogFile.flush();
+						_encoding->_callbackData.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_callbackData.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_callbackData.ffmpegOutputLogFile.flush();
 					}
 				}
 			}
@@ -1365,17 +1318,39 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 				// generic error
 				if (ffmpegLineLower.find("error") != std::string::npos)
 				{
-					_encoding->_data.pushErrorMessage(std::format("error: {}", ffmpegLine));
+					_encoding->_callbackData.pushErrorMessage(std::format("error: {}", ffmpegLine));
 					SPDLOG_ERROR("ffmpegLineCallback, error detected"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 					error = true;
-					if (_encoding->_data.ffmpegOutputLogFile)
+					if (_encoding->_callbackData.ffmpegOutputLogFile)
 					{
-						_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-						_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
-						_encoding->_data.ffmpegOutputLogFile.flush();
+						_encoding->_callbackData.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_callbackData.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_callbackData.ffmpegOutputLogFile.flush();
+					}
+				}
+				else if (ffmpegLineLower.find("signal") != std::string::npos)
+				{
+					if (ffmpegLineLower.find("signal 3") != string::npos // SIGQUIT
+						|| ffmpegLineLower.find("signal: 3") != string::npos)
+						_encoding->_callbackData.signal = 3;
+					else if (ffmpegLineLower.find("signal 15") != string::npos // SIGTERM
+						|| ffmpegLineLower.find("signal: 15") != string::npos)
+						_encoding->_callbackData.signal = 15;
+
+					_encoding->_callbackData.pushErrorMessage(std::format("signal: {}", ffmpegLine));
+					SPDLOG_ERROR("ffmpegLineCallback, signal detected"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
+					error = true;
+					if (_encoding->_callbackData.ffmpegOutputLogFile)
+					{
+						_encoding->_callbackData.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+						_encoding->_callbackData.ffmpegOutputLogFile.write("\n", 1);
+						_encoding->_callbackData.ffmpegOutputLogFile.flush();
 					}
 				}
 			}
@@ -1400,12 +1375,12 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 				{
 					case "frame"_case:
 					{
-						_encoding->_data.processedFrames = stoi(string(value));
+						_encoding->_callbackData.processedFrames = stoi(string(value));
 						break;
 					}
 					case "fps"_case:
 					{
-						_encoding->_data.framePerSeconds = stod(string(value));
+						_encoding->_callbackData.framePerSeconds = stod(string(value));
 						break;
 					}
 					case "speed"_case:
@@ -1414,28 +1389,28 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 						{
 							if (value.back() == 'x')
 								value.remove_suffix(1);
-							_encoding->_data.speed = std::stod(string(value));
+							_encoding->_callbackData.speed = std::stod(string(value));
 						}
 						break;
 					}
 					case "drop_frames"_case:
 					{
-						_encoding->_data.dropFrames = stoi(string(value));
+						_encoding->_callbackData.dropFrames = stoi(string(value));
 						break;
 					}
 					case "dup_frames"_case:
 					{
-						_encoding->_data.dupFrames = stoi(string(value));
+						_encoding->_callbackData.dupFrames = stoi(string(value));
 						break;
 					}
 					case "stream_0_0_q"_case:
 					{
-						_encoding->_data.stream_0_0_q = std::stod(string(value));
+						_encoding->_callbackData.stream_0_0_q = std::stod(string(value));
 						break;
 					}
 					case "stream_1_0_q"_case:
 					{
-						_encoding->_data.stream_1_0_q = std::stod(string(value));
+						_encoding->_callbackData.stream_1_0_q = std::stod(string(value));
 						break;
 					}
 					case "out_time"_case:
@@ -1473,7 +1448,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 						*/
 						if (value != "N/A")
 						{
-							_encoding->_data.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
+							_encoding->_callbackData.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
 							realBitRateChanged = true;
 						}
 						break;
@@ -1482,7 +1457,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 					{
 						if (value != "N/A")
 						{
-							_encoding->_data.totalSizeKBps = stoul(string(value));
+							_encoding->_callbackData.totalSizeKBps = stoul(string(value));
 							realBitRateChanged = true;
 						}
 						break;
@@ -1492,7 +1467,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 						// value is in kbits/s
 						if (value != "N/A")
 						{
-							_encoding->_data.bitRateKbps = stod(std::string(value));
+							_encoding->_callbackData.bitRateKbps = stod(std::string(value));
 							realBitRateChanged = true;
 						}
 						break;
@@ -1500,7 +1475,7 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 					case "progress"_case:
 					{
 						if (value == "end")
-							_encoding->_data.finished = true;
+							_encoding->_callbackData.finished = true;
 						break;
 					}
 					default:
@@ -1519,28 +1494,28 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 							", encodingJobKey: {}"
 							", cleanffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, cleanffmpegLine);
 
-						if (_encoding->_data.ffmpegOutputLogFile)
+						if (_encoding->_callbackData.ffmpegOutputLogFile)
 						{
-							_encoding->_data.ffmpegOutputLogFile.write(cleanffmpegLine.data(), cleanffmpegLine.size());
-							_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
-							_encoding->_data.ffmpegOutputLogFile.flush();
+							_encoding->_callbackData.ffmpegOutputLogFile.write(cleanffmpegLine.data(), cleanffmpegLine.size());
+							_encoding->_callbackData.ffmpegOutputLogFile.write("\n", 1);
+							_encoding->_callbackData.ffmpegOutputLogFile.flush();
 						}
 						break;
 					}
 				}
 
 				// NEW: calcolo del bitrate reale
-				if (realBitRateChanged && _encoding->_data.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_data.totalSizeKBps > 0)
+				if (realBitRateChanged && _encoding->_callbackData.processedOutputTimestampMilliSecs.count() > 0 && _encoding->_callbackData.totalSizeKBps > 0)
 				{
-					double seconds = _encoding->_data.processedOutputTimestampMilliSecs.count() / 1000.0;
-					double realBps = (_encoding->_data.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
+					double seconds = _encoding->_callbackData.processedOutputTimestampMilliSecs.count() / 1000.0;
+					double realBps = (_encoding->_callbackData.totalSizeKBps * 8.0) / seconds; // kilobytes -> kilobits
 					double realKbps = realBps * 1000.0;
 
 					// Media ponderata per stabilità:
-					if (_encoding->_data.bitRateKbps > 0.0)
-						_encoding->_data.avgBitRateKbps = (_encoding->_data.bitRateKbps * 0.6) + (realKbps * 0.4);
+					if (_encoding->_callbackData.bitRateKbps > 0.0)
+						_encoding->_callbackData.avgBitRateKbps = (_encoding->_callbackData.bitRateKbps * 0.6) + (realKbps * 0.4);
 					else
-						_encoding->_data.avgBitRateKbps = realKbps;
+						_encoding->_callbackData.avgBitRateKbps = realKbps;
 				}
 			}
 			else
@@ -1550,11 +1525,11 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 					", encodingJobKey: {}"
 					", ffmpegLine: {}", _encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine);
 
-				if (_encoding->_data.ffmpegOutputLogFile)
+				if (_encoding->_callbackData.ffmpegOutputLogFile)
 				{
-					_encoding->_data.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
-					_encoding->_data.ffmpegOutputLogFile.write("\n", 1);
-					_encoding->_data.ffmpegOutputLogFile.flush();
+					_encoding->_callbackData.ffmpegOutputLogFile.write(ffmpegLine.data(), ffmpegLine.size());
+					_encoding->_callbackData.ffmpegOutputLogFile.write("\n", 1);
+					_encoding->_callbackData.ffmpegOutputLogFile.flush();
 				}
 			}
 		}
@@ -1568,6 +1543,62 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 			", ffmpegLine: {}"
 			", exception: {}",
 			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ffmpegLine, e.what()
+		);
+	}
+}
+
+void FFMPEGEncoderTask::addEncodingCompleted()
+{
+	lock_guard<mutex> locker(*_encodingCompletedMutex);
+
+	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
+
+	encodingCompleted->_encodingJobKey = _encoding->_encodingJobKey;
+	encodingCompleted->_completedWithError = _completedWithError;
+	encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
+	encodingCompleted->_killedByUser = _killedByUser;
+	encodingCompleted->_killToRestartByEngine = _encoding->_killToRestartByEngine;
+	encodingCompleted->_urlForbidden = _urlForbidden;
+	encodingCompleted->_urlNotFound = _urlNotFound;
+	encodingCompleted->_timestamp = chrono::system_clock::now();
+
+	{
+		shared_lock lock(_encoding->_callbackDataMutex);
+		encodingCompleted->_callbackData = _encoding->_callbackData;
+		if (_encoding->_callbackData.finished)
+		{
+			encodingCompleted->_urlForbidden = _urlForbidden;
+			encodingCompleted->_urlNotFound = _urlNotFound;
+		}
+	}
+
+	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
+
+	SPDLOG_INFO(
+		"addEncodingCompleted"
+		", ingestionJobKey: {}"
+		", encodingJobKey: {}"
+		", encodingCompletedMap size: {}",
+		_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encodingCompletedMap->size()
+	);
+}
+
+void FFMPEGEncoderTask::removeEncodingCompletedIfPresent() const
+{
+
+	lock_guard<mutex> locker(*_encodingCompletedMutex);
+
+	auto it = _encodingCompletedMap->find(_encoding->_encodingJobKey);
+	if (it != _encodingCompletedMap->end())
+	{
+		_encodingCompletedMap->erase(it);
+
+		SPDLOG_INFO(
+			"removeEncodingCompletedIfPresent"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", encodingCompletedMap size: {}",
+			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encodingCompletedMap->size()
 		);
 	}
 }

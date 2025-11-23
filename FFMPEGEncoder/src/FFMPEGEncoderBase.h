@@ -41,14 +41,14 @@ class FFMPEGEncoderBase
 
 		virtual void reset()
 		{
-			unique_lock lock(_dataMutex);
+			unique_lock lock(_callbackDataMutex);
 
 			_available = true;
 			_ingestionJobKey = 0;
 			_encodingJobKey = 0;
 			_method = "";
 			_childProcessId.reset(); // not running
-			_data.reset();
+			_callbackData.reset();
 		}
 
 		void pushErrorMessage(const string& errorMessage)
@@ -73,7 +73,8 @@ class FFMPEGEncoderBase
 			return errorMessage;
 		}
 
-		struct Data {
+		/*
+		struct CallbackData {
 			// lower case
 			inline static const std::vector<string> errorPatterns = {
 				"invalid data found",
@@ -90,29 +91,10 @@ class FFMPEGEncoderBase
 				"non-monotonous dts in output stream",
 				"404 not found"	// url not found
 			};
-			static constexpr int32_t maxErrorsStored = 50;
 
-			ofstream ffmpegOutputLogFile;
-
-			int32_t processedFrames{};
-			double framePerSeconds{};
-			chrono::milliseconds processedOutputTimestampMilliSecs{};
-			double speed{}; // Utile per capire se il server sta performando bene
-			int32_t dropFrames{};
-			int32_t dupFrames{};
-			double stream_0_0_q{};
-			double stream_1_0_q{};
-			size_t totalSizeKBps{};
-			double bitRateKbps{};
-			double avgBitRateKbps{};	// calculated by us
-
-			bool finished{}; // progress=end
-
-			queue<string> _errorMessages;
-
-			Data() = default;
+			CallbackData() = default;
 			// Copy assignment operator that ignores ffmpegOutputLogFile
-			Data& operator=(const Data& other)
+			CallbackData& operator=(const CallbackData& other)
 			{
 				if (this == &other)
 					return *this;
@@ -131,16 +113,26 @@ class FFMPEGEncoderBase
 				finished = other.finished;
 				_errorMessages = other._errorMessages;
 
+				urlForbidden = other.urlForbidden;
+				urlNotFound = other.urlNotFound;
+
+				signal = other.signal;
+
 				// ffmpegOutputLogFile non viene copiato perchè non è copiabile (La sua copy-constructor è deleted)
 
 				return *this;
 			}
 
+			static constexpr int32_t maxErrorsStored = 50;
 			void pushErrorMessage(const string& errorMessage)
 			{
 				if (_errorMessages.size() >= maxErrorsStored)
 					_errorMessages.pop();
 				_errorMessages.push(errorMessage);
+				if (!urlForbidden && errorMessage.starts_with("403 forbidden"))
+					urlForbidden = true;
+				if (!urlNotFound && errorMessage.starts_with("404 not found"))
+					urlNotFound = true;
 			}
 
 			void reset()
@@ -156,7 +148,13 @@ class FFMPEGEncoderBase
 				totalSizeKBps = 0;
 				bitRateKbps = 0.0;
 				avgBitRateKbps = 0.0;
-				finished = false;
+
+				urlForbidden = false;
+				urlNotFound = false;
+
+				signal = nullopt;
+
+				finished = nullopt;
 
 				while (!_errorMessages.empty())
 					_errorMessages.pop();
@@ -164,19 +162,24 @@ class FFMPEGEncoderBase
 
 			json toJson()
 			{
-				json progressRoot;
-				progressRoot["processedFrames"] = processedFrames;
-				progressRoot["framePerSeconds"] = framePerSeconds;
-				progressRoot["processedOutputTimestampMilliSecs"] = processedOutputTimestampMilliSecs.count();
-				progressRoot["speed"] = speed;
-				progressRoot["dropFrames"] = dropFrames;
-				progressRoot["dupFrames"] = dupFrames;
-				progressRoot["stream_0_0_q"] = stream_0_0_q;
-				progressRoot["stream_1_0_q"] = stream_1_0_q;
-				progressRoot["totalSizeKBps"] = totalSizeKBps;
-				progressRoot["bitRateKbps"] = bitRateKbps;
-				progressRoot["avgBitRateKbps"] = avgBitRateKbps;
-				progressRoot["finished"] = finished;
+				if (!finished) // indica che Data non è stato usato
+					return nullptr;
+				json root;
+				root["processedFrames"] = processedFrames;
+				root["framePerSeconds"] = framePerSeconds;
+				root["processedOutputTimestampMilliSecs"] = processedOutputTimestampMilliSecs.count();
+				root["speed"] = speed;
+				root["dropFrames"] = dropFrames;
+				root["dupFrames"] = dupFrames;
+				root["stream_0_0_q"] = stream_0_0_q;
+				root["stream_1_0_q"] = stream_1_0_q;
+				root["totalSizeKBps"] = totalSizeKBps;
+				root["bitRateKbps"] = bitRateKbps;
+				root["avgBitRateKbps"] = avgBitRateKbps;
+				root["urlForbidden"] = urlForbidden;
+				root["urlNotFound"] = urlNotFound;
+				root["signal"] = signal ? *signal : -1;
+				root["finished"] = *finished;
 
 				json errorMessagesRoot = json::array();
 				auto tmp = _errorMessages;   // copia della queue
@@ -184,12 +187,38 @@ class FFMPEGEncoderBase
 					errorMessagesRoot.push_back(tmp.front());
 					tmp.pop();
 				}
-				progressRoot["errorMessages"] = errorMessagesRoot;
-				return progressRoot;
+				root["errorMessages"] = errorMessagesRoot;
+				return root;
 			}
+
+			ofstream ffmpegOutputLogFile;
+
+			int32_t processedFrames{};
+			double framePerSeconds{};
+			chrono::milliseconds processedOutputTimestampMilliSecs{};
+			double speed{}; // Utile per capire se il server sta performando bene
+			int32_t dropFrames{};
+			int32_t dupFrames{};
+			double stream_0_0_q{};
+			double stream_1_0_q{};
+			size_t totalSizeKBps{};
+			double bitRateKbps{};
+			double avgBitRateKbps{};	// calculated by us
+
+			bool urlForbidden{};
+			bool urlNotFound{};
+
+			optional<int32_t> signal{};
+
+			// nullopt se Data non è stato utilizzato, false se viene usato ma non è ancora terminato, true se viene usato ed è terminato (progress=end)
+			optional<bool> finished = nullopt;
+
+		  private:
+			queue<string> _errorMessages;
 		};
-		shared_mutex _dataMutex;
-		Data _data;
+		*/
+		shared_mutex _callbackDataMutex;
+		FFMpegEngine::CallbackData _callbackData;
 
 		string _method;
 		bool _available{};
@@ -379,7 +408,7 @@ class FFMPEGEncoderBase
 		bool _urlNotFound;
 		chrono::system_clock::time_point _timestamp;
 
-		Encoding::Data _progress;
+		FFMpegEngine::CallbackData _callbackData;
 	};
 
   public:

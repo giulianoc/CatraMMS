@@ -1248,13 +1248,21 @@ void FFMPEGEncoder::encodingStatus(
 					selectedEncodingCompleted->_killedByUser && selectedEncodingCompleted->_killToRestartByEngine
 					? false
 					: selectedEncodingCompleted->_killedByUser;
-				responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_urlForbidden;
-				responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_urlNotFound;
 				responseBodyRoot["completedWithError"] = selectedEncodingCompleted->_completedWithError;
 				responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
 				responseBodyRoot["encodingFinished"] = true;
 				responseBodyRoot["encodingProgress"] = 100.0;
-				responseBodyRoot["progress"] = selectedEncodingCompleted->_progress.toJson();
+				if (selectedEncodingCompleted->_callbackData.finished)
+				{
+					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_callbackData.urlForbidden;
+					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_callbackData.urlNotFound;
+				}
+				else
+				{
+					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_urlForbidden;
+					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_urlNotFound;
+				}
+				responseBodyRoot["data"] = selectedEncodingCompleted->_callbackData.toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1290,16 +1298,6 @@ void FFMPEGEncoder::encodingStatus(
 							chrono::duration_cast<chrono::seconds>(endEncodingProgress - startEncodingProgress).count()
 						);
 					}
-					catch (FFMpegEncodingStatusNotAvailable &e)
-					{
-						SPDLOG_INFO(
-							"_ffmpeg->getEncodingProgress failed"
-							", ingestionJobKey: {}"
-							", encodingJobKey: {}"
-							", e.what(): {}",
-							ingestionJobKey, encodingJobKey, e.what()
-						);
-					}
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
@@ -1333,8 +1331,13 @@ void FFMPEGEncoder::encodingStatus(
 				else
 					responseBodyRoot["encodingProgress"] = encodingProgress;
 				{
-					shared_lock lock(selectedEncoding->_dataMutex);
-					responseBodyRoot["progress"] = selectedEncoding->_data.toJson();
+					shared_lock lock(selectedEncoding->_callbackDataMutex);
+					responseBodyRoot["data"] = selectedEncoding->_callbackData.toJson();
+					if (selectedEncoding->_callbackData.finished)
+					{
+						responseBodyRoot["urlForbidden"] = selectedEncoding->_callbackData.urlForbidden;
+						responseBodyRoot["urlNotFound"] = selectedEncoding->_callbackData.urlNotFound;
+					}
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1359,8 +1362,13 @@ void FFMPEGEncoder::encodingStatus(
 				// sense the encoding progress
 				responseBodyRoot["encodingProgress"] = nullptr;
 				{
-					shared_lock lock(selectedLiveProxy->_dataMutex);
-					responseBodyRoot["progress"] = selectedLiveProxy->_data.toJson();
+					shared_lock lock(selectedLiveProxy->_callbackDataMutex);
+					responseBodyRoot["data"] = selectedLiveProxy->_callbackData.toJson();
+					if (selectedLiveProxy->_callbackData.finished)
+					{
+						responseBodyRoot["urlForbidden"] = selectedLiveProxy->_callbackData.urlForbidden;
+						responseBodyRoot["urlNotFound"] = selectedLiveProxy->_callbackData.urlNotFound;
+					}
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1388,8 +1396,13 @@ void FFMPEGEncoder::encodingStatus(
 				// EncoderVideoAudioProxy.cpp
 				responseBodyRoot["encodingProgress"] = nullptr;
 				{
-					shared_lock lock(selectedLiveRecording->_dataMutex);
-					responseBodyRoot["progress"] = selectedLiveRecording->_data.toJson();
+					shared_lock lock(selectedLiveRecording->_callbackDataMutex);
+					responseBodyRoot["data"] = selectedLiveRecording->_callbackData.toJson();
+					if (selectedLiveRecording->_callbackData.finished)
+					{
+						responseBodyRoot["urlForbidden"] = selectedLiveRecording->_callbackData.urlForbidden;
+						responseBodyRoot["urlNotFound"] = selectedLiveRecording->_callbackData.urlNotFound;
+					}
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
