@@ -1268,25 +1268,13 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 				}
 			}
 		}
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][5].as<bool>(false));
-		SPDLOG_INFO("AAAAAAA: {}", static_cast<int>(sqlResultSet->getColumnTypeByIndex(6)));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][6].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", static_cast<int>(sqlResultSet->getColumnTypeByIndex(7)));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][7].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][8].as<string>(""));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][9].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][10].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][11].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][12].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][13].as<int>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][14].as<int64_t>(-1));
 
 		return make_tuple(
 			(*sqlResultSet)[0][0].as<int64_t>(-1), (*sqlResultSet)[0][1].as<string>(""), encodersPoolLabel, (*sqlResultSet)[0][3].as<string>(""),
-			(*sqlResultSet)[0][4].as<int64_t>(-1), (*sqlResultSet)[0][5].as<bool>(false), (*sqlResultSet)[0][6].as<int>(-1),
-			(*sqlResultSet)[0][7].as<int>(-1), (*sqlResultSet)[0][8].as<string>(""), (*sqlResultSet)[0][9].as<int>(-1),
-			(*sqlResultSet)[0][10].as<int>(-1), (*sqlResultSet)[0][11].as<int>(-1), (*sqlResultSet)[0][12].as<int>(-1),
-			(*sqlResultSet)[0][13].as<int>(-1), (*sqlResultSet)[0][14].as<int64_t>(-1)
+			(*sqlResultSet)[0][4].as<int64_t>(-1), (*sqlResultSet)[0][5].as<bool>(false), (*sqlResultSet)[0][6].as<int16_t>(-1),
+			(*sqlResultSet)[0][7].as<int16_t>(-1), (*sqlResultSet)[0][8].as<string>(""), (*sqlResultSet)[0][9].as<int16_t>(-1),
+			(*sqlResultSet)[0][10].as<int16_t>(-1), (*sqlResultSet)[0][11].as<int16_t>(-1), (*sqlResultSet)[0][12].as<int16_t>(-1),
+			(*sqlResultSet)[0][13].as<int16_t>(-1), (*sqlResultSet)[0][14].as<int64_t>(-1)
 		);
 	}
 	catch (DBRecordNotFound &e)
