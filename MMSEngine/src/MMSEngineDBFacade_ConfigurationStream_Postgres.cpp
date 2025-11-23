@@ -1268,13 +1268,10 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 				}
 			}
 		}
-		SPDLOG_INFO("AAAAAA");
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][0].as<int64_t>(-1));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][1].as<string>(""));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][3].as<string>(""));
-		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][4].as<int64_t>(-1));
 		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][5].as<bool>(false));
+		SPDLOG_INFO("AAAAAAA: {}", static_cast<int>(sqlResultSet->getColumnTypeByIndex(6)));
 		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][6].as<int>(-1));
+		SPDLOG_INFO("AAAAAAA: {}", static_cast<int>(sqlResultSet->getColumnTypeByIndex(7)));
 		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][7].as<int>(-1));
 		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][8].as<string>(""));
 		SPDLOG_INFO("AAAAAAA: {}", (*sqlResultSet)[0][9].as<int>(-1));

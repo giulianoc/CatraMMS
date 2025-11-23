@@ -907,7 +907,6 @@ json MMSEngineDBFacade::getStreamInputRoot(
 		int captureChannelsNumber = -1;
 		int64_t tvSourceTVConfKey = -1;
 
-		SPDLOG_INFO("AAAAAA");
 		{
 			tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, ignore, ignore, pushListenTimeout, captureVideoDeviceNumber,
 				captureVideoInputFormat, captureFrameRate, captureWidth, captureHeight, captureAudioDeviceNumber, captureChannelsNumber,
@@ -930,7 +929,6 @@ json MMSEngineDBFacade::getStreamInputRoot(
 
 		int64_t pushEncoderKey = -1;
 
-		SPDLOG_INFO("AAAAAA: {}", streamSourceType);
 		if (streamSourceType == "IP_PULL")
 		{
 			url = pullUrl;
@@ -955,7 +953,6 @@ json MMSEngineDBFacade::getStreamInputRoot(
 
 			tie(tvType, tvServiceId, tvFrequency, tvSymbolRate, tvBandwidthInHz, tvModulation, tvVideoPid, tvAudioItalianPid) = tvChannelConfDetails;
 		}
-		SPDLOG_INFO("AAAAAA");
 
 		streamInputRoot["confKey"] = confKey;
 		streamInputRoot["configurationLabel"] = configurationLabel;
