@@ -202,6 +202,7 @@ int main(int argc, char **argv)
 				encoding->_available = true;
 				encoding->_childProcessId.reset(); // not running
 				encoding->_ffmpeg = make_shared<FFMpegWrapper>(configurationRoot);
+				encoding->_callbackData = make_shared<FFMpegEngine::CallbackData>();
 
 				encodingsCapability.push_back(encoding);
 			}
@@ -219,6 +220,7 @@ int main(int argc, char **argv)
 				liveProxy->_childProcessId.reset(); // not running
 				liveProxy->_ingestionJobKey = 0;
 				liveProxy->_ffmpeg = make_shared<FFMpegWrapper>(configurationRoot);
+				liveProxy->_callbackData = make_shared<FFMpegEngine::CallbackData>();
 
 				liveProxiesCapability.push_back(liveProxy);
 			}
@@ -237,6 +239,7 @@ int main(int argc, char **argv)
 				liveRecording->_ingestionJobKey = 0;
 				liveRecording->_encodingParametersRoot = nullptr;
 				liveRecording->_ffmpeg = make_shared<FFMpegWrapper>(configurationRoot);
+				liveRecording->_callbackData = make_shared<FFMpegEngine::CallbackData>();
 
 				liveRecordingsCapability.push_back(liveRecording);
 			}
