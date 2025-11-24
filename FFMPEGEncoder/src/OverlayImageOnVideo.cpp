@@ -229,7 +229,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 		_encoding->_ffmpeg->overlayImageOnVideo(
 			externalEncoder, sourceVideoAssetPathName, videoDurationInMilliSeconds, mmsSourceImageAssetPathName, imagePosition_X_InPixel,
 			imagePosition_Y_InPixel, encodedStagingAssetPathName, encodingProfileDetailsRoot, _encoding->_encodingJobKey, _encoding->_ingestionJobKey,
-			_encoding->_childProcessId, nullptr
+			_encoding->_childProcessId, _encoding->_callbackData
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

@@ -59,7 +59,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	long _tvChannelPort_Start;
 	long _tvChannelPort_MaxNumberOfOffsets;
 
-	void ffmpegLineCallback(const string_view& ffmpegLine) const;
+	// void ffmpegLineCallback(const string_view& ffmpegLine) const;
 
 	static string buildAddContentIngestionWorkflow(
 		int64_t ingestionJobKey, string label, string fileFormat, string ingester,

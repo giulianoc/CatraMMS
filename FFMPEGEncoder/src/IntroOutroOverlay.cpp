@@ -568,8 +568,8 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 								introPathName,
 
-								_encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId,
-								nullptr
+								_encoding->_encodingJobKey, _encoding->_ingestionJobKey,
+								_encoding->_childProcessId, _encoding->_callbackData
 							);
 						}
 						else
@@ -614,8 +614,8 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 								outroPathName,
 
-								_encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId,
-								nullptr
+								_encoding->_encodingJobKey, _encoding->_ingestionJobKey,
+								_encoding->_childProcessId, _encoding->_callbackData
 							);
 						}
 						else
@@ -653,12 +653,12 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 							}
 							string encodedPathName = stagingBasePath + "/" + "destChunk" + "_" + currentCounter + "." + destFileFormat;
 							concatSourcePhysicalPaths.push_back(encodedPathName);
-							_encoding->_ffmpeg->encodeContent(currentFile, currentFileDurationInMilliSeconds,
-								encodedPathName, encodingProfileDetailsRoot, true,
-								nullptr, nullptr, -1,
-								-1, nullptr, -1,
-								_encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId,
-								nullptr
+							_encoding->_ffmpeg->encodeContent(
+								currentFile, currentFileDurationInMilliSeconds, encodedPathName,
+								encodingProfileDetailsRoot, true, nullptr, nullptr,
+								-1, -1, nullptr, -1,
+								_encoding->_encodingJobKey, _encoding->_ingestionJobKey,
+								_encoding->_childProcessId, _encoding->_callbackData
 							);
 						}
 						else
@@ -943,8 +943,8 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				encodedStagingAssetPathName,
 
-				_encoding->_encodingJobKey, _encoding->_ingestionJobKey, _encoding->_childProcessId,
-				nullptr
+				_encoding->_encodingJobKey, _encoding->_ingestionJobKey,
+				_encoding->_childProcessId, _encoding->_callbackData
 			);
 		}
 

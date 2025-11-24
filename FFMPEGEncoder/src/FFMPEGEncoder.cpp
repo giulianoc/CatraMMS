@@ -1252,17 +1252,17 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
 				responseBodyRoot["encodingFinished"] = true;
 				responseBodyRoot["encodingProgress"] = 100.0;
-				if (selectedEncodingCompleted->_callbackData.finished)
+				if (selectedEncodingCompleted->_callbackData->getFinished())
 				{
-					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_callbackData.urlForbidden;
-					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_callbackData.urlNotFound;
+					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_callbackData->getUrlForbidden();
+					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_callbackData->getUrlForbidden();
 				}
 				else
 				{
 					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_urlForbidden;
 					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_urlNotFound;
 				}
-				responseBodyRoot["data"] = selectedEncodingCompleted->_callbackData.toJson();
+				responseBodyRoot["data"] = selectedEncodingCompleted->_callbackData->toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1331,13 +1331,14 @@ void FFMPEGEncoder::encodingStatus(
 				else
 					responseBodyRoot["encodingProgress"] = encodingProgress;
 				{
-					shared_lock lock(selectedEncoding->_callbackDataMutex);
-					responseBodyRoot["data"] = selectedEncoding->_callbackData.toJson();
-					if (selectedEncoding->_callbackData.finished)
+					if (selectedEncoding->_callbackData->getFinished())
 					{
-						responseBodyRoot["urlForbidden"] = selectedEncoding->_callbackData.urlForbidden;
-						responseBodyRoot["urlNotFound"] = selectedEncoding->_callbackData.urlNotFound;
+						responseBodyRoot["data"] = selectedEncoding->_callbackData->toJson();
+						responseBodyRoot["urlForbidden"] = selectedEncoding->_callbackData->getUrlForbidden();
+						responseBodyRoot["urlNotFound"] = selectedEncoding->_callbackData->getUrlNotFound();
 					}
+					else
+						responseBodyRoot["data"] = nullptr;
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1362,13 +1363,14 @@ void FFMPEGEncoder::encodingStatus(
 				// sense the encoding progress
 				responseBodyRoot["encodingProgress"] = nullptr;
 				{
-					shared_lock lock(selectedLiveProxy->_callbackDataMutex);
-					responseBodyRoot["data"] = selectedLiveProxy->_callbackData.toJson();
-					if (selectedLiveProxy->_callbackData.finished)
+					if (selectedLiveProxy->_callbackData->getFinished())
 					{
-						responseBodyRoot["urlForbidden"] = selectedLiveProxy->_callbackData.urlForbidden;
-						responseBodyRoot["urlNotFound"] = selectedLiveProxy->_callbackData.urlNotFound;
+						responseBodyRoot["data"] = selectedLiveProxy->_callbackData->toJson();
+						responseBodyRoot["urlForbidden"] = selectedLiveProxy->_callbackData->getUrlForbidden();
+						responseBodyRoot["urlNotFound"] = selectedLiveProxy->_callbackData->getUrlNotFound();
 					}
+					else
+						responseBodyRoot["data"] = nullptr;
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1396,13 +1398,14 @@ void FFMPEGEncoder::encodingStatus(
 				// EncoderVideoAudioProxy.cpp
 				responseBodyRoot["encodingProgress"] = nullptr;
 				{
-					shared_lock lock(selectedLiveRecording->_callbackDataMutex);
-					responseBodyRoot["data"] = selectedLiveRecording->_callbackData.toJson();
-					if (selectedLiveRecording->_callbackData.finished)
+					if (selectedLiveRecording->_callbackData->getFinished())
 					{
-						responseBodyRoot["urlForbidden"] = selectedLiveRecording->_callbackData.urlForbidden;
-						responseBodyRoot["urlNotFound"] = selectedLiveRecording->_callbackData.urlNotFound;
+						responseBodyRoot["data"] = selectedLiveRecording->_callbackData->toJson();
+						responseBodyRoot["urlForbidden"] = selectedLiveRecording->_callbackData->getUrlForbidden();
+						responseBodyRoot["urlNotFound"] = selectedLiveRecording->_callbackData->getUrlNotFound();
 					}
+					else
+						responseBodyRoot["data"] = nullptr;
 				}
 
 				responseBody = JSONUtils::toString(responseBodyRoot);

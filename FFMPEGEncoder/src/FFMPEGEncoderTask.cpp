@@ -1251,6 +1251,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 	return make_pair(multicastIP, multicastPort);
 }
 
+/*
 void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 {
 	try
@@ -1415,37 +1416,12 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 					}
 					case "out_time"_case:
 					{
-						// usiamo out_time_ms already in millisecs
-						/*
-						// formato: HH:MM:SS.xxx
-						int h = std::stoi(string(value.substr(0, 2)));
-						int m = std::stoi(string(value.substr(3, 2)));
-						int s = std::stoi(string(value.substr(6, 2)));
-						int ms = std::stoi(string(value.substr(9)));
-						_encoding->_progress.out_time = std::chrono::milliseconds(
-							(static_cast<int64_t>(h) * 3600000LL) +
-							(static_cast<int64_t>(m) * 60000LL) +
-							(static_cast<int64_t>(s) * 1000LL) +
-							ms);
-						*/
 						break;
 					}
 					case "out_time_us"_case: // timestamp dell'output in microsecondi (1.000.000), usiamo out_time_ms in millisecs
 						break;
 					case "out_time_ms"_case:
 					{
-						/*
-						// formato: HH:MM:SS.xxx
-						int h = std::stoi(string(value.substr(0, 2)));
-						int m = std::stoi(string(value.substr(3, 2)));
-						int s = std::stoi(string(value.substr(6, 2)));
-						int ms = std::stoi(string(value.substr(9)));
-						_encoding->_progress.out_time = std::chrono::milliseconds(
-							(static_cast<int64_t>(h) * 3600000LL) +
-							(static_cast<int64_t>(m) * 60000LL) +
-							(static_cast<int64_t>(s) * 1000LL) +
-							ms);
-						*/
 						if (value != "N/A")
 						{
 							_encoding->_callbackData.processedOutputTimestampMilliSecs = chrono::milliseconds(stoul(string(value)));
@@ -1546,12 +1522,13 @@ void FFMPEGEncoderTask::ffmpegLineCallback(const string_view& ffmpegLine) const
 		);
 	}
 }
+*/
 
 void FFMPEGEncoderTask::addEncodingCompleted()
 {
 	lock_guard<mutex> locker(*_encodingCompletedMutex);
 
-	shared_ptr<EncodingCompleted> encodingCompleted = make_shared<EncodingCompleted>();
+	auto encodingCompleted = make_shared<EncodingCompleted>();
 
 	encodingCompleted->_encodingJobKey = _encoding->_encodingJobKey;
 	encodingCompleted->_completedWithError = _completedWithError;
@@ -1563,12 +1540,11 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 	encodingCompleted->_timestamp = chrono::system_clock::now();
 
 	{
-		shared_lock lock(_encoding->_callbackDataMutex);
-		encodingCompleted->_callbackData = _encoding->_callbackData;
-		if (_encoding->_callbackData.finished)
+		encodingCompleted->_callbackData = _encoding->_callbackData->clone();
+		if (encodingCompleted->_callbackData->getFinished())
 		{
-			encodingCompleted->_urlForbidden = _urlForbidden;
-			encodingCompleted->_urlNotFound = _urlNotFound;
+			encodingCompleted->_urlForbidden = encodingCompleted->_callbackData->getUrlForbidden();
+			encodingCompleted->_urlNotFound = encodingCompleted->_callbackData->getUrlNotFound();
 		}
 	}
 

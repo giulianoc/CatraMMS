@@ -436,9 +436,8 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 			outputsRoot,
 
-			framesToBeDetectedRoot,
-			[&](const string_view& line) {ffmpegLineCallback(line); }, liveRecording->_callbackData,
-			liveRecording->_childProcessId, &(liveRecording->_recordingStart), &(liveRecording->_numberOfRestartBecauseOfFailure)
+			framesToBeDetectedRoot, liveRecording->_callbackData, liveRecording->_childProcessId, &(liveRecording->_recordingStart),
+			&(liveRecording->_numberOfRestartBecauseOfFailure)
 		);
 
 		if (liveRecording->_streamSourceType == "TV" && tvServiceId != -1 // this is just to be sure variables are initialized

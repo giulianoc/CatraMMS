@@ -202,9 +202,9 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpeg->encodeContent(
 			sourceAssetPathName, durationInMilliSeconds, encodedStagingAssetPathName, encodingProfileDetailsRoot,
-			contentType == MMSEngineDBFacade::ContentType::Video, videoTracksRoot, audioTracksRoot, videoTrackIndexToBeUsed,
-			audioTrackIndexToBeUsed, filtersRoot, physicalPathKey, _encoding->_encodingJobKey,
-			_encoding->_ingestionJobKey, _encoding->_childProcessId, nullptr
+			contentType == MMSEngineDBFacade::ContentType::Video, videoTracksRoot, audioTracksRoot, videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,
+			filtersRoot, physicalPathKey, _encoding->_encodingJobKey, _encoding->_ingestionJobKey,
+			_encoding->_childProcessId, _encoding->_callbackData
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

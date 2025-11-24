@@ -164,7 +164,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		_encoding->_ffmpeg->generateFramesToIngest(
 			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, imagesDirectory, imageBaseFileName, startTimeInSeconds, maxFramesNumber,
 			videoFilter, periodInSeconds, mjpeg, imageWidth, imageHeight, sourceAssetPathName, videoDurationInMilliSeconds,
-			_encoding->_childProcessId, [&](const string_view& line) {ffmpegLineCallback(line); }
+			_encoding->_childProcessId, _encoding->_callbackData
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;

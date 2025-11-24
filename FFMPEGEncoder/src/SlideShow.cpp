@@ -290,8 +290,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		_encoding->_ffmpeg->slideShow(
 			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, durationOfEachSlideInSeconds, frameRateMode,
 			encodingProfileDetailsRoot, imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,
-			encodedStagingAssetPathName, _encoding->_childProcessId,
-			[&](const string_view& line) {ffmpegLineCallback(line); }
+			encodedStagingAssetPathName, _encoding->_childProcessId, _encoding->_callbackData
 		);
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
