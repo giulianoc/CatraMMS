@@ -96,11 +96,11 @@ class FFMPEGEncoderBase
 
 		bool _monitoringRealTimeInfoEnabled{}; // frame/size/time
 		uintmax_t _outputFfmpegFileSize{};
-		long _realTimeFrame{};
-		long _realTimeSize{};
+		int32_t _realTimeFrame{};
+		size_t _realTimeSize{};
 		long _realTimeFrameRate{};
 		double _realTimeBitRate{};
-		double _realTimeTimeInMilliSeconds{};
+		chrono::milliseconds _realTimeTimeInMilliSeconds{};
 		chrono::system_clock::time_point _realTimeLastChange;
 
 		long _numberOfRestartBecauseOfFailure{};
@@ -143,6 +143,8 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_ingestedParametersRoot = _ingestedParametersRoot;
 			liveProxyAndGrid->_inputsRoot = _inputsRoot;
 
+			liveProxyAndGrid->_callbackData = _callbackData->clone();
+
 			liveProxyAndGrid->_proxyStart = _proxyStart;
 
 			return liveProxyAndGrid;
@@ -165,11 +167,11 @@ class FFMPEGEncoderBase
 
 		bool _monitoringRealTimeInfoEnabled{}; // frame/size/time
 		uintmax_t _outputFfmpegFileSize{};
-		long _realTimeFrame{};
-		long _realTimeSize{};
+		int32_t _realTimeFrame{};
+		size_t _realTimeSize{};
 		long _realTimeFrameRate{};
 		double _realTimeBitRate{};
-		double _realTimeTimeInMilliSeconds{};
+		chrono::milliseconds _realTimeTimeInMilliSeconds{};
 		chrono::system_clock::time_point _realTimeLastChange;
 
 		long _numberOfRestartBecauseOfFailure{};
@@ -245,6 +247,8 @@ class FFMPEGEncoderBase
 			liveRecording->_monitorVirtualVODManifestFileName = _monitorVirtualVODManifestFileName;
 			liveRecording->_virtualVODStagingContentsPath = _virtualVODStagingContentsPath;
 			liveRecording->_liveRecorderVirtualVODImageMediaItemKey = _liveRecorderVirtualVODImageMediaItemKey;
+
+			liveRecording->_callbackData = _callbackData->clone();
 
 			return liveRecording;
 		}

@@ -1289,7 +1289,9 @@ void FFMPEGEncoder::encodingStatus(
 					{
 						chrono::system_clock::time_point startEncodingProgress = chrono::system_clock::now();
 
-						encodingProgress = selectedEncoding->_ffmpeg->getEncodingProgress();
+						optional<double> localEncodingProgress = selectedEncoding->_callbackData->getProgressPercent();
+						if (localEncodingProgress)
+							encodingProgress = *localEncodingProgress;
 
 						chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
 						SPDLOG_INFO(

@@ -182,7 +182,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		liveRecording->_realTimeSize = -1;
 		liveRecording->_realTimeFrameRate = -1;
 		liveRecording->_realTimeBitRate = -1;
-		liveRecording->_realTimeTimeInMilliSeconds = -1.0;
+		liveRecording->_realTimeTimeInMilliSeconds = chrono::milliseconds(0);
 		liveRecording->_realTimeLastChange = chrono::system_clock::now();
 
 		// -1 perchè liveRecording fa un incremento quando il live recording parte che quindi setta a 0 correttamente la variabile

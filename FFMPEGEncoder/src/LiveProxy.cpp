@@ -53,7 +53,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		liveProxyData->_realTimeSize = -1;
 		liveProxyData->_realTimeFrameRate = -1;
 		liveProxyData->_realTimeBitRate = -1;
-		liveProxyData->_realTimeTimeInMilliSeconds = -1.0;
+		liveProxyData->_realTimeTimeInMilliSeconds = chrono::milliseconds(0);
 		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
 		// 0 perchè liveProxy2 incrementa su un restart
