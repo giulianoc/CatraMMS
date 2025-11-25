@@ -1287,6 +1287,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 	long lastRealTimeFrameRate = 0;
 	long lastRealTimeBitRate = 0;
 	long lastNumberOfRestartBecauseOfFailure = 0;
+	string lastEncodingErrorMessages;
 	while (!(encodingFinished || encodingStatusFailures >= maxConsecutiveEncodingStatusFailures))
 	{
 		this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -1309,7 +1310,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessages, urlForbidden, urlNotFound, encodingProgress, encodingPid,
 				realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 
-			if (encodingErrorMessages != "")
+			if (encodingErrorMessages != lastEncodingErrorMessages)
 			{
 				try
 				{
@@ -1327,6 +1328,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					*/
 					_mmsEngineDBFacade->updateIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, encodingErrorMessages);
+					lastEncodingErrorMessages = encodingErrorMessages;
 				}
 				catch (exception &e)
 				{
@@ -1891,6 +1893,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			bool encodingFinished = false;
 			bool completedWithError = false;
 			string encodingErrorMessages;
+			string lastEncodingErrorMessages;
 
 			int encoderNotReachableFailures = 0;
 			int lastEncodingPid = 0;
@@ -2063,7 +2066,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						}
 					}
 
-					if (encodingErrorMessages != "")
+					if (encodingErrorMessages != lastEncodingErrorMessages)
 					{
 						SPDLOG_ERROR(
 							"Encoding failed (look the Transcoder logs)"
@@ -2090,6 +2093,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						*/
 						_mmsEngineDBFacade->updateIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, encodingErrorMessages);
+						lastEncodingErrorMessages = encodingErrorMessages;
 					}
 
 					// update currentAttemptsNumberInCaseOfErrors++
