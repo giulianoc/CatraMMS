@@ -1008,7 +1008,7 @@ void EncoderProxy::operator()()
 	);
 }
 
-tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> EncoderProxy::getEncodingStatus()
+tuple<bool, bool, bool, string, bool, bool, optional<double>, int, json, long> EncoderProxy::getEncodingStatus()
 {
 	bool encodingFinished;
 	bool killedByUser;
@@ -1016,10 +1016,9 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 	string encoderErrorMessages;
 	bool urlNotFound;
 	bool urlForbidden;
-	double encodingProgress;
+	optional<double> encodingProgress;
 	int pid;
-	long realTimeFrameRate;
-	double realTimeBitRate;
+	json realTimeInfoRoot;
 	long numberOfRestartBecauseOfFailure;
 
 	string ffmpegEncoderURL;
@@ -1064,12 +1063,25 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 
 				urlForbidden = JSONUtils::asBool(dataRoot, "urlForbidden", false);
 				urlNotFound = JSONUtils::asBool(dataRoot, "urlNotFound", false);
-				realTimeFrameRate = JSONUtils::asInt(dataRoot, "framePerSeconds", -1);
-				realTimeBitRate = JSONUtils::asDouble(dataRoot, "bitRateKbps", -1.0);
+				{
+					realTimeInfoRoot["framePerSeconds"] = JSONUtils::asInt(dataRoot, "framePerSeconds", -1);
+					realTimeInfoRoot["bitRateKbps"] = JSONUtils::asDouble(dataRoot, "bitRateKbps", -1.0);
+					realTimeInfoRoot["avgBitRateKbps"] = JSONUtils::asDouble(dataRoot, "avgBitRateKbps", -1.0);
+					realTimeInfoRoot["dropFrames"] = JSONUtils::asInt(dataRoot, "dropFrames", -1);
+					realTimeInfoRoot["dupFrames"] = JSONUtils::asInt(dataRoot, "dupFrames", -1);
+					realTimeInfoRoot["processedFrames"] = JSONUtils::asInt(dataRoot, "processedFrames", -1);
+					realTimeInfoRoot["processedOutputTimestampMilliSecs"] = JSONUtils::asInt(dataRoot, "processedOutputTimestampMilliSecs", -1);
+					realTimeInfoRoot["speed"] = JSONUtils::asDouble(dataRoot, "speed", -1.0);
+					realTimeInfoRoot["stream_0_0_q"] = JSONUtils::asDouble(dataRoot, "stream_0_0_q", -1.0);
+					realTimeInfoRoot["stream_1_0_q"] = JSONUtils::asDouble(dataRoot, "stream_1_0_q", -1.0);
+					realTimeInfoRoot["processedSizeKBps"] = JSONUtils::asDouble(dataRoot, "processedSizeKBps", -1.0);
+				}
 			}
 			encodingFinished = JSONUtils::asBool(encodeStatusResponse, "encodingFinished", false);
 			killedByUser = JSONUtils::asBool(encodeStatusResponse, "killedByUser", false);
-			encodingProgress = JSONUtils::asDouble(encodeStatusResponse, "encodingProgress", 0.0);
+			if (JSONUtils::isMetadataPresent(encodeStatusResponse, "encodingProgress")
+				&& !JSONUtils::isNull(encodeStatusResponse, "encodingProgress"))
+				encodingProgress = JSONUtils::asDouble(encodeStatusResponse, "encodingProgress", 0.0);
 			pid = JSONUtils::asInt(encodeStatusResponse, "pid", -1);
 			numberOfRestartBecauseOfFailure = JSONUtils::asInt(encodeStatusResponse, "numberOfRestartBecauseOfFailure", -1);
 		}
@@ -1113,8 +1125,8 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 	}
 
 	return make_tuple(
-		encodingFinished, killedByUser, completedWithError, encoderErrorMessages, urlForbidden, urlNotFound, encodingProgress, pid, realTimeFrameRate,
-		realTimeBitRate, numberOfRestartBecauseOfFailure
+		encodingFinished, killedByUser, completedWithError, encoderErrorMessages, urlForbidden, urlNotFound, encodingProgress, pid,
+		realTimeInfoRoot, numberOfRestartBecauseOfFailure
 	);
 }
 
@@ -1291,8 +1303,6 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 	bool encodingFinished = false;
 	int encodingStatusFailures = 0;
 	int lastEncodingPid = 0;
-	long lastRealTimeFrameRate = 0;
-	long lastRealTimeBitRate = 0;
 	long lastNumberOfRestartBecauseOfFailure = 0;
 	string lastEncodingErrorMessages;
 	while (!(encodingFinished || encodingStatusFailures >= maxConsecutiveEncodingStatusFailures))
@@ -1305,17 +1315,16 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			string encodingErrorMessages;
 			bool urlForbidden = false;
 			bool urlNotFound = false;
-			double encodingProgress = 0.0;
+			optional<double> encodingProgress;
 			int encodingPid;
-			long realTimeFrameRate;
-			long realTimeBitRate;
+			json realTimeInfoRoot;
 			long numberOfRestartBecauseOfFailure;
 
 			// tuple<bool, bool, bool, string, bool, bool, double, int>
 			// encodingStatus =
 			// getEncodingStatus(/* _encodingItem->_encodingJobKey */);
 			tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessages, urlForbidden, urlNotFound, encodingProgress, encodingPid,
-				realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
+				realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 
 			if (encodingErrorMessages != lastEncodingErrorMessages)
 			{
@@ -1372,14 +1381,14 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 						"updateEncodingJobProgress"
 						", encodingJobKey: {}"
 						", encodingProgress: {}",
-						_encodingItem->_encodingJobKey, encodingProgress
+						_encodingItem->_encodingJobKey, encodingProgress ? *encodingProgress : -1.0
 					);
-					_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
+					_mmsEngineDBFacade->updateEncodingJobProgressAndRealTimeInfo(_encodingItem->_encodingJobKey, encodingProgress, realTimeInfoRoot);
 				}
 				catch (exception &e)
 				{
 					SPDLOG_ERROR(
-						"updateEncodingJobProgress failed"
+						"updateEncodingJobProgressAndRealTimeInfo failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", e.what(): {}",
@@ -1387,7 +1396,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					);
 				}
 
-				if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
+				if (lastEncodingPid != encodingPid ||
 					lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
 				{
 					try
@@ -1397,19 +1406,15 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", encodingPid: {}"
-							", realTimeFrameRate: {}"
-							", realTimeBitRate: {}"
 							", numberOfRestartBecauseOfFailure: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid,
 							numberOfRestartBecauseOfFailure
 						);
-						_mmsEngineDBFacade->updateEncodingRealTimeInfo(
-							_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
+						_mmsEngineDBFacade->updateEncodingPid(
+							_encodingItem->_encodingJobKey, encodingPid, numberOfRestartBecauseOfFailure
 						);
 
 						lastEncodingPid = encodingPid;
-						lastRealTimeFrameRate = realTimeFrameRate;
-						lastRealTimeBitRate = realTimeBitRate;
 						lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
 					}
 					catch (exception &e)
@@ -1419,11 +1424,9 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", encodingPid: {}"
-							", realTimeFrameRate: {}"
-							", realTimeBitRate: {}"
 							", numberOfRestartBecauseOfFailure: {}"
 							", e.what: {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid,
 							numberOfRestartBecauseOfFailure, e.what()
 						);
 					}
@@ -1873,16 +1876,18 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			{
 				try
 				{
-					double encodingProgress = -1.0; // it is a live
+					optional<double> encodingProgress; // it is a live
 
 					SPDLOG_INFO(
 						"updateEncodingJobProgress"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", encodingProgress: {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+						encodingProgress ? *encodingProgress : -1.0
 					);
-					_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
+					_mmsEngineDBFacade->updateEncodingJobProgressAndRealTimeInfo(_encodingItem->_encodingJobKey, encodingProgress,
+						nullptr);
 				}
 				catch (exception &e)
 				{
@@ -1904,11 +1909,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 			int encoderNotReachableFailures = 0;
 			int lastEncodingPid = 0;
-			long lastRealTimeFrameRate = 0;
-			double lastRealTimeBitRate = 0;
+			json realTimeInfoRoot;
 			int encodingPid;
-			long realTimeFrameRate;
-			double realTimeBitRate;
 			long lastNumberOfRestartBecauseOfFailure = 0;
 			long numberOfRestartBecauseOfFailure;
 
@@ -1950,7 +1952,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				try
 				{
 					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessages, urlForbidden, urlNotFound, ignore, encodingPid,
-						realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure) = getEncodingStatus();
+						realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 					SPDLOG_INFO(
 						"getEncodingStatus"
 						", _ingestionJobKey: {}"
@@ -2003,22 +2005,25 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 					// update encodingProgress/encodingPid/real time info
 					{
-						if (timePeriod)
+						// if (timePeriod)
 						{
 							time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
-							double encodingProgress;
+							optional<double> encodingProgress;
 
-							if (utcNow < utcPeriodStart)
-								encodingProgress = 0.0;
-							else if (utcPeriodStart < utcNow && utcNow < utcPeriodEnd)
+							if (timePeriod)
 							{
-								double elapsed = utcNow - utcPeriodStart;
-								double proxyPeriod = utcPeriodEnd - utcPeriodStart;
-								encodingProgress = (elapsed * 100) / proxyPeriod;
+								if (utcNow < utcPeriodStart)
+									encodingProgress = 0.0;
+								else if (utcPeriodStart < utcNow && utcNow < utcPeriodEnd)
+								{
+									double elapsed = utcNow - utcPeriodStart;
+									double proxyPeriod = utcPeriodEnd - utcPeriodStart;
+									encodingProgress = (elapsed * 100) / proxyPeriod;
+								}
+								else
+									encodingProgress = 100.0;
 							}
-							else
-								encodingProgress = 100.0;
 
 							SPDLOG_INFO(
 								"updateEncodingJobProgress"
@@ -2028,13 +2033,16 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 								", utcProxyPeriodStart: {}"
 								", utcNow: {}"
 								", utcProxyPeriodEnd: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingProgress, utcPeriodStart, utcNow,
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+								encodingProgress ? *encodingProgress : -1.0, utcPeriodStart, utcNow,
 								utcPeriodEnd
 							);
-							_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, encodingProgress);
+							_mmsEngineDBFacade->updateEncodingJobProgressAndRealTimeInfo(
+								_encodingItem->_encodingJobKey, encodingProgress, realTimeInfoRoot
+							);
 						}
 
-						if (lastEncodingPid != encodingPid || lastRealTimeFrameRate != realTimeFrameRate || lastRealTimeBitRate != realTimeBitRate ||
+						if (lastEncodingPid != encodingPid ||
 							lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
 						{
 							SPDLOG_INFO(
@@ -2042,19 +2050,15 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
 								", encodingPid: {}"
-								", realTimeFrameRate: {}"
-								", realTimeBitRate: {}"
 								", numberOfRestartBecauseOfFailure: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid,
 								numberOfRestartBecauseOfFailure
 							);
-							_mmsEngineDBFacade->updateEncodingRealTimeInfo(
-								_encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure
+							_mmsEngineDBFacade->updateEncodingPid(
+								_encodingItem->_encodingJobKey, encodingPid, numberOfRestartBecauseOfFailure
 							);
 
 							lastEncodingPid = encodingPid;
-							lastRealTimeFrameRate = realTimeFrameRate;
-							lastRealTimeBitRate = realTimeBitRate;
 							lastNumberOfRestartBecauseOfFailure = numberOfRestartBecauseOfFailure;
 						}
 						else
@@ -2064,10 +2068,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
 								", encodingPid: {}"
-								", realTimeFrameRate: {}"
-								", realTimeBitRate: {}"
 								", numberOfRestartBecauseOfFailure: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid, realTimeFrameRate, realTimeBitRate,
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingPid,
 								numberOfRestartBecauseOfFailure
 							);
 						}

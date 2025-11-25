@@ -380,7 +380,8 @@ string EncoderProxy::faceIdentification()
 					", encodingProgress: {}",
 					_encodingItem->_encodingJobKey, _localEncodingProgress
 				);
-				_mmsEngineDBFacade->updateEncodingJobProgress(_encodingItem->_encodingJobKey, _localEncodingProgress);
+				_mmsEngineDBFacade->updateEncodingJobProgressAndRealTimeInfo(_encodingItem->_encodingJobKey, _localEncodingProgress,
+					nullptr);
 			}
 			catch (exception &e)
 			{

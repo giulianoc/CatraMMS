@@ -1809,19 +1809,9 @@ nontransaction trans{*(conn->_sqlConnection)};
 	}
 }
 
-void MMSEngineDBFacade::updateEncodingJobProgress(int64_t encodingJobKey, double encodingPercentage)
+void MMSEngineDBFacade::updateEncodingJobProgressAndRealTimeInfo(int64_t encodingJobKey, const optional<double> encodingPercentage,
+	const json& realTimeInfoRoot)
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-nontransaction trans{*(conn->_sqlConnection)};
-*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -1833,11 +1823,21 @@ nontransaction trans{*(conn->_sqlConnection)};
 				+ ", encodingProgress: " + to_string(encodingPercentage)
 				);
 			*/
-			string sqlStatement = std::format(
-				"update MMS_EncodingJob set encodingProgress = {} "
-				"where encodingJobKey = {} ",
-				encodingPercentage, encodingJobKey
-			);
+			string sqlStatement;
+			if (realTimeInfoRoot == nullptr)
+				sqlStatement = std::format(
+					"update MMS_EncodingJob set encodingProgress = {} "
+					"where encodingJobKey = {} ",
+					encodingPercentage ? std::format("{}", *encodingPercentage) : "null",
+					encodingJobKey
+				);
+			else
+				sqlStatement = std::format(
+					"update MMS_EncodingJob set encodingProgress = {}, realTimeInfo = {} "
+					"where encodingJobKey = {} ",
+					encodingPercentage ? std::format("{}", *encodingPercentage) : "null",
+					JSONUtils::toString(realTimeInfoRoot), encodingJobKey
+				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -1869,7 +1869,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1892,22 +1892,10 @@ nontransaction trans{*(conn->_sqlConnection)};
 	}
 }
 
-void MMSEngineDBFacade::updateEncodingRealTimeInfo(
-	int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate, long numberOfRestartBecauseOfFailure
+void MMSEngineDBFacade::updateEncodingPid(
+	int64_t encodingJobKey, const int encodingPid, long numberOfRestartBecauseOfFailure
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-nontransaction trans{*(conn->_sqlConnection)};
-*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1919,13 +1907,13 @@ nontransaction trans{*(conn->_sqlConnection)};
 				);
 			*/
 			string sqlStatement = std::format(
-				"update MMS_EncodingJob set encodingPid = {}, realTimeFrameRate = {}, realTimeBitRate = {}, "
+				"update MMS_EncodingJob set encodingPid = {}, "
 				"numberOfRestartBecauseOfFailure = {} "
 				"where encodingJobKey = {} ",
-				encodingPid == -1 ? "null" : to_string(encodingPid), realTimeFrameRate == -1 ? "null" : to_string(realTimeFrameRate),
-				realTimeBitRate == -1.0 ? "null" : to_string(realTimeBitRate), numberOfRestartBecauseOfFailure, encodingJobKey
+				encodingPid == -1 ? "null" : to_string(encodingPid),
+				numberOfRestartBecauseOfFailure, encodingJobKey
 			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			const chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
@@ -1956,7 +1944,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -3228,7 +3216,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
 				"ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
-				"ej.realTimeFrameRate, ej.realTimeBitRate, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
+				"ej.realTimeInfo, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
 				"to_char(ej.encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
 				"to_char(ej.encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
 				"case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
@@ -3347,17 +3335,11 @@ nontransaction trans{*(conn->_sqlConnection)};
 				else
 					encodingJobRoot[field] = row["encodingPid"].as<int64_t>();
 
-				field = "realTimeFrameRate";
-				if (row["realTimeFrameRate"].is_null())
-					encodingJobRoot[field] = -1;
+				field = "realTimeInfo";
+				if (row["realTimeInfo"].is_null())
+					encodingJobRoot[field] = nullptr;
 				else
-					encodingJobRoot[field] = row["realTimeFrameRate"].as<int64_t>();
-
-				field = "realTimeBitRate";
-				if (row["realTimeBitRate"].is_null())
-					encodingJobRoot[field] = -1.0;
-				else
-					encodingJobRoot[field] = row["realTimeBitRate"].as<float>();
+					encodingJobRoot[field] = JSONUtils::toJson(row["realTimeInfo"].as<string>());
 
 				field = "numberOfRestartBecauseOfFailure";
 				if (row["numberOfRestartBecauseOfFailure"].is_null())
@@ -3625,11 +3607,11 @@ void MMSEngineDBFacade::addEncodingJob(
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, "
-				"processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
+				"processorMMS, encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, "
 				"creationDate) values ("
 				"DEFAULT,         {},              {},   {},           {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL,             {}, "
-				"NULL,         NULL,       NULL,        NULL,              NULL,            NULL,                            0,				NOW() at "
+				"NULL,         NULL,       NULL,        NULL,          NULL,                            0,				NOW() at "
 				"time zone 'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -3792,10 +3774,10 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},  {},		   {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,          NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -3941,10 +3923,10 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,          NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -4113,10 +4095,10 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,          NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -4257,11 +4239,11 @@ work trans{*(conn->_sqlConnection)};
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, "
 				"parameters, encodingPriority, encodingJobStart, encodingJobEnd, "
 				"encodingProgress, status, processorMMS, encoderKey, "
-				"encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {}, "
 				"{},          {},              NOW() at time zone 'utc', NULL, "
 				"NULL,             {},      NULL,         NULL, "
-				"NULL,        NULL,              NULL,            NULL,                             0,			  NOW() at time zone 'utc')",
+				"NULL,        NULL,          NULL,                             0,			  NOW() at time zone 'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
 			);
@@ -4366,10 +4348,10 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                             0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,            NULL,                             0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -4471,10 +4453,10 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -4687,11 +4669,11 @@ work trans{*(conn->_sqlConnection)};
 				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
 					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 					"'utc')",
 					ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -4824,11 +4806,11 @@ work trans{*(conn->_sqlConnection)};
 				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
 					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 					"'utc')",
 					ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -4955,11 +4937,11 @@ work trans{*(conn->_sqlConnection)};
 				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
 					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 					"'utc')",
 					ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -5079,11 +5061,11 @@ work trans{*(conn->_sqlConnection)};
 				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
 					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 					"'utc')",
 					ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -5194,11 +5176,11 @@ work trans{*(conn->_sqlConnection)};
 				string sqlStatement = std::format(
 					"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 					"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-					"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
+					"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) "
 					"values ("
 					"DEFAULT,        {},               {},    {},			  {},          {}, "
 					"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-					"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+					"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 					"'utc')",
 					ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 					trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -5352,10 +5334,10 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -5480,10 +5462,10 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -5661,10 +5643,10 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, encodingPriority, "
 				"encodingJobStart, encodingJobEnd, encodingProgress, status, processorMMS, "
-				"encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
+				"encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {},          {}, "
 				"NOW() at time zone 'utc', NULL,   NULL,             {},      NULL, "
-				"NULL,       NULL,        NULL,              NULL,            NULL,                            0,			  NOW() at time zone "
+				"NULL,       NULL,        NULL,            NULL,                            0,			  NOW() at time zone "
 				"'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -5858,11 +5840,11 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
-				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
+				"status, processorMMS, encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, "
 				"creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL, "
-				"{},      NULL,         NULL,       NULL,        NULL,              NULL,           NULL,                            0,			    "
+				"{},      NULL,         NULL,       NULL,        NULL,           NULL,                            0,			    "
 				"NOW() at time zone 'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))
@@ -6026,11 +6008,11 @@ work trans{*(conn->_sqlConnection)};
 			string sqlStatement = std::format(
 				"insert into MMS_EncodingJob(encodingJobKey, ingestionJobKey, type, typePriority, parameters, "
 				"encodingPriority, encodingJobStart, encodingJobEnd, encodingProgress, "
-				"status, processorMMS, encoderKey, encodingPid, realTimeFrameRate, realTimeBitRate, numberOfRestartBecauseOfFailure, failuresNumber, "
+				"status, processorMMS, encoderKey, encodingPid, realTimeInfo, numberOfRestartBecauseOfFailure, failuresNumber, "
 				"creationDate) values ("
 				"DEFAULT,        {},               {},    {},			  {}, "
 				"{},               NOW() at time zone 'utc', NULL,   NULL, "
-				"{},      NULL,         NULL,       NULL,        NULL,              NULL,           NULL,                            0,				"
+				"{},      NULL,         NULL,       NULL,        NULL,           NULL,                            0,				"
 				"NOW() at time zone 'utc')",
 				ingestionJobKey, trans.transaction->quote(toString(encodingType)), getEncodingTypePriority(encodingType),
 				trans.transaction->quote(parameters), savedEncodingPriority, trans.transaction->quote(toString(EncodingStatus::ToBeProcessed))

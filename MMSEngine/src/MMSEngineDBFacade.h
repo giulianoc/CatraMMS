@@ -1930,11 +1930,9 @@ class MMSEngineDBFacade
 
 	void updateEncodingJobTryAgain(shared_ptr<Workspace> workspace, int64_t encodingJobKey);
 
-	void updateEncodingJobProgress(int64_t encodingJobKey, double encodingPercentage);
+	void updateEncodingJobProgressAndRealTimeInfo(int64_t encodingJobKey, optional<double> encodingPercentage, const json &realTimeInfoRoot);
 
-	void updateEncodingRealTimeInfo(
-		int64_t encodingJobKey, int encodingPid, long realTimeFrameRate, double realTimeBitRate, long numberOfRestartBecauseOfFailure
-	);
+	void updateEncodingPid(int64_t encodingJobKey, int encodingPid, long numberOfRestartBecauseOfFailure);
 
 	bool updateEncodingJobFailuresNumber(int64_t encodingJobKey, long failuresNumber);
 
