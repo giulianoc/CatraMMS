@@ -817,7 +817,6 @@ json MMSEngineDBFacade::getStreamList(
 		if (!country.empty())
 			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.transaction->quote("%" + country + "%"));
 
-		SPDLOG_ERROR("sqlWhere: {}", sqlWhere);
 		json responseRoot;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_Conf_Stream {}", sqlWhere);
