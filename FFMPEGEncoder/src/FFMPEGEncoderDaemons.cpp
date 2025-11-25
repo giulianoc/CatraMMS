@@ -1877,7 +1877,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					if (copiedLiveRecording->_callbackData->getFinished())
 					{
 						SPDLOG_INFO(
-							"liveRecordingMonitor. areRealTimeInfoChanged check"
+							"liveRecordingMonitor. getRealTimeInfoByOutputLog check"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", channelLabel: {}",
@@ -2031,7 +2031,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					else
 					{
 						SPDLOG_WARN(
-							"liveProxyMonitor getRealTimeInfoByOutputLog check cannot be done because no callbackdata available"
+							"liveRecordingMonitor, getRealTimeInfoByOutputLog check cannot be done because no callbackdata available"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
 							", channelLabel: {}"
