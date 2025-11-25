@@ -1052,8 +1052,14 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 				json dataRoot = JSONUtils::asJson(encodeStatusResponse, "data", json());
 
 				json errorMessagesRoot = JSONUtils::asJson(dataRoot, "errorMessages", json::array());
-				for (auto& errorMessageRoot : errorMessagesRoot)
-					encoderErrorMessages = std::format("- {}\n", StringUtils::replaceAll(JSONUtils::asString(errorMessageRoot), "\n", " "));
+				{
+					std::ostringstream html;
+					html << "<ul>";
+					for (auto& errorMessageRoot : errorMessagesRoot)
+						html << "<li>" << JSONUtils::asString(errorMessageRoot) << "</li>";
+					html << "</ul>";
+					encoderErrorMessages = html.str();
+				}
 
 				urlForbidden = JSONUtils::asBool(dataRoot, "urlForbidden", false);
 				urlNotFound = JSONUtils::asBool(dataRoot, "urlNotFound", false);
