@@ -3082,6 +3082,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 			try
 			{
+				/*
 				string firstLineOfErrorMessage;
 				{
 					string firstLine;
@@ -3093,6 +3094,8 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 				}
 
 				appendIngestionJobErrorMessage(ingestionJobKey, firstLineOfErrorMessage);
+				*/
+				updateIngestionJobErrorMessages(ingestionJobKey, errorMessage);
 			}
 			catch (exception &e)
 			{

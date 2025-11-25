@@ -177,12 +177,12 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		liveRecording->_monitoringEnabled = JSONUtils::asBool(liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
 		liveRecording->_monitoringRealTimeInfoEnabled =
 			JSONUtils::asBool(liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-		liveRecording->_outputFfmpegFileSize = 0;
-		liveRecording->_realTimeFrame = -1;
-		liveRecording->_realTimeSize = -1;
-		liveRecording->_realTimeFrameRate = -1;
-		liveRecording->_realTimeBitRate = -1;
-		liveRecording->_realTimeTimeInMilliSeconds = chrono::milliseconds(0);
+		liveRecording->_lastOutputFfmpegFileSize = 0;
+		liveRecording->_lastRealTimeFrame = -1;
+		liveRecording->_lastRealTimeSize = -1;
+		liveRecording->_lastRealTimeFrameRate = -1;
+		liveRecording->_lastRealTimeBitRate = -1;
+		liveRecording->_lastRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
 		liveRecording->_realTimeLastChange = chrono::system_clock::now();
 
 		// -1 perchè liveRecording fa un incremento quando il live recording parte che quindi setta a 0 correttamente la variabile
@@ -534,7 +534,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		}
 		else
 		{
-			liveRecording->pushErrorMessage(errorMessage);
+			liveRecording->_callbackData->pushErrorMessage(errorMessage);
 			_completedWithError = true;
 		}
 

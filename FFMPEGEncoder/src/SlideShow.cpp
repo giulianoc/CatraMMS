@@ -392,7 +392,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->pushErrorMessage(errorMessage);
+		_encoding->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -413,7 +413,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->pushErrorMessage(errorMessage);
+		_encoding->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

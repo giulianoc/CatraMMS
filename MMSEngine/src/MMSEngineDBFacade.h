@@ -1537,7 +1537,8 @@ class MMSEngineDBFacade
 
 	void updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus, string errorMessage, string processorMMS = "noToBeUpdated");
 
-	void appendIngestionJobErrorMessage(int64_t ingestionJobKey, string errorMessage);
+	// void appendIngestionJobErrorMessage(int64_t ingestionJobKey, string errorMessage);
+	void updateIngestionJobErrorMessages(int64_t ingestionJobKey, string errorMessages);
 
 	bool updateIngestionJobSourceDownloadingInProgress(int64_t ingestionJobKey, double downloadingPercentage);
 

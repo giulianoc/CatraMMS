@@ -28,8 +28,8 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 
 		_completedWithError = false;
 		_killedByUser = false;
-		_urlForbidden = false;
-		_urlNotFound = false;
+		// _urlForbidden = false;
+		// _urlNotFound = false;
 
 		_tvChannelConfigurationDirectory = JSONUtils::asString(configurationRoot["ffmpeg"], "tvChannelConfigurationDirectory", "");
 		SPDLOG_INFO(
@@ -41,7 +41,6 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		_tvChannelPort_Start = 8000;
 		_tvChannelPort_MaxNumberOfOffsets = 100;
 
-		_encoding->_errorMessages = {}; // clear
 		removeEncodingCompletedIfPresent();
 	}
 	catch (exception &e)
@@ -1532,20 +1531,22 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 
 	encodingCompleted->_encodingJobKey = _encoding->_encodingJobKey;
 	encodingCompleted->_completedWithError = _completedWithError;
-	encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
+	// encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
 	encodingCompleted->_killedByUser = _killedByUser;
 	encodingCompleted->_killToRestartByEngine = _encoding->_killToRestartByEngine;
-	encodingCompleted->_urlForbidden = _urlForbidden;
-	encodingCompleted->_urlNotFound = _urlNotFound;
+	// encodingCompleted->_urlForbidden = _urlForbidden;
+	// encodingCompleted->_urlNotFound = _urlNotFound;
 	encodingCompleted->_timestamp = chrono::system_clock::now();
 
 	{
 		encodingCompleted->_callbackData = _encoding->_callbackData->clone();
+		/*
 		if (encodingCompleted->_callbackData->getFinished())
 		{
 			encodingCompleted->_urlForbidden = encodingCompleted->_callbackData->getUrlForbidden();
 			encodingCompleted->_urlNotFound = encodingCompleted->_callbackData->getUrlNotFound();
 		}
+		*/
 	}
 
 	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));

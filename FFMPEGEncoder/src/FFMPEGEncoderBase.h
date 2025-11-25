@@ -49,28 +49,6 @@ class FFMPEGEncoderBase
 			_callbackData->reset();
 		}
 
-		void pushErrorMessage(const string& errorMessage)
-		{
-			lock_guard<mutex> locker(_errorMessagesMutex);
-			_errorMessages.push(errorMessage);
-
-			_lastErrorMessage = errorMessage;
-		}
-
-		string popErrorMessage()
-		{
-			string errorMessage;
-
-			lock_guard<mutex> locker(_errorMessagesMutex);
-
-			if (!_errorMessages.empty())
-			{
-				errorMessage = _errorMessages.front();
-				_errorMessages.pop();
-			}
-			return errorMessage;
-		}
-
 		shared_ptr<FFMpegEngine::CallbackData> _callbackData;
 
 		string _method;
@@ -81,10 +59,6 @@ class FFMPEGEncoderBase
 		shared_ptr<FFMpegWrapper> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful{};
 		bool _killToRestartByEngine{};
-
-		mutex _errorMessagesMutex;
-		queue<string> _errorMessages;
-		string _lastErrorMessage;
 	};
 
 	struct LiveProxyAndGrid final : public Encoding
@@ -95,12 +69,12 @@ class FFMPEGEncoderBase
 		json _outputsRoot;
 
 		bool _monitoringRealTimeInfoEnabled{}; // frame/size/time
-		uintmax_t _outputFfmpegFileSize{};
-		int32_t _realTimeFrame{};
-		size_t _realTimeSize{};
-		long _realTimeFrameRate{};
-		double _realTimeBitRate{};
-		chrono::milliseconds _realTimeTimeInMilliSeconds{};
+		uintmax_t _lastOutputFfmpegFileSize{};
+		int32_t _lastRealTimeFrame{};
+		size_t _lastRealTimeSize{};
+		long _lastRealTimeFrameRate{};
+		double _lastRealTimeBitRate{};
+		chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
 		chrono::system_clock::time_point _realTimeLastChange;
 
 		long _numberOfRestartBecauseOfFailure{};
@@ -121,12 +95,12 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_childProcessId = _childProcessId;
 			liveProxyAndGrid->_killToRestartByEngine = _killToRestartByEngine;
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
-			liveProxyAndGrid->_outputFfmpegFileSize = _outputFfmpegFileSize;
-			liveProxyAndGrid->_realTimeFrame = _realTimeFrame;
-			liveProxyAndGrid->_realTimeSize = _realTimeSize;
-			liveProxyAndGrid->_realTimeFrameRate = _realTimeFrameRate;
-			liveProxyAndGrid->_realTimeBitRate = _realTimeBitRate;
-			liveProxyAndGrid->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
+			liveProxyAndGrid->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
+			liveProxyAndGrid->_lastRealTimeFrame = _lastRealTimeFrame;
+			liveProxyAndGrid->_lastRealTimeSize = _lastRealTimeSize;
+			liveProxyAndGrid->_lastRealTimeFrameRate = _lastRealTimeFrameRate;
+			liveProxyAndGrid->_lastRealTimeBitRate = _lastRealTimeBitRate;
+			liveProxyAndGrid->_lastRealTimeTimeInMilliSeconds = _lastRealTimeTimeInMilliSeconds;
 			liveProxyAndGrid->_realTimeLastChange = _realTimeLastChange;
 			liveProxyAndGrid->_numberOfRestartBecauseOfFailure = _numberOfRestartBecauseOfFailure;
 			liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
@@ -166,12 +140,12 @@ class FFMPEGEncoderBase
 		bool _monitoringEnabled{};
 
 		bool _monitoringRealTimeInfoEnabled{}; // frame/size/time
-		uintmax_t _outputFfmpegFileSize{};
-		int32_t _realTimeFrame{};
-		size_t _realTimeSize{};
-		long _realTimeFrameRate{};
-		double _realTimeBitRate{};
-		chrono::milliseconds _realTimeTimeInMilliSeconds{};
+		uintmax_t _lastOutputFfmpegFileSize{};
+		int32_t _lastRealTimeFrame{};
+		size_t _lastRealTimeSize{};
+		long _lastRealTimeFrameRate{};
+		double _lastRealTimeBitRate{};
+		chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
 		chrono::system_clock::time_point _realTimeLastChange;
 
 		long _numberOfRestartBecauseOfFailure{};
@@ -215,12 +189,12 @@ class FFMPEGEncoderBase
 			liveRecording->_killToRestartByEngine = _killToRestartByEngine;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
-			liveRecording->_outputFfmpegFileSize = _outputFfmpegFileSize;
-			liveRecording->_realTimeFrame = _realTimeFrame;
-			liveRecording->_realTimeSize = _realTimeSize;
-			liveRecording->_realTimeFrameRate = _realTimeFrameRate;
-			liveRecording->_realTimeBitRate = _realTimeBitRate;
-			liveRecording->_realTimeTimeInMilliSeconds = _realTimeTimeInMilliSeconds;
+			liveRecording->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
+			liveRecording->_lastRealTimeFrame = _lastRealTimeFrame;
+			liveRecording->_lastRealTimeSize = _lastRealTimeSize;
+			liveRecording->_lastRealTimeFrameRate = _lastRealTimeFrameRate;
+			liveRecording->_lastRealTimeBitRate = _lastRealTimeBitRate;
+			liveRecording->_lastRealTimeTimeInMilliSeconds = _lastRealTimeTimeInMilliSeconds;
 			liveRecording->_realTimeLastChange = _realTimeLastChange;
 			liveRecording->_numberOfRestartBecauseOfFailure = _numberOfRestartBecauseOfFailure;
 			liveRecording->_encodingJobKey = _encodingJobKey;
@@ -258,11 +232,11 @@ class FFMPEGEncoderBase
 	{
 		int64_t _encodingJobKey;
 		bool _completedWithError;
-		string _errorMessage;
+		// string _errorMessage;
 		bool _killedByUser;
 		bool _killToRestartByEngine;
-		bool _urlForbidden;
-		bool _urlNotFound;
+		// bool _urlForbidden;
+		// bool _urlNotFound;
 		chrono::system_clock::time_point _timestamp;
 
 		shared_ptr<FFMpegEngine::CallbackData> _callbackData;

@@ -2,6 +2,7 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
+#include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
@@ -1332,20 +1333,9 @@ void MMSEngineDBFacade::updateIngestionJob(
 	}
 }
 
+/*
 void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, string errorMessage)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1383,6 +1373,88 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
+			// if (rowsUpdated != 1)
+			// {
+			//	string errorMessage = __FILEREF__ + "no update was done" + ", errorMessageForSQL: " + errorMessageForSQL +
+			//						  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
+			//						  ", sqlStatement: " + sqlStatement;
+			//	warn(errorMessage);
+
+				// throw runtime_exception(errorMessage);
+			// }
+			// else
+			// {
+			//	info(__FILEREF__ + "IngestionJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey));
+			// }
+		}
+	}
+	catch (exception const &e)
+	{
+		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+*/
+void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey, string errorMessages)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		/*
+		string errorMessageForSQL;
+		if (errorMessage.length() >= 1024)
+			errorMessageForSQL = errorMessage.substr(0, 1024);
+		else
+			errorMessageForSQL = errorMessage;
+		{
+			string strToBeReplaced = "FFMpeg";
+			string strToReplace = "XXX";
+			if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
+				errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+		}
+		*/
+		// if (errorMessageForSQL != "")
+		{
+			string errorMessagesForSQL = StringUtils::replaceAll(errorMessages, "FFMpeg", "XXX");
+
+			// like: non lo uso per motivi di performance
+			string sqlStatement = std::format(
+				"update MMS_IngestionJob "
+				"set errorMessage = {} "
+				"where ingestionJobKey = {} "
+				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+				"'SourceUploadingInProgress', 'EncodingQueued') ", // not like 'End_%' "
+				trans.transaction->quote(errorMessagesForSQL), ingestionJobKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
 			/*
 			if (rowsUpdated != 1)
 			{
@@ -1402,7 +1474,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"

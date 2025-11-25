@@ -306,7 +306,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					SPDLOG_ERROR(errorMessage);
 
 					_completedWithError = true;
-					_encoding->pushErrorMessage(errorMessage);
+					_encoding->_callbackData->pushErrorMessage(errorMessage);
 
 					// throw e;
 				}
@@ -322,7 +322,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					SPDLOG_ERROR(errorMessage);
 
 					_completedWithError = true;
-					_encoding->pushErrorMessage(errorMessage);
+					_encoding->_callbackData->pushErrorMessage(errorMessage);
 
 					// throw e;
 				}
@@ -584,7 +584,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->pushErrorMessage(errorMessage);
+		_encoding->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -618,7 +618,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->pushErrorMessage(errorMessage);
+		_encoding->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

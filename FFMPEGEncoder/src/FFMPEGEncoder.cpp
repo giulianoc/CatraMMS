@@ -1249,19 +1249,9 @@ void FFMPEGEncoder::encodingStatus(
 					? false
 					: selectedEncodingCompleted->_killedByUser;
 				responseBodyRoot["completedWithError"] = selectedEncodingCompleted->_completedWithError;
-				responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
+				// responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
 				responseBodyRoot["encodingFinished"] = true;
 				responseBodyRoot["encodingProgress"] = 100.0;
-				if (selectedEncodingCompleted->_callbackData->getFinished())
-				{
-					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_callbackData->getUrlForbidden();
-					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_callbackData->getUrlForbidden();
-				}
-				else
-				{
-					responseBodyRoot["urlForbidden"] = selectedEncodingCompleted->_urlForbidden;
-					responseBodyRoot["urlNotFound"] = selectedEncodingCompleted->_urlNotFound;
-				}
 				responseBodyRoot["data"] = selectedEncodingCompleted->_callbackData->toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
@@ -1318,9 +1308,6 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["encodingJobKey"] = selectedEncoding->_encodingJobKey;
 				responseBodyRoot["pid"] = selectedEncoding->_childProcessId.pid;
 				responseBodyRoot["killedByUser"] = false;
-				responseBodyRoot["urlForbidden"] = false;
-				responseBodyRoot["urlNotFound"] = false;
-				responseBodyRoot["errorMessage"] = selectedEncoding->popErrorMessage();
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 				if (encodingProgress == -2.0)
 				{
@@ -1332,16 +1319,7 @@ void FFMPEGEncoder::encodingStatus(
 				}
 				else
 					responseBodyRoot["encodingProgress"] = encodingProgress;
-				{
-					if (selectedEncoding->_callbackData->getFinished())
-					{
-						responseBodyRoot["data"] = selectedEncoding->_callbackData->toJson();
-						responseBodyRoot["urlForbidden"] = selectedEncoding->_callbackData->getUrlForbidden();
-						responseBodyRoot["urlNotFound"] = selectedEncoding->_callbackData->getUrlNotFound();
-					}
-					else
-						responseBodyRoot["data"] = nullptr;
-				}
+				responseBodyRoot["data"] = selectedEncoding->_callbackData->toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1352,28 +1330,14 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["ingestionJobKey"] = selectedLiveProxy->_ingestionJobKey;
 				responseBodyRoot["encodingJobKey"] = selectedLiveProxy->_encodingJobKey;
 				responseBodyRoot["pid"] = selectedLiveProxy->_childProcessId.pid;
-				responseBodyRoot["realTimeFrameRate"] = selectedLiveProxy->_realTimeFrameRate;
-				responseBodyRoot["realTimeBitRate"] = selectedLiveProxy->_realTimeBitRate;
 				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveProxy->_numberOfRestartBecauseOfFailure;
 				responseBodyRoot["killedByUser"] = false;
-				responseBodyRoot["urlForbidden"] = false;
-				responseBodyRoot["urlNotFound"] = false;
-				responseBodyRoot["errorMessage"] = selectedLiveProxy->popErrorMessage();
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
 				// 2020-06-11: it's a live, it does not have
 				// sense the encoding progress
 				responseBodyRoot["encodingProgress"] = nullptr;
-				{
-					if (selectedLiveProxy->_callbackData->getFinished())
-					{
-						responseBodyRoot["data"] = selectedLiveProxy->_callbackData->toJson();
-						responseBodyRoot["urlForbidden"] = selectedLiveProxy->_callbackData->getUrlForbidden();
-						responseBodyRoot["urlNotFound"] = selectedLiveProxy->_callbackData->getUrlNotFound();
-					}
-					else
-						responseBodyRoot["data"] = nullptr;
-				}
+				responseBodyRoot["data"] = selectedLiveProxy->_callbackData->toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1384,13 +1348,8 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["ingestionJobKey"] = selectedLiveRecording->_ingestionJobKey;
 				responseBodyRoot["encodingJobKey"] = selectedLiveRecording->_encodingJobKey;
 				responseBodyRoot["pid"] = selectedLiveRecording->_childProcessId.pid;
-				responseBodyRoot["realTimeFrameRate"] = selectedLiveRecording->_realTimeFrameRate;
-				responseBodyRoot["realTimeBitRate"] = selectedLiveRecording->_realTimeBitRate;
 				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveRecording->_numberOfRestartBecauseOfFailure;
 				responseBodyRoot["killedByUser"] = false;
-				responseBodyRoot["urlForbidden"] = false;
-				responseBodyRoot["urlNotFound"] = false;
-				responseBodyRoot["errorMessage"] = selectedLiveRecording->popErrorMessage();
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
 				// 2020-10-13: we do not have here the
@@ -1399,16 +1358,7 @@ void FFMPEGEncoder::encodingStatus(
 				//	it is calculated in
 				// EncoderVideoAudioProxy.cpp
 				responseBodyRoot["encodingProgress"] = nullptr;
-				{
-					if (selectedLiveRecording->_callbackData->getFinished())
-					{
-						responseBodyRoot["data"] = selectedLiveRecording->_callbackData->toJson();
-						responseBodyRoot["urlForbidden"] = selectedLiveRecording->_callbackData->getUrlForbidden();
-						responseBodyRoot["urlNotFound"] = selectedLiveRecording->_callbackData->getUrlNotFound();
-					}
-					else
-						responseBodyRoot["data"] = nullptr;
-				}
+				responseBodyRoot["data"] = selectedLiveRecording->_callbackData->toJson();
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}

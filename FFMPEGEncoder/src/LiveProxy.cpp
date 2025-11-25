@@ -48,12 +48,12 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 
 		liveProxyData->_monitoringRealTimeInfoEnabled =
 			JSONUtils::asBool(liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-		liveProxyData->_outputFfmpegFileSize = 0;
-		liveProxyData->_realTimeFrame = -1;
-		liveProxyData->_realTimeSize = -1;
-		liveProxyData->_realTimeFrameRate = -1;
-		liveProxyData->_realTimeBitRate = -1;
-		liveProxyData->_realTimeTimeInMilliSeconds = chrono::milliseconds(0);
+		liveProxyData->_lastOutputFfmpegFileSize = 0;
+		liveProxyData->_lastRealTimeFrame = -1;
+		liveProxyData->_lastRealTimeSize = -1;
+		liveProxyData->_lastRealTimeFrameRate = -1;
+		liveProxyData->_lastRealTimeBitRate = -1;
+		liveProxyData->_lastRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
 		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
 		// 0 perchè liveProxy2 incrementa su un restart
@@ -362,19 +362,19 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		}
 		else if (dynamic_cast<FFMpegURLForbidden*>(&e))
 		{
-			liveProxyData->pushErrorMessage(errorMessage);
+			liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 			_completedWithError = true;
-			_urlForbidden = true;
+			// _urlForbidden = true;
 		}
 		else if (dynamic_cast<FFMpegURLNotFound*>(&e))
 		{
-			liveProxyData->pushErrorMessage(errorMessage);
+			liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 			_completedWithError = true;
-			_urlNotFound = true;
+			// _urlNotFound = true;
 		}
 		else
 		{
-			liveProxyData->pushErrorMessage(errorMessage);
+			liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 			_completedWithError = true;
 		}
 

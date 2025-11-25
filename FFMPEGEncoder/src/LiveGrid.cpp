@@ -166,9 +166,9 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
-		_urlForbidden = true;
+		// _urlForbidden = true;
 
 		throw e;
 	}
@@ -188,9 +188,9 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
-		_urlNotFound = true;
+		// _urlNotFound = true;
 
 		throw e;
 	}
@@ -210,7 +210,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;
@@ -231,7 +231,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_liveProxyData->pushErrorMessage(errorMessage);
+		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

@@ -230,6 +230,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				// controlla se il lastModificationTime dell'output file di ffmpeg è cambiato
+				/* 2025-11-25: ho commentato questo controllo perchè ho visto che c'è almeno uno scenario in cui
+				 * il file di output non cambia, cioé nel caso di un proxy di un VOD.
 				if (liveProxyWorking)
 				{
 					SPDLOG_INFO(
@@ -256,8 +258,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						);
 
 						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
-
-						break;
 					}
 				}
 
@@ -278,6 +278,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 					continue;
 				}
+				*/
 
 				// First health check
 				//		HLS/DASH:	kill if manifest file does not exist or was not updated in the last 30 seconds
@@ -373,27 +374,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch (runtime_error &e)
-							{
-								string errorMessage = std::format(
-									"liveProxyMonitor (HLS) on manifest path name failed"
-									", copiedLiveProxy->_ingestionJobKey: {}"
-									", copiedLiveProxy->_encodingJobKey: {}"
-									", e.what(): {}",
-									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
-								);
-								SPDLOG_ERROR(errorMessage);
-							}
 							catch (exception &e)
 							{
-								string errorMessage = std::format(
+								SPDLOG_ERROR(
 									"liveProxyMonitor (HLS) on manifest path name failed"
 									", copiedLiveProxy->_ingestionJobKey: {}"
 									", copiedLiveProxy->_encodingJobKey: {}"
 									", e.what(): {}",
 									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 								);
-								SPDLOG_ERROR(errorMessage);
 							}
 						}
 						else // rtmp (Proxy) or SRT (Grid)
@@ -452,27 +441,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
 						}
 					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = std::format(
-							"liveProxyMonitor (rtmp) Non-monotonous DTS failed"
-							", copiedLiveProxy->_ingestionJobKey: {}"
-							", copiedLiveProxy->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
-						);
-						SPDLOG_ERROR(errorMessage);
-					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveProxyMonitor (rtmp) Non-monotonous DTS failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -663,7 +640,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												}
 											}
 										}
-										catch (runtime_error &e)
+										catch (exception &e)
 										{
 											SPDLOG_ERROR(
 												"liveProxyMonitor. scan LiveProxy files failed"
@@ -673,16 +650,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												", e.what(): {}",
 												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestDirectoryPathName,
 												e.what()
-											);
-										}
-										catch (...)
-										{
-											SPDLOG_ERROR(
-												"liveProxyMonitor. scan LiveProxy files failed"
-												", _ingestionJobKey: {}"
-												", _encodingJobKey: {}"
-												", manifestDirectoryPathName: {}",
-												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestDirectoryPathName
 											);
 										}
 
@@ -717,7 +684,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											);
 
 											// we killed the process, we do not care to remove the too old segments
-											// since we will remove the entore directory
+											// since we will remove the entire directory
 											break;
 										}
 
@@ -752,27 +719,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch (runtime_error &e)
-							{
-								string errorMessage = std::format(
-									"liveProxyMonitor (HLS) on segments (and retention) failed"
-									", copiedLiveProxy->_ingestionJobKey: {}"
-									", copiedLiveProxy->_encodingJobKey: {}"
-									", e.what(): {}",
-									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
-								);
-								SPDLOG_ERROR(errorMessage);
-							}
 							catch (exception &e)
 							{
-								string errorMessage = std::format(
+								SPDLOG_ERROR(
 									"liveProxyMonitor (HLS) on segments (and retention) failed"
 									", copiedLiveProxy->_ingestionJobKey: {}"
 									", copiedLiveProxy->_encodingJobKey: {}"
 									", e.what(): {}",
 									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 								);
-								SPDLOG_ERROR(errorMessage);
 							}
 						}
 					}
@@ -811,13 +766,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						sourceLiveProxy->_realTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames();
-						sourceLiveProxy->_realTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps();
-						sourceLiveProxy->_realTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs();
-						sourceLiveProxy->_realTimeBitRate = copiedLiveProxy->_callbackData->getBitRateKbps();
+						sourceLiveProxy->_lastRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames();
+						sourceLiveProxy->_lastRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps();
+						sourceLiveProxy->_lastRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs();
+						sourceLiveProxy->_lastRealTimeBitRate = copiedLiveProxy->_callbackData->getBitRateKbps();
 
-						if (copiedLiveProxy->_realTimeFrame != -1 || copiedLiveProxy->_realTimeSize != -1 ||
-							copiedLiveProxy->_realTimeTimeInMilliSeconds.count() != 0)
+						if (copiedLiveProxy->_lastRealTimeFrame != -1 || copiedLiveProxy->_lastRealTimeSize != -1 ||
+							copiedLiveProxy->_lastRealTimeTimeInMilliSeconds.count() != 0)
 						{
 							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 							// recupero dei dati
@@ -826,18 +781,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
 							int32_t diffRealTimeFrame = -1;
-							if (copiedLiveProxy->_callbackData->getProcessedFrames() != -1 && copiedLiveProxy->_realTimeFrame != -1)
+							if (copiedLiveProxy->_callbackData->getProcessedFrames() != -1 && copiedLiveProxy->_lastRealTimeFrame != -1)
 							{
-								diffRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames() - copiedLiveProxy->_realTimeFrame;
-								sourceLiveProxy->_realTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
+								diffRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames() - copiedLiveProxy->_lastRealTimeFrame;
+								sourceLiveProxy->_lastRealTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
 							}
 							size_t diffRealTimeSize = -1;
-							if (copiedLiveProxy->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveProxy->_realTimeSize != -1)
-								diffRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps() - copiedLiveProxy->_realTimeSize;
+							if (copiedLiveProxy->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveProxy->_lastRealTimeSize != -1)
+								diffRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps() - copiedLiveProxy->_lastRealTimeSize;
 							chrono::milliseconds diffRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
 							if (copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs().count() != 0
-								&& copiedLiveProxy->_realTimeTimeInMilliSeconds.count() != 0)
-								diffRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs() - copiedLiveProxy->_realTimeTimeInMilliSeconds;
+								&& copiedLiveProxy->_lastRealTimeTimeInMilliSeconds.count() != 0)
+								diffRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
+									- copiedLiveProxy->_lastRealTimeTimeInMilliSeconds;
 
 							SPDLOG_INFO(
 								"liveProxyMonitor. Live Proxy real time info"
@@ -857,13 +813,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
 								_maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
 								diffRealTimeTimeInMilliSeconds.count(),
-								sourceLiveProxy->_realTimeBitRate, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
+								sourceLiveProxy->_lastRealTimeBitRate, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
 								_maxRealTimeInfoTimestampDiscontinuity
 							);
 
-							if ((copiedLiveProxy->_realTimeFrame == copiedLiveProxy->_callbackData->getProcessedFrames()
-								&& copiedLiveProxy->_realTimeSize == copiedLiveProxy->_callbackData->getProcessedSizeKBps()
-								&& copiedLiveProxy->_realTimeTimeInMilliSeconds == copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
+							if ((copiedLiveProxy->_lastRealTimeFrame == copiedLiveProxy->_callbackData->getProcessedFrames()
+								&& copiedLiveProxy->_lastRealTimeSize == copiedLiveProxy->_callbackData->getProcessedSizeKBps()
+								&& copiedLiveProxy->_lastRealTimeTimeInMilliSeconds == copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
 								|| copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity))
 							{
 								// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
@@ -932,25 +888,23 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_WARN(
 							"liveProxyMonitor (rtmp) real time info check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
-						SPDLOG_WARN(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveProxyMonitor (rtmp) real time info check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -1001,36 +955,23 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (FFMpegEncodingStatusNotAvailable &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_WARN(
 							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
-						SPDLOG_WARN(errorMessage);
-					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = std::format(
-							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
-							", copiedLiveProxy->_ingestionJobKey: {}"
-							", copiedLiveProxy->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
-						);
-						SPDLOG_ERROR(errorMessage);
 					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -1083,13 +1024,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, configurationLabel, localErrorMessage, false);
 						// ProcessUtility::termProcess(sourceLiveProxy->_childPid);
 
-						sourceLiveProxy->pushErrorMessage(std::format(
+						sourceLiveProxy->_callbackData->pushErrorMessage(std::format(
 							"{} {}", Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), localErrorMessage
 						));
 					}
 					catch (runtime_error &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveProxyMonitor. ProcessUtility::kill/quit/term Process failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -1099,7 +1040,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 							copiedLiveProxy->_childProcessId.toString(), e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -1120,23 +1060,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				liveProxyAndGridRunningCounter, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count()
 			);
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = std::format(
-				"liveProxyMonitor failed"
-				", e.what(): {}",
-				e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = std::format(
+			SPDLOG_ERROR(
 				"liveProxyMonitor failed"
 				", e.what(): {}",
 				e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
 		}
 
 		// recording
@@ -1285,9 +1215,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						", channelLabel: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
 					);
-					uintmax_t previousOutputFfmpegFileSize = copiedLiveRecording->_outputFfmpegFileSize;
+					uintmax_t previousOutputFfmpegFileSize = copiedLiveRecording->_lastOutputFfmpegFileSize;
 					uintmax_t newOutputFfmpegFileSize = sourceLiveRecording->_ffmpeg->getOutputFFMpegFileSize();
-					sourceLiveRecording->_outputFfmpegFileSize = newOutputFfmpegFileSize;
+					sourceLiveRecording->_lastOutputFfmpegFileSize = newOutputFfmpegFileSize;
 					if (previousOutputFfmpegFileSize != 0 && previousOutputFfmpegFileSize == newOutputFfmpegFileSize)
 					{
 						liveRecorderWorking = false;
@@ -1303,8 +1233,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						);
 
 						localErrorMessage = " restarted because of 'output ffmpeg file size is not changing'";
-
-						break;
 					}
 				}
 
@@ -1426,27 +1354,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 						}
 					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = std::format(
-							"liveRecordingMonitor on path name failed"
-							", copiedLiveRecording->_ingestionJobKey: {}"
-							", copiedLiveRecording->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-						);
-						SPDLOG_ERROR(errorMessage);
-					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveRecordingMonitor on path name failed"
 							", copiedLiveRecording->_ingestionJobKey: {}"
 							", copiedLiveRecording->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -1563,27 +1479,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch (runtime_error &e)
-							{
-								string errorMessage = std::format(
-									"liveRecorderMonitor (HLS) on manifest path name failed"
-									", copiedLiveRecording->_ingestionJobKey: {}"
-									", copiedLiveRecording->_encodingJobKey: {}"
-									", e.what(): {}",
-									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-								);
-								SPDLOG_ERROR(errorMessage);
-							}
 							catch (exception &e)
 							{
-								string errorMessage = std::format(
+								SPDLOG_ERROR(
 									"liveRecorderMonitor (HLS) on manifest path name failed"
 									", copiedLiveRecording->_ingestionJobKey: {}"
 									", copiedLiveRecording->_encodingJobKey: {}"
 									", e.what(): {}",
 									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
 								);
-								SPDLOG_ERROR(errorMessage);
 							}
 						}
 						else // rtmp (Proxy)
@@ -1645,27 +1549,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'Non-monotonous DTS in output stream/incorrect timestamps'";
 						}
 					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = std::format(
-							"liveRecorderMonitor (rtmp) Non-monotonous DTS failed"
-							", copiedLiveRecording->_ingestionJobKey: {}"
-							", copiedLiveRecording->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-						);
-						SPDLOG_ERROR(errorMessage);
-					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveRecorderMonitor (rtmp) Non-monotonous DTS failed"
 							", copiedLiveRecording->_ingestionJobKey: {}"
 							", copiedLiveRecording->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -1831,24 +1723,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														firstChunkRead = true;
 													}
 												}
-												catch (runtime_error &e)
-												{
-													string errorMessage = std::format(
-														"liveRecordingMonitor. listing directory failed"
-														", copiedLiveRecording->_ingestionJobKey: {}"
-														", copiedLiveRecording->_encodingJobKey: {}"
-														", manifestDirectoryPathName: {}"
-														", e.what(): {}",
-														copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
-														manifestDirectoryPathName, e.what()
-													);
-													SPDLOG_ERROR(errorMessage);
-
-													// throw e;
-												}
 												catch (exception &e)
 												{
-													string errorMessage = std::format(
+													SPDLOG_ERROR(
 														"liveRecordingMonitor. listing directory failed"
 														", copiedLiveRecording->_ingestionJobKey: {}"
 														", copiedLiveRecording->_encodingJobKey: {}"
@@ -1857,14 +1734,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
 														manifestDirectoryPathName, e.what()
 													);
-													SPDLOG_ERROR(errorMessage);
-
-													// throw e;
 												}
 											}
 										}
 									}
-									catch (runtime_error &e)
+									catch (exception &e)
 									{
 										SPDLOG_ERROR(
 											"liveRecordingMonitor. scan LiveRecorder files failed"
@@ -1874,16 +1748,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", e.what(): {}",
 											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName,
 											e.what()
-										);
-									}
-									catch (...)
-									{
-										SPDLOG_ERROR(
-											"liveRecordingMonitor. scan LiveRecorder files failed"
-											", _ingestionJobKey: {}"
-											", _encodingJobKey: {}"
-											", manifestDirectoryPathName: {}",
-											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName
 										);
 									}
 
@@ -1938,7 +1802,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												);
 												fs::remove_all(segmentPathNameToBeRemoved);
 											}
-											catch (runtime_error &e)
+											catch (exception &e)
 											{
 												SPDLOG_ERROR(
 													"liveRecordingMonitor. remove failed"
@@ -1954,27 +1818,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 								}
 							}
-							catch (runtime_error &e)
-							{
-								string errorMessage = std::format(
-									"liveRecorderMonitor (HLS) on segments (and retention) failed"
-									", copiedLiveRecording->_ingestionJobKey: {}"
-									", copiedLiveRecording->_encodingJobKey: {}"
-									", e.what(): {}",
-									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-								);
-								SPDLOG_ERROR(errorMessage);
-							}
 							catch (exception &e)
 							{
-								string errorMessage = std::format(
+								SPDLOG_ERROR(
 									"liveRecorderMonitor (HLS) on segments (and retention) failed"
 									", copiedLiveRecording->_ingestionJobKey: {}"
 									", copiedLiveRecording->_encodingJobKey: {}"
 									", e.what(): {}",
 									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
 								);
-								SPDLOG_ERROR(errorMessage);
 							}
 						}
 					}
@@ -2014,13 +1866,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					try
 					{
 						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						sourceLiveRecording->_realTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames();
-						sourceLiveRecording->_realTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps();
-						sourceLiveRecording->_realTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs();
-						sourceLiveRecording->_realTimeBitRate = copiedLiveRecording->_callbackData->getBitRateKbps();
+						sourceLiveRecording->_lastRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames();
+						sourceLiveRecording->_lastRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps();
+						sourceLiveRecording->_lastRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs();
+						sourceLiveRecording->_lastRealTimeBitRate = copiedLiveRecording->_callbackData->getBitRateKbps();
 
-						if (copiedLiveRecording->_realTimeFrame != -1 || copiedLiveRecording->_realTimeSize != -1 ||
-							copiedLiveRecording->_realTimeTimeInMilliSeconds.count() != 0)
+						if (copiedLiveRecording->_lastRealTimeFrame != -1 || copiedLiveRecording->_lastRealTimeSize != -1 ||
+							copiedLiveRecording->_lastRealTimeTimeInMilliSeconds.count() != 0)
 						{
 							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 							// recupero dei dati
@@ -2030,22 +1882,23 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									.count();
 
 							int32_t diffRealTimeFrame = -1;
-							if (copiedLiveRecording->_callbackData->getProcessedFrames() != -1 && copiedLiveRecording->_realTimeFrame != -1)
+							if (copiedLiveRecording->_callbackData->getProcessedFrames() != -1 && copiedLiveRecording->_lastRealTimeFrame != -1)
 							{
-								diffRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames() - copiedLiveRecording->_realTimeFrame;
-								sourceLiveRecording->_realTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
+								diffRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames() - copiedLiveRecording->_lastRealTimeFrame;
+								sourceLiveRecording->_lastRealTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
 							}
 							size_t diffRealTimeSize = -1;
-							if (copiedLiveRecording->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveRecording->_realTimeSize != -1)
-								diffRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps() - copiedLiveRecording->_realTimeSize;
+							if (copiedLiveRecording->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveRecording->_lastRealTimeSize != -1)
+								diffRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps() - copiedLiveRecording->_lastRealTimeSize;
 							chrono::milliseconds diffRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
 							if (copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs().count() != 0
-								&& copiedLiveRecording->_realTimeTimeInMilliSeconds.count() != 0)
-								diffRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs() - copiedLiveRecording->_realTimeTimeInMilliSeconds;
+								&& copiedLiveRecording->_lastRealTimeTimeInMilliSeconds.count() != 0)
+								diffRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()
+									- copiedLiveRecording->_lastRealTimeTimeInMilliSeconds;
 
-							if ((copiedLiveRecording->_realTimeFrame == copiedLiveRecording->_callbackData->getProcessedFrames()
-								&& copiedLiveRecording->_realTimeSize == copiedLiveRecording->_callbackData->getProcessedSizeKBps()
-								&& copiedLiveRecording->_realTimeTimeInMilliSeconds == copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()) ||
+							if ((copiedLiveRecording->_lastRealTimeFrame == copiedLiveRecording->_callbackData->getProcessedFrames()
+								&& copiedLiveRecording->_lastRealTimeSize == copiedLiveRecording->_callbackData->getProcessedSizeKBps()
+								&& copiedLiveRecording->_lastRealTimeTimeInMilliSeconds == copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()) ||
 								copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
 							{
 								if (copiedLiveRecording->_monitoringRealTimeInfoEnabled)
@@ -2143,27 +1996,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						);
 						SPDLOG_WARN(errorMessage);
 					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = std::format(
-							"liveRecorderMonitor (rtmp) real time info check failed"
-							", copiedLiveRecording->_ingestionJobKey: {}"
-							", copiedLiveRecording->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-						);
-						SPDLOG_ERROR(errorMessage);
-					}
 					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveRecorderMonitor (rtmp) real time info check failed"
 							", copiedLiveRecording->_ingestionJobKey: {}"
 							", copiedLiveRecording->_encodingJobKey: {}"
 							", e.what(): {}",
 							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -2199,14 +2040,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						);
 						// ProcessUtility::termProcess(sourceLiveRecording->_childPid);
 						//
-						sourceLiveRecording->pushErrorMessage(std::format(
+						sourceLiveRecording->_callbackData->pushErrorMessage(std::format(
 							"{} {}{}", Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())),
 							sourceLiveRecording->_channelLabel, localErrorMessage
 						));
 					}
-					catch (runtime_error &e)
+					catch (exception &e)
 					{
-						string errorMessage = std::format(
+						SPDLOG_ERROR(
 							"liveRecordingMonitor. ProcessUtility::kill/quit Process failed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -2216,7 +2057,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
 							copiedLiveRecording->_childProcessId.toString(), e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
 					}
 				}
 
@@ -2237,23 +2077,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				liveRecordingRunningCounter, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - monitorStart).count()
 			);
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = std::format(
-				"liveRecordingMonitor failed"
-				", e.what(): {}",
-				e.what()
-			);
-			SPDLOG_ERROR(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = std::format(
+			SPDLOG_ERROR(
 				"liveRecordingMonitor failed"
 				", e.what(): {}",
 				e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
 		}
 
 		this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));

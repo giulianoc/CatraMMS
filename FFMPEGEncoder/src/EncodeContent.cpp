@@ -414,7 +414,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		);
 
 		// used by FFMPEGEncoderTask
-		_encoding->pushErrorMessage(e.what());
+		_encoding->_callbackData->pushErrorMessage(e.what());
 		_completedWithError = true;
 
 		throw e;
@@ -468,7 +468,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		SPDLOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
-		_encoding->pushErrorMessage(errorMessage);
+		_encoding->_callbackData->pushErrorMessage(errorMessage);
 		_completedWithError = true;
 
 		throw e;

@@ -53,8 +53,8 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
 	bool _completedWithError;
 	bool _killedByUser;
-	bool _urlForbidden;
-	bool _urlNotFound;
+	// bool _urlForbidden;
+	// bool _urlNotFound;
 
 	long _tvChannelPort_Start;
 	long _tvChannelPort_MaxNumberOfOffsets;
