@@ -1836,7 +1836,7 @@ void MMSEngineDBFacade::updateEncodingJobProgressAndRealTimeInfo(int64_t encodin
 					"update MMS_EncodingJob set encodingProgress = {}, realTimeInfo = {} "
 					"where encodingJobKey = {} ",
 					encodingPercentage ? std::format("{}", *encodingPercentage) : "null",
-					JSONUtils::toString(realTimeInfoRoot), encodingJobKey
+					trans.transaction->quote(JSONUtils::toString(realTimeInfoRoot)), encodingJobKey
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
