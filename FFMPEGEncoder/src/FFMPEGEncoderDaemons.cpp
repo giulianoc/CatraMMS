@@ -755,157 +755,173 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// perchè voglio cmq avere i dati real time
 				if (liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
-					SPDLOG_INFO(
-						"liveProxyMonitor getRealTimeInfoByOutputLog check"
-						", ingestionJobKey: {}"
-						", encodingJobKey: {}"
-						", configurationLabel: {}"
-						", _callbackData: {}",
-						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						JSONUtils::toString(copiedLiveProxy->_callbackData->toJson())
-					);
-
-					try
+					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
+					if (copiedLiveProxy->_callbackData->getFinished())
 					{
-						// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-						sourceLiveProxy->_lastRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames();
-						sourceLiveProxy->_lastRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps();
-						sourceLiveProxy->_lastRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs();
-						sourceLiveProxy->_lastRealTimeBitRate = copiedLiveProxy->_callbackData->getBitRateKbps();
+						SPDLOG_INFO(
+							"liveProxyMonitor getRealTimeInfoByOutputLog check"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", configurationLabel: {}"
+							", _callbackData: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+							JSONUtils::toString(copiedLiveProxy->_callbackData->toJson())
+						);
 
-						if (copiedLiveProxy->_lastRealTimeFrame != -1 || copiedLiveProxy->_lastRealTimeSize != -1 ||
-							copiedLiveProxy->_lastRealTimeTimeInMilliSeconds.count() != 0)
+						try
 						{
-							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
-							// recupero dei dati
+							// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
+							sourceLiveProxy->_lastRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames();
+							sourceLiveProxy->_lastRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps();
+							sourceLiveProxy->_lastRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs();
+							sourceLiveProxy->_lastRealTimeBitRate = copiedLiveProxy->_callbackData->getBitRateKbps();
 
-							int elapsedInSecondsSinceLastChange =
-								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
-
-							int32_t diffRealTimeFrame = -1;
-							if (copiedLiveProxy->_callbackData->getProcessedFrames() != -1 && copiedLiveProxy->_lastRealTimeFrame != -1)
+							if (copiedLiveProxy->_lastRealTimeFrame != -1 || copiedLiveProxy->_lastRealTimeSize != -1 ||
+								copiedLiveProxy->_lastRealTimeTimeInMilliSeconds.count() != 0)
 							{
-								diffRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames() - copiedLiveProxy->_lastRealTimeFrame;
-								sourceLiveProxy->_lastRealTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
-							}
-							size_t diffRealTimeSize = -1;
-							if (copiedLiveProxy->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveProxy->_lastRealTimeSize != -1)
-								diffRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps() - copiedLiveProxy->_lastRealTimeSize;
-							chrono::milliseconds diffRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
-							if (copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs().count() != 0
-								&& copiedLiveProxy->_lastRealTimeTimeInMilliSeconds.count() != 0)
-								diffRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
-									- copiedLiveProxy->_lastRealTimeTimeInMilliSeconds;
+								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
+								// recupero dei dati
 
-							SPDLOG_INFO(
-								"liveProxyMonitor. Live Proxy real time info"
-								", ingestionJobKey: {}"
-								", encodingJobKey: {}"
-								", configurationLabel: {}"
-								", _childProcessId: {}"
-								", elapsedInSecondsSinceLastChange: {}"
-								", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-								", diff real time frame: {}"
-								", diff real time size: {}"
-								", diff real time time in millisecs: {}"
-								", realTimeBitRate: {}"
-								", timestampDiscontinuityCount: {}"
-								", _maxRealTimeInfoTimestampDiscontinuity: {}",
-								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-								copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
-								_maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
-								diffRealTimeTimeInMilliSeconds.count(),
-								sourceLiveProxy->_lastRealTimeBitRate, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
-								_maxRealTimeInfoTimestampDiscontinuity
-							);
+								int elapsedInSecondsSinceLastChange =
+									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
-							if ((copiedLiveProxy->_lastRealTimeFrame == copiedLiveProxy->_callbackData->getProcessedFrames()
-								&& copiedLiveProxy->_lastRealTimeSize == copiedLiveProxy->_callbackData->getProcessedSizeKBps()
-								&& copiedLiveProxy->_lastRealTimeTimeInMilliSeconds == copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
-								|| copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity))
-							{
-								// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
-
-								if (copiedLiveProxy->_monitoringRealTimeInfoEnabled)
+								int32_t diffRealTimeFrame = -1;
+								if (copiedLiveProxy->_callbackData->getProcessedFrames() != -1 && copiedLiveProxy->_lastRealTimeFrame != -1)
 								{
-									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+									diffRealTimeFrame = copiedLiveProxy->_callbackData->getProcessedFrames() - copiedLiveProxy->_lastRealTimeFrame;
+									sourceLiveProxy->_lastRealTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
+								}
+								size_t diffRealTimeSize = -1;
+								if (copiedLiveProxy->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveProxy->_lastRealTimeSize != -1)
+									diffRealTimeSize = copiedLiveProxy->_callbackData->getProcessedSizeKBps() - copiedLiveProxy->_lastRealTimeSize;
+								chrono::milliseconds diffRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
+								if (copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs().count() != 0
+									&& copiedLiveProxy->_lastRealTimeTimeInMilliSeconds.count() != 0)
+									diffRealTimeTimeInMilliSeconds = copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
+										- copiedLiveProxy->_lastRealTimeTimeInMilliSeconds;
+
+								SPDLOG_INFO(
+									"liveProxyMonitor. Live Proxy real time info"
+									", ingestionJobKey: {}"
+									", encodingJobKey: {}"
+									", configurationLabel: {}"
+									", _childProcessId: {}"
+									", elapsedInSecondsSinceLastChange: {}"
+									", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+									", diff real time frame: {}"
+									", diff real time size: {}"
+									", diff real time time in millisecs: {}"
+									", realTimeBitRate: {}"
+									", timestampDiscontinuityCount: {}"
+									", _maxRealTimeInfoTimestampDiscontinuity: {}",
+									copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+									copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
+									_maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
+									diffRealTimeTimeInMilliSeconds.count(),
+									sourceLiveProxy->_lastRealTimeBitRate, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
+									_maxRealTimeInfoTimestampDiscontinuity
+								);
+
+								if ((copiedLiveProxy->_lastRealTimeFrame == copiedLiveProxy->_callbackData->getProcessedFrames()
+									&& copiedLiveProxy->_lastRealTimeSize == copiedLiveProxy->_callbackData->getProcessedSizeKBps()
+									&& copiedLiveProxy->_lastRealTimeTimeInMilliSeconds == copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
+									|| copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity))
+								{
+									// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
+
+									if (copiedLiveProxy->_monitoringRealTimeInfoEnabled)
 									{
-										SPDLOG_ERROR(
-											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
-											"info are not changing or too 'timestamp discontinuity'. LiveProxy (ffmpeg) is killed in order to be "
-											"started again"
-											", ingestionJobKey: {}"
-											", encodingJobKey: {}"
-											", configurationLabel: {}"
-											", copiedLiveProxy->_childProcessId: {}"
-											", realTimeFrame: {}"
-											", realTimeSize: {}"
-											", realTimeTimeInMilliSeconds: {}"
-											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
-											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-											copiedLiveProxy->_childProcessId.toString(), copiedLiveProxy->_callbackData->getProcessedFrames(),
-											copiedLiveProxy->_callbackData->getProcessedSizeKBps(),
-											copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs().count(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-											copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
-										);
+										if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+										{
+											SPDLOG_ERROR(
+												"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
+												"info are not changing or too 'timestamp discontinuity'. LiveProxy (ffmpeg) is killed in order to be "
+												"started again"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", configurationLabel: {}"
+												", copiedLiveProxy->_childProcessId: {}"
+												", realTimeFrame: {}"
+												", realTimeSize: {}"
+												", realTimeTimeInMilliSeconds: {}"
+												", elapsedInSecondsSinceLastChange: {}"
+												", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+												", timestampDiscontinuityCount: {}"
+												", _maxRealTimeInfoTimestampDiscontinuity: {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+												copiedLiveProxy->_childProcessId.toString(), copiedLiveProxy->_callbackData->getProcessedFrames(),
+												copiedLiveProxy->_callbackData->getProcessedSizeKBps(),
+												copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs().count(),
+												elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+												copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
+											);
 
-										liveProxyWorking = false;
+											liveProxyWorking = false;
 
-										if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-											localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
+											if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+												localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
+											else
+												localErrorMessage = " restarted because of 'real time info not changing'";
+										}
 										else
-											localErrorMessage = " restarted because of 'real time info not changing'";
+										{
+											SPDLOG_INFO(
+												"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", configurationLabel: {}"
+												", copiedLiveProxy->_childProcessId: {}"
+												", elapsedInSecondsSinceLastChange: {}"
+												", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+												", timestampDiscontinuityCount: {}"
+												", _maxRealTimeInfoTimestampDiscontinuity: {}",
+												copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+												copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
+												_maxRealTimeInfoNotChangedToleranceInSeconds, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
+												_maxRealTimeInfoTimestampDiscontinuity
+											);
+										}
 									}
-									else
-									{
-										SPDLOG_INFO(
-											"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
-											", ingestionJobKey: {}"
-											", encodingJobKey: {}"
-											", configurationLabel: {}"
-											", copiedLiveProxy->_childProcessId: {}"
-											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
-											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-											copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
-											_maxRealTimeInfoNotChangedToleranceInSeconds, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
-											_maxRealTimeInfoTimestampDiscontinuity
-										);
-									}
+								}
+								else
+								{
+									sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 								}
 							}
 							else
-							{
 								sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
-							}
 						}
-						else
-							sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
+						catch (FFMpegEncodingStatusNotAvailable &e)
+						{
+							SPDLOG_WARN(
+								"liveProxyMonitor (rtmp) real time info check failed"
+								", copiedLiveProxy->_ingestionJobKey: {}"
+								", copiedLiveProxy->_encodingJobKey: {}"
+								", e.what(): {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+							);
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"liveProxyMonitor (rtmp) real time info check failed"
+								", copiedLiveProxy->_ingestionJobKey: {}"
+								", copiedLiveProxy->_encodingJobKey: {}"
+								", e.what(): {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+							);
+						}
 					}
-					catch (FFMpegEncodingStatusNotAvailable &e)
+					else
 					{
 						SPDLOG_WARN(
-							"liveProxyMonitor (rtmp) real time info check failed"
-							", copiedLiveProxy->_ingestionJobKey: {}"
-							", copiedLiveProxy->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
-						);
-					}
-					catch (exception &e)
-					{
-						SPDLOG_ERROR(
-							"liveProxyMonitor (rtmp) real time info check failed"
-							", copiedLiveProxy->_ingestionJobKey: {}"
-							", copiedLiveProxy->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+							"liveProxyMonitor getRealTimeInfoByOutputLog check cannot be done because no callbackdata available"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", configurationLabel: {}"
+							", _callbackData: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+							JSONUtils::toString(copiedLiveProxy->_callbackData->toJson())
 						);
 					}
 				}
@@ -1857,155 +1873,171 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// perchè voglio cmq avere i dati real time
 				if (liveRecorderWorking) // && copiedLiveRecording->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
-					SPDLOG_INFO(
-						"liveRecordingMonitor. areRealTimeInfoChanged check"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}"
-						", channelLabel: {}",
-						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
-					);
-
-					try
+					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
+					if (copiedLiveRecording->_callbackData->getFinished())
 					{
-						// Second health check, rtmp(Proxy), looks if the frame is increasing
-						sourceLiveRecording->_lastRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames();
-						sourceLiveRecording->_lastRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps();
-						sourceLiveRecording->_lastRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs();
-						sourceLiveRecording->_lastRealTimeBitRate = copiedLiveRecording->_callbackData->getBitRateKbps();
+						SPDLOG_INFO(
+							"liveRecordingMonitor. areRealTimeInfoChanged check"
+							", _ingestionJobKey: {}"
+							", _encodingJobKey: {}"
+							", channelLabel: {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel
+						);
 
-						if (copiedLiveRecording->_lastRealTimeFrame != -1 || copiedLiveRecording->_lastRealTimeSize != -1 ||
-							copiedLiveRecording->_lastRealTimeTimeInMilliSeconds.count() != 0)
+						try
 						{
-							// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
-							// recupero dei dati
+							// Second health check, rtmp(Proxy), looks if the frame is increasing
+							sourceLiveRecording->_lastRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames();
+							sourceLiveRecording->_lastRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps();
+							sourceLiveRecording->_lastRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs();
+							sourceLiveRecording->_lastRealTimeBitRate = copiedLiveRecording->_callbackData->getBitRateKbps();
 
-							int elapsedInSecondsSinceLastChange =
-								chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
-									.count();
-
-							int32_t diffRealTimeFrame = -1;
-							if (copiedLiveRecording->_callbackData->getProcessedFrames() != -1 && copiedLiveRecording->_lastRealTimeFrame != -1)
+							if (copiedLiveRecording->_lastRealTimeFrame != -1 || copiedLiveRecording->_lastRealTimeSize != -1 ||
+								copiedLiveRecording->_lastRealTimeTimeInMilliSeconds.count() != 0)
 							{
-								diffRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames() - copiedLiveRecording->_lastRealTimeFrame;
-								sourceLiveRecording->_lastRealTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
-							}
-							size_t diffRealTimeSize = -1;
-							if (copiedLiveRecording->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveRecording->_lastRealTimeSize != -1)
-								diffRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps() - copiedLiveRecording->_lastRealTimeSize;
-							chrono::milliseconds diffRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
-							if (copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs().count() != 0
-								&& copiedLiveRecording->_lastRealTimeTimeInMilliSeconds.count() != 0)
-								diffRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()
-									- copiedLiveRecording->_lastRealTimeTimeInMilliSeconds;
+								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
+								// recupero dei dati
 
-							if ((copiedLiveRecording->_lastRealTimeFrame == copiedLiveRecording->_callbackData->getProcessedFrames()
-								&& copiedLiveRecording->_lastRealTimeSize == copiedLiveRecording->_callbackData->getProcessedSizeKBps()
-								&& copiedLiveRecording->_lastRealTimeTimeInMilliSeconds == copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()) ||
-								copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-							{
-								if (copiedLiveRecording->_monitoringRealTimeInfoEnabled)
+								int elapsedInSecondsSinceLastChange =
+									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
+										.count();
+
+								int32_t diffRealTimeFrame = -1;
+								if (copiedLiveRecording->_callbackData->getProcessedFrames() != -1 && copiedLiveRecording->_lastRealTimeFrame != -1)
 								{
-									// real time info not changed oppure ci sono troppo timestamp discontinuity
-									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+									diffRealTimeFrame = copiedLiveRecording->_callbackData->getProcessedFrames() - copiedLiveRecording->_lastRealTimeFrame;
+									sourceLiveRecording->_lastRealTimeFrameRate = diffRealTimeFrame / elapsedInSecondsSinceLastChange;
+								}
+								size_t diffRealTimeSize = -1;
+								if (copiedLiveRecording->_callbackData->getProcessedSizeKBps() != -1 && copiedLiveRecording->_lastRealTimeSize != -1)
+									diffRealTimeSize = copiedLiveRecording->_callbackData->getProcessedSizeKBps() - copiedLiveRecording->_lastRealTimeSize;
+								chrono::milliseconds diffRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
+								if (copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs().count() != 0
+									&& copiedLiveRecording->_lastRealTimeTimeInMilliSeconds.count() != 0)
+									diffRealTimeTimeInMilliSeconds = copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()
+										- copiedLiveRecording->_lastRealTimeTimeInMilliSeconds;
+
+								if ((copiedLiveRecording->_lastRealTimeFrame == copiedLiveRecording->_callbackData->getProcessedFrames()
+									&& copiedLiveRecording->_lastRealTimeSize == copiedLiveRecording->_callbackData->getProcessedSizeKBps()
+									&& copiedLiveRecording->_lastRealTimeTimeInMilliSeconds == copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()) ||
+									copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+								{
+									if (copiedLiveRecording->_monitoringRealTimeInfoEnabled)
 									{
-										SPDLOG_ERROR(
-											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
-											"Recorder real time info are not changing. LiveRecorder (ffmpeg) is killed in order to be started again"
-											", ingestionJobKey: {}"
-											", encodingJobKey: {}"
-											", channelLabel: {}"
-											", _childProcessId: {}"
-											", realTimeFrame: {}"
-											", realTimeSize: {}"
-											", realTimeTimeInMilliSeconds: {}"
-											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
-											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
-											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
-											copiedLiveRecording->_callbackData->getProcessedFrames(),
-											copiedLiveRecording->_callbackData->getProcessedSizeKBps(),
-											copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs().count(),
-											elapsedInSecondsSinceLastChange,
-											_maxRealTimeInfoNotChangedToleranceInSeconds, copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(),
-											_maxRealTimeInfoTimestampDiscontinuity
-										);
+										// real time info not changed oppure ci sono troppo timestamp discontinuity
+										if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+										{
+											SPDLOG_ERROR(
+												"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
+												"Recorder real time info are not changing. LiveRecorder (ffmpeg) is killed in order to be started again"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", channelLabel: {}"
+												", _childProcessId: {}"
+												", realTimeFrame: {}"
+												", realTimeSize: {}"
+												", realTimeTimeInMilliSeconds: {}"
+												", elapsedInSecondsSinceLastChange: {}"
+												", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+												", timestampDiscontinuityCount: {}"
+												", _maxRealTimeInfoTimestampDiscontinuity: {}",
+												copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+												copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
+												copiedLiveRecording->_callbackData->getProcessedFrames(),
+												copiedLiveRecording->_callbackData->getProcessedSizeKBps(),
+												copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs().count(),
+												elapsedInSecondsSinceLastChange,
+												_maxRealTimeInfoNotChangedToleranceInSeconds, copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(),
+												_maxRealTimeInfoTimestampDiscontinuity
+											);
 
-										liveRecorderWorking = false;
+											liveRecorderWorking = false;
 
-										if (copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-											localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
+											if (copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+												localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
+											else
+												localErrorMessage = " restarted because of 'real time info not changing'";
+										}
 										else
-											localErrorMessage = " restarted because of 'real time info not changing'";
+										{
+											SPDLOG_INFO(
+												"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", channelLabel: {}"
+												", _childProcessId: {}"
+												", elapsedInSecondsSinceLastChange: {}"
+												", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+												", timestampDiscontinuityCount: {}"
+												", _maxRealTimeInfoTimestampDiscontinuity: {}",
+												copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
+												copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
+												elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
+												copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
+											);
+										}
 									}
-									else
-									{
-										SPDLOG_INFO(
-											"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
-											", ingestionJobKey: {}"
-											", encodingJobKey: {}"
-											", channelLabel: {}"
-											", _childProcessId: {}"
-											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
-											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
-											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-											copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
-										);
-									}
+								}
+								else
+								{
+									sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
+
+									SPDLOG_INFO(
+										"liveRecordingMonitor. Live Recording real time info is changed"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", configurationLabel: {}"
+										", _childProcessId: {}"
+										", elapsedInSecondsSinceLastChange: {}"
+										", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
+										", diff real time frame: {}"
+										", diff real time size: {}"
+										", diff real time time in millisecs: {}"
+										", timestampDiscontinuityCount: {}"
+										", _maxRealTimeInfoTimestampDiscontinuity: {}",
+										copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+										copiedLiveRecording->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
+										_maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
+										diffRealTimeTimeInMilliSeconds.count(),
+										copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
+									);
 								}
 							}
 							else
-							{
 								sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
-
-								SPDLOG_INFO(
-									"liveRecordingMonitor. Live Recording real time info is changed"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", configurationLabel: {}"
-									", _childProcessId: {}"
-									", elapsedInSecondsSinceLastChange: {}"
-									", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-									", diff real time frame: {}"
-									", diff real time size: {}"
-									", diff real time time in millisecs: {}"
-									", timestampDiscontinuityCount: {}"
-									", _maxRealTimeInfoTimestampDiscontinuity: {}",
-									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-									copiedLiveRecording->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
-									_maxRealTimeInfoNotChangedToleranceInSeconds, diffRealTimeFrame, diffRealTimeSize,
-									diffRealTimeTimeInMilliSeconds.count(),
-									copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
-								);
-							}
 						}
-						else
-							sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
+						catch (FFMpegEncodingStatusNotAvailable &e)
+						{
+							string errorMessage = std::format(
+								"liveRecorderMonitor (rtmp) real time info check failed"
+								", copiedLiveRecording->_ingestionJobKey: {}"
+								", copiedLiveRecording->_encodingJobKey: {}"
+								", e.what(): {}",
+								copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+							);
+							SPDLOG_WARN(errorMessage);
+						}
+						catch (exception &e)
+						{
+							SPDLOG_ERROR(
+								"liveRecorderMonitor (rtmp) real time info check failed"
+								", copiedLiveRecording->_ingestionJobKey: {}"
+								", copiedLiveRecording->_encodingJobKey: {}"
+								", e.what(): {}",
+								copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+							);
+						}
 					}
-					catch (FFMpegEncodingStatusNotAvailable &e)
+					else
 					{
-						string errorMessage = std::format(
-							"liveRecorderMonitor (rtmp) real time info check failed"
-							", copiedLiveRecording->_ingestionJobKey: {}"
-							", copiedLiveRecording->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-						);
-						SPDLOG_WARN(errorMessage);
-					}
-					catch (exception &e)
-					{
-						SPDLOG_ERROR(
-							"liveRecorderMonitor (rtmp) real time info check failed"
-							", copiedLiveRecording->_ingestionJobKey: {}"
-							", copiedLiveRecording->_encodingJobKey: {}"
-							", e.what(): {}",
-							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
+						SPDLOG_WARN(
+							"liveProxyMonitor getRealTimeInfoByOutputLog check cannot be done because no callbackdata available"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", channelLabel: {}"
+							", _callbackData: {}",
+							copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
+							JSONUtils::toString(copiedLiveRecording->_callbackData->toJson())
 						);
 					}
 				}
