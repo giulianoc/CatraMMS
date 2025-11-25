@@ -759,8 +759,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						"liveProxyMonitor getRealTimeInfoByOutputLog check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
-						", configurationLabel: {}",
-						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+						", configurationLabel: {}"
+						", _callbackData: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						JSONUtils::toString(copiedLiveProxy->_callbackData->toJson())
 					);
 
 					try
