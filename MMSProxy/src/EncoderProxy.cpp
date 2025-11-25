@@ -1052,6 +1052,7 @@ tuple<bool, bool, bool, string, bool, bool, double, int, long, double, long> Enc
 				json dataRoot = JSONUtils::asJson(encodeStatusResponse, "data", json());
 
 				json errorMessagesRoot = JSONUtils::asJson(dataRoot, "errorMessages", json::array());
+				if (errorMessagesRoot.size() > 0)
 				{
 					std::ostringstream html;
 					html << "<ul>";
