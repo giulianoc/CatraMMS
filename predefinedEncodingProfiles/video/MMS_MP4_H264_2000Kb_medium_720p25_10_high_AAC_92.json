@@ -8,12 +8,14 @@
 		"frameRate": 25,
 		"twoPasses" : false,
 		"otherOutputParameters": "-pix_fmt yuv420p -preset medium -level 4.0 -crf 22",
-		"keyFrameIntervalInSeconds": 10,
+		"keyFrameIntervalInSeconds": 5,
 		"bitRates": [
 			{
 				"width" : 1280,
 				"height" : 720,
-				"kBitRate" : 2000
+				"kBitRate" : 2000,
+				"kMaxRate" : 2200,
+				"kBufferSize" : 4000
 			}
 		]
 	},
