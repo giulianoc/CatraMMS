@@ -751,10 +751,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				// TODO:
-				// 2024-08-10: sposto il controllo _monitoringRealTimeInfoEnabled prima del check sotto
-				// perchè voglio cmq avere i dati real time
-				if (false && liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
+				// 2025-11-26: Diamo il tempo all'encoder di partire prima di eseguire il controllo (liveProxyLiveTimeInSeconds > 3 * 60).
+				//	Questo perchè ho avuto uno scenario in cui l'encoder riprovava tante volte a partire fallendo ogni volta.
+				//	ProxyStart viene aggiornata ad ogni tentativo di partenza.
+				//	Ad un certo punto si è attivato anche questo controllo che, non vedendo i dati real time cambiare, killava il processo.
+				//	Per questo motivo ho aggiunto il check: liveProxyLiveTimeInSeconds > 3 * 60
+				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					if (copiedLiveProxy->_callbackData->getFinished())
