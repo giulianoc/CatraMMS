@@ -751,9 +751,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
+				// TODO:
 				// 2024-08-10: sposto il controllo _monitoringRealTimeInfoEnabled prima del check sotto
 				// perchè voglio cmq avere i dati real time
-				if (liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
+				if (false && liveProxyWorking) // && copiedLiveProxy->_monitoringRealTimeInfoEnabled) // && rtmpOutputFound)
 				{
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					if (copiedLiveProxy->_callbackData->getFinished())
