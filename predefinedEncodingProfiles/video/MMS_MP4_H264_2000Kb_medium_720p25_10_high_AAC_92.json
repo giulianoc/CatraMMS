@@ -1,13 +1,14 @@
 {
-	"label" : "MMS_MP4_H264_2000Kb_medium_720p25_Main_AAC_92",
+	"label" : "MMS_MP4_H264_2000Kb_medium_720p25_high_AAC_92",
 	"fileFormat" : "mp4",
 	"video" : 
 	{
 		"codec" : "libx264",
-		"profile" : "main",
+		"profile" : "high",
 		"frameRate": 25,
 		"twoPasses" : false,
-		"otherOutputParameters": "-preset medium -level 4.0 -crf 22",
+		"otherOutputParameters": "-pix_fmt yuv420p -preset medium -level 4.0 -crf 22",
+		"keyFrameIntervalInSeconds": 10,
 		"bitRates": [
 			{
 				"width" : 1280,
