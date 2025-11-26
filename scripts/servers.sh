@@ -353,21 +353,21 @@ prodServers[$((serverIndex*6+4))]=encoder
 prodServers[$((serverIndex*6+5))]=10.0.1.21
 
 
-#serverIndex=$((serverIndex+1))
-#prodServers[$((serverIndex*6+0))]=aws-encoder-irl-1
-#prodServers[$((serverIndex*6+1))]=ec2-54-76-8-245.eu-west-1.compute.amazonaws.com
-#prodServers[$((serverIndex*6+2))]=cibortv/aws-cibortv1-key-ireland
-#prodServers[$((serverIndex*6+3))]=22
-#prodServers[$((serverIndex*6+4))]=externalEncoder
-#prodServers[$((serverIndex*6+5))]=
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=aws-encoder-irl-1
+prodServers[$((serverIndex*6+1))]=ec2-54-76-8-245.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*6+2))]=cibortv/aws-cibortv1-key-ireland
+prodServers[$((serverIndex*6+3))]=22
+prodServers[$((serverIndex*6+4))]=externalEncoder
+prodServers[$((serverIndex*6+5))]=
 
-#serverIndex=$((serverIndex+1))
-#prodServers[$((serverIndex*6+0))]=aws-encoder-irl-2
-#prodServers[$((serverIndex*6+1))]=ec2-34-242-128-224.eu-west-1.compute.amazonaws.com
-#prodServers[$((serverIndex*6+2))]=cibortv/aws-cibortv1-key-ireland
-#prodServers[$((serverIndex*6+3))]=22
-#prodServers[$((serverIndex*6+4))]=externalEncoder
-#prodServers[$((serverIndex*6+5))]=
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=aws-encoder-irl-2
+prodServers[$((serverIndex*6+1))]=ec2-34-242-128-224.eu-west-1.compute.amazonaws.com
+prodServers[$((serverIndex*6+2))]=cibortv/aws-cibortv1-key-ireland
+prodServers[$((serverIndex*6+3))]=22
+prodServers[$((serverIndex*6+4))]=externalEncoder
+prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=aws-encoder-irl-3
