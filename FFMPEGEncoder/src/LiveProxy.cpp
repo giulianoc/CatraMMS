@@ -48,12 +48,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 
 		liveProxyData->_monitoringRealTimeInfoEnabled =
 			JSONUtils::asBool(liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
-		liveProxyData->_lastOutputFfmpegFileSize = 0;
-		liveProxyData->_lastRealTimeFrame = -1;
-		liveProxyData->_lastRealTimeSize = -1;
-		liveProxyData->_lastRealTimeFrameRate = -1;
-		liveProxyData->_lastRealTimeBitRate = -1;
-		liveProxyData->_lastRealTimeTimeInMilliSeconds = chrono::milliseconds(0);
+		liveProxyData->_lastRealTimeInfo = {};
 		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
 		// 0 perchè liveProxy2 incrementa su un restart
