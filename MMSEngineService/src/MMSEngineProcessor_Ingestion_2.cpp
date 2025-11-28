@@ -3264,7 +3264,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			CurlWrapper::downloadFile(
 				localSourceReferenceURL, destBinaryPathName, progressDownloadCallback, &progressData, _downloadChunkSizeInMegaBytes,
-				std::format(", ingestionJobKey: {}", ingestionJobKey), 120 /* timeoutInSeconds */, _maxDownloadAttemptNumber, true
+				std::format(", ingestionJobKey: {}", ingestionJobKey), 240, _maxDownloadAttemptNumber, true
 			);
 
 			if (localM3u8TarGzOrStreaming == 1)
