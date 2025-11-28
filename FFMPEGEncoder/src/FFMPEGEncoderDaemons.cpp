@@ -798,7 +798,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
-										/*
 										SPDLOG_ERROR(
 											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
 											"info are not changing or too 'timestamp discontinuity'. LiveProxy (ffmpeg) is killed in order to be "
@@ -823,24 +822,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
 										else
 											localErrorMessage = " restarted because of 'real time info not changing'";
-										*/
-										SPDLOG_WARN(
-											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
-											"info are not changing or too 'timestamp discontinuity'. LiveProxy (ffmpeg) is killed in order to be "
-											"started again"
-											", ingestionJobKey: {}"
-											", encodingJobKey: {}"
-											", configurationLabel: {}"
-											", copiedLiveProxy->_childProcessId: {}"
-											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
-											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-											copiedLiveProxy->_childProcessId.toString(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-											copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
-										);
 									}
 									else
 									{

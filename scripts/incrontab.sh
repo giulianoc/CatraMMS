@@ -16,7 +16,9 @@ if [ ! -f "$debugFileName" ]; then
 else
 	filesize=$(stat -c %s $debugFileName)
 	# 1 GB = 1 * 1024 * 1024 * 1024 = 1073741824 bytes
-	if (( filesize > 1073741824 ))
+	# 0.5 GB =    512 * 1024 * 1024 =  536870915 bytes
+	# 300MB =     300 * 1024 * 1024 =  314572800 bytes
+	if (( filesize > 314572800 ))
 	then
 		echo "" > $debugFileName
 	fi              
