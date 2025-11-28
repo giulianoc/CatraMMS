@@ -24,6 +24,9 @@ tarFileName=$moduleName-$version.tar.gz
 
 source /opt/catrasoftware/CatraMMS/scripts/servers.sh
 
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 deploy()
 {
 	serverName=$1
@@ -36,7 +39,9 @@ deploy()
 
 	echo ""
 	echo ""
+	printf "${RED}"
 	echo $serverName
+	printf "${NC}"
 	scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
 	echo ""
 
