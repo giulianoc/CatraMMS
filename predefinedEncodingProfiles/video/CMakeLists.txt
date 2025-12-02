@@ -23,6 +23,7 @@ set(PROFILEs
     MMS_MP4_H264_800Kb_veryfast_360p25_high422_AAC_92.json
     MMS_TS_H264_800Kb_veryfast_360p25_high422_AAC_92.json
     MMS_HLS_H264_800Kb_veryfast_360p25_high422_AAC_92.json
+    MMS_HLS_H264_800Kb_veryfast_360p25_high_AAC_92.json
     MMS_DASH_H264_800Kb_veryfast_360p25_high422_AAC_92.json
     MMS_MP4_H264_800Kb_veryslow_360p25_high422_AAC_92.json
     MMS_MP4_AV1_2000Kb_ConstrainedQuality_360p_AAC_92.json

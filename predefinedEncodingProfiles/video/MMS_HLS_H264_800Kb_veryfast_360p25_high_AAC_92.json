@@ -1,0 +1,33 @@
+{
+	"label" : "MMS_HLS_H264_800Kb_veryfast_360p25_high_AAC_92",
+	"fileFormat" : "hls",
+	"HLS" : 
+	{
+		"segmentDuration" : 10
+	},
+	"video" : 
+	{
+		"codec" : "libx264",
+		"profile" : "high",
+		"frameRate": 25,
+		"twoPasses" : false,
+		"otherOutputParameters": "-pix_fmt yuv420p -preset veryfast -level 4.0 -crf 22",
+		"bitRates": [
+			{
+				"width" : 640,
+				"height" : 360,
+				"kBitRate" : 800
+			}
+		]
+	},
+	"audio" : 
+	{
+		"codec" : "aac",
+		"channelsNumber": 2,
+		"bitRates": [
+			{
+				"kBitRate" : 92
+			}
+		]
+	}
+}
