@@ -33,6 +33,10 @@
 		// optional: It is possible to use this field to specify any other input options
 		"otherInputOptions": "",
 
+		// optional: It is possible to use this field to specify any other output options
+		// Examples: -map 0:2 (o -map 0:0x103) where 0:2 or 0:0x103(pid) is the stream containing the timecode
+		"otherOutputOptions": "",
+
 		// optional: true if an utc time overlay has to be overlayed in the recording. Default is false
 		// 	If true an encoding (h264 and aac) is applied to the input feed.
 		// 	If false the recording saves the received payload without any change
