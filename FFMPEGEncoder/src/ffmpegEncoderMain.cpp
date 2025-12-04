@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 
 		// 2021-09-24: chrono is already thread safe.
 		// mutex lastEncodingAcceptedTimeMutex;
-		chrono::system_clock::time_point lastEncodingAcceptedTime = chrono::system_clock::now();
+		// chrono::system_clock::time_point lastEncodingAcceptedTime = chrono::system_clock::now();
 
 		// here is allocated all it is shared among FFMPEGEncoder threads
 		mutex encodingMutex;
@@ -261,8 +261,7 @@ int main(int argc, char **argv)
 
 				&cpuUsageMutex, &cpuUsage,
 
-				// &lastEncodingAcceptedTimeMutex,
-				&lastEncodingAcceptedTime,
+				// &lastEncodingAcceptedTime,
 
 				&encodingMutex, &encodingsCapability,
 

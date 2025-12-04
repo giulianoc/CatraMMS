@@ -37,7 +37,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 		for (int sourceIndex = 0; sourceIndex < sourcesRoot.size(); sourceIndex++)
 		{
-			json sourceRoot = sourcesRoot[sourceIndex];
+			const json& sourceRoot = sourcesRoot[sourceIndex];
 
 			bool stopIfReferenceProcessingError = JSONUtils::asBool(sourceRoot, "stopIfReferenceProcessingError", false);
 			int64_t sourceDurationInMilliSeconds = JSONUtils::asInt64(sourceRoot, "sourceDurationInMilliSeconds", 0);
@@ -114,6 +114,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 			try
 			{
+				_encoding->_encodingStart = chrono::system_clock::now();
 				_encoding->_ffmpeg->silentAudio(
 					sourceAssetPathName, sourceDurationInMilliSeconds,
 

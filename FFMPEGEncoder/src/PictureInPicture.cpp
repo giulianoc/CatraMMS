@@ -297,6 +297,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		string overlay_Width_InPixel = JSONUtils::asString(ingestedParametersRoot, "overlay_Width_InPixel", "100");
 		string overlay_Height_InPixel = JSONUtils::asString(ingestedParametersRoot, "overlay_Height_InPixel", "100");
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->pictureInPicture(
 			mainSourceAssetPathName, mainSourceDurationInMilliSeconds,
 

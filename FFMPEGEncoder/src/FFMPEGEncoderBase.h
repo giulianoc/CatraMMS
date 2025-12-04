@@ -37,6 +37,7 @@ class FFMPEGEncoderBase
 			_killToRestartByEngine = false;
 			_encodingJobKey = encodingJobKey;
 			_ffmpegTerminatedSuccessful = false;
+			_encodingStart = nullopt;
 		}
 
 		virtual void reset()
@@ -58,6 +59,8 @@ class FFMPEGEncoderBase
 		int64_t _encodingJobKey{};
 		shared_ptr<FFMpegWrapper> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful{};
+		// quando inizia l'encoding, dopo la preparazione dei contenuti che in caso di externalContent può essere lunga per il download
+		optional<chrono::system_clock::time_point> _encodingStart;
 		bool _killToRestartByEngine{};
 	};
 
@@ -86,7 +89,7 @@ class FFMPEGEncoderBase
 		json _inputsRoot;
 		mutex _inputsRootMutex;
 
-		chrono::system_clock::time_point _proxyStart;
+		// chrono::system_clock::time_point _proxyStart;
 
 		[[nodiscard]] shared_ptr<LiveProxyAndGrid> cloneForMonitor() const
 		{
@@ -121,7 +124,8 @@ class FFMPEGEncoderBase
 
 			liveProxyAndGrid->_callbackData = _callbackData->clone();
 
-			liveProxyAndGrid->_proxyStart = _proxyStart;
+			// liveProxyAndGrid->_proxyStart = _proxyStart;
+			liveProxyAndGrid->_encodingStart = _encodingStart;
 
 			return liveProxyAndGrid;
 		}
@@ -168,7 +172,7 @@ class FFMPEGEncoderBase
 		int64_t _lastRecordedSegmentUtcStartTimeInMillisecs{};
 		string _channelLabel;
 		string _segmenterType;
-		chrono::system_clock::time_point _recordingStart;
+		// chrono::system_clock::time_point _recordingStart;
 
 		bool _virtualVOD{};
 		string _monitorVirtualVODManifestDirectoryPath; // used to build virtualVOD
@@ -222,7 +226,8 @@ class FFMPEGEncoderBase
 			liveRecording->_lastRecordedAssetDurationInSeconds = _lastRecordedAssetDurationInSeconds;
 			liveRecording->_channelLabel = _channelLabel;
 			liveRecording->_segmenterType = _segmenterType;
-			liveRecording->_recordingStart = _recordingStart;
+			// liveRecording->_recordingStart = _recordingStart;
+			liveRecording->_encodingStart = _encodingStart;
 			liveRecording->_virtualVOD = _virtualVOD;
 			liveRecording->_monitorVirtualVODManifestDirectoryPath = _monitorVirtualVODManifestDirectoryPath;
 			liveRecording->_monitorVirtualVODManifestFileName = _monitorVirtualVODManifestFileName;

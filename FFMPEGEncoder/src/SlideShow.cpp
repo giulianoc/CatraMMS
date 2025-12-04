@@ -287,6 +287,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->slideShow(
 			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, durationOfEachSlideInSeconds, frameRateMode,
 			encodingProfileDetailsRoot, imagesPathNames, audiosPathNames, shortestAudioDurationInSeconds,

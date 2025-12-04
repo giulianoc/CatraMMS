@@ -54,8 +54,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	shared_mutex *cpuUsageMutex, deque<int> *cpuUsage,
 
-	// mutex* lastEncodingAcceptedTimeMutex,
-	chrono::system_clock::time_point *lastEncodingAcceptedTime,
+	// chrono::system_clock::time_point *lastEncodingAcceptedTime,
 
 	mutex *encodingMutex, vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *encodingsCapability,
 
@@ -76,8 +75,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_cpuUsageMutex = cpuUsageMutex;
 	_cpuUsage = cpuUsage;
 
-	// _lastEncodingAcceptedTimeMutex = lastEncodingAcceptedTimeMutex;
-	_lastEncodingAcceptedTime = lastEncodingAcceptedTime;
+	// _lastEncodingAcceptedTime = lastEncodingAcceptedTime;
 
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
@@ -512,6 +510,16 @@ void FFMPEGEncoder::requestManagement(
 		bool freeEncodingFound = false;
 		bool encodingAlreadyRunning = false;
 		int maxEncodingsCapability = getMaxEncodingsCapability();
+		// Ci sono dei casi in cui non bisogna accettare ulteriori encoding anche se la CPU è bassa:
+		//	- è arrivato un encoding su un externalEncoding che impiega 1h per scaricare i contenuti da encodare.
+		//		Se accettassimo ulteriori encoding, tutti i download rimarrebbero bloccati.
+		//	- arriva un encoding su un encoder interno, bisogna aspettare che la variabile
+		//		cpuUsage si aggiorni prima di accettare un nuovo encoding
+		// Per questo motivo sono stati introdotti atLeastThisEncodingJobKeyNotStartedYet (cioè ancora in downloading) e lastEncodingStart
+		// Se inizializziamo atLeastThisEncodingJobKeyNotStartedYet (cioè ancora in downloading), lastEncodingStart è inutile perchè comunque
+		// non possiamo accettare altri encoding
+		optional<int64_t> atLeastThisEncodingJobKeyNotStartedYet;
+		optional<chrono::system_clock::time_point> lastEncodingStart;
 		for (int encodingIndex = 0; encodingIndex < maxEncodingsCapability; encodingIndex++)
 		{
 			shared_ptr<FFMPEGEncoderBase::Encoding> encoding = (*_encodingsCapability)[encodingIndex];
@@ -528,6 +536,20 @@ void FFMPEGEncoder::requestManagement(
 			{
 				if (encoding->_encodingJobKey == encodingJobKey)
 					encodingAlreadyRunning = true;
+
+				if (!atLeastThisEncodingJobKeyNotStartedYet)
+				{
+					// fino ad ora gli encoding sono tutti partiti (cioè non ancora in downloading)
+					if (encoding->_encodingStart)
+					{
+						if (!lastEncodingStart)
+							lastEncodingStart = encoding->_encodingStart;
+						else if (lastEncodingStart && *encoding->_encodingStart > *lastEncodingStart)
+							lastEncodingStart = encoding->_encodingStart;
+					}
+					else
+						atLeastThisEncodingJobKeyNotStartedYet = encoding->_encodingJobKey;
+				}
 			}
 		}
 		if (encodingAlreadyRunning || !freeEncodingFound)
@@ -552,8 +574,40 @@ void FFMPEGEncoder::requestManagement(
 
 		try
 		{
-			json metadataRoot = JSONUtils::toJson(requestBody);
+			if (atLeastThisEncodingJobKeyNotStartedYet)
+			{
+				string errorMessage = std::format("Too early to accept a new encoding request, one is still in downloading"
+					", ingestionJobKey: {}"
+					", encodingJobKey: {}"
+					", atLeastThisEncodingJobKeyNotStartedYet: {}"
+					", {}", ingestionJobKey, encodingJobKey, *atLeastThisEncodingJobKeyNotStartedYet, NoEncodingAvailable().what());
+				SPDLOG_WARN(errorMessage);
 
+				throw HTTPError(400, errorMessage);
+			}
+			if (lastEncodingStart)
+			{
+				int elapsedSecondsSinceLastEncodingAccepted = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - *lastEncodingStart).count();
+				if (elapsedSecondsSinceLastEncodingAccepted < _intervalInSecondsBetweenEncodingAccept)
+				{
+					int secondsToWait = _intervalInSecondsBetweenEncodingAccept - elapsedSecondsSinceLastEncodingAccepted;
+					string errorMessage = std::format("Too early to accept a new encoding request, waiting cpuUsage to be updated"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", elapsedSecondsSinceLastEncodingAccepted: {}"
+						", intervalInSecondsBetweenEncodingAccept: {}"
+						", secondsToWait: {}"
+						", {}", ingestionJobKey, encodingJobKey, elapsedSecondsSinceLastEncodingAccepted,
+							_intervalInSecondsBetweenEncodingAccept, secondsToWait, NoEncodingAvailable().what());
+
+					SPDLOG_WARN(errorMessage);
+
+					throw HTTPError(400, errorMessage);
+				}
+			}
+
+			json metadataRoot = JSONUtils::toJson(requestBody);
+			/*
 			bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
 			// se si tratta di un encoder esterno,
@@ -581,21 +635,20 @@ void FFMPEGEncoder::requestManagement(
 
 				throw HTTPError(400, errorMessage);
 			}
+			*/
 
 			SPDLOG_INFO(
 				"Accept a new encoding request"
 				", ingestionJobKey: {}"
-				", encodingJobKey: {}"
-				", elapsedSecondsSinceLastEncodingAccepted: {}"
-				", intervalInSecondsBetweenEncodingAccept: {}",
-				ingestionJobKey, encodingJobKey, elapsedSecondsSinceLastEncodingAccepted, intervalInSecondsBetweenEncodingAccept
+				", encodingJobKey: {}",
+				ingestionJobKey, encodingJobKey
 			);
 
 			// 2023-06-15: scenario: tanti encoding stanno aspettando di essere gestiti.
 			//	L'encoder finisce il task in corso, tutti gli encoding in attesa verificano che la CPU è bassa e,
 			// tutti entrano per essere gestiti. Per risolvere questo problema, è necessario aggiornare _lastEncodingAcceptedTime
 			// as soon as possible, altrimenti tutti quelli in coda entrano per essere gestiti
-			*_lastEncodingAcceptedTime = chrono::system_clock::now();
+			// *_lastEncodingAcceptedTime = chrono::system_clock::now();
 
 			selectedEncoding->initEncoding(encodingJobKey, method);
 
@@ -812,7 +865,7 @@ void FFMPEGEncoder::liveRecorder(
 				// For this reason, _recordingStart is initialized to make sure monitoring does not perform his checks before recorder is not
 				// really started. _recordingStart will be initialized correctly into the liveRecorderThread method
 				selectedLiveRecording->initEncoding(encodingJobKey, api);
-				selectedLiveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(60);
+				selectedLiveRecording->_encodingStart = chrono::system_clock::now() + chrono::seconds(60);
 
 				SPDLOG_INFO(
 					"Creating liveRecorder thread"
@@ -2995,19 +3048,12 @@ void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 		", ffmpeg->cpuUsageThresholdForProxy: {}",
 		_cpuUsageThresholdForProxy
 	);
-	_intervalInSecondsBetweenEncodingAcceptForInternalEncoder =
-		JSONUtils::asInt(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAcceptForInternalEncoder", 5);
+	_intervalInSecondsBetweenEncodingAccept =
+		JSONUtils::asInt(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
 	SPDLOG_INFO(
 		"Configuration item"
-		", ffmpeg->intervalInSecondsBetweenEncodingAcceptForInternalEncoder: {}",
-		_intervalInSecondsBetweenEncodingAcceptForInternalEncoder
-	);
-	_intervalInSecondsBetweenEncodingAcceptForExternalEncoder =
-		JSONUtils::asInt(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAcceptForExternalEncoder", 120);
-	SPDLOG_INFO(
-		"Configuration item"
-		", ffmpeg->intervalInSecondsBetweenEncodingAcceptForExternalEncoder: {}",
-		_intervalInSecondsBetweenEncodingAcceptForExternalEncoder
+		", ffmpeg->intervalInSecondsBetweenEncodingAccept: {}",
+		_intervalInSecondsBetweenEncodingAccept
 	);
 
 	_encoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");

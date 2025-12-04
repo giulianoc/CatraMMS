@@ -155,12 +155,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
 					", configurationLabel: {}"
-					", sourceLiveProxy->_childProcessId: {}"
-					", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-					", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+					", sourceLiveProxy->_childProcessId: {}",
 					copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-					sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-					sourceLiveProxy->_proxyStart.time_since_epoch().count()
+					sourceLiveProxy->_childProcessId.toString()
 				);
 
 				chrono::system_clock::time_point now = chrono::system_clock::now();
@@ -168,31 +165,31 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				bool liveProxyWorking = true;
 				string localErrorMessage;
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
 				}
 
-				int64_t liveProxyLiveTimeInSeconds;
+				int64_t liveProxyLiveTimeInSeconds = 0;
 				{
 					// copiedLiveProxy->_proxyStart could be a bit in the future
-					if (now > copiedLiveProxy->_proxyStart)
-						liveProxyLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveProxy->_proxyStart).count();
-					else // it will be negative
-						liveProxyLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveProxy->_proxyStart).count();
+					if (copiedLiveProxy->_encodingStart)
+					{
+						if (now > *(copiedLiveProxy->_encodingStart))
+							liveProxyLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - *(copiedLiveProxy->_encodingStart)).count();
+						else // it will be negative
+							liveProxyLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - *(copiedLiveProxy->_encodingStart)).count();
+					}
 
 					// checks are done after 3 minutes LiveProxy started,
 					// in order to be sure the manifest file was already created
@@ -211,19 +208,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					*/
 				}
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
@@ -392,19 +386,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						to_string(sourceLiveProxy->_proxyStart.time_since_epoch().count())
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
@@ -453,19 +444,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
@@ -544,7 +532,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 										}
 
-										chrono::system_clock::time_point lastChunkTimestamp = copiedLiveProxy->_proxyStart;
+										chrono::system_clock::time_point lastChunkTimestamp =
+											copiedLiveProxy->_encodingStart ? *(copiedLiveProxy->_encodingStart) : now;
 										bool firstChunkRead = false;
 
 										try
@@ -733,19 +722,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
@@ -883,19 +869,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
@@ -950,19 +933,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", configurationLabel: {}"
-						", sourceLiveProxy->_childProcessId: {}"
-						", copiedLiveProxy->_proxyStart.time_since_epoch().count(): {}"
-						", sourceLiveProxy->_proxyStart.time_since_epoch().count(): {}",
+						", sourceLiveProxy->_childProcessId: {}",
 						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-						sourceLiveProxy->_childProcessId.toString(), copiedLiveProxy->_proxyStart.time_since_epoch().count(),
-						sourceLiveProxy->_proxyStart.time_since_epoch().count()
+						sourceLiveProxy->_childProcessId.toString()
 					);
 
 					continue;
@@ -1115,30 +1095,30 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				string localErrorMessage;
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						sourceLiveRecording->_recordingStart.time_since_epoch().count()
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;
 				}
 
 				// copiedLiveRecording->_recordingStart could be a bit in the future
-				int64_t liveRecordingLiveTimeInSeconds;
-				if (now > copiedLiveRecording->_recordingStart)
-					liveRecordingLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveRecording->_recordingStart).count();
-				else // it will be negative
-					liveRecordingLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - copiedLiveRecording->_recordingStart).count();
+				int64_t liveRecordingLiveTimeInSeconds = 0;
+				if (copiedLiveRecording->_encodingStart)
+				{
+					if (now > *(copiedLiveRecording->_encodingStart))
+						liveRecordingLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - *(copiedLiveRecording->_encodingStart)).count();
+					else // it will be negative
+						liveRecordingLiveTimeInSeconds = chrono::duration_cast<chrono::seconds>(now - *(copiedLiveRecording->_encodingStart)).count();
+				}
 
 				string field = "segmentDuration";
 				int segmentDurationInSeconds = JSONUtils::asInt(copiedLiveRecording->_ingestedParametersRoot, field, -1);
@@ -1162,19 +1142,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 			*/
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;
@@ -1212,19 +1189,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						to_string(sourceLiveRecording->_recordingStart.time_since_epoch().count())
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;
@@ -1342,19 +1316,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						sourceLiveRecording->_recordingStart.time_since_epoch().count()
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;
@@ -1473,19 +1444,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						sourceLiveRecording->_recordingStart.time_since_epoch().count()
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;
@@ -1537,19 +1505,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						sourceLiveRecording->_recordingStart.time_since_epoch().count()
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;
@@ -1618,7 +1583,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										manifestDirectoryPathName = manifestFilePathName.substr(0, manifestFilePathIndex);
 									}
 
-									chrono::system_clock::time_point lastChunkTimestamp = copiedLiveRecording->_recordingStart;
+									chrono::system_clock::time_point lastChunkTimestamp =
+										copiedLiveRecording->_encodingStart ? *(copiedLiveRecording->_encodingStart) : chrono::system_clock::now();
 									bool firstChunkRead = false;
 
 									try
@@ -1808,19 +1774,16 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
-					copiedLiveRecording->_recordingStart != sourceLiveRecording->_recordingStart)
+					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
 					SPDLOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
 						", channelLabel: {}"
-						", sourceLiveRecording->_childProcessId: {}"
-						", copiedLiveRecording->_recordingStart.time_since_epoch().count(): {}"
-						", sourceLiveRecording->_recordingStart.time_since_epoch().count(): {}",
+						", sourceLiveRecording->_childProcessId: {}",
 						copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, copiedLiveRecording->_channelLabel,
-						sourceLiveRecording->_childProcessId.toString(), copiedLiveRecording->_recordingStart.time_since_epoch().count(),
-						sourceLiveRecording->_recordingStart.time_since_epoch().count()
+						sourceLiveRecording->_childProcessId.toString()
 					);
 
 					continue;

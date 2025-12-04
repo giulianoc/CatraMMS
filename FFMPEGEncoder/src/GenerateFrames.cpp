@@ -161,6 +161,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 		string imageBaseFileName = to_string(_encoding->_ingestionJobKey);
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->generateFramesToIngest(
 			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, imagesDirectory, imageBaseFileName, startTimeInSeconds, maxFramesNumber,
 			videoFilter, periodInSeconds, mjpeg, imageWidth, imageHeight, sourceAssetPathName, videoDurationInMilliSeconds,

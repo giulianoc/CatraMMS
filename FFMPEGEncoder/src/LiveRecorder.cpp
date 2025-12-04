@@ -323,17 +323,17 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		if (liveRecording->_streamSourceType == "IP_PUSH")
 		{
 			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) < chrono::system_clock::now())
-				liveRecording->_recordingStart = chrono::system_clock::now() + chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
+				liveRecording->_encodingStart = chrono::system_clock::now() + chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 			else
-				liveRecording->_recordingStart =
+				liveRecording->_encodingStart =
 					chrono::system_clock::from_time_t(utcRecordingPeriodStart) + chrono::seconds(ipMMSAsServer_listenTimeoutInSeconds);
 		}
 		else
 		{
 			if (chrono::system_clock::from_time_t(utcRecordingPeriodStart) < chrono::system_clock::now())
-				liveRecording->_recordingStart = chrono::system_clock::now();
+				liveRecording->_encodingStart = chrono::system_clock::now();
 			else
-				liveRecording->_recordingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart);
+				liveRecording->_encodingStart = chrono::system_clock::from_time_t(utcRecordingPeriodStart);
 		}
 
 		// liveRecording->_liveRecorderOutputRoots.clear();
@@ -433,7 +433,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 			outputsRoot,
 
-			framesToBeDetectedRoot, liveRecording->_callbackData, liveRecording->_childProcessId, &(liveRecording->_recordingStart),
+			framesToBeDetectedRoot, liveRecording->_callbackData, liveRecording->_childProcessId, liveRecording->_encodingStart,
 			&(liveRecording->_numberOfRestartBecauseOfFailure)
 		);
 

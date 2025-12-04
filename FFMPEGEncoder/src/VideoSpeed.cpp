@@ -195,6 +195,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->videoSpeed(
 			sourceAssetPathName, videoDurationInMilliSeconds,
 

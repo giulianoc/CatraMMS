@@ -38,8 +38,7 @@ class FFMPEGEncoder final : public FastCGIAPI
 
 		shared_mutex *cpuUsageMutex, deque<int> *cpuUsage,
 
-		// mutex* lastEncodingAcceptedTimeMutex,
-		chrono::system_clock::time_point *lastEncodingAcceptedTime,
+		// chrono::system_clock::time_point *lastEncodingAcceptedTime,
 
 		mutex *encodingMutex, vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *encodingsCapability,
 
@@ -83,9 +82,10 @@ class FFMPEGEncoder final : public FastCGIAPI
 	// overloading the process 	To solve this issue, we will force to wait at
 	// lease 5 seconds to accept a second encoding request. 	That will allow
 	// the cpuUsage to be updated for the next encoding request
-	int _intervalInSecondsBetweenEncodingAcceptForInternalEncoder{};
-	int _intervalInSecondsBetweenEncodingAcceptForExternalEncoder{};
-	chrono::system_clock::time_point *_lastEncodingAcceptedTime;
+	// int _intervalInSecondsBetweenEncodingAcceptForInternalEncoder{};
+	// int _intervalInSecondsBetweenEncodingAcceptForExternalEncoder{};
+	// chrono::system_clock::time_point *_lastEncodingAcceptedTime;
+	int _intervalInSecondsBetweenEncodingAccept{};
 
 	string _encoderUser;
 	string _encoderPassword;

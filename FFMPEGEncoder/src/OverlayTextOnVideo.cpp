@@ -191,6 +191,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 		json drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->overlayTextOnVideo(
 			sourceAssetPathName, videoDurationInMilliSeconds,
 

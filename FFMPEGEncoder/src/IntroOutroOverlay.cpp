@@ -396,6 +396,8 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);
 		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);
 
+		_encoding->_encodingStart = chrono::system_clock::now();
+
 		// 2023-06-01: ho notato che il comando ffmpeg "accumula" lip-sync ed il problema è
 		//	evidente con video di durata >= 10min. Dipende anche tanto dalla codifica del sorgente,
 		//	un sorgente "non compresso" ritarda il problema del lip-sync

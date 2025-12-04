@@ -226,6 +226,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->overlayImageOnVideo(
 			externalEncoder, sourceVideoAssetPathName, videoDurationInMilliSeconds, mmsSourceImageAssetPathName, imagePosition_X_InPixel,
 			imagePosition_Y_InPixel, encodedStagingAssetPathName, encodingProfileDetailsRoot, _encoding->_encodingJobKey, _encoding->_ingestionJobKey,

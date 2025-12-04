@@ -200,6 +200,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			_encoding->_ingestionJobKey, _encoding->_encodingJobKey, sourceAssetPathName
 		);
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->encodeContent(
 			sourceAssetPathName, durationInMilliSeconds, encodedStagingAssetPathName, encodingProfileDetailsRoot,
 			contentType == MMSEngineDBFacade::ContentType::Video, videoTracksRoot, audioTracksRoot, videoTrackIndexToBeUsed, audioTrackIndexToBeUsed,

@@ -187,6 +187,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
 
+		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->cutFrameAccurateWithEncoding(
 			_encoding->_ingestionJobKey, sourceAssetPathName, _encoding->_encodingJobKey, encodingProfileDetailsRoot,
 			JSONUtils::asString(ingestedParametersRoot, "startTime", ""), JSONUtils::asString(encodingParametersRoot, "endTime", ""),

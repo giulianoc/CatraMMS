@@ -200,25 +200,25 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 						if (utcProxyPeriodStart != -1)
 						{
 							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
-								liveProxyData->_proxyStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
+								liveProxyData->_encodingStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
 							else
-								liveProxyData->_proxyStart =
+								liveProxyData->_encodingStart =
 									chrono::system_clock::from_time_t(utcProxyPeriodStart) + chrono::seconds(pushListenTimeout);
 						}
 						else
-							liveProxyData->_proxyStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
+							liveProxyData->_encodingStart = chrono::system_clock::now() + chrono::seconds(pushListenTimeout);
 					}
 					else
 					{
 						if (utcProxyPeriodStart != -1)
 						{
 							if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
-								liveProxyData->_proxyStart = chrono::system_clock::now();
+								liveProxyData->_encodingStart = chrono::system_clock::now();
 							else
-								liveProxyData->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+								liveProxyData->_encodingStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
 						}
 						else
-							liveProxyData->_proxyStart = chrono::system_clock::now();
+							liveProxyData->_encodingStart = chrono::system_clock::now();
 					}
 				}
 				else
@@ -226,12 +226,12 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					if (utcProxyPeriodStart != -1)
 					{
 						if (chrono::system_clock::from_time_t(utcProxyPeriodStart) < chrono::system_clock::now())
-							liveProxyData->_proxyStart = chrono::system_clock::now();
+							liveProxyData->_encodingStart = chrono::system_clock::now();
 						else
-							liveProxyData->_proxyStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
+							liveProxyData->_encodingStart = chrono::system_clock::from_time_t(utcProxyPeriodStart);
 					}
 					else
-						liveProxyData->_proxyStart = chrono::system_clock::now();
+						liveProxyData->_encodingStart = chrono::system_clock::now();
 				}
 			}
 
@@ -245,7 +245,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			liveProxyData->_ffmpeg->liveProxy(
 				liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
 				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot, liveProxyData->_childProcessId,
-				&(liveProxyData->_proxyStart), liveProxyData->_callbackData, &(liveProxyData->_numberOfRestartBecauseOfFailure)
+				liveProxyData->_encodingStart, liveProxyData->_callbackData, &(liveProxyData->_numberOfRestartBecauseOfFailure)
 			);
 		}
 
