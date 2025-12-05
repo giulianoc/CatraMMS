@@ -1624,19 +1624,18 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 
 	try
 	{
-		vector<tuple<string, string, string>> ativeNetworkInterfaces = System::getActiveNetworkInterface();
-		for (const auto &[interfaceName, interfaceType, ipAddress] : ativeNetworkInterfaces)
+		vector<tuple<string, string, bool, string>> nativeNetworkInterfaces = System::getActiveNetworkInterface();
+		for (const auto &[interfaceName, interfaceType, privateIp, ipAddress] : nativeNetworkInterfaces)
 		{
 			SPDLOG_INFO(
 				"getActiveNetworkInterface"
 				", interface name: {}"
 				", interface type: {}"
+				", private ip: {}"
 				", ip address: {}",
-				interfaceName, interfaceType, ipAddress
+				interfaceName, interfaceType, privateIp, ipAddress
 			);
-			if (interfaceType != "IPv4" || ipAddress.starts_with("192.168.") || ipAddress.starts_with("10.") ||
-				(ipAddress.starts_with("172.") && std::stoi(ipAddress.substr(4, ipAddress.find('.', 4) - 4)) >= 16 &&
-				 std::stoi(ipAddress.substr(4, ipAddress.find('.', 4) - 4)) <= 31))
+			if (interfaceType != "IPv4" || privateIp)
 				continue; // rete interna
 			_deliveryExternalNetworkInterface = interfaceName;
 		}

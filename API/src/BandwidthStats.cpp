@@ -75,7 +75,7 @@ void BandwidthStats::logAndReset()
 				peak = v;
 		}
 
-		double avg = static_cast<double>(sum) / samples.size();
+		const double avg = static_cast<double>(sum) / samples.size();
 		SPDLOG_INFO(
 			"BandwidthStats. Day: @{}@, Hour: @{}@, Peak: @{}@ Mbps, Avg: @{}@ Mbps", _currentDay, hour, (peak * 8) / 1000000,
 			std::format("{:.1f}", (avg * 8) / 1000000)

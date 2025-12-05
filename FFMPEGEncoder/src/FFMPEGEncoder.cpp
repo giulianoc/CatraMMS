@@ -599,7 +599,6 @@ void FFMPEGEncoder::requestManagement(
 						", secondsToWait: {}"
 						", {}", ingestionJobKey, encodingJobKey, elapsedSecondsSinceLastEncodingAccepted,
 							_intervalInSecondsBetweenEncodingAccept, secondsToWait, NoEncodingAvailable().what());
-
 					SPDLOG_WARN(errorMessage);
 
 					throw HTTPError(400, errorMessage);
