@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		json configuration = FastCGIAPI::loadConfigurationFile(configurationPathName, "MMS_");
+		json configuration = JSONUtils::loadConfigurationFile(configurationPathName, "MMS_");
 
 		shared_ptr<spdlog::logger> logger = setMainLogger(configuration);
 		registerSlowQueryLogger(configuration);
