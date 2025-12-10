@@ -1618,6 +1618,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"processorMMS               text NULL,"
 				"status           			text NOT NULL,"
 				"errorMessage               text NULL,"
+				"errorMessages              text[] NULL,"
 				"scheduleStart_virtual		timestamp without time zone not NULL,"
 				// added because the channels view was slow
 				"configurationLabel_virtual	text generated always as (metaDataContent ->> 'configurationLabel') stored NULL,"

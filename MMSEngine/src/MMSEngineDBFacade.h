@@ -1537,8 +1537,8 @@ class MMSEngineDBFacade
 
 	void updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus, string errorMessage, string processorMMS = "noToBeUpdated");
 
-	// void appendIngestionJobErrorMessage(int64_t ingestionJobKey, string errorMessage);
-	void updateIngestionJobErrorMessages(int64_t ingestionJobKey, string errorMessages);
+	void appendIngestionJobErrorMessages(int64_t ingestionJobKey, const json& newErrorMessagesRoot);
+	// void updateIngestionJobErrorMessages(int64_t ingestionJobKey, string errorMessages);
 
 	bool updateIngestionJobSourceDownloadingInProgress(int64_t ingestionJobKey, double downloadingPercentage);
 
@@ -2518,8 +2518,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	void loadSqlColumnsSchema();
-	string getPostgresArray(vector<string> &arrayElements, bool emptyElementToBeRemoved, PostgresConnTrans &trans);
-	string getPostgresArray(json arrayRoot, bool emptyElementToBeRemoved, PostgresConnTrans &trans);
+	static string getPostgresArray(const vector<string> &arrayElements, bool emptyElementToBeRemoved, const PostgresConnTrans &trans);
+	static string getPostgresArray(const json &arrayRoot, bool emptyElementToBeRemoved, const PostgresConnTrans &trans);
 	bool isTimezoneValid(string timezone);
 #endif
 
@@ -2718,7 +2718,7 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	json getIngestionJobRoot(
-		shared_ptr<Workspace> workspace, row &row,
+		const shared_ptr<Workspace>& workspace, row &row,
 		bool dependencyInfo,	  // added for performance issue
 		bool ingestionJobOutputs, // added because output could be thousands of entries
 		PostgresConnTrans &trans, chrono::milliseconds *sqlDuration = nullptr

@@ -3082,23 +3082,23 @@ nontransaction trans{*(conn->_sqlConnection)};
 				requestParametersRoot[field] = encodingJobKey;
 			}
 
-			if (startIngestionDate != "")
+			if (!startIngestionDate.empty())
 			{
 				field = "startIngestionDate";
 				requestParametersRoot[field] = startIngestionDate;
 			}
-			if (endIngestionDate != "")
+			if (!endIngestionDate.empty())
 			{
 				field = "endIngestionDate";
 				requestParametersRoot[field] = endIngestionDate;
 			}
 
-			if (startEncodingDate != "")
+			if (!startEncodingDate.empty())
 			{
 				field = "startEncodingDate";
 				requestParametersRoot[field] = startEncodingDate;
 			}
-			if (endEncodingDate != "")
+			if (!endEncodingDate.empty())
 			{
 				field = "endEncodingDate";
 				requestParametersRoot[field] = endEncodingDate;
@@ -3116,7 +3116,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			field = "status";
 			requestParametersRoot[field] = status;
 
-			if (types != "")
+			if (!types.empty())
 			{
 				field = "types";
 				requestParametersRoot[field] = types;
@@ -3129,7 +3129,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 		// manage types
 		vector<string> vTypes;
 		string typesArgument;
-		if (types != "")
+		if (!types.empty())
 		{
 			stringstream ss(types);
 			string type;
@@ -3139,7 +3139,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				if (!type.empty())
 				{
 					vTypes.push_back(type);
-					if (typesArgument == "")
+					if (typesArgument.empty())
 						typesArgument = trans.transaction->quote(type);
 					else
 						typesArgument += (", " + trans.transaction->quote(type));
@@ -3157,22 +3157,22 @@ nontransaction trans{*(conn->_sqlConnection)};
 		// if (startAndEndIngestionDatePresent)
 		//     sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and
 		//     ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
-		if (startIngestionDate != "")
+		if (!startIngestionDate.empty())
 			sqlWhere += std::format(
 				"and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate)
 			);
-		if (endIngestionDate != "")
+		if (!endIngestionDate.empty())
 			sqlWhere += std::format(
 				"and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate)
 			);
 		// if (startAndEndEncodingDatePresent)
 		//     sqlWhere += ("and ej.encodingJobStart >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and
 		//     ej.encodingJobStart <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
-		if (startEncodingDate != "")
+		if (!startEncodingDate.empty())
 			sqlWhere += std::format(
 				"and ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startEncodingDate)
 			);
-		if (endEncodingDate != "")
+		if (!endEncodingDate.empty())
 			sqlWhere += std::format(
 				"and ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endEncodingDate)
 			);
@@ -3186,7 +3186,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			sqlWhere += ("and ej.status = 'Processing' ");
 		else if (status == "ToBeProcessed")
 			sqlWhere += ("and ej.status = 'ToBeProcessed' ");
-		if (types != "")
+		if (!types.empty())
 		{
 			if (vTypes.size() == 1)
 				sqlWhere += std::format("and ej.type = {} ", trans.transaction->quote(types));

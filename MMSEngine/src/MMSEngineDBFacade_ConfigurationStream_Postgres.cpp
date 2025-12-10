@@ -3094,7 +3094,9 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 				appendIngestionJobErrorMessage(ingestionJobKey, firstLineOfErrorMessage);
 				*/
-				updateIngestionJobErrorMessages(ingestionJobKey, errorMessage);
+				json errorMessagesRoot = json::array();
+				errorMessagesRoot.push_back(errorMessage);
+				appendIngestionJobErrorMessages(ingestionJobKey, errorMessagesRoot);
 			}
 			catch (exception &e)
 			{

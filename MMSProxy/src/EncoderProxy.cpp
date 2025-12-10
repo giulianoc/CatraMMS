@@ -1008,12 +1008,12 @@ void EncoderProxy::operator()()
 	);
 }
 
-tuple<bool, bool, bool, string, bool, bool, optional<double>, int, json, long> EncoderProxy::getEncodingStatus()
+tuple<bool, bool, bool, json, bool, bool, optional<double>, int, json, long> EncoderProxy::getEncodingStatus()
 {
 	bool encodingFinished;
 	bool killedByUser;
 	bool completedWithError;
-	string encoderErrorMessages;
+	json newErrorMessagesRoot;
 	bool urlNotFound;
 	bool urlForbidden;
 	optional<double> encodingProgress;
@@ -1050,16 +1050,7 @@ tuple<bool, bool, bool, string, bool, bool, optional<double>, int, json, long> E
 			{
 				json dataRoot = JSONUtils::asJson(encodeStatusResponse, "data", json());
 
-				json errorMessagesRoot = JSONUtils::asJson(dataRoot, "errorMessages", json::array());
-				if (errorMessagesRoot.size() > 0)
-				{
-					std::ostringstream html;
-					html << "<ul>";
-					for (auto& errorMessageRoot : errorMessagesRoot)
-						html << "<li>" << JSONUtils::asString(errorMessageRoot) << "</li>";
-					html << "</ul>";
-					encoderErrorMessages = html.str();
-				}
+				newErrorMessagesRoot = JSONUtils::asJson(dataRoot, "errorMessages", json::array());
 
 				urlForbidden = JSONUtils::asBool(dataRoot, "urlForbidden", false);
 				urlNotFound = JSONUtils::asBool(dataRoot, "urlNotFound", false);
@@ -1125,7 +1116,7 @@ tuple<bool, bool, bool, string, bool, bool, optional<double>, int, json, long> E
 	}
 
 	return make_tuple(
-		encodingFinished, killedByUser, completedWithError, encoderErrorMessages, urlForbidden, urlNotFound, encodingProgress, pid,
+		encodingFinished, killedByUser, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, encodingProgress, pid,
 		realTimeInfoRoot, numberOfRestartBecauseOfFailure
 	);
 }
@@ -1304,7 +1295,6 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 	int encodingStatusFailures = 0;
 	int lastEncodingPid = 0;
 	long lastNumberOfRestartBecauseOfFailure = 0;
-	string lastEncodingErrorMessages;
 	while (!(encodingFinished || encodingStatusFailures >= maxConsecutiveEncodingStatusFailures))
 	{
 		this_thread::sleep_for(chrono::seconds(_intervalInSecondsToCheckEncodingFinished));
@@ -1312,7 +1302,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 		try
 		{
 			bool completedWithError = false;
-			string encodingErrorMessages;
+			json newErrorMessagesRoot;
 			bool urlForbidden = false;
 			bool urlNotFound = false;
 			optional<double> encodingProgress;
@@ -1323,10 +1313,10 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			// tuple<bool, bool, bool, string, bool, bool, double, int>
 			// encodingStatus =
 			// getEncodingStatus(/* _encodingItem->_encodingJobKey */);
-			tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessages, urlForbidden, urlNotFound, encodingProgress, encodingPid,
+			tie(encodingFinished, killedByUser, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, encodingProgress, encodingPid,
 				realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 
-			if (encodingErrorMessages != lastEncodingErrorMessages)
+			if (!newErrorMessagesRoot.empty())
 			{
 				try
 				{
@@ -1343,8 +1333,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					*/
-					_mmsEngineDBFacade->updateIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, encodingErrorMessages);
-					lastEncodingErrorMessages = encodingErrorMessages;
+					_mmsEngineDBFacade->appendIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, newErrorMessagesRoot);
 				}
 				catch (exception &e)
 				{
@@ -1364,9 +1353,9 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
 					", _currentUsedFFMpegEncoderHost: {}"
-					", encodingErrorMessage: {}",
+					", newErrorMessagesRoot: {}",
 					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost,
-					regex_replace(encodingErrorMessages, regex("\n"), " ")
+					JSONUtils::toString(newErrorMessagesRoot)
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -1904,8 +1893,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			// loop waiting the end of the encoding
 			bool encodingFinished = false;
 			bool completedWithError = false;
-			string encodingErrorMessages;
-			string lastEncodingErrorMessages;
+			json newErrorMessagesRoot;
 
 			int encoderNotReachableFailures = 0;
 			int lastEncodingPid = 0;
@@ -1951,7 +1939,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 				try
 				{
-					tie(encodingFinished, killedByUser, completedWithError, encodingErrorMessages, urlForbidden, urlNotFound, ignore, encodingPid,
+					tie(encodingFinished, killedByUser, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, ignore, encodingPid,
 						realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 					SPDLOG_INFO(
 						"getEncodingStatus"
@@ -1962,12 +1950,12 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						", encodingFinished: {}"
 						", killedByUser: {}"
 						", completedWithError: {}"
-						", encodingErrorMessage: {}"
+						", newErrorMessagesRoot: {}"
 						", urlForbidden: {}"
 						", urlNotFound: {}",
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
-						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError, encodingErrorMessages, urlForbidden,
-						urlNotFound
+						maxAttemptsNumberInCaseOfErrors, encodingFinished, killedByUser, completedWithError,
+						JSONUtils::toString(newErrorMessagesRoot), urlForbidden, urlNotFound
 					);
 				}
 				catch (exception &e)
@@ -2075,7 +2063,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						}
 					}
 
-					if (encodingErrorMessages != lastEncodingErrorMessages)
+					if (!newErrorMessagesRoot.empty())
 					{
 						SPDLOG_ERROR(
 							"Encoding failed (look the Transcoder logs)"
@@ -2083,9 +2071,9 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							", _encodingJobKey: {}"
 							", _currentUsedFFMpegEncoderHost: {}"
 							", completedWithError: {}"
-							", encodingErrorMessage: {}",
+							", newErrorMessagesRoot: {}",
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, completedWithError,
-							encodingErrorMessages
+							JSONUtils::toString(newErrorMessagesRoot)
 						);
 
 						/*
@@ -2101,8 +2089,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						*/
-						_mmsEngineDBFacade->updateIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, encodingErrorMessages);
-						lastEncodingErrorMessages = encodingErrorMessages;
+						_mmsEngineDBFacade->appendIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, newErrorMessagesRoot);
 					}
 
 					// update currentAttemptsNumberInCaseOfErrors++
@@ -2159,9 +2146,9 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							", urlForbidden: {}"
 							", urlNotFound: {}"
 							", completedWithError: {}"
-							", encodingErrorMessage: {}",
+							", newErrorMessagesRoot: {}",
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, killedByUser,
-							urlForbidden, urlNotFound, completedWithError, encodingErrorMessages
+							urlForbidden, urlNotFound, completedWithError, JSONUtils::toString(newErrorMessagesRoot)
 						);
 				}
 				catch (exception &e)

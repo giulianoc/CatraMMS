@@ -459,7 +459,7 @@ json MMSEngineDBFacade::updateMediaItem(
 
 			if (tagsModified)
 			{
-				if (setSQL != "")
+				if (!setSQL.empty())
 					setSQL += ", ";
 				setSQL += std::format("tags = {}", getPostgresArray(tagsRoot, true, trans));
 			}

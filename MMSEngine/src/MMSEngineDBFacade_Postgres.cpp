@@ -201,7 +201,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		_logger->warn(__FILEREF__ + "createTablesIfNeeded not done because no master connections");
 }
 
-MMSEngineDBFacade::~MMSEngineDBFacade() {}
+MMSEngineDBFacade::~MMSEngineDBFacade() = default;
 
 void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigurationRoot)
 {
@@ -1712,19 +1712,19 @@ MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTec
 	return deliveryTechnology;
 }
 
-string MMSEngineDBFacade::getPostgresArray(vector<string> &arrayElements, bool emptyElementToBeRemoved, PostgresConnTrans &trans)
+string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
 {
 	string postgresArray;
-	for (string element : arrayElements)
+	for (const string& element : arrayElements)
 	{
-		if (emptyElementToBeRemoved && element == "")
+		if (emptyElementToBeRemoved && element.empty())
 			continue;
-		if (postgresArray == "")
+		if (postgresArray.empty())
 			postgresArray = trans.transaction->quote(element);
 		else
 			postgresArray += "," + trans.transaction->quote(element);
 	}
-	if (postgresArray == "")
+	if (postgresArray.empty())
 		postgresArray = "ARRAY []::text[]";
 	else
 		postgresArray = "ARRAY [" + postgresArray + "]";
@@ -1732,22 +1732,22 @@ string MMSEngineDBFacade::getPostgresArray(vector<string> &arrayElements, bool e
 	return postgresArray;
 }
 
-string MMSEngineDBFacade::getPostgresArray(json arrayRoot, bool emptyElementToBeRemoved, PostgresConnTrans &trans)
+string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
 {
 	string postgresArray;
-	for (int index = 0; index < arrayRoot.size(); index++)
+	for (const auto & index : arrayRoot)
 	{
-		string element = JSONUtils::asString(arrayRoot[index]);
+		string element = JSONUtils::asString(index);
 
-		if (emptyElementToBeRemoved && element == "")
+		if (emptyElementToBeRemoved && element.empty())
 			continue;
 
-		if (postgresArray == "")
+		if (postgresArray.empty())
 			postgresArray = trans.transaction->quote(element);
 		else
 			postgresArray += "," + trans.transaction->quote(element);
 	}
-	if (postgresArray == "")
+	if (postgresArray.empty())
 		postgresArray = "ARRAY []::text[]";
 	else
 		postgresArray = "ARRAY [" + postgresArray + "]";

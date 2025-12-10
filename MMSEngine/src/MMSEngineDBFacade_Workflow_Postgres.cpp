@@ -529,7 +529,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 						"case when startProcessing IS NULL then NOW() at time zone 'utc' else startProcessing end as newStartProcessing, "
 						"case when endProcessing IS NULL then NOW() at time zone 'utc' else endProcessing end as newEndProcessing, "
 						"downloadingProgress, uploadingProgress, "
-						"status, errorMessage from MMS_IngestionJob where ingestionRootKey = {} "
+						"status, errorMessages from MMS_IngestionJob where ingestionRootKey = {} "
 						"order by ingestionJobKey asc",
 						currentIngestionRootKey
 					);

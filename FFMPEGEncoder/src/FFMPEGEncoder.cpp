@@ -1304,7 +1304,7 @@ void FFMPEGEncoder::encodingStatus(
 				// responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
 				responseBodyRoot["encodingFinished"] = true;
 				responseBodyRoot["encodingProgress"] = 100.0;
-				responseBodyRoot["data"] = selectedEncodingCompleted->_callbackData->toJson();
+				responseBodyRoot["data"] = selectedEncodingCompleted->_callbackData->toJson(true);
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1371,7 +1371,7 @@ void FFMPEGEncoder::encodingStatus(
 				}
 				else
 					responseBodyRoot["encodingProgress"] = encodingProgress;
-				responseBodyRoot["data"] = selectedEncoding->_callbackData->toJson();
+				responseBodyRoot["data"] = selectedEncoding->_callbackData->toJson(true);
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1389,7 +1389,7 @@ void FFMPEGEncoder::encodingStatus(
 				// 2020-06-11: it's a live, it does not have
 				// sense the encoding progress
 				responseBodyRoot["encodingProgress"] = nullptr;
-				responseBodyRoot["data"] = selectedLiveProxy->_callbackData->toJson();
+				responseBodyRoot["data"] = selectedLiveProxy->_callbackData->toJson(true);
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}
@@ -1410,7 +1410,7 @@ void FFMPEGEncoder::encodingStatus(
 				//	it is calculated in
 				// EncoderVideoAudioProxy.cpp
 				responseBodyRoot["encodingProgress"] = nullptr;
-				responseBodyRoot["data"] = selectedLiveRecording->_callbackData->toJson();
+				responseBodyRoot["data"] = selectedLiveRecording->_callbackData->toJson(true);
 
 				responseBody = JSONUtils::toString(responseBodyRoot);
 			}

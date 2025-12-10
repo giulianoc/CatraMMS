@@ -1333,34 +1333,30 @@ void MMSEngineDBFacade::updateIngestionJob(
 	}
 }
 
-/*
-void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, string errorMessage)
+void MMSEngineDBFacade::appendIngestionJobErrorMessages(int64_t ingestionJobKey, const json& newErrorMessagesRoot)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
-		string errorMessageForSQL;
-		if (errorMessage.length() >= 1024)
-			errorMessageForSQL = errorMessage.substr(0, 1024);
-		else
-			errorMessageForSQL = errorMessage;
+		/*
 		{
 			string strToBeReplaced = "FFMpeg";
 			string strToReplace = "XXX";
 			if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
 				errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
 		}
+		*/
 
-		if (errorMessageForSQL != "")
+		string newErrorMessages = getPostgresArray(newErrorMessagesRoot, true, trans);
 		{
 			// like: non lo uso per motivi di performance
 			string sqlStatement = std::format(
-				"update MMS_IngestionJob "
-				"set errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
+				"UPDATE MMS_IngestionJob "
+				"SET errorMessages = COALESCE(errorMessages, ARRAY[]::text[]) || {} "
 				"where ingestionJobKey = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') ", // not like 'End_%' "
-				trans.transaction->quote(errorMessageForSQL), ingestionJobKey
+				newErrorMessages, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -1390,7 +1386,7 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1412,25 +1408,23 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessage(int64_t ingestionJobKey, 
 		throw;
 	}
 }
-*/
+/*
 void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey, string errorMessages)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
-		/*
-		string errorMessageForSQL;
-		if (errorMessage.length() >= 1024)
-			errorMessageForSQL = errorMessage.substr(0, 1024);
-		else
-			errorMessageForSQL = errorMessage;
-		{
-			string strToBeReplaced = "FFMpeg";
-			string strToReplace = "XXX";
-			if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
-				errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
-		}
-		*/
+		// string errorMessageForSQL;
+		// if (errorMessage.length() >= 1024)
+		// 	errorMessageForSQL = errorMessage.substr(0, 1024);
+		// else
+		// 	errorMessageForSQL = errorMessage;
+		// {
+		// 	string strToBeReplaced = "FFMpeg";
+		// 	string strToReplace = "XXX";
+		// 	if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
+		// 		errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+		// }
 		// if (errorMessageForSQL != "")
 		{
 			string errorMessagesForSQL = StringUtils::replaceAll(errorMessages, "FFMpeg", "XXX");
@@ -1455,21 +1449,19 @@ void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey,
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			/*
-			if (rowsUpdated != 1)
-			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", errorMessageForSQL: " + errorMessageForSQL +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
-									  ", sqlStatement: " + sqlStatement;
-				warn(errorMessage);
+			// if (rowsUpdated != 1)
+			// {
+			// 	string errorMessage = __FILEREF__ + "no update was done" + ", errorMessageForSQL: " + errorMessageForSQL +
+			// 						  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", rowsUpdated: " + to_string(rowsUpdated) +
+			// 						  ", sqlStatement: " + sqlStatement;
+			// 	warn(errorMessage);
 
 				// throw runtime_exception(errorMessage);
-			}
-			else
-			{
-				info(__FILEREF__ + "IngestionJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey));
-			}
-			*/
+			// }
+			// else
+			// {
+			// 	info(__FILEREF__ + "IngestionJob updated successful" + ", ingestionJobKey: " + to_string(ingestionJobKey));
+			// }
 		}
 	}
 	catch (exception const &e)
@@ -1496,6 +1488,7 @@ void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey,
 		throw;
 	}
 }
+*/
 
 void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 	int64_t ingestionJobKey, IngestionStatus newIngestionStatus, bool updateIngestionRootStatus, PostgresConnTrans &trans
@@ -3412,35 +3405,35 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			field = "status";
 			requestParametersRoot[field] = status;
 
-			if (startIngestionDate != "")
+			if (!startIngestionDate.empty())
 			{
 				field = "startIngestionDate";
 				requestParametersRoot[field] = startIngestionDate;
 			}
-			if (endIngestionDate != "")
+			if (!endIngestionDate.empty())
 			{
 				field = "endIngestionDate";
 				requestParametersRoot[field] = endIngestionDate;
 			}
-			if (startScheduleDate != "")
+			if (!startScheduleDate.empty())
 			{
 				field = "startScheduleDate";
 				requestParametersRoot[field] = startScheduleDate;
 			}
 
-			if (ingestionType != "")
+			if (!ingestionType.empty())
 			{
 				field = "ingestionType";
 				requestParametersRoot[field] = ingestionType;
 			}
 
-			if (configurationLabel != "")
+			if (!configurationLabel.empty())
 			{
 				field = "configurationLabel";
 				requestParametersRoot[field] = configurationLabel;
 			}
 
-			if (outputChannelLabel != "")
+			if (!outputChannelLabel.empty())
 			{
 				field = "outputChannelLabel";
 				requestParametersRoot[field] = outputChannelLabel;
@@ -3457,7 +3450,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				requestParametersRoot[field] = broadcastIngestionJobKeyNotNull;
 			}
 
-			if (jsonParametersCondition != "")
+			if (!jsonParametersCondition.empty())
 			{
 				field = "jsonParametersCondition";
 				requestParametersRoot[field] = jsonParametersCondition;
@@ -3474,7 +3467,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		sqlWhere += std::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
 		if (ingestionJobKey != -1)
 			sqlWhere += std::format("and ij.ingestionJobKey = {} ", ingestionJobKey);
-		if (label != "")
+		if (!label.empty())
 		{
 			// LOWER was used because the column is using utf8_bin that is case sensitive
 			if (labelLike)
@@ -3487,29 +3480,29 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate
 		<= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		*/
-		if (startIngestionDate != "")
+		if (!startIngestionDate.empty())
 			sqlWhere += std::format(
 				"and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate)
 			);
-		if (endIngestionDate != "")
+		if (!endIngestionDate.empty())
 			sqlWhere += std::format(
 				"and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate)
 			);
-		if (startScheduleDate != "")
+		if (!startScheduleDate.empty())
 			sqlWhere += std::format(
 				"and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startScheduleDate)
 			);
-		if (ingestionType != "")
+		if (!ingestionType.empty())
 			sqlWhere += std::format("and ij.ingestionType = {} ", trans.transaction->quote(ingestionType));
-		if (configurationLabel != "")
+		if (!configurationLabel.empty())
 			sqlWhere += std::format("and ij.configurationLabel_virtual = {} ", trans.transaction->quote(configurationLabel));
-		if (outputChannelLabel != "")
+		if (!outputChannelLabel.empty())
 			sqlWhere += std::format("and ij.outputChannelLabel_virtual = {} ", trans.transaction->quote(outputChannelLabel));
 		if (recordingCode != -1)
 			sqlWhere += std::format("and ij.recordingCode_virtual = {} ", recordingCode);
 		if (broadcastIngestionJobKeyNotNull)
 			sqlWhere += ("and ij.broadcastIngestionJobKey_virtual is not null ");
-		if (jsonParametersCondition != "")
+		if (!jsonParametersCondition.empty())
 			sqlWhere += std::format("and {} ", jsonParametersCondition);
 		if (status == "completed")
 			sqlWhere += ("and ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
@@ -3546,7 +3539,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				"case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing, "
 				"case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing, "
 				"ij.downloadingProgress, ij.uploadingProgress, "
-				"ij.status, ij.errorMessage from MMS_IngestionRoot ir, MMS_IngestionJob ij {} "
+				"ij.status, ij.errorMessages from MMS_IngestionRoot ir, MMS_IngestionJob ij {} "
 				"order by newStartProcessing {}, newEndProcessing "
 				"limit {} offset {}",
 				sqlWhere, asc ? "asc" : "desc", rows, start
@@ -3607,7 +3600,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 }
 
 json MMSEngineDBFacade::getIngestionJobRoot(
-	shared_ptr<Workspace> workspace, row &row,
+	const shared_ptr<Workspace>& workspace, row &row,
 	bool dependencyInfo,	  // added for performance issue
 	bool ingestionJobOutputs, // added because output could be thousands of entries
 	PostgresConnTrans &trans, chrono::milliseconds *sqlDuration
@@ -3617,7 +3610,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 
 	try
 	{
-		int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+		auto ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
 
 		string field = "ingestionType";
 		ingestionJobRoot[field] = row["ingestionType"].as<string>();
@@ -3683,11 +3676,11 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 				json mediaItemRoot;
 
 				field = "mediaItemKey";
-				int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				auto mediaItemKey = row["mediaItemKey"].as<int64_t>();
 				mediaItemRoot[field] = mediaItemKey;
 
 				field = "physicalPathKey";
-				int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
+				auto physicalPathKey = row["physicalPathKey"].as<int64_t>();
 				mediaItemRoot[field] = physicalPathKey;
 
 				field = "position";
@@ -3746,11 +3739,25 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		field = "ingestionRootKey";
 		ingestionJobRoot[field] = row["ingestionRootKey"].as<int64_t>();
 
-		field = "errorMessage";
-		if (row["errorMessage"].is_null())
+		field = "errorMessages";
+		if (row["errorMessages"].is_null())
 			ingestionJobRoot[field] = nullptr;
 		else
 		{
+			json errorMessagesRoot = json::array();
+
+			auto array = row["errorMessage"].as_array();
+			pair<array_parser::juncture, string> elem;
+			do
+			{
+				elem = array.get_next();
+				if (elem.first == array_parser::juncture::string_value)
+					errorMessagesRoot.push_back(elem.second);
+			} while (elem.first != array_parser::juncture::done);
+
+			ingestionJobRoot[field] = errorMessagesRoot;
+
+			/*
 			int maxErrorMessageLength = 2000;
 
 			string errorMessage = row["errorMessage"].as<string>();
@@ -3768,6 +3775,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 				field = "errorMessageTruncated";
 				ingestionJobRoot[field] = false;
 			}
+			*/
 		}
 
 		switch (ingestionType)
