@@ -3746,7 +3746,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		{
 			json errorMessagesRoot = json::array();
 
-			auto array = row["errorMessage"].as_array();
+			auto array = row["errorMessages"].as_array();
 			pair<array_parser::juncture, string> elem;
 			do
 			{
