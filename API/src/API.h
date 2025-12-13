@@ -297,7 +297,7 @@ class API final : public FastCGIAPI
 		bool responseBodyCompressed
 	);
 
-	void avgBandwidthUsage(
+	void avgBandwidthUsage_(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,

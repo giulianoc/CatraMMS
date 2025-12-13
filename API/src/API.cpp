@@ -49,127 +49,1207 @@ API::API(
 
 	loadConfiguration(configurationRoot, fileUploadProgressData);
 
-	registerHandler<API>("status", &API::status);
-	registerHandler<API>("avgBandwidthUsage", &API::avgBandwidthUsage);
-	registerHandler<API>("binaryAuthorization", &API::binaryAuthorization);
-	registerHandler<API>("deliveryAuthorizationThroughParameter", &API::deliveryAuthorizationThroughParameter);
-	registerHandler<API>("deliveryAuthorizationThroughPath", &API::deliveryAuthorizationThroughPath);
-	registerHandler<API>("manageHTTPStreamingManifest_authorizationThroughParameter", &API::manageHTTPStreamingManifest_authorizationThroughParameter);
-
-	registerHandler<API>("login", &API::login);
-	registerHandler<API>("registerUser", &API::registerUser);
-	registerHandler<API>("updateUser", &API::updateUser);
-	registerHandler<API>("createTokenToResetPassword", &API::createTokenToResetPassword);
-	registerHandler<API>("resetPassword", &API::resetPassword);
-	registerHandler<API>("updateWorkspace", &API::updateWorkspace);
-	registerHandler<API>("setWorkspaceAsDefault", &API::setWorkspaceAsDefault);
-	registerHandler<API>("createWorkspace", &API::createWorkspace);
-	registerHandler<API>("deleteWorkspace", &API::deleteWorkspace);
-	registerHandler<API>("unshareWorkspace", &API::unshareWorkspace);
-	registerHandler<API>("workspaceUsage", &API::workspaceUsage);
-	registerHandler<API>("shareWorkspace", &API::shareWorkspace_);
-	registerHandler<API>("workspaceList", &API::workspaceList);
-	registerHandler<API>("addInvoice", &API::addInvoice);
-	registerHandler<API>("invoiceList", &API::invoiceList);
-	registerHandler<API>("confirmRegistration", &API::confirmRegistration);
-	registerHandler<API>("addEncoder", &API::addEncoder);
-	registerHandler<API>("removeEncoder", &API::removeEncoder);
-	registerHandler<API>("modifyEncoder", &API::modifyEncoder);
-	registerHandler<API>("encoderList", &API::encoderList);
-	registerHandler<API>("encodersPoolList", &API::encodersPoolList);
-	registerHandler<API>("addEncodersPool", &API::addEncodersPool);
-	registerHandler<API>("modifyEncodersPool", &API::modifyEncodersPool);
-	registerHandler<API>("removeEncodersPool", &API::removeEncodersPool);
-	registerHandler<API>("addAssociationWorkspaceEncoder", &API::addAssociationWorkspaceEncoder);
-	registerHandler<API>("removeAssociationWorkspaceEncoder", &API::removeAssociationWorkspaceEncoder);
-	registerHandler<API>("createDeliveryAuthorization", &API::createDeliveryAuthorization);
-	registerHandler<API>("createBulkOfDeliveryAuthorization", &API::createBulkOfDeliveryAuthorization);
-	registerHandler<API>("ingestion", &API::ingestion);
-	registerHandler<API>("ingestionRootsStatus", &API::ingestionRootsStatus);
-	registerHandler<API>("ingestionRootMetaDataContent", &API::ingestionRootMetaDataContent);
-	registerHandler<API>("ingestionJobsStatus", &API::ingestionJobsStatus);
-	registerHandler<API>("cancelIngestionJob", &API::cancelIngestionJob);
-	registerHandler<API>("updateIngestionJob", &API::updateIngestionJob);
-	registerHandler<API>("ingestionJobSwitchToEncoder", &API::ingestionJobSwitchToEncoder);
-	registerHandler<API>("encodingJobsStatus", &API::encodingJobsStatus);
-	registerHandler<API>("encodingJobPriority", &API::encodingJobPriority);
-	registerHandler<API>("killOrCancelEncodingJob", &API::killOrCancelEncodingJob);
-	registerHandler<API>("changeLiveProxyPlaylist", &API::changeLiveProxyPlaylist);
-	registerHandler<API>("changeLiveProxyOverlayText", &API::changeLiveProxyOverlayText);
-	registerHandler<API>("mediaItemsList", &API::mediaItemsList);
-	registerHandler<API>("updateMediaItem", &API::updateMediaItem);
-	registerHandler<API>("updatePhysicalPath", &API::updatePhysicalPath);
-	registerHandler<API>("tagsList", &API::tagsList);
-	registerHandler<API>("uploadedBinary", &API::uploadedBinary);
-	registerHandler<API>("addUpdateEncodingProfilesSet", &API::addUpdateEncodingProfilesSet);
-	registerHandler<API>("encodingProfilesSetsList", &API::encodingProfilesSetsList);
-	registerHandler<API>("addEncodingProfile", &API::addEncodingProfile);
-	registerHandler<API>("removeEncodingProfile", &API::removeEncodingProfile);
-	registerHandler<API>("removeEncodingProfilesSet", &API::removeEncodingProfilesSet);
-	registerHandler<API>("encodingProfilesList", &API::encodingProfilesList);
-	registerHandler<API>("workflowsAsLibraryList", &API::workflowsAsLibraryList);
-	registerHandler<API>("workflowAsLibraryContent", &API::workflowAsLibraryContent);
-	registerHandler<API>("saveWorkflowAsLibrary", &API::saveWorkflowAsLibrary);
-	registerHandler<API>("removeWorkflowAsLibrary", &API::removeWorkflowAsLibrary);
-	registerHandler<API>("mmsSupport", &API::mmsSupport);
-	registerHandler<API>("addYouTubeConf", &API::addYouTubeConf);
-	registerHandler<API>("modifyYouTubeConf", &API::modifyYouTubeConf);
-	registerHandler<API>("removeYouTubeConf", &API::removeYouTubeConf);
-	registerHandler<API>("youTubeConfList", &API::youTubeConfList);
-	registerHandler<API>("addFacebookConf", &API::addFacebookConf);
-	registerHandler<API>("modifyFacebookConf", &API::modifyFacebookConf);
-	registerHandler<API>("removeFacebookConf", &API::removeFacebookConf);
-	registerHandler<API>("facebookConfList", &API::facebookConfList);
-	registerHandler<API>("addTwitchConf", &API::addTwitchConf);
-	registerHandler<API>("modifyTwitchConf", &API::modifyTwitchConf);
-	registerHandler<API>("removeTwitchConf", &API::removeTwitchConf);
-	registerHandler<API>("twitchConfList", &API::twitchConfList);
-	registerHandler<API>("addStream", &API::addStream);
-	registerHandler<API>("modifyStream", &API::modifyStream);
-	registerHandler<API>("removeStream", &API::removeStream);
-	registerHandler<API>("streamList", &API::streamList);
-	registerHandler<API>("streamFreePushEncoderPort", &API::streamFreePushEncoderPort);
-	registerHandler<API>("addSourceTVStream", &API::addSourceTVStream);
-	registerHandler<API>("modifySourceTVStream", &API::modifySourceTVStream);
-	registerHandler<API>("removeSourceTVStream", &API::removeSourceTVStream);
-	registerHandler<API>("sourceTVStreamList", &API::sourceTVStreamList);
-	registerHandler<API>("addAWSChannelConf", &API::addAWSChannelConf);
-	registerHandler<API>("modifyAWSChannelConf", &API::modifyAWSChannelConf);
-	registerHandler<API>("removeAWSChannelConf", &API::removeAWSChannelConf);
-	registerHandler<API>("awsChannelConfList", &API::awsChannelConfList);
-	registerHandler<API>("addCDN77ChannelConf", &API::addCDN77ChannelConf);
-	registerHandler<API>("modifyCDN77ChannelConf", &API::modifyCDN77ChannelConf);
-	registerHandler<API>("removeCDN77ChannelConf", &API::removeCDN77ChannelConf);
-	registerHandler<API>("cdn77ChannelConfList", &API::cdn77ChannelConfList);
-	registerHandler<API>("addRTMPChannelConf", &API::addRTMPChannelConf);
-	registerHandler<API>("modifyRTMPChannelConf", &API::modifyRTMPChannelConf);
-	registerHandler<API>("removeRTMPChannelConf", &API::removeRTMPChannelConf);
-	registerHandler<API>("rtmpChannelConfList", &API::rtmpChannelConfList);
-	registerHandler<API>("addSRTChannelConf", &API::addSRTChannelConf);
-	registerHandler<API>("modifySRTChannelConf", &API::modifySRTChannelConf);
-	registerHandler<API>("removeSRTChannelConf", &API::removeSRTChannelConf);
-	registerHandler<API>("srtChannelConfList", &API::srtChannelConfList);
-	registerHandler<API>("addHLSChannelConf", &API::addHLSChannelConf);
-	registerHandler<API>("modifyHLSChannelConf", &API::modifyHLSChannelConf);
-	registerHandler<API>("removeHLSChannelConf", &API::removeHLSChannelConf);
-	registerHandler<API>("hlsChannelConfList", &API::hlsChannelConfList);
-	registerHandler<API>("addFTPConf", &API::addFTPConf);
-	registerHandler<API>("modifyFTPConf", &API::modifyFTPConf);
-	registerHandler<API>("removeFTPConf", &API::removeFTPConf);
-	registerHandler<API>("ftpConfList", &API::ftpConfList);
-	registerHandler<API>("addEMailConf", &API::addEMailConf);
-	registerHandler<API>("modifyEMailConf", &API::modifyEMailConf);
-	registerHandler<API>("removeEMailConf", &API::removeEMailConf);
-	registerHandler<API>("emailConfList", &API::emailConfList);
-	registerHandler<API>("loginStatisticList", &API::loginStatisticList);
-	registerHandler<API>("addRequestStatistic", &API::addRequestStatistic);
-	registerHandler<API>("requestStatisticList", &API::requestStatisticList);
-	registerHandler<API>("requestStatisticPerContentList", &API::requestStatisticPerContentList);
-	registerHandler<API>("requestStatisticPerUserList", &API::requestStatisticPerUserList);
-	registerHandler<API>("requestStatisticPerMonthList", &API::requestStatisticPerMonthList);
-	registerHandler<API>("requestStatisticPerDayList", &API::requestStatisticPerDayList);
-	registerHandler<API>("requestStatisticPerHourList", &API::requestStatisticPerHourList);
-	registerHandler<API>("requestStatisticPerCountryList", &API::requestStatisticPerCountryList);
+	// registerHandler<API>("status", &API::status);
+	registerHandler("status",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			status(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("avgBandwidthUsage", &API::avgBandwidthUsage_);
+	registerHandler("avgBandwidthUsage",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			avgBandwidthUsage_(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("binaryAuthorization", &API::binaryAuthorization);
+	registerHandler("binaryAuthorization",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			binaryAuthorization(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("deliveryAuthorizationThroughParameter", &API::deliveryAuthorizationThroughParameter);
+	registerHandler("deliveryAuthorizationThroughParameter",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			deliveryAuthorizationThroughParameter(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("deliveryAuthorizationThroughPath", &API::deliveryAuthorizationThroughPath);
+	registerHandler("deliveryAuthorizationThroughPath",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			deliveryAuthorizationThroughPath(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("manageHTTPStreamingManifest_authorizationThroughParameter", &API::manageHTTPStreamingManifest_authorizationThroughParameter);
+	registerHandler("manageHTTPStreamingManifest_authorizationThroughParameter",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			manageHTTPStreamingManifest_authorizationThroughParameter(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	//
+	// registerHandler<API>("login", &API::login);
+	registerHandler("login",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			login(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("registerUser", &API::registerUser);
+	registerHandler("registerUser",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			registerUser(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("updateUser", &API::updateUser);
+	registerHandler("updateUser",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			updateUser(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("createTokenToResetPassword", &API::createTokenToResetPassword);
+	registerHandler("createTokenToResetPassword",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			createTokenToResetPassword(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("resetPassword", &API::resetPassword);
+	registerHandler("resetPassword",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			resetPassword(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("updateWorkspace", &API::updateWorkspace);
+	registerHandler("updateWorkspace",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			updateWorkspace(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("setWorkspaceAsDefault", &API::setWorkspaceAsDefault);
+	registerHandler("setWorkspaceAsDefault",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			setWorkspaceAsDefault(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("createWorkspace", &API::createWorkspace);
+	registerHandler("createWorkspace",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			createWorkspace(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("deleteWorkspace", &API::deleteWorkspace);
+	registerHandler("deleteWorkspace",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			deleteWorkspace(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("unshareWorkspace", &API::unshareWorkspace);
+	registerHandler("unshareWorkspace",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			unshareWorkspace(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("workspaceUsage", &API::workspaceUsage);
+	registerHandler("workspaceUsage",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			workspaceUsage(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("shareWorkspace", &API::shareWorkspace_);
+	registerHandler("shareWorkspace",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			shareWorkspace_(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("workspaceList", &API::workspaceList);
+	registerHandler("workspaceList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			workspaceList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addInvoice", &API::addInvoice);
+	registerHandler("addInvoice",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addInvoice(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("invoiceList", &API::invoiceList);
+	registerHandler("invoiceList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			invoiceList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("confirmRegistration", &API::confirmRegistration);
+	registerHandler("confirmRegistration",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			confirmRegistration(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addEncoder", &API::addEncoder);
+	registerHandler("addEncoder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addEncoder(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeEncoder", &API::removeEncoder);
+	registerHandler("removeEncoder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeEncoder(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyEncoder", &API::modifyEncoder);
+	registerHandler("modifyEncoder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyEncoder(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("encoderList", &API::encoderList);
+	registerHandler("encoderList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			encoderList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("encodersPoolList", &API::encodersPoolList);
+	registerHandler("encodersPoolList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			encodersPoolList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addEncodersPool", &API::addEncodersPool);
+	registerHandler("addEncodersPool",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addEncodersPool(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyEncodersPool", &API::modifyEncodersPool);
+	registerHandler("modifyEncodersPool",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyEncodersPool(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeEncodersPool", &API::removeEncodersPool);
+	registerHandler("removeEncodersPool",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeEncodersPool(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addAssociationWorkspaceEncoder", &API::addAssociationWorkspaceEncoder);
+	registerHandler("addAssociationWorkspaceEncoder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addAssociationWorkspaceEncoder(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeAssociationWorkspaceEncoder", &API::removeAssociationWorkspaceEncoder);
+	registerHandler("removeAssociationWorkspaceEncoder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeAssociationWorkspaceEncoder(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("createDeliveryAuthorization", &API::createDeliveryAuthorization);
+	registerHandler("createDeliveryAuthorization",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			createDeliveryAuthorization(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("createBulkOfDeliveryAuthorization", &API::createBulkOfDeliveryAuthorization);
+	registerHandler("createBulkOfDeliveryAuthorization",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			createBulkOfDeliveryAuthorization(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("ingestion", &API::ingestion);
+	registerHandler("ingestion",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			ingestion(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("ingestionRootsStatus", &API::ingestionRootsStatus);
+	registerHandler("ingestionRootsStatus",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			ingestionRootsStatus(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("ingestionRootMetaDataContent", &API::ingestionRootMetaDataContent);
+	registerHandler("ingestionRootMetaDataContent",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			ingestionRootMetaDataContent(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("ingestionJobsStatus", &API::ingestionJobsStatus);
+	registerHandler("ingestionJobsStatus",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			ingestionJobsStatus(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("cancelIngestionJob", &API::cancelIngestionJob);
+	registerHandler("cancelIngestionJob",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			cancelIngestionJob(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("updateIngestionJob", &API::updateIngestionJob);
+	registerHandler("updateIngestionJob",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			updateIngestionJob(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("ingestionJobSwitchToEncoder", &API::ingestionJobSwitchToEncoder);
+	registerHandler("ingestionJobSwitchToEncoder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			ingestionJobSwitchToEncoder(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("encodingJobsStatus", &API::encodingJobsStatus);
+	registerHandler("encodingJobsStatus",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			encodingJobsStatus(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("encodingJobPriority", &API::encodingJobPriority);
+	registerHandler("encodingJobPriority",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			encodingJobPriority(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("killOrCancelEncodingJob", &API::killOrCancelEncodingJob);
+	registerHandler("killOrCancelEncodingJob",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			killOrCancelEncodingJob(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("changeLiveProxyPlaylist", &API::changeLiveProxyPlaylist);
+	registerHandler("changeLiveProxyPlaylist",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			changeLiveProxyPlaylist(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("changeLiveProxyOverlayText", &API::changeLiveProxyOverlayText);
+	registerHandler("changeLiveProxyOverlayText",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			changeLiveProxyOverlayText(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("mediaItemsList", &API::mediaItemsList);
+	registerHandler("mediaItemsList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			mediaItemsList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("updateMediaItem", &API::updateMediaItem);
+	registerHandler("updateMediaItem",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			updateMediaItem(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("updatePhysicalPath", &API::updatePhysicalPath);
+	registerHandler("updatePhysicalPath",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			updatePhysicalPath(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("tagsList", &API::tagsList);
+	registerHandler("tagsList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			tagsList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("uploadedBinary", &API::uploadedBinary);
+	registerHandler("uploadedBinary",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			uploadedBinary(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addUpdateEncodingProfilesSet", &API::addUpdateEncodingProfilesSet);
+	registerHandler("addUpdateEncodingProfilesSet",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addUpdateEncodingProfilesSet(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("encodingProfilesSetsList", &API::encodingProfilesSetsList);
+	registerHandler("encodingProfilesSetsList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			encodingProfilesSetsList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addEncodingProfile", &API::addEncodingProfile);
+	registerHandler("addEncodingProfile",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addEncodingProfile(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeEncodingProfile", &API::removeEncodingProfile);
+	registerHandler("removeEncodingProfile",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeEncodingProfile(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeEncodingProfilesSet", &API::removeEncodingProfilesSet);
+	registerHandler("removeEncodingProfilesSet",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeEncodingProfilesSet(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("encodingProfilesList", &API::encodingProfilesList);
+	registerHandler("encodingProfilesList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			encodingProfilesList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("workflowsAsLibraryList", &API::workflowsAsLibraryList);
+	registerHandler("workflowsAsLibraryList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			workflowsAsLibraryList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("workflowAsLibraryContent", &API::workflowAsLibraryContent);
+	registerHandler("workflowAsLibraryContent",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			workflowAsLibraryContent(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("saveWorkflowAsLibrary", &API::saveWorkflowAsLibrary);
+	registerHandler("saveWorkflowAsLibrary",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			saveWorkflowAsLibrary(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeWorkflowAsLibrary", &API::removeWorkflowAsLibrary);
+	registerHandler("removeWorkflowAsLibrary",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeWorkflowAsLibrary(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("mmsSupport", &API::mmsSupport);
+	registerHandler("mmsSupport",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			mmsSupport(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addYouTubeConf", &API::addYouTubeConf);
+	registerHandler("addYouTubeConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addYouTubeConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyYouTubeConf", &API::modifyYouTubeConf);
+	registerHandler("modifyYouTubeConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyYouTubeConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeYouTubeConf", &API::removeYouTubeConf);
+	registerHandler("removeYouTubeConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeYouTubeConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("youTubeConfList", &API::youTubeConfList);
+	registerHandler("youTubeConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			youTubeConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addFacebookConf", &API::addFacebookConf);
+	registerHandler("addFacebookConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addFacebookConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyFacebookConf", &API::modifyFacebookConf);
+	registerHandler("modifyFacebookConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyFacebookConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeFacebookConf", &API::removeFacebookConf);
+	registerHandler("removeFacebookConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeFacebookConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("facebookConfList", &API::facebookConfList);
+	registerHandler("facebookConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			facebookConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addTwitchConf", &API::addTwitchConf);
+	registerHandler("addTwitchConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addTwitchConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyTwitchConf", &API::modifyTwitchConf);
+	registerHandler("modifyTwitchConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyTwitchConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeTwitchConf", &API::removeTwitchConf);
+	registerHandler("removeTwitchConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeTwitchConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("twitchConfList", &API::twitchConfList);
+	registerHandler("twitchConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			twitchConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addStream", &API::addStream);
+	registerHandler("addStream",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addStream(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyStream", &API::modifyStream);
+	registerHandler("modifyStream",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyStream(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeStream", &API::removeStream);
+	registerHandler("removeStream",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeStream(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("streamList", &API::streamList);
+	registerHandler("streamList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			streamList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("streamFreePushEncoderPort", &API::streamFreePushEncoderPort);
+	registerHandler("streamFreePushEncoderPort",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			streamFreePushEncoderPort(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addSourceTVStream", &API::addSourceTVStream);
+	registerHandler("addSourceTVStream",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addSourceTVStream(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifySourceTVStream", &API::modifySourceTVStream);
+	registerHandler("modifySourceTVStream",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifySourceTVStream(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeSourceTVStream", &API::removeSourceTVStream);
+	registerHandler("removeSourceTVStream",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeSourceTVStream(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("sourceTVStreamList", &API::sourceTVStreamList);
+	registerHandler("sourceTVStreamList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			sourceTVStreamList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addAWSChannelConf", &API::addAWSChannelConf);
+	registerHandler("addAWSChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addAWSChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyAWSChannelConf", &API::modifyAWSChannelConf);
+	registerHandler("modifyAWSChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyAWSChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeAWSChannelConf", &API::removeAWSChannelConf);
+	registerHandler("removeAWSChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeAWSChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("awsChannelConfList", &API::awsChannelConfList);
+	registerHandler("awsChannelConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			awsChannelConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addCDN77ChannelConf", &API::addCDN77ChannelConf);
+	registerHandler("addCDN77ChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addCDN77ChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyCDN77ChannelConf", &API::modifyCDN77ChannelConf);
+	registerHandler("modifyCDN77ChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyCDN77ChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeCDN77ChannelConf", &API::removeCDN77ChannelConf);
+	registerHandler("removeCDN77ChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeCDN77ChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("cdn77ChannelConfList", &API::cdn77ChannelConfList);
+	registerHandler("cdn77ChannelConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			cdn77ChannelConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addRTMPChannelConf", &API::addRTMPChannelConf);
+	registerHandler("addRTMPChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addRTMPChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyRTMPChannelConf", &API::modifyRTMPChannelConf);
+	registerHandler("modifyRTMPChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyRTMPChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeRTMPChannelConf", &API::removeRTMPChannelConf);
+	registerHandler("removeRTMPChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeRTMPChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("rtmpChannelConfList", &API::rtmpChannelConfList);
+	registerHandler("rtmpChannelConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			rtmpChannelConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addSRTChannelConf", &API::addSRTChannelConf);
+	registerHandler("addSRTChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addSRTChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifySRTChannelConf", &API::modifySRTChannelConf);
+	registerHandler("modifySRTChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifySRTChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeSRTChannelConf", &API::removeSRTChannelConf);
+	registerHandler("removeSRTChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeSRTChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("srtChannelConfList", &API::srtChannelConfList);
+	registerHandler("srtChannelConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			srtChannelConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addHLSChannelConf", &API::addHLSChannelConf);
+	registerHandler("addHLSChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addHLSChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyHLSChannelConf", &API::modifyHLSChannelConf);
+	registerHandler("modifyHLSChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyHLSChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeHLSChannelConf", &API::removeHLSChannelConf);
+	registerHandler("removeHLSChannelConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeHLSChannelConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("hlsChannelConfList", &API::hlsChannelConfList);
+	registerHandler("hlsChannelConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			hlsChannelConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addFTPConf", &API::addFTPConf);
+	registerHandler("addFTPConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addFTPConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyFTPConf", &API::modifyFTPConf);
+	registerHandler("modifyFTPConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyFTPConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeFTPConf", &API::removeFTPConf);
+	registerHandler("removeFTPConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeFTPConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("ftpConfList", &API::ftpConfList);
+	registerHandler("ftpConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			ftpConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addEMailConf", &API::addEMailConf);
+	registerHandler("addEMailConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addEMailConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("modifyEMailConf", &API::modifyEMailConf);
+	registerHandler("modifyEMailConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			modifyEMailConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("removeEMailConf", &API::removeEMailConf);
+	registerHandler("removeEMailConf",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			removeEMailConf(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("emailConfList", &API::emailConfList);
+	registerHandler("emailConfList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			emailConfList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("loginStatisticList", &API::loginStatisticList);
+	registerHandler("loginStatisticList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			loginStatisticList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("addRequestStatistic", &API::addRequestStatistic);
+	registerHandler("addRequestStatistic",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			addRequestStatistic(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticList", &API::requestStatisticList);
+	registerHandler("requestStatisticList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticPerContentList", &API::requestStatisticPerContentList);
+	registerHandler("requestStatisticPerContentList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticPerContentList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticPerUserList", &API::requestStatisticPerUserList);
+	registerHandler("requestStatisticPerUserList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticPerUserList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticPerMonthList", &API::requestStatisticPerMonthList);
+	registerHandler("requestStatisticPerMonthList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticPerMonthList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticPerDayList", &API::requestStatisticPerDayList);
+	registerHandler("requestStatisticPerDayList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticPerDayList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticPerHourList", &API::requestStatisticPerHourList);
+	registerHandler("requestStatisticPerHourList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticPerHourList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
+	// registerHandler<API>("requestStatisticPerCountryList", &API::requestStatisticPerCountryList);
+	registerHandler("requestStatisticPerCountryList",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
+			const string_view& requestBody, bool responseBodyCompressed)
+		{
+			requestStatisticPerCountryList(sThreadId, requestIdentifier, request, authorizationDetails,
+				requestURI, requestMethod, requestBody, responseBodyCompressed);
+		}
+	);
 }
 
 API::~API() = default;
@@ -382,7 +1462,7 @@ void API::status(
 	}
 }
 
-void API::avgBandwidthUsage(
+void API::avgBandwidthUsage_(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed
