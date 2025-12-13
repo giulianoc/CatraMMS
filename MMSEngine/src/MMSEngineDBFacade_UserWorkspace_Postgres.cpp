@@ -3373,7 +3373,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTr
 
 	try
 	{
-		SPDLOG_INFO("AAAAAAAAAAAAAA");
 		int64_t maxStorageInMB;
 		int64_t totalSizeInBytes;
 		{
@@ -3394,7 +3393,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTr
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-		SPDLOG_INFO("AAAAAAAAAAAAAA");
 			if (!empty(res))
 			{
 				if (res[0]["totalSizeInBytes"].is_null())
@@ -3402,7 +3400,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTr
 				else
 					totalSizeInBytes = res[0]["totalSizeInBytes"].as<int64_t>();
 			}
-		SPDLOG_INFO("AAAAAAAAAAAAAA");
 		}
 
 		{
@@ -3418,7 +3415,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTr
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-		SPDLOG_INFO("AAAAAAAAAAAAAA");
 			if (!empty(res))
 				maxStorageInMB = res[0]["maxStorageInGB"].as<int>() * 1000;
 			else
@@ -3430,7 +3426,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTr
 
 				throw runtime_error(errorMessage);
 			}
-		SPDLOG_INFO("AAAAAAAAAAAAAA");
 		}
 
 		return make_pair(totalSizeInBytes, maxStorageInMB);
