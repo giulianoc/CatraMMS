@@ -3263,7 +3263,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(int64_t workspaceKey
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -3368,13 +3368,14 @@ json MMSEngineDBFacade::getWorkspaceCost(PostgresConnTrans &trans, int64_t works
 	return workspaceCost;
 }
 
-pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &trans, int64_t workspaceKey)
+pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTrans &trans, int64_t workspaceKey)
 {
-	int64_t totalSizeInBytes;
-	int64_t maxStorageInMB;
 
 	try
 	{
+		SPDLOG_INFO("AAAAAAAAAAAAAA");
+		int64_t maxStorageInMB;
+		int64_t totalSizeInBytes;
 		{
 			string sqlStatement = std::format(
 				"select SUM(pp.sizeInBytes) as totalSizeInBytes from MMS_MediaItem mi, MMS_PhysicalPath pp "
@@ -3393,6 +3394,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
+		SPDLOG_INFO("AAAAAAAAAAAAAA");
 			if (!empty(res))
 			{
 				if (res[0]["totalSizeInBytes"].is_null())
@@ -3400,12 +3402,13 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 				else
 					totalSizeInBytes = res[0]["totalSizeInBytes"].as<int64_t>();
 			}
+		SPDLOG_INFO("AAAAAAAAAAAAAA");
 		}
 
 		{
 			string sqlStatement = std::format("select maxStorageInGB from MMS_WorkspaceCost where workspaceKey = {}", workspaceKey);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			const result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3415,16 +3418,19 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
+		SPDLOG_INFO("AAAAAAAAAAAAAA");
 			if (!empty(res))
 				maxStorageInMB = res[0]["maxStorageInGB"].as<int>() * 1000;
 			else
 			{
-				string errorMessage = __FILEREF__ + "Workspace is not present/configured" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
+				const string errorMessage = std::format("Workspace is not present/configured"
+					", workspaceKey: {}"
+					", sqlStatement: {}", workspaceKey, sqlStatement);
+				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
+		SPDLOG_INFO("AAAAAAAAAAAAAA");
 		}
 
 		return make_pair(totalSizeInBytes, maxStorageInMB);

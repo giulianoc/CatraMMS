@@ -2653,10 +2653,9 @@ void API::workspaceUsage(
 		{
 			int64_t workSpaceUsageInBytes;
 
-	SPDLOG_INFO("AAAAAAAAAAAAA");
-			pair<int64_t, int64_t> workSpaceUsageInBytesAndMaxStorageInMB = _mmsEngineDBFacade->getWorkspaceUsage(
+	SPDLOG_INFO("AAAAAAAAAAAAA _workspaceKey: {}", apiAuthorizationDetails->workspace->_workspaceKey);
+			tie(workSpaceUsageInBytes, ignore) = _mmsEngineDBFacade->getWorkspaceUsage(
 				apiAuthorizationDetails->workspace->_workspaceKey);
-			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;
 			SPDLOG_INFO("AAAAAAAAAAAAA");
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;

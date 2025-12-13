@@ -2740,7 +2740,7 @@ class MMSEngineDBFacade
 #endif
 
 #ifdef __POSTGRES__
-	pair<int64_t, int64_t> getWorkspaceUsage(PostgresConnTrans &trans, int64_t workspaceKey);
+	pair<int64_t, int64_t> getWorkspaceUsage(const PostgresConnTrans &trans, int64_t workspaceKey);
 #else
 	pair<int64_t, int64_t> getWorkspaceUsage(shared_ptr<MySQLConnection> conn, int64_t workspaceKey);
 #endif
