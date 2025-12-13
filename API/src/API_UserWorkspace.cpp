@@ -2633,7 +2633,9 @@ void API::workspaceUsage(
 
 	string api = "workspaceUsage";
 
+	SPDLOG_INFO("AAAAAAAAAAAAA");
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	SPDLOG_INFO("AAAAAAAAAAAAA");
 
 	try
 	{
@@ -2651,9 +2653,11 @@ void API::workspaceUsage(
 		{
 			int64_t workSpaceUsageInBytes;
 
+	SPDLOG_INFO("AAAAAAAAAAAAA");
 			pair<int64_t, int64_t> workSpaceUsageInBytesAndMaxStorageInMB = _mmsEngineDBFacade->getWorkspaceUsage(
 				apiAuthorizationDetails->workspace->_workspaceKey);
 			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;
+			SPDLOG_INFO("AAAAAAAAAAAAA");
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
 
@@ -2665,6 +2669,7 @@ void API::workspaceUsage(
 		workspaceUsageRoot[field] = responseRoot;
 
 		string responseBody = JSONUtils::toString(workspaceUsageRoot);
+		SPDLOG_INFO("AAAAAAAAAAAAA: {}", responseBody);
 
 		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
 	}
