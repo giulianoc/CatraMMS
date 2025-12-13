@@ -3765,6 +3765,7 @@ void API::ingestionJobsStatus(
 	bool responseBodyCompressed
 )
 {
+	SPDLOG_INFO("CCCCCCCCCCC");
 	string api = "ingestionJobsStatus";
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
