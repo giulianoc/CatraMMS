@@ -23,7 +23,8 @@ void API::workflowsAsLibraryList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "workflowsAsLibraryList";
@@ -56,7 +57,8 @@ void API::workflowAsLibraryContent(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "workflowAsLibraryContent";
@@ -67,7 +69,16 @@ void API::workflowAsLibraryContent(
 
 	try
 	{
-		int64_t workflowLibraryKey = getQueryParameter("workflowLibraryKey", static_cast<int64_t>(-1), true);
+		int64_t workflowLibraryKey = -1;
+		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
+		if (workflowLibraryKeyIt == queryParameters.end())
+		{
+			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
 
 		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(apiAuthorizationDetails->workspace->_workspaceKey, workflowLibraryKey);
 
@@ -89,7 +100,8 @@ void API::saveWorkflowAsLibrary(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "saveWorkflowAsLibrary";
@@ -131,7 +143,15 @@ void API::saveWorkflowAsLibrary(
 				}
 				workflowLabel = JSONUtils::asString(requestBodyRoot, field, "");
 
-				workflowAsLibraryScope = getQueryParameter("scope", "", true);
+				auto workflowAsLibraryScopeIt = queryParameters.find("scope");
+				if (workflowAsLibraryScopeIt == queryParameters.end())
+				{
+					string errorMessage = "'scope' URI parameter is missing";
+					SPDLOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+				workflowAsLibraryScope = workflowAsLibraryScopeIt->second;
 
 				if (workflowAsLibraryScope == "MMS" && !apiAuthorizationDetails->admin)
 				{
@@ -146,7 +166,10 @@ void API::saveWorkflowAsLibrary(
 				}
 			}
 
-			int64_t thumbnailMediaItemKey = getQueryParameter("thumbnailMediaItemKey", static_cast<int64_t>(-1), false);
+			int64_t thumbnailMediaItemKey = -1;
+			auto thumbnailMediaItemKeyIt = queryParameters.find("thumbnailMediaItemKey");
+			if (thumbnailMediaItemKeyIt != queryParameters.end() && thumbnailMediaItemKeyIt->second != "")
+				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
 
 			int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
 				workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->userKey, workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->workspace->_workspaceKey, workflowLabel,
@@ -177,7 +200,8 @@ void API::removeWorkflowAsLibrary(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeWorkflowAsLibrary";
@@ -188,9 +212,26 @@ void API::removeWorkflowAsLibrary(
 
 	try
 	{
-		int64_t workflowLibraryKey = getQueryParameter("workflowLibraryKey", static_cast<int64_t>(-1), true);
+		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
+		if (workflowLibraryKeyIt == queryParameters.end())
+		{
+			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string workflowAsLibraryScope = getQueryParameter("scope", "", true);
+			throw runtime_error(errorMessage);
+		}
+		int64_t workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
+
+		string workflowAsLibraryScope;
+		auto workflowAsLibraryScopeIt = queryParameters.find("scope");
+		if (workflowAsLibraryScopeIt == queryParameters.end())
+		{
+			string errorMessage = "'scope' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		workflowAsLibraryScope = workflowAsLibraryScopeIt->second;
 
 		if (workflowAsLibraryScope == "MMS" && !apiAuthorizationDetails->admin)
 		{

@@ -57,12 +57,13 @@ class FFMPEGEncoder final : public FastCGIAPI
 	void manageRequestAndResponse(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
-		const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength
+		const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
+		const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
 	) override;
 
 	shared_ptr<AuthorizationDetails> checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password) override;
 
-	bool basicAuthenticationRequired(const string &requestURI) override;
+	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
 
 	void sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage) override;
 
@@ -130,117 +131,164 @@ class FFMPEGEncoder final : public FastCGIAPI
 	void status(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void info(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void videoSpeed(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void encodeContent(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void cutFrameAccurate(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void overlayImageOnVideo(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void overlayTextOnVideo(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void generateFrames(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void slideShow(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void addSilentAudio(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void pictureInPicture(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void introOutroOverlay(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void liveRecorder(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void liveProxy(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void liveGrid(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void encodingStatus(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void filterNotification(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void killEncodingJob(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void changeLiveProxyPlaylist(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void changeLiveProxyOverlayText(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void encodingProgress(
 		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters
+	) const;
 
 	void liveProxy_liveGrid(
 		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void requestManagement(
 		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed);
+		const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
+		const unordered_map<string, string>& requestDetails,
+		const unordered_map<string, string>& queryParameters);
 
 	void encodeContentThread(
 		// FCGX_Request& request,

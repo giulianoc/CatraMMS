@@ -22,7 +22,8 @@ void API::addEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addEncoder";
@@ -187,7 +188,8 @@ void API::modifyEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyEncoder";
@@ -318,7 +320,16 @@ void API::modifyEncoder(
 		string sResponse;
 		try
 		{
-			int64_t encoderKey = getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
+			int64_t encoderKey;
+			auto encoderKeyIt = queryParameters.find("encoderKey");
+			if (encoderKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encoderKey = stoll(encoderKeyIt->second);
 
 			_mmsEngineDBFacade->modifyEncoder(
 				encoderKey, labelToBeModified, label, externalToBeModified, external, enabledToBeModified, enabled, protocolToBeModified, protocol,
@@ -358,7 +369,8 @@ void API::removeEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEncoder";
@@ -387,7 +399,16 @@ void API::removeEncoder(
 		string sResponse;
 		try
 		{
-			int64_t encoderKey = getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
+			int64_t encoderKey;
+			auto encoderKeyIt = queryParameters.find("encoderKey");
+			if (encoderKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encoderKey = stoll(encoderKeyIt->second);
 
 			_mmsEngineDBFacade->removeEncoder(encoderKey);
 
@@ -423,7 +444,8 @@ void API::encoderList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encoderList";
@@ -438,53 +460,117 @@ void API::encoderList(
 
 	try
 	{
-		int64_t encoderKey = getQueryParameter("encoderKey", static_cast<int64_t>(-1));
-
-		int32_t start = getQueryParameter("start", static_cast<int64_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int64_t>(30));
-		if (rows > _maxPageSize)
+		int64_t encoderKey = -1;
+		auto encoderKeyIt = queryParameters.find("encoderKey");
+		if (encoderKeyIt != queryParameters.end() && !encoderKeyIt->second.empty())
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
-
-			// rows = _maxPageSize;
-
-			string errorMessage =
-				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-			throw runtime_error(errorMessage);
-
-			throw runtime_error(errorMessage);
+			encoderKey = stoll(encoderKeyIt->second);
+			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
+			//	it is changed to -1, the return is all the rows. Because of that it was commented
+			// if (liveURLKey == 0)
+			// 	liveURLKey = -1;
 		}
 
-		string label = getQueryParameter("label", "");
-
-		string serverName = getQueryParameter("serverName", "");
-
-		int32_t port = getQueryParameter("port", static_cast<int64_t>(-1));
-
-		string labelOrder = getQueryParameter("labelOrder", "");
-		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
-			SPDLOG_WARN(
-				"encoderList: 'labelOrder' parameter is unknown"
-				", labelOrder: {}",
-				labelOrder
-			);
-			labelOrder = "";
+			start = stoll(startIt->second);
 		}
 
-		bool runningInfo = getQueryParameter("runningInfo", false);
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-		int64_t workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey;
+				// rows = _maxPageSize;
+
+				string errorMessage =
+					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
+				throw runtime_error(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string label;
+		auto labelIt = queryParameters.find("label");
+		if (labelIt != queryParameters.end() && !labelIt->second.empty())
+		{
+			label = labelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+			label = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string serverName;
+		auto serverNameIt = queryParameters.find("serverName");
+		if (serverNameIt != queryParameters.end() && !serverNameIt->second.empty())
+		{
+			serverName = serverNameIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(serverName, regex(plus), plusDecoded);
+
+			serverName = CurlWrapper::unescape(firstDecoding);
+		}
+
+		int port = -1;
+		auto portIt = queryParameters.find("port");
+		if (portIt != queryParameters.end() && !portIt->second.empty())
+		{
+			port = stoi(portIt->second);
+		}
+
+		string labelOrder;
+		auto labelOrderIt = queryParameters.find("labelOrder");
+		if (labelOrderIt != queryParameters.end() && !labelOrderIt->second.empty())
+		{
+			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
+				labelOrder = labelOrderIt->second;
+			else
+				SPDLOG_WARN(
+					"encoderList: 'labelOrder' parameter is unknown"
+					", labelOrder: {}",
+					labelOrderIt->second
+				);
+		}
+
+		bool runningInfo = false;
+		auto runningInfoIt = queryParameters.find("runningInfo");
+		if (runningInfoIt != queryParameters.end())
+			runningInfo = (runningInfoIt->second == "true" ? true : false);
+
 		bool allEncoders = false;
+		int64_t workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey;
 		if (apiAuthorizationDetails->admin)
 		{
 			// in case of admin, from the GUI, it is needed to:
 			// - get the list of all encoders
 			// - encoders for a specific workspace
 
-			allEncoders = getQueryParameter("allEncoders", false);
-			workspaceKey = getQueryParameter("workspaceKey", apiAuthorizationDetails->workspace->_workspaceKey);
+			auto allEncodersIt = queryParameters.find("allEncoders");
+			if (allEncodersIt != queryParameters.end())
+				allEncoders = (allEncodersIt->second == "true" ? true : false);
+
+			auto workspaceKeyIt = queryParameters.find("workspaceKey");
+			if (workspaceKeyIt != queryParameters.end() && !workspaceKeyIt->second.empty())
+				workspaceKey = stoll(workspaceKeyIt->second);
 		}
 
 		{
@@ -514,7 +600,8 @@ void API::encodersPoolList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "encoderList";
@@ -529,38 +616,72 @@ void API::encodersPoolList(
 
 	try
 	{
-		int64_t encodersPoolKey = getQueryParameter("encodersPoolKey", static_cast<int64_t>(-1));
-
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int64_t encodersPoolKey = -1;
+		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
+		if (encodersPoolKeyIt != queryParameters.end() && !encodersPoolKeyIt->second.empty())
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
-
-			// rows = _maxPageSize;
-
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
+			encodersPoolKey = stoll(encodersPoolKeyIt->second);
 		}
 
-		string label = getQueryParameter("label", "");
-		string labelOrder = getQueryParameter("labelOrder", "");
-		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
-			SPDLOG_WARN(
-				"encodersPoolList: 'labelOrder' parameter is unknown"
-				", labelOrder: {}",
-				labelOrder
-			);
-			labelOrder = "";
+			start = stoll(startIt->second);
+		}
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
+
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string label;
+		auto labelIt = queryParameters.find("label");
+		if (labelIt != queryParameters.end() && !labelIt->second.empty())
+		{
+			label = labelIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+
+			label = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string labelOrder;
+		auto labelOrderIt = queryParameters.find("labelOrder");
+		if (labelOrderIt != queryParameters.end() && !labelOrderIt->second.empty())
+		{
+			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
+				labelOrder = labelOrderIt->second;
+			else
+				SPDLOG_WARN(
+					"encodersPoolList: 'labelOrder' parameter is unknown"
+					", labelOrder: {}",
+					labelOrderIt->second
+				);
 		}
 
 		{
@@ -589,7 +710,8 @@ void API::addEncodersPool(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addEncodersPool";
@@ -698,7 +820,8 @@ void API::modifyEncodersPool(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "modifyEncodersPool";
@@ -728,7 +851,16 @@ void API::modifyEncodersPool(
 		string label;
 		vector<int64_t> encoderKeys;
 
-		int64_t encodersPoolKey = getQueryParameter("encodersPoolKey", static_cast<int64_t>(-1), true);
+		int64_t encodersPoolKey = -1;
+		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
+		if (encodersPoolKeyIt == queryParameters.end())
+		{
+			string errorMessage = "The 'encodersPoolKey' parameter is not found";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		encodersPoolKey = stoll(encodersPoolKeyIt->second);
 
 		try
 		{
@@ -810,7 +942,8 @@ void API::removeEncodersPool(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeEncodersPool";
@@ -839,7 +972,16 @@ void API::removeEncodersPool(
 		string sResponse;
 		try
 		{
-			int64_t encodersPoolKey = getQueryParameter("encodersPoolKey", static_cast<int64_t>(-1), true);
+			int64_t encodersPoolKey;
+			auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
+			if (encodersPoolKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'encodersPoolKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encodersPoolKey = stoll(encodersPoolKeyIt->second);
 
 			_mmsEngineDBFacade->removeEncodersPool(encodersPoolKey);
 
@@ -875,7 +1017,8 @@ void API::addAssociationWorkspaceEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addAssociationWorkspaceEncoder";
@@ -904,9 +1047,27 @@ void API::addAssociationWorkspaceEncoder(
 		string sResponse;
 		try
 		{
-			int64_t workspaceKey = getQueryParameter("workspaceKey", static_cast<int64_t>(-1), true);
+			int64_t workspaceKey;
+			auto workspaceKeyIt = queryParameters.find("workspaceKey");
+			if (workspaceKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'workspaceKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
-			int64_t encoderKey = getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
+				throw runtime_error(errorMessage);
+			}
+			workspaceKey = stoll(workspaceKeyIt->second);
+
+			int64_t encoderKey;
+			auto encoderKeyIt = queryParameters.find("encoderKey");
+			if (encoderKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encoderKey = stoll(encoderKeyIt->second);
 
 			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 
@@ -942,7 +1103,8 @@ void API::removeAssociationWorkspaceEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "removeAssociationWorkspaceEncoder";
@@ -971,9 +1133,27 @@ void API::removeAssociationWorkspaceEncoder(
 		string sResponse;
 		try
 		{
-			int64_t workspaceKey = getQueryParameter("workspaceKey", static_cast<int64_t>(-1), true);
+			int64_t workspaceKey;
+			auto workspaceKeyIt = queryParameters.find("workspaceKey");
+			if (workspaceKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'workspaceKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
 
-			int64_t encoderKey = getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
+				throw runtime_error(errorMessage);
+			}
+			workspaceKey = stoll(workspaceKeyIt->second);
+
+			int64_t encoderKey;
+			auto encoderKeyIt = queryParameters.find("encoderKey");
+			if (encoderKeyIt == queryParameters.end())
+			{
+				string errorMessage = "The 'encoderKey' parameter is not found";
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			encoderKey = stoll(encoderKeyIt->second);
 
 			_mmsEngineDBFacade->removeAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 

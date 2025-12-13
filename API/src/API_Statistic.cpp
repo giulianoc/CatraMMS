@@ -21,7 +21,8 @@ void API::addRequestStatistic(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "addRequestStatistic";
@@ -160,7 +161,8 @@ void API::requestStatisticList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticList";
@@ -175,32 +177,88 @@ void API::requestStatisticList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
+			start = stoll(startIt->second);
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			// rows = _maxPageSize;
+				// rows = _maxPageSize;
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
-
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticList(
@@ -229,7 +287,8 @@ void API::requestStatisticPerContentList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerContentList";
@@ -244,37 +303,99 @@ void API::requestStatisticPerContentList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
+			start = stoll(startIt->second);
+
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			// rows = _maxPageSize;
+				// rows = _maxPageSize;
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		// dates are essential in order to make the indexes working
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
-		int32_t minimalNextRequestDistanceInSeconds = getQueryParameter("minimalNextRequestDistanceInSeconds",
-			static_cast<int32_t>(-1));
-
-		bool totalNumFoundToBeCalculated = getQueryParameter("totalNumFoundToBeCalculated", false);
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerContentList(
@@ -304,7 +425,8 @@ void API::requestStatisticPerUserList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerUserList";
@@ -319,37 +441,100 @@ void API::requestStatisticPerUserList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			start = stoll(startIt->second);
+		}
 
-			// rows = _maxPageSize;
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
-		int32_t minimalNextRequestDistanceInSeconds = getQueryParameter("minimalNextRequestDistanceInSeconds",
-			static_cast<int32_t>(-1));
-
-		bool totalNumFoundToBeCalculated = getQueryParameter("totalNumFoundToBeCalculated", false);
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerUserList(
@@ -379,7 +564,8 @@ void API::requestStatisticPerMonthList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerMonthList";
@@ -394,37 +580,100 @@ void API::requestStatisticPerMonthList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			start = stoll(startIt->second);
+		}
 
-			// rows = _maxPageSize;
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
-		int32_t minimalNextRequestDistanceInSeconds = getQueryParameter("minimalNextRequestDistanceInSeconds",
-			static_cast<int32_t>(-1));
-
-		bool totalNumFoundToBeCalculated = getQueryParameter("totalNumFoundToBeCalculated", false);
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerMonthList(
@@ -454,7 +703,8 @@ void API::requestStatisticPerDayList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerDayList";
@@ -469,37 +719,100 @@ void API::requestStatisticPerDayList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			start = stoll(startIt->second);
+		}
 
-			// rows = _maxPageSize;
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
-		int32_t minimalNextRequestDistanceInSeconds = getQueryParameter("minimalNextRequestDistanceInSeconds",
-			static_cast<int32_t>(-1));
-
-		bool totalNumFoundToBeCalculated = getQueryParameter("totalNumFoundToBeCalculated", false);
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerDayList(
@@ -529,7 +842,8 @@ void API::requestStatisticPerHourList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerHourList";
@@ -544,37 +858,100 @@ void API::requestStatisticPerHourList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			start = stoll(startIt->second);
+		}
 
-			// rows = _maxPageSize;
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
-		int32_t minimalNextRequestDistanceInSeconds = getQueryParameter("minimalNextRequestDistanceInSeconds",
-			static_cast<int32_t>(-1));
-
-		bool totalNumFoundToBeCalculated = getQueryParameter("totalNumFoundToBeCalculated", false);
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerHourList(
@@ -604,7 +981,8 @@ void API::requestStatisticPerCountryList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "requestStatisticPerCountryList";
@@ -619,37 +997,100 @@ void API::requestStatisticPerCountryList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			start = stoll(startIt->second);
+		}
 
-			// rows = _maxPageSize;
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string title;
+		auto titleIt = queryParameters.find("title");
+		if (titleIt != queryParameters.end() && titleIt->second != "")
+		{
+			title = titleIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(title, regex(plus), plusDecoded);
+
+			title = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string userId;
+		auto userIdIt = queryParameters.find("userId");
+		if (userIdIt != queryParameters.end() && userIdIt->second != "")
+		{
+			userId = userIdIt->second;
+
+			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
+			//	That  because if we have really a + char (%2B into the string), and we do the replace
+			//	after unescape, this char will be changed to space and we do not want it
+			string plus = "\\+";
+			string plusDecoded = " ";
+			string firstDecoding = regex_replace(userId, regex(plus), plusDecoded);
+
+			userId = CurlWrapper::unescape(firstDecoding);
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string userId = getQueryParameter("userId", "");
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
 
-		string title = getQueryParameter("title", "");
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		int minimalNextRequestDistanceInSeconds = -1;
+		auto minimalIt = queryParameters.find("minimalNextRequestDistanceInSeconds");
+		if (minimalIt != queryParameters.end() && minimalIt->second != "")
+			minimalNextRequestDistanceInSeconds = stoll(minimalIt->second);
 
-		int32_t minimalNextRequestDistanceInSeconds = getQueryParameter("minimalNextRequestDistanceInSeconds",
-			static_cast<int32_t>(-1));
-
-		bool totalNumFoundToBeCalculated = getQueryParameter("totalNumFoundToBeCalculated", false);
+		bool totalNumFoundToBeCalculated = false;
+		auto totalNumFoundIt = queryParameters.find("totalNumFoundToBeCalculated");
+		if (totalNumFoundIt != queryParameters.end() && totalNumFoundIt->second != "")
+			totalNumFoundToBeCalculated = totalNumFoundIt->second == "true" ? true : false;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getRequestStatisticPerCountryList(
@@ -679,7 +1120,8 @@ void API::loginStatisticList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "loginStatisticList";
@@ -705,28 +1147,58 @@ void API::loginStatisticList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && startIt->second != "")
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
+			start = stoll(startIt->second);
+		}
 
-			// rows = _maxPageSize;
+		int rows = 30;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && rowsIt->second != "")
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		string startStatisticDate;
+		auto startStatisticDateIt = queryParameters.find("startStatisticDate");
+		if (startStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'startStatisticDate' URI parameter is missing";
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		startStatisticDate = startStatisticDateIt->second;
 
-		string startStatisticDate = getQueryParameter("startStatisticDate", "", true);
-		string endStatisticDate = getQueryParameter("endStatisticDate", "", true);
+		string endStatisticDate;
+		auto endStatisticDateIt = queryParameters.find("endStatisticDate");
+		if (endStatisticDateIt == queryParameters.end())
+		{
+			string errorMessage = "'endStatisticDate' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		endStatisticDate = endStatisticDateIt->second;
 
 		{
 			json statisticsListRoot = _mmsEngineDBFacade->getLoginStatisticList(startStatisticDate, endStatisticDate, start, rows);

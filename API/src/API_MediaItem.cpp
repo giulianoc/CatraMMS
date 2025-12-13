@@ -20,7 +20,8 @@ void API::updateMediaItem(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updateMediaItem";
@@ -47,7 +48,16 @@ void API::updateMediaItem(
 
 	try
 	{
-		int64_t mediaItemKey = getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), true);
+		int64_t mediaItemKey = -1;
+		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
+		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second.empty())
+		{
+			string errorMessage = "'mediaItemKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		mediaItemKey = stoll(mediaItemKeyIt->second);
 
 		json metadataRoot = JSONUtils::toJson(requestBody);
 
@@ -161,7 +171,8 @@ void API::updatePhysicalPath(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "updatePhysicalPath";
@@ -190,8 +201,27 @@ void API::updatePhysicalPath(
 	{
 		int64_t newRetentionInMinutes;
 
-		int64_t mediaItemKey = getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), true);
-		int64_t physicalPathKey = getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), true);
+		int64_t mediaItemKey = -1;
+		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
+		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second.empty())
+		{
+			string errorMessage = "'mediaItemKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		mediaItemKey = stoll(mediaItemKeyIt->second);
+
+		int64_t physicalPathKey = -1;
+		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
+		if (physicalPathKeyIt == queryParameters.end() || physicalPathKeyIt->second.empty())
+		{
+			string errorMessage = "'physicalPathKey' URI parameter is missing";
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		physicalPathKey = stoll(physicalPathKeyIt->second);
 
 		json metadataRoot = JSONUtils::toJson(requestBody);
 
@@ -271,7 +301,8 @@ void API::mediaItemsList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "mediaItemsList";
@@ -289,21 +320,21 @@ void API::mediaItemsList(
 	{
 		chrono::system_clock::time_point startAPI = chrono::system_clock::now();
 
-		int64_t mediaItemKey = getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
+		int64_t mediaItemKey = getQueryParameter(queryParameters, "mediaItemKey", static_cast<int64_t>(-1), false);
 		// client could send 0 (see CatraMMSAPI::getMEdiaItem) in case it does not have mediaItemKey
 		// but other parameters
 		if (mediaItemKey == 0)
 			mediaItemKey = -1;
 
-		string uniqueName = getQueryParameter("uniqueName", string(), false);
+		string uniqueName = getQueryParameter(queryParameters, "uniqueName", string(), false);
 
-		int64_t physicalPathKey = getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), false);
+		int64_t physicalPathKey = getQueryParameter(queryParameters, "physicalPathKey", static_cast<int64_t>(-1), false);
 		if (physicalPathKey == 0)
 			physicalPathKey = -1;
 
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0), false);
+		int32_t start = getQueryParameter(queryParameters, "start", static_cast<int32_t>(0), false);
 
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(10), false);
+		int32_t rows = getQueryParameter(queryParameters, "rows", static_cast<int32_t>(10), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -322,7 +353,7 @@ void API::mediaItemsList(
 			throw runtime_error(errorMessage);
 		}
 
-		string sContentType = getQueryParameter("contentType", string(), false);
+		string sContentType = getQueryParameter(queryParameters, "contentType", string(), false);
 		bool contentTypePresent = false;
 		MMSEngineDBFacade::ContentType contentType;
 		if (!sContentType.empty())
@@ -337,26 +368,34 @@ void API::mediaItemsList(
 		 *  0: look for NO liveRecordingChunk (default)
 		 *  1: look for liveRecordingChunk
 		 */
-		int32_t liveRecordingChunk = getQueryParameter("liveRecordingChunk", false) == false ? 0 : 1;
+		int liveRecordingChunk = 0;
+		auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
+		if (liveRecordingChunkIt != queryParameters.end() && !liveRecordingChunkIt->second.empty())
+		{
+			if (liveRecordingChunkIt->second == "true")
+				liveRecordingChunk = 1;
+			else if (liveRecordingChunkIt->second == "false")
+				liveRecordingChunk = 0;
+		}
 
-		string startIngestionDate = getQueryParameter("startIngestionDate", string(), false);
+		string startIngestionDate = getQueryParameter(queryParameters, "startIngestionDate", string(), false);
 
-		string endIngestionDate = getQueryParameter("endIngestionDate", string(), false);
+		string endIngestionDate = getQueryParameter(queryParameters, "endIngestionDate", string(), false);
 
-		string title = getQueryParameter("title", string(), false);
+		string title = getQueryParameter(queryParameters, "title", string(), false);
 
-		vector<string> tagsIn = getQueryParameter("tagsIn", ',', vector<string>(), false);
-		vector<string> tagsNotIn = getQueryParameter("tagsNotIn", ',', vector<string>(), false);
-		vector<int64_t> otherMediaItemsKey = getQueryParameter("otherMIKs", ',', vector<int64_t>(), false);
-		set<string> responseFields = getQueryParameter("responseFields", ',', set<string>(), false);
+		vector<string> tagsIn = getQueryParameter(queryParameters, "tagsIn", ',', vector<string>(), false);
+		vector<string> tagsNotIn = getQueryParameter(queryParameters, "tagsNotIn", ',', vector<string>(), false);
+		vector<int64_t> otherMediaItemsKey = getQueryParameter(queryParameters, "otherMIKs", ',', vector<int64_t>(), false);
+		set<string> responseFields = getQueryParameter(queryParameters, "responseFields", ',', set<string>(), false);
 
-		int64_t recordingCode = getQueryParameter("recordingCode", static_cast<int64_t>(-1), false);
+		int64_t recordingCode = getQueryParameter(queryParameters, "recordingCode", static_cast<int64_t>(-1), false);
 
-		string jsonCondition = getQueryParameter("jsonCondition", string(), false);
+		string jsonCondition = getQueryParameter(queryParameters, "jsonCondition", string(), false);
 
-		string orderBy = getQueryParameter("orderBy", string(), false);
+		string orderBy = getQueryParameter(queryParameters, "orderBy", string(), false);
 
-		string jsonOrderBy = getQueryParameter("jsonOrderBy", string(), false);
+		string jsonOrderBy = getQueryParameter(queryParameters, "jsonOrderBy", string(), false);
 
 		{
 			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
@@ -399,7 +438,8 @@ void API::tagsList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed
+	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
+	const unordered_map<string, string>& queryParameters
 )
 {
 	string api = "tagsList";
@@ -415,32 +455,51 @@ void API::tagsList(
 
 	try
 	{
-		int32_t start = getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(10));
-		if (rows > _maxPageSize)
+		int start = 0;
+		auto startIt = queryParameters.find("start");
+		if (startIt != queryParameters.end() && !startIt->second.empty())
 		{
-			// 2022-02-13: changed to return an error otherwise the user
-			//	think to ask for a huge number of items while the return is much less
-
-			// rows = _maxPageSize;
-
-			string errorMessage = std::format(
-				"rows parameter too big"
-				", rows: {}"
-				", _maxPageSize: {}",
-				rows, _maxPageSize
-			);
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
+			start = stoll(startIt->second);
 		}
 
-		optional<MMSEngineDBFacade::ContentType> contentType;
-		optional<string> sContentType = getOptQueryParameter<string>("contentType");
-		if (sContentType)
-			contentType = MMSEngineDBFacade::toContentType(*sContentType);
+		int rows = 10;
+		auto rowsIt = queryParameters.find("rows");
+		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
+		{
+			rows = stoll(rowsIt->second);
+			if (rows > _maxPageSize)
+			{
+				// 2022-02-13: changed to return an error otherwise the user
+				//	think to ask for a huge number of items while the return is much less
 
-		string tagNameFilter = getQueryParameter("tagNameFilter", "");
+				// rows = _maxPageSize;
+
+				string errorMessage = std::format(
+					"rows parameter too big"
+					", rows: {}"
+					", _maxPageSize: {}",
+					rows, _maxPageSize
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+
+		bool contentTypePresent = false;
+		optional<MMSEngineDBFacade::ContentType> contentType;
+		auto contentTypeIt = queryParameters.find("contentType");
+		if (contentTypeIt != queryParameters.end() && !contentTypeIt->second.empty())
+		{
+			contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+
+			contentTypePresent = true;
+		}
+
+		string tagNameFilter;
+		auto tagNameFilterIt = queryParameters.find("tagNameFilter");
+		if (tagNameFilterIt != queryParameters.end() && !tagNameFilterIt->second.empty())
+			tagNameFilter = tagNameFilterIt->second;
 
 		/*
 		 * liveRecordingChunk:
@@ -448,7 +507,15 @@ void API::tagsList(
 		 *  0: look for NO liveRecordingChunk (default)
 		 *  1: look for liveRecordingChunk
 		 */
-		int32_t liveRecordingChunk = getQueryParameter("liveRecordingChunk", false) == false ? 0 : 1;
+		int liveRecordingChunk = 0;
+		auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
+		if (liveRecordingChunkIt != queryParameters.end() && !liveRecordingChunkIt->second.empty())
+		{
+			if (liveRecordingChunkIt->second == "true")
+				liveRecordingChunk = 1;
+			else if (liveRecordingChunkIt->second == "false")
+				liveRecordingChunk = 0;
+		}
 
 		{
 			json tagsRoot = _mmsEngineDBFacade->getTagsList(

@@ -38,9 +38,9 @@ add_definitions(-D__POSTGRES__)
 # next serve per una condizione in MMSEngine/src/CMakeLists.txt
 set(__POSTGRES__ "1")
 
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE RelWithDebInfo)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 
 set(CatraMMS_VERSION_MAJOR 1)
 set(CatraMMS_VERSION_MINOR 0)
