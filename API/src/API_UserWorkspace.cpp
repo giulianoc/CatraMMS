@@ -26,8 +26,7 @@
 void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters)
+		bool responseBodyCompressed)
 {
 	string api = "registerUser";
 
@@ -388,8 +387,7 @@ void API::createWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "createWorkspace";
@@ -418,30 +416,12 @@ void API::createWorkspace(
 
 	try
 	{
-		string workspaceName;
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		MMSEngineDBFacade::EncodingPeriod encodingPeriod;
 		int maxIngestionsNumber;
 		int maxStorageInMB;
 
-		auto workspaceNameIt = queryParameters.find("workspaceName");
-		if (workspaceNameIt == queryParameters.end())
-		{
-			string errorMessage = "The 'workspaceName' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		{
-			workspaceName = workspaceNameIt->second;
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(workspaceName, regex(plus), plusDecoded);
-
-			workspaceName = CurlWrapper::unescape(firstDecoding);
-		}
+		string workspaceName = getQueryParameter("workspaceName", "", true);
 
 		encodingPriority = _encodingPriorityWorkspaceDefaultValue;
 
@@ -650,8 +630,7 @@ void API::shareWorkspace_(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "shareWorkspace";
@@ -967,8 +946,7 @@ void API::workspaceList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "workspaceList";
@@ -983,10 +961,7 @@ void API::workspaceList(
 
 	try
 	{
-		bool costDetails = false;
-		auto costDetailsIt = queryParameters.find("costDetails");
-		if (costDetailsIt != queryParameters.end() && costDetailsIt->second == "true")
-			costDetails = true;
+		bool costDetails = getQueryParameter("costDetails", false);
 
 		{
 			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(apiAuthorizationDetails->userKey, apiAuthorizationDetails->admin, costDetails);
@@ -1013,8 +988,7 @@ void API::confirmRegistration(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "confirmRegistration";
@@ -1025,19 +999,12 @@ void API::confirmRegistration(
 
 	try
 	{
-		auto confirmationCodeIt = queryParameters.find("confirmationeCode");
-		if (confirmationCodeIt == queryParameters.end())
-		{
-			string errorMessage = "The 'confirmationeCode' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		string confirmationCode = getQueryParameter("confirmationeCode", "", true);
 
 		try
 		{
 			tuple<string, string, string> apiKeyNameAndEmailAddress =
-				_mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second, _expirationInDaysWorkspaceDefaultValue);
+				_mmsEngineDBFacade->confirmRegistration(confirmationCode, _expirationInDaysWorkspaceDefaultValue);
 
 			string apiKey;
 			string name;
@@ -1108,8 +1075,7 @@ void API::confirmRegistration(
 void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 	string api = "login";
 
@@ -1504,8 +1470,7 @@ void API::updateUser(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "updateUser";
@@ -1708,8 +1673,7 @@ void API::updateUser(
 void API::createTokenToResetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters)
+		bool responseBodyCompressed)
 {
 	string api = "createTokenToResetPassword";
 
@@ -1719,24 +1683,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 
 	try
 	{
-		string email;
-
-		auto emailIt = queryParameters.find("email");
-		if (emailIt == queryParameters.end())
-		{
-			string errorMessage = "The 'email' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		{
-			email = emailIt->second;
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(email, regex(plus), plusDecoded);
-
-			email = CurlWrapper::unescape(firstDecoding);
-		}
+		string email = getQueryParameter("email", "", true);
 
 		string resetPasswordToken;
 		string name;
@@ -1828,8 +1775,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters)
+		bool responseBodyCompressed)
 {
 	string api = "resetPassword";
 
@@ -1964,8 +1910,7 @@ void API::updateWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "updateWorkspace";
@@ -2361,8 +2306,7 @@ void API::setWorkspaceAsDefault(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "setWorkspaceAsDefault";
@@ -2378,16 +2322,8 @@ void API::setWorkspaceAsDefault(
 
 	try
 	{
-		int64_t workspaceKeyToBeSetAsDefault = -1;
-		auto workspaceKeyToBeSetAsDefaultIt = queryParameters.find("workspaceKeyToBeSetAsDefault");
-		if (workspaceKeyToBeSetAsDefaultIt == queryParameters.end() || workspaceKeyToBeSetAsDefaultIt->second == "")
-		{
-			string errorMessage = "The 'workspaceKeyToBeSetAsDefault' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		workspaceKeyToBeSetAsDefault = stoll(workspaceKeyToBeSetAsDefaultIt->second);
+		int64_t workspaceKeyToBeSetAsDefault = getQueryParameter("workspaceKeyToBeSetAsDefault",
+			static_cast<int64_t>(-1), true);
 
 		try
 		{
@@ -2435,8 +2371,7 @@ void API::deleteWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 	string api = "deleteWorkspace";
 
@@ -2590,8 +2525,7 @@ void API::unshareWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 	string api = "unshareWorkspace";
 
@@ -2694,8 +2628,7 @@ void API::workspaceUsage(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 
 	string api = "workspaceUsage";

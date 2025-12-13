@@ -23,8 +23,7 @@ void API::addYouTubeConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addYouTubeConf";
@@ -201,8 +200,7 @@ void API::modifyYouTubeConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyYouTubeConf";
@@ -284,7 +282,7 @@ void API::modifyYouTubeConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = getQueryParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+			int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 			if (tokenTypeModified)
 			{
@@ -357,8 +355,7 @@ void API::removeYouTubeConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeYouTubeConf";
@@ -385,7 +382,7 @@ void API::removeYouTubeConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeYouTubeConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -410,8 +407,7 @@ void API::youTubeConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "youTubeConfList";
@@ -426,7 +422,7 @@ void API::youTubeConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
+		string label = getQueryParameter("label", string(), false);
 
 		{
 			json youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(apiAuthorizationDetails->workspace->_workspaceKey, label);
@@ -452,8 +448,7 @@ void API::addFacebookConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addFacebookConf";
@@ -562,8 +557,7 @@ void API::modifyFacebookConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyFacebookConf";
@@ -635,7 +629,7 @@ void API::modifyFacebookConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyFacebookConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, userAccessToken);
 
@@ -660,8 +654,7 @@ void API::removeFacebookConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeFacebookConf";
@@ -687,7 +680,7 @@ void API::removeFacebookConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeFacebookConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -711,8 +704,7 @@ void API::facebookConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "facebookConfList";
@@ -727,13 +719,13 @@ void API::facebookConfList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
 		if (confKey == 0)
 			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-			label = getMapParameter(queryParameters, "label", string(), false);
+			label = getQueryParameter("label", string(), false);
 
 		{
 			json facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
@@ -759,8 +751,7 @@ void API::addTwitchConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addTwitchConf";
@@ -869,8 +860,7 @@ void API::modifyTwitchConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyTwitchConf";
@@ -942,7 +932,7 @@ void API::modifyTwitchConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyTwitchConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, refreshToken);
 
@@ -967,8 +957,7 @@ void API::removeTwitchConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeTwitchConf";
@@ -994,7 +983,7 @@ void API::removeTwitchConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeTwitchConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -1018,8 +1007,7 @@ void API::twitchConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "twitchConfList";
@@ -1034,13 +1022,13 @@ void API::twitchConfList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
 		if (confKey == 0)
 			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-			label = getMapParameter(queryParameters, "label", string(), false);
+			label = getQueryParameter("label", string(), false);
 
 		{
 			json twitchConfListRoot = _mmsEngineDBFacade->getTwitchConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
@@ -1230,7 +1218,7 @@ void API::modifyTiktokConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyTiktokConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, token);
 
@@ -1271,7 +1259,7 @@ void API::removeTiktokConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeTiktokConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -1311,13 +1299,13 @@ void API::tiktokConfList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
 		if (confKey == 0)
 			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-			label = getMapParameter(queryParameters, "label", string(), false);
+			label = getQueryParameter("label", string(), false);
 
 		{
 			json tiktokConfListRoot = _mmsEngineDBFacade->getTiktokConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
@@ -1343,8 +1331,7 @@ void API::addStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addStream";
@@ -1561,8 +1548,7 @@ void API::modifyStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyStream";
@@ -1884,8 +1870,8 @@ void API::modifyStream(
 		string sResponse;
 		try
 		{
-			int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-			string labelKey = getMapParameter(queryParameters, "label", string(), false);
+			int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+			string labelKey = getQueryParameter("label", string(), false);
 
 			if (confKey == -1 && labelKey.empty())
 			{
@@ -1940,8 +1926,7 @@ void API::removeStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeStream";
@@ -1970,8 +1955,8 @@ void API::removeStream(
 		string sResponse;
 		try
 		{
-			int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-			string label = getMapParameter(queryParameters, "label", string(), false);
+			int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+			string label = getQueryParameter("label", string(), false);
 			if (confKey == -1 && label.empty())
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
@@ -2013,8 +1998,7 @@ void API::streamList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "streamList";
@@ -2029,9 +2013,9 @@ void API::streamList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-		int32_t start = getMapParameter(queryParameters, "start", static_cast<int32_t>(0), false);
-		int32_t rows = getMapParameter(queryParameters, "rows", static_cast<int32_t>(30), false);
+		int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+		int32_t start = getQueryParameter("start", static_cast<int32_t>(0), false);
+		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -2046,10 +2030,10 @@ void API::streamList(
 			throw runtime_error(errorMessage);
 		}
 
-		string label = getMapParameter(queryParameters, "label", string(""), false);
-		bool labelLike = getMapParameter(queryParameters, "labelLike", true, false);
-		string url = getMapParameter(queryParameters, "url", string(""), false);
-		string sourceType = getMapParameter(queryParameters, "sourceType", string(""), false);
+		string label = getQueryParameter("label", string(""), false);
+		bool labelLike = getQueryParameter("labelLike", true, false);
+		string url = getQueryParameter("url", string(""), false);
+		string sourceType = getQueryParameter("sourceType", string(""), false);
 		if (sourceType != "" && sourceType != "IP_PULL" && sourceType != "IP_PUSH"
 			&& sourceType != "CaptureLive" && sourceType != "TV")
 		{
@@ -2060,11 +2044,11 @@ void API::streamList(
 			);
 			sourceType = "";
 		}
-		string type = getMapParameter(queryParameters, "type", string(""), false);
-		string name = getMapParameter(queryParameters, "name", string(""), false);
-		string region = getMapParameter(queryParameters, "region", string(""), false);
-		string country = getMapParameter(queryParameters, "country", string(""), false);
-		string labelOrder = getMapParameter(queryParameters, "labelOrder", string(""), false);
+		string type = getQueryParameter("type", string(""), false);
+		string name = getQueryParameter("name", string(""), false);
+		string region = getQueryParameter("region", string(""), false);
+		string country = getQueryParameter("country", string(""), false);
+		string labelOrder = getQueryParameter("labelOrder", string(""), false);
 		if (labelOrder != "asc" && labelOrder != "desc")
 		{
 			SPDLOG_WARN(
@@ -2100,8 +2084,7 @@ void API::streamFreePushEncoderPort(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "streamFreePushEncoderPort";
@@ -2116,7 +2099,7 @@ void API::streamFreePushEncoderPort(
 
 	try
 	{
-		const int64_t encoderKey = getMapParameter(queryParameters, "encoderKey", -1, true);
+		const int64_t encoderKey = getQueryParameter("encoderKey", -1, true);
 
 		const json streamFreePushEncoderPortRoot = _mmsEngineDBFacade->getStreamFreePushEncoderPort(encoderKey);
 
@@ -2140,8 +2123,7 @@ void API::addSourceTVStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addSourceTVStream";
@@ -2332,8 +2314,7 @@ void API::modifySourceTVStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifySourceTVStream";
@@ -2546,7 +2527,7 @@ void API::modifySourceTVStream(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		json sourceTVStreamRoot = _mmsEngineDBFacade->modifySourceTVStream(
 			confKey, typeToBeModified, type, serviceIdToBeModified, serviceId, networkIdToBeModified, networkId, transportStreamIdToBeModified,
@@ -2578,8 +2559,7 @@ void API::removeSourceTVStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeSourceTVStream";
@@ -2605,7 +2585,7 @@ void API::removeSourceTVStream(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeSourceTVStream(confKey);
 
@@ -2629,8 +2609,7 @@ void API::sourceTVStreamList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 	string api = "sourceTVStreamList";
 
@@ -2644,9 +2623,9 @@ void API::sourceTVStreamList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-		int32_t start = getMapParameter(queryParameters, "start", static_cast<int32_t>(0), false);
-		int32_t rows = getMapParameter(queryParameters, "rows", static_cast<int32_t>(30), false);
+		int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+		int32_t start = getQueryParameter("start", static_cast<int32_t>(0), false);
+		int32_t rows = getQueryParameter("rows", static_cast<int32_t>(30), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -2660,14 +2639,14 @@ void API::sourceTVStreamList(
 
 			throw runtime_error(errorMessage);
 		}
-		string type = getMapParameter(queryParameters, "type", string(""), false);
-		int64_t serviceId = getMapParameter(queryParameters, "serviceId", static_cast<int64_t>(-1), false);
-		string name = getMapParameter(queryParameters, "name", string(""), false);
-		string lnb = getMapParameter(queryParameters, "lnb", string(""), false);
-		int64_t frequency = getMapParameter(queryParameters, "frequency", static_cast<int64_t>(-1), false);
-		int32_t videoPid = getMapParameter(queryParameters, "videoPid", static_cast<int32_t>(-1), false);
-		string audioPids = getMapParameter(queryParameters, "audioPids", string(""), false);
-		string nameOrder = getMapParameter(queryParameters, "nameOrder", string(""), false);
+		string type = getQueryParameter("type", string(""), false);
+		int64_t serviceId = getQueryParameter("serviceId", static_cast<int64_t>(-1), false);
+		string name = getQueryParameter("name", string(""), false);
+		string lnb = getQueryParameter("lnb", string(""), false);
+		int64_t frequency = getQueryParameter("frequency", static_cast<int64_t>(-1), false);
+		int32_t videoPid = getQueryParameter("videoPid", static_cast<int32_t>(-1), false);
+		string audioPids = getQueryParameter("audioPids", string(""), false);
+		string nameOrder = getQueryParameter("nameOrder", string(""), false);
 		if (nameOrder != "asc" && nameOrder != "desc")
 		{
 			SPDLOG_WARN(
@@ -2704,8 +2683,7 @@ void API::addAWSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addAWSChannelConf";
@@ -2859,8 +2837,7 @@ void API::modifyAWSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyAWSChannelConf";
@@ -2977,7 +2954,7 @@ void API::modifyAWSChannelConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyAWSChannelConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, channelId, rtmpURL, playURL, type);
 
@@ -3002,8 +2979,7 @@ void API::removeAWSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeAWSChannelConf";
@@ -3029,7 +3005,7 @@ void API::removeAWSChannelConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 		_mmsEngineDBFacade->removeAWSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
@@ -3052,8 +3028,7 @@ void API::awsChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "awsChannelConfList";
@@ -3068,11 +3043,11 @@ void API::awsChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		const bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = getQueryParameter("label", string(), false);
+		const bool labelLike = getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -3104,8 +3079,7 @@ void API::addCDN77ChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addCDN77ChannelConf";
@@ -3289,8 +3263,7 @@ void API::modifyCDN77ChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyCDN77ChannelConf";
@@ -3445,7 +3418,7 @@ void API::modifyCDN77ChannelConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyCDN77ChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
@@ -3472,8 +3445,7 @@ void API::removeCDN77ChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeCDN77ChannelConf";
@@ -3499,7 +3471,7 @@ void API::removeCDN77ChannelConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeCDN77ChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -3523,8 +3495,7 @@ void API::cdn77ChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "cdn77ChannelConfList";
@@ -3539,11 +3510,11 @@ void API::cdn77ChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = getQueryParameter("label", string(), false);
+		bool labelLike = getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -3575,8 +3546,7 @@ void API::addRTMPChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addRTMPChannelConf";
@@ -3717,8 +3687,7 @@ void API::modifyRTMPChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyRTMPChannelConf";
@@ -3865,7 +3834,7 @@ void API::modifyRTMPChannelConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyRTMPChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type
@@ -3892,8 +3861,7 @@ void API::removeRTMPChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeRTMPChannelConf";
@@ -3919,7 +3887,7 @@ void API::removeRTMPChannelConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeRTMPChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -3943,8 +3911,7 @@ void API::rtmpChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "rtmpChannelConfList";
@@ -3959,11 +3926,11 @@ void API::rtmpChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = getQueryParameter("label", string(), false);
+		bool labelLike = getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -3996,8 +3963,7 @@ void API::addSRTChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addSRTChannelConf";
@@ -4135,8 +4101,7 @@ void API::modifySRTChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifySRTChannelConf";
@@ -4283,7 +4248,7 @@ void API::modifySRTChannelConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifySRTChannelConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
 
@@ -4308,8 +4273,7 @@ void API::removeSRTChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeSRTChannelConf";
@@ -4335,7 +4299,7 @@ void API::removeSRTChannelConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeSRTChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -4359,8 +4323,7 @@ void API::srtChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "srtChannelConfList";
@@ -4375,11 +4338,11 @@ void API::srtChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = getQueryParameter("label", string(), false);
+		bool labelLike = getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -4412,8 +4375,7 @@ void API::addHLSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addHLSChannelConf";
@@ -4546,8 +4508,7 @@ void API::modifyHLSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyHLSChannelConf";
@@ -4664,7 +4625,7 @@ void API::modifyHLSChannelConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyHLSChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type
@@ -4691,8 +4652,7 @@ void API::removeHLSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeHLSChannelConf";
@@ -4718,7 +4678,7 @@ void API::removeHLSChannelConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeHLSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -4742,8 +4702,7 @@ void API::hlsChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "hlsChannelConfList";
@@ -4758,11 +4717,11 @@ void API::hlsChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = getQueryParameter("label", string(), false);
+		bool labelLike = getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -4795,8 +4754,7 @@ void API::addFTPConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addFTPConf";
@@ -4965,8 +4923,7 @@ void API::modifyFTPConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyFTPConf";
@@ -5098,7 +5055,7 @@ void API::modifyFTPConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyFTPConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, server, port, userName, password, remoteDirectory);
 
@@ -5123,8 +5080,7 @@ void API::removeFTPConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeFTPConf";
@@ -5150,7 +5106,7 @@ void API::removeFTPConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeFTPConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -5174,8 +5130,7 @@ void API::ftpConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 	string api = "ftpConfList";
 
@@ -5214,8 +5169,7 @@ void API::addEMailConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "addEMailConf";
@@ -5354,8 +5308,7 @@ void API::modifyEMailConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "modifyEMailConf";
@@ -5457,7 +5410,7 @@ void API::modifyEMailConf(
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyEMailConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, addresses, subject, message);
 
@@ -5482,8 +5435,7 @@ void API::removeEMailConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "removeEMailConf";
@@ -5509,7 +5461,7 @@ void API::removeEMailConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeEMailConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
@@ -5533,8 +5485,7 @@ void API::emailConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	bool responseBodyCompressed)
 {
 	string api = "emailConfList";
 

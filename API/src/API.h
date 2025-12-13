@@ -72,13 +72,12 @@ class API final : public FastCGIAPI
 	void manageRequestAndResponse(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
-		const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
-		const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
+		const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength
 	) override;
 
 	shared_ptr<AuthorizationDetails> checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password) override;
 
-	bool basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters) override;
+	bool basicAuthenticationRequired(const string &requestURI) override;
 
 	void sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage) override;
 
@@ -182,8 +181,7 @@ class API final : public FastCGIAPI
 	void registerUser(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void emailFormatCheck(string email);
 
@@ -191,257 +189,224 @@ class API final : public FastCGIAPI
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void createTokenToResetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void resetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void updateWorkspace(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void setWorkspaceAsDefault(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void createWorkspace(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void deleteWorkspace(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void unshareWorkspace(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void
 	workspaceUsage(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void shareWorkspace_(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void workspaceList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void confirmRegistration(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void addInvoice(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void invoiceList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void mmsSupport(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void status(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void avgBandwidthUsage(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void binaryAuthorization(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void deliveryAuthorizationThroughParameter(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void deliveryAuthorizationThroughPath(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void manageHTTPStreamingManifest_authorizationThroughParameter(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void ingestionRootsStatus(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void ingestionRootMetaDataContent(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void ingestionJobsStatus(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void cancelIngestionJob(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void updateIngestionJob(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void ingestionJobSwitchToEncoder(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void encodingJobsStatus(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void encodingJobPriority(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void killOrCancelEncodingJob(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void changeLiveProxyPlaylist(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void changeLiveProxyOverlayText(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void killEncodingJob(int64_t encoderKey, int64_t ingestionJobKey, int64_t encodingJobKey, string killType);
@@ -450,56 +415,49 @@ class API final : public FastCGIAPI
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void updateMediaItem(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void updatePhysicalPath(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void tagsList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void encodingProfilesSetsList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void encodingProfilesList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void ingestion(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	static json manageWorkflowVariables(const string_view& requestBody, json variablesValuesToBeUsedRoot);
@@ -564,8 +522,7 @@ class API final : public FastCGIAPI
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	// void manageTarFileInCaseOfIngestionOfSegments(
@@ -577,176 +534,154 @@ class API final : public FastCGIAPI
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addEncodingProfile(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeEncodingProfile(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeEncodingProfilesSet(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void workflowsAsLibraryList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void workflowAsLibraryContent(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void saveWorkflowAsLibrary(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeWorkflowAsLibrary(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void createDeliveryAuthorization(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void createBulkOfDeliveryAuthorization(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addYouTubeConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyYouTubeConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeYouTubeConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void youTubeConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addFacebookConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyFacebookConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeFacebookConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void facebookConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addTwitchConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyTwitchConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeTwitchConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void twitchConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addTiktokConf(
@@ -785,444 +720,388 @@ class API final : public FastCGIAPI
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyStream(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeStream(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void streamList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void streamFreePushEncoderPort(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addSourceTVStream(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifySourceTVStream(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeSourceTVStream(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void sourceTVStreamList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addAWSChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyAWSChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeAWSChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void awsChannelConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addCDN77ChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyCDN77ChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeCDN77ChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void cdn77ChannelConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addRTMPChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyRTMPChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeRTMPChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void rtmpChannelConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addSRTChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifySRTChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeSRTChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void srtChannelConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addHLSChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyHLSChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeHLSChannelConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void hlsChannelConfList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addFTPConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyFTPConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeFTPConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void ftpConfList(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void addEMailConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyEMailConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeEMailConf(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void emailConfList(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters);
+		bool responseBodyCompressed);
 
 	void addRequestStatistic(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticPerContentList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticPerUserList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticPerMonthList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticPerDayList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticPerHourList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void requestStatisticPerCountryList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void loginStatisticList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addEncoder(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyEncoder(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeEncoder(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void encoderList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void encodersPoolList(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addEncodersPool(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void modifyEncodersPool(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeEncodersPool(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void addAssociationWorkspaceEncoder(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	void removeAssociationWorkspaceEncoder(
 		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters
+		bool responseBodyCompressed
 	);
 
 	json getReviewedFiltersRoot(json filtersRoot, const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey);

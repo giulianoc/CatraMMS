@@ -5636,7 +5636,7 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 }
 
 json MMSEngineDBFacade::getTagsList(
-	int64_t workspaceKey, int start, int rows, int liveRecordingChunk, bool contentTypePresent, ContentType contentType, string tagNameFilter,
+	int64_t workspaceKey, int start, int rows, int liveRecordingChunk, optional<ContentType> contentType, string tagNameFilter,
 	bool fromMaster
 )
 {
@@ -5668,10 +5668,9 @@ json MMSEngineDBFacade::getTagsList(
 			", start: {}"
 			", rows: {}"
 			", liveRecordingChunk: {}"
-			", contentTypePresent: {}"
 			", contentType: {}"
 			", tagNameFilter: {}",
-			workspaceKey, start, rows, liveRecordingChunk, contentTypePresent, (contentTypePresent ? toString(contentType) : ""), tagNameFilter
+			workspaceKey, start, rows, liveRecordingChunk, (contentType ? toString(*contentType) : ""), tagNameFilter
 		);
 
 		{
@@ -5686,10 +5685,10 @@ json MMSEngineDBFacade::getTagsList(
 			field = "liveRecordingChunk";
 			requestParametersRoot[field] = liveRecordingChunk;
 
-			if (contentTypePresent)
+			if (contentType)
 			{
 				field = "contentType";
-				requestParametersRoot[field] = toString(contentType);
+				requestParametersRoot[field] = toString(*contentType);
 			}
 
 			if (tagNameFilter != "")
@@ -5711,8 +5710,8 @@ json MMSEngineDBFacade::getTagsList(
 
 		string sqlWhere;
 		sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
-		if (contentTypePresent)
-			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(contentType)));
+		if (contentType)
+			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(*contentType)));
 		if (liveRecordingChunk == 0)
 			sqlWhere += ("and userData -> 'mmsData' ->> 'liveRecordingChunk' is NULL ");
 		else if (liveRecordingChunk == 1)

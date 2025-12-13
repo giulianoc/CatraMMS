@@ -34,8 +34,7 @@ void API::ingestion(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "ingestion";
@@ -2850,8 +2849,7 @@ void API::uploadedBinary(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "uploadedBinary";
@@ -2868,27 +2866,11 @@ void API::uploadedBinary(
 			throw runtime_error(errorMessage);
 		}
 
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end())
-		{
-			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
-			SPDLOG_ERROR(errorMessage);
+		int64_t ingestionJobKey = getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-		auto binaryPathFileIt = requestDetails.find("HTTP_X_FILE");
-		if (binaryPathFileIt == requestDetails.end())
-		{
-			string errorMessage = string("'HTTP_X_FILE' item is missing");
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		// sourceBinaryPathFile will be something like:
 		// /var/catramms/storage/nginxWorkingAreaRepository/0000001023
-		string sourceBinaryPathFile = binaryPathFileIt->second;
+		string sourceBinaryPathFile = getHeaderParameter("x-file", string(""), true);
 
 		// Content-Range: bytes 0-99999/100000
 		bool contentRangePresent = false;
@@ -2896,10 +2878,9 @@ void API::uploadedBinary(
 		uint64_t contentRangeEnd = -1;
 		uint64_t contentRangeSize = -1;
 		double uploadingProgress = 0.0;
-		auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
-		if (contentRangeIt != requestDetails.end())
+		string contentRange = getHeaderParameter("content-range", string(""));
+		if (!contentRange.empty())
 		{
-			string contentRange = contentRangeIt->second;
 			try
 			{
 				parseContentRange(contentRange, contentRangeStart, contentRangeEnd, contentRangeSize);
@@ -3625,8 +3606,7 @@ void API::ingestionRootsStatus(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "ingestionRootsStatus";
@@ -3642,112 +3622,47 @@ void API::ingestionRootsStatus(
 
 	try
 	{
-		int64_t ingestionRootKey = -1;
-		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-		if (ingestionRootKeyIt != queryParameters.end() && !ingestionRootKeyIt->second.empty())
-			ingestionRootKey = stoll(ingestionRootKeyIt->second);
+		int64_t ingestionRootKey = getQueryParameter("ingestionRootKey", static_cast<int64_t>(-1), false);
 
-		int64_t mediaItemKey = -1;
-		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt != queryParameters.end() && !mediaItemKeyIt->second.empty())
-			mediaItemKey = stoll(mediaItemKeyIt->second);
+		int64_t mediaItemKey = getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
-			start = stoll(startIt->second);
+		int32_t start = getQueryParameter("start", static_cast<int64_t>(0), false);
 
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
+		int32_t rows = getQueryParameter("rows", static_cast<int64_t>(10), false);
+		if (rows > _maxPageSize)
 		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return
-				// is much less
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return
+			// is much less
 
-				// rows = _maxPageSize;
+			// rows = _maxPageSize;
 
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
+			throw runtime_error(errorMessage);
 		}
 
-		string startIngestionDate;
-		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-		if (startIngestionDateIt != queryParameters.end())
-			startIngestionDate = startIngestionDateIt->second;
+		string startIngestionDate = getQueryParameter("startIngestionDate", "", false);
 
-		string endIngestionDate;
-		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-		if (endIngestionDateIt != queryParameters.end())
-			endIngestionDate = endIngestionDateIt->second;
+		string endIngestionDate = getQueryParameter("endIngestionDate", "", false);
 
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && !labelIt->second.empty())
-		{
-			label = labelIt->second;
+		string label = getQueryParameter("label", "", false);
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+		string status = getQueryParameter("status", "all", false);
 
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		bool hiddenToo = getQueryParameter("hiddenToo", true, false);
 
-		string status = "all";
-		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && !statusIt->second.empty())
-		{
-			status = statusIt->second;
-		}
+		bool asc = getQueryParameter("asc", true, false);
 
-		bool hiddenToo = getQueryParameter(queryParameters, "hiddenToo", true, false);
+		bool ingestionJobOutputs = getQueryParameter("ingestionJobOutputs", true, false);
 
-		bool asc = true;
-		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && !ascIt->second.empty())
-		{
-			if (ascIt->second == "true")
-				asc = true;
-			else
-				asc = false;
-		}
-
-		bool ingestionJobOutputs = true;
-		auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
-		if (ingestionJobOutputsIt != queryParameters.end() && !ingestionJobOutputsIt->second.empty())
-		{
-			if (ingestionJobOutputsIt->second == "true")
-				ingestionJobOutputs = true;
-			else
-				ingestionJobOutputs = false;
-		}
-
-		bool dependencyInfo = true;
-		auto dependencyInfoIt = queryParameters.find("dependencyInfo");
-		if (dependencyInfoIt != queryParameters.end() && !dependencyInfoIt->second.empty())
-		{
-			if (dependencyInfoIt->second == "true")
-				dependencyInfo = true;
-			else
-				dependencyInfo = false;
-		}
+		bool dependencyInfo = getQueryParameter("dependencyInfo", true, false);
 
 		{
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
@@ -3781,8 +3696,7 @@ void API::ingestionRootMetaDataContent(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "ingestionRootMetaDataContent";
@@ -3798,21 +3712,9 @@ void API::ingestionRootMetaDataContent(
 
 	try
 	{
-		int64_t ingestionRootKey = -1;
-		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-		if (ingestionRootKeyIt == queryParameters.end() || ingestionRootKeyIt->second.empty())
-		{
-			string errorMessage = "The 'ingestionRootKey' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
+		int64_t ingestionRootKey = getQueryParameter("ingestionRootKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		ingestionRootKey = stoll(ingestionRootKeyIt->second);
-
-		bool processedMetadata = false;
-		auto processedMetadataIt = queryParameters.find("processedMetadata");
-		if (processedMetadataIt != queryParameters.end() && !processedMetadataIt->second.empty())
-			processedMetadata = (processedMetadataIt->second == "true" ? true : false);
+		bool processedMetadata = getQueryParameter("processedMetadata", false);
 
 		{
 			string ingestionRootMetaDataContent;
@@ -3860,8 +3762,7 @@ void API::ingestionJobsStatus(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "ingestionJobsStatus";
@@ -3877,213 +3778,64 @@ void API::ingestionJobsStatus(
 
 	try
 	{
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt != queryParameters.end() && !ingestionJobKeyIt->second.empty())
+		int64_t ingestionJobKey = getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1));
+
+		int32_t start = getQueryParameter("start", static_cast<int64_t>(0));
+
+		int32_t rows = getQueryParameter("rows", static_cast<int64_t>(10));
+		if (rows > _maxPageSize)
 		{
-			ingestionJobKey = stoll(ingestionJobKeyIt->second);
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return
+			// is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
-		{
-			start = stoll(startIt->second);
-		}
+		string label = getQueryParameter("label", "");
 
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return
-				// is much less
+		bool labelLike = getQueryParameter("labelLike", true);
 
-				// rows = _maxPageSize;
+		string startIngestionDate = getQueryParameter("startIngestionDate", "");
+		string endIngestionDate = getQueryParameter("endIngestionDate", "");
 
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
+		string startScheduleDate = getQueryParameter("startScheduleDate", "");
 
-				throw runtime_error(errorMessage);
-			}
-		}
+		string ingestionType = getQueryParameter("ingestionType", "");
 
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
+		bool asc = getQueryParameter("asc", true);
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+		bool ingestionJobOutputs = getQueryParameter("ingestionJobOutputs", true);
 
-			label = CurlWrapper::unescape(firstDecoding);
-		}
-
-		bool labelLike = true;
-		auto labelLikeIt = queryParameters.find("labelLike");
-		if (labelLikeIt != queryParameters.end() && !labelLikeIt->second.empty())
-		{
-			labelLike = (labelLikeIt->second == "true" ? true : false);
-		}
-
-		string startIngestionDate;
-		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-		if (startIngestionDateIt != queryParameters.end())
-			startIngestionDate = startIngestionDateIt->second;
-
-		string endIngestionDate;
-		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-		if (endIngestionDateIt != queryParameters.end())
-			endIngestionDate = endIngestionDateIt->second;
-
-		string startScheduleDate;
-		auto startScheduleDateIt = queryParameters.find("startScheduleDate");
-		if (startScheduleDateIt != queryParameters.end())
-			startScheduleDate = startScheduleDateIt->second;
-
-		string ingestionType;
-		auto ingestionTypeIt = queryParameters.find("ingestionType");
-		if (ingestionTypeIt != queryParameters.end() && !ingestionTypeIt->second.empty())
-		{
-			ingestionType = ingestionTypeIt->second;
-		}
-
-		bool asc = true;
-		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && !ascIt->second.empty())
-		{
-			if (ascIt->second == "true")
-				asc = true;
-			else
-				asc = false;
-		}
-
-		bool ingestionJobOutputs = true;
-		auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
-		if (ingestionJobOutputsIt != queryParameters.end() && !ingestionJobOutputsIt->second.empty())
-		{
-			if (ingestionJobOutputsIt->second == "true")
-				ingestionJobOutputs = true;
-			else
-				ingestionJobOutputs = false;
-		}
-
-		bool dependencyInfo = true;
-		auto dependencyInfoIt = queryParameters.find("dependencyInfo");
-		if (dependencyInfoIt != queryParameters.end() && !dependencyInfoIt->second.empty())
-		{
-			if (dependencyInfoIt->second == "true")
-				dependencyInfo = true;
-			else
-				dependencyInfo = false;
-		}
+		bool dependencyInfo = getQueryParameter("dependencyInfo", true);
 
 		// used in case of live-proxy
-		string configurationLabel;
-		auto configurationLabelIt = queryParameters.find("configurationLabel");
-		if (configurationLabelIt != queryParameters.end() && !configurationLabelIt->second.empty())
-		{
-			configurationLabel = configurationLabelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(configurationLabel, regex(plus), plusDecoded);
-
-			configurationLabel = CurlWrapper::unescape(firstDecoding);
-		}
+		string configurationLabel = getQueryParameter("configurationLabel", "");
 
 		// used in case of live-grid
-		string outputChannelLabel;
-		auto outputChannelLabelIt = queryParameters.find("outputChannelLabel");
-		if (outputChannelLabelIt != queryParameters.end() && !outputChannelLabelIt->second.empty())
-		{
-			outputChannelLabel = outputChannelLabelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(outputChannelLabel, regex(plus), plusDecoded);
-
-			outputChannelLabel = CurlWrapper::unescape(firstDecoding);
-		}
+		string outputChannelLabel = getQueryParameter("outputChannelLabel", "");
 
 		// used in case of live-recorder
-		int64_t recordingCode = -1;
-		auto recordingCodeIt = queryParameters.find("recordingCode");
-		if (recordingCodeIt != queryParameters.end() && !recordingCodeIt->second.empty())
-		{
-			recordingCode = stoll(recordingCodeIt->second);
-		}
+		int64_t recordingCode = getQueryParameter("recordingCode", static_cast<int64_t>(-1));
 
 		// used in case of broadcaster
-		bool broadcastIngestionJobKeyNotNull = false;
-		auto broadcastIngestionJobKeyNotNullIt = queryParameters.find("broadcastIngestionJobKeyNotNull");
-		if (broadcastIngestionJobKeyNotNullIt != queryParameters.end() && !broadcastIngestionJobKeyNotNullIt->second.empty())
-		{
-			if (broadcastIngestionJobKeyNotNullIt->second == "true")
-				broadcastIngestionJobKeyNotNull = true;
-			else
-				broadcastIngestionJobKeyNotNull = false;
-		}
+		bool broadcastIngestionJobKeyNotNull = getQueryParameter("broadcastIngestionJobKeyNotNull", false);
 
-		string jsonParametersCondition;
-		auto jsonParametersConditionIt = queryParameters.find("jsonParametersCondition");
-		if (jsonParametersConditionIt != queryParameters.end() && !jsonParametersConditionIt->second.empty())
-		{
-			jsonParametersCondition = jsonParametersConditionIt->second;
+		string jsonParametersCondition = getQueryParameter("jsonParametersCondition", "");
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(jsonParametersCondition, regex(plus), plusDecoded);
+		string status = getQueryParameter("status", "all");
 
-			jsonParametersCondition = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string status = "all";
-		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && !statusIt->second.empty())
-		{
-			status = statusIt->second;
-		}
-
-		bool fromMaster = false;
-		auto fromMasterIt = queryParameters.find("fromMaster");
-		if (fromMasterIt != queryParameters.end() && !fromMasterIt->second.empty())
-		{
-			if (fromMasterIt->second == "true")
-				fromMaster = true;
-			else
-				fromMaster = false;
-		}
+		bool fromMaster = getQueryParameter("fromMaster", false);
 
 		{
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
@@ -4115,8 +3867,7 @@ void API::cancelIngestionJob(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "API::cancelIngestionJob";
@@ -4143,16 +3894,7 @@ void API::cancelIngestionJob(
 
 	try
 	{
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
-		{
-			string errorMessage = "The 'ingestionJobKey' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t ingestionJobKey = getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		/*
 		 * This forceCancel parameter was added because of this Scenario:
@@ -4190,15 +3932,7 @@ void API::cancelIngestionJob(
 		 *
 		 *
 		 */
-		bool forceCancel = false;
-		auto forceCancelIt = queryParameters.find("forceCancel");
-		if (forceCancelIt != queryParameters.end() && !forceCancelIt->second.empty())
-		{
-			if (forceCancelIt->second == "true")
-				forceCancel = true;
-			else
-				forceCancel = false;
-		}
+		bool forceCancel = getQueryParameter("forceCancel", false);
 
 		MMSEngineDBFacade::IngestionStatus ingestionStatus = _mmsEngineDBFacade->ingestionJob_Status(
 			apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey,
@@ -4251,8 +3985,7 @@ void API::updateIngestionJob(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "updateIngestionJob";
@@ -4279,16 +4012,7 @@ void API::updateIngestionJob(
 
 	try
 	{
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
-		{
-			string errorMessage = "'ingestionJobKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t ingestionJobKey = getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		try
 		{
@@ -4472,8 +4196,7 @@ void API::ingestionJobSwitchToEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "ingestionJobSwitchToEncoder";
@@ -4499,17 +4222,17 @@ void API::ingestionJobSwitchToEncoder(
 
 	try
 	{
-		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
+		int64_t ingestionJobKey = getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		// mandatory nel caso di broadcaster, servono:
 		// 	- newPushEncoderKey e newPushPublicEncoderName per lo switch del broadcaster
 		// 	- newEncodersPoolLabel per lo switch del broadcast
 		// mandatory nel caso di Live-Proxy or VOD-Proxy or CountdownProxy, serve:
 		// 	- newEncodersPoolLabel
-		int64_t newPushEncoderKey = getQueryParameter(queryParameters, "newPushEncoderKey", static_cast<int64_t>(-1), false);
+		int64_t newPushEncoderKey = getQueryParameter("newPushEncoderKey", static_cast<int64_t>(-1), false);
 		// newPushPublicEncoderName: indica se bisogna usare l'IP pubblico o quello interno/privato
-		bool newPushPublicEncoderName = getQueryParameter(queryParameters, "newPushPublicEncoderName", false, false);
-		string newEncodersPoolLabel = getQueryParameter(queryParameters, "newEncodersPoolLabel", string(""), false);
+		bool newPushPublicEncoderName = getQueryParameter("newPushPublicEncoderName", false, false);
+		string newEncodersPoolLabel = getQueryParameter("newEncodersPoolLabel", string(""), false);
 
 		SPDLOG_INFO(
 			"ingestionJobSwitchToEncoder"
@@ -4792,8 +4515,7 @@ void API::changeLiveProxyPlaylist(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "changeLiveProxyPlaylist";
@@ -4809,8 +4531,8 @@ void API::changeLiveProxyPlaylist(
 
 	try
 	{
-		int64_t broadcasterIngestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", -1, true, nullptr);
-		bool interruptPlaylist = getQueryParameter(queryParameters, "interruptPlaylist", false, false, nullptr);
+		int64_t broadcasterIngestionJobKey = getQueryParameter("ingestionJobKey", -1, true, nullptr);
+		bool interruptPlaylist = getQueryParameter("interruptPlaylist", false, false, nullptr);
 
 		SPDLOG_INFO(
 			"Received {}"
@@ -6165,8 +5887,7 @@ void API::changeLiveProxyOverlayText(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "changeLiveProxyOverlayText";
@@ -6182,15 +5903,7 @@ void API::changeLiveProxyOverlayText(
 
 	try
 	{
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
-		{
-			string errorMessage = "'ingestionJobKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t broadcasterIngestionJobKey = getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		SPDLOG_INFO("{}, broadcasterIngestionJobKey: {}", api, broadcasterIngestionJobKey);
 

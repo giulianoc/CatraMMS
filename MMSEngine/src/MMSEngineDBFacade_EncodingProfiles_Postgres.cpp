@@ -646,7 +646,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 }
 
 json MMSEngineDBFacade::getEncodingProfilesSetList(
-	int64_t workspaceKey, int64_t encodingProfilesSetKey, bool contentTypePresent, ContentType contentType
+	int64_t workspaceKey, int64_t encodingProfilesSetKey, optional<ContentType> contentType
 )
 {
 	json contentListRoot;
@@ -671,9 +671,8 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 			"getEncodingProfilesSetList"
 			", workspaceKey: {}"
 			", encodingProfilesSetKey: {}"
-			", contentTypePresent: {}"
 			", contentType: {}",
-			workspaceKey, encodingProfilesSetKey, contentTypePresent, (contentTypePresent ? toString(contentType) : "")
+			workspaceKey, encodingProfilesSetKey, (contentType ? toString(*contentType) : "")
 		);
 
 		{
@@ -685,10 +684,10 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 				requestParametersRoot[field] = encodingProfilesSetKey;
 			}
 
-			if (contentTypePresent)
+			if (contentType)
 			{
 				field = "contentType";
-				requestParametersRoot[field] = toString(contentType);
+				requestParametersRoot[field] = toString(*contentType);
 			}
 
 			field = "requestParameters";
@@ -698,8 +697,8 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
 		if (encodingProfilesSetKey != -1)
 			sqlWhere += std::format("and encodingProfilesSetKey = {} ", encodingProfilesSetKey);
-		if (contentTypePresent)
-			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(contentType)));
+		if (contentType)
+			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(*contentType)));
 
 		json responseRoot;
 		{
@@ -735,7 +734,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 				field = "label";
 				encodingProfilesSetRoot[field] = row["label"].as<string>();
 
-				ContentType contentType = MMSEngineDBFacade::toContentType(row["contentType"].as<string>());
+				ContentType localContentType = MMSEngineDBFacade::toContentType(row["contentType"].as<string>());
 				field = "contentType";
 				encodingProfilesSetRoot[field] = row["contentType"].as<string>();
 
@@ -847,7 +846,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 }
 
 json MMSEngineDBFacade::getEncodingProfileList(
-	int64_t workspaceKey, int64_t encodingProfileKey, bool contentTypePresent, ContentType contentType, string label
+	int64_t workspaceKey, int64_t encodingProfileKey, optional<ContentType> contentType, string label
 )
 {
 	json contentListRoot;
@@ -872,10 +871,9 @@ json MMSEngineDBFacade::getEncodingProfileList(
 			"getEncodingProfileList"
 			", workspaceKey: {}"
 			", encodingProfileKey: {}"
-			", contentTypePresent: {}"
 			", contentType: {}"
 			", label: {}",
-			workspaceKey, encodingProfileKey, contentTypePresent, (contentTypePresent ? toString(contentType) : ""), label
+			workspaceKey, encodingProfileKey, (contentType ? toString(*contentType) : ""), label
 		);
 
 		{
@@ -887,10 +885,10 @@ json MMSEngineDBFacade::getEncodingProfileList(
 				requestParametersRoot[field] = encodingProfileKey;
 			}
 
-			if (contentTypePresent)
+			if (contentType)
 			{
 				field = "contentType";
-				requestParametersRoot[field] = toString(contentType);
+				requestParametersRoot[field] = toString(*contentType);
 			}
 
 			if (label != "")
@@ -906,8 +904,8 @@ json MMSEngineDBFacade::getEncodingProfileList(
 		string sqlWhere = std::format("where (workspaceKey = {} or workspaceKey is null) ", workspaceKey);
 		if (encodingProfileKey != -1)
 			sqlWhere += std::format("and encodingProfileKey = {} ", encodingProfileKey);
-		if (contentTypePresent)
-			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(contentType)));
+		if (contentType)
+			sqlWhere += std::format("and contentType = {} ", trans.transaction->quote(toString(*contentType)));
 		if (label != "")
 			sqlWhere += std::format("and lower(label) like lower({}) ", trans.transaction->quote("%" + label + "%"));
 

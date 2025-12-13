@@ -1625,8 +1625,7 @@ class MMSEngineDBFacade
 	);
 
 	json getTagsList(
-		int64_t workspaceKey, int start, int rows, int liveRecordingChunk, bool contentTypePresent, ContentType contentType, string tagNameFilter,
-		bool fromMaster
+		int64_t workspaceKey, int start, int rows, int liveRecordingChunk, optional<ContentType> contentType, string tagNameFilter, bool fromMaster
 	);
 
 	void updateMediaItem(int64_t mediaItemKey, string processorMMSForRetention);
@@ -1643,9 +1642,9 @@ class MMSEngineDBFacade
 
 	string getWorkflowAsLibraryContent(int64_t workspaceKey, string label);
 
-	json getEncodingProfilesSetList(int64_t workspaceKey, int64_t encodingProfilesSetKey, bool contentTypePresent, ContentType contentType);
+	json getEncodingProfilesSetList(int64_t workspaceKey, int64_t encodingProfilesSetKey, optional<ContentType> contentType);
 
-	json getEncodingProfileList(int64_t workspaceKey, int64_t encodingProfileKey, bool contentTypePresent, ContentType contentType, string label);
+	json getEncodingProfileList(int64_t workspaceKey, int64_t encodingProfileKey, optional<ContentType> contentType, string label);
 
 	int64_t getPhysicalPathDetails(int64_t referenceMediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
 	int64_t

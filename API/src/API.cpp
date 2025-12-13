@@ -177,8 +177,7 @@ API::~API() = default;
 void API::manageRequestAndResponse(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
-	const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
-	const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
+	const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength
 )
 {
 	bool basicAuthenticationPresent = authorizationDetails != nullptr;
@@ -232,7 +231,7 @@ void API::manageRequestAndResponse(
 	try
 	{
 		handleRequest(sThreadId, requestIdentifier, request, authorizationDetails, requestURI, requestMethod, requestBody,
-			responseBodyCompressed, requestDetails, queryParameters, true);
+			responseBodyCompressed, true);
 	}
 	catch (exception &e)
 	{
@@ -265,8 +264,7 @@ void API::mmsSupport(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
 	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	bool responseBodyCompressed
 )
 {
 	string api = "mmsSupport";
@@ -348,9 +346,7 @@ void API::mmsSupport(
 void API::status(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed
 )
 {
 	string api = "status";
@@ -389,9 +385,7 @@ void API::status(
 void API::avgBandwidthUsage(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed
 )
 {
 	string api = "avgBandwidthUsage";
@@ -429,9 +423,7 @@ void API::avgBandwidthUsage(
 void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
 	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed
 )
 {
 	string api = "manageHTTPStreamingManifest_authorizationThroughParameter";
@@ -456,14 +448,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 			throw runtime_error(errorMessage);
 		}
 
-		auto tokenIt = queryParameters.find("token");
-		if (tokenIt == queryParameters.end())
-		{
-			string errorMessage = string("Not authorized: token parameter not present");
-			SPDLOG_WARN(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		string token = getQueryParameter("token", "", true);
 
 		// we could have:
 		//		- master manifest, token parameter: <token>--- (es: token=9163 oppure ic_vOSatb6TWp4ania5kaQ%3D%3D,1717958161)
@@ -476,12 +461,12 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 		bool secondaryManifest;
 		string tokenComingFromURL;
 
-		bool isNumber = StringUtils::isNumber(tokenIt->second);
-		if (isNumber || tokenIt->second.find(",") != string::npos)
+		bool isNumber = StringUtils::isNumber(token);
+		if (isNumber || token.find(",") != string::npos)
 		{
 			secondaryManifest = false;
 			// tokenComingFromURL = stoll(tokenIt->second);
-			tokenComingFromURL = tokenIt->second;
+			tokenComingFromURL = token;
 		}
 		else
 		{
@@ -492,9 +477,9 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 			"manageHTTPStreamingManifest"
 			", analizing the token {}"
 			", isNumber: {}"
-			", tokenIt->second: {}"
+			", token: {}"
 			", secondaryManifest: {}",
-			tokenIt->second, isNumber, tokenIt->second, secondaryManifest
+			token, isNumber, token, secondaryManifest
 		);
 
 		string contentURI;
@@ -516,17 +501,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 
 		if (secondaryManifest)
 		{
-			auto cookieIt = queryParameters.find("cookie");
-			if (cookieIt == queryParameters.end())
-			{
-				string errorMessage = string("The 'cookie' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			string cookie = cookieIt->second;
-
-			string token = tokenIt->second;
+			string cookie = getQueryParameter("cookie", "", true);
 
 			tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(secondaryManifest, token, cookie, contentURI);
 
@@ -544,10 +519,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 		else
 		{
 			// cookie parameter is added inside catramms.nginx
-			string mmsInfoCookie;
-			auto cookieIt = queryParameters.find("cookie");
-			if (cookieIt != queryParameters.end())
-				mmsInfoCookie = cookieIt->second;
+			string mmsInfoCookie = getQueryParameter("cookie", "", false);
 
 			tokenComingFromURL = _mmsDeliveryAuthorization->checkDeliveryAuthorizationOfAManifest(
 				secondaryManifest, tokenComingFromURL, mmsInfoCookie, contentURI
@@ -950,12 +922,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 			}
 
 			bool enableCorsGETHeader = true;
-			string originHeader;
-			{
-				auto originIt = requestDetails.find("HTTP_ORIGIN");
-				if (originIt != requestDetails.end())
-					originHeader = originIt->second;
-			}
+			string originHeader = getQueryParameter("origin", "");
 			if (secondaryManifest)
 				sendSuccess(
 					sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody, contentType, "",
@@ -1197,11 +1164,11 @@ shared_ptr<FastCGIAPI::AuthorizationDetails> API::checkAuthorization(const strin
 	}
 }
 
-bool API::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
+bool API::basicAuthenticationRequired(const string &requestURI)
 {
 	bool basicAuthenticationRequired = true;
 
-	const string method = getMapParameter(queryParameters, "x-api-method", string(), false);
+	const string method = getQueryParameter("x-api-method", string(), false);
 	if (method.empty())
 	{
 		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
