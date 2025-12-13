@@ -1134,6 +1134,22 @@ shared_ptr<FastCGIAPI::AuthorizationDetails> API::checkAuthorization(const strin
 		apiAuthorizationDetails->canEditEncodersPool = get<12>(userKeyWorkspaceAndFlags);
 		apiAuthorizationDetails->canApplicationRecorder = get<13>(userKeyWorkspaceAndFlags);
 		apiAuthorizationDetails->canCreateRemoveLiveChannel = get<14>(userKeyWorkspaceAndFlags);
+
+		if (apiAuthorizationDetails->userKey != StringUtils::toInt64(userName))
+		{
+			SPDLOG_INFO(
+				"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
+				", _requestIdentifier: {}"
+				", threadId: {}"
+				", username of basic authorization (userKey): {}"
+				", userKey associated to the APIKey: {}"
+				", apiKey: {}",
+				_requestIdentifier, sThreadId, userName, apiAuthorizationDetails->userKey, password
+			);
+
+			throw HTTPError(401);
+		}
+
 		return apiAuthorizationDetails;
 	}
 	catch (exception &e)
@@ -1144,21 +1160,6 @@ shared_ptr<FastCGIAPI::AuthorizationDetails> API::checkAuthorization(const strin
 			", threadId: {}"
 			", apiKey: {}",
 			_requestIdentifier, sThreadId, password
-		);
-
-		throw HTTPError(401);
-	}
-
-	if (apiAuthorizationDetails->userKey != StringUtils::toInt64(userName))
-	{
-		SPDLOG_INFO(
-			"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
-			", _requestIdentifier: {}"
-			", threadId: {}"
-			", username of basic authorization (userKey): {}"
-			", userKey associated to the APIKey: {}"
-			", apiKey: {}",
-			_requestIdentifier, sThreadId, userName, apiAuthorizationDetails->userKey, password
 		);
 
 		throw HTTPError(401);
