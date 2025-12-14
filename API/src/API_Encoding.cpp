@@ -24,7 +24,7 @@
 #include <sstream>
 
 void API::encodingJobsStatus(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -93,7 +93,7 @@ void API::encodingJobsStatus(
 
 			string responseBody = JSONUtils::toString(encodingStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -110,7 +110,7 @@ void API::encodingJobsStatus(
 }
 
 void API::encodingJobPriority(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -161,7 +161,7 @@ void API::encodingJobPriority(
 
 			string responseBody;
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -178,7 +178,7 @@ void API::encodingJobPriority(
 }
 
 void API::killOrCancelEncodingJob(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -613,7 +613,7 @@ void API::killOrCancelEncodingJob(
 			}
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -630,7 +630,7 @@ void API::killOrCancelEncodingJob(
 }
 
 void API::encodingProfilesSetsList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -660,7 +660,7 @@ void API::encodingProfilesSetsList(
 
 			string responseBody = JSONUtils::toString(encodingProfilesSetListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -676,7 +676,7 @@ void API::encodingProfilesSetsList(
 }
 
 void API::encodingProfilesList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -707,7 +707,7 @@ void API::encodingProfilesList(
 
 			string responseBody = JSONUtils::toString(encodingProfileListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -723,7 +723,7 @@ void API::encodingProfilesList(
 }
 
 void API::addUpdateEncodingProfilesSet(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -828,7 +828,7 @@ void API::addUpdateEncodingProfilesSet(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -844,7 +844,7 @@ void API::addUpdateEncodingProfilesSet(
 }
 
 void API::addEncodingProfile(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -954,7 +954,7 @@ void API::addEncodingProfile(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -970,7 +970,7 @@ void API::addEncodingProfile(
 }
 
 void API::removeEncodingProfile(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1016,7 +1016,7 @@ void API::removeEncodingProfile(
 
 		string responseBody;
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -1031,7 +1031,7 @@ void API::removeEncodingProfile(
 }
 
 void API::removeEncodingProfilesSet(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1077,7 +1077,7 @@ void API::removeEncodingProfilesSet(
 
 		string responseBody;
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{

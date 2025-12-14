@@ -55,7 +55,7 @@ class FFMPEGEncoder final : public FastCGIAPI
 	~FFMPEGEncoder() override;
 
 	void manageRequestAndResponse(
-		const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	) override;
 
@@ -128,96 +128,96 @@ class FFMPEGEncoder final : public FastCGIAPI
 	int64_t _mmsAPITimeoutInSeconds{};
 
 	void status(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void info(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void videoSpeed(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void encodeContent(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void cutFrameAccurate(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void overlayImageOnVideo(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void overlayTextOnVideo(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void generateFrames(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void slideShow(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void addSilentAudio(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void pictureInPicture(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void introOutroOverlay(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void liveRecorder(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void liveProxy(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void liveGrid(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void encodingStatus(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void filterNotification(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void killEncodingJob(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void changeLiveProxyPlaylist(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void changeLiveProxyOverlayText(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void encodingProgress(
-		const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	) const;
 
 	void liveProxy_liveGrid(
-		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& method, const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void requestManagement(
-		const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+		const string_view& method, const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
 	void encodeContentThread(

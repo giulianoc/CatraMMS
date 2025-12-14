@@ -20,7 +20,7 @@
 #include <regex>
 
 void API::addYouTubeConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -178,7 +178,7 @@ void API::addYouTubeConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -195,7 +195,7 @@ void API::addYouTubeConf(
 }
 
 void API::modifyYouTubeConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -331,7 +331,7 @@ void API::modifyYouTubeConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -348,7 +348,7 @@ void API::modifyYouTubeConf(
 }
 
 void API::removeYouTubeConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -382,7 +382,7 @@ void API::removeYouTubeConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -398,7 +398,7 @@ void API::removeYouTubeConf(
 }
 
 void API::youTubeConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -421,7 +421,7 @@ void API::youTubeConfList(
 
 			string responseBody = JSONUtils::toString(youTubeConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -437,7 +437,7 @@ void API::youTubeConfList(
 }
 
 void API::addFacebookConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -528,7 +528,7 @@ void API::addFacebookConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -544,7 +544,7 @@ void API::addFacebookConf(
 }
 
 void API::modifyFacebookConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -623,7 +623,7 @@ void API::modifyFacebookConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -639,7 +639,7 @@ void API::modifyFacebookConf(
 }
 
 void API::removeFacebookConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -672,7 +672,7 @@ void API::removeFacebookConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -687,7 +687,7 @@ void API::removeFacebookConf(
 }
 
 void API::facebookConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -716,7 +716,7 @@ void API::facebookConfList(
 
 			string responseBody = JSONUtils::toString(facebookConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -732,7 +732,7 @@ void API::facebookConfList(
 }
 
 void API::addTwitchConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -823,7 +823,7 @@ void API::addTwitchConf(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -839,7 +839,7 @@ void API::addTwitchConf(
 }
 
 void API::modifyTwitchConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -918,7 +918,7 @@ void API::modifyTwitchConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -934,7 +934,7 @@ void API::modifyTwitchConf(
 }
 
 void API::removeTwitchConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -967,7 +967,7 @@ void API::removeTwitchConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -982,7 +982,7 @@ void API::removeTwitchConf(
 }
 
 void API::twitchConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1011,7 +1011,7 @@ void API::twitchConfList(
 
 			string responseBody = JSONUtils::toString(twitchConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -1027,7 +1027,7 @@ void API::twitchConfList(
 }
 
 void API::addTiktokConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1108,7 +1108,7 @@ void API::addTiktokConf(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1124,7 +1124,7 @@ void API::addTiktokConf(
 }
 
 void API::modifyTiktokConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1194,7 +1194,7 @@ void API::modifyTiktokConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1210,7 +1210,7 @@ void API::modifyTiktokConf(
 }
 
 void API::removeTiktokConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1232,7 +1232,7 @@ void API::removeTiktokConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1247,7 +1247,7 @@ void API::removeTiktokConf(
 }
 
 void API::tiktokConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1276,7 +1276,7 @@ void API::tiktokConfList(
 
 			string responseBody = JSONUtils::toString(tiktokConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -1292,7 +1292,7 @@ void API::tiktokConfList(
 }
 
 void API::addStream(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1491,7 +1491,7 @@ void API::addStream(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1507,7 +1507,7 @@ void API::addStream(
 }
 
 void API::modifyStream(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1867,7 +1867,7 @@ void API::modifyStream(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1883,7 +1883,7 @@ void API::modifyStream(
 }
 
 void API::removeStream(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1938,7 +1938,7 @@ void API::removeStream(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1953,7 +1953,7 @@ void API::removeStream(
 }
 
 void API::streamList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2022,7 +2022,7 @@ void API::streamList(
 
 		string responseBody = JSONUtils::toString(streamListRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2037,7 +2037,7 @@ void API::streamList(
 }
 
 void API::streamFreePushEncoderPort(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2059,7 +2059,7 @@ void API::streamFreePushEncoderPort(
 
 		const string responseBody = JSONUtils::toString(streamFreePushEncoderPortRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2074,7 +2074,7 @@ void API::streamFreePushEncoderPort(
 }
 
 void API::addSourceTVStream(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2247,7 +2247,7 @@ void API::addSourceTVStream(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2263,7 +2263,7 @@ void API::addSourceTVStream(
 }
 
 void API::modifySourceTVStream(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2490,7 +2490,7 @@ void API::modifySourceTVStream(
 
 		string sResponse = JSONUtils::toString(sourceTVStreamRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2506,7 +2506,7 @@ void API::modifySourceTVStream(
 }
 
 void API::removeSourceTVStream(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2539,7 +2539,7 @@ void API::removeSourceTVStream(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2554,7 +2554,7 @@ void API::removeSourceTVStream(
 }
 
 void API::sourceTVStreamList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "sourceTVStreamList";
@@ -2610,7 +2610,7 @@ void API::sourceTVStreamList(
 
 			string responseBody = JSONUtils::toString(sourceTVStreamRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -2626,7 +2626,7 @@ void API::sourceTVStreamList(
 }
 
 void API::addAWSChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2762,7 +2762,7 @@ void API::addAWSChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2778,7 +2778,7 @@ void API::addAWSChannelConf(
 }
 
 void API::modifyAWSChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2902,7 +2902,7 @@ void API::modifyAWSChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2918,7 +2918,7 @@ void API::modifyAWSChannelConf(
 }
 
 void API::removeAWSChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2950,7 +2950,7 @@ void API::removeAWSChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2965,7 +2965,7 @@ void API::removeAWSChannelConf(
 }
 
 void API::awsChannelConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2998,7 +2998,7 @@ void API::awsChannelConfList(
 
 			string responseBody = JSONUtils::toString(awsChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3014,7 +3014,7 @@ void API::awsChannelConfList(
 }
 
 void API::addCDN77ChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3180,7 +3180,7 @@ void API::addCDN77ChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3196,7 +3196,7 @@ void API::addCDN77ChannelConf(
 }
 
 void API::modifyCDN77ChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3360,7 +3360,7 @@ void API::modifyCDN77ChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3376,7 +3376,7 @@ void API::modifyCDN77ChannelConf(
 }
 
 void API::removeCDN77ChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3409,7 +3409,7 @@ void API::removeCDN77ChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3424,7 +3424,7 @@ void API::removeCDN77ChannelConf(
 }
 
 void API::cdn77ChannelConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3457,7 +3457,7 @@ void API::cdn77ChannelConfList(
 
 			string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3473,7 +3473,7 @@ void API::cdn77ChannelConfList(
 }
 
 void API::addRTMPChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3596,7 +3596,7 @@ void API::addRTMPChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3612,7 +3612,7 @@ void API::addRTMPChannelConf(
 }
 
 void API::modifyRTMPChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3768,7 +3768,7 @@ void API::modifyRTMPChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3784,7 +3784,7 @@ void API::modifyRTMPChannelConf(
 }
 
 void API::removeRTMPChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3817,7 +3817,7 @@ void API::removeRTMPChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3832,7 +3832,7 @@ void API::removeRTMPChannelConf(
 }
 
 void API::rtmpChannelConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3866,7 +3866,7 @@ void API::rtmpChannelConfList(
 
 			string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3882,7 +3882,7 @@ void API::rtmpChannelConfList(
 }
 
 void API::addSRTChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4002,7 +4002,7 @@ void API::addSRTChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4018,7 +4018,7 @@ void API::addSRTChannelConf(
 }
 
 void API::modifySRTChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4172,7 +4172,7 @@ void API::modifySRTChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4188,7 +4188,7 @@ void API::modifySRTChannelConf(
 }
 
 void API::removeSRTChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4221,7 +4221,7 @@ void API::removeSRTChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4236,7 +4236,7 @@ void API::removeSRTChannelConf(
 }
 
 void API::srtChannelConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4270,7 +4270,7 @@ void API::srtChannelConfList(
 
 			string responseBody = JSONUtils::toString(srtChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -4286,7 +4286,7 @@ void API::srtChannelConfList(
 }
 
 void API::addHLSChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4401,7 +4401,7 @@ void API::addHLSChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4417,7 +4417,7 @@ void API::addHLSChannelConf(
 }
 
 void API::modifyHLSChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4543,7 +4543,7 @@ void API::modifyHLSChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4559,7 +4559,7 @@ void API::modifyHLSChannelConf(
 }
 
 void API::removeHLSChannelConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4592,7 +4592,7 @@ void API::removeHLSChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4607,7 +4607,7 @@ void API::removeHLSChannelConf(
 }
 
 void API::hlsChannelConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4641,7 +4641,7 @@ void API::hlsChannelConfList(
 
 			string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -4657,7 +4657,7 @@ void API::hlsChannelConfList(
 }
 
 void API::addFTPConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4808,7 +4808,7 @@ void API::addFTPConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4824,7 +4824,7 @@ void API::addFTPConf(
 }
 
 void API::modifyFTPConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4963,7 +4963,7 @@ void API::modifyFTPConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4979,7 +4979,7 @@ void API::modifyFTPConf(
 }
 
 void API::removeFTPConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -5012,7 +5012,7 @@ void API::removeFTPConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5027,7 +5027,7 @@ void API::removeFTPConf(
 }
 
 void API::ftpConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "ftpConfList";
@@ -5048,7 +5048,7 @@ void API::ftpConfList(
 
 			string responseBody = JSONUtils::toString(ftpConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -5064,7 +5064,7 @@ void API::ftpConfList(
 }
 
 void API::addEMailConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -5185,7 +5185,7 @@ void API::addEMailConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5201,7 +5201,7 @@ void API::addEMailConf(
 }
 
 void API::modifyEMailConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -5310,7 +5310,7 @@ void API::modifyEMailConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5326,7 +5326,7 @@ void API::modifyEMailConf(
 }
 
 void API::removeEMailConf(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -5359,7 +5359,7 @@ void API::removeEMailConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5374,7 +5374,7 @@ void API::removeEMailConf(
 }
 
 void API::emailConfList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "emailConfList";
@@ -5395,7 +5395,7 @@ void API::emailConfList(
 
 			string responseBody = JSONUtils::toString(emailConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)

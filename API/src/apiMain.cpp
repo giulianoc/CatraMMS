@@ -291,10 +291,8 @@ int main(int argc, char **argv)
 
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
-			shared_ptr<API> api = make_shared<API>(
-				noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization, &fcgiAcceptMutex, &fileUploadProgressData,
-				bandwidthUsage
-			);
+			auto api = make_shared<API>(noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization,
+				&fcgiAcceptMutex, &fileUploadProgressData, bandwidthUsage);
 
 			apis.push_back(api);
 			apiThreads.emplace_back(&API::operator(), api);

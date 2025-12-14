@@ -31,7 +31,7 @@
 #include <sstream>
 
 void API::ingestion(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -253,7 +253,7 @@ void API::ingestion(
 	{
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 		SPDLOG_INFO(
@@ -2844,7 +2844,7 @@ void API::ingestionEvents(
 }
 
 void API::uploadedBinary(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3252,7 +3252,7 @@ void API::uploadedBinary(
 		}
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception e)
 	{
@@ -3599,7 +3599,7 @@ void API::fileUploadProgressCheckThread()
 }
 
 void API::ingestionRootsStatus(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3670,7 +3670,7 @@ void API::ingestionRootsStatus(
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3687,7 +3687,7 @@ void API::ingestionRootsStatus(
 }
 
 void API::ingestionRootMetaDataContent(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3734,7 +3734,7 @@ void API::ingestionRootMetaDataContent(
 			);
 			*/
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, ingestionRootMetaDataContent);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, ingestionRootMetaDataContent);
 		}
 	}
 	catch (exception &e)
@@ -3751,7 +3751,7 @@ void API::ingestionRootMetaDataContent(
 }
 
 void API::ingestionJobsStatus(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3838,7 +3838,7 @@ void API::ingestionJobsStatus(
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3855,7 +3855,7 @@ void API::ingestionJobsStatus(
 }
 
 void API::cancelIngestionJob(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -3955,7 +3955,7 @@ void API::cancelIngestionJob(
 			_mmsEngineDBFacade->forceCancelEncodingJob(ingestionJobKey);
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -3971,7 +3971,7 @@ void API::cancelIngestionJob(
 }
 
 void API::updateIngestionJob(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4152,7 +4152,7 @@ void API::updateIngestionJob(
 
 			string responseBody = JSONUtils::toString(responseRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -4180,7 +4180,7 @@ void API::updateIngestionJob(
 }
 
 void API::ingestionJobSwitchToEncoder(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -4482,7 +4482,7 @@ void API::ingestionJobSwitchToEncoder(
 		}
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -4497,7 +4497,7 @@ void API::ingestionJobSwitchToEncoder(
 }
 
 void API::changeLiveProxyPlaylist(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -5837,7 +5837,7 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -5867,7 +5867,7 @@ void API::changeLiveProxyPlaylist(
 }
 
 void API::changeLiveProxyOverlayText(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -5986,7 +5986,7 @@ void API::changeLiveProxyOverlayText(
 		}
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{

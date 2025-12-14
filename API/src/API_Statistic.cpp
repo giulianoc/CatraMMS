@@ -18,7 +18,7 @@
 #include <regex>
 
 void API::addRequestStatistic(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -138,7 +138,7 @@ void API::addRequestStatistic(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -155,7 +155,7 @@ void API::addRequestStatistic(
 }
 
 void API::requestStatisticList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -205,7 +205,7 @@ void API::requestStatisticList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -222,7 +222,7 @@ void API::requestStatisticList(
 }
 
 void API::requestStatisticPerContentList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -278,7 +278,7 @@ void API::requestStatisticPerContentList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -295,7 +295,7 @@ void API::requestStatisticPerContentList(
 }
 
 void API::requestStatisticPerUserList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -351,7 +351,7 @@ void API::requestStatisticPerUserList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -368,7 +368,7 @@ void API::requestStatisticPerUserList(
 }
 
 void API::requestStatisticPerMonthList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -424,7 +424,7 @@ void API::requestStatisticPerMonthList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -441,7 +441,7 @@ void API::requestStatisticPerMonthList(
 }
 
 void API::requestStatisticPerDayList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -497,7 +497,7 @@ void API::requestStatisticPerDayList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -514,7 +514,7 @@ void API::requestStatisticPerDayList(
 }
 
 void API::requestStatisticPerHourList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -570,7 +570,7 @@ void API::requestStatisticPerHourList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -587,7 +587,7 @@ void API::requestStatisticPerHourList(
 }
 
 void API::requestStatisticPerCountryList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -643,7 +643,7 @@ void API::requestStatisticPerCountryList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -660,7 +660,7 @@ void API::requestStatisticPerCountryList(
 }
 
 void API::loginStatisticList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -715,7 +715,7 @@ void API::loginStatisticList(
 
 			string responseBody = JSONUtils::toString(statisticsListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)

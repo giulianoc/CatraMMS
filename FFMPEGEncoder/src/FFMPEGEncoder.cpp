@@ -97,170 +97,170 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	// registerHandler<FFMPEGEncoder>("status", &FFMPEGEncoder::status);
 	registerHandler("status",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			status(sThreadId, requestIdentifier, request, requestData);
+			status(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("info", &FFMPEGEncoder::info);
 	registerHandler("info",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			info(sThreadId, requestIdentifier, request, requestData);
+			info(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("videoSpeed", &FFMPEGEncoder::videoSpeed);
 	registerHandler("videoSpeed",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			videoSpeed(sThreadId, requestIdentifier, request, requestData);
+			videoSpeed(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("encodeContent", &FFMPEGEncoder::encodeContent);
 	registerHandler("encodeContent",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			encodeContent(sThreadId, requestIdentifier, request, requestData);
+			encodeContent(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("cutFrameAccurate", &FFMPEGEncoder::cutFrameAccurate);
 	registerHandler("cutFrameAccurate",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			cutFrameAccurate(sThreadId, requestIdentifier, request, requestData);
+			cutFrameAccurate(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("overlayImageOnVideo", &FFMPEGEncoder::overlayImageOnVideo);
 	registerHandler("overlayImageOnVideo",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			overlayImageOnVideo(sThreadId, requestIdentifier, request, requestData);
+			overlayImageOnVideo(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("overlayTextOnVideo", &FFMPEGEncoder::overlayTextOnVideo);
 	registerHandler("overlayTextOnVideo",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			overlayTextOnVideo(sThreadId, requestIdentifier, request, requestData);
+			overlayTextOnVideo(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("generateFrames", &FFMPEGEncoder::generateFrames);
 	registerHandler("generateFrames",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			generateFrames(sThreadId, requestIdentifier, request, requestData);
+			generateFrames(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("slideShow", &FFMPEGEncoder::slideShow);
 	registerHandler("slideShow",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			slideShow(sThreadId, requestIdentifier, request, requestData);
+			slideShow(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("addSilentAudio", &FFMPEGEncoder::addSilentAudio);
 	registerHandler("addSilentAudio",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			addSilentAudio(sThreadId, requestIdentifier, request, requestData);
+			addSilentAudio(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("pictureInPicture", &FFMPEGEncoder::pictureInPicture);
 	registerHandler("pictureInPicture",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			pictureInPicture(sThreadId, requestIdentifier, request, requestData);
+			pictureInPicture(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("introOutroOverlay", &FFMPEGEncoder::introOutroOverlay);
 	registerHandler("introOutroOverlay",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			introOutroOverlay(sThreadId, requestIdentifier, request, requestData);
+			introOutroOverlay(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("liveRecorder", &FFMPEGEncoder::liveRecorder);
 	registerHandler("liveRecorder",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			liveRecorder(sThreadId, requestIdentifier, request, requestData);
+			liveRecorder(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("liveProxy", &FFMPEGEncoder::liveProxy);
 	registerHandler("liveProxy",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			liveProxy(sThreadId, requestIdentifier, request, requestData);
+			liveProxy(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("liveGrid", &FFMPEGEncoder::liveGrid);
 	registerHandler("liveGrid",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			liveGrid(sThreadId, requestIdentifier, request, requestData);
+			liveGrid(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("encodingStatus", &FFMPEGEncoder::encodingStatus);
 	registerHandler("encodingStatus",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			encodingStatus(sThreadId, requestIdentifier, request, requestData);
+			encodingStatus(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("filterNotification", &FFMPEGEncoder::filterNotification);
 	registerHandler("filterNotification",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			filterNotification(sThreadId, requestIdentifier, request, requestData);
+			filterNotification(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("killEncodingJob", &FFMPEGEncoder::killEncodingJob);
 	registerHandler("killEncodingJob",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			killEncodingJob(sThreadId, requestIdentifier, request, requestData);
+			killEncodingJob(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("changeLiveProxyPlaylist", &FFMPEGEncoder::changeLiveProxyPlaylist);
 	registerHandler("changeLiveProxyPlaylist",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			changeLiveProxyPlaylist(sThreadId, requestIdentifier, request, requestData);
+			changeLiveProxyPlaylist(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("changeLiveProxyOverlayText", &FFMPEGEncoder::changeLiveProxyOverlayText);
 	registerHandler("changeLiveProxyOverlayText",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			changeLiveProxyOverlayText(sThreadId, requestIdentifier, request, requestData);
+			changeLiveProxyOverlayText(sThreadId, request, requestData);
 		}
 	);
 	// registerHandler<FFMPEGEncoder>("encodingProgress", &FFMPEGEncoder::encodingProgress);
 	registerHandler("encodingProgress",
-		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
 		{
-			encodingProgress(sThreadId, requestIdentifier, request, requestData);
+			encodingProgress(sThreadId, request, requestData);
 		}
 	);
 }
@@ -275,7 +275,7 @@ FFMPEGEncoder::~FFMPEGEncoder() = default;
 // solo thread!!!
 
 void FFMPEGEncoder::manageRequestAndResponse(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -288,7 +288,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 	try
 	{
-		handleRequest(sThreadId, requestIdentifier, request, requestData, true);
+		handleRequest(sThreadId, request, requestData, true);
 	}
 	catch (exception &e)
 	{
@@ -317,7 +317,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 }
 
 void FFMPEGEncoder::status(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -336,7 +336,7 @@ void FFMPEGEncoder::status(
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -354,7 +354,7 @@ void FFMPEGEncoder::status(
 }
 
 void FFMPEGEncoder::info(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -385,7 +385,7 @@ void FFMPEGEncoder::info(
 
 		string responseBody = JSONUtils::toString(infoRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -403,7 +403,7 @@ void FFMPEGEncoder::info(
 }
 
 void FFMPEGEncoder::videoSpeed(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -415,11 +415,11 @@ void FFMPEGEncoder::videoSpeed(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::encodeContent(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -431,11 +431,11 @@ void FFMPEGEncoder::encodeContent(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::cutFrameAccurate(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -447,11 +447,11 @@ void FFMPEGEncoder::cutFrameAccurate(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::overlayImageOnVideo(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -463,11 +463,11 @@ void FFMPEGEncoder::overlayImageOnVideo(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::overlayTextOnVideo(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -479,11 +479,11 @@ void FFMPEGEncoder::overlayTextOnVideo(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::generateFrames(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -495,11 +495,11 @@ void FFMPEGEncoder::generateFrames(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::slideShow(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -511,11 +511,11 @@ void FFMPEGEncoder::slideShow(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::addSilentAudio(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -527,11 +527,11 @@ void FFMPEGEncoder::addSilentAudio(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::pictureInPicture(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -543,11 +543,11 @@ void FFMPEGEncoder::pictureInPicture(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::introOutroOverlay(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -559,11 +559,11 @@ void FFMPEGEncoder::introOutroOverlay(
 		api, requestData.requestBody
 	);
 
-	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
+	requestManagement(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::requestManagement(
-	const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& method, const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -833,13 +833,13 @@ void FFMPEGEncoder::requestManagement(
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 }
 
 void FFMPEGEncoder::liveRecorder(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -973,7 +973,7 @@ void FFMPEGEncoder::liveRecorder(
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 				requestData.requestURI, requestData.requestMethod, 200, responseBody);
 		}
 	}
@@ -992,7 +992,7 @@ void FFMPEGEncoder::liveRecorder(
 }
 
 void FFMPEGEncoder::liveProxy(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1004,11 +1004,11 @@ void FFMPEGEncoder::liveProxy(
 		api, requestData.requestBody
 	);
 
-	liveProxy_liveGrid(api, sThreadId, requestIdentifier, request, requestData);
+	liveProxy_liveGrid(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::liveGrid(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1020,11 +1020,11 @@ void FFMPEGEncoder::liveGrid(
 		api, requestData.requestBody
 	);
 
-	liveProxy_liveGrid(api, sThreadId, requestIdentifier, request, requestData);
+	liveProxy_liveGrid(api, sThreadId, request, requestData);
 }
 
 void FFMPEGEncoder::liveProxy_liveGrid(
-	const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& method, const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1163,13 +1163,13 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 }
 
 void FFMPEGEncoder::encodingStatus(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1479,7 +1479,7 @@ void FFMPEGEncoder::encodingStatus(
 			responseBody, chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()
 		);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -1497,7 +1497,7 @@ void FFMPEGEncoder::encodingStatus(
 }
 
 void FFMPEGEncoder::filterNotification(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1655,7 +1655,7 @@ void FFMPEGEncoder::filterNotification(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -1673,7 +1673,7 @@ void FFMPEGEncoder::filterNotification(
 }
 
 void FFMPEGEncoder::killEncodingJob(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1846,7 +1846,7 @@ void FFMPEGEncoder::killEncodingJob(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -1864,7 +1864,7 @@ void FFMPEGEncoder::killEncodingJob(
 }
 
 void FFMPEGEncoder::changeLiveProxyPlaylist(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1963,7 +1963,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -1981,7 +1981,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 }
 
 void FFMPEGEncoder::changeLiveProxyOverlayText(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2054,7 +2054,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
@@ -2072,7 +2072,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 }
 
 void FFMPEGEncoder::encodingProgress(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 ) const
 {
@@ -2351,13 +2351,12 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> FFMPEGEncoder::checkAuthorizat
 	{
 		SPDLOG_ERROR(
 			"Username/password of the basic authorization are wrong"
-			", _requestIdentifier: {}"
 			", threadId: {}"
 			", userName: {}"
 			", _encoderUser: {}"
 			", password: {}"
 			", _encoderPassword: {}",
-			_requestIdentifier, sThreadId, userName, _encoderUser, password, _encoderPassword
+			sThreadId, userName, _encoderUser, password, _encoderPassword
 		);
 
 		throw FCGIRequestData::HTTPError(401);

@@ -20,7 +20,7 @@
 #include <sstream>
 
 void API::workflowsAsLibraryList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -36,7 +36,7 @@ void API::workflowsAsLibraryList(
 
 		string responseBody = JSONUtils::toString(workflowListRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -51,7 +51,7 @@ void API::workflowsAsLibraryList(
 }
 
 void API::workflowAsLibraryContent(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -67,7 +67,7 @@ void API::workflowAsLibraryContent(
 
 		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(apiAuthorizationDetails->workspace->_workspaceKey, workflowLibraryKey);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, workflowLibraryContent);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, workflowLibraryContent);
 	}
 	catch (exception &e)
 	{
@@ -82,7 +82,7 @@ void API::workflowAsLibraryContent(
 }
 
 void API::saveWorkflowAsLibrary(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -152,7 +152,7 @@ void API::saveWorkflowAsLibrary(
 				 ", \"scope\": \"" + workflowAsLibraryScope + "\" " + "}");
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -168,7 +168,7 @@ void API::saveWorkflowAsLibrary(
 }
 
 void API::removeWorkflowAsLibrary(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -216,7 +216,7 @@ void API::removeWorkflowAsLibrary(
 
 		string responseBody;
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{

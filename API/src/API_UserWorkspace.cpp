@@ -23,7 +23,7 @@
 #include <stdexcept>
 #include <vector>
 
-void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData)
 {
 	string api = "registerUser";
@@ -313,7 +313,7 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -382,7 +382,7 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 }
 
 void API::createWorkspace(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -552,7 +552,7 @@ void API::createWorkspace(
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 			pair<string, string> emailAddressAndName = _mmsEngineDBFacade->getUserDetails(apiAuthorizationDetails->userKey);
 
@@ -623,7 +623,7 @@ void API::createWorkspace(
 }
 
 void API::shareWorkspace_(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -815,7 +815,7 @@ void API::shareWorkspace_(
 
 				string responseBody = JSONUtils::toString(registrationRoot);
 
-				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
@@ -882,7 +882,7 @@ void API::shareWorkspace_(
 
 				string responseBody = JSONUtils::toString(registrationRoot);
 
-				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
@@ -937,7 +937,7 @@ void API::shareWorkspace_(
 }
 
 void API::workspaceList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -960,7 +960,7 @@ void API::workspaceList(
 
 			string responseBody = JSONUtils::toString(workspaceListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -977,7 +977,7 @@ void API::workspaceList(
 }
 
 void API::confirmRegistration(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1007,7 +1007,7 @@ void API::confirmRegistration(
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 			string tosCommaSeparated = emailAddress;
 			string subject = "Welcome";
@@ -1062,7 +1062,7 @@ void API::confirmRegistration(
 	}
 }
 
-void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+void API::login(const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "login";
@@ -1424,7 +1424,7 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 
 			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -1455,7 +1455,7 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 }
 
 void API::updateUser(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -1626,7 +1626,7 @@ void API::updateUser(
 
 			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -1656,7 +1656,7 @@ void API::updateUser(
 	}
 }
 
-void API::createTokenToResetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData)
 {
 	string api = "createTokenToResetPassword";
@@ -1700,7 +1700,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 
 		try
 		{
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, "");
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, "");
 
 			string resetPasswordURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -1756,7 +1756,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 	}
 }
 
-void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData)
 {
 	string api = "resetPassword";
@@ -1839,7 +1839,7 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 
 		try
 		{
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, "");
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, "");
 
 			string tosCommaSeparated = email;
 			string subject = "Reset password";
@@ -1889,7 +1889,7 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 }
 
 void API::updateWorkspace(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2252,7 +2252,7 @@ void API::updateWorkspace(
 
 			string responseBody = JSONUtils::toString(workspaceDetailRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -2283,7 +2283,7 @@ void API::updateWorkspace(
 }
 
 void API::setWorkspaceAsDefault(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -2316,7 +2316,7 @@ void API::setWorkspaceAsDefault(
 
 			string responseBody;
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -2346,7 +2346,7 @@ void API::setWorkspaceAsDefault(
 }
 
 void API::deleteWorkspace(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "deleteWorkspace";
@@ -2467,7 +2467,7 @@ void API::deleteWorkspace(
 			);
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -2498,7 +2498,7 @@ void API::deleteWorkspace(
 }
 
 void API::unshareWorkspace(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "unshareWorkspace";
@@ -2568,7 +2568,7 @@ void API::unshareWorkspace(
 			}
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -2599,7 +2599,7 @@ void API::unshareWorkspace(
 }
 
 void API::workspaceUsage(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 
@@ -2642,7 +2642,7 @@ void API::workspaceUsage(
 		string responseBody = JSONUtils::toString(workspaceUsageRoot);
 		SPDLOG_INFO("AAAAAAAAAAAAA: {}", responseBody);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{

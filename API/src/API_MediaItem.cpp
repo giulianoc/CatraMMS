@@ -17,7 +17,7 @@
 #include "spdlog/spdlog.h"
 
 void API::updateMediaItem(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -125,7 +125,7 @@ void API::updateMediaItem(
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -156,7 +156,7 @@ void API::updateMediaItem(
 }
 
 void API::updatePhysicalPath(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -233,7 +233,7 @@ void API::updatePhysicalPath(
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -264,7 +264,7 @@ void API::updatePhysicalPath(
 }
 
 void API::mediaItemsList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -367,7 +367,7 @@ void API::mediaItemsList(
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 
 		SPDLOG_INFO(
@@ -390,7 +390,7 @@ void API::mediaItemsList(
 }
 
 void API::tagsList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -451,7 +451,7 @@ void API::tagsList(
 
 			string responseBody = JSONUtils::toString(tagsRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)

@@ -5,7 +5,7 @@
 #include <format>
 #include <regex>
 
-void API::createDeliveryAuthorization(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -136,7 +136,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, int64_t requ
 					+ ", \"maxRetries\": " + to_string(maxRetries)
 					+ " }";
 				*/
-				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
 		catch (exception &e)
@@ -164,7 +164,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, int64_t requ
 }
 
 void API::createBulkOfDeliveryAuthorization(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -501,7 +501,7 @@ void API::createBulkOfDeliveryAuthorization(
 				// 	responseBody
 				// );
 
-				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
 		catch (exception &e)
@@ -530,7 +530,7 @@ void API::createBulkOfDeliveryAuthorization(
 }
 
 void API::binaryAuthorization(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -636,7 +636,7 @@ void API::binaryAuthorization(
 			}
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
 	catch (exception &e)
 	{
@@ -653,7 +653,7 @@ void API::binaryAuthorization(
 }
 
 void API::deliveryAuthorizationThroughParameter(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -715,7 +715,7 @@ void API::deliveryAuthorizationThroughParameter(
 
 		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
 	catch (exception &e)
 	{
@@ -732,7 +732,7 @@ void API::deliveryAuthorizationThroughParameter(
 }
 
 void API::deliveryAuthorizationThroughPath(
-	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -760,7 +760,7 @@ void API::deliveryAuthorizationThroughPath(
 
 		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
 	catch (exception &e)
 	{

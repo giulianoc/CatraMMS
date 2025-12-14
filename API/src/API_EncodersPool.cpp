@@ -19,7 +19,7 @@
 #include <regex>
 
 void API::addEncoder(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -165,7 +165,7 @@ void API::addEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -182,7 +182,7 @@ void API::addEncoder(
 }
 
 void API::modifyEncoder(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -334,7 +334,7 @@ void API::modifyEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -351,7 +351,7 @@ void API::modifyEncoder(
 }
 
 void API::removeEncoder(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -398,7 +398,7 @@ void API::removeEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -414,7 +414,7 @@ void API::removeEncoder(
 }
 
 void API::encoderList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -486,7 +486,7 @@ void API::encoderList(
 
 			string responseBody = JSONUtils::toString(encoderListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -503,7 +503,7 @@ void API::encoderList(
 }
 
 void API::encodersPoolList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -559,7 +559,7 @@ void API::encodersPoolList(
 
 			string responseBody = JSONUtils::toString(encodersPoolListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -576,7 +576,7 @@ void API::encodersPoolList(
 }
 
 void API::addEncodersPool(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -666,7 +666,7 @@ void API::addEncodersPool(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -683,7 +683,7 @@ void API::addEncodersPool(
 }
 
 void API::modifyEncodersPool(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -776,7 +776,7 @@ void API::modifyEncodersPool(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -793,7 +793,7 @@ void API::modifyEncodersPool(
 }
 
 void API::removeEncodersPool(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -840,7 +840,7 @@ void API::removeEncodersPool(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -856,7 +856,7 @@ void API::removeEncodersPool(
 }
 
 void API::addAssociationWorkspaceEncoder(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -905,7 +905,7 @@ void API::addAssociationWorkspaceEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -921,7 +921,7 @@ void API::addAssociationWorkspaceEncoder(
 }
 
 void API::removeAssociationWorkspaceEncoder(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -970,7 +970,7 @@ void API::removeAssociationWorkspaceEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{

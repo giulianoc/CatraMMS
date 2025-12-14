@@ -17,7 +17,7 @@
 #include <regex>
 
 void API::addInvoice(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)
 {
 	string api = "addInvoice";
@@ -138,7 +138,7 @@ void API::addInvoice(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -155,7 +155,7 @@ void API::addInvoice(
 }
 
 void API::invoiceList(
-	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
 {
@@ -196,7 +196,7 @@ void API::invoiceList(
 			string responseBody;
 #endif
 
-			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
