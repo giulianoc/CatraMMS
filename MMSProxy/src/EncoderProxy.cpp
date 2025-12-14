@@ -1333,7 +1333,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 
 					_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 					*/
-					_mmsEngineDBFacade->appendIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, newErrorMessagesRoot);
+					_mmsEngineDBFacade->addIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, newErrorMessagesRoot);
 				}
 				catch (exception &e)
 				{
@@ -2089,7 +2089,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 						_mmsEngineDBFacade->appendIngestionJobErrorMessage(_encodingItem->_ingestionJobKey, firstLineOfEncodingErrorMessage);
 						*/
-						_mmsEngineDBFacade->appendIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, newErrorMessagesRoot);
+						_mmsEngineDBFacade->addIngestionJobErrorMessages(_encodingItem->_ingestionJobKey, newErrorMessagesRoot);
 					}
 
 					// update currentAttemptsNumberInCaseOfErrors++

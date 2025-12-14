@@ -6,6 +6,7 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
+#include <algorithm>
 #include <utility>
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
@@ -1333,7 +1334,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 	}
 }
 
-void MMSEngineDBFacade::appendIngestionJobErrorMessages(int64_t ingestionJobKey, const json& newErrorMessagesRoot)
+void MMSEngineDBFacade::addIngestionJobErrorMessages(int64_t ingestionJobKey, json& newErrorMessagesRoot)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -1347,12 +1348,14 @@ void MMSEngineDBFacade::appendIngestionJobErrorMessages(int64_t ingestionJobKey,
 		}
 		*/
 
+		// eseguo il reverse in modo che i messaggi di errore siano in ordine desc
+		ranges::reverse(newErrorMessagesRoot);
 		string newErrorMessages = getPostgresArray(newErrorMessagesRoot, true, trans);
 		{
 			// like: non lo uso per motivi di performance
 			string sqlStatement = std::format(
 				"UPDATE MMS_IngestionJob "
-				"SET errorMessages = COALESCE(errorMessages, ARRAY[]::text[]) || {} "
+				"SET errorMessages = {} || COALESCE(errorMessages, ARRAY[]::text[]) "
 				"where ingestionJobKey = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') ", // not like 'End_%' "
