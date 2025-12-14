@@ -20,21 +20,18 @@
 
 void API::addEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addEncoder";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin)
@@ -45,7 +42,7 @@ void API::addEncoder(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -60,7 +57,7 @@ void API::addEncoder(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -141,9 +138,9 @@ void API::addEncoder(
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what()
+				requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -168,16 +165,16 @@ void API::addEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -186,21 +183,18 @@ void API::addEncoder(
 
 void API::modifyEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyEncoder";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin)
@@ -211,7 +205,7 @@ void API::modifyEncoder(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -239,7 +233,7 @@ void API::modifyEncoder(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -308,9 +302,9 @@ void API::modifyEncoder(
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what()
+				requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -320,16 +314,7 @@ void API::modifyEncoder(
 		string sResponse;
 		try
 		{
-			int64_t encoderKey;
-			auto encoderKeyIt = queryParameters.find("encoderKey");
-			if (encoderKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'encoderKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encoderKey = stoll(encoderKeyIt->second);
+			int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
 
 			_mmsEngineDBFacade->modifyEncoder(
 				encoderKey, labelToBeModified, label, externalToBeModified, external, enabledToBeModified, enabled, protocolToBeModified, protocol,
@@ -349,16 +334,16 @@ void API::modifyEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -367,15 +352,12 @@ void API::modifyEncoder(
 
 void API::removeEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeEncoder";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -391,7 +373,7 @@ void API::removeEncoder(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -399,16 +381,7 @@ void API::removeEncoder(
 		string sResponse;
 		try
 		{
-			int64_t encoderKey;
-			auto encoderKeyIt = queryParameters.find("encoderKey");
-			if (encoderKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'encoderKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encoderKey = stoll(encoderKeyIt->second);
+			int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
 
 			_mmsEngineDBFacade->removeEncoder(encoderKey);
 
@@ -425,7 +398,7 @@ void API::removeEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -442,15 +415,12 @@ void API::removeEncoder(
 
 void API::encoderList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encoderList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -460,117 +430,53 @@ void API::encoderList(
 
 	try
 	{
-		int64_t encoderKey = -1;
-		auto encoderKeyIt = queryParameters.find("encoderKey");
-		if (encoderKeyIt != queryParameters.end() && !encoderKeyIt->second.empty())
+		int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1));
+
+		int32_t start = requestData.getQueryParameter("start", static_cast<int64_t>(0));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int64_t>(30));
+		if (rows > _maxPageSize)
 		{
-			encoderKey = stoll(encoderKeyIt->second);
-			// 2020-01-31: it was sent 0, it should return no rows but, since we have the below check and
-			//	it is changed to -1, the return is all the rows. Because of that it was commented
-			// if (liveURLKey == 0)
-			// 	liveURLKey = -1;
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage =
+				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
+			throw runtime_error(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
+		string label = requestData.getQueryParameter("label", "");
+
+		string serverName = requestData.getQueryParameter("serverName", "");
+
+		int32_t port = requestData.getQueryParameter("port", static_cast<int64_t>(-1));
+
+		string labelOrder = requestData.getQueryParameter("labelOrder", "");
+		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
-			start = stoll(startIt->second);
+			SPDLOG_WARN(
+				"encoderList: 'labelOrder' parameter is unknown"
+				", labelOrder: {}",
+				labelOrder
+			);
+			labelOrder = "";
 		}
 
-		int rows = 30;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
+		bool runningInfo = requestData.getQueryParameter("runningInfo", false);
 
-				// rows = _maxPageSize;
-
-				string errorMessage =
-					__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-				throw runtime_error(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && !labelIt->second.empty())
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string serverName;
-		auto serverNameIt = queryParameters.find("serverName");
-		if (serverNameIt != queryParameters.end() && !serverNameIt->second.empty())
-		{
-			serverName = serverNameIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(serverName, regex(plus), plusDecoded);
-
-			serverName = CurlWrapper::unescape(firstDecoding);
-		}
-
-		int port = -1;
-		auto portIt = queryParameters.find("port");
-		if (portIt != queryParameters.end() && !portIt->second.empty())
-		{
-			port = stoi(portIt->second);
-		}
-
-		string labelOrder;
-		auto labelOrderIt = queryParameters.find("labelOrder");
-		if (labelOrderIt != queryParameters.end() && !labelOrderIt->second.empty())
-		{
-			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
-				labelOrder = labelOrderIt->second;
-			else
-				SPDLOG_WARN(
-					"encoderList: 'labelOrder' parameter is unknown"
-					", labelOrder: {}",
-					labelOrderIt->second
-				);
-		}
-
-		bool runningInfo = false;
-		auto runningInfoIt = queryParameters.find("runningInfo");
-		if (runningInfoIt != queryParameters.end())
-			runningInfo = (runningInfoIt->second == "true" ? true : false);
-
-		bool allEncoders = false;
 		int64_t workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey;
+		bool allEncoders = false;
 		if (apiAuthorizationDetails->admin)
 		{
 			// in case of admin, from the GUI, it is needed to:
 			// - get the list of all encoders
 			// - encoders for a specific workspace
 
-			auto allEncodersIt = queryParameters.find("allEncoders");
-			if (allEncodersIt != queryParameters.end())
-				allEncoders = (allEncodersIt->second == "true" ? true : false);
-
-			auto workspaceKeyIt = queryParameters.find("workspaceKey");
-			if (workspaceKeyIt != queryParameters.end() && !workspaceKeyIt->second.empty())
-				workspaceKey = stoll(workspaceKeyIt->second);
+			allEncoders = requestData.getQueryParameter("allEncoders", false);
+			workspaceKey = requestData.getQueryParameter("workspaceKey", apiAuthorizationDetails->workspace->_workspaceKey);
 		}
 
 		{
@@ -580,7 +486,7 @@ void API::encoderList(
 
 			string responseBody = JSONUtils::toString(encoderListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -598,15 +504,12 @@ void API::encoderList(
 
 void API::encodersPoolList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encoderList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -616,72 +519,38 @@ void API::encodersPoolList(
 
 	try
 	{
-		int64_t encodersPoolKey = -1;
-		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
-		if (encodersPoolKeyIt != queryParameters.end() && !encodersPoolKeyIt->second.empty())
+		int64_t encodersPoolKey = requestData.getQueryParameter("encodersPoolKey", static_cast<int64_t>(-1));
+
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30));
+		if (rows > _maxPageSize)
 		{
-			encodersPoolKey = stoll(encodersPoolKeyIt->second);
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
+		string label = requestData.getQueryParameter("label", "");
+		string labelOrder = requestData.getQueryParameter("labelOrder", "");
+		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
-			start = stoll(startIt->second);
-		}
-
-		int rows = 30;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
-
-				// rows = _maxPageSize;
-
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && !labelIt->second.empty())
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string labelOrder;
-		auto labelOrderIt = queryParameters.find("labelOrder");
-		if (labelOrderIt != queryParameters.end() && !labelOrderIt->second.empty())
-		{
-			if (labelOrderIt->second == "asc" || labelOrderIt->second == "desc")
-				labelOrder = labelOrderIt->second;
-			else
-				SPDLOG_WARN(
-					"encodersPoolList: 'labelOrder' parameter is unknown"
-					", labelOrder: {}",
-					labelOrderIt->second
-				);
+			SPDLOG_WARN(
+				"encodersPoolList: 'labelOrder' parameter is unknown"
+				", labelOrder: {}",
+				labelOrder
+			);
+			labelOrder = "";
 		}
 
 		{
@@ -690,7 +559,7 @@ void API::encodersPoolList(
 
 			string responseBody = JSONUtils::toString(encodersPoolListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -708,21 +577,18 @@ void API::encodersPoolList(
 
 void API::addEncodersPool(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addEncodersPool";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
@@ -733,7 +599,7 @@ void API::addEncodersPool(
 			apiAuthorizationDetails->canEditEncodersPool
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -743,7 +609,7 @@ void API::addEncodersPool(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -774,8 +640,8 @@ void API::addEncodersPool(
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
-				", requestBody: {}",
-				requestBody
+				", requestData.requestBody: {}",
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -800,16 +666,16 @@ void API::addEncodersPool(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -818,21 +684,18 @@ void API::addEncodersPool(
 
 void API::modifyEncodersPool(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyEncodersPool";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
@@ -843,7 +706,7 @@ void API::modifyEncodersPool(
 			apiAuthorizationDetails->canEditEncodersPool
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -851,20 +714,11 @@ void API::modifyEncodersPool(
 		string label;
 		vector<int64_t> encoderKeys;
 
-		int64_t encodersPoolKey = -1;
-		auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
-		if (encodersPoolKeyIt == queryParameters.end())
-		{
-			string errorMessage = "The 'encodersPoolKey' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		encodersPoolKey = stoll(encodersPoolKeyIt->second);
+		int64_t encodersPoolKey = requestData.getQueryParameter("encodersPoolKey", static_cast<int64_t>(-1), true);
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -895,9 +749,9 @@ void API::modifyEncodersPool(
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what()
+				requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -922,16 +776,16 @@ void API::modifyEncodersPool(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -940,15 +794,12 @@ void API::modifyEncodersPool(
 
 void API::removeEncodersPool(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeEncodersPool";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -964,7 +815,7 @@ void API::removeEncodersPool(
 			apiAuthorizationDetails->canEditEncodersPool
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -972,16 +823,7 @@ void API::removeEncodersPool(
 		string sResponse;
 		try
 		{
-			int64_t encodersPoolKey;
-			auto encodersPoolKeyIt = queryParameters.find("encodersPoolKey");
-			if (encodersPoolKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'encodersPoolKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encodersPoolKey = stoll(encodersPoolKeyIt->second);
+			int64_t encodersPoolKey = requestData.getQueryParameter("encodersPoolKey", static_cast<int64_t>(-1), true);
 
 			_mmsEngineDBFacade->removeEncodersPool(encodersPoolKey);
 
@@ -998,7 +840,7 @@ void API::removeEncodersPool(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1015,15 +857,12 @@ void API::removeEncodersPool(
 
 void API::addAssociationWorkspaceEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addAssociationWorkspaceEncoder";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1039,7 +878,7 @@ void API::addAssociationWorkspaceEncoder(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -1047,27 +886,9 @@ void API::addAssociationWorkspaceEncoder(
 		string sResponse;
 		try
 		{
-			int64_t workspaceKey;
-			auto workspaceKeyIt = queryParameters.find("workspaceKey");
-			if (workspaceKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'workspaceKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
+			int64_t workspaceKey = requestData.getQueryParameter("workspaceKey", static_cast<int64_t>(-1), true);
 
-				throw runtime_error(errorMessage);
-			}
-			workspaceKey = stoll(workspaceKeyIt->second);
-
-			int64_t encoderKey;
-			auto encoderKeyIt = queryParameters.find("encoderKey");
-			if (encoderKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'encoderKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encoderKey = stoll(encoderKeyIt->second);
+			int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
 
 			_mmsEngineDBFacade->addAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 
@@ -1084,7 +905,7 @@ void API::addAssociationWorkspaceEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1101,15 +922,12 @@ void API::addAssociationWorkspaceEncoder(
 
 void API::removeAssociationWorkspaceEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeAssociationWorkspaceEncoder";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1125,7 +943,7 @@ void API::removeAssociationWorkspaceEncoder(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -1133,27 +951,9 @@ void API::removeAssociationWorkspaceEncoder(
 		string sResponse;
 		try
 		{
-			int64_t workspaceKey;
-			auto workspaceKeyIt = queryParameters.find("workspaceKey");
-			if (workspaceKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'workspaceKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
+			int64_t workspaceKey = requestData.getQueryParameter("workspaceKey", static_cast<int64_t>(-1), true);
 
-				throw runtime_error(errorMessage);
-			}
-			workspaceKey = stoll(workspaceKeyIt->second);
-
-			int64_t encoderKey;
-			auto encoderKeyIt = queryParameters.find("encoderKey");
-			if (encoderKeyIt == queryParameters.end())
-			{
-				string errorMessage = "The 'encoderKey' parameter is not found";
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			encoderKey = stoll(encoderKeyIt->second);
+			int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1), true);
 
 			_mmsEngineDBFacade->removeAssociationWorkspaceEncoder(workspaceKey, encoderKey);
 
@@ -1170,7 +970,7 @@ void API::removeAssociationWorkspaceEncoder(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{

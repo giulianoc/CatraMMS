@@ -32,21 +32,18 @@
 
 void API::ingestion(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "ingestion";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canIngestWorkflow)
@@ -57,14 +54,14 @@ void API::ingestion(
 			apiAuthorizationDetails->canIngestWorkflow
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	json responseBodyRoot;
 	chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 	try
 	{
-		json requestBodyRoot = manageWorkflowVariables(requestBody, nullptr);
+		json requestBodyRoot = manageWorkflowVariables(requestData.requestBody, nullptr);
 
 		// string responseBody;
 		json responseBodyTasksRoot = json::array();
@@ -115,7 +112,7 @@ void API::ingestion(
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
 				_mmsEngineDBFacade->addWorkflow(trans, apiAuthorizationDetails->workspace->_workspaceKey, apiAuthorizationDetails->userKey, rootType, rootLabel, rootHidden,
-					requestBody);
+					requestData.requestBody);
 #else
 			int64_t ingestionRootKey =
 				_mmsEngineDBFacade->addIngestionRoot(conn, apiAuthorizationDetails->workspace->_workspaceKey, apiAuthorizationDetails->userKey, rootType, rootLabel, requestBody.c_str());
@@ -245,9 +242,9 @@ void API::ingestion(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -256,7 +253,7 @@ void API::ingestion(
 	{
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
 		SPDLOG_INFO(
@@ -270,9 +267,9 @@ void API::ingestion(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -286,7 +283,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 	{
 		SPDLOG_INFO(
 			"manageWorkflowVariables"
-			", requestBody: {}",
+			", requestData.requestBody: {}",
 			requestBody
 		);
 
@@ -585,7 +582,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 	{
 		string errorMessage = std::format(
 			"requestBody json is not well format"
-			", requestBody: {}",
+			", requestData.requestBody: {}",
 			requestBody
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -2848,15 +2845,12 @@ void API::ingestionEvents(
 
 void API::uploadedBinary(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "uploadedBinary";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	try
 	{
@@ -2868,27 +2862,11 @@ void API::uploadedBinary(
 			throw runtime_error(errorMessage);
 		}
 
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end())
-		{
-			string errorMessage = string("'ingestionJobKey' URI parameter is missing");
-			SPDLOG_ERROR(errorMessage);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		int64_t ingestionJobKey = stoll(ingestionJobKeyIt->second);
-
-		auto binaryPathFileIt = requestDetails.find("HTTP_X_FILE");
-		if (binaryPathFileIt == requestDetails.end())
-		{
-			string errorMessage = string("'HTTP_X_FILE' item is missing");
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		// sourceBinaryPathFile will be something like:
 		// /var/catramms/storage/nginxWorkingAreaRepository/0000001023
-		string sourceBinaryPathFile = binaryPathFileIt->second;
+		string sourceBinaryPathFile = requestData.getHeaderParameter("x-file", string(""), true);
 
 		// Content-Range: bytes 0-99999/100000
 		bool contentRangePresent = false;
@@ -2896,13 +2874,12 @@ void API::uploadedBinary(
 		uint64_t contentRangeEnd = -1;
 		uint64_t contentRangeSize = -1;
 		double uploadingProgress = 0.0;
-		auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
-		if (contentRangeIt != requestDetails.end())
+		string contentRange = requestData.getHeaderParameter("content-range", string(""));
+		if (!contentRange.empty())
 		{
-			string contentRange = contentRangeIt->second;
 			try
 			{
-				parseContentRange(contentRange, contentRangeStart, contentRangeEnd, contentRangeSize);
+				FCGIRequestData::parseContentRange(contentRange, contentRangeStart, contentRangeEnd, contentRangeSize);
 
 				// X : 100 = contentRangeEnd : contentRangeSize
 				uploadingProgress = 100 * contentRangeEnd / contentRangeSize;
@@ -3275,7 +3252,7 @@ void API::uploadedBinary(
 		}
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception e)
 	{
@@ -3623,131 +3600,63 @@ void API::fileUploadProgressCheckThread()
 
 void API::ingestionRootsStatus(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "ingestionRootsStatus";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionRootKey = -1;
-		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-		if (ingestionRootKeyIt != queryParameters.end() && !ingestionRootKeyIt->second.empty())
-			ingestionRootKey = stoll(ingestionRootKeyIt->second);
+		int64_t ingestionRootKey = requestData.getQueryParameter("ingestionRootKey", static_cast<int64_t>(-1), false);
 
-		int64_t mediaItemKey = -1;
-		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt != queryParameters.end() && !mediaItemKeyIt->second.empty())
-			mediaItemKey = stoll(mediaItemKeyIt->second);
+		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
-			start = stoll(startIt->second);
+		int32_t start = requestData.getQueryParameter("start", static_cast<int64_t>(0), false);
 
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int64_t>(10), false);
+		if (rows > _maxPageSize)
 		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return
-				// is much less
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return
+			// is much less
 
-				// rows = _maxPageSize;
+			// rows = _maxPageSize;
 
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
 
-				throw runtime_error(errorMessage);
-			}
+			throw runtime_error(errorMessage);
 		}
 
-		string startIngestionDate;
-		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-		if (startIngestionDateIt != queryParameters.end())
-			startIngestionDate = startIngestionDateIt->second;
+		string startIngestionDate = requestData.getQueryParameter("startIngestionDate", "", false);
 
-		string endIngestionDate;
-		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-		if (endIngestionDateIt != queryParameters.end())
-			endIngestionDate = endIngestionDateIt->second;
+		string endIngestionDate = requestData.getQueryParameter("endIngestionDate", "", false);
 
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && !labelIt->second.empty())
-		{
-			label = labelIt->second;
+		string label = requestData.getQueryParameter("label", "", false);
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+		string status = requestData.getQueryParameter("status", "all", false);
 
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		bool hiddenToo = requestData.getQueryParameter("hiddenToo", true, false);
 
-		string status = "all";
-		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && !statusIt->second.empty())
-		{
-			status = statusIt->second;
-		}
+		bool asc = requestData.getQueryParameter("asc", true, false);
 
-		bool hiddenToo = getQueryParameter(queryParameters, "hiddenToo", true, false);
+		bool ingestionJobOutputs = requestData.getQueryParameter("ingestionJobOutputs", true, false);
 
-		bool asc = true;
-		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && !ascIt->second.empty())
-		{
-			if (ascIt->second == "true")
-				asc = true;
-			else
-				asc = false;
-		}
-
-		bool ingestionJobOutputs = true;
-		auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
-		if (ingestionJobOutputsIt != queryParameters.end() && !ingestionJobOutputsIt->second.empty())
-		{
-			if (ingestionJobOutputsIt->second == "true")
-				ingestionJobOutputs = true;
-			else
-				ingestionJobOutputs = false;
-		}
-
-		bool dependencyInfo = true;
-		auto dependencyInfoIt = queryParameters.find("dependencyInfo");
-		if (dependencyInfoIt != queryParameters.end() && !dependencyInfoIt->second.empty())
-		{
-			if (dependencyInfoIt->second == "true")
-				dependencyInfo = true;
-			else
-				dependencyInfo = false;
-		}
+		bool dependencyInfo = requestData.getQueryParameter("dependencyInfo", true, false);
 
 		{
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionRootsStatus(
@@ -3761,7 +3670,7 @@ void API::ingestionRootsStatus(
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3769,9 +3678,9 @@ void API::ingestionRootsStatus(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3779,40 +3688,25 @@ void API::ingestionRootsStatus(
 
 void API::ingestionRootMetaDataContent(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "ingestionRootMetaDataContent";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionRootKey = -1;
-		auto ingestionRootKeyIt = queryParameters.find("ingestionRootKey");
-		if (ingestionRootKeyIt == queryParameters.end() || ingestionRootKeyIt->second.empty())
-		{
-			string errorMessage = "The 'ingestionRootKey' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
+		int64_t ingestionRootKey = requestData.getQueryParameter("ingestionRootKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		ingestionRootKey = stoll(ingestionRootKeyIt->second);
-
-		bool processedMetadata = false;
-		auto processedMetadataIt = queryParameters.find("processedMetadata");
-		if (processedMetadataIt != queryParameters.end() && !processedMetadataIt->second.empty())
-			processedMetadata = (processedMetadataIt->second == "true" ? true : false);
+		bool processedMetadata = requestData.getQueryParameter("processedMetadata", false);
 
 		{
 			string ingestionRootMetaDataContent;
@@ -3840,7 +3734,7 @@ void API::ingestionRootMetaDataContent(
 			);
 			*/
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, ingestionRootMetaDataContent);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, ingestionRootMetaDataContent);
 		}
 	}
 	catch (exception &e)
@@ -3848,9 +3742,9 @@ void API::ingestionRootMetaDataContent(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3858,232 +3752,81 @@ void API::ingestionRootMetaDataContent(
 
 void API::ingestionJobsStatus(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
+	SPDLOG_INFO("CCCCCCCCCCC");
 	string api = "ingestionJobsStatus";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt != queryParameters.end() && !ingestionJobKeyIt->second.empty())
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1));
+
+		int32_t start = requestData.getQueryParameter("start", static_cast<int64_t>(0));
+
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int64_t>(10));
+		if (rows > _maxPageSize)
 		{
-			ingestionJobKey = stoll(ingestionJobKeyIt->second);
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return
+			// is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
-		{
-			start = stoll(startIt->second);
-		}
+		string label = requestData.getQueryParameter("label", "");
 
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return
-				// is much less
+		bool labelLike = requestData.getQueryParameter("labelLike", true);
 
-				// rows = _maxPageSize;
+		string startIngestionDate = requestData.getQueryParameter("startIngestionDate", "");
+		string endIngestionDate = requestData.getQueryParameter("endIngestionDate", "");
 
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
+		string startScheduleDate = requestData.getQueryParameter("startScheduleDate", "");
 
-				throw runtime_error(errorMessage);
-			}
-		}
+		string ingestionType = requestData.getQueryParameter("ingestionType", "");
 
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
+		bool asc = requestData.getQueryParameter("asc", true);
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
+		bool ingestionJobOutputs = requestData.getQueryParameter("ingestionJobOutputs", true);
 
-			label = CurlWrapper::unescape(firstDecoding);
-		}
-
-		bool labelLike = true;
-		auto labelLikeIt = queryParameters.find("labelLike");
-		if (labelLikeIt != queryParameters.end() && !labelLikeIt->second.empty())
-		{
-			labelLike = (labelLikeIt->second == "true" ? true : false);
-		}
-
-		string startIngestionDate;
-		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-		if (startIngestionDateIt != queryParameters.end())
-			startIngestionDate = startIngestionDateIt->second;
-
-		string endIngestionDate;
-		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-		if (endIngestionDateIt != queryParameters.end())
-			endIngestionDate = endIngestionDateIt->second;
-
-		string startScheduleDate;
-		auto startScheduleDateIt = queryParameters.find("startScheduleDate");
-		if (startScheduleDateIt != queryParameters.end())
-			startScheduleDate = startScheduleDateIt->second;
-
-		string ingestionType;
-		auto ingestionTypeIt = queryParameters.find("ingestionType");
-		if (ingestionTypeIt != queryParameters.end() && !ingestionTypeIt->second.empty())
-		{
-			ingestionType = ingestionTypeIt->second;
-		}
-
-		bool asc = true;
-		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && !ascIt->second.empty())
-		{
-			if (ascIt->second == "true")
-				asc = true;
-			else
-				asc = false;
-		}
-
-		bool ingestionJobOutputs = true;
-		auto ingestionJobOutputsIt = queryParameters.find("ingestionJobOutputs");
-		if (ingestionJobOutputsIt != queryParameters.end() && !ingestionJobOutputsIt->second.empty())
-		{
-			if (ingestionJobOutputsIt->second == "true")
-				ingestionJobOutputs = true;
-			else
-				ingestionJobOutputs = false;
-		}
-
-		bool dependencyInfo = true;
-		auto dependencyInfoIt = queryParameters.find("dependencyInfo");
-		if (dependencyInfoIt != queryParameters.end() && !dependencyInfoIt->second.empty())
-		{
-			if (dependencyInfoIt->second == "true")
-				dependencyInfo = true;
-			else
-				dependencyInfo = false;
-		}
+		bool dependencyInfo = requestData.getQueryParameter("dependencyInfo", true);
 
 		// used in case of live-proxy
-		string configurationLabel;
-		auto configurationLabelIt = queryParameters.find("configurationLabel");
-		if (configurationLabelIt != queryParameters.end() && !configurationLabelIt->second.empty())
-		{
-			configurationLabel = configurationLabelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(configurationLabel, regex(plus), plusDecoded);
-
-			configurationLabel = CurlWrapper::unescape(firstDecoding);
-		}
+		string configurationLabel = requestData.getQueryParameter("configurationLabel", "");
 
 		// used in case of live-grid
-		string outputChannelLabel;
-		auto outputChannelLabelIt = queryParameters.find("outputChannelLabel");
-		if (outputChannelLabelIt != queryParameters.end() && !outputChannelLabelIt->second.empty())
-		{
-			outputChannelLabel = outputChannelLabelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(outputChannelLabel, regex(plus), plusDecoded);
-
-			outputChannelLabel = CurlWrapper::unescape(firstDecoding);
-		}
+		string outputChannelLabel = requestData.getQueryParameter("outputChannelLabel", "");
 
 		// used in case of live-recorder
-		int64_t recordingCode = -1;
-		auto recordingCodeIt = queryParameters.find("recordingCode");
-		if (recordingCodeIt != queryParameters.end() && !recordingCodeIt->second.empty())
-		{
-			recordingCode = stoll(recordingCodeIt->second);
-		}
+		int64_t recordingCode = requestData.getQueryParameter("recordingCode", static_cast<int64_t>(-1));
 
 		// used in case of broadcaster
-		bool broadcastIngestionJobKeyNotNull = false;
-		auto broadcastIngestionJobKeyNotNullIt = queryParameters.find("broadcastIngestionJobKeyNotNull");
-		if (broadcastIngestionJobKeyNotNullIt != queryParameters.end() && !broadcastIngestionJobKeyNotNullIt->second.empty())
-		{
-			if (broadcastIngestionJobKeyNotNullIt->second == "true")
-				broadcastIngestionJobKeyNotNull = true;
-			else
-				broadcastIngestionJobKeyNotNull = false;
-		}
+		bool broadcastIngestionJobKeyNotNull = requestData.getQueryParameter("broadcastIngestionJobKeyNotNull", false);
 
-		string jsonParametersCondition;
-		auto jsonParametersConditionIt = queryParameters.find("jsonParametersCondition");
-		if (jsonParametersConditionIt != queryParameters.end() && !jsonParametersConditionIt->second.empty())
-		{
-			jsonParametersCondition = jsonParametersConditionIt->second;
+		string jsonParametersCondition = requestData.getQueryParameter("jsonParametersCondition", "");
 
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then
-			// apply unescape
-			//	That  because if we have really a + char (%2B into the string),
-			// and we do the replace 	after unescape, this char will be
-			// changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(jsonParametersCondition, regex(plus), plusDecoded);
+		string status = requestData.getQueryParameter("status", "all");
 
-			jsonParametersCondition = CurlWrapper::unescape(firstDecoding);
-		}
-
-		string status = "all";
-		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && !statusIt->second.empty())
-		{
-			status = statusIt->second;
-		}
-
-		bool fromMaster = false;
-		auto fromMasterIt = queryParameters.find("fromMaster");
-		if (fromMasterIt != queryParameters.end() && !fromMasterIt->second.empty())
-		{
-			if (fromMasterIt->second == "true")
-				fromMaster = true;
-			else
-				fromMaster = false;
-		}
+		bool fromMaster = requestData.getQueryParameter("fromMaster", false);
 
 		{
 			json ingestionStatusRoot = _mmsEngineDBFacade->getIngestionJobsStatus(
@@ -4095,7 +3838,7 @@ void API::ingestionJobsStatus(
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -4103,9 +3846,9 @@ void API::ingestionJobsStatus(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4113,21 +3856,18 @@ void API::ingestionJobsStatus(
 
 void API::cancelIngestionJob(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "API::cancelIngestionJob";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCancelIngestionJob)
@@ -4138,21 +3878,12 @@ void API::cancelIngestionJob(
 			apiAuthorizationDetails->canCancelIngestionJob
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
-		{
-			string errorMessage = "The 'ingestionJobKey' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		/*
 		 * This forceCancel parameter was added because of this Scenario:
@@ -4190,15 +3921,7 @@ void API::cancelIngestionJob(
 		 *
 		 *
 		 */
-		bool forceCancel = false;
-		auto forceCancelIt = queryParameters.find("forceCancel");
-		if (forceCancelIt != queryParameters.end() && !forceCancelIt->second.empty())
-		{
-			if (forceCancelIt->second == "true")
-				forceCancel = true;
-			else
-				forceCancel = false;
-		}
+		bool forceCancel = requestData.getQueryParameter("forceCancel", false);
 
 		MMSEngineDBFacade::IngestionStatus ingestionStatus = _mmsEngineDBFacade->ingestionJob_Status(
 			apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey,
@@ -4232,16 +3955,16 @@ void API::cancelIngestionJob(
 			_mmsEngineDBFacade->forceCancelEncodingJob(ingestionJobKey);
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4249,21 +3972,18 @@ void API::cancelIngestionJob(
 
 void API::updateIngestionJob(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "updateIngestionJob";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
@@ -4274,21 +3994,12 @@ void API::updateIngestionJob(
 			apiAuthorizationDetails->canEditMedia
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		int64_t ingestionJobKey = -1;
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
-		{
-			string errorMessage = "'ingestionJobKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		ingestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		try
 		{
@@ -4319,7 +4030,7 @@ void API::updateIngestionJob(
 				throw runtime_error(errorMessage);
 			}
 
-			json metadataRoot = JSONUtils::toJson(requestBody);
+			json metadataRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "IngestionType";
 			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
@@ -4441,7 +4152,7 @@ void API::updateIngestionJob(
 
 			string responseBody = JSONUtils::toString(responseRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -4460,9 +4171,9 @@ void API::updateIngestionJob(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4470,15 +4181,12 @@ void API::updateIngestionJob(
 
 void API::ingestionJobSwitchToEncoder(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "ingestionJobSwitchToEncoder";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -4494,22 +4202,22 @@ void API::ingestionJobSwitchToEncoder(
 			apiAuthorizationDetails->canEditMedia
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		// mandatory nel caso di broadcaster, servono:
 		// 	- newPushEncoderKey e newPushPublicEncoderName per lo switch del broadcaster
 		// 	- newEncodersPoolLabel per lo switch del broadcast
 		// mandatory nel caso di Live-Proxy or VOD-Proxy or CountdownProxy, serve:
 		// 	- newEncodersPoolLabel
-		int64_t newPushEncoderKey = getQueryParameter(queryParameters, "newPushEncoderKey", static_cast<int64_t>(-1), false);
+		int64_t newPushEncoderKey = requestData.getQueryParameter("newPushEncoderKey", static_cast<int64_t>(-1), false);
 		// newPushPublicEncoderName: indica se bisogna usare l'IP pubblico o quello interno/privato
-		bool newPushPublicEncoderName = getQueryParameter(queryParameters, "newPushPublicEncoderName", false, false);
-		string newEncodersPoolLabel = getQueryParameter(queryParameters, "newEncodersPoolLabel", string(""), false);
+		bool newPushPublicEncoderName = requestData.getQueryParameter("newPushPublicEncoderName", false, false);
+		string newEncodersPoolLabel = requestData.getQueryParameter("newEncodersPoolLabel", string(""), false);
 
 		SPDLOG_INFO(
 			"ingestionJobSwitchToEncoder"
@@ -4774,7 +4482,7 @@ void API::ingestionJobSwitchToEncoder(
 		}
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -4790,34 +4498,31 @@ void API::ingestionJobSwitchToEncoder(
 
 void API::changeLiveProxyPlaylist(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "changeLiveProxyPlaylist";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t broadcasterIngestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", -1, true, nullptr);
-		bool interruptPlaylist = getQueryParameter(queryParameters, "interruptPlaylist", false, false, nullptr);
+		int64_t broadcasterIngestionJobKey = requestData.getQueryParameter("ingestionJobKey", -1, true, nullptr);
+		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false, nullptr);
 
 		SPDLOG_INFO(
 			"Received {}"
 			", broadcasterIngestionJobKey: {}"
 			", interruptPlaylist: {}"
-			", requestBody: {}",
-			api, broadcasterIngestionJobKey, interruptPlaylist, requestBody
+			", requestData.requestBody: {}",
+			api, broadcasterIngestionJobKey, interruptPlaylist, requestData.requestBody
 		);
 
 		// next try/catch initialize the belows parameters using the broadcaster info
@@ -5241,7 +4946,7 @@ void API::changeLiveProxyPlaylist(
 		json newPlaylistRoot = json::array();
 		try
 		{
-			json newReceivedPlaylistRoot = JSONUtils::toJson(requestBody);
+			json newReceivedPlaylistRoot = JSONUtils::toJson(requestData.requestBody);
 
 			// check the received playlist
 			// in case of vodInput/countdownInput, the physicalPathKey is
@@ -5302,7 +5007,7 @@ void API::changeLiveProxyPlaylist(
 									"No source is present"
 									", broadcasterIngestionJobKey: {}"
 									", json data: {}",
-									broadcasterIngestionJobKey, requestBody
+									broadcasterIngestionJobKey, requestData.requestBody
 								);
 								SPDLOG_ERROR(errorMessage);
 
@@ -5323,7 +5028,7 @@ void API::changeLiveProxyPlaylist(
 								// field = "physicalPathKey";
 								if (!JSONUtils::isMetadataPresent(sourceRoot, "physicalPathKey"))
 								{
-									string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestBody);
+									string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestData.requestBody);
 									SPDLOG_ERROR(errorMessage);
 
 									throw runtime_error(errorMessage);
@@ -5458,7 +5163,7 @@ void API::changeLiveProxyPlaylist(
 							// field = "physicalPathKey";
 							if (!JSONUtils::isMetadataPresent(countdownInputRoot, "physicalPathKey"))
 							{
-								string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestBody);
+								string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestData.requestBody);
 								SPDLOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
@@ -6132,7 +5837,7 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -6153,9 +5858,9 @@ void API::changeLiveProxyPlaylist(
 	{
 		SPDLOG_ERROR(
 			"{} failed"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -6163,34 +5868,23 @@ void API::changeLiveProxyPlaylist(
 
 void API::changeLiveProxyOverlayText(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "changeLiveProxyOverlayText";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		auto ingestionJobKeyIt = queryParameters.find("ingestionJobKey");
-		if (ingestionJobKeyIt == queryParameters.end() || ingestionJobKeyIt->second.empty())
-		{
-			string errorMessage = "'ingestionJobKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t broadcasterIngestionJobKey = stoll(ingestionJobKeyIt->second);
+		int64_t broadcasterIngestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		SPDLOG_INFO("{}, broadcasterIngestionJobKey: {}", api, broadcasterIngestionJobKey);
 
@@ -6272,7 +5966,7 @@ void API::changeLiveProxyOverlayText(
 				vector<string> otherHeaders;
 				CurlWrapper::httpPutStringAndGetJson(
 					ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
-					string(requestBody),
+					string(requestData.requestBody),
 					"text/plain", // contentType
 					otherHeaders, std::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 				);
@@ -6292,16 +5986,16 @@ void API::changeLiveProxyOverlayText(
 		}
 
 		string responseBody;
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}

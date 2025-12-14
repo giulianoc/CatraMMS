@@ -18,21 +18,18 @@
 
 void API::updateMediaItem(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "updateMediaItem";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
@@ -43,23 +40,14 @@ void API::updateMediaItem(
 			apiAuthorizationDetails->canEditMedia
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		int64_t mediaItemKey = -1;
-		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second.empty())
-		{
-			string errorMessage = "'mediaItemKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
+		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		mediaItemKey = stoll(mediaItemKeyIt->second);
-
-		json metadataRoot = JSONUtils::toJson(requestBody);
+		json metadataRoot = JSONUtils::toJson(requestData.requestBody);
 
 		bool titleModified = false;
 		string newTitle;
@@ -137,16 +125,16 @@ void API::updateMediaItem(
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -158,9 +146,9 @@ void API::updateMediaItem(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -169,21 +157,18 @@ void API::updateMediaItem(
 
 void API::updatePhysicalPath(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "updatePhysicalPath";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditMedia)
@@ -194,36 +179,17 @@ void API::updatePhysicalPath(
 			apiAuthorizationDetails->canEditMedia
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
 		int64_t newRetentionInMinutes;
 
-		int64_t mediaItemKey = -1;
-		auto mediaItemKeyIt = queryParameters.find("mediaItemKey");
-		if (mediaItemKeyIt == queryParameters.end() || mediaItemKeyIt->second.empty())
-		{
-			string errorMessage = "'mediaItemKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
+		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), true);
+		int64_t physicalPathKey = requestData.getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		mediaItemKey = stoll(mediaItemKeyIt->second);
-
-		int64_t physicalPathKey = -1;
-		auto physicalPathKeyIt = queryParameters.find("physicalPathKey");
-		if (physicalPathKeyIt == queryParameters.end() || physicalPathKeyIt->second.empty())
-		{
-			string errorMessage = "'physicalPathKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		physicalPathKey = stoll(physicalPathKeyIt->second);
-
-		json metadataRoot = JSONUtils::toJson(requestBody);
+		json metadataRoot = JSONUtils::toJson(requestData.requestBody);
 
 		{
 			vector<string> mandatoryFields = {"RetentionInMinutes"};
@@ -267,16 +233,16 @@ void API::updatePhysicalPath(
 
 			string responseBody = JSONUtils::toString(mediaItemRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -288,9 +254,9 @@ void API::updatePhysicalPath(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -299,42 +265,39 @@ void API::updatePhysicalPath(
 
 void API::mediaItemsList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "mediaItemsList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
 		chrono::system_clock::time_point startAPI = chrono::system_clock::now();
 
-		int64_t mediaItemKey = getQueryParameter(queryParameters, "mediaItemKey", static_cast<int64_t>(-1), false);
+		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
 		// client could send 0 (see CatraMMSAPI::getMEdiaItem) in case it does not have mediaItemKey
 		// but other parameters
 		if (mediaItemKey == 0)
 			mediaItemKey = -1;
 
-		string uniqueName = getQueryParameter(queryParameters, "uniqueName", string(), false);
+		string uniqueName = requestData.getQueryParameter("uniqueName", string(), false);
 
-		int64_t physicalPathKey = getQueryParameter(queryParameters, "physicalPathKey", static_cast<int64_t>(-1), false);
+		int64_t physicalPathKey = requestData.getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), false);
 		if (physicalPathKey == 0)
 			physicalPathKey = -1;
 
-		int32_t start = getQueryParameter(queryParameters, "start", static_cast<int32_t>(0), false);
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0), false);
 
-		int32_t rows = getQueryParameter(queryParameters, "rows", static_cast<int32_t>(10), false);
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(10), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -353,7 +316,7 @@ void API::mediaItemsList(
 			throw runtime_error(errorMessage);
 		}
 
-		string sContentType = getQueryParameter(queryParameters, "contentType", string(), false);
+		string sContentType = requestData.getQueryParameter("contentType", string(), false);
 		bool contentTypePresent = false;
 		MMSEngineDBFacade::ContentType contentType;
 		if (!sContentType.empty())
@@ -368,34 +331,26 @@ void API::mediaItemsList(
 		 *  0: look for NO liveRecordingChunk (default)
 		 *  1: look for liveRecordingChunk
 		 */
-		int liveRecordingChunk = 0;
-		auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
-		if (liveRecordingChunkIt != queryParameters.end() && !liveRecordingChunkIt->second.empty())
-		{
-			if (liveRecordingChunkIt->second == "true")
-				liveRecordingChunk = 1;
-			else if (liveRecordingChunkIt->second == "false")
-				liveRecordingChunk = 0;
-		}
+		int32_t liveRecordingChunk = requestData.getQueryParameter("liveRecordingChunk", false) == false ? 0 : 1;
 
-		string startIngestionDate = getQueryParameter(queryParameters, "startIngestionDate", string(), false);
+		string startIngestionDate = requestData.getQueryParameter("startIngestionDate", string(), false);
 
-		string endIngestionDate = getQueryParameter(queryParameters, "endIngestionDate", string(), false);
+		string endIngestionDate = requestData.getQueryParameter("endIngestionDate", string(), false);
 
-		string title = getQueryParameter(queryParameters, "title", string(), false);
+		string title = requestData.getQueryParameter("title", string(), false);
 
-		vector<string> tagsIn = getQueryParameter(queryParameters, "tagsIn", ',', vector<string>(), false);
-		vector<string> tagsNotIn = getQueryParameter(queryParameters, "tagsNotIn", ',', vector<string>(), false);
-		vector<int64_t> otherMediaItemsKey = getQueryParameter(queryParameters, "otherMIKs", ',', vector<int64_t>(), false);
-		set<string> responseFields = getQueryParameter(queryParameters, "responseFields", ',', set<string>(), false);
+		vector<string> tagsIn = requestData.getQueryParameter("tagsIn", ',', vector<string>(), false);
+		vector<string> tagsNotIn = requestData.getQueryParameter("tagsNotIn", ',', vector<string>(), false);
+		vector<int64_t> otherMediaItemsKey = requestData.getQueryParameter("otherMIKs", ',', vector<int64_t>(), false);
+		set<string> responseFields = requestData.getQueryParameter("responseFields", ',', set<string>(), false);
 
-		int64_t recordingCode = getQueryParameter(queryParameters, "recordingCode", static_cast<int64_t>(-1), false);
+		int64_t recordingCode = requestData.getQueryParameter("recordingCode", static_cast<int64_t>(-1), false);
 
-		string jsonCondition = getQueryParameter(queryParameters, "jsonCondition", string(), false);
+		string jsonCondition = requestData.getQueryParameter("jsonCondition", string(), false);
 
-		string orderBy = getQueryParameter(queryParameters, "orderBy", string(), false);
+		string orderBy = requestData.getQueryParameter("orderBy", string(), false);
 
-		string jsonOrderBy = getQueryParameter(queryParameters, "jsonOrderBy", string(), false);
+		string jsonOrderBy = requestData.getQueryParameter("jsonOrderBy", string(), false);
 
 		{
 			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
@@ -412,7 +367,7 @@ void API::mediaItemsList(
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 
 		SPDLOG_INFO(
@@ -425,9 +380,9 @@ void API::mediaItemsList(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -436,70 +391,48 @@ void API::mediaItemsList(
 
 void API::tagsList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "tagsList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(10));
+		if (rows > _maxPageSize)
 		{
-			start = stoll(startIt->second);
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
-
-				// rows = _maxPageSize;
-
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		bool contentTypePresent = false;
 		optional<MMSEngineDBFacade::ContentType> contentType;
-		auto contentTypeIt = queryParameters.find("contentType");
-		if (contentTypeIt != queryParameters.end() && !contentTypeIt->second.empty())
-		{
-			contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+		optional<string> sContentType = requestData.getOptQueryParameter<string>("contentType");
+		if (sContentType)
+			contentType = MMSEngineDBFacade::toContentType(*sContentType);
 
-			contentTypePresent = true;
-		}
-
-		string tagNameFilter;
-		auto tagNameFilterIt = queryParameters.find("tagNameFilter");
-		if (tagNameFilterIt != queryParameters.end() && !tagNameFilterIt->second.empty())
-			tagNameFilter = tagNameFilterIt->second;
+		string tagNameFilter = requestData.getQueryParameter("tagNameFilter", "");
 
 		/*
 		 * liveRecordingChunk:
@@ -507,15 +440,7 @@ void API::tagsList(
 		 *  0: look for NO liveRecordingChunk (default)
 		 *  1: look for liveRecordingChunk
 		 */
-		int liveRecordingChunk = 0;
-		auto liveRecordingChunkIt = queryParameters.find("liveRecordingChunk");
-		if (liveRecordingChunkIt != queryParameters.end() && !liveRecordingChunkIt->second.empty())
-		{
-			if (liveRecordingChunkIt->second == "true")
-				liveRecordingChunk = 1;
-			else if (liveRecordingChunkIt->second == "false")
-				liveRecordingChunk = 0;
-		}
+		int32_t liveRecordingChunk = requestData.getQueryParameter("liveRecordingChunk", false) == false ? 0 : 1;
 
 		{
 			json tagsRoot = _mmsEngineDBFacade->getTagsList(
@@ -526,7 +451,7 @@ void API::tagsList(
 
 			string responseBody = JSONUtils::toString(tagsRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -534,9 +459,9 @@ void API::tagsList(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;

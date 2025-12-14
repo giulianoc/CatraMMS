@@ -5,17 +5,13 @@
 #include <format>
 #include <regex>
 
-void API::createDeliveryAuthorization(
-const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+void API::createDeliveryAuthorization(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
+	const FCGIRequestData& requestData
 )
 {
 	string api = "createDeliveryAuthorization";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -27,10 +23,8 @@ const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 			apiAuthorizationDetails->canDeliveryAuthorization
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
-
-	string clientIPAddress = getClientIPAddress(requestDetails);
 
 	try
 	{
@@ -38,32 +32,32 @@ const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 		// - ci sia un sistema intermedio tra i veri client e MMS e
 		// - sia questo sistema intermedio che crea le richieste di delivery
 		// Questo sistema forward l'IP del client come parametro
-		string playerIP = getQueryParameter(queryParameters, "remoteIPAddress", clientIPAddress, false);
-		if (playerIP == clientIPAddress)
-			playerIP = getQueryParameter(queryParameters, "playerIP", clientIPAddress, false);
-		bool playerIPToBeAuthorized = getQueryParameter(queryParameters, "playerIPToBeAuthorized", false, false);
+		string playerIP = requestData.getQueryParameter("remoteIPAddress", requestData.clientIPAddress, false);
+		if (playerIP == requestData.clientIPAddress)
+			playerIP = requestData.getQueryParameter("playerIP", requestData.clientIPAddress, false);
+		bool playerIPToBeAuthorized = requestData.getQueryParameter("playerIPToBeAuthorized", false, false);
 
-		string playerCountry = getQueryParameter(queryParameters, "playerCountry", string(), false);
-		string playerRegion = getQueryParameter(queryParameters, "playerRegion", string(), false);
+		string playerCountry = requestData.getQueryParameter("playerCountry", string(), false);
+		string playerRegion = requestData.getQueryParameter("playerRegion", string(), false);
 
-		int64_t physicalPathKey = getMapParameter(queryParameters, "physicalPathKey", static_cast<int64_t>(-1), false);
-		int64_t mediaItemKey = getMapParameter(queryParameters, "mediaItemKey", static_cast<int64_t>(-1), false);
+		int64_t physicalPathKey = requestData.getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), false);
+		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
 		if (mediaItemKey == 0)
 			mediaItemKey = -1;
 
-		string uniqueName = getQueryParameter(queryParameters, "uniqueName", string(), false);
+		string uniqueName = requestData.getQueryParameter("uniqueName", string(), false);
 
-		int64_t encodingProfileKey = getMapParameter(queryParameters, "encodingProfileKey", static_cast<int64_t>(-1), false);
+		int64_t encodingProfileKey = requestData.getQueryParameter("encodingProfileKey", static_cast<int64_t>(-1), false);
 		if (encodingProfileKey == 0)
 			encodingProfileKey = -1;
 
-		string encodingProfileLabel = getQueryParameter(queryParameters, "encodingProfileLabel", string(), false);
+		string encodingProfileLabel = requestData.getQueryParameter("encodingProfileLabel", string(), false);
 
 		// this is for live authorization
-		int64_t ingestionJobKey = getMapParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), false);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), false);
 
 		// this is for live authorization
-		int64_t deliveryCode = getMapParameter(queryParameters, "deliveryCode", static_cast<int64_t>(-1), false);
+		int64_t deliveryCode = requestData.getQueryParameter("deliveryCode", static_cast<int64_t>(-1), false);
 
 		if (physicalPathKey == -1 &&
 			((mediaItemKey == -1 && uniqueName.empty())
@@ -77,18 +71,18 @@ const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 			throw runtime_error(errorMessage);
 		}
 
-		int32_t ttlInSeconds = getMapParameter(queryParameters, "ttlInSeconds", _defaultTTLInSeconds, false);
-		int32_t maxRetries = getMapParameter(queryParameters, "maxRetries", _defaultMaxRetries, false);
+		int32_t ttlInSeconds = requestData.getQueryParameter("ttlInSeconds", _defaultTTLInSeconds, false);
+		int32_t maxRetries = requestData.getQueryParameter("maxRetries", _defaultMaxRetries, false);
 
-		bool reuseAuthIfPresent = getMapParameter(queryParameters, "reuseAuthIfPresent", true, false);
-		bool redirect = getMapParameter(queryParameters, "redirect", _defaultRedirect, false);
-		bool save = getMapParameter(queryParameters, "save", false, false);
+		bool reuseAuthIfPresent = requestData.getQueryParameter("reuseAuthIfPresent", true, false);
+		bool redirect = requestData.getQueryParameter("redirect", _defaultRedirect, false);
+		bool save = requestData.getQueryParameter("save", false, false);
 
-		string deliveryType = getQueryParameter(queryParameters, "deliveryType", string(), false);
+		string deliveryType = requestData.getQueryParameter("deliveryType", string(), false);
 
-		bool filteredByStatistic = getMapParameter(queryParameters, "filteredByStatistic", false, false);
+		bool filteredByStatistic = requestData.getQueryParameter("filteredByStatistic", false, false);
 
-		string userId = getQueryParameter(queryParameters, "userId", string(), false);
+		string userId = requestData.getQueryParameter("userId", string(), false);
 
 		try
 		{
@@ -142,7 +136,7 @@ const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 					+ ", \"maxRetries\": " + to_string(maxRetries)
 					+ " }";
 				*/
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
 		catch (exception &e)
@@ -171,15 +165,12 @@ const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
 
 void API::createBulkOfDeliveryAuthorization(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "createBulkOfDeliveryAuthorization";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -191,10 +182,8 @@ void API::createBulkOfDeliveryAuthorization(
 			apiAuthorizationDetails->canDeliveryAuthorization
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
-
-	string clientIPAddress = getClientIPAddress(requestDetails);
 
 	try
 	{
@@ -220,7 +209,7 @@ void API::createBulkOfDeliveryAuthorization(
 		json deliveryAutorizationDetailsRoot;
 		try
 		{
-			deliveryAutorizationDetailsRoot = JSONUtils::toJson(requestBody);
+			deliveryAutorizationDetailsRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
@@ -235,15 +224,15 @@ void API::createBulkOfDeliveryAuthorization(
 			// - ci sia un sistema intermedio tra i veri client e MMS e
 			// - sia questo sistema intermedio che crea le richieste di delivery
 			// Questo sistema forward l'IP del client come parametro
-			string playerIP = getQueryParameter(queryParameters, "remoteIPAddress", clientIPAddress, false);
-			if (playerIP == clientIPAddress)
-				playerIP = getQueryParameter(queryParameters, "playerIP", clientIPAddress, false);
+			string playerIP = requestData.getQueryParameter("remoteIPAddress", requestData.clientIPAddress, false);
+			if (playerIP == requestData.clientIPAddress)
+				playerIP = requestData.getQueryParameter("playerIP", requestData.clientIPAddress, false);
 
-			int32_t ttlInSeconds = getMapParameter(queryParameters, "ttlInSeconds", _defaultTTLInSeconds, false);
+			int32_t ttlInSeconds = requestData.getQueryParameter("ttlInSeconds", _defaultTTLInSeconds, false);
 
-			int32_t maxRetries = getMapParameter(queryParameters, "maxRetries", _defaultMaxRetries, false);
+			int32_t maxRetries = requestData.getQueryParameter("maxRetries", _defaultMaxRetries, false);
 
-			bool reuseAuthIfPresent = getMapParameter(queryParameters, "reuseAuthIfPresent", true, false);
+			bool reuseAuthIfPresent = requestData.getQueryParameter("reuseAuthIfPresent", true, false);
 
 			bool save = false;
 
@@ -512,7 +501,7 @@ void API::createBulkOfDeliveryAuthorization(
 				// 	responseBody
 				// );
 
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 			}
 		}
 		catch (exception &e)
@@ -542,65 +531,66 @@ void API::createBulkOfDeliveryAuthorization(
 
 void API::binaryAuthorization(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "binaryAuthorization";
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
 	{
 		// since we are here, for sure user is authorized
 
-		auto binaryVirtualHostNameIt = queryParameters.find("binaryVirtualHostName");
-		auto binaryListenHostIt = queryParameters.find("binaryListenHost");
+		bool bBinaryVirtualHostName;
+		string binaryVirtualHostName = requestData.getQueryParameter("binaryVirtualHostName", "",
+			false, &bBinaryVirtualHostName);
+
+		bool bBinaryListenHost;
+		string binaryListenHost = requestData.getQueryParameter("binaryListenHost", "",
+			false, &bBinaryListenHost);
 
 		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
-		auto progressIdIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-		if (binaryVirtualHostNameIt != queryParameters.end()
-			&& binaryListenHostIt != queryParameters.end()
-			&& progressIdIt != requestDetails.end()
-			&& originalURIIt != requestDetails.end())
+		bool bProgressId;
+		string progressId = requestData.getHeaderParameter("x-original-method", "", false, &bProgressId);
+		bool bOriginalURI;
+		string originalURI = requestData.getHeaderParameter("x-original-uri", "", false, &bOriginalURI);
+		if (bBinaryVirtualHostName && bBinaryListenHost && bProgressId && bOriginalURI)
 		{
-			size_t ingestionJobKeyIndex = originalURIIt->second.find_last_of("/");
+			size_t ingestionJobKeyIndex = originalURI.find_last_of("/");
 			if (ingestionJobKeyIndex != string::npos)
 			{
 				try
 				{
-					struct FileUploadProgressData::RequestData requestData;
+					struct FileUploadProgressData::RequestData progressRequestData;
 
-					requestData._progressId = progressIdIt->second;
-					requestData._binaryListenHost = binaryListenHostIt->second;
-					requestData._binaryVirtualHostName = binaryVirtualHostNameIt->second;
+					progressRequestData._progressId = progressId;
+					progressRequestData._binaryListenHost = binaryListenHost;
+					progressRequestData._binaryVirtualHostName = binaryVirtualHostName;
 					// requestData._binaryListenIp = binaryVirtualHostNameIt->second;
-					requestData._ingestionJobKey = stoll(originalURIIt->second.substr(ingestionJobKeyIndex + 1));
-					requestData._lastPercentageUpdated = 0;
-					requestData._callFailures = 0;
+					progressRequestData._ingestionJobKey = stoll(originalURI.substr(ingestionJobKeyIndex + 1));
+					progressRequestData._lastPercentageUpdated = 0;
+					progressRequestData._callFailures = 0;
 
 					// Content-Range: bytes 0-99999/100000
-					requestData._contentRangePresent = false;
-					requestData._contentRangeStart = -1;
-					requestData._contentRangeEnd = -1;
-					requestData._contentRangeSize = -1;
-					auto contentRangeIt = requestDetails.find("HTTP_CONTENT_RANGE");
-					if (contentRangeIt != requestDetails.end())
+					progressRequestData._contentRangePresent = false;
+					progressRequestData._contentRangeStart = -1;
+					progressRequestData._contentRangeEnd = -1;
+					progressRequestData._contentRangeSize = -1;
+					bool bContentRange;
+					string contentRange = requestData.getHeaderParameter("content-range", "", false, &bContentRange);
+					if (bContentRange)
 					{
-						string_view contentRange = contentRangeIt->second;
 						try
 						{
-							parseContentRange(contentRange, requestData._contentRangeStart, requestData._contentRangeEnd,
-								requestData._contentRangeSize);
+							FCGIRequestData::parseContentRange(contentRange, progressRequestData._contentRangeStart,
+								progressRequestData._contentRangeEnd, progressRequestData._contentRangeSize);
 
-							requestData._contentRangePresent = true;
+							progressRequestData._contentRangePresent = true;
 						}
 						catch (exception &e)
 						{
@@ -620,41 +610,42 @@ void API::binaryAuthorization(
 						", contentRangeStart: {}"
 						", contentRangeEnd: {}"
 						", contentRangeSize: {}",
-						requestData._contentRangePresent, requestData._contentRangeStart, requestData._contentRangeEnd, requestData._contentRangeSize
+						progressRequestData._contentRangePresent, progressRequestData._contentRangeStart,
+						progressRequestData._contentRangeEnd, progressRequestData._contentRangeSize
 					);
 
 					lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
 
-					_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(requestData);
+					_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(progressRequestData);
 					SPDLOG_INFO(
 						"Added upload file progress to be monitored"
 						", _progressId: {}"
 						", _binaryVirtualHostName: {}"
 						", _binaryListenHost: {}",
-						requestData._progressId, requestData._binaryVirtualHostName, requestData._binaryListenHost
+						progressRequestData._progressId, progressRequestData._binaryVirtualHostName, progressRequestData._binaryListenHost
 					);
 				}
 				catch (exception &e)
 				{
 					SPDLOG_ERROR(
 						"ProgressId not found"
-						", progressIdIt->second: {}",
-						progressIdIt->second
+						", progressId: {}",
+						progressId
 					);
 				}
 			}
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -663,41 +654,42 @@ void API::binaryAuthorization(
 
 void API::deliveryAuthorizationThroughParameter(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "deliveryAuthorizationThroughParameter";
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
 	{
 		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
 
-		auto tokenIt = requestDetails.find("HTTP_X_ORIGINAL_METHOD");
-		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-		if (tokenIt == requestDetails.end() || originalURIIt == requestDetails.end())
+		bool bToken;
+		string token = requestData.getHeaderParameter("x-original-method", "",
+			false, &bToken);
+		bool bOriginalURI;
+		string originalURI = requestData.getHeaderParameter("x-original-uri", "",
+			false, &bOriginalURI);
+		if (!bToken || !bOriginalURI)
 		{
 			string errorMessage = std::format(
 				"deliveryAuthorization, not authorized"
 				", token: {}"
 				", URI: {}",
-				(tokenIt != requestDetails.end() ? tokenIt->second : "null"),
-				(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
+				(bToken ? token : "null"),
+				(bOriginalURI ? originalURI : "null")
 			);
 			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string contentURI = originalURIIt->second;
+		string contentURI = originalURI;
 		size_t endOfURIIndex = contentURI.find_last_of("?");
 		if (endOfURIIndex == string::npos)
 		{
@@ -712,7 +704,7 @@ void API::deliveryAuthorizationThroughParameter(
 		}
 		contentURI = contentURI.substr(0, endOfURIIndex);
 
-		string tokenParameter = tokenIt->second;
+		string tokenParameter = token;
 
 		SPDLOG_INFO(
 			"Calling checkDeliveryAuthorizationThroughParameter"
@@ -723,55 +715,40 @@ void API::deliveryAuthorizationThroughParameter(
 
 		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 }
 
 void API::deliveryAuthorizationThroughPath(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "deliveryAuthorizationThroughPath";
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
 	{
 		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
 
-		auto originalURIIt = requestDetails.find("HTTP_X_ORIGINAL_URI");
-		if (originalURIIt == requestDetails.end())
-		{
-			string errorMessage = std::format(
-				"deliveryAuthorization, not authorized"
-				", URI: {}",
-				(originalURIIt != requestDetails.end() ? originalURIIt->second : "null")
-			);
-			SPDLOG_WARN(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		string contentURI = originalURIIt->second;
+		const string contentURI = requestData.getHeaderParameter("x-original-uri", "", true);
 
 		/* log incluso in checkDeliveryAuthorizationThroughPath
 		SPDLOG_INFO(
@@ -783,18 +760,19 @@ void API::deliveryAuthorizationThroughPath(
 
 		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughPath(contentURI);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 }
+

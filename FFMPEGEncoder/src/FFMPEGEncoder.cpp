@@ -95,27 +95,174 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	*_lastEncodingCompletedCheck = chrono::system_clock::now();
 
-	registerHandler<FFMPEGEncoder>("status", &FFMPEGEncoder::status);
-	registerHandler<FFMPEGEncoder>("info", &FFMPEGEncoder::info);
-	registerHandler<FFMPEGEncoder>("videoSpeed", &FFMPEGEncoder::videoSpeed);
-	registerHandler<FFMPEGEncoder>("encodeContent", &FFMPEGEncoder::encodeContent);
-	registerHandler<FFMPEGEncoder>("cutFrameAccurate", &FFMPEGEncoder::cutFrameAccurate);
-	registerHandler<FFMPEGEncoder>("overlayImageOnVideo", &FFMPEGEncoder::overlayImageOnVideo);
-	registerHandler<FFMPEGEncoder>("overlayTextOnVideo", &FFMPEGEncoder::overlayTextOnVideo);
-	registerHandler<FFMPEGEncoder>("generateFrames", &FFMPEGEncoder::generateFrames);
-	registerHandler<FFMPEGEncoder>("slideShow", &FFMPEGEncoder::slideShow);
-	registerHandler<FFMPEGEncoder>("addSilentAudio", &FFMPEGEncoder::addSilentAudio);
-	registerHandler<FFMPEGEncoder>("pictureInPicture", &FFMPEGEncoder::pictureInPicture);
-	registerHandler<FFMPEGEncoder>("introOutroOverlay", &FFMPEGEncoder::introOutroOverlay);
-	registerHandler<FFMPEGEncoder>("liveRecorder", &FFMPEGEncoder::liveRecorder);
-	registerHandler<FFMPEGEncoder>("liveProxy", &FFMPEGEncoder::liveProxy);
-	registerHandler<FFMPEGEncoder>("liveGrid", &FFMPEGEncoder::liveGrid);
-	registerHandler<FFMPEGEncoder>("encodingStatus", &FFMPEGEncoder::encodingStatus);
-	registerHandler<FFMPEGEncoder>("filterNotification", &FFMPEGEncoder::filterNotification);
-	registerHandler<FFMPEGEncoder>("killEncodingJob", &FFMPEGEncoder::killEncodingJob);
-	registerHandler<FFMPEGEncoder>("changeLiveProxyPlaylist", &FFMPEGEncoder::changeLiveProxyPlaylist);
-	registerHandler<FFMPEGEncoder>("changeLiveProxyOverlayText", &FFMPEGEncoder::changeLiveProxyOverlayText);
-	registerHandler<FFMPEGEncoder>("encodingProgress", &FFMPEGEncoder::encodingProgress);
+	// registerHandler<FFMPEGEncoder>("status", &FFMPEGEncoder::status);
+	registerHandler("status",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			status(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("info", &FFMPEGEncoder::info);
+	registerHandler("info",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			info(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("videoSpeed", &FFMPEGEncoder::videoSpeed);
+	registerHandler("videoSpeed",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			videoSpeed(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("encodeContent", &FFMPEGEncoder::encodeContent);
+	registerHandler("encodeContent",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			encodeContent(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("cutFrameAccurate", &FFMPEGEncoder::cutFrameAccurate);
+	registerHandler("cutFrameAccurate",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			cutFrameAccurate(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("overlayImageOnVideo", &FFMPEGEncoder::overlayImageOnVideo);
+	registerHandler("overlayImageOnVideo",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			overlayImageOnVideo(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("overlayTextOnVideo", &FFMPEGEncoder::overlayTextOnVideo);
+	registerHandler("overlayTextOnVideo",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			overlayTextOnVideo(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("generateFrames", &FFMPEGEncoder::generateFrames);
+	registerHandler("generateFrames",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			generateFrames(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("slideShow", &FFMPEGEncoder::slideShow);
+	registerHandler("slideShow",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			slideShow(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("addSilentAudio", &FFMPEGEncoder::addSilentAudio);
+	registerHandler("addSilentAudio",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			addSilentAudio(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("pictureInPicture", &FFMPEGEncoder::pictureInPicture);
+	registerHandler("pictureInPicture",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			pictureInPicture(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("introOutroOverlay", &FFMPEGEncoder::introOutroOverlay);
+	registerHandler("introOutroOverlay",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			introOutroOverlay(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("liveRecorder", &FFMPEGEncoder::liveRecorder);
+	registerHandler("liveRecorder",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			liveRecorder(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("liveProxy", &FFMPEGEncoder::liveProxy);
+	registerHandler("liveProxy",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			liveProxy(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("liveGrid", &FFMPEGEncoder::liveGrid);
+	registerHandler("liveGrid",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			liveGrid(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("encodingStatus", &FFMPEGEncoder::encodingStatus);
+	registerHandler("encodingStatus",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			encodingStatus(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("filterNotification", &FFMPEGEncoder::filterNotification);
+	registerHandler("filterNotification",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			filterNotification(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("killEncodingJob", &FFMPEGEncoder::killEncodingJob);
+	registerHandler("killEncodingJob",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			killEncodingJob(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("changeLiveProxyPlaylist", &FFMPEGEncoder::changeLiveProxyPlaylist);
+	registerHandler("changeLiveProxyPlaylist",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			changeLiveProxyPlaylist(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("changeLiveProxyOverlayText", &FFMPEGEncoder::changeLiveProxyOverlayText);
+	registerHandler("changeLiveProxyOverlayText",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			changeLiveProxyOverlayText(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
+	// registerHandler<FFMPEGEncoder>("encodingProgress", &FFMPEGEncoder::encodingProgress);
+	registerHandler("encodingProgress",
+		[this](const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request& request,
+			const FCGIRequestData& requestData)
+		{
+			encodingProgress(sThreadId, requestIdentifier, request, requestData);
+		}
+	);
 }
 
 FFMPEGEncoder::~FFMPEGEncoder() = default;
@@ -129,9 +276,7 @@ FFMPEGEncoder::~FFMPEGEncoder() = default;
 
 void FFMPEGEncoder::manageRequestAndResponse(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI, const string_view& requestMethod,
-	const string_view& requestBody, bool responseBodyCompressed, unsigned long contentLength,
-	const unordered_map<string, string> &requestDetails, const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	if (chrono::system_clock::now() - *_lastEncodingCompletedCheck >= chrono::seconds(_encodingCompletedRetentionInSeconds))
@@ -143,8 +288,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 	try
 	{
-		handleRequest(sThreadId, requestIdentifier, request, authorizationDetails, requestURI, requestMethod, requestBody,
-			responseBodyCompressed, requestDetails, queryParameters, true);
+		handleRequest(sThreadId, requestIdentifier, request, requestData, true);
 	}
 	catch (exception &e)
 	{
@@ -152,18 +296,18 @@ void FFMPEGEncoder::manageRequestAndResponse(
 			"manage request failed"
 			", requestBody: {}"
 			", e.what(): {}",
-			requestBody, e.what()
+			requestData.requestBody, e.what()
 		);
 
 		int htmlResponseCode = 500;
 		string errorMessage;
-		if (dynamic_cast<HTTPError*>(&e))
+		if (dynamic_cast<FCGIRequestData::HTTPError*>(&e))
 		{
-			htmlResponseCode = dynamic_cast<HTTPError*>(&e)->httpErrorCode;
+			htmlResponseCode = dynamic_cast<FCGIRequestData::HTTPError*>(&e)->httpErrorCode;
 			errorMessage = e.what();
 		}
 		else
-			errorMessage = getHtmlStandardMessage(htmlResponseCode);
+			errorMessage = FCGIRequestData::getHtmlStandardMessage(htmlResponseCode);
 		SPDLOG_ERROR(errorMessage);
 
 		sendError(request, htmlResponseCode, errorMessage);
@@ -174,10 +318,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 void FFMPEGEncoder::status(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "status";
@@ -185,7 +326,7 @@ void FFMPEGEncoder::status(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
@@ -195,7 +336,8 @@ void FFMPEGEncoder::status(
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -204,19 +346,16 @@ void FFMPEGEncoder::status(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw FCGIRequestData::HTTPError(500);
 	}
 }
 
 void FFMPEGEncoder::info(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "info";
@@ -224,7 +363,7 @@ void FFMPEGEncoder::info(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
@@ -246,7 +385,8 @@ void FFMPEGEncoder::info(
 
 		string responseBody = JSONUtils::toString(infoRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -255,19 +395,16 @@ void FFMPEGEncoder::info(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw FCGIRequestData::HTTPError(500);
 	}
 }
 
 void FFMPEGEncoder::videoSpeed(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "videoSpeed";
@@ -275,22 +412,15 @@ void FFMPEGEncoder::videoSpeed(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::encodeContent(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encodeContent";
@@ -298,22 +428,15 @@ void FFMPEGEncoder::encodeContent(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::cutFrameAccurate(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "cutFrameAccurate";
@@ -321,22 +444,15 @@ void FFMPEGEncoder::cutFrameAccurate(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::overlayImageOnVideo(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "overlayImageOnVideo";
@@ -344,22 +460,15 @@ void FFMPEGEncoder::overlayImageOnVideo(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::overlayTextOnVideo(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "overlayTextOnVideo";
@@ -367,22 +476,15 @@ void FFMPEGEncoder::overlayTextOnVideo(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::generateFrames(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "generateFrames";
@@ -390,22 +492,15 @@ void FFMPEGEncoder::generateFrames(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::slideShow(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "slideShow";
@@ -413,22 +508,15 @@ void FFMPEGEncoder::slideShow(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::addSilentAudio(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addSilentAudio";
@@ -436,22 +524,15 @@ void FFMPEGEncoder::addSilentAudio(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::pictureInPicture(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "pictureInPicture";
@@ -459,22 +540,15 @@ void FFMPEGEncoder::pictureInPicture(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::introOutroOverlay(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "introOutroOverlay";
@@ -482,26 +556,19 @@ void FFMPEGEncoder::introOutroOverlay(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	requestManagement(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	requestManagement(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::requestManagement(
 	const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
-	int64_t ingestionJobKey = getMapParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-	int64_t encodingJobKey = getMapParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+	int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
+	int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
 	{
 		lock_guard<mutex> locker(*_encodingMutex);
@@ -569,7 +636,7 @@ void FFMPEGEncoder::requestManagement(
 				errorMessage, encodingAlreadyRunning, freeEncodingFound
 			);
 
-			throw HTTPError(400, errorMessage);
+			throw FCGIRequestData::HTTPError(400, errorMessage);
 		}
 
 		try
@@ -583,7 +650,7 @@ void FFMPEGEncoder::requestManagement(
 					", {}", ingestionJobKey, encodingJobKey, *atLeastThisEncodingJobKeyNotStartedYet, NoEncodingAvailable().what());
 				SPDLOG_WARN(errorMessage);
 
-				throw HTTPError(400, errorMessage);
+				throw FCGIRequestData::HTTPError(400, errorMessage);
 			}
 			if (lastEncodingStart)
 			{
@@ -601,11 +668,11 @@ void FFMPEGEncoder::requestManagement(
 							_intervalInSecondsBetweenEncodingAccept, secondsToWait, NoEncodingAvailable().what());
 					SPDLOG_WARN(errorMessage);
 
-					throw HTTPError(400, errorMessage);
+					throw FCGIRequestData::HTTPError(400, errorMessage);
 				}
 			}
 
-			json metadataRoot = JSONUtils::toJson(requestBody);
+			json metadataRoot = JSONUtils::toJson(requestData.requestBody);
 			/*
 			bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 
@@ -632,7 +699,7 @@ void FFMPEGEncoder::requestManagement(
 
 				SPDLOG_WARN(errorMessage);
 
-				throw HTTPError(400, errorMessage);
+				throw FCGIRequestData::HTTPError(400, errorMessage);
 			}
 			*/
 
@@ -656,7 +723,7 @@ void FFMPEGEncoder::requestManagement(
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
 				", requestBody: {}",
-				method, ingestionJobKey, encodingJobKey, requestBody
+				method, ingestionJobKey, encodingJobKey, requestData.requestBody
 			);
 			if (method == "videoSpeed")
 			{
@@ -750,7 +817,7 @@ void FFMPEGEncoder::requestManagement(
 				", encodingJobKey: {}"
 				// ", requestBody: {}"	aggiunto nel catch del chiamante
 				", e.what(): {}",
-				method, ingestionJobKey, requestBody, e.what()
+				method, ingestionJobKey, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -766,16 +833,14 @@ void FFMPEGEncoder::requestManagement(
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 }
 
 void FFMPEGEncoder::liveRecorder(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "liveRecorder";
@@ -783,13 +848,13 @@ void FFMPEGEncoder::liveRecorder(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionJobKey = getMapParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-		int64_t encodingJobKey = getMapParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
 		{
 			lock_guard<mutex> locker(*_liveRecordingMutex);
@@ -830,7 +895,7 @@ void FFMPEGEncoder::liveRecorder(
 					errorMessage, encodingAlreadyRunning, freeEncodingFound
 				);
 
-				throw HTTPError(400, errorMessage);
+				throw FCGIRequestData::HTTPError(400, errorMessage);
 			}
 
 			try
@@ -871,11 +936,11 @@ void FFMPEGEncoder::liveRecorder(
 					", ingestionJobKey: {}"
 					", selectedLiveRecording->_encodingJobKey: {}"
 					", requestBody: {}",
-					ingestionJobKey, encodingJobKey, requestBody
+					ingestionJobKey, encodingJobKey, requestData.requestBody
 				);
 				thread liveRecorderThread(
 					&FFMPEGEncoder::liveRecorderThread, this, selectedLiveRecording, ingestionJobKey, encodingJobKey,
-					string(requestBody)
+					requestData.requestBody
 				);
 				liveRecorderThread.detach();
 
@@ -892,7 +957,7 @@ void FFMPEGEncoder::liveRecorder(
 					", selectedLiveRecording->_encodingJobKey: {}"
 					", requestBody: {}"
 					", e.what(): {}",
-					ingestionJobKey, encodingJobKey, requestBody, e.what()
+					ingestionJobKey, encodingJobKey, requestData.requestBody, e.what()
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -908,7 +973,8 @@ void FFMPEGEncoder::liveRecorder(
 
 			string responseBody = JSONUtils::toString(responseBodyRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+				requestData.requestURI, requestData.requestMethod, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -918,7 +984,7 @@ void FFMPEGEncoder::liveRecorder(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -927,10 +993,7 @@ void FFMPEGEncoder::liveRecorder(
 
 void FFMPEGEncoder::liveProxy(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "liveProxy";
@@ -938,22 +1001,15 @@ void FFMPEGEncoder::liveProxy(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	liveProxy_liveGrid(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	liveProxy_liveGrid(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::liveGrid(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "liveGrid";
@@ -961,26 +1017,19 @@ void FFMPEGEncoder::liveGrid(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
-	liveProxy_liveGrid(api,
-		sThreadId, requestIdentifier, request, authorizationDetails, requestURI,
-		requestMethod, requestBody, responseBodyCompressed,
-		requestDetails, queryParameters
-	);
+	liveProxy_liveGrid(api, sThreadId, requestIdentifier, request, requestData);
 }
 
 void FFMPEGEncoder::liveProxy_liveGrid(
 	const string_view& method, const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
-	int64_t ingestionJobKey = getMapParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-	int64_t encodingJobKey = getMapParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+	int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
+	int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
 	{
 		lock_guard<mutex> locker(*_liveProxyMutex);
@@ -1023,7 +1072,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 				errorMessage, ingestionJobKey, encodingJobKey, encodingAlreadyRunning, freeEncodingFound
 			);
 
-			throw HTTPError(400, errorMessage);
+			throw FCGIRequestData::HTTPError(400, errorMessage);
 		}
 
 		try
@@ -1064,10 +1113,10 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
 					", requestBody: {}",
-					ingestionJobKey, encodingJobKey, requestBody
+					ingestionJobKey, encodingJobKey, requestData.requestBody
 				);
 				thread liveProxyThread(&FFMPEGEncoder::liveProxyThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey,
-					string(requestBody));
+					requestData.requestBody);
 				liveProxyThread.detach();
 			}
 			else if (method == "liveGrid")
@@ -1077,10 +1126,10 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
 					", requestBody: {}",
-					ingestionJobKey, encodingJobKey, requestBody
+					ingestionJobKey, encodingJobKey, requestData.requestBody
 				);
 				thread liveGridThread(&FFMPEGEncoder::liveGridThread, this, selectedLiveProxy, ingestionJobKey, encodingJobKey,
-					string(requestBody));
+					requestData.requestBody);
 				liveGridThread.detach();
 			}
 
@@ -1098,7 +1147,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 				", encodingJobKey: {}"
 				", requestBody: {}"
 				", e.what(): {}",
-				method, ingestionJobKey, encodingJobKey, requestBody, e.what()
+				method, ingestionJobKey, encodingJobKey, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1114,16 +1163,14 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 
 		string responseBody = JSONUtils::toString(responseBodyRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 }
 
 void FFMPEGEncoder::encodingStatus(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encodingStatus";
@@ -1131,13 +1178,13 @@ void FFMPEGEncoder::encodingStatus(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
 		chrono::system_clock::time_point startEncodingStatus = chrono::system_clock::now();
 
@@ -1432,7 +1479,8 @@ void FFMPEGEncoder::encodingStatus(
 			responseBody, chrono::duration_cast<chrono::seconds>(endEncodingStatus - startEncodingStatus).count()
 		);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -1441,19 +1489,16 @@ void FFMPEGEncoder::encodingStatus(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw FCGIRequestData::HTTPError(500);
 	}
 }
 
 void FFMPEGEncoder::filterNotification(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "filterNotification";
@@ -1461,14 +1506,14 @@ void FFMPEGEncoder::filterNotification(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
-		string filterName = getQueryParameter(queryParameters, "filterName", string(), true);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
+		string filterName = requestData.getQueryParameter("filterName", string(), true);
 
 		bool encodingCompleted = false;
 		{
@@ -1610,7 +1655,8 @@ void FFMPEGEncoder::filterNotification(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -1619,19 +1665,16 @@ void FFMPEGEncoder::filterNotification(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw FCGIRequestData::HTTPError(500);
 	}
 }
 
 void FFMPEGEncoder::killEncodingJob(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "killEncodingJob";
@@ -1639,16 +1682,16 @@ void FFMPEGEncoder::killEncodingJob(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t ingestionJobKey = getQueryParameter(queryParameters, "ingestionJobKey", static_cast<int64_t>(-1), true);
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
 		// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
-		string killType = getQueryParameter(queryParameters, "killType", string("kill"), false);
+		string killType = requestData.getQueryParameter("killType", string("kill"), false);
 
 		SPDLOG_INFO(
 			"Received killEncodingJob"
@@ -1717,7 +1760,7 @@ void FFMPEGEncoder::killEncodingJob(
 				ingestionJobKey, encodingJobKey, NoEncodingJobKeyFound().what()
 			);
 			SPDLOG_ERROR(errorMessage);
-			throw HTTPError(400, errorMessage);
+			throw FCGIRequestData::HTTPError(400, errorMessage);
 		}
 
 		SPDLOG_INFO(
@@ -1803,7 +1846,8 @@ void FFMPEGEncoder::killEncodingJob(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -1812,7 +1856,7 @@ void FFMPEGEncoder::killEncodingJob(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -1821,10 +1865,7 @@ void FFMPEGEncoder::killEncodingJob(
 
 void FFMPEGEncoder::changeLiveProxyPlaylist(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "changeLiveProxyPlaylist";
@@ -1832,13 +1873,13 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
-		bool interruptPlaylist = getQueryParameter(queryParameters, "interruptPlaylist", false, false);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
+		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false);
 
 		SPDLOG_INFO(
 			"Received changeLiveProxyPlaylist"
@@ -1846,7 +1887,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 			encodingJobKey
 		);
 
-		json newInputsRoot = JSONUtils::toJson(requestBody);
+		json newInputsRoot = JSONUtils::toJson(requestData.requestBody);
 
 		{
 			bool encodingFound = false;
@@ -1870,7 +1911,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
 				SPDLOG_ERROR(errorMessage);
 
-				throw HTTPError(500, errorMessage);
+				throw FCGIRequestData::HTTPError(500, errorMessage);
 			}
 
 			{
@@ -1922,7 +1963,8 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -1931,7 +1973,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -1940,10 +1982,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 
 void FFMPEGEncoder::changeLiveProxyOverlayText(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "changeLiveProxyOverlayText";
@@ -1951,14 +1990,14 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
-		string newOverlayText(requestBody);
+		string newOverlayText(requestData.requestBody);
 
 		{
 			bool encodingFound = false;
@@ -1990,7 +2029,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
 				", requestBody: {}",
-				selectedLiveProxy->_ingestionJobKey, encodingJobKey, requestBody
+				selectedLiveProxy->_ingestionJobKey, encodingJobKey, requestData.requestBody
 			);
 
 			string textTemporaryFileName = FFMpegFilters::getDrawTextTemporaryPathName(
@@ -2015,7 +2054,8 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 			responseBody = JSONUtils::toString(responseBodyRoot);
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, requestURI, requestMethod, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request,
+			requestData.requestURI, requestData.requestMethod, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2024,7 +2064,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -2033,10 +2073,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 
 void FFMPEGEncoder::encodingProgress(
 	const string_view& sThreadId, const int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody, const bool responseBodyCompressed,
-	const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 ) const
 {
 	string api = "encodingProgress";
@@ -2044,7 +2081,7 @@ void FFMPEGEncoder::encodingProgress(
 	SPDLOG_INFO(
 		"Received {}"
 		", requestBody: {}",
-		api, requestBody
+		api, requestData.requestBody
 	);
 
 	try
@@ -2069,7 +2106,7 @@ void FFMPEGEncoder::encodingProgress(
 		}
 		*/
 
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), true);
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 
 		bool encodingCompleted = false;
 		shared_ptr<FFMPEGEncoderBase::EncodingCompleted> selectedEncodingCompleted;
@@ -2300,14 +2337,15 @@ void FFMPEGEncoder::encodingProgress(
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
-		throw HTTPError(500);
+		throw FCGIRequestData::HTTPError(500);
 	}
 }
 
-shared_ptr<FastCGIAPI::AuthorizationDetails> FFMPEGEncoder::checkAuthorization(const string_view& sThreadId, const string_view& userName, const string_view& password)
+shared_ptr<FCGIRequestData::AuthorizationDetails> FFMPEGEncoder::checkAuthorization(const string_view& sThreadId,
+	const string_view& userName, const string_view& password)
 {
 	if (userName != _encoderUser || password != _encoderPassword)
 	{
@@ -2322,21 +2360,21 @@ shared_ptr<FastCGIAPI::AuthorizationDetails> FFMPEGEncoder::checkAuthorization(c
 			_requestIdentifier, sThreadId, userName, _encoderUser, password, _encoderPassword
 		);
 
-		throw HTTPError(401);
+		throw FCGIRequestData::HTTPError(401);
 	}
 
-	auto authorizationDetails = make_shared<AuthorizationDetails>();
+	auto authorizationDetails = make_shared<FCGIRequestData::AuthorizationDetails>();
 	authorizationDetails->userName = userName;
 	authorizationDetails->password = password;
 
 	return authorizationDetails;
 }
 
-bool FFMPEGEncoder::basicAuthenticationRequired(const string &requestURI, const unordered_map<string, string> &queryParameters)
+bool FFMPEGEncoder::basicAuthenticationRequired(const FCGIRequestData& requestData)
 {
 	bool basicAuthenticationRequired = true;
 
-	const string method = getQueryParameter(queryParameters, "x-api-method", string(), false);
+	const string method = requestData.getQueryParameter("x-api-method", string(), false);
 	if (method.empty())
 	{
 		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
@@ -2354,7 +2392,7 @@ bool FFMPEGEncoder::basicAuthenticationRequired(const string &requestURI, const 
 	// This is the authorization asked when the deliveryURL is received by
 	// nginx Here the token is checked and it is not needed any basic
 	// authorization
-	if (requestURI == "/catramms/delivery/authorization")
+	if (requestData.requestURI == "/catramms/delivery/authorization")
 		basicAuthenticationRequired = false;
 
 	return basicAuthenticationRequired;

@@ -18,19 +18,16 @@
 
 void API::addInvoice(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "addInvoice";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin)
@@ -41,7 +38,7 @@ void API::addInvoice(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -53,7 +50,7 @@ void API::addInvoice(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "userKey";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -105,9 +102,9 @@ void API::addInvoice(
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format",
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what()
+				requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -141,16 +138,16 @@ void API::addInvoice(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -159,49 +156,35 @@ void API::addInvoice(
 
 void API::invoiceList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "invoiceList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && !startIt->second.empty())
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30));
+		if (rows > _maxPageSize)
 		{
-			start = stoll(startIt->second);
-		}
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
 
-		int rows = 30;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && !rowsIt->second.empty())
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
+			// rows = _maxPageSize;
 
-				// rows = _maxPageSize;
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
 
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
+			throw runtime_error(errorMessage);
 		}
 
 		{
@@ -213,7 +196,7 @@ void API::invoiceList(
 			string responseBody;
 #endif
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)

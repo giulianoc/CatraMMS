@@ -24,19 +24,16 @@
 #include <vector>
 
 void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters)
+		const FCGIRequestData& requestData)
 {
 	string api = "registerUser";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
@@ -60,14 +57,14 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestBody);
+			metadataRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"Json metadata failed during the parsing"
 				", json data: {}",
-				requestBody
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -190,9 +187,9 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
-					", requestBody: {}"
+					", requestData.requestBody: {}"
 					", e.what(): {}",
-					api, requestBody, e.what()
+					api, requestData.requestBody, e.what()
 				);
 				SPDLOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
@@ -216,9 +213,9 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 					SPDLOG_ERROR(
 						"API failed"
 						", API: {}"
-						", requestBody: {}"
+						", requestData.requestBody: {}"
 						", e.what(): {}",
-						api, requestBody, e.what()
+						api, requestData.requestBody, e.what()
 					);
 
 					// string errorMessage = string("Internal server error");
@@ -248,9 +245,9 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 					SPDLOG_ERROR(
 						"API failed"
 						", API: {}"
-						", requestBody: {}"
+						", requestData.requestBody: {}"
 						", e.what(): {}",
-						api, requestBody, e.what()
+						api, requestData.requestBody, e.what()
 					);
 
 					// string errorMessage = string("Internal server error");
@@ -297,9 +294,9 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
-					", requestBody: {}"
+					", requestData.requestBody: {}"
 					", e.what(): {}",
-					api, requestBody, e.what()
+					api, requestData.requestBody, e.what()
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -316,7 +313,7 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -361,9 +358,9 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -375,9 +372,9 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -386,20 +383,17 @@ void API::registerUser(const string_view& sThreadId, int64_t requestIdentifier, 
 
 void API::createWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "createWorkspace";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateRemoveWorkspace)
@@ -418,30 +412,12 @@ void API::createWorkspace(
 
 	try
 	{
-		string workspaceName;
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		MMSEngineDBFacade::EncodingPeriod encodingPeriod;
 		int maxIngestionsNumber;
 		int maxStorageInMB;
 
-		auto workspaceNameIt = queryParameters.find("workspaceName");
-		if (workspaceNameIt == queryParameters.end())
-		{
-			string errorMessage = "The 'workspaceName' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			sendError(request, 400, errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		{
-			workspaceName = workspaceNameIt->second;
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(workspaceName, regex(plus), plusDecoded);
-
-			workspaceName = CurlWrapper::unescape(firstDecoding);
-		}
+		string workspaceName = requestData.getQueryParameter("workspaceName", "", true);
 
 		encodingPriority = _encodingPriorityWorkspaceDefaultValue;
 
@@ -495,9 +471,9 @@ void API::createWorkspace(
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -522,9 +498,9 @@ void API::createWorkspace(
 				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
-					", requestBody: {}"
+					", requestData.requestBody: {}"
 					", e.what(): {}",
-					api, requestBody, e.what()
+					api, requestData.requestBody, e.what()
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -552,9 +528,9 @@ void API::createWorkspace(
 				string errorMessage = std::format(
 					"API failed"
 					", API: {}"
-					", requestBody: {}"
+					", requestData.requestBody: {}"
 					", e.what(): {}",
-					api, requestBody, e.what()
+					api, requestData.requestBody, e.what()
 				);
 				SPDLOG_ERROR(errorMessage);
 
@@ -576,7 +552,7 @@ void API::createWorkspace(
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 			pair<string, string> emailAddressAndName = _mmsEngineDBFacade->getUserDetails(apiAuthorizationDetails->userKey);
 
@@ -623,9 +599,9 @@ void API::createWorkspace(
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -637,9 +613,9 @@ void API::createWorkspace(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -648,21 +624,18 @@ void API::createWorkspace(
 
 void API::shareWorkspace_(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "shareWorkspace";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canShareWorkspace)
@@ -673,7 +646,7 @@ void API::shareWorkspace_(
 			apiAuthorizationDetails->canShareWorkspace
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -681,14 +654,14 @@ void API::shareWorkspace_(
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestBody);
+			metadataRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"Json metadata failed during the parsing"
 				", json data: {}",
-				requestBody
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -760,9 +733,9 @@ void API::shareWorkspace_(
 				SPDLOG_WARN(
 					"API failed"
 					", API: {}"
-					", requestBody: {}"
+					", requestData.requestBody: {}"
 					", e.what(): {}",
-					api, requestBody, e.what()
+					api, requestData.requestBody, e.what()
 				);
 
 				userAlreadyPresent = false;
@@ -842,7 +815,7 @@ void API::shareWorkspace_(
 
 				string responseBody = JSONUtils::toString(registrationRoot);
 
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
@@ -909,7 +882,7 @@ void API::shareWorkspace_(
 
 				string responseBody = JSONUtils::toString(registrationRoot);
 
-				sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+				sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 				string tosCommaSeparated = email;
 				string subject = "Share Workspace code";
@@ -940,9 +913,9 @@ void API::shareWorkspace_(
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -954,9 +927,9 @@ void API::shareWorkspace_(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -965,15 +938,12 @@ void API::shareWorkspace_(
 
 void API::workspaceList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "workspaceList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -983,17 +953,14 @@ void API::workspaceList(
 
 	try
 	{
-		bool costDetails = false;
-		auto costDetailsIt = queryParameters.find("costDetails");
-		if (costDetailsIt != queryParameters.end() && costDetailsIt->second == "true")
-			costDetails = true;
+		bool costDetails = requestData.getQueryParameter("costDetails", false);
 
 		{
 			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(apiAuthorizationDetails->userKey, apiAuthorizationDetails->admin, costDetails);
 
 			string responseBody = JSONUtils::toString(workspaceListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -1011,33 +978,23 @@ void API::workspaceList(
 
 void API::confirmRegistration(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "confirmRegistration";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
-		auto confirmationCodeIt = queryParameters.find("confirmationeCode");
-		if (confirmationCodeIt == queryParameters.end())
-		{
-			string errorMessage = "The 'confirmationeCode' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
+		string confirmationCode = requestData.getQueryParameter("confirmationeCode", "", true);
 
 		try
 		{
 			tuple<string, string, string> apiKeyNameAndEmailAddress =
-				_mmsEngineDBFacade->confirmRegistration(confirmationCodeIt->second, _expirationInDaysWorkspaceDefaultValue);
+				_mmsEngineDBFacade->confirmRegistration(confirmationCode, _expirationInDaysWorkspaceDefaultValue);
 
 			string apiKey;
 			string name;
@@ -1050,7 +1007,7 @@ void API::confirmRegistration(
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 
 			string tosCommaSeparated = emailAddress;
 			string subject = "Welcome";
@@ -1106,19 +1063,16 @@ void API::confirmRegistration(
 }
 
 void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "login";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}",
 		// commented because of the password
-		// ", requestBody: {}",
+		// ", requestData.requestBody: {}",
 		api
 	);
 
@@ -1127,14 +1081,14 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestBody);
+			metadataRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"Json metadata failed during the parsing"
 				", json data: {}",
-				requestBody
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1204,9 +1158,9 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 					string errorMessage = std::format(
 						"API failed"
 						", API: {}"
-						", requestBody: {}"
+						", requestData.requestBody: {}"
 						", e.what(): {}",
-						api, requestBody, e.what()
+						api, requestData.requestBody, e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -1334,9 +1288,9 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 						string errorMessage = std::format(
 							"API failed"
 							", API: {}"
-							", requestBody: {}"
+							", requestData.requestBody: {}"
 							", e.what(): {}",
-							api, requestBody, e.what()
+							api, requestData.requestBody, e.what()
 						);
 						SPDLOG_ERROR(errorMessage);
 
@@ -1409,9 +1363,9 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 					string errorMessage = std::format(
 						"API failed"
 						", API: {}"
-						", requestBody: {}"
+						", requestData.requestBody: {}"
 						", e.what(): {}",
-						api, requestBody, e.what()
+						api, requestData.requestBody, e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -1470,16 +1424,16 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 
 			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1491,9 +1445,9 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -1502,20 +1456,17 @@ void API::login(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Re
 
 void API::updateUser(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "updateUser";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
@@ -1539,14 +1490,14 @@ void API::updateUser(
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestBody);
+			metadataRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"Json metadata failed during the parsing"
 				", json data: {}",
-				requestBody
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1675,16 +1626,16 @@ void API::updateUser(
 
 			string responseBody = JSONUtils::toString(loginDetailsRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1696,9 +1647,9 @@ void API::updateUser(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -1706,37 +1657,17 @@ void API::updateUser(
 }
 
 void API::createTokenToResetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters)
+		const FCGIRequestData& requestData)
 {
 	string api = "createTokenToResetPassword";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
-		string email;
-
-		auto emailIt = queryParameters.find("email");
-		if (emailIt == queryParameters.end())
-		{
-			string errorMessage = "The 'email' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		{
-			email = emailIt->second;
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(email, regex(plus), plusDecoded);
-
-			email = CurlWrapper::unescape(firstDecoding);
-		}
+		string email = requestData.getQueryParameter("email", "", true);
 
 		string resetPasswordToken;
 		string name;
@@ -1769,7 +1700,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 
 		try
 		{
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, "");
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, "");
 
 			string resetPasswordURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -1826,19 +1757,16 @@ void API::createTokenToResetPassword(const string_view& sThreadId, int64_t reque
 }
 
 void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-		const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-		const string_view& requestMethod, const string_view& requestBody,
-		bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-		const unordered_map<string, string>& queryParameters)
+		const FCGIRequestData& requestData)
 {
 	string api = "resetPassword";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
@@ -1849,14 +1777,14 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestBody);
+			metadataRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = fmt::format(
 				"Json metadata failed during the parsing"
 				", json data: {}",
-				requestBody
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1900,9 +1828,9 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1911,7 +1839,7 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 
 		try
 		{
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, "");
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, "");
 
 			string tosCommaSeparated = email;
 			string subject = "Reset password";
@@ -1937,9 +1865,9 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -1951,9 +1879,9 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -1962,21 +1890,18 @@ void API::resetPassword(const string_view& sThreadId, int64_t requestIdentifier,
 
 void API::updateWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "updateWorkspace";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
@@ -2045,14 +1970,14 @@ void API::updateWorkspace(
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestBody);
+			metadataRoot = JSONUtils::toJson(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"Json metadata failed during the parsing"
 				", json data: {}",
-				requestBody
+				requestData.requestBody
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -2327,16 +2252,16 @@ void API::updateWorkspace(
 
 			string responseBody = JSONUtils::toString(workspaceDetailRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -2348,9 +2273,9 @@ void API::updateWorkspace(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -2359,35 +2284,24 @@ void API::updateWorkspace(
 
 void API::setWorkspaceAsDefault(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "setWorkspaceAsDefault";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t workspaceKeyToBeSetAsDefault = -1;
-		auto workspaceKeyToBeSetAsDefaultIt = queryParameters.find("workspaceKeyToBeSetAsDefault");
-		if (workspaceKeyToBeSetAsDefaultIt == queryParameters.end() || workspaceKeyToBeSetAsDefaultIt->second == "")
-		{
-			string errorMessage = "The 'workspaceKeyToBeSetAsDefault' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		workspaceKeyToBeSetAsDefault = stoll(workspaceKeyToBeSetAsDefaultIt->second);
+		int64_t workspaceKeyToBeSetAsDefault = requestData.getQueryParameter("workspaceKeyToBeSetAsDefault",
+			static_cast<int64_t>(-1), true);
 
 		try
 		{
@@ -2402,16 +2316,16 @@ void API::setWorkspaceAsDefault(
 
 			string responseBody;
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"API failed"
 				", API: {}"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				api, requestBody, e.what()
+				api, requestData.requestBody, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
@@ -2422,9 +2336,9 @@ void API::setWorkspaceAsDefault(
 		string errorMessage = std::format(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		SPDLOG_ERROR(errorMessage);
 		throw;
@@ -2433,14 +2347,11 @@ void API::setWorkspaceAsDefault(
 
 void API::deleteWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "deleteWorkspace";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2457,7 +2368,7 @@ void API::deleteWorkspace(
 			apiAuthorizationDetails->canCreateRemoveWorkspace
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -2556,7 +2467,7 @@ void API::deleteWorkspace(
 			);
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -2588,14 +2499,11 @@ void API::deleteWorkspace(
 
 void API::unshareWorkspace(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "unshareWorkspace";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2612,7 +2520,7 @@ void API::unshareWorkspace(
 			apiAuthorizationDetails->canShareWorkspace
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -2660,7 +2568,7 @@ void API::unshareWorkspace(
 			}
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 		catch (exception &e)
 		{
@@ -2692,15 +2600,14 @@ void API::unshareWorkspace(
 
 void API::workspaceUsage(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 
 	string api = "workspaceUsage";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	SPDLOG_INFO("AAAAAAAAAAAAA");
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+	SPDLOG_INFO("AAAAAAAAAAAAA");
 
 	try
 	{
@@ -2718,9 +2625,10 @@ void API::workspaceUsage(
 		{
 			int64_t workSpaceUsageInBytes;
 
-			pair<int64_t, int64_t> workSpaceUsageInBytesAndMaxStorageInMB = _mmsEngineDBFacade->getWorkspaceUsage(
+	SPDLOG_INFO("AAAAAAAAAAAAA _workspaceKey: {}", apiAuthorizationDetails->workspace->_workspaceKey);
+			tie(workSpaceUsageInBytes, ignore) = _mmsEngineDBFacade->getWorkspaceUsage(
 				apiAuthorizationDetails->workspace->_workspaceKey);
-			tie(workSpaceUsageInBytes, ignore) = workSpaceUsageInBytesAndMaxStorageInMB;
+			SPDLOG_INFO("AAAAAAAAAAAAA");
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
 
@@ -2732,8 +2640,9 @@ void API::workspaceUsage(
 		workspaceUsageRoot[field] = responseRoot;
 
 		string responseBody = JSONUtils::toString(workspaceUsageRoot);
+		SPDLOG_INFO("AAAAAAAAAAAAA: {}", responseBody);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{

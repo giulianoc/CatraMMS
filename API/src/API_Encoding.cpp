@@ -25,142 +25,62 @@
 
 void API::encodingJobsStatus(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encodingJobsStatus";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t encodingJobKey = -1;
-		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-		if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1));
+
+		int start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
+
+		int rows = requestData.getQueryParameter("rows", static_cast<int32_t>(10));
+		if (rows > _maxPageSize)
 		{
-			encodingJobKey = stoll(encodingJobKeyIt->second);
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
 		}
 
-		int start = 0;
-		auto startIt = queryParameters.find("start");
-		if (startIt != queryParameters.end() && startIt->second != "")
-		{
-			start = stoll(startIt->second);
-		}
+		string startIngestionDate = requestData.getQueryParameter("startIngestionDate", "");
+		string endIngestionDate = requestData.getQueryParameter("endIngestionDate", "");
 
-		int rows = 10;
-		auto rowsIt = queryParameters.find("rows");
-		if (rowsIt != queryParameters.end() && rowsIt->second != "")
-		{
-			rows = stoll(rowsIt->second);
-			if (rows > _maxPageSize)
-			{
-				// 2022-02-13: changed to return an error otherwise the user
-				//	think to ask for a huge number of items while the return is much less
+		string startEncodingDate = requestData.getQueryParameter("startEncodingDate", "");
+		string endEncodingDate = requestData.getQueryParameter("endEncodingDate", "");
 
-				// rows = _maxPageSize;
+		int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1));
 
-				string errorMessage = std::format(
-					"rows parameter too big"
-					", rows: {}"
-					", _maxPageSize: {}",
-					rows, _maxPageSize
-				);
-				SPDLOG_ERROR(errorMessage);
+		bool alsoEncodingJobsFromOtherWorkspaces = requestData.getQueryParameter("alsoEncodingJobsFromOtherWorkspaces", false);
 
-				throw runtime_error(errorMessage);
-			}
-		}
+		bool asc = requestData.getQueryParameter("asc", true);
 
-		string startIngestionDate;
-		auto startIngestionDateIt = queryParameters.find("startIngestionDate");
-		if (startIngestionDateIt != queryParameters.end())
-			startIngestionDate = startIngestionDateIt->second;
+		string status = requestData.getQueryParameter("status", "all");
 
-		string endIngestionDate;
-		auto endIngestionDateIt = queryParameters.find("endIngestionDate");
-		if (endIngestionDateIt != queryParameters.end())
-			endIngestionDate = endIngestionDateIt->second;
+		string types = requestData.getQueryParameter("types", "");
 
-		string startEncodingDate;
-		auto startEncodingDateIt = queryParameters.find("startEncodingDate");
-		if (startEncodingDateIt != queryParameters.end())
-			startEncodingDate = startEncodingDateIt->second;
-
-		string endEncodingDate;
-		auto endEncodingDateIt = queryParameters.find("endEncodingDate");
-		if (endEncodingDateIt != queryParameters.end())
-			endEncodingDate = endEncodingDateIt->second;
-
-		int64_t encoderKey = -1;
-		auto encoderKeyIt = queryParameters.find("encoderKey");
-		if (encoderKeyIt != queryParameters.end() && encoderKeyIt->second != "")
-		{
-			encoderKey = stoll(encoderKeyIt->second);
-		}
-
-		bool alsoEncodingJobsFromOtherWorkspaces = false;
-		auto alsoEncodingJobsFromOtherWorkspacesIt = queryParameters.find("alsoEncodingJobsFromOtherWorkspaces");
-		if (alsoEncodingJobsFromOtherWorkspacesIt != queryParameters.end() && alsoEncodingJobsFromOtherWorkspacesIt->second != "")
-		{
-			if (alsoEncodingJobsFromOtherWorkspacesIt->second == "true")
-				alsoEncodingJobsFromOtherWorkspaces = true;
-			else
-				alsoEncodingJobsFromOtherWorkspaces = false;
-		}
-
-		bool asc = true;
-		auto ascIt = queryParameters.find("asc");
-		if (ascIt != queryParameters.end() && ascIt->second != "")
-		{
-			if (ascIt->second == "true")
-				asc = true;
-			else
-				asc = false;
-		}
-
-		string status = "all";
-		auto statusIt = queryParameters.find("status");
-		if (statusIt != queryParameters.end() && statusIt->second != "")
-		{
-			status = statusIt->second;
-		}
-
-		string types = "";
-		auto typesIt = queryParameters.find("types");
-		if (typesIt != queryParameters.end() && typesIt->second != "")
-		{
-			types = typesIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(types, regex(plus), plusDecoded);
-
-			types = CurlWrapper::unescape(firstDecoding);
-		}
-
-		bool fromMaster = false;
-		auto fromMasterIt = queryParameters.find("fromMaster");
-		if (fromMasterIt != queryParameters.end() && fromMasterIt->second != "")
-		{
-			if (fromMasterIt->second == "true")
-				fromMaster = true;
-			else
-				fromMaster = false;
-		}
+		bool fromMaster = requestData.getQueryParameter("fromMaster", false);
 
 		{
 			json encodingStatusRoot = _mmsEngineDBFacade->getEncodingJobsStatus(
@@ -173,7 +93,7 @@ void API::encodingJobsStatus(
 
 			string responseBody = JSONUtils::toString(encodingStatusRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -181,9 +101,9 @@ void API::encodingJobsStatus(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -191,50 +111,32 @@ void API::encodingJobsStatus(
 
 void API::encodingJobPriority(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encodingJobPriority";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
 	{
-		int64_t encodingJobKey = -1;
-		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-		if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
-		{
-			encodingJobKey = stoll(encodingJobKeyIt->second);
-		}
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1));
 
-		MMSEngineDBFacade::EncodingPriority newEncodingJobPriority;
 		bool newEncodingJobPriorityPresent = false;
-		auto newEncodingJobPriorityCodeIt = queryParameters.find("newEncodingJobPriorityCode");
-		if (newEncodingJobPriorityCodeIt != queryParameters.end() && newEncodingJobPriorityCodeIt->second != "")
-		{
-			newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(stoll(newEncodingJobPriorityCodeIt->second));
-			newEncodingJobPriorityPresent = true;
-		}
+		int32_t iNewEncodingJobPriority = requestData.getQueryParameter("newEncodingJobPriorityCode", static_cast<int32_t>(-1),
+			false, &newEncodingJobPriorityPresent);
+		MMSEngineDBFacade::EncodingPriority newEncodingJobPriority;
+		if (newEncodingJobPriorityPresent && iNewEncodingJobPriority >= 0)
+			newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(iNewEncodingJobPriority);
 
-		bool tryEncodingAgain = false;
-		auto tryEncodingAgainIt = queryParameters.find("tryEncodingAgain");
-		if (tryEncodingAgainIt != queryParameters.end())
-		{
-			if (tryEncodingAgainIt->second == "false")
-				tryEncodingAgain = false;
-			else
-				tryEncodingAgain = true;
-		}
+		bool tryEncodingAgain = requestData.getQueryParameter("tryEncodingAgain", false);
 
 		{
 			if (newEncodingJobPriorityPresent)
@@ -259,7 +161,7 @@ void API::encodingJobPriority(
 
 			string responseBody;
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -267,9 +169,9 @@ void API::encodingJobPriority(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -277,21 +179,18 @@ void API::encodingJobPriority(
 
 void API::killOrCancelEncodingJob(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "killOrCancelEncodingJob";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canKillEncoding)
@@ -302,21 +201,15 @@ void API::killOrCancelEncodingJob(
 			apiAuthorizationDetails->canKillEncoding
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		int64_t encodingJobKey = getQueryParameter(queryParameters, "encodingJobKey", static_cast<int64_t>(-1), false);
-		/*
-		int64_t encodingJobKey = -1;
-		auto encodingJobKeyIt = queryParameters.find("encodingJobKey");
-		if (encodingJobKeyIt != queryParameters.end() && encodingJobKeyIt->second != "")
-			encodingJobKey = stoll(encodingJobKeyIt->second);
-		*/
+		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), false);
 
 		// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
-		string killType = getQueryParameter(queryParameters, "killType", string("kill"), false);
+		string killType = requestData.getQueryParameter("killType", string("kill"), false);
 		/*
 		bool lightKill = false;
 		auto lightKillIt = queryParameters.find("lightKill");
@@ -720,7 +613,7 @@ void API::killOrCancelEncodingJob(
 			}
 
 			string responseBody;
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -728,9 +621,9 @@ void API::killOrCancelEncodingJob(
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -738,15 +631,12 @@ void API::killOrCancelEncodingJob(
 
 void API::encodingProfilesSetsList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encodingProfilesSetsList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -756,22 +646,12 @@ void API::encodingProfilesSetsList(
 
 	try
 	{
-		int64_t encodingProfilesSetKey = -1;
-		auto encodingProfilesSetKeyIt = queryParameters.find("encodingProfilesSetKey");
-		if (encodingProfilesSetKeyIt != queryParameters.end() && encodingProfilesSetKeyIt->second != "")
-		{
-			encodingProfilesSetKey = stoll(encodingProfilesSetKeyIt->second);
-		}
+		const int64_t encodingProfilesSetKey = requestData.getQueryParameter("encodingProfilesSetKey", static_cast<int64_t>(-1));
 
-		bool contentTypePresent = false;
 		optional<MMSEngineDBFacade::ContentType> contentType;
-		auto contentTypeIt = queryParameters.find("contentType");
-		if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
-		{
-			contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
-
-			contentTypePresent = true;
-		}
+		optional<string> sContentType = requestData.getOptQueryParameter<string>("contentType");
+		if (sContentType)
+			contentType = MMSEngineDBFacade::toContentType(*sContentType);
 
 		{
 
@@ -780,7 +660,7 @@ void API::encodingProfilesSetsList(
 
 			string responseBody = JSONUtils::toString(encodingProfilesSetListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -797,15 +677,12 @@ void API::encodingProfilesSetsList(
 
 void API::encodingProfilesList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "encodingProfilesList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -815,38 +692,14 @@ void API::encodingProfilesList(
 
 	try
 	{
-		int64_t encodingProfileKey = -1;
-		auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
-		if (encodingProfileKeyIt != queryParameters.end() && encodingProfileKeyIt->second != "")
-		{
-			encodingProfileKey = stoll(encodingProfileKeyIt->second);
-		}
+		int64_t encodingProfileKey = requestData.getQueryParameter("encodingProfileKey", static_cast<int64_t>(-1));
 
-		bool contentTypePresent = false;
 		optional<MMSEngineDBFacade::ContentType> contentType;
-		auto contentTypeIt = queryParameters.find("contentType");
-		if (contentTypeIt != queryParameters.end() && contentTypeIt->second != "")
-		{
-			contentType = MMSEngineDBFacade::toContentType(contentTypeIt->second);
+		optional<string> sContentType = requestData.getOptQueryParameter<string>("contentType");
+		if (sContentType)
+			contentType = MMSEngineDBFacade::toContentType(*sContentType);
 
-			contentTypePresent = true;
-		}
-
-		string label;
-		auto labelIt = queryParameters.find("label");
-		if (labelIt != queryParameters.end() && labelIt->second != "")
-		{
-			label = labelIt->second;
-
-			// 2021-01-07: Remark: we have FIRST to replace + in space and then apply unescape
-			//	That  because if we have really a + char (%2B into the string), and we do the replace
-			//	after unescape, this char will be changed to space and we do not want it
-			string plus = "\\+";
-			string plusDecoded = " ";
-			string firstDecoding = regex_replace(label, regex(plus), plusDecoded);
-
-			label = CurlWrapper::unescape(firstDecoding);
-		}
+		string label = requestData.getQueryParameter("label", "");
 
 		{
 			json encodingProfileListRoot =
@@ -854,7 +707,7 @@ void API::encodingProfilesList(
 
 			string responseBody = JSONUtils::toString(encodingProfileListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -871,21 +724,18 @@ void API::encodingProfilesList(
 
 void API::addUpdateEncodingProfilesSet(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addUpdateEncodingProfilesSet";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateProfiles)
@@ -896,22 +746,15 @@ void API::addUpdateEncodingProfilesSet(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		auto sContentTypeIt = queryParameters.find("contentType");
-		if (sContentTypeIt == queryParameters.end())
-		{
-			string errorMessage = "'contentType' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
+		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
+			requestData.getQueryParameter("contentType", "", true));
 
-			throw runtime_error(errorMessage);
-		}
-		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(sContentTypeIt->second);
-
-		json encodingProfilesSetRoot = JSONUtils::toJson(requestBody);
+		json encodingProfilesSetRoot = JSONUtils::toJson(requestData.requestBody);
 
 		string responseBody;
 
@@ -962,7 +805,7 @@ void API::addUpdateEncodingProfilesSet(
 				);
 #endif
 
-				if (responseBody != "")
+				if (!responseBody.empty())
 					responseBody += string(", ");
 				responseBody +=
 					(string("{ ") + "\"encodingProfileKey\": " + to_string(encodingProfileKey) + ", \"label\": \"" + profileLabel + "\" " + "}");
@@ -985,16 +828,16 @@ void API::addUpdateEncodingProfilesSet(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -1002,21 +845,18 @@ void API::addUpdateEncodingProfilesSet(
 
 void API::addEncodingProfile(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addEncodingProfile";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canCreateProfiles)
@@ -1027,22 +867,15 @@ void API::addEncodingProfile(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		auto sContentTypeIt = queryParameters.find("contentType");
-		if (sContentTypeIt == queryParameters.end())
-		{
-			string errorMessage = "'contentType' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
+		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
+			requestData.getQueryParameter("contentType", "", true));
 
-			throw runtime_error(errorMessage);
-		}
-		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(sContentTypeIt->second);
-
-		json encodingProfileRoot = JSONUtils::toJson(requestBody);
+		json encodingProfileRoot = JSONUtils::toJson(requestData.requestBody);
 
 		string responseBody;
 
@@ -1121,16 +954,16 @@ void API::addEncodingProfile(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -1138,15 +971,12 @@ void API::addEncodingProfile(
 
 void API::removeEncodingProfile(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeEncodingProfile";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1162,20 +992,12 @@ void API::removeEncodingProfile(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		auto encodingProfileKeyIt = queryParameters.find("encodingProfileKey");
-		if (encodingProfileKeyIt == queryParameters.end())
-		{
-			string errorMessage = "'encodingProfileKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t encodingProfileKey = stoll(encodingProfileKeyIt->second);
+		const int64_t encodingProfileKey = requestData.getQueryParameter("encodingProfileKey", static_cast<int64_t>(-1), true);
 
 		try
 		{
@@ -1194,7 +1016,7 @@ void API::removeEncodingProfile(
 
 		string responseBody;
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -1210,15 +1032,12 @@ void API::removeEncodingProfile(
 
 void API::removeEncodingProfilesSet(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeEncodingProfilesSet";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1234,20 +1053,12 @@ void API::removeEncodingProfilesSet(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		auto encodingProfilesSetKeyIt = queryParameters.find("encodingProfilesSetKey");
-		if (encodingProfilesSetKeyIt == queryParameters.end())
-		{
-			string errorMessage = "'encodingProfilesSetKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		int64_t encodingProfilesSetKey = stoll(encodingProfilesSetKeyIt->second);
+		const int64_t encodingProfilesSetKey = requestData.getQueryParameter("encodingProfilesSetKey", static_cast<int64_t>(-1), true);
 
 		try
 		{
@@ -1266,7 +1077,7 @@ void API::removeEncodingProfilesSet(
 
 		string responseBody;
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{

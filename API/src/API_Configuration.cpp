@@ -21,21 +21,18 @@
 
 void API::addYouTubeConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addYouTubeConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -47,7 +44,7 @@ void API::addYouTubeConf(
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -59,7 +56,7 @@ void API::addYouTubeConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -125,9 +122,9 @@ void API::addYouTubeConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what());
+				requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -181,16 +178,16 @@ void API::addYouTubeConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -199,21 +196,18 @@ void API::addYouTubeConf(
 
 void API::modifyYouTubeConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyYouTubeConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -225,7 +219,7 @@ void API::modifyYouTubeConf(
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -241,7 +235,7 @@ void API::modifyYouTubeConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -274,8 +268,8 @@ void API::modifyYouTubeConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -284,7 +278,7 @@ void API::modifyYouTubeConf(
 		string sResponse;
 		try
 		{
-			int64_t confKey = getQueryParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+			int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 			if (tokenTypeModified)
 			{
@@ -337,16 +331,16 @@ void API::modifyYouTubeConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 
 		throw;
@@ -355,15 +349,12 @@ void API::modifyYouTubeConf(
 
 void API::removeYouTubeConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeYouTubeConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -380,18 +371,18 @@ void API::removeYouTubeConf(
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeYouTubeConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -408,15 +399,12 @@ void API::removeYouTubeConf(
 
 void API::youTubeConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "youTubeConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -426,14 +414,14 @@ void API::youTubeConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
+		string label = requestData.getQueryParameter("label", string(), false);
 
 		{
 			json youTubeConfListRoot = _mmsEngineDBFacade->getYouTubeConfList(apiAuthorizationDetails->workspace->_workspaceKey, label);
 
 			string responseBody = JSONUtils::toString(youTubeConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -450,21 +438,18 @@ void API::youTubeConfList(
 
 void API::addFacebookConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addFacebookConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -475,7 +460,7 @@ void API::addFacebookConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -485,7 +470,7 @@ void API::addFacebookConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -518,8 +503,8 @@ void API::addFacebookConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -543,16 +528,16 @@ void API::addFacebookConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -560,21 +545,18 @@ void API::addFacebookConf(
 
 void API::modifyFacebookConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyFacebookConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -585,7 +567,7 @@ void API::modifyFacebookConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -595,7 +577,7 @@ void API::modifyFacebookConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -628,29 +610,29 @@ void API::modifyFacebookConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyFacebookConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, userAccessToken);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -658,15 +640,12 @@ void API::modifyFacebookConf(
 
 void API::removeFacebookConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeFacebookConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -682,18 +661,18 @@ void API::removeFacebookConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeFacebookConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -709,15 +688,12 @@ void API::removeFacebookConf(
 
 void API::facebookConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "facebookConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -727,20 +703,20 @@ void API::facebookConfList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
 		if (confKey == 0)
 			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-			label = getMapParameter(queryParameters, "label", string(), false);
+			label = requestData.getQueryParameter("label", string(), false);
 
 		{
 			json facebookConfListRoot = _mmsEngineDBFacade->getFacebookConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(facebookConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -757,21 +733,18 @@ void API::facebookConfList(
 
 void API::addTwitchConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addTwitchConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -782,7 +755,7 @@ void API::addTwitchConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -792,7 +765,7 @@ void API::addTwitchConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -825,8 +798,8 @@ void API::addTwitchConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -850,16 +823,16 @@ void API::addTwitchConf(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -867,21 +840,18 @@ void API::addTwitchConf(
 
 void API::modifyTwitchConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyTwitchConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -892,7 +862,7 @@ void API::modifyTwitchConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -902,7 +872,7 @@ void API::modifyTwitchConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -935,29 +905,29 @@ void API::modifyTwitchConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyTwitchConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, refreshToken);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -965,15 +935,12 @@ void API::modifyTwitchConf(
 
 void API::removeTwitchConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeTwitchConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -989,18 +956,18 @@ void API::removeTwitchConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeTwitchConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1016,15 +983,12 @@ void API::removeTwitchConf(
 
 void API::twitchConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "twitchConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1034,20 +998,20 @@ void API::twitchConfList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
 		if (confKey == 0)
 			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-			label = getMapParameter(queryParameters, "label", string(), false);
+			label = requestData.getQueryParameter("label", string(), false);
 
 		{
 			json twitchConfListRoot = _mmsEngineDBFacade->getTwitchConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(twitchConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -1064,21 +1028,18 @@ void API::twitchConfList(
 
 void API::addTiktokConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addTiktokConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
@@ -1088,7 +1049,7 @@ void API::addTiktokConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1121,9 +1082,9 @@ void API::addTiktokConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what());
+				requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1147,16 +1108,16 @@ void API::addTiktokConf(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -1164,21 +1125,18 @@ void API::addTiktokConf(
 
 void API::modifyTiktokConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyTiktokConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	try
@@ -1188,7 +1146,7 @@ void API::modifyTiktokConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1222,30 +1180,30 @@ void API::modifyTiktokConf(
 		{
 			string errorMessage = std::format(
 				"requestBody json is not well format"
-				", requestBody: {}"
+				", requestData.requestBody: {}"
 				", e.what(): {}",
-				requestBody, e.what());
+				requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyTiktokConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, token);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -1253,15 +1211,12 @@ void API::modifyTiktokConf(
 
 void API::removeTiktokConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeTiktokConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1271,13 +1226,13 @@ void API::removeTiktokConf(
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeTiktokConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -1293,15 +1248,12 @@ void API::removeTiktokConf(
 
 void API::tiktokConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "tiktokConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1311,20 +1263,20 @@ void API::tiktokConfList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
+		int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
 		if (confKey == 0)
 			confKey = -1;
 
 		string label;
 		if (confKey == -1)
-			label = getMapParameter(queryParameters, "label", string(), false);
+			label = requestData.getQueryParameter("label", string(), false);
 
 		{
 			json tiktokConfListRoot = _mmsEngineDBFacade->getTiktokConfList(apiAuthorizationDetails->workspace->_workspaceKey, confKey, label);
 
 			string responseBody = JSONUtils::toString(tiktokConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -1341,21 +1293,18 @@ void API::tiktokConfList(
 
 void API::addStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addStream";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -1366,7 +1315,7 @@ void API::addStream(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -1403,7 +1352,7 @@ void API::addStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1512,8 +1461,8 @@ void API::addStream(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1542,16 +1491,16 @@ void API::addStream(
 			throw e;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -1559,21 +1508,18 @@ void API::addStream(
 
 void API::modifyStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyStream";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -1584,7 +1530,7 @@ void API::modifyStream(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -1648,7 +1594,7 @@ void API::modifyStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			labelToBeModified = false;
 			string field = "label";
@@ -1874,8 +1820,8 @@ void API::modifyStream(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -1884,8 +1830,8 @@ void API::modifyStream(
 		string sResponse;
 		try
 		{
-			int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-			string labelKey = getMapParameter(queryParameters, "label", string(), false);
+			int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+			string labelKey = requestData.getQueryParameter("label", string(), false);
 
 			if (confKey == -1 && labelKey.empty())
 			{
@@ -1921,16 +1867,16 @@ void API::modifyStream(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -1938,15 +1884,12 @@ void API::modifyStream(
 
 void API::removeStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeStream";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -1962,7 +1905,7 @@ void API::removeStream(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -1970,8 +1913,8 @@ void API::removeStream(
 		string sResponse;
 		try
 		{
-			int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-			string label = getMapParameter(queryParameters, "label", string(), false);
+			int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+			string label = requestData.getQueryParameter("label", string(), false);
 			if (confKey == -1 && label.empty())
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
@@ -1995,7 +1938,7 @@ void API::removeStream(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2011,15 +1954,12 @@ void API::removeStream(
 
 void API::streamList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "streamList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2029,9 +1969,9 @@ void API::streamList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-		int32_t start = getMapParameter(queryParameters, "start", static_cast<int32_t>(0), false);
-		int32_t rows = getMapParameter(queryParameters, "rows", static_cast<int32_t>(30), false);
+		int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0), false);
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -2046,10 +1986,10 @@ void API::streamList(
 			throw runtime_error(errorMessage);
 		}
 
-		string label = getMapParameter(queryParameters, "label", string(""), false);
-		bool labelLike = getMapParameter(queryParameters, "labelLike", true, false);
-		string url = getMapParameter(queryParameters, "url", string(""), false);
-		string sourceType = getMapParameter(queryParameters, "sourceType", string(""), false);
+		string label = requestData.getQueryParameter("label", string(""), false);
+		bool labelLike = requestData.getQueryParameter("labelLike", true, false);
+		string url = requestData.getQueryParameter("url", string(""), false);
+		string sourceType = requestData.getQueryParameter("sourceType", string(""), false);
 		if (sourceType != "" && sourceType != "IP_PULL" && sourceType != "IP_PUSH"
 			&& sourceType != "CaptureLive" && sourceType != "TV")
 		{
@@ -2060,11 +2000,11 @@ void API::streamList(
 			);
 			sourceType = "";
 		}
-		string type = getMapParameter(queryParameters, "type", string(""), false);
-		string name = getMapParameter(queryParameters, "name", string(""), false);
-		string region = getMapParameter(queryParameters, "region", string(""), false);
-		string country = getMapParameter(queryParameters, "country", string(""), false);
-		string labelOrder = getMapParameter(queryParameters, "labelOrder", string(""), false);
+		string type = requestData.getQueryParameter("type", string(""), false);
+		string name = requestData.getQueryParameter("name", string(""), false);
+		string region = requestData.getQueryParameter("region", string(""), false);
+		string country = requestData.getQueryParameter("country", string(""), false);
+		string labelOrder = requestData.getQueryParameter("labelOrder", string(""), false);
 		if (labelOrder != "asc" && labelOrder != "desc")
 		{
 			SPDLOG_WARN(
@@ -2082,7 +2022,7 @@ void API::streamList(
 
 		string responseBody = JSONUtils::toString(streamListRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2098,15 +2038,12 @@ void API::streamList(
 
 void API::streamFreePushEncoderPort(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "streamFreePushEncoderPort";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2116,13 +2053,13 @@ void API::streamFreePushEncoderPort(
 
 	try
 	{
-		const int64_t encoderKey = getMapParameter(queryParameters, "encoderKey", -1, true);
+		const int64_t encoderKey = requestData.getQueryParameter("encoderKey", -1, true);
 
 		const json streamFreePushEncoderPortRoot = _mmsEngineDBFacade->getStreamFreePushEncoderPort(encoderKey);
 
 		const string responseBody = JSONUtils::toString(streamFreePushEncoderPortRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -2138,21 +2075,18 @@ void API::streamFreePushEncoderPort(
 
 void API::addSourceTVStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addSourceTVStream";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin)
@@ -2163,7 +2097,7 @@ void API::addSourceTVStream(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -2190,7 +2124,7 @@ void API::addSourceTVStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2285,8 +2219,8 @@ void API::addSourceTVStream(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2313,16 +2247,16 @@ void API::addSourceTVStream(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -2330,21 +2264,18 @@ void API::addSourceTVStream(
 
 void API::modifySourceTVStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifySourceTVStream";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin)
@@ -2355,7 +2286,7 @@ void API::modifySourceTVStream(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -2401,7 +2332,7 @@ void API::modifySourceTVStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "type";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2539,14 +2470,14 @@ void API::modifySourceTVStream(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		json sourceTVStreamRoot = _mmsEngineDBFacade->modifySourceTVStream(
 			confKey, typeToBeModified, type, serviceIdToBeModified, serviceId, networkIdToBeModified, networkId, transportStreamIdToBeModified,
@@ -2559,16 +2490,16 @@ void API::modifySourceTVStream(
 
 		string sResponse = JSONUtils::toString(sourceTVStreamRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -2576,15 +2507,12 @@ void API::modifySourceTVStream(
 
 void API::removeSourceTVStream(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeSourceTVStream";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2600,18 +2528,18 @@ void API::removeSourceTVStream(
 			apiAuthorizationDetails->admin
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeSourceTVStream(confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -2627,14 +2555,11 @@ void API::removeSourceTVStream(
 
 void API::sourceTVStreamList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "sourceTVStreamList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -2644,9 +2569,9 @@ void API::sourceTVStreamList(
 
 	try
 	{
-		int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), false);
-		int32_t start = getMapParameter(queryParameters, "start", static_cast<int32_t>(0), false);
-		int32_t rows = getMapParameter(queryParameters, "rows", static_cast<int32_t>(30), false);
+		int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), false);
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0), false);
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30), false);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -2660,14 +2585,14 @@ void API::sourceTVStreamList(
 
 			throw runtime_error(errorMessage);
 		}
-		string type = getMapParameter(queryParameters, "type", string(""), false);
-		int64_t serviceId = getMapParameter(queryParameters, "serviceId", static_cast<int64_t>(-1), false);
-		string name = getMapParameter(queryParameters, "name", string(""), false);
-		string lnb = getMapParameter(queryParameters, "lnb", string(""), false);
-		int64_t frequency = getMapParameter(queryParameters, "frequency", static_cast<int64_t>(-1), false);
-		int32_t videoPid = getMapParameter(queryParameters, "videoPid", static_cast<int32_t>(-1), false);
-		string audioPids = getMapParameter(queryParameters, "audioPids", string(""), false);
-		string nameOrder = getMapParameter(queryParameters, "nameOrder", string(""), false);
+		string type = requestData.getQueryParameter("type", string(""), false);
+		int64_t serviceId = requestData.getQueryParameter("serviceId", static_cast<int64_t>(-1), false);
+		string name = requestData.getQueryParameter("name", string(""), false);
+		string lnb = requestData.getQueryParameter("lnb", string(""), false);
+		int64_t frequency = requestData.getQueryParameter("frequency", static_cast<int64_t>(-1), false);
+		int32_t videoPid = requestData.getQueryParameter("videoPid", static_cast<int32_t>(-1), false);
+		string audioPids = requestData.getQueryParameter("audioPids", string(""), false);
+		string nameOrder = requestData.getQueryParameter("nameOrder", string(""), false);
 		if (nameOrder != "asc" && nameOrder != "desc")
 		{
 			SPDLOG_WARN(
@@ -2685,7 +2610,7 @@ void API::sourceTVStreamList(
 
 			string responseBody = JSONUtils::toString(sourceTVStreamRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -2702,21 +2627,18 @@ void API::sourceTVStreamList(
 
 void API::addAWSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addAWSChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -2727,7 +2649,7 @@ void API::addAWSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -2740,7 +2662,7 @@ void API::addAWSChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2815,8 +2737,8 @@ void API::addAWSChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -2840,16 +2762,16 @@ void API::addAWSChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -2857,21 +2779,18 @@ void API::addAWSChannelConf(
 
 void API::modifyAWSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyAWSChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -2882,7 +2801,7 @@ void API::modifyAWSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -2895,7 +2814,7 @@ void API::modifyAWSChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -2970,29 +2889,29 @@ void API::modifyAWSChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyAWSChannelConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, channelId, rtmpURL, playURL, type);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3000,15 +2919,12 @@ void API::modifyAWSChannelConf(
 
 void API::removeAWSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeAWSChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -3024,17 +2940,17 @@ void API::removeAWSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 		_mmsEngineDBFacade->removeAWSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3050,15 +2966,12 @@ void API::removeAWSChannelConf(
 
 void API::awsChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "awsChannelConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -3068,11 +2981,11 @@ void API::awsChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		const bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = requestData.getQueryParameter("label", string(), false);
+		const bool labelLike = requestData.getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = requestData.getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -3085,7 +2998,7 @@ void API::awsChannelConfList(
 
 			string responseBody = JSONUtils::toString(awsChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3102,21 +3015,18 @@ void API::awsChannelConfList(
 
 void API::addCDN77ChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addCDN77ChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -3127,7 +3037,7 @@ void API::addCDN77ChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -3143,7 +3053,7 @@ void API::addCDN77ChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3243,8 +3153,8 @@ void API::addCDN77ChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -3270,16 +3180,16 @@ void API::addCDN77ChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3287,21 +3197,18 @@ void API::addCDN77ChannelConf(
 
 void API::modifyCDN77ChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyCDN77ChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -3312,7 +3219,7 @@ void API::modifyCDN77ChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -3328,7 +3235,7 @@ void API::modifyCDN77ChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3438,14 +3345,14 @@ void API::modifyCDN77ChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyCDN77ChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, srtFeed, srtURL, rtmpURL, resourceURL, filePath, secureToken, type
@@ -3453,16 +3360,16 @@ void API::modifyCDN77ChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3470,15 +3377,12 @@ void API::modifyCDN77ChannelConf(
 
 void API::removeCDN77ChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeCDN77ChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -3494,18 +3398,18 @@ void API::removeCDN77ChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeCDN77ChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3521,15 +3425,12 @@ void API::removeCDN77ChannelConf(
 
 void API::cdn77ChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "cdn77ChannelConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -3539,11 +3440,11 @@ void API::cdn77ChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = requestData.getQueryParameter("label", string(), false);
+		bool labelLike = requestData.getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = requestData.getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -3556,7 +3457,7 @@ void API::cdn77ChannelConfList(
 
 			string responseBody = JSONUtils::toString(cdn77ChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3573,21 +3474,18 @@ void API::cdn77ChannelConfList(
 
 void API::addRTMPChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addRTMPChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -3598,7 +3496,7 @@ void API::addRTMPChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -3613,7 +3511,7 @@ void API::addRTMPChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3672,8 +3570,8 @@ void API::addRTMPChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -3698,16 +3596,16 @@ void API::addRTMPChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3715,21 +3613,18 @@ void API::addRTMPChannelConf(
 
 void API::modifyRTMPChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyRTMPChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -3740,7 +3635,7 @@ void API::modifyRTMPChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -3755,7 +3650,7 @@ void API::modifyRTMPChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3858,14 +3753,14 @@ void API::modifyRTMPChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyRTMPChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type
@@ -3873,16 +3768,16 @@ void API::modifyRTMPChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -3890,15 +3785,12 @@ void API::modifyRTMPChannelConf(
 
 void API::removeRTMPChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeRTMPChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -3914,18 +3806,18 @@ void API::removeRTMPChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeRTMPChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -3941,15 +3833,12 @@ void API::removeRTMPChannelConf(
 
 void API::rtmpChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "rtmpChannelConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -3959,11 +3848,11 @@ void API::rtmpChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = requestData.getQueryParameter("label", string(), false);
+		bool labelLike = requestData.getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = requestData.getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -3977,7 +3866,7 @@ void API::rtmpChannelConfList(
 
 			string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -3994,21 +3883,18 @@ void API::rtmpChannelConfList(
 
 void API::addSRTChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addSRTChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -4019,7 +3905,7 @@ void API::addSRTChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -4034,7 +3920,7 @@ void API::addSRTChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4090,8 +3976,8 @@ void API::addSRTChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4116,16 +4002,16 @@ void API::addSRTChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4133,21 +4019,18 @@ void API::addSRTChannelConf(
 
 void API::modifySRTChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifySRTChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -4158,7 +4041,7 @@ void API::modifySRTChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -4173,7 +4056,7 @@ void API::modifySRTChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4276,29 +4159,29 @@ void API::modifySRTChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifySRTChannelConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, srtURL, mode, streamId, passphrase, playURL, type);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4306,15 +4189,12 @@ void API::modifySRTChannelConf(
 
 void API::removeSRTChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeSRTChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -4330,18 +4210,18 @@ void API::removeSRTChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeSRTChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4357,15 +4237,12 @@ void API::removeSRTChannelConf(
 
 void API::srtChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "srtChannelConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -4375,11 +4252,11 @@ void API::srtChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = requestData.getQueryParameter("label", string(), false);
+		bool labelLike = requestData.getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = requestData.getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -4393,7 +4270,7 @@ void API::srtChannelConfList(
 
 			string responseBody = JSONUtils::toString(srtChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -4410,21 +4287,18 @@ void API::srtChannelConfList(
 
 void API::addHLSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addHLSChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -4435,7 +4309,7 @@ void API::addHLSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -4448,7 +4322,7 @@ void API::addHLSChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4501,8 +4375,8 @@ void API::addHLSChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4527,16 +4401,16 @@ void API::addHLSChannelConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4544,21 +4418,18 @@ void API::addHLSChannelConf(
 
 void API::modifyHLSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyHLSChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -4569,7 +4440,7 @@ void API::modifyHLSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -4582,7 +4453,7 @@ void API::modifyHLSChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4657,14 +4528,14 @@ void API::modifyHLSChannelConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyHLSChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, deliveryCode, segmentDuration, playlistEntriesNumber, type
@@ -4672,16 +4543,16 @@ void API::modifyHLSChannelConf(
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4689,15 +4560,12 @@ void API::modifyHLSChannelConf(
 
 void API::removeHLSChannelConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeHLSChannelConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -4713,18 +4581,18 @@ void API::removeHLSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeHLSChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -4740,15 +4608,12 @@ void API::removeHLSChannelConf(
 
 void API::hlsChannelConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "hlsChannelConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -4758,11 +4623,11 @@ void API::hlsChannelConfList(
 
 	try
 	{
-		string label = getQueryParameter(queryParameters, "label", string(), false);
-		bool labelLike = getQueryParameter(queryParameters, "labelLike", false, false);
+		string label = requestData.getQueryParameter("label", string(), false);
+		bool labelLike = requestData.getQueryParameter("labelLike", false, false);
 
 		int type = 0; // ALL
-		string sType = getQueryParameter(queryParameters, "type", string(), false);
+		string sType = requestData.getQueryParameter("type", string(), false);
 		if (sType != "")
 		{
 			if (sType == "SHARED")
@@ -4776,7 +4641,7 @@ void API::hlsChannelConfList(
 
 			string responseBody = JSONUtils::toString(hlsChannelConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -4793,21 +4658,18 @@ void API::hlsChannelConfList(
 
 void API::addFTPConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addFTPConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -4818,7 +4680,7 @@ void API::addFTPConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -4832,7 +4694,7 @@ void API::addFTPConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4921,8 +4783,8 @@ void API::addFTPConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4946,16 +4808,16 @@ void API::addFTPConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -4963,21 +4825,18 @@ void API::addFTPConf(
 
 void API::modifyFTPConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyFTPConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -4988,7 +4847,7 @@ void API::modifyFTPConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -5002,7 +4861,7 @@ void API::modifyFTPConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5091,29 +4950,29 @@ void API::modifyFTPConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyFTPConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, server, port, userName, password, remoteDirectory);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -5121,15 +4980,12 @@ void API::modifyFTPConf(
 
 void API::removeFTPConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeFTPConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -5145,18 +5001,18 @@ void API::removeFTPConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeFTPConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5172,14 +5028,11 @@ void API::removeFTPConf(
 
 void API::ftpConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "ftpConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -5195,7 +5048,7 @@ void API::ftpConfList(
 
 			string responseBody = JSONUtils::toString(ftpConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)
@@ -5212,21 +5065,18 @@ void API::ftpConfList(
 
 void API::addEMailConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "addEMailConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -5237,7 +5087,7 @@ void API::addEMailConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -5249,7 +5099,7 @@ void API::addEMailConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5310,8 +5160,8 @@ void API::addEMailConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -5335,16 +5185,16 @@ void API::addEMailConf(
 			throw;
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -5352,21 +5202,18 @@ void API::addEMailConf(
 
 void API::modifyEMailConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "modifyEMailConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
-		", requestBody: {}",
-		api, apiAuthorizationDetails->workspace->_workspaceKey, requestBody
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditConfiguration)
@@ -5377,7 +5224,7 @@ void API::modifyEMailConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
@@ -5389,7 +5236,7 @@ void API::modifyEMailConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestBody);
+			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -5450,29 +5297,29 @@ void API::modifyEMailConf(
 		catch (exception &e)
 		{
 			string errorMessage = std::format("requestBody json is not well format"
-				", requestBody: {}"
-				", e.what(): {}", requestBody, e.what());
+				", requestData.requestBody: {}"
+				", e.what(): {}", requestData.requestBody, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyEMailConf(confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, addresses, subject, message);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -5480,15 +5327,12 @@ void API::modifyEMailConf(
 
 void API::removeEMailConf(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeEMailConf";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -5504,18 +5348,18 @@ void API::removeEMailConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		SPDLOG_ERROR(errorMessage);
-		throw HTTPError(403);
+		throw FCGIRequestData::HTTPError(403);
 	}
 
 	try
 	{
-		const int64_t confKey = getMapParameter(queryParameters, "confKey", static_cast<int64_t>(-1), true);
+		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->removeEMailConf(apiAuthorizationDetails->workspace->_workspaceKey, confKey);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, sResponse);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, sResponse);
 	}
 	catch (exception &e)
 	{
@@ -5531,14 +5375,11 @@ void API::removeEMailConf(
 
 void API::emailConfList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters)
+	const FCGIRequestData& requestData)
 {
 	string api = "emailConfList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
@@ -5554,7 +5395,7 @@ void API::emailConfList(
 
 			string responseBody = JSONUtils::toString(emailConfListRoot);
 
-			sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+			sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 	}
 	catch (exception &e)

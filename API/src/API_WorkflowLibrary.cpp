@@ -21,15 +21,12 @@
 
 void API::workflowsAsLibraryList(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "workflowsAsLibraryList";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
@@ -39,7 +36,7 @@ void API::workflowsAsLibraryList(
 
 		string responseBody = JSONUtils::toString(workflowListRoot);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
@@ -55,34 +52,22 @@ void API::workflowsAsLibraryList(
 
 void API::workflowAsLibraryContent(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "workflowAsLibraryContent";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
-		int64_t workflowLibraryKey = -1;
-		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
-		if (workflowLibraryKeyIt == queryParameters.end())
-		{
-			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
+		int64_t workflowLibraryKey = requestData.getQueryParameter("workflowLibraryKey", static_cast<int64_t>(-1), true);
 
 		string workflowLibraryContent = _mmsEngineDBFacade->getWorkflowAsLibraryContent(apiAuthorizationDetails->workspace->_workspaceKey, workflowLibraryKey);
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, workflowLibraryContent);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, workflowLibraryContent);
 	}
 	catch (exception &e)
 	{
@@ -98,20 +83,17 @@ void API::workflowAsLibraryContent(
 
 void API::saveWorkflowAsLibrary(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "saveWorkflowAsLibrary";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO(
 		"Received {}"
-		", requestBody: {}",
-		api, requestBody
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
 	);
 
 	try
@@ -123,7 +105,7 @@ void API::saveWorkflowAsLibrary(
 			string workflowLabel;
 			string workflowAsLibraryScope;
 			{
-				json requestBodyRoot = manageWorkflowVariables(requestBody, nullptr);
+				json requestBodyRoot = manageWorkflowVariables(requestData.requestBody, nullptr);
 
 				Validator validator(_mmsEngineDBFacade, _configurationRoot);
 				// it starts from the root and validate recursively the entire body
@@ -143,15 +125,7 @@ void API::saveWorkflowAsLibrary(
 				}
 				workflowLabel = JSONUtils::asString(requestBodyRoot, field, "");
 
-				auto workflowAsLibraryScopeIt = queryParameters.find("scope");
-				if (workflowAsLibraryScopeIt == queryParameters.end())
-				{
-					string errorMessage = "'scope' URI parameter is missing";
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
-				}
-				workflowAsLibraryScope = workflowAsLibraryScopeIt->second;
+				workflowAsLibraryScope = requestData.getQueryParameter("scope", "", true);
 
 				if (workflowAsLibraryScope == "MMS" && !apiAuthorizationDetails->admin)
 				{
@@ -166,14 +140,11 @@ void API::saveWorkflowAsLibrary(
 				}
 			}
 
-			int64_t thumbnailMediaItemKey = -1;
-			auto thumbnailMediaItemKeyIt = queryParameters.find("thumbnailMediaItemKey");
-			if (thumbnailMediaItemKeyIt != queryParameters.end() && thumbnailMediaItemKeyIt->second != "")
-				thumbnailMediaItemKey = stoll(thumbnailMediaItemKeyIt->second);
+			int64_t thumbnailMediaItemKey = requestData.getQueryParameter("thumbnailMediaItemKey", static_cast<int64_t>(-1), false);
 
 			int64_t workflowLibraryKey = _mmsEngineDBFacade->addUpdateWorkflowAsLibrary(
 				workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->userKey, workflowAsLibraryScope == "MMS" ? -1 : apiAuthorizationDetails->workspace->_workspaceKey, workflowLabel,
-				thumbnailMediaItemKey, requestBody, apiAuthorizationDetails->admin
+				thumbnailMediaItemKey, requestData.requestBody, apiAuthorizationDetails->admin
 			);
 
 			responseBody =
@@ -181,16 +152,16 @@ void API::saveWorkflowAsLibrary(
 				 ", \"scope\": \"" + workflowAsLibraryScope + "\" " + "}");
 		}
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 201, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
 	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"API failed"
 			", API: {}"
-			", requestBody: {}"
+			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestBody, e.what()
+			api, requestData.requestBody, e.what()
 		);
 		throw;
 	}
@@ -198,40 +169,20 @@ void API::saveWorkflowAsLibrary(
 
 void API::removeWorkflowAsLibrary(
 	const string_view& sThreadId, int64_t requestIdentifier, FCGX_Request &request,
-	const shared_ptr<AuthorizationDetails>& authorizationDetails, const string_view& requestURI,
-	const string_view& requestMethod, const string_view& requestBody,
-	bool responseBodyCompressed, const unordered_map<string, string>& requestDetails,
-	const unordered_map<string, string>& queryParameters
+	const FCGIRequestData& requestData
 )
 {
 	string api = "removeWorkflowAsLibrary";
 
-	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(authorizationDetails);
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
 	SPDLOG_INFO("Received {}", api);
 
 	try
 	{
-		auto workflowLibraryKeyIt = queryParameters.find("workflowLibraryKey");
-		if (workflowLibraryKeyIt == queryParameters.end())
-		{
-			string errorMessage = "'workflowLibraryKey' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
+		int64_t workflowLibraryKey = requestData.getQueryParameter("workflowLibraryKey", static_cast<int64_t>(-1), true);
 
-			throw runtime_error(errorMessage);
-		}
-		int64_t workflowLibraryKey = stoll(workflowLibraryKeyIt->second);
-
-		string workflowAsLibraryScope;
-		auto workflowAsLibraryScopeIt = queryParameters.find("scope");
-		if (workflowAsLibraryScopeIt == queryParameters.end())
-		{
-			string errorMessage = "'scope' URI parameter is missing";
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-		workflowAsLibraryScope = workflowAsLibraryScopeIt->second;
+		string workflowAsLibraryScope = requestData.getQueryParameter("scope", "", true);
 
 		if (workflowAsLibraryScope == "MMS" && !apiAuthorizationDetails->admin)
 		{
@@ -265,7 +216,7 @@ void API::removeWorkflowAsLibrary(
 
 		string responseBody;
 
-		sendSuccess(sThreadId, requestIdentifier, responseBodyCompressed, request, "", api, 200, responseBody);
+		sendSuccess(sThreadId, requestIdentifier, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
 	catch (exception &e)
 	{
