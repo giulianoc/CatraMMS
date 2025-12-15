@@ -1352,14 +1352,15 @@ void MMSEngineDBFacade::addIngestionJobErrorMessages(int64_t ingestionJobKey, js
 		ranges::reverse(newErrorMessagesRoot);
 		string newErrorMessages = getPostgresArray(newErrorMessagesRoot, true, trans);
 		{
+			int maxErrorMessagesNumber = 100;
 			// like: non lo uso per motivi di performance
 			string sqlStatement = std::format(
 				"UPDATE MMS_IngestionJob "
-				"SET errorMessages = {} || COALESCE(errorMessages, ARRAY[]::text[]) "
+				"SET errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}] "
 				"where ingestionJobKey = {} "
 				"and status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
 				"'SourceUploadingInProgress', 'EncodingQueued') ", // not like 'End_%' "
-				newErrorMessages, ingestionJobKey
+				newErrorMessages, maxErrorMessagesNumber, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
@@ -3552,8 +3553,9 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
+				chrono::system_clock::time_point startGetIngestionJobRoot = chrono::system_clock::now();
 				json ingestionJobRoot = getIngestionJobRoot(workspace, row, dependencyInfo, ingestionJobOutputs, trans);
-				internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+				internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startGetIngestionJobRoot);
 
 				ingestionJobsRoot.push_back(ingestionJobRoot);
 			}

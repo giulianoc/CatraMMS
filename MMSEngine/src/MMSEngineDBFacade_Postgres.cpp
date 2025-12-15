@@ -1735,22 +1735,32 @@ string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, 
 string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
 {
 	string postgresArray;
-	for (const auto & index : arrayRoot)
+
+	if (!arrayRoot.is_array())
 	{
-		string element = JSONUtils::asString(index);
+		string errorMessage = std::format("Expected JSON array"
+			", arrayRoot: {}", JSONUtils::toString(arrayRoot)
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw std::runtime_error(errorMessage);
+	}
+
+	std::ostringstream oss;
+	bool first = true;
+	for (const auto& elementRoot : arrayRoot)
+	{
+		string element = JSONUtils::asString(elementRoot);
 
 		if (emptyElementToBeRemoved && element.empty())
 			continue;
 
-		if (postgresArray.empty())
-			postgresArray = trans.transaction->quote(element);
-		else
-			postgresArray += "," + trans.transaction->quote(element);
+		if (!first)
+			oss << ",";
+		oss << trans.transaction->quote(element);
+		first = false;
 	}
-	if (postgresArray.empty())
-		postgresArray = "ARRAY []::text[]";
-	else
-		postgresArray = "ARRAY [" + postgresArray + "]";
-
-	return postgresArray;
+	if (oss.str().empty())
+		return "ARRAY[]::text[]";
+	return "ARRAY[" + oss.str() + "]";
 }
