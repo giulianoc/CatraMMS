@@ -976,8 +976,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::killProcess(sourceLiveProxy->_childPid);
 						// sourceLiveProxy->_killedBecauseOfNotWorking = true;
 						// ProcessUtility::quitProcess(sourceLiveProxy->_childPid);
-						termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, configurationLabel, localErrorMessage, false);
-						// ProcessUtility::termProcess(sourceLiveProxy->_childPid);
+
+						// TODO:
+						if (false)
+							termProcess(sourceLiveProxy, copiedLiveProxy->_ingestionJobKey, configurationLabel, localErrorMessage, false);
 
 						sourceLiveProxy->_callbackData->pushErrorMessage(std::format(
 							"{} {}", Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), localErrorMessage
@@ -1948,11 +1950,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// ProcessUtility::killProcess(sourceLiveRecording->_childPid);
 						// sourceLiveRecording->_killedBecauseOfNotWorking = true;
 						// ProcessUtility::quitProcess(sourceLiveRecording->_childPid);
-						termProcess(
-							sourceLiveRecording, copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_channelLabel, localErrorMessage, false
+
+						// TODO:
+						if (false)
+							termProcess(sourceLiveRecording, copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_channelLabel, localErrorMessage, false
 						);
-						// ProcessUtility::termProcess(sourceLiveRecording->_childPid);
-						//
 						sourceLiveRecording->_callbackData->pushErrorMessage(std::format(
 							"{} {}{}", Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())),
 							sourceLiveRecording->_channelLabel, localErrorMessage
