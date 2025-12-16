@@ -778,8 +778,42 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								int elapsedInSecondsSinceLastChange =
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
-								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo
-									|| copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+								/* 2025-12-16: Discontinuity: [vist#0:1/h264] timestamp discontinuity (stream id=0): -20390288, new offset= -9998357
+								Significa che:
+								- il PTS/DTS in ingresso ha fatto un salto
+								- FFmpeg ha ricalcolato un offset per continuare la timeline
+								- il demuxer NON è crashato
+								Non è di per sé un errore, infatti spesso lo streaming funzione bene (dipende da DOVE cade la discontinuità),
+								é tipico di:
+								- SRT / RTMP / UDP
+								- encoder upstream che riparte
+								- cambi di GOP
+								- encoder hardware
+								FFmpeg riallinea il tempo
+								- I segmenti successivi hanno timestamp coerenti
+								- Il player non se ne accorge
+								In alcuni casi potrebbe causare problemi quando
+								- Tanti timestamp discontinuity ravvicinati
+								- Salti grandi (decine di secondi)
+								- Segmenti HLS generati ma con:
+								- durata errata
+								- EXT-X-PROGRAM-DATE-TIME instabile
+								La discontinuità diventa fatale quando abbiamo:
+								- Non-monotonous DTS
+								- PTS < DTS
+								- DTS out of order
+								- Invalid NAL unit
+								- PPS id out of range
+								- Error muxing packet
+								- av_interleaved_write_frame(): Invalid argument
+								Oppure:
+								- HLS smette di aggiornarsi
+								- playlist .m3u8 non cresce
+								- segmenti .ts non vengono più creati
+								Per questo motivo elimino il controllo su TimestampDiscontinuity
+								 */
+								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
+									// || copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
 								{
 									// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -804,9 +838,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										liveProxyWorking = false;
 
-										if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-											localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
-										else
+										// if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+										//	localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
+										// else
 											localErrorMessage = " restarted because of 'real time info not changing'";
 									}
 									else
@@ -1831,8 +1865,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
 										.count();
 
-								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo
-									|| copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+								// getTimestampDiscontinuityCount: vedi commento scritto per il Live proxy
+								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
+									// || copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
 								{
 									// real time info not changed oppure ci sono troppo timestamp discontinuity
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -1857,9 +1892,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										liveRecorderWorking = false;
 
-										if (copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-											localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
-										else
+										// if (copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
+										//	localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
+										// else
 											localErrorMessage = " restarted because of 'real time info not changing'";
 									}
 									else
