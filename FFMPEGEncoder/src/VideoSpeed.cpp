@@ -252,7 +252,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
+			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 
@@ -271,7 +271,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
+			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
@@ -292,7 +292,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
+			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);

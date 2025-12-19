@@ -9,7 +9,7 @@ void BandwidthStats::addSample(uint64_t bytesUsed, chrono::system_clock::time_po
 
 	time_t timestamp_t = chrono::system_clock::to_time_t(timestamp);
 
-	string day = Datetime::utcToLocalString(timestamp_t, Datetime::Format::YYYY_MM_DD);
+	string day = Datetime::utcToLocalString(timestamp_t, "%Y-%m-%d");
 	tm local_tm = Datetime::utcSecondsToLocalTime(timestamp_t);
 
 	if (_currentDay.empty())

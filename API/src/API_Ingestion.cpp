@@ -5360,7 +5360,8 @@ void API::changeLiveProxyPlaylist(
 						", utcProxyPeriodStart: {} ({})"
 						", utcProxyPeriodEnd: {} ({})",
 						broadcasterIngestionJobKey, newReceivedPlaylistIndex, newReceivedPlaylistRoot.size(), utcCurrentBroadcasterStart,
-						Datetime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart, Datetime::utcToUtcString(utcProxyPeriodStart),
+						Datetime::utcToUtcString(utcCurrentBroadcasterStart), utcProxyPeriodStart,
+						Datetime::utcToUtcString(utcProxyPeriodStart),
 						utcProxyPeriodEnd, Datetime::utcToUtcString(utcProxyPeriodEnd)
 					);
 
@@ -5378,12 +5379,14 @@ void API::changeLiveProxyPlaylist(
 						else if (utcProxyPeriodStart >= utcProxyPeriodEnd)
 							partialMessage = std::format(
 								"utcProxyPeriodStart {} ({}) >= utcProxyPeriodEnd {} ({})", utcProxyPeriodStart,
-								Datetime::utcToUtcString(utcProxyPeriodStart), utcProxyPeriodEnd, Datetime::utcToUtcString(utcProxyPeriodEnd)
+								Datetime::utcToUtcString(utcProxyPeriodStart), utcProxyPeriodEnd,
+								Datetime::utcToUtcString(utcProxyPeriodEnd)
 							);
 						else if (utcProxyPeriodEnd > utcBroadcasterEnd)
 							partialMessage = std::format(
 								"utcProxyPeriodEnd {} ({}) > utcBroadcasterEnd {} ({})", utcProxyPeriodEnd,
-								Datetime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd, Datetime::utcToUtcString(utcBroadcasterEnd)
+								Datetime::utcToUtcString(utcProxyPeriodEnd), utcBroadcasterEnd,
+								Datetime::utcToUtcString(utcBroadcasterEnd)
 							);
 
 						string errorMessage = std::format(

@@ -258,7 +258,7 @@ serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=usa-phil-delivery-5
 prodServers[$((serverIndex*6+1))]=68.233.32.54
 prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=925568.233.32.54
+prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=68.233.32.54
 

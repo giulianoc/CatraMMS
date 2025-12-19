@@ -511,7 +511,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			", API: {}"
 			", requestBody: {}"
 			", e.what(): {}",
-			Datetime::utcToLocalString(chrono::system_clock::to_time_t(chrono::system_clock::now())), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
+			Datetime::nowLocalTime(), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
 		SPDLOG_ERROR(errorMessage);
