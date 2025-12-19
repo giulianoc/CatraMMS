@@ -121,6 +121,7 @@ set(FASTCGIAPI_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/FastCGIAPI/src"
 set(CONVERT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/Convert/src")
 set(DATETIME_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/Datetime/src")
 set(DATETIME_LIB_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/Datetime/src")
+option(DATETIME_EXAMPLES "Build Datetime examples" ON)
 set(EVENTSSET_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/EventsSet/src")
 set(MULTIEVENTSSET_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/MultiEventsSet/src")
 set(MULTIEVENTSSET_LIB_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/MultiEventsSet/src")

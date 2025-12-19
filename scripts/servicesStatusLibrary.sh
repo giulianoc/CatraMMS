@@ -936,7 +936,28 @@ mms_incrontab_check_locks()
     channel=$(basename "$path")
     maxAllowedConsecutiveLocks=3
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
-    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk -v maxAllowedConsecutiveLocks=$maxAllowedConsecutiveLocks 'BEGIN { alarm=0; } { if (NR > maxAllowedConsecutiveLocks && prevprev ~ /Lock attivo/ && prev ~ /Lock attivo/ && $0 ~ /Lock attivo/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')
+    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk -v maxAllowedConsecutiveLocks=$maxAllowedConsecutiveLocks ' \
+    	BEGIN \
+    	{ \
+    		counter=0; \
+    	} \
+    	{ \
+    		if ($0 ~ /Lock attivo/) { \
+    			counter++; \
+    			if (counter > maxAllowedConsecutiveLocks) \
+    				exit; \
+    		} \
+    		else \
+    			counter=0; \
+    	} \
+    END \
+    { \
+    	if (counter > maxAllowedConsecutiveLocks) \
+    		alarm=1; \
+    	else \
+    		alarm=0; \
+    	printf("%d", alarm) \
+    }')
 		if [ $alarm -eq 0 ]; then
 			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_locks, incrontab locks for channel $channel (filter ${dateFilter}) is fine" >> $debugFilename
 

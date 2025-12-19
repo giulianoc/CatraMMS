@@ -1714,28 +1714,24 @@ MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTec
 
 string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
 {
-	string postgresArray;
+	std::ostringstream oss;
+	bool first = true;
 	for (const string& element : arrayElements)
 	{
 		if (emptyElementToBeRemoved && element.empty())
 			continue;
-		if (postgresArray.empty())
-			postgresArray = trans.transaction->quote(element);
-		else
-			postgresArray += "," + trans.transaction->quote(element);
+		if (!first)
+			oss << ",";
+		oss << trans.transaction->quote(element);
+		first = false;
 	}
-	if (postgresArray.empty())
-		postgresArray = "ARRAY []::text[]";
-	else
-		postgresArray = "ARRAY [" + postgresArray + "]";
-
-	return postgresArray;
+	if (oss.str().empty())
+		return "ARRAY[]::text[]";
+	return std::format("ARRAY[{}]", oss.str());
 }
 
 string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
 {
-	string postgresArray;
-
 	if (!arrayRoot.is_array())
 	{
 		string errorMessage = std::format("Expected JSON array"
@@ -1762,5 +1758,5 @@ string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emp
 	}
 	if (oss.str().empty())
 		return "ARRAY[]::text[]";
-	return "ARRAY[" + oss.str() + "]";
+	return std::format("ARRAY[{}]", oss.str());
 }

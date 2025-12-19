@@ -1352,7 +1352,7 @@ void MMSEngineDBFacade::addIngestionJobErrorMessages(int64_t ingestionJobKey, js
 		ranges::reverse(newErrorMessagesRoot);
 		string newErrorMessages = getPostgresArray(newErrorMessagesRoot, true, trans);
 		{
-			int maxErrorMessagesNumber = 100;
+			int maxErrorMessagesNumber = 1000;
 			// like: non lo uso per motivi di performance
 			string sqlStatement = std::format(
 				"UPDATE MMS_IngestionJob "

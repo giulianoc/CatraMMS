@@ -40,6 +40,12 @@ fileName=$3
 
 elapsedCopyInMilliSecs=0
 
+#aggiungo il controllo che parallel sia istallato perchè altrimenti rsync non funziona e non viene scritto alcun errore nel log
+if ! command -v parallel >/dev/null 2>&1; then
+	echo "$(date +'%Y-%m-%d %H:%M:%S'): ERROR GNU parallel non installato" >> "$debugFileName"
+	exit 1
+fi
+
 #Caso (1). Nel caso di un encoder che genera HLS, abbiamo:
 #IN_MOVED_TO per i file .m3u8
 #IN_MODIFY per i files .ts e .m3u8.tmp
