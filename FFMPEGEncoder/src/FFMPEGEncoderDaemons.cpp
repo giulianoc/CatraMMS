@@ -38,7 +38,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		);
 
 		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
-		_maxRealTimeInfoTimestampDiscontinuity = 400;
+		_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = 1000; // ne ho contati 1300 in 30 secondi in un caso
 	}
 	catch (runtime_error &e)
 	{
@@ -776,46 +776,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 								// recupero dei dati
-
 								int elapsedInSecondsSinceLastChange =
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
-								/* 2025-12-16: Discontinuity: [vist#0:1/h264] timestamp discontinuity (stream id=0): -20390288, new offset= -9998357
-								Significa che:
-								- il PTS/DTS in ingresso ha fatto un salto
-								- FFmpeg ha ricalcolato un offset per continuare la timeline
-								- il demuxer NON è crashato
-								Non è di per sé un errore, infatti spesso lo streaming funzione bene (dipende da DOVE cade la discontinuità),
-								é tipico di:
-								- SRT / RTMP / UDP
-								- encoder upstream che riparte
-								- cambi di GOP
-								- encoder hardware
-								FFmpeg riallinea il tempo
-								- I segmenti successivi hanno timestamp coerenti
-								- Il player non se ne accorge
-								In alcuni casi potrebbe causare problemi quando
-								- Tanti timestamp discontinuity ravvicinati
-								- Salti grandi (decine di secondi)
-								- Segmenti HLS generati ma con:
-								- durata errata
-								- EXT-X-PROGRAM-DATE-TIME instabile
-								La discontinuità diventa fatale quando abbiamo:
-								- Non-monotonous DTS
-								- PTS < DTS
-								- DTS out of order
-								- Invalid NAL unit
-								- PPS id out of range
-								- Error muxing packet
-								- av_interleaved_write_frame(): Invalid argument
-								Oppure:
-								- HLS smette di aggiornarsi
-								- playlist .m3u8 non cresce
-								- segmenti .ts non vengono più creati
-								Per questo motivo elimino il controllo su TimestampDiscontinuity
-								 */
 								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
-									// || copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
 								{
 									// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -829,21 +793,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", configurationLabel: {}"
 											", copiedLiveProxy->_childProcessId: {}"
 											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childProcessId.toString(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-											copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
+											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
 										);
 
 										liveProxyWorking = false;
-
-										// if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-										//	localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
-										// else
-											localErrorMessage = " restarted because of 'real time info not changing'";
+										localErrorMessage = " restarted because of 'real time info not changing'";
 									}
 									else
 									{
@@ -854,13 +811,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", configurationLabel: {}"
 											", copiedLiveProxy->_childProcessId: {}"
 											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
-											_maxRealTimeInfoNotChangedToleranceInSeconds, copiedLiveProxy->_callbackData->getTimestampDiscontinuityCount(),
-											_maxRealTimeInfoTimestampDiscontinuity
+											_maxRealTimeInfoNotChangedToleranceInSeconds
 										);
 									}
 								}
@@ -869,16 +823,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							else
 								sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
-						}
-						catch (FFMpegEncodingStatusNotAvailable &e)
-						{
-							SPDLOG_WARN(
-								"liveProxyMonitor (rtmp) real time info check failed"
-								", copiedLiveProxy->_ingestionJobKey: {}"
-								", copiedLiveProxy->_encodingJobKey: {}"
-								", e.what(): {}",
-								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
-							);
 						}
 						catch (exception &e)
 						{
@@ -920,7 +864,100 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				if (liveProxyWorking) // && rtmpOutputFound)
+				/* 2025-12-16: Discontinuity: [vist#0:1/h264] timestamp discontinuity (stream id=0): -20390288, new offset= -9998357
+				Significa che:
+				- il PTS/DTS in ingresso ha fatto un salto
+				- FFmpeg ha ricalcolato un offset per continuare la timeline
+				- il demuxer NON è crashato
+				Non è di per sé un errore, infatti spesso lo streaming funzione bene (dipende da DOVE cade la discontinuità),
+				é tipico di:
+				- SRT / RTMP / UDP
+				- encoder upstream che riparte
+				- cambi di GOP
+				- encoder hardware
+				FFmpeg riallinea il tempo
+				- I segmenti successivi hanno timestamp coerenti
+				- Il player non se ne accorge
+				In alcuni casi potrebbe causare problemi quando
+				- Tanti timestamp discontinuity ravvicinati
+				- Salti grandi (decine di secondi)
+				- Segmenti HLS generati ma con:
+				- durata errata
+				- EXT-X-PROGRAM-DATE-TIME instabile
+				La discontinuità diventa fatale quando abbiamo:
+				- Non-monotonous DTS
+				- PTS < DTS
+				- DTS out of order
+				- Invalid NAL unit
+				- PPS id out of range
+				- Error muxing packet
+				- av_interleaved_write_frame(): Invalid argument
+				- tanti discontinuity in pochi secondi Es.: ≥ 5 volte in 30s oppure crescita continua per 60s
+					(ho visto 1300 discontinuities in 30 secondi)
+				Oppure:
+				- HLS smette di aggiornarsi
+				- playlist .m3u8 non cresce
+				- segmenti .ts non vengono più creati
+				 */
+				if (liveProxyWorking)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor too timestamp discontinuities in time window check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+					);
+
+					try
+					{
+						if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCountInTimeWindow() >
+							_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow)
+						{
+							SPDLOG_ERROR(
+								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). "
+								"Too timestamp discontinuities in time window failed. LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", copiedLiveProxy->_childProcessId: {}"
+								", timestampDiscontinuityCountInTimeWindow: {}"
+								", _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, copiedLiveProxy->_childProcessId.toString(),
+								copiedLiveProxy->_callbackData->getTimestampDiscontinuityCountInTimeWindow(), _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow
+							);
+
+							liveProxyWorking = false;
+							localErrorMessage = " restarted because of too timestamp discontinuities in time window";
+						}
+					}
+					catch (exception &e)
+					{
+						SPDLOG_ERROR(
+							"liveProxyMonitor (rtmp) too timestamp discontinuities in time window check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+					}
+				}
+
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childProcessId: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						sourceLiveProxy->_childProcessId.toString()
+					);
+
+					continue;
+				}
+
+				if (liveProxyWorking)
 				{
 					SPDLOG_INFO(
 						"liveProxyMonitor forbiddenErrorInOutputLog check"
@@ -947,9 +984,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							localErrorMessage = " restarted because of 'HTTP error 403 Forbidden'";
 						}
 					}
-					catch (FFMpegEncodingStatusNotAvailable &e)
+					catch (exception &e)
 					{
-						SPDLOG_WARN(
+						SPDLOG_ERROR(
 							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -957,10 +994,108 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
 					}
+				}
+
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childProcessId: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						sourceLiveProxy->_childProcessId.toString()
+					);
+
+					continue;
+				}
+
+				if (liveProxyWorking)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor Both TLS and open resource errors check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+					);
+
+					try
+					{
+						if (sourceLiveProxy->_callbackData->getTlsAndOpenResourceError())
+						{
+							SPDLOG_ERROR(
+								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. Both TLS and open resource errors detected. "
+								"LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", copiedLiveProxy->_childProcessId: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, copiedLiveProxy->_childProcessId.toString()
+							);
+
+							liveProxyWorking = false;
+							localErrorMessage = " restarted because of TLS and open resource errors";
+						}
+					}
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
-							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
+							"liveProxyMonitor (rtmp) Both TLS and open resource errors check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+					}
+				}
+
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childProcessId: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						sourceLiveProxy->_childProcessId.toString()
+					);
+
+					continue;
+				}
+
+				if (liveProxyWorking)
+				{
+					SPDLOG_INFO(
+						"liveProxyMonitor Segment Failed Too Many Times check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+					);
+
+					try
+					{
+						if (sourceLiveProxy->_callbackData->getSegmentFailedTooManyTimes())
+						{
+							SPDLOG_ERROR(
+								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. Segment Failed Too Many Times. "
+								"LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", copiedLiveProxy->_childProcessId: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, copiedLiveProxy->_childProcessId.toString()
+							);
+
+							liveProxyWorking = false;
+							localErrorMessage = " restarted because of Segment Failed Too Many Times";
+						}
+					}
+					catch (exception &e)
+					{
+						SPDLOG_ERROR(
+							"liveProxyMonitor (rtmp) Segment Failed Too Many Times"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
 							", e.what(): {}",
@@ -1867,7 +2002,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								// getTimestampDiscontinuityCount: vedi commento scritto per il Live proxy
 								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
-									// || copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
 								{
 									// real time info not changed oppure ci sono troppo timestamp discontinuity
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -1880,22 +2014,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", channelLabel: {}"
 											", _childProcessId: {}"
 											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
 											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
 											elapsedInSecondsSinceLastChange,
-											_maxRealTimeInfoNotChangedToleranceInSeconds, copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(),
-											_maxRealTimeInfoTimestampDiscontinuity
+											_maxRealTimeInfoNotChangedToleranceInSeconds
 										);
 
 										liveRecorderWorking = false;
-
-										// if (copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount() > _maxRealTimeInfoTimestampDiscontinuity)
-										//	localErrorMessage = " restarted because of 'real time info too timestamp discontinuity";
-										// else
-											localErrorMessage = " restarted because of 'real time info not changing'";
+										localErrorMessage = " restarted because of 'real time info not changing'";
 									}
 									else
 									{
@@ -1906,13 +2033,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", channelLabel: {}"
 											", _childProcessId: {}"
 											", elapsedInSecondsSinceLastChange: {}"
-											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}"
-											", timestampDiscontinuityCount: {}"
-											", _maxRealTimeInfoTimestampDiscontinuity: {}",
+											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
 											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds,
-											copiedLiveRecording->_callbackData->getTimestampDiscontinuityCount(), _maxRealTimeInfoTimestampDiscontinuity
+											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
 										);
 									}
 								}
@@ -1921,17 +2045,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							else
 								sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
-						}
-						catch (FFMpegEncodingStatusNotAvailable &e)
-						{
-							string errorMessage = std::format(
-								"liveRecorderMonitor (rtmp) real time info check failed"
-								", copiedLiveRecording->_ingestionJobKey: {}"
-								", copiedLiveRecording->_encodingJobKey: {}"
-								", e.what(): {}",
-								copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, e.what()
-							);
-							SPDLOG_WARN(errorMessage);
 						}
 						catch (exception &e)
 						{

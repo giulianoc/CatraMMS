@@ -51,7 +51,7 @@ private:
 	int _monitorCheckInSeconds;
 
 	int _maxRealTimeInfoNotChangedToleranceInSeconds;
-	int _maxRealTimeInfoTimestampDiscontinuity;
+	int _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow;
 	GetCpuUsage _getCpuUsage;
 
 	mutex *_liveRecordingMutex;
