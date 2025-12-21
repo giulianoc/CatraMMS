@@ -61,6 +61,7 @@ private:
 	shared_mutex *_cpuUsageMutex;
 	deque<int> *_cpuUsage;
 
+	static bool exists(const string& pathName, int retries = 3, int waitInSeconds = 1);
 };
 
 #endif

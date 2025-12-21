@@ -313,7 +313,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								{
 									string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 									{
-										if (!fs::exists(manifestFilePathName))
+										if (!exists(manifestFilePathName))
 										{
 											liveProxyWorking = false;
 
@@ -329,43 +329,41 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 											break;
 										}
-										else
+
+										int64_t lastManifestFileUpdateInSeconds;
 										{
-											int64_t lastManifestFileUpdateInSeconds;
-											{
-												chrono::system_clock::time_point fileLastModification =
-													chrono::time_point_cast<chrono::system_clock::duration>(
-														fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
-														chrono::system_clock::now()
-													);
-												chrono::system_clock::time_point now = chrono::system_clock::now();
-
-												lastManifestFileUpdateInSeconds =
-													chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
-											}
-
-											long maxLastManifestFileUpdateInSeconds = 30;
-
-											if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
-											{
-												liveProxyWorking = false;
-
-												SPDLOG_ERROR(
-													"liveProxyMonitor. Manifest file was not updated in the last {} seconds"
-													", ingestionJobKey: {}"
-													", encodingJobKey: {}"
-													", manifestFilePathName: {}"
-													", lastManifestFileUpdateInSeconds: {} seconds ago"
-													", maxLastManifestFileUpdateInSeconds: {}",
-													maxLastManifestFileUpdateInSeconds, copiedLiveProxy->_ingestionJobKey,
-													copiedLiveProxy->_encodingJobKey, manifestFilePathName, lastManifestFileUpdateInSeconds,
-													maxLastManifestFileUpdateInSeconds
+											chrono::system_clock::time_point fileLastModification =
+												chrono::time_point_cast<chrono::system_clock::duration>(
+													fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
+													chrono::system_clock::now()
 												);
+											chrono::system_clock::time_point now = chrono::system_clock::now();
 
-												localErrorMessage = " restarted because of 'manifest file was not updated'";
+											lastManifestFileUpdateInSeconds =
+												chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+										}
 
-												break;
-											}
+										long maxLastManifestFileUpdateInSeconds = 30;
+
+										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
+										{
+											liveProxyWorking = false;
+
+											SPDLOG_ERROR(
+												"liveProxyMonitor. Manifest file was not updated in the last {} seconds"
+												", ingestionJobKey: {}"
+												", encodingJobKey: {}"
+												", manifestFilePathName: {}"
+												", lastManifestFileUpdateInSeconds: {} seconds ago"
+												", maxLastManifestFileUpdateInSeconds: {}",
+												maxLastManifestFileUpdateInSeconds, copiedLiveProxy->_ingestionJobKey,
+												copiedLiveProxy->_encodingJobKey, manifestFilePathName, lastManifestFileUpdateInSeconds,
+												maxLastManifestFileUpdateInSeconds
+											);
+
+											localErrorMessage = " restarted because of 'manifest file was not updated'";
+
+											break;
 										}
 									}
 								}
@@ -540,7 +538,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										try
 										{
-											if (fs::exists(manifestDirectoryPathName))
+											if (exists(manifestDirectoryPathName))
 											{
 												// chunks will be removed 10 minutes after the "capacity" of the playlist
 												// long liveProxyChunkRetentionInSeconds =
@@ -781,12 +779,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
 								{
-									// real time info non sono cambiate oppure ci sono troppi timestamp discontinuity
+									// real time info non sono cambiate
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
 										SPDLOG_ERROR(
 											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
-											"info are not changing or too 'timestamp discontinuity'. LiveProxy (ffmpeg) is killed in order to be "
+											"info are not changing. LiveProxy (ffmpeg) is killed in order to be "
 											"started again"
 											", ingestionJobKey: {}"
 											", encodingJobKey: {}"
@@ -1396,81 +1394,54 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 						string segmentListPathName =
 							copiedLiveRecording->_chunksTranscoderStagingContentsPath + copiedLiveRecording->_segmentListFileName;
-
+						if (!exists(segmentListPathName))
 						{
-							// 2022-05-26: in case the file does not exist, try again to make sure
-							//	it really does not exist
-							bool segmentListFileExistence = fs::exists(segmentListPathName);
+							liveRecorderWorking = false;
 
-							if (!segmentListFileExistence)
+							SPDLOG_ERROR(
+								"liveRecordingMonitor. Segment list file does not exist"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", liveRecordingLiveTimeInSeconds: {}"
+								", segmentListPathName: {}",
+								copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds,
+								segmentListPathName
+							);
+
+							localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
+						}
+						else
+						{
+							int64_t lastSegmentListFileUpdateInSeconds;
 							{
-								int sleepTimeInSeconds = 5;
-
-								SPDLOG_WARN(
-									"liveRecordingMonitor. Segment list file does not exist, let's check again"
-									", ingestionJobKey: {}"
-									", encodingJobKey: {}"
-									", liveRecordingLiveTimeInSeconds: {}"
-									", segmentListPathName: {}"
-									", sleepTimeInSeconds: {}",
-									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds,
-									segmentListPathName, sleepTimeInSeconds
+								chrono::system_clock::time_point fileLastModification = chrono::time_point_cast<chrono::system_clock::duration>(
+									fs::last_write_time(segmentListPathName) - fs::file_time_type::clock::now() + chrono::system_clock::now()
 								);
+								chrono::system_clock::time_point now = chrono::system_clock::now();
 
-								this_thread::sleep_for(chrono::seconds(sleepTimeInSeconds));
-
-								segmentListFileExistence = fs::exists(segmentListPathName);
+								lastSegmentListFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
 							}
 
-							if (!segmentListFileExistence)
+							long maxLastSegmentListFileUpdateInSeconds = segmentDurationInSeconds * 2;
+
+							if (lastSegmentListFileUpdateInSeconds > maxLastSegmentListFileUpdateInSeconds)
 							{
 								liveRecorderWorking = false;
 
 								SPDLOG_ERROR(
-									"liveRecordingMonitor. Segment list file does not exist"
+									"liveRecordingMonitor. Segment list file was not updated in the last {} seconds"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
 									", liveRecordingLiveTimeInSeconds: {}"
-									", segmentListPathName: {}",
-									copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds,
-									segmentListPathName
+									", segmentListPathName: {}"
+									", lastSegmentListFileUpdateInSeconds: {} seconds ago"
+									", maxLastSegmentListFileUpdateInSeconds: {}",
+									maxLastSegmentListFileUpdateInSeconds, copiedLiveRecording->_ingestionJobKey,
+									copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds, segmentListPathName,
+									lastSegmentListFileUpdateInSeconds, maxLastSegmentListFileUpdateInSeconds
 								);
 
 								localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
-							}
-							else
-							{
-								int64_t lastSegmentListFileUpdateInSeconds;
-								{
-									chrono::system_clock::time_point fileLastModification = chrono::time_point_cast<chrono::system_clock::duration>(
-										fs::last_write_time(segmentListPathName) - fs::file_time_type::clock::now() + chrono::system_clock::now()
-									);
-									chrono::system_clock::time_point now = chrono::system_clock::now();
-
-									lastSegmentListFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
-								}
-
-								long maxLastSegmentListFileUpdateInSeconds = segmentDurationInSeconds * 2;
-
-								if (lastSegmentListFileUpdateInSeconds > maxLastSegmentListFileUpdateInSeconds)
-								{
-									liveRecorderWorking = false;
-
-									SPDLOG_ERROR(
-										"liveRecordingMonitor. Segment list file was not updated in the last {} seconds"
-										", ingestionJobKey: {}"
-										", encodingJobKey: {}"
-										", liveRecordingLiveTimeInSeconds: {}"
-										", segmentListPathName: {}"
-										", lastSegmentListFileUpdateInSeconds: {} seconds ago"
-										", maxLastSegmentListFileUpdateInSeconds: {}",
-										maxLastSegmentListFileUpdateInSeconds, copiedLiveRecording->_ingestionJobKey,
-										copiedLiveRecording->_encodingJobKey, liveRecordingLiveTimeInSeconds, segmentListPathName,
-										lastSegmentListFileUpdateInSeconds, maxLastSegmentListFileUpdateInSeconds
-									);
-
-									localErrorMessage = " restarted because of 'segment list file is missing or was not updated'";
-								}
 							}
 						}
 					}
@@ -1539,61 +1510,57 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								// First health check (HLS/DASH) looking the manifests path name timestamp
 
 								string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+								if (!exists(manifestFilePathName))
 								{
-									if (!fs::exists(manifestFilePathName))
-									{
-										liveRecorderWorking = false;
+									liveRecorderWorking = false;
 
-										SPDLOG_ERROR(
-											"liveRecorderMonitor. Manifest file does not exist"
-											", ingestionJobKey: {}"
-											", encodingJobKey: {}"
-											", manifestFilePathName: {}",
-											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestFilePathName
+									SPDLOG_ERROR(
+										"liveRecorderMonitor. Manifest file does not exist"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", manifestFilePathName: {}",
+										copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestFilePathName
+									);
+
+									localErrorMessage = " restarted because of 'manifest file is missing'";
+
+									break;
+								}
+
+								int64_t lastManifestFileUpdateInSeconds;
+								{
+									chrono::system_clock::time_point fileLastModification =
+										chrono::time_point_cast<chrono::system_clock::duration>(
+											fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
+											chrono::system_clock::now()
 										);
+									chrono::system_clock::time_point now = chrono::system_clock::now();
 
-										localErrorMessage = " restarted because of 'manifest file is missing'";
+									lastManifestFileUpdateInSeconds =
+										chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+								}
 
-										break;
-									}
-									else
-									{
-										int64_t lastManifestFileUpdateInSeconds;
-										{
-											chrono::system_clock::time_point fileLastModification =
-												chrono::time_point_cast<chrono::system_clock::duration>(
-													fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
-													chrono::system_clock::now()
-												);
-											chrono::system_clock::time_point now = chrono::system_clock::now();
+								long maxLastManifestFileUpdateInSeconds = 45;
 
-											lastManifestFileUpdateInSeconds =
-												chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
-										}
+								if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
+								{
+									liveRecorderWorking = false;
 
-										long maxLastManifestFileUpdateInSeconds = 45;
+									SPDLOG_ERROR(
+										"liveRecorderMonitor. Manifest file was not updated in the last {} seconds"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", manifestFilePathName: {}"
+										", lastManifestFileUpdateInSeconds: {} seconds ago"
+										", maxLastManifestFileUpdateInSeconds: {}",
+										maxLastManifestFileUpdateInSeconds, copiedLiveRecording->_ingestionJobKey,
+										copiedLiveRecording->_encodingJobKey, manifestFilePathName, lastManifestFileUpdateInSeconds,
+										maxLastManifestFileUpdateInSeconds
+									);
 
-										if (lastManifestFileUpdateInSeconds > maxLastManifestFileUpdateInSeconds)
-										{
-											liveRecorderWorking = false;
+									localErrorMessage = " restarted because of 'manifest file was not updated'";
 
-											SPDLOG_ERROR(
-												"liveRecorderMonitor. Manifest file was not updated in the last {} seconds"
-												", ingestionJobKey: {}"
-												", encodingJobKey: {}"
-												", manifestFilePathName: {}"
-												", lastManifestFileUpdateInSeconds: {} seconds ago"
-												", maxLastManifestFileUpdateInSeconds: {}",
-												maxLastManifestFileUpdateInSeconds, copiedLiveRecording->_ingestionJobKey,
-												copiedLiveRecording->_encodingJobKey, manifestFilePathName, lastManifestFileUpdateInSeconds,
-												maxLastManifestFileUpdateInSeconds
-											);
-
-											localErrorMessage = " restarted because of 'manifest file was not updated'";
-
-											break;
-										}
-									}
+									break;
 								}
 							}
 							catch (exception &e)
@@ -1760,7 +1727,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 									try
 									{
-										if (fs::exists(manifestDirectoryPathName))
+										if (exists(manifestDirectoryPathName))
 										{
 											// chunks will be removed 10 minutes after the "capacity" of the playlist
 											// 2022-05-26: it was 10 minutes fixed. This is an error
@@ -2003,7 +1970,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								// getTimestampDiscontinuityCount: vedi commento scritto per il Live proxy
 								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
 								{
-									// real time info not changed oppure ci sono troppo timestamp discontinuity
+									// real time info not changed
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
 										SPDLOG_ERROR(
@@ -2149,6 +2116,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 		this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
 	}
+}
+
+bool FFMPEGEncoderDaemons::exists(const string& pathName, const int retries, const int waitInSeconds)
+{
+	for (int i = 0; i < retries; i++)
+	{
+		if (fs::exists(pathName))
+			return true;
+		if (i + 1 < retries)
+			this_thread::sleep_for(chrono::seconds(waitInSeconds));
+	}
+
+	return false;
 }
 
 void FFMPEGEncoderDaemons::stopMonitorThread()
