@@ -2050,7 +2050,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		string signedURL;
 		{
-			string hashStr = std::format("{}{}{}", filePath, expirationInSeconds, secureToken);
+			string hashStr = std::format("{}{}{}", filePath, expiryTimestamp, secureToken);
 
 			SPDLOG_INFO(
 				"getMedianovaSignedTokenURL"
