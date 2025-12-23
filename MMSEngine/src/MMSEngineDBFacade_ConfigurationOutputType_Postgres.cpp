@@ -2223,8 +2223,8 @@ pair<string, json> MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIn
 				throw DBRecordNotFound(errorMessage);
 			}
 
-			playURL = (*sqlResultSet)[0][0].as<string>(string(""));
 			signedURLDetailsRoot = (*sqlResultSet)[0][0].as<json>(nullptr);
+			playURL = (*sqlResultSet)[0][1].as<string>(string(""));
 		}
 
 		return make_pair(playURL, signedURLDetailsRoot);
