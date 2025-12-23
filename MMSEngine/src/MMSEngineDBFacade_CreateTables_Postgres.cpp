@@ -557,6 +557,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								  "streamName					text NULL,"
 								  "userName					text NULL,"
 								  "password					text NULL,"
+								  "signedURLDetails			jsonb NULL,"
 								  "playURL					text NULL,"
 								  "type						text NOT NULL,"
 								  "outputIndex				smallint NULL,"

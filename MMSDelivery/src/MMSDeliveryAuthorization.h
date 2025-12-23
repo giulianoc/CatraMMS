@@ -54,6 +54,13 @@ class MMSDeliveryAuthorization
 		const string &secureToken, long expirationInSeconds, string playerIP = ""
 	);
 	string getAWSSignedURL(const string &playURL, int expirationInSeconds);
+	static string getSignedTokenURL(
+		const string &playURLHostname,
+		// i.e.: 1234456789.rsc.cdn77.org
+		const string &filePath,
+		// /file/playlist/d.m3u8
+		const string &secureToken, long expirationInSeconds, string playerIP = ""
+	);
 
 	unordered_map<string, uint64_t> getExternalDeliveriesRunningHosts();
 	void updateExternalDeliveriesBandwidthHosts(const unordered_map<string, uint64_t> &hostsBandwidth);

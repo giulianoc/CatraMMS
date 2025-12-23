@@ -452,9 +452,28 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				{
 					try
 					{
-						playURL = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
-						// if (secureToken != "")
-						// 		playURL = getSignedCDN77URL(resourceURL, filePath, secureToken, ttlInSeconds, playerIPToBeAuthorized ? playerIP : "");
+						/* signedURLDetailsRoot:
+						{
+							"securityType": "token",
+							"tokenDetails": {
+								"playURLHostName": "..."
+								"token": "..."
+							}
+						}
+						*/
+						json signedURLDetailsRoot;
+						tie(playURL, signedURLDetailsRoot) = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+						string securityType = JSONUtils::asString(signedURLDetailsRoot, "securityType", "none");
+						if (securityType == "token")
+						{
+							json tokenDetailsRoot = JSONUtils::asJson(signedURLDetailsRoot, "tokenDetails", json::object());
+							string playURLHostName = JSONUtils::asString(tokenDetailsRoot, "playURLHostName", "");
+							string filePath = JSONUtils::asString(tokenDetailsRoot, "filePath", "");
+							string secureToken = JSONUtils::asString(tokenDetailsRoot, "token", "");
+
+							playURL = getSignedTokenURL(playURLHostName, filePath, secureToken, ttlInSeconds,
+								/* playerIPToBeAuthorized ? playerIP : */ "");
+						}
 					}
 					catch (DBRecordNotFound &e)
 					{
@@ -1903,7 +1922,8 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 					}
 					*/
 
-					// md5Base64 = Convert::base64_encode(md5_digest, md5_digest_len);
+					md5Base64 = Encrypt::binaryToBase64(md5_digest, md5_digest_len);
+					/*
 					{
 						BIO *bio, *b64;
 						BUF_MEM *bufferPtr;
@@ -1937,13 +1957,14 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 							"getSignedCDN77URL"
 							", (*bufferPtr).length: {}"
 							", (*bufferPtr).data: {}",
-							(*bufferPtr).length, (*bufferPtr).data
+							bufferPtr->length, bufferPtr->data
 						);
 
-						md5Base64 = string((*bufferPtr).data, (*bufferPtr).length);
+						md5Base64 = string(bufferPtr->data, bufferPtr->length);
 
 						BUF_MEM_free(bufferPtr);
 					}
+					*/
 
 					OPENSSL_free(md5_digest);
 
@@ -1984,6 +2005,169 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			", playerIP: {}"
 			", signedURL: {}",
 			resourceURL, filePath, secureToken, expirationInSeconds, playerIP, signedURL
+		);
+
+		return signedURL;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"getSignedCDN77URL failed"
+			", e.what(): {}",
+			e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw;
+	}
+}
+
+string MMSDeliveryAuthorization::getSignedTokenURL(
+	const string& playURLHostname, // i.e.: 1234456789.rsc.cdn77.org
+	const string& filePath,	// /file/playlist/d.m3u8
+	const string& secureToken, long expirationInSeconds, string playerIP
+)
+{
+	SPDLOG_INFO(
+		"getSignedTokenURL"
+		", playURLHostname: {}"
+		", filePath: {}"
+		", secureToken: {}"
+		", expirationInSeconds: {}"
+		", playerIP: {}",
+		playURLHostname, filePath, secureToken, expirationInSeconds, playerIP
+	);
+
+	try
+	{
+		//  It's smart to set the expiration time as current time plus 5 minutes { time() + 300}.
+		//  This way the link will be available only for the time needed to start the download.
+
+		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + expirationInSeconds;
+
+		string signedURL;
+		{
+			string path = StringUtils::uriPathPrefix(filePath, true);
+
+			// $hashStr = $path . $secureToken;
+			string hashStr = playerIP.empty() ?
+				std::format("{}{}", path, secureToken) :
+				std::format("{}{} {}", path, playerIP, secureToken);
+
+			hashStr = std::format("{}{}", expiryTimestamp, hashStr);
+			string sExpiryTimestamp = std::format(",{}", expiryTimestamp);
+
+			SPDLOG_INFO(
+				"getSignedTokenURL"
+				", path: {}"
+				", hashStr: {}"
+				", sExpiryTimestamp: {}",
+				path, hashStr, sExpiryTimestamp
+			);
+
+			// eseguiamo il base64 dell'md5 di hashStr
+			string md5Base64;
+			{
+				{
+					unsigned char *md5_digest;
+					unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
+
+					EVP_MD_CTX *mdctx;
+
+					// MD5_Init
+					mdctx = EVP_MD_CTX_new();
+					EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
+
+					// MD5_Update
+					EVP_DigestUpdate(mdctx, (unsigned char *)hashStr.c_str(), hashStr.size());
+
+					// MD5_Final
+					md5_digest = static_cast<unsigned char *>(OPENSSL_malloc(md5_digest_len));
+					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
+
+					md5Base64 = Encrypt::binaryToBase64(md5_digest, md5_digest_len);
+					/*
+					{
+						BIO *bio, *b64;
+						BUF_MEM *bufferPtr;
+
+						SPDLOG_DEBUG("BIO_new...");
+						b64 = BIO_new(BIO_f_base64());
+						// By default there must be a newline at the end of input.
+						// Next flag remove new line at the end
+						BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+						bio = BIO_new(BIO_s_mem());
+
+						SPDLOG_DEBUG("BIO_push...");
+						bio = BIO_push(b64, bio);
+
+						SPDLOG_DEBUG("BIO_write...");
+						BIO_write(bio, md5_digest, md5_digest_len);
+						BIO_flush(bio);
+						BIO_get_mem_ptr(bio, &bufferPtr);
+
+						SPDLOG_DEBUG("BIO_set_close...");
+						BIO_set_close(bio, BIO_NOCLOSE);
+						SPDLOG_DEBUG("BIO_free_all...");
+						BIO_free_all(bio);
+						// info(__FILEREF__ + "BIO_free...");
+						// BIO_free(b64);	// useless because of BIO_free_all
+
+						SPDLOG_DEBUG("base64Text set...");
+						// char* base64Text=(*bufferPtr).data;
+
+						SPDLOG_INFO(
+							"getSignedCDN77URL"
+							", (*bufferPtr).length: {}"
+							", (*bufferPtr).data: {}",
+							bufferPtr->length, bufferPtr->data
+						);
+
+						md5Base64 = string(bufferPtr->data, bufferPtr->length);
+
+						BUF_MEM_free(bufferPtr);
+					}
+					*/
+
+					OPENSSL_free(md5_digest);
+
+					EVP_MD_CTX_free(mdctx);
+				}
+
+				SPDLOG_INFO(
+					"getSignedCDN77URL"
+					", md5Base64: {}",
+					md5Base64
+				);
+
+				// $invalidChars = ['+','/'];
+				// $validChars = ['-','_'];
+				ranges::transform(
+					md5Base64, md5Base64.begin(),
+					[](unsigned char c)
+					{
+						if (c == '+')
+							return '-';
+						else if (c == '/')
+							return '_';
+						else
+							return (char)c;
+					}
+				);
+			}
+
+			signedURL = std::format("https://{}/{}{}{}", playURLHostname, md5Base64, sExpiryTimestamp, filePath);
+		}
+
+		SPDLOG_INFO(
+			"end getSignedCDN77URL"
+			", playURLHostname: {}"
+			", filePath: {}"
+			", secureToken: {}"
+			", expirationInSeconds: {}"
+			", playerIP: {}"
+			", signedURL: {}",
+			playURLHostname, filePath, secureToken, expirationInSeconds, playerIP, signedURL
 		);
 
 		return signedURL;

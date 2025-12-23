@@ -7,6 +7,8 @@
 #include <openssl/pem.h>
 
 #include "AWSSigner.h"
+
+#include "Encrypt.h"
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
@@ -173,7 +175,7 @@ string AWSSigner::sign(string pemPathName, string message)
 
 	SPDLOG_DEBUG("RSASign...");
 	size_t signedMessageLength;
-	unsigned char *signedMessage = NULL;
+	vector<unsigned char> signedMessage;
 	{
 		EVP_MD_CTX *m_RSASignCtx = EVP_MD_CTX_create();
 		EVP_PKEY *priKey = EVP_PKEY_new();
@@ -218,12 +220,11 @@ string AWSSigner::sign(string pemPathName, string message)
 		}
 
 		SPDLOG_DEBUG("EVP_DigestSignFinal...");
-		signedMessage = (unsigned char *)malloc(signedMessageLength);
-		if (EVP_DigestSignFinal(m_RSASignCtx, signedMessage, &signedMessageLength) <= 0)
+		signedMessage.resize(signedMessageLength);
+		if (EVP_DigestSignFinal(m_RSASignCtx, signedMessage.data(), &signedMessageLength) <= 0)
 		{
 			SPDLOG_ERROR("EVP_DigestSignFinal failed");
 
-			free(signedMessage);
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
 			RSA_free(rsa);
@@ -231,6 +232,7 @@ string AWSSigner::sign(string pemPathName, string message)
 
 			return "";
 		}
+		signedMessage.resize(signedMessageLength);
 
 		SPDLOG_DEBUG("EVP_PKEY_free...");
 		EVP_PKEY_free(priKey);
@@ -253,7 +255,8 @@ string AWSSigner::sign(string pemPathName, string message)
 		", signedMessageLength: {}",
 		signedMessageLength
 	);
-	string signature;
+	string signature = Encrypt::binaryToBase64(signedMessage.data(), signedMessageLength);
+	/*
 	{
 		BIO *bio, *b64;
 		BUF_MEM *bufferPtr;
@@ -286,7 +289,7 @@ string AWSSigner::sign(string pemPathName, string message)
 
 		SPDLOG_DEBUG("signature: {}", signature);
 	}
-	free(signedMessage);
+	*/
 
 	SPDLOG_DEBUG("signature before replace: {}", signature);
 

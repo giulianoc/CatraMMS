@@ -1430,7 +1430,7 @@ MMSEngineDBFacade::reserveCDN77Channel(int64_t workspaceKey, string label, int o
 			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
 			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			string sqlStatement;
-			if (label == "")
+			if (label.empty())
 			{
 				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
 				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
@@ -2156,7 +2156,7 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 	}
 }
 
-string MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex)
+pair<string, json> MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex)
 {
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -2171,15 +2171,17 @@ string MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKe
 		);
 
 		string playURL;
+		json signedURLDetailsRoot;
 		{
 			string sqlStatement = std::format(
-				"select playURL "
+				"select signedURLDetails, playURL "
 				"from MMS_Conf_RTMPChannel "
 				"where reservedByIngestionJobKey = {} and outputIndex = {}",
 				reservedIngestionJobKey, outputIndex
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			const result res = trans.transaction->exec(sqlStatement);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -2189,7 +2191,7 @@ string MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKe
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			if (empty(res))
+			if (sqlResultSet->empty())
 			{
 				string errorMessage = std::format(
 					"Configuration label is not found"
@@ -2202,15 +2204,15 @@ string MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKe
 				throw DBRecordNotFound(errorMessage);
 			}
 
-			if (!res[0]["playURL"].is_null())
-				playURL = res[0]["playURL"].as<string>();
+			playURL = (*sqlResultSet)[0][0].as<string>(string(""));
+			signedURLDetailsRoot = (*sqlResultSet)[0][0].as<json>(nullptr);
 		}
 
-		return playURL;
+		return make_pair(playURL, signedURLDetailsRoot);
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"

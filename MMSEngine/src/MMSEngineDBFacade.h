@@ -2225,7 +2225,7 @@ class MMSEngineDBFacade
 
 	tuple<string, string, string, string, string, string, bool>
 	reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
-	string rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
+	pair<string, json> rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
 	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 	int64_t addSRTChannelConf(
