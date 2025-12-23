@@ -3732,7 +3732,7 @@ void API::modifyRTMPChannelConf(
 			}
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "signedURLDetailsRoot";
+			field = "signedURLDetails";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(

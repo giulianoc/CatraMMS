@@ -467,6 +467,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						if (securityType == "token")
 						{
 							json tokenDetailsRoot = JSONUtils::asJson(signedURLDetailsRoot, "tokenDetails", json::object());
+
 							string playURLHostName = JSONUtils::asString(tokenDetailsRoot, "playURLHostName", "");
 							string filePath = JSONUtils::asString(tokenDetailsRoot, "filePath", "");
 							string secureToken = JSONUtils::asString(tokenDetailsRoot, "token", "");
