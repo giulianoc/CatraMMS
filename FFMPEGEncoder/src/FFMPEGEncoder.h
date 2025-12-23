@@ -60,7 +60,7 @@ class FFMPEGEncoder final : public FastCGIAPI
 	) override;
 
 	shared_ptr<FCGIRequestData::AuthorizationDetails> checkAuthorization(const string_view& sThreadId,
-		const string_view& userName, const string_view& password) override;
+		const FCGIRequestData& requestData, const string_view& userName, const string_view& password) override;
 
 	bool basicAuthenticationRequired(const FCGIRequestData& requestData) override;
 

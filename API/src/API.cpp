@@ -1645,7 +1645,7 @@ void API::bandwidthUsageThread()
 }
 
 shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const string_view &sThreadId,
-	const string_view &userName, const string_view &password)
+	const FCGIRequestData& requestData, const string_view &userName, const string_view &password)
 {
 	auto apiAuthorizationDetails = make_shared<APIAuthorizationDetails>();
 	try

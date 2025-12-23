@@ -2345,7 +2345,7 @@ void FFMPEGEncoder::encodingProgress(
 }
 
 shared_ptr<FCGIRequestData::AuthorizationDetails> FFMPEGEncoder::checkAuthorization(const string_view& sThreadId,
-	const string_view& userName, const string_view& password)
+	const FCGIRequestData& requestData, const string_view& userName, const string_view& password)
 {
 	if (userName != _encoderUser || password != _encoderPassword)
 	{
