@@ -1388,20 +1388,20 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore, ignore) =
 								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey, youTubeConfigurationLabel, warningIfMissing);
 
-							int64_t confKey;
-							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
-
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
-								confKey, workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								confKey, workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
-								workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 
@@ -1479,20 +1479,20 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore, ignore) =
 								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey, youTubeConfigurationLabel, warningIfMissing);
 
-							int64_t confKey;
-							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
-
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
-								confKey, workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								confKey, workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
-								workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								workspace->_workspaceKey, youTubeConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 
@@ -1986,20 +1986,20 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore, ignore) =
 								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey, facebookConfigurationLabel, warningIfMissing);
 
-							int64_t confKey;
-							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
-
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
-								confKey, workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								confKey, workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
-								workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 
@@ -2083,20 +2083,20 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							tuple<int64_t, string, string, string, string, string> rtmpChannelDetails =
+							int64_t confKey;
+							tie(confKey, ignore, ignore, ignore, ignore, ignore, ignore) =
 								_mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey, facebookConfigurationLabel, warningIfMissing);
 
-							int64_t confKey;
-							tie(confKey, ignore, ignore, ignore, ignore, ignore) = rtmpChannelDetails;
-
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
-								confKey, workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								confKey, workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 						catch (DBRecordNotFound &e)
 						{
 							_mmsEngineDBFacade->addRTMPChannelConf(
-								workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "", "", "", "", "DEDICATED"
+								workspace->_workspaceKey, facebookConfigurationLabel, rtmpURL, "",
+								"", "", nullptr, "", "DEDICATED"
 							);
 						}
 

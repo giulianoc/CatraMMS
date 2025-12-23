@@ -3506,6 +3506,7 @@ void API::addRTMPChannelConf(
 		string streamName;
 		string userName;
 		string password;
+		json signedURLDetailsRoot;
 		string playURL;
 		string type;
 
@@ -3550,8 +3551,13 @@ void API::addRTMPChannelConf(
 			field = "password";
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
+			field = "signedURLDetails";
+			signedURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
+
 			field = "playURL";
 			playURL = JSONUtils::asString(requestBodyRoot, field, "");
+
+			signedURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, "signedURLDetails", json(nullptr));
 
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3581,7 +3587,10 @@ void API::addRTMPChannelConf(
 		try
 		{
 			int64_t confKey =
-				_mmsEngineDBFacade->addRTMPChannelConf(apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type);
+				_mmsEngineDBFacade->addRTMPChannelConf(
+				apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password,
+				signedURLDetailsRoot, playURL, type
+			);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
 		}
@@ -3645,6 +3654,7 @@ void API::modifyRTMPChannelConf(
 		string streamName;
 		string userName;
 		string password;
+		json signedURLDetailsRoot;
 		string playURL;
 		string type;
 
@@ -3722,6 +3732,20 @@ void API::modifyRTMPChannelConf(
 			}
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
+			field = "signedURLDetailsRoot";
+			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			signedURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
+
 			field = "playURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
@@ -3763,7 +3787,8 @@ void API::modifyRTMPChannelConf(
 		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyRTMPChannelConf(
-			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, playURL, type
+			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, signedURLDetailsRoot, playURL,
+			type
 		);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
