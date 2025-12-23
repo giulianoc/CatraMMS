@@ -2018,7 +2018,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 				if (row[9].isNull())
 					rtmpChannelConfRoot[field] = nullptr;
 				else
-					rtmpChannelConfRoot[field] = row[9].as<int32_t>(static_cast<int32_t>(-1));
+					rtmpChannelConfRoot[field] = row[9].as<int16_t>(static_cast<int16_t>(-1));
 
 				field = "reservedByIngestionJobKey";
 				if (row[10].isNull())
