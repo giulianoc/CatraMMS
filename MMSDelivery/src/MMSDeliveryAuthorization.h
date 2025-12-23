@@ -54,11 +54,9 @@ class MMSDeliveryAuthorization
 		const string &secureToken, long expirationInSeconds, string playerIP = ""
 	);
 	string getAWSSignedURL(const string &playURL, int expirationInSeconds);
-	static string getSignedTokenURL(
+	static string getMedianovaSignedTokenURL(
 		const string &playURLHostname,
-		// i.e.: 1234456789.rsc.cdn77.org
 		const string &filePath,
-		// /file/playlist/d.m3u8
 		const string &secureToken, long expirationInSeconds, string playerIP = ""
 	);
 

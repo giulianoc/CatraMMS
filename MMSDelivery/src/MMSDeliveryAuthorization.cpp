@@ -472,7 +472,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							string filePath = JSONUtils::asString(tokenDetailsRoot, "filePath", "");
 							string secureToken = JSONUtils::asString(tokenDetailsRoot, "token", "");
 
-							playURL = getSignedTokenURL(playURLHostName, filePath, secureToken, ttlInSeconds,
+							playURL = getMedianovaSignedTokenURL(playURLHostName, filePath, secureToken, ttlInSeconds,
 								/* playerIPToBeAuthorized ? playerIP : */ "");
 						}
 					}
@@ -2023,14 +2023,16 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 	}
 }
 
-string MMSDeliveryAuthorization::getSignedTokenURL(
-	const string& playURLHostname, // i.e.: 1234456789.rsc.cdn77.org
-	const string& filePath,	// /file/playlist/d.m3u8
-	const string& secureToken, long expirationInSeconds, string playerIP
+string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
+	const string& playURLHostname, // i.e.: origin-l-backup.glb.mncdn.com
+	const string& filePath,	// /mn-m1/cnl52/index.m3u8
+	const string& secureToken, // i.e.: svFTvs7d
+	long expirationInSeconds,  // 3600
+	string playerIP
 )
 {
 	SPDLOG_INFO(
-		"getSignedTokenURL"
+		"getMedianovaSignedTokenURL"
 		", playURLHostname: {}"
 		", filePath: {}"
 		", secureToken: {}"
@@ -2048,22 +2050,12 @@ string MMSDeliveryAuthorization::getSignedTokenURL(
 
 		string signedURL;
 		{
-			string path = StringUtils::uriPathPrefix(filePath, true);
-
-			// $hashStr = $path . $secureToken;
-			string hashStr = playerIP.empty() ?
-				std::format("{}{}", path, secureToken) :
-				std::format("{}{} {}", path, playerIP, secureToken);
-
-			hashStr = std::format("{}{}", expiryTimestamp, hashStr);
-			string sExpiryTimestamp = std::format(",{}", expiryTimestamp);
+			string hashStr = std::format("{}{}{}", filePath, expirationInSeconds, secureToken);
 
 			SPDLOG_INFO(
-				"getSignedTokenURL"
-				", path: {}"
-				", hashStr: {}"
-				", sExpiryTimestamp: {}",
-				path, hashStr, sExpiryTimestamp
+				"getMedianovaSignedTokenURL"
+				", hashStr: {}",
+				hashStr
 			);
 
 			// eseguiamo il base64 dell'md5 di hashStr
@@ -2136,13 +2128,13 @@ string MMSDeliveryAuthorization::getSignedTokenURL(
 				}
 
 				SPDLOG_INFO(
-					"getSignedCDN77URL"
+					"getMedianovaSignedTokenURL"
 					", md5Base64: {}",
 					md5Base64
 				);
 
-				// $invalidChars = ['+','/'];
-				// $validChars = ['-','_'];
+				if (md5Base64.ends_with("=="))
+					md5Base64 = md5Base64.substr(0, md5Base64.size() - 2);
 				ranges::transform(
 					md5Base64, md5Base64.begin(),
 					[](unsigned char c)
@@ -2157,11 +2149,12 @@ string MMSDeliveryAuthorization::getSignedTokenURL(
 				);
 			}
 
+			string sExpiryTimestamp = std::format(",{}", expiryTimestamp);
 			signedURL = std::format("https://{}/{}{}{}", playURLHostname, md5Base64, sExpiryTimestamp, filePath);
 		}
 
 		SPDLOG_INFO(
-			"end getSignedCDN77URL"
+			"end getMedianovaSignedTokenURL"
 			", playURLHostname: {}"
 			", filePath: {}"
 			", secureToken: {}"
@@ -2176,7 +2169,7 @@ string MMSDeliveryAuthorization::getSignedTokenURL(
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
-			"getSignedCDN77URL failed"
+			"getMedianovaSignedTokenURL failed"
 			", e.what(): {}",
 			e.what()
 		);
