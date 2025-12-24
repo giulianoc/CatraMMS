@@ -2209,12 +2209,12 @@ class MMSEngineDBFacade
 
 	int64_t addRTMPChannelConf(
 		int64_t workspaceKey, const string &label, const string &rtmpURL, const string &streamName, const string &userName, const string &password,
-		const json &signedURLDetailsRoot, const string &playURL, const string &type
+		const json &playURLDetailsRoot, const string &playURL, const string &type
 	);
 
 	void modifyRTMPChannelConf(
 		int64_t confKey, int64_t workspaceKey, const string &label, const string &rtmpURL, const string &streamName, const string &userName,
-		const string &password, const json &signedURLDetailsRoot, const string &playURL, const string &type
+		const string &password, const json &playURLDetailsRoot, const string &playURL, const string &type
 	);
 
 	void removeRTMPChannelConf(int64_t workspaceKey, int64_t confKey);

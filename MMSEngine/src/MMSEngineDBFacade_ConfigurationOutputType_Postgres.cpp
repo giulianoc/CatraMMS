@@ -1691,7 +1691,7 @@ void MMSEngineDBFacade::releaseCDN77Channel(int64_t workspaceKey, int outputInde
 
 int64_t MMSEngineDBFacade::addRTMPChannelConf(
 	int64_t workspaceKey, const string& label, const string& rtmpURL, const string& streamName, const string& userName, const string& password,
-	const json& signedURLDetailsRoot, const string& playURL, const string& type
+	const json& playURLDetailsRoot, const string& playURL, const string& type
 )
 {
 	int64_t confKey;
@@ -1702,13 +1702,13 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 		{
 			string sqlStatement = std::format(
 				"insert into MMS_Conf_RTMPChannel(workspaceKey, label, rtmpURL, "
-				"streamName, userName, password, signedURLDetails, playURL, type) values ("
+				"streamName, userName, password, playURLDetails, playURL, type) values ("
 				"{}, {}, {}, {}, {}, {}, {}, {}, {}) returning confKey",
 				workspaceKey, trans.transaction->quote(label), trans.transaction->quote(rtmpURL),
 				streamName.empty() ? "null" : trans.transaction->quote(streamName),
 				userName.empty() ? "null" : trans.transaction->quote(userName),
 				password.empty() ? "null" : trans.transaction->quote(password),
-				signedURLDetailsRoot == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(signedURLDetailsRoot)),
+				playURLDetailsRoot == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(playURLDetailsRoot)),
 				playURL.empty() ? "null" : trans.transaction->quote(playURL),
 				trans.transaction->quote(type)
 			);
@@ -1754,7 +1754,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 
 void MMSEngineDBFacade::modifyRTMPChannelConf(
 	int64_t confKey, int64_t workspaceKey, const string& label, const string& rtmpURL, const string& streamName, const string& userName,
-	const string& password, const json& signedURLDetailsRoot, const string& playURL, const string& type
+	const string& password, const json& playURLDetailsRoot, const string& playURL, const string& type
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -1763,13 +1763,13 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 		{
 			string sqlStatement = std::format(
 				"update MMS_Conf_RTMPChannel set label = {}, rtmpURL = {}, streamName = {}, "
-				"userName = {}, password = {}, signedURLDetails = {}, playURL = {}, type = {} "
+				"userName = {}, password = {}, playURLDetails = {}, playURL = {}, type = {} "
 				"where confKey = {} and workspaceKey = {} ",
 				trans.transaction->quote(label), trans.transaction->quote(rtmpURL),
 				streamName.empty() ? "null" : trans.transaction->quote(streamName),
 				userName.empty() ? "null" : trans.transaction->quote(userName),
 				password.empty() ? "null" : trans.transaction->quote(password),
-				signedURLDetailsRoot == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(signedURLDetailsRoot)),
+				playURLDetailsRoot == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(playURLDetailsRoot)),
 				playURL.empty() ? "null" : trans.transaction->quote(playURL),
 				trans.transaction->quote(type), confKey, workspaceKey
 			);
@@ -1958,7 +1958,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 		{
 			string sqlStatement = std::format(
 				"select rc.confKey, rc.label, rc.rtmpURL, rc.streamName, rc.userName, rc.password, "
-				"rc.signedURLDetails, rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
+				"rc.playURLDetails, rc.playURL, rc.type, rc.outputIndex, rc.reservedByIngestionJobKey, "
 				"ij.metaDataContent ->> 'configurationLabel' as configurationLabel "
 				"from MMS_Conf_RTMPChannel rc left join MMS_IngestionJob ij "
 				"on rc.reservedByIngestionJobKey = ij.ingestionJobKey {} "
@@ -1999,7 +1999,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 				else
 					rtmpChannelConfRoot[field] = row[5].as<string>("");
 
-				field = "signedURLDetails";
+				field = "playURLDetails";
 				if (row[6].isNull())
 					rtmpChannelConfRoot[field] = nullptr;
 				else
@@ -2097,11 +2097,11 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 		string streamName;
 		string userName;
 		string password;
-		json signedURLDetails;
+		json playURLDetails;
 		string playURL;
 		{
 			string sqlStatement = std::format(
-				"select confKey, rtmpURL, streamName, userName, password, signedURLDetails, playURL "
+				"select confKey, rtmpURL, streamName, userName, password, playURLDetails, playURL "
 				"from MMS_Conf_RTMPChannel "
 				"where workspaceKey = {} and label = {}",
 				workspaceKey, trans.transaction->quote(label)
@@ -2143,12 +2143,12 @@ MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, boo
 			if (!(*sqlResultSet)[0][4].isNull())
 				password = (*sqlResultSet)[0][4].as<string>("");
 			if (!(*sqlResultSet)[0][5].isNull())
-				signedURLDetails = (*sqlResultSet)[0][5].as<json>(json(nullptr));
+				playURLDetails = (*sqlResultSet)[0][5].as<json>(json(nullptr));
 			if (!(*sqlResultSet)[0][6].isNull())
 				playURL = (*sqlResultSet)[0][6].as<string>("");
 		}
 
-		return make_tuple(confKey, rtmpURL, streamName, userName, password, signedURLDetails, playURL);
+		return make_tuple(confKey, rtmpURL, streamName, userName, password, playURLDetails, playURL);
 	}
 	catch (exception const &e)
 	{
@@ -2190,10 +2190,10 @@ pair<string, json> MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIn
 		);
 
 		string playURL;
-		json signedURLDetailsRoot;
+		json playURLDetailsRoot;
 		{
 			string sqlStatement = std::format(
-				"select signedURLDetails, playURL "
+				"select playURLDetails, playURL "
 				"from MMS_Conf_RTMPChannel "
 				"where reservedByIngestionJobKey = {} and outputIndex = {}",
 				reservedIngestionJobKey, outputIndex
@@ -2223,11 +2223,11 @@ pair<string, json> MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIn
 				throw DBRecordNotFound(errorMessage);
 			}
 
-			signedURLDetailsRoot = (*sqlResultSet)[0][0].as<json>(nullptr);
+			playURLDetailsRoot = (*sqlResultSet)[0][0].as<json>(nullptr);
 			playURL = (*sqlResultSet)[0][1].as<string>(string(""));
 		}
 
-		return make_pair(playURL, signedURLDetailsRoot);
+		return make_pair(playURL, playURLDetailsRoot);
 	}
 	catch (exception const &e)
 	{

@@ -3506,7 +3506,7 @@ void API::addRTMPChannelConf(
 		string streamName;
 		string userName;
 		string password;
-		json signedURLDetailsRoot;
+		json playURLDetailsRoot;
 		string playURL;
 		string type;
 
@@ -3551,13 +3551,11 @@ void API::addRTMPChannelConf(
 			field = "password";
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "signedURLDetails";
-			signedURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
+			field = "playURLDetails";
+			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
 
 			field = "playURL";
 			playURL = JSONUtils::asString(requestBodyRoot, field, "");
-
-			signedURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, "signedURLDetails", json(nullptr));
 
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3589,7 +3587,7 @@ void API::addRTMPChannelConf(
 			int64_t confKey =
 				_mmsEngineDBFacade->addRTMPChannelConf(
 				apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password,
-				signedURLDetailsRoot, playURL, type
+				playURLDetailsRoot, playURL, type
 			);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
@@ -3654,7 +3652,7 @@ void API::modifyRTMPChannelConf(
 		string streamName;
 		string userName;
 		string password;
-		json signedURLDetailsRoot;
+		json playURLDetailsRoot;
 		string playURL;
 		string type;
 
@@ -3732,7 +3730,7 @@ void API::modifyRTMPChannelConf(
 			}
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
-			field = "signedURLDetails";
+			field = "playURLDetails";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
@@ -3744,7 +3742,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			signedURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
+			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
 
 			field = "playURL";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3787,8 +3785,8 @@ void API::modifyRTMPChannelConf(
 		const int64_t confKey = requestData.getQueryParameter("confKey", static_cast<int64_t>(-1), true);
 
 		_mmsEngineDBFacade->modifyRTMPChannelConf(
-			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password, signedURLDetailsRoot, playURL,
-			type
+			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password,
+			playURLDetailsRoot, playURL, type
 		);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
@@ -3878,7 +3876,7 @@ void API::rtmpChannelConfList(
 
 		int type = 0; // ALL
 		string sType = requestData.getQueryParameter("type", string(), false);
-		if (sType != "")
+		if (!sType.empty())
 		{
 			if (sType == "SHARED")
 				type = 1;
@@ -3887,9 +3885,9 @@ void API::rtmpChannelConfList(
 		}
 
 		{
-			json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
+			const json rtmpChannelConfListRoot = _mmsEngineDBFacade->getRTMPChannelConfList(apiAuthorizationDetails->workspace->_workspaceKey, -1, label, labelLike, type);
 
-			string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
+			const string responseBody = JSONUtils::toString(rtmpChannelConfListRoot);
 
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}

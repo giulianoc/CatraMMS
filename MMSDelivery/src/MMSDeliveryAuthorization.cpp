@@ -452,40 +452,42 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				{
 					try
 					{
-						/* signedURLDetailsRoot:
+						/* playURLDetailsRoot:
 						{
 							"securityType": "token",
-							"tokenDetails": {
-								"playURLHostName": "..."
-								"token": "..."
+							"cdnName": "medianova",
+							"playURLProtocol": "https",
+							"playURLHostName": "...",
+							"uri": "...",
+							"token": "...",
+							"medianova":
+							{
+								"uriEnabled": true
 							}
 						}
 						*/
-						json signedURLDetailsRoot;
-						tie(playURL, signedURLDetailsRoot) = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
-						string securityType = JSONUtils::asString(signedURLDetailsRoot, "securityType", "none");
+						json playURLDetailsRoot;
+						tie(playURL, playURLDetailsRoot) = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+
+						string securityType = JSONUtils::asString(playURLDetailsRoot, "securityType", "none");
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string playURLProtocol = JSONUtils::asString(playURLDetailsRoot, "playURLProtocol", "https");
+						string playURLHostName = JSONUtils::asString(playURLDetailsRoot, "playURLHostName", "");
+						string uri = JSONUtils::asString(playURLDetailsRoot, "uri", "");
 						if (securityType == "token")
 						{
-							json tokenDetailsRoot = JSONUtils::asJson(signedURLDetailsRoot, "tokenDetails", json::object());
+							string secureToken = JSONUtils::asString(playURLDetailsRoot, "token", "");
+							if (cdnName == "medianova")
+							{
+								json medianovaRoot = JSONUtils::asJson(playURLDetailsRoot, "medianova", json(nullptr));
+								bool uriEnabled = JSONUtils::asBool(medianovaRoot, "uriEnabled", false);
 
-							string playURLHostName = JSONUtils::asString(tokenDetailsRoot, "playURLHostName", "");
-							string filePath = JSONUtils::asString(tokenDetailsRoot, "filePath", "");
-							string secureToken = JSONUtils::asString(tokenDetailsRoot, "token", "");
-
-							playURL = getMedianovaSignedTokenURL(playURLHostName, filePath, secureToken, ttlInSeconds,
+								playURL = getMedianovaSignedTokenURL(playURLProtocol, playURLHostName, uri, secureToken, ttlInSeconds,
 								/* playerIPToBeAuthorized ? playerIP : */ "");
+							}
 						}
-					}
-					catch (DBRecordNotFound &e)
-					{
-						SPDLOG_ERROR(
-							"ingestionJobKey/outputIndex not found failed"
-							", ingestionJobKey: {}"
-							", outputIndex: {}"
-							", exception: {}",
-							ingestionJobKey, outputIndex, e.what()
-						);
-						continue;
+						else if (securityType == "none") // TODO: lasciare else ma eliminare l'if
+							playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);
 					}
 					catch (exception &e)
 					{
@@ -2024,8 +2026,9 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 }
 
 string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
+	const string& playURLProtocol, // i.e.: https
 	const string& playURLHostname, // i.e.: origin-l-backup.glb.mncdn.com
-	const string& filePath,	// /mn-m1/cnl52/index.m3u8
+	const string& uri,	// /mn-m1/cnl52/index.m3u8
 	const string& secureToken, // i.e.: svFTvs7d
 	long expirationInSeconds,  // 3600
 	string playerIP
@@ -2033,12 +2036,13 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 {
 	SPDLOG_INFO(
 		"getMedianovaSignedTokenURL"
+		", playURLProtocol: {}"
 		", playURLHostname: {}"
-		", filePath: {}"
+		", uri: {}"
 		", secureToken: {}"
 		", expirationInSeconds: {}"
 		", playerIP: {}",
-		playURLHostname, filePath, secureToken, expirationInSeconds, playerIP
+		playURLProtocol, playURLHostname, uri, secureToken, expirationInSeconds, playerIP
 	);
 
 	try
@@ -2048,127 +2052,55 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + expirationInSeconds;
 
-		string signedURL;
-		{
-			string hashStr = std::format("{}{}{}", filePath, expiryTimestamp, secureToken);
+		string toSign = std::format("{}{}{}", uri, expiryTimestamp, secureToken);
+		SPDLOG_INFO(
+			"getMedianovaSignedTokenURL"
+			", toSign: {}",
+			toSign
+		);
 
-			SPDLOG_INFO(
-				"getMedianovaSignedTokenURL"
-				", hashStr: {}",
-				hashStr
-			);
+		unsigned int len;
+		const auto digest = Encrypt::md5(toSign, len);
+		string md5Base64 = Encrypt::binaryToBase64(digest.data(), len);
+		SPDLOG_INFO(
+			"getMedianovaSignedTokenURL"
+			", md5Base64: {}",
+			md5Base64
+		);
 
-			// eseguiamo il base64 dell'md5 di hashStr
-			string md5Base64;
+		if (md5Base64.ends_with("=="))
+			md5Base64 = md5Base64.substr(0, md5Base64.size() - 2);
+		ranges::transform(
+			md5Base64, md5Base64.begin(),
+			[](unsigned char c)
 			{
-				{
-					unsigned char *md5_digest;
-					unsigned int md5_digest_len = EVP_MD_size(EVP_md5());
-
-					EVP_MD_CTX *mdctx;
-
-					// MD5_Init
-					mdctx = EVP_MD_CTX_new();
-					EVP_DigestInit_ex(mdctx, EVP_md5(), NULL);
-
-					// MD5_Update
-					EVP_DigestUpdate(mdctx, (unsigned char *)hashStr.c_str(), hashStr.size());
-
-					// MD5_Final
-					md5_digest = static_cast<unsigned char *>(OPENSSL_malloc(md5_digest_len));
-					EVP_DigestFinal_ex(mdctx, md5_digest, &md5_digest_len);
-
-					md5Base64 = Encrypt::binaryToBase64(md5_digest, md5_digest_len);
-					/*
-					{
-						BIO *bio, *b64;
-						BUF_MEM *bufferPtr;
-
-						SPDLOG_DEBUG("BIO_new...");
-						b64 = BIO_new(BIO_f_base64());
-						// By default there must be a newline at the end of input.
-						// Next flag remove new line at the end
-						BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-						bio = BIO_new(BIO_s_mem());
-
-						SPDLOG_DEBUG("BIO_push...");
-						bio = BIO_push(b64, bio);
-
-						SPDLOG_DEBUG("BIO_write...");
-						BIO_write(bio, md5_digest, md5_digest_len);
-						BIO_flush(bio);
-						BIO_get_mem_ptr(bio, &bufferPtr);
-
-						SPDLOG_DEBUG("BIO_set_close...");
-						BIO_set_close(bio, BIO_NOCLOSE);
-						SPDLOG_DEBUG("BIO_free_all...");
-						BIO_free_all(bio);
-						// info(__FILEREF__ + "BIO_free...");
-						// BIO_free(b64);	// useless because of BIO_free_all
-
-						SPDLOG_DEBUG("base64Text set...");
-						// char* base64Text=(*bufferPtr).data;
-
-						SPDLOG_INFO(
-							"getSignedCDN77URL"
-							", (*bufferPtr).length: {}"
-							", (*bufferPtr).data: {}",
-							bufferPtr->length, bufferPtr->data
-						);
-
-						md5Base64 = string(bufferPtr->data, bufferPtr->length);
-
-						BUF_MEM_free(bufferPtr);
-					}
-					*/
-
-					OPENSSL_free(md5_digest);
-
-					EVP_MD_CTX_free(mdctx);
-				}
-
-				SPDLOG_INFO(
-					"getMedianovaSignedTokenURL"
-					", md5Base64: {}",
-					md5Base64
-				);
-
-				if (md5Base64.ends_with("=="))
-					md5Base64 = md5Base64.substr(0, md5Base64.size() - 2);
-				ranges::transform(
-					md5Base64, md5Base64.begin(),
-					[](unsigned char c)
-					{
-						if (c == '+')
-							return '-';
-						else if (c == '/')
-							return '_';
-						else
-							return (char)c;
-					}
-				);
+				if (c == '+')
+					return '-';
+				else if (c == '/')
+					return '_';
+				else
+					return (char)c;
 			}
+		);
 
-			string sExpiryTimestamp = std::format(",{}", expiryTimestamp);
-			signedURL = std::format("https://{}/{}{}{}", playURLHostname, md5Base64, sExpiryTimestamp, filePath);
-		}
+		string signedURL = std::format("https://{}/{},{}{}", playURLHostname, md5Base64, expiryTimestamp, uri);
 
 		SPDLOG_INFO(
 			"end getMedianovaSignedTokenURL"
 			", playURLHostname: {}"
-			", filePath: {}"
+			", uri: {}"
 			", secureToken: {}"
 			", expirationInSeconds: {}"
 			", playerIP: {}"
 			", signedURL: {}",
-			playURLHostname, filePath, secureToken, expirationInSeconds, playerIP, signedURL
+			playURLHostname, uri, secureToken, expirationInSeconds, playerIP, signedURL
 		);
 
 		return signedURL;
 	}
 	catch (exception &e)
 	{
-		string errorMessage = std::format(
+		const string errorMessage = std::format(
 			"getMedianovaSignedTokenURL failed"
 			", e.what(): {}",
 			e.what()
