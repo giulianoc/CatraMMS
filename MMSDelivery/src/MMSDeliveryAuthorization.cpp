@@ -486,8 +486,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 								/* playerIPToBeAuthorized ? playerIP : */ "");
 							}
 						}
-						// else if (securityType == "none") // TODO: lasciare else ma eliminare l'if
-						//	playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);
+						else
+							playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);
 					}
 					catch (exception &e)
 					{
@@ -2054,7 +2054,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		string newUri = StringUtils::uriPathPrefix(uri) + "/";
 
-		string toSign = std::format("{}{}{}", expiryTimestamp, secureToken, newUri);
+		string toSign = std::format("{} {} {}", expiryTimestamp, secureToken, newUri);
 		SPDLOG_INFO(
 			"getMedianovaSignedTokenURL"
 			", toSign: {}",
