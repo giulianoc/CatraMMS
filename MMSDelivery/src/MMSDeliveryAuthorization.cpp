@@ -486,8 +486,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 								/* playerIPToBeAuthorized ? playerIP : */ "");
 							}
 						}
-						else if (securityType == "none") // TODO: lasciare else ma eliminare l'if
-							playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);
+						// else if (securityType == "none") // TODO: lasciare else ma eliminare l'if
+						//	playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);
 					}
 					catch (exception &e)
 					{
@@ -2088,7 +2088,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 			}
 		);
 
-		string signedURL = std::format("https://{}{}?st={}&e={}", playURLHostname, uri, md5Base64, expiryTimestamp);
+		string signedURL = std::format("{}://{}{}?st={}&e={}", playURLProtocol, playURLHostname, uri, md5Base64, expiryTimestamp);
 
 		SPDLOG_INFO(
 			"end getMedianovaSignedTokenURL"
