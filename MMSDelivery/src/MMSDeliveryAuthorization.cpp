@@ -2052,7 +2052,9 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + expirationInSeconds;
 
-		string toSign = std::format("{}{}{}", uri, expiryTimestamp, secureToken);
+		string newUri = StringUtils::uriPathPrefix(uri) + "/";
+
+		string toSign = std::format("{}{}{}", expiryTimestamp, secureToken, newUri);
 		SPDLOG_INFO(
 			"getMedianovaSignedTokenURL"
 			", toSign: {}",
@@ -2060,35 +2062,33 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 		);
 
 		unsigned int len;
-		const auto digest = Encrypt::md5(toSign, len);
+		const auto md5Digest = Encrypt::md5(toSign, len);
 		SPDLOG_INFO(
 			"getMedianovaSignedTokenURL digest"
 			"len: {}", len
 		);
 
-		string md5Base64 = Encrypt::binaryToBase64(digest.data(), len);
+		string md5Base64 = Encrypt::binaryToBase64(md5Digest.data(), len);
 		SPDLOG_INFO(
 			"getMedianovaSignedTokenURL"
 			", md5Base64: {}",
 			md5Base64
 		);
 
-		if (md5Base64.ends_with("=="))
-			md5Base64 = md5Base64.substr(0, md5Base64.size() - 2);
+		md5Base64 = StringUtils::replaceAll(md5Base64, "=", "");
 		ranges::transform(
 			md5Base64, md5Base64.begin(),
 			[](unsigned char c)
 			{
 				if (c == '+')
 					return '-';
-				else if (c == '/')
+				if (c == '/')
 					return '_';
-				else
-					return (char)c;
+				return static_cast<char>(c);
 			}
 		);
 
-		string signedURL = std::format("https://{}/{},{}{}", playURLHostname, md5Base64, expiryTimestamp, uri);
+		string signedURL = std::format("https://{}{}?st={}&e={}", playURLHostname, uri, md5Base64, expiryTimestamp);
 
 		SPDLOG_INFO(
 			"end getMedianovaSignedTokenURL"
