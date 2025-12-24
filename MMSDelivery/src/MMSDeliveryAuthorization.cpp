@@ -2061,6 +2061,11 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		unsigned int len;
 		const auto digest = Encrypt::md5(toSign, len);
+		SPDLOG_INFO(
+			"getMedianovaSignedTokenURL digest"
+			"len: {}", len
+		);
+
 		string md5Base64 = Encrypt::binaryToBase64(digest.data(), len);
 		SPDLOG_INFO(
 			"getMedianovaSignedTokenURL"
