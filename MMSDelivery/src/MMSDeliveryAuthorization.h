@@ -55,11 +55,8 @@ class MMSDeliveryAuthorization
 	);
 	string getAWSSignedURL(const string &playURL, int expirationInSeconds);
 	static string getMedianovaSignedTokenURL(
-		const string& playURLProtocol,
-		const string &playURLHostname,
-		const string &filePath,
-		const string &secureToken, long expirationInSeconds, string playerIP = ""
-	);
+		const string& playURLProtocol, const string& playURLHostname, const string& uri, const string& secureToken,
+		long expirationInSeconds, bool uriEnabled, const optional<string>& playerIP = "");
 
 	unordered_map<string, uint64_t> getExternalDeliveriesRunningHosts();
 	void updateExternalDeliveriesBandwidthHosts(const unordered_map<string, uint64_t> &hostsBandwidth);

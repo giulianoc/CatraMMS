@@ -482,8 +482,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 								json medianovaRoot = JSONUtils::asJson(playURLDetailsRoot, "medianova", json(nullptr));
 								bool uriEnabled = JSONUtils::asBool(medianovaRoot, "uriEnabled", false);
 
-								playURL = getMedianovaSignedTokenURL(playURLProtocol, playURLHostName, uri, secureToken, ttlInSeconds,
-								/* playerIPToBeAuthorized ? playerIP : */ "");
+								playURL = getMedianovaSignedTokenURL(
+									playURLProtocol, playURLHostName, uri, secureToken, ttlInSeconds, uriEnabled,
+									playerIPToBeAuthorized ? playerIP : ""
+								);
 							}
 						}
 						else
@@ -2031,18 +2033,19 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 	const string& uri,	// /mn-m1/cnl52/index.m3u8
 	const string& secureToken, // i.e.: svFTvs7d
 	long expirationInSeconds,  // 3600
-	string playerIP
+	const bool uriEnabled,
+	const optional<string>& playerIP
 )
 {
 	SPDLOG_INFO(
 		"getMedianovaSignedTokenURL"
 		", playURLProtocol: {}"
 		", playURLHostname: {}"
-		", uri: {}"
 		", secureToken: {}"
 		", expirationInSeconds: {}"
+		", uri: {}"
 		", playerIP: {}",
-		playURLProtocol, playURLHostname, uri, secureToken, expirationInSeconds, playerIP
+		playURLProtocol, playURLHostname, secureToken, expirationInSeconds, uri ? *uri : "", playerIP ? *playerIP : ""
 	);
 
 	try
@@ -2052,9 +2055,15 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		long expiryTimestamp = chrono::system_clock::to_time_t(chrono::system_clock::now()) + expirationInSeconds;
 
-		string newUri = StringUtils::uriPathPrefix(uri) + "/";
+		optional<string> newUri = nullopt;
+		if (uri)
+			newUri = StringUtils::uriPathPrefix(*uri) + "/";
 
-		string toSign = std::format("{} {} {}", expiryTimestamp, secureToken, newUri);
+		// Ordered fields: expiryTimestamp, secureToken, [playerIP], [newUri], [any query parameters]
+		// If userID is added, the signed URL should have also the userid parameter (&userid=$user_id)
+		string toSign = std::format("{} {}{}{}", expiryTimestamp, secureToken,
+			playerIP ? std::format(" {}", *playerIP) : "",
+			newUri ? std::format(" {}", *newUri) : "");
 		SPDLOG_INFO(
 			"getMedianovaSignedTokenURL"
 			", toSign: {}",
