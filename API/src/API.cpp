@@ -426,48 +426,6 @@ API::API(
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ sourceTVStreamList(sThreadId, request, requestData); }
 	);
-	/*
-	registerHandler(
-		"addAWSChannelConf",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ addAWSChannelConf(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"modifyAWSChannelConf",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ modifyAWSChannelConf(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"removeAWSChannelConf",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ removeAWSChannelConf(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"awsChannelConfList",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ awsChannelConfList(sThreadId, request, requestData); }
-	);
-	*/
-	registerHandler(
-		"addCDN77ChannelConf",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ addCDN77ChannelConf(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"modifyCDN77ChannelConf",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ modifyCDN77ChannelConf(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"removeCDN77ChannelConf",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ removeCDN77ChannelConf(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"cdn77ChannelConfList",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ cdn77ChannelConfList(sThreadId, request, requestData); }
-	);
 	registerHandler(
 		"addRTMPChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)

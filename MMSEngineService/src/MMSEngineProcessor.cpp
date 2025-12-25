@@ -948,17 +948,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 
 		filtersRoot = getReviewedFiltersRoot(filtersRoot, workspace, ingestionJobKey);
 
-		if (outputType == "CDN_CDN77")
-		{
-			// it could not exist in case of SHARED CDN77
-			field = "cdn77ChannelConfigurationLabel";
-			cdn77ChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
-
-			// cdn77ExpirationInMinutes is needed only in case of signed url
-			field = "cdn77ExpirationInMinutes";
-			cdn77ExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440); // 1 day
-		}
-		else if (outputType == "RTMP_Channel")
+		if (outputType == "RTMP_Channel")
 		{
 			// it could not exist in case of SHARED RTMP
 			field = "rtmpChannelConfigurationLabel";

@@ -59,7 +59,7 @@
 		//	At least one Output has to be present
 		"outputs" = [
 			{
-				// optional, possible values: HLS_Channel, RTMP_Channel, SRT_Channel, CDN_CDN77.
+				// optional, possible values: HLS_Channel, RTMP_Channel, SRT_Channel.
 				// HLS_Channel works also in case of an external transcoder
 				// Default: HLS_Channel
 				"outputType": "HLS_Channel",
@@ -68,16 +68,6 @@
 				// the configuration label of an HLS Channel defined in MMS.
 				// If not present, a SHARED free HLS channel is used
 				"hlsChannelConfigurationLabel": "",
-
-				// optional, used only in case of CDN_CDN77
-				// the configuration label of an CDN77 Channel defined in MMS.
-				// If not present, a SHARED free CDN77 channel is used
-				"cdn77ChannelConfigurationLabel": "",
-
-				// optional, used only in case of a signed CDN_CDN77 
-				// it specifies the expiration of the signed URL
-				// Default: 1440 (1 day)
-				"cdn77ExpirationInMinutes": 1440,
 
 				// optional, used only in case of RTMP_Channel
 				// the configuration label of an RTMP Channel defined in MMS.

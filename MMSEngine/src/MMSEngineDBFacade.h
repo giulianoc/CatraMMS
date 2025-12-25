@@ -2170,44 +2170,6 @@ class MMSEngineDBFacade
 
 	tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int> getSourceTVStreamDetails(int64_t confKey, bool warningIfMissing);
 
-	/*
-	int64_t addAWSChannelConf(int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type);
-
-	void modifyAWSChannelConf(int64_t confKey, int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type);
-
-	void removeAWSChannelConf(int64_t workspaceKey, int64_t confKey);
-
-	json getAWSChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
-							   int type); // 0: all, 1: SHARED, 2: DEDICATED
-
-	tuple<string, string, string, bool> reserveAWSChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
-
-	string releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
-	string cdnaws_reservationDetails(int64_t reservedIngestionJobKey, int outputIndex);
-	*/
-	int64_t addCDN77ChannelConf(
-		int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath, string secureToken,
-		string type
-	);
-
-	void modifyCDN77ChannelConf(
-		int64_t confKey, int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath,
-		string secureToken, string type
-	);
-
-	void removeCDN77ChannelConf(int64_t workspaceKey, int64_t confKey);
-
-	json getCDN77ChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
-								 int type); // 0: all, 1: SHARED, 2: DEDICATED
-
-	tuple<string, string, string> getCDN77ChannelDetails(int64_t workspaceKey, string label);
-
-	tuple<string, bool, string, string, string, string, string, bool>
-	reserveCDN77Channel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
-	tuple<string, string, string> cdn77_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
-
-	void releaseCDN77Channel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
-
 	int64_t addRTMPChannelConf(
 		int64_t workspaceKey, const string &label, const string &rtmpURL, const string &streamName, const string &userName, const string &password,
 		const json &playURLDetailsRoot, const string &type

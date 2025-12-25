@@ -145,10 +145,6 @@
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=mediaItemsList&mediaItemKey=$2 last;
 		}
-		#togliere il metodo POST quando AWS cibortv verrà dismesso (i campi del body sono stati aggiunti alla GET)
-		#if ($request_method = POST) {
-		#	rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/?$ /api?x-api-version=$1&x-api-method=mediaItemsList last;
-		#}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateMediaItem&mediaItemKey=$2 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/mediaItem/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updatePhysicalPath&mediaItemKey=$2&physicalPathKey=$3 last;
@@ -195,8 +191,6 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryAuthorization&physicalPathKey=$2 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/vod/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryAuthorization&mediaItemKey=$2&encodingProfileKey=$3 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/live/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryAuthorization&ingestionJobKey=$2 last;
-			#2023-02-01: rimossa perchè deve rientrare nella precedente API
-			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/cdn77/live/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=createDeliveryCDN77Authorization&streamConfKey=$2 last;
 		}
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/delivery/bulk/?$ /api?x-api-version=$1&x-api-method=createBulkOfDeliveryAuthorization last;
@@ -281,34 +275,6 @@
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/sourceTVStream/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=sourceTVStreamList&confKey=$2 last;
-		}
-
-#AWS
-#		if ($request_method = POST) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=addAWSChannelConf last;
-#		}
-#		if ($request_method = PUT) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyAWSChannelConf&confKey=$2 last;
-#		}
-#		if ($request_method = DELETE) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAWSChannelConf&confKey=$2 last;
-#		}
-#		if ($request_method = GET) {
-#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=awsChannelConfList last;
-#		}
-
-#CDN77
-		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?x-api-version=$1&x-api-method=addCDN77ChannelConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyCDN77ChannelConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeCDN77ChannelConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/cdn77/channel/?$ /api?x-api-version=$1&x-api-method=cdn77ChannelConfList last;
 		}
 
 #RTMP

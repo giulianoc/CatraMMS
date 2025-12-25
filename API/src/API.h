@@ -619,48 +619,6 @@ class API final : public FastCGIAPI
 		const FCGIRequestData& requestData
 	);
 
-	/*
-	void addAWSChannelConf(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
-	void modifyAWSChannelConf(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
-	void removeAWSChannelConf(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
-	void awsChannelConfList(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-	*/
-
-	void addCDN77ChannelConf(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
-	void modifyCDN77ChannelConf(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
-	void removeCDN77ChannelConf(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
-	void cdn77ChannelConfList(
-		const string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData
-	);
-
 	void addRTMPChannelConf(
 		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
