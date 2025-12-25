@@ -467,8 +467,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							}
 						}
 						*/
-						json playURLDetailsRoot;
-						tie(playURL, playURLDetailsRoot) = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
+						json playURLDetailsRoot = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
 
 						string securityType = JSONUtils::asString(playURLDetailsRoot, "securityType", "none");
 						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
@@ -492,6 +491,14 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 									uriEnabled, playerIPToBeAuthorized && playerIPEnabled
 								);
 							}
+							else
+								SPDLOG_ERROR(
+									"cdnName unknown"
+									", ingestionJobKey: {}"
+									", outputIndex: {}"
+									", cdnName: {}",
+									ingestionJobKey, outputIndex, cdnName
+								);
 						}
 						else
 							playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);

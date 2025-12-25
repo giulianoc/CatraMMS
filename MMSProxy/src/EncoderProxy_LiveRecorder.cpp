@@ -357,7 +357,7 @@ bool EncoderProxy::liveRecorder()
 					// ripartenza di mmsEngine, nel caso di richiesta già
 					// attiva, ritornerebbe le stesse info associate a
 					// ingestionJobKey (senza exception)
-					auto [reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved] =
+					auto [reservedLabel, rtmpURL, streamName, userName, password, channelAlreadyReserved] =
 						_mmsEngineDBFacade->reserveRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
@@ -382,9 +382,6 @@ bool EncoderProxy::liveRecorder()
 						field = "rtmpUrl";
 						outputRoot[field] = rtmpURL;
 
-						// field = "playUrl";
-						// outputRoot[field] = playURL;
-
 						outputsRoot[outputIndex] = outputRoot;
 
 						field = "outputsRoot";
@@ -401,10 +398,9 @@ bool EncoderProxy::liveRecorder()
 								", rtmpChannelConfigurationLabel: {}"
 								", reservedLabel: {}"
 								", rtmpURL: {}"
-								", channelAlreadyReserved: {}"
-								", playURL: {}",
+								", channelAlreadyReserved: {}",
 								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
-								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
+								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved
 							);
 
 							_mmsEngineDBFacade->updateOutputURL(

@@ -284,14 +284,14 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 				}
 				else if (outputType == "RTMP_Channel")
 				{
-					// RtmpUrl and PlayUrl fields have to be initialized
+					// RtmpUrl fields have to be initialized
 
 					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, "rtmpChannelConfigurationLabel", "");
 
 					// reserveRTMPChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
 					// associate a ingestionJobKey (senza exception)
-					auto [reservedLabel, rtmpURL, streamName, userName, password, playURL, channelAlreadyReserved] =
+					auto [reservedLabel, rtmpURL, streamName, userName, password, channelAlreadyReserved] =
 						_mmsEngineDBFacade->reserveRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
@@ -314,7 +314,6 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// update outputsRoot with the new details
 					{
 						outputRoot["rtmpUrl"] = rtmpURL;
-						// outputRoot["playUrl"] = playURL;
 						outputsRoot[outputIndex] = outputRoot;
 						(_encodingItem->_encodingParametersRoot)["outputsRoot"] = outputsRoot;
 
@@ -329,10 +328,9 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 								", rtmpChannelConfigurationLabel: {}"
 								", reservedLabel: {}"
 								", rtmpURL: {}"
-								", channelAlreadyReserved: {}"
-								", playURL: {}",
+								", channelAlreadyReserved: {}",
 								_proxyIdentifier, _encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey,
-								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved, playURL
+								_encodingItem->_encodingJobKey, rtmpChannelConfigurationLabel, reservedLabel, rtmpURL, channelAlreadyReserved
 							);
 
 							_mmsEngineDBFacade->updateOutputURL(

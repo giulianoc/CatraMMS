@@ -2209,12 +2209,12 @@ class MMSEngineDBFacade
 
 	int64_t addRTMPChannelConf(
 		int64_t workspaceKey, const string &label, const string &rtmpURL, const string &streamName, const string &userName, const string &password,
-		const json &playURLDetailsRoot, const string &playURL, const string &type
+		const json &playURLDetailsRoot, const string &type
 	);
 
 	void modifyRTMPChannelConf(
 		int64_t confKey, int64_t workspaceKey, const string &label, const string &rtmpURL, const string &streamName, const string &userName,
-		const string &password, const json &playURLDetailsRoot, const string &playURL, const string &type
+		const string &password, const json &playURLDetailsRoot, const string &type
 	);
 
 	void removeRTMPChannelConf(int64_t workspaceKey, int64_t confKey);
@@ -2222,11 +2222,11 @@ class MMSEngineDBFacade
 	json getRTMPChannelConfList(int64_t workspaceKey, int64_t confKey, string label, bool labelLike,
 								int type); // 0: all, 1: SHARED, 2: DEDICATED
 
-	tuple<int64_t, string, string, string, string, json, string> getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing);
+	int64_t getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing);
 
-	tuple<string, string, string, string, string, string, bool>
-	reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
-	pair<string, json> rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
+	tuple<string, string, string, string, string, bool>
+		reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
+	json rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
 	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 	int64_t addSRTChannelConf(

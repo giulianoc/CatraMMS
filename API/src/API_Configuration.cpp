@@ -3507,7 +3507,6 @@ void API::addRTMPChannelConf(
 		string userName;
 		string password;
 		json playURLDetailsRoot;
-		string playURL;
 		string type;
 
 		try
@@ -3554,9 +3553,6 @@ void API::addRTMPChannelConf(
 			field = "playURLDetails";
 			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
 
-			field = "playURL";
-			playURL = JSONUtils::asString(requestBodyRoot, field, "");
-
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
@@ -3587,7 +3583,7 @@ void API::addRTMPChannelConf(
 			int64_t confKey =
 				_mmsEngineDBFacade->addRTMPChannelConf(
 				apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password,
-				playURLDetailsRoot, playURL, type
+				playURLDetailsRoot, type
 			);
 
 			sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
@@ -3653,7 +3649,6 @@ void API::modifyRTMPChannelConf(
 		string userName;
 		string password;
 		json playURLDetailsRoot;
-		string playURL;
 		string type;
 
 		try
@@ -3744,20 +3739,6 @@ void API::modifyRTMPChannelConf(
 			}
 			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
 
-			field = "playURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", Field: {}",
-					field
-				);
-				SPDLOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			playURL = JSONUtils::asString(requestBodyRoot, field, "");
-
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
@@ -3786,7 +3767,7 @@ void API::modifyRTMPChannelConf(
 
 		_mmsEngineDBFacade->modifyRTMPChannelConf(
 			confKey, apiAuthorizationDetails->workspace->_workspaceKey, label, rtmpURL, streamName, userName, password,
-			playURLDetailsRoot, playURL, type
+			playURLDetailsRoot, type
 		);
 
 		string sResponse = (string("{ ") + "\"confKey\": " + to_string(confKey) + "}");
