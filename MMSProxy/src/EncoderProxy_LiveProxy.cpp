@@ -117,6 +117,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+				/*
 				if (outputType == "CDN_AWS")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
@@ -128,32 +129,6 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					auto [awsChannelId, rtmpURL, playURL, channelAlreadyReserved] = _mmsEngineDBFacade->reserveAWSChannel(
 						_encodingItem->_workspace->_workspaceKey, awsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 					);
-
-					/*
-					bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
-					int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
-
-					if (awsSignedURL)
-					{
-						try
-						{
-							MMSDeliveryAuthorization mmsDeliveryAuthorization(_configuration, _mmsStorage, _mmsEngineDBFacade);
-							playURL = mmsDeliveryAuthorization.getAWSSignedURL(playURL, awsExpirationInMinutes * 60);
-						}
-						catch (exception &ex)
-						{
-							SPDLOG_ERROR(
-								"getAWSSignedURL failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", playURL: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, playURL
-							);
-
-							// throw e;
-						}
-					}
-					*/
 
 					// update outputsRoot with the new details
 					{
@@ -203,7 +178,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					if (!channelAlreadyReserved)
 						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
-				else if (outputType == "CDN_CDN77")
+				*/
+				if (outputType == "CDN_CDN77")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
@@ -291,8 +267,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// reserveRTMPChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
 					// associate a ingestionJobKey (senza exception)
-					auto [reservedLabel, rtmpURL, streamName, userName, password, channelAlreadyReserved] =
-						_mmsEngineDBFacade->reserveRTMPChannel(
+					auto [reservedLabel, rtmpURL, streamName, userName, password,
+						channelAlreadyReserved, playURLDetailsRoot] = _mmsEngineDBFacade->reserveRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
 
@@ -348,6 +324,20 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 							);
 
 							throw;
+						}
+					}
+
+					// channelAlreadyReserved true means the channel was already reserved, so it is supposed
+					// is already started Maybe just start again is not an issue!!! Let's see
+					if (!channelAlreadyReserved)
+					{
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						if (cdnName == "aws")
+						{
+							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							if (!awsChannelId.empty())
+								awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
 					}
 				}
@@ -536,6 +526,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+				/*
 				if (outputType == "CDN_AWS")
 				{
 					try
@@ -558,7 +549,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						);
 					}
 				}
-				else if (outputType == "CDN_CDN77")
+				*/
+				if (outputType == "CDN_CDN77")
 				{
 					try
 					{
@@ -583,9 +575,17 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					try
 					{
 						// error in case do not find ingestionJobKey
-						_mmsEngineDBFacade->releaseRTMPChannel(
+						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						if (cdnName == "aws")
+						{
+							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							if (!awsChannelId.empty())
+								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+						}
 					}
 					catch (...)
 					{
@@ -644,6 +644,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+				/*
 				if (outputType == "CDN_AWS")
 				{
 					try
@@ -666,7 +667,8 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						);
 					}
 				}
-				else if (outputType == "CDN_CDN77")
+				*/
+				if (outputType == "CDN_CDN77")
 				{
 					try
 					{
@@ -691,9 +693,17 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					try
 					{
 						// error in case do not find ingestionJobKey
-						_mmsEngineDBFacade->releaseRTMPChannel(
+						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						if (cdnName == "aws")
+						{
+							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							if (!awsChannelId.empty())
+								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+						}
 					}
 					catch (...)
 					{

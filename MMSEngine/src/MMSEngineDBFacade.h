@@ -2170,6 +2170,7 @@ class MMSEngineDBFacade
 
 	tuple<string, int64_t, int64_t, int64_t, int64_t, string, int, int> getSourceTVStreamDetails(int64_t confKey, bool warningIfMissing);
 
+	/*
 	int64_t addAWSChannelConf(int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type);
 
 	void modifyAWSChannelConf(int64_t confKey, int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type);
@@ -2183,7 +2184,7 @@ class MMSEngineDBFacade
 
 	string releaseAWSChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 	string cdnaws_reservationDetails(int64_t reservedIngestionJobKey, int outputIndex);
-
+	*/
 	int64_t addCDN77ChannelConf(
 		int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath, string secureToken,
 		string type
@@ -2224,11 +2225,11 @@ class MMSEngineDBFacade
 
 	int64_t getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing);
 
-	tuple<string, string, string, string, string, bool>
+	tuple<string, string, string, string, string, bool, json>
 		reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey);
 	json rtmp_reservationDetails(int64_t reservedIngestionJobKey, int16_t outputIndex);
 
-	void releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
+	json releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey);
 	int64_t addSRTChannelConf(
 		int64_t workspaceKey, string label, string srtURL, string mode, string streamId, string passphrase, string playURL, string type
 	);

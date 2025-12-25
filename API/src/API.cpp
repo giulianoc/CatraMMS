@@ -49,677 +49,557 @@ API::API(
 
 	loadConfiguration(configurationRoot, fileUploadProgressData);
 
-	// registerHandler<API>("status", &API::status);
 	registerHandler(
 		"status", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ status(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("avgBandwidthUsage", &API::avgBandwidthUsage_);
 	registerHandler(
 		"avgBandwidthUsage",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ avgBandwidthUsage_(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("binaryAuthorization", &API::binaryAuthorization);
 	registerHandler(
 		"binaryAuthorization",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ binaryAuthorization(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("deliveryAuthorizationThroughParameter", &API::deliveryAuthorizationThroughParameter);
 	registerHandler(
 		"deliveryAuthorizationThroughParameter",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ deliveryAuthorizationThroughParameter(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("deliveryAuthorizationThroughPath", &API::deliveryAuthorizationThroughPath);
 	registerHandler(
 		"deliveryAuthorizationThroughPath",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ deliveryAuthorizationThroughPath(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("manageHTTPStreamingManifest_authorizationThroughParameter",
-	// &API::manageHTTPStreamingManifest_authorizationThroughParameter);
 	registerHandler(
 		"manageHTTPStreamingManifest_authorizationThroughParameter",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ manageHTTPStreamingManifest_authorizationThroughParameter(sThreadId, request, requestData); }
 	);
-	//
-	// registerHandler<API>("login", &API::login);
 	registerHandler(
 		"login", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ login(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("registerUser", &API::registerUser);
 	registerHandler(
 		"registerUser", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ registerUser(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("updateUser", &API::updateUser);
 	registerHandler(
 		"updateUser", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ updateUser(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("createTokenToResetPassword", &API::createTokenToResetPassword);
 	registerHandler(
 		"createTokenToResetPassword",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ createTokenToResetPassword(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("resetPassword", &API::resetPassword);
 	registerHandler(
 		"resetPassword", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ resetPassword(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("updateWorkspace", &API::updateWorkspace);
 	registerHandler(
 		"updateWorkspace", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ updateWorkspace(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("setWorkspaceAsDefault", &API::setWorkspaceAsDefault);
 	registerHandler(
 		"setWorkspaceAsDefault",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ setWorkspaceAsDefault(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("createWorkspace", &API::createWorkspace);
 	registerHandler(
 		"createWorkspace", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ createWorkspace(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("deleteWorkspace", &API::deleteWorkspace);
 	registerHandler(
 		"deleteWorkspace", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ deleteWorkspace(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("unshareWorkspace", &API::unshareWorkspace);
 	registerHandler(
 		"unshareWorkspace", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ unshareWorkspace(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("workspaceUsage", &API::workspaceUsage);
 	registerHandler(
 		"workspaceUsage", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ workspaceUsage(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("shareWorkspace", &API::shareWorkspace_);
 	registerHandler(
 		"shareWorkspace", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ shareWorkspace_(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("workspaceList", &API::workspaceList);
 	registerHandler(
 		"workspaceList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ workspaceList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addInvoice", &API::addInvoice);
 	registerHandler(
 		"addInvoice", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addInvoice(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("invoiceList", &API::invoiceList);
 	registerHandler(
 		"invoiceList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ invoiceList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("confirmRegistration", &API::confirmRegistration);
 	registerHandler(
 		"confirmRegistration",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ confirmRegistration(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addEncoder", &API::addEncoder);
 	registerHandler(
 		"addEncoder", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addEncoder(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeEncoder", &API::removeEncoder);
 	registerHandler(
 		"removeEncoder", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeEncoder(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyEncoder", &API::modifyEncoder);
 	registerHandler(
 		"modifyEncoder", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyEncoder(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("encoderList", &API::encoderList);
 	registerHandler(
 		"encoderList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encoderList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("encodersPoolList", &API::encodersPoolList);
 	registerHandler(
 		"encodersPoolList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encodersPoolList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addEncodersPool", &API::addEncodersPool);
 	registerHandler(
 		"addEncodersPool", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addEncodersPool(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyEncodersPool", &API::modifyEncodersPool);
 	registerHandler(
 		"modifyEncodersPool",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyEncodersPool(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeEncodersPool", &API::removeEncodersPool);
 	registerHandler(
 		"removeEncodersPool",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeEncodersPool(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addAssociationWorkspaceEncoder", &API::addAssociationWorkspaceEncoder);
 	registerHandler(
 		"addAssociationWorkspaceEncoder",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addAssociationWorkspaceEncoder(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeAssociationWorkspaceEncoder", &API::removeAssociationWorkspaceEncoder);
 	registerHandler(
 		"removeAssociationWorkspaceEncoder",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeAssociationWorkspaceEncoder(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("createDeliveryAuthorization", &API::createDeliveryAuthorization);
 	registerHandler(
 		"createDeliveryAuthorization",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ createDeliveryAuthorization(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("createBulkOfDeliveryAuthorization", &API::createBulkOfDeliveryAuthorization);
 	registerHandler(
 		"createBulkOfDeliveryAuthorization",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ createBulkOfDeliveryAuthorization(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("ingestion", &API::ingestion);
 	registerHandler(
 		"ingestion", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ingestion(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("ingestionRootsStatus", &API::ingestionRootsStatus);
 	registerHandler(
 		"ingestionRootsStatus",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ingestionRootsStatus(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("ingestionRootMetaDataContent", &API::ingestionRootMetaDataContent);
 	registerHandler(
 		"ingestionRootMetaDataContent",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ingestionRootMetaDataContent(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("ingestionJobsStatus", &API::ingestionJobsStatus);
 	registerHandler(
 		"ingestionJobsStatus",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ingestionJobsStatus(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("cancelIngestionJob", &API::cancelIngestionJob);
 	registerHandler(
 		"cancelIngestionJob",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ cancelIngestionJob(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("updateIngestionJob", &API::updateIngestionJob);
 	registerHandler(
 		"updateIngestionJob",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ updateIngestionJob(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("ingestionJobSwitchToEncoder", &API::ingestionJobSwitchToEncoder);
 	registerHandler(
 		"ingestionJobSwitchToEncoder",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ingestionJobSwitchToEncoder(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("encodingJobsStatus", &API::encodingJobsStatus);
 	registerHandler(
 		"encodingJobsStatus",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encodingJobsStatus(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("encodingJobPriority", &API::encodingJobPriority);
 	registerHandler(
 		"encodingJobPriority",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encodingJobPriority(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("killOrCancelEncodingJob", &API::killOrCancelEncodingJob);
 	registerHandler(
 		"killOrCancelEncodingJob",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ killOrCancelEncodingJob(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("changeLiveProxyPlaylist", &API::changeLiveProxyPlaylist);
 	registerHandler(
 		"changeLiveProxyPlaylist",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ changeLiveProxyPlaylist(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("changeLiveProxyOverlayText", &API::changeLiveProxyOverlayText);
 	registerHandler(
 		"changeLiveProxyOverlayText",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ changeLiveProxyOverlayText(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("mediaItemsList", &API::mediaItemsList);
 	registerHandler(
 		"mediaItemsList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ mediaItemsList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("updateMediaItem", &API::updateMediaItem);
 	registerHandler(
 		"updateMediaItem", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ updateMediaItem(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("updatePhysicalPath", &API::updatePhysicalPath);
 	registerHandler(
 		"updatePhysicalPath",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ updatePhysicalPath(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("tagsList", &API::tagsList);
 	registerHandler(
 		"tagsList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ tagsList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("uploadedBinary", &API::uploadedBinary);
 	registerHandler(
 		"uploadedBinary", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ uploadedBinary(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addUpdateEncodingProfilesSet", &API::addUpdateEncodingProfilesSet);
 	registerHandler(
 		"addUpdateEncodingProfilesSet",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addUpdateEncodingProfilesSet(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("encodingProfilesSetsList", &API::encodingProfilesSetsList);
 	registerHandler(
 		"encodingProfilesSetsList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encodingProfilesSetsList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addEncodingProfile", &API::addEncodingProfile);
 	registerHandler(
 		"addEncodingProfile",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addEncodingProfile(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeEncodingProfile", &API::removeEncodingProfile);
 	registerHandler(
 		"removeEncodingProfile",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeEncodingProfile(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeEncodingProfilesSet", &API::removeEncodingProfilesSet);
 	registerHandler(
 		"removeEncodingProfilesSet",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeEncodingProfilesSet(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("encodingProfilesList", &API::encodingProfilesList);
 	registerHandler(
 		"encodingProfilesList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encodingProfilesList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("workflowsAsLibraryList", &API::workflowsAsLibraryList);
 	registerHandler(
 		"workflowsAsLibraryList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ workflowsAsLibraryList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("workflowAsLibraryContent", &API::workflowAsLibraryContent);
 	registerHandler(
 		"workflowAsLibraryContent",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ workflowAsLibraryContent(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("saveWorkflowAsLibrary", &API::saveWorkflowAsLibrary);
 	registerHandler(
 		"saveWorkflowAsLibrary",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ saveWorkflowAsLibrary(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeWorkflowAsLibrary", &API::removeWorkflowAsLibrary);
 	registerHandler(
 		"removeWorkflowAsLibrary",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeWorkflowAsLibrary(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("mmsSupport", &API::mmsSupport);
 	registerHandler(
 		"mmsSupport", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ mmsSupport(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addYouTubeConf", &API::addYouTubeConf);
 	registerHandler(
 		"addYouTubeConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addYouTubeConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyYouTubeConf", &API::modifyYouTubeConf);
 	registerHandler(
 		"modifyYouTubeConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyYouTubeConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeYouTubeConf", &API::removeYouTubeConf);
 	registerHandler(
 		"removeYouTubeConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeYouTubeConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("youTubeConfList", &API::youTubeConfList);
 	registerHandler(
 		"youTubeConfList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ youTubeConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addFacebookConf", &API::addFacebookConf);
 	registerHandler(
 		"addFacebookConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addFacebookConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyFacebookConf", &API::modifyFacebookConf);
 	registerHandler(
 		"modifyFacebookConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyFacebookConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeFacebookConf", &API::removeFacebookConf);
 	registerHandler(
 		"removeFacebookConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeFacebookConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("facebookConfList", &API::facebookConfList);
 	registerHandler(
 		"facebookConfList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ facebookConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addTwitchConf", &API::addTwitchConf);
 	registerHandler(
 		"addTwitchConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addTwitchConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyTwitchConf", &API::modifyTwitchConf);
 	registerHandler(
 		"modifyTwitchConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyTwitchConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeTwitchConf", &API::removeTwitchConf);
 	registerHandler(
 		"removeTwitchConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeTwitchConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("twitchConfList", &API::twitchConfList);
 	registerHandler(
 		"twitchConfList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ twitchConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addStream", &API::addStream);
 	registerHandler(
 		"addStream", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addStream(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyStream", &API::modifyStream);
 	registerHandler(
 		"modifyStream", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyStream(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeStream", &API::removeStream);
 	registerHandler(
 		"removeStream", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeStream(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("streamList", &API::streamList);
 	registerHandler(
 		"streamList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ streamList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("streamFreePushEncoderPort", &API::streamFreePushEncoderPort);
 	registerHandler(
 		"streamFreePushEncoderPort",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ streamFreePushEncoderPort(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addSourceTVStream", &API::addSourceTVStream);
 	registerHandler(
 		"addSourceTVStream",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addSourceTVStream(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifySourceTVStream", &API::modifySourceTVStream);
 	registerHandler(
 		"modifySourceTVStream",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifySourceTVStream(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeSourceTVStream", &API::removeSourceTVStream);
 	registerHandler(
 		"removeSourceTVStream",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeSourceTVStream(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("sourceTVStreamList", &API::sourceTVStreamList);
 	registerHandler(
 		"sourceTVStreamList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ sourceTVStreamList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addAWSChannelConf", &API::addAWSChannelConf);
+	/*
 	registerHandler(
 		"addAWSChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addAWSChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyAWSChannelConf", &API::modifyAWSChannelConf);
 	registerHandler(
 		"modifyAWSChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyAWSChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeAWSChannelConf", &API::removeAWSChannelConf);
 	registerHandler(
 		"removeAWSChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeAWSChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("awsChannelConfList", &API::awsChannelConfList);
 	registerHandler(
 		"awsChannelConfList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ awsChannelConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addCDN77ChannelConf", &API::addCDN77ChannelConf);
+	*/
 	registerHandler(
 		"addCDN77ChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addCDN77ChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyCDN77ChannelConf", &API::modifyCDN77ChannelConf);
 	registerHandler(
 		"modifyCDN77ChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyCDN77ChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeCDN77ChannelConf", &API::removeCDN77ChannelConf);
 	registerHandler(
 		"removeCDN77ChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeCDN77ChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("cdn77ChannelConfList", &API::cdn77ChannelConfList);
 	registerHandler(
 		"cdn77ChannelConfList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ cdn77ChannelConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addRTMPChannelConf", &API::addRTMPChannelConf);
 	registerHandler(
 		"addRTMPChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addRTMPChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyRTMPChannelConf", &API::modifyRTMPChannelConf);
 	registerHandler(
 		"modifyRTMPChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyRTMPChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeRTMPChannelConf", &API::removeRTMPChannelConf);
 	registerHandler(
 		"removeRTMPChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeRTMPChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("rtmpChannelConfList", &API::rtmpChannelConfList);
 	registerHandler(
 		"rtmpChannelConfList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ rtmpChannelConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addSRTChannelConf", &API::addSRTChannelConf);
 	registerHandler(
 		"addSRTChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addSRTChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifySRTChannelConf", &API::modifySRTChannelConf);
 	registerHandler(
 		"modifySRTChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifySRTChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeSRTChannelConf", &API::removeSRTChannelConf);
 	registerHandler(
 		"removeSRTChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeSRTChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("srtChannelConfList", &API::srtChannelConfList);
 	registerHandler(
 		"srtChannelConfList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ srtChannelConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addHLSChannelConf", &API::addHLSChannelConf);
 	registerHandler(
 		"addHLSChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addHLSChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyHLSChannelConf", &API::modifyHLSChannelConf);
 	registerHandler(
 		"modifyHLSChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyHLSChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeHLSChannelConf", &API::removeHLSChannelConf);
 	registerHandler(
 		"removeHLSChannelConf",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeHLSChannelConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("hlsChannelConfList", &API::hlsChannelConfList);
 	registerHandler(
 		"hlsChannelConfList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ hlsChannelConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addFTPConf", &API::addFTPConf);
 	registerHandler(
 		"addFTPConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addFTPConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyFTPConf", &API::modifyFTPConf);
 	registerHandler(
 		"modifyFTPConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyFTPConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeFTPConf", &API::removeFTPConf);
 	registerHandler(
 		"removeFTPConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeFTPConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("ftpConfList", &API::ftpConfList);
 	registerHandler(
 		"ftpConfList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ftpConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addEMailConf", &API::addEMailConf);
 	registerHandler(
 		"addEMailConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addEMailConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("modifyEMailConf", &API::modifyEMailConf);
 	registerHandler(
 		"modifyEMailConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ modifyEMailConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("removeEMailConf", &API::removeEMailConf);
 	registerHandler(
 		"removeEMailConf", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeEMailConf(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("emailConfList", &API::emailConfList);
 	registerHandler(
 		"emailConfList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ emailConfList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("loginStatisticList", &API::loginStatisticList);
 	registerHandler(
 		"loginStatisticList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ loginStatisticList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("addRequestStatistic", &API::addRequestStatistic);
 	registerHandler(
 		"addRequestStatistic",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ addRequestStatistic(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticList", &API::requestStatisticList);
 	registerHandler(
 		"requestStatisticList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ requestStatisticList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticPerContentList", &API::requestStatisticPerContentList);
 	registerHandler(
 		"requestStatisticPerContentList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ requestStatisticPerContentList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticPerUserList", &API::requestStatisticPerUserList);
 	registerHandler(
 		"requestStatisticPerUserList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ requestStatisticPerUserList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticPerMonthList", &API::requestStatisticPerMonthList);
 	registerHandler(
 		"requestStatisticPerMonthList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ requestStatisticPerMonthList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticPerDayList", &API::requestStatisticPerDayList);
 	registerHandler(
 		"requestStatisticPerDayList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ requestStatisticPerDayList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticPerHourList", &API::requestStatisticPerHourList);
 	registerHandler(
 		"requestStatisticPerHourList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ requestStatisticPerHourList(sThreadId, request, requestData); }
 	);
-	// registerHandler<API>("requestStatisticPerCountryList", &API::requestStatisticPerCountryList);
 	registerHandler(
 		"requestStatisticPerCountryList",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)

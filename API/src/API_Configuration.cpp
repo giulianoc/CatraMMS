@@ -2625,6 +2625,7 @@ void API::sourceTVStreamList(
 	}
 }
 
+/*
 void API::addAWSChannelConf(
 	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
@@ -3012,6 +3013,7 @@ void API::awsChannelConfList(
 		throw;
 	}
 }
+*/
 
 void API::addCDN77ChannelConf(
 	const string_view& sThreadId, FCGX_Request &request,

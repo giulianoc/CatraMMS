@@ -140,6 +140,7 @@ bool EncoderProxy::liveRecorder()
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+				/*
 				if (outputType == "CDN_AWS")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
@@ -147,14 +148,6 @@ bool EncoderProxy::liveRecorder()
 					string awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, "awsChannelConfigurationLabel", "");
 					// bool awsSignedURL = JSONUtils::asBool(outputRoot, "awsSignedURL", false);
 					// int awsExpirationInMinutes = JSONUtils::asInt(outputRoot, "awsExpirationInMinutes", 1440);
-
-					/*
-					string awsChannelType;
-					if (awsChannelConfigurationLabel == "")
-						awsChannelType = "SHARED";
-					else
-						awsChannelType = "DEDICATED";
-					*/
 
 					// reserveAWSChannel ritorna exception se non ci sono piu
 					// canali liberi o quello dedicato è già occupato In caso di
@@ -164,37 +157,6 @@ bool EncoderProxy::liveRecorder()
 					auto [awsChannelId, rtmpURL, playURL, channelAlreadyReserved] = _mmsEngineDBFacade->reserveAWSChannel(
 						_encodingItem->_workspace->_workspaceKey, awsChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 					);
-
-					/*
-					string awsChannelId;
-					string rtmpURL;
-					string playURL;
-					bool channelAlreadyReserved;
-					tie(awsChannelId, rtmpURL, playURL, channelAlreadyReserved) = awsChannelDetails;
-					*/
-
-					/*
-					if (awsSignedURL)
-					{
-						try
-						{
-							MMSDeliveryAuthorization mmsDeliveryAuthorization(_configuration, _mmsStorage, _mmsEngineDBFacade);
-							playURL = mmsDeliveryAuthorization.getAWSSignedURL(playURL, awsExpirationInMinutes * 60);
-						}
-						catch (exception &ex)
-						{
-							SPDLOG_ERROR(
-								"getAWSSignedURL failed"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", playURL: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, playURL
-							);
-
-							// throw e;
-						}
-					}
-					*/
 
 					// update outputsRoot with the new details
 					{
@@ -260,7 +222,8 @@ bool EncoderProxy::liveRecorder()
 					if (!channelAlreadyReserved)
 						awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 				}
-				else if (outputType == "CDN_CDN77")
+				*/
+				if (outputType == "CDN_CDN77")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
@@ -357,8 +320,8 @@ bool EncoderProxy::liveRecorder()
 					// ripartenza di mmsEngine, nel caso di richiesta già
 					// attiva, ritornerebbe le stesse info associate a
 					// ingestionJobKey (senza exception)
-					auto [reservedLabel, rtmpURL, streamName, userName, password, channelAlreadyReserved] =
-						_mmsEngineDBFacade->reserveRTMPChannel(
+					auto [reservedLabel, rtmpURL, streamName, userName, password, channelAlreadyReserved,
+						playURLDetailsRoot] = _mmsEngineDBFacade->reserveRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
 
@@ -418,6 +381,20 @@ bool EncoderProxy::liveRecorder()
 							);
 
 							// throw e;
+						}
+					}
+
+					// channelAlreadyReserved true means the channel was already reserved, so it is supposed
+					// is already started Maybe just start again is not an issue!!! Let's see
+					if (!channelAlreadyReserved)
+					{
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						if (cdnName == "aws")
+						{
+							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							if (!awsChannelId.empty())
+								awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
 					}
 				}
@@ -723,6 +700,7 @@ bool EncoderProxy::liveRecorder()
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+				/*
 				if (outputType == "CDN_AWS")
 				{
 					try
@@ -746,7 +724,8 @@ bool EncoderProxy::liveRecorder()
 						SPDLOG_ERROR(errorMessage);
 					}
 				}
-				else if (outputType == "CDN_CDN77")
+				*/
+				if (outputType == "CDN_CDN77")
 				{
 					try
 					{
@@ -772,9 +751,17 @@ bool EncoderProxy::liveRecorder()
 					try
 					{
 						// error in case do not find ingestionJobKey
-						_mmsEngineDBFacade->releaseRTMPChannel(
+						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						if (cdnName == "aws")
+						{
+							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							if (!awsChannelId.empty())
+								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+						}
 					}
 					catch (...)
 					{
@@ -836,6 +823,7 @@ bool EncoderProxy::liveRecorder()
 
 				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 
+				/*
 				if (outputType == "CDN_AWS")
 				{
 					try
@@ -859,7 +847,8 @@ bool EncoderProxy::liveRecorder()
 						SPDLOG_ERROR(errorMessage);
 					}
 				}
-				else if (outputType == "CDN_CDN77")
+				*/
+				if (outputType == "CDN_CDN77")
 				{
 					try
 					{
@@ -885,9 +874,17 @@ bool EncoderProxy::liveRecorder()
 					try
 					{
 						// error in case do not find ingestionJobKey
-						_mmsEngineDBFacade->releaseRTMPChannel(
+						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
+						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						if (cdnName == "aws")
+						{
+							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							if (!awsChannelId.empty())
+								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
+						}
 					}
 					catch (...)
 					{

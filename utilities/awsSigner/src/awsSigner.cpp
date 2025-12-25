@@ -52,7 +52,7 @@ int main(int iArgc, char *pArgv[])
 		try
 		{
 			string hostName = "d3ao8qf3jbneud.cloudfront.net";
-			string uriPath = "2/000/038/302/423540_29822_28/423540_29822.m3u8";
+			string uriPath = "/2/000/038/302/423540_29822_28/423540_29822.m3u8";
 			string keyPairId = "APKAUYWFOBAADUMU4IGK";
 			string privateKeyPEMPathName = "/opt/catramms/CatraMMS/conf/pk-APKAUYWFOBAADUMU4IGK.pem";
 			int expirationInSeconds = 60 * 60;

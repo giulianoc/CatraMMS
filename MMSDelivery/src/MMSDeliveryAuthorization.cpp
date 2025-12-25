@@ -412,6 +412,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (playURL.empty())
 						continue;
 				}
+				/*
 				else if (outputType == "CDN_AWS")
 				{
 					try
@@ -448,6 +449,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					if (playURL.empty())
 						continue;
 				}
+				*/
 				else if (outputType == "RTMP_Channel")
 				{
 					try
@@ -455,15 +457,19 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						/* playURLDetailsRoot:
 						{
 							"securityType": "token",
-							"cdnName": "medianova",
+							"cdnName": "medianova", // "aws"
 							"playURLProtocol": "https",
-							"playURLHostName": "cibortv-live.lg.mncdn.com",
-							"uri": "/mn-d1/dmax/index.m3u8",
+							"playURLHostName": "cibortv-live.lg.mncdn.com", // "d1nue3l1x0sz90.cloudfront.net"
+							"uri": "/mn-d1/dmax/index.m3u8", // /out/v1/ca8fd629f9204ca38daf18f04187c694/index.m3u8
 							"token": "svFTvs7d",
 							"medianova":
 							{
 								"uriEnabled": true,
 								"playerIPEnabled": false
+							},
+							"aws":
+							{
+								"channelId": "...."
 							}
 						}
 						*/
@@ -490,6 +496,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 									playURLProtocol, playURLHostName, uri, secureToken, ttlInSeconds, playerIP,
 									uriEnabled, playerIPToBeAuthorized && playerIPEnabled
 								);
+							}
+							else if (cdnName == "aws")
+							{
+								AWSSigner awsSigner;
+								playURL = awsSigner.calculateSignedURL(playURLHostName, uri, _keyPairId, _privateKeyPEMPathName, ttlInSeconds);
 							}
 							else
 								SPDLOG_ERROR(
@@ -2143,6 +2154,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 	}
 }
 
+/*
 string MMSDeliveryAuthorization::getAWSSignedURL(const string& playURL, int expirationInSeconds)
 {
 	string signedPlayURL;
@@ -2198,6 +2210,7 @@ string MMSDeliveryAuthorization::getAWSSignedURL(const string& playURL, int expi
 
 	return signedPlayURL;
 }
+*/
 
 time_t MMSDeliveryAuthorization::getReusableExpirationTime(int ttlInSeconds)
 {

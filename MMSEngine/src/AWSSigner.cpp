@@ -60,7 +60,7 @@ B. Write a method to create the signature for the signed URL that uses
 		return "";
 	}
 
-	string resourceUrlOrPath = string("https://") + hostName + "/" + uriPath;
+	string resourceUrlOrPath = string("https://") + hostName + uriPath;
 
 	time_t utcExpirationTime;
 	{

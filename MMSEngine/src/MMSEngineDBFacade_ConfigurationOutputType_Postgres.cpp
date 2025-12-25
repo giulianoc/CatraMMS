@@ -3,6 +3,7 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
+/*
 int64_t MMSEngineDBFacade::addAWSChannelConf(int64_t workspaceKey, string label, string channelId, string rtmpURL, string playURL, string type)
 {
 	int64_t confKey;
@@ -84,19 +85,6 @@ void MMSEngineDBFacade::modifyAWSChannelConf(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			/*
-		if (rowsUpdated != 1)
-		{
-			string errorMessage = __FILEREF__ + "no update was done"
-					+ ", confKey: " + to_string(confKey)
-					+ ", rowsUpdated: " + to_string(rowsUpdated)
-					+ ", sqlStatement: " + sqlStatement
-			;
-			warn(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-			*/
 		}
 	}
 	catch (exception const &e)
@@ -782,7 +770,7 @@ string MMSEngineDBFacade::releaseAWSChannel(int64_t workspaceKey, int outputInde
 		throw;
 	}
 }
-
+*/
 int64_t MMSEngineDBFacade::addCDN77ChannelConf(
 	int64_t workspaceKey, string label, bool srtFeed, string srtURL, string rtmpURL, string resourceURL, string filePath, string secureToken,
 	string type
@@ -2226,7 +2214,7 @@ json MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey,
 	}
 }
 
-tuple<string, string, string, string, string, bool>
+tuple<string, string, string, string, string, bool, json>
 MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int outputIndex, int64_t ingestionJobKey)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
@@ -2326,6 +2314,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 		string reservedStreamName;
 		string reservedUserName;
 		string reservedPassword;
+		json reservedPlayURLDetails = nullptr;
 		int64_t reservedByIngestionJobKey = -1;
 
 		{
@@ -2343,7 +2332,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				// Per questo motivo ho aggiunto: order by reservedByIngestionJobKey desc limit 1
 				// 2023-11-22: perchè ritorni la riga con ingestionJobKey inizializzato bisogna usare asc e non desc
 				sqlStatement = std::format(
-					"select confKey, label, rtmpURL, streamName, userName, password, "
+					"select confKey, label, rtmpURL, streamName, userName, password, playURLDetails, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel "
 					"where workspaceKey = {} and type = 'SHARED' "
 					"and ((outputIndex is null and reservedByIngestionJobKey is null) or (outputIndex = {} and reservedByIngestionJobKey = {})) "
@@ -2357,7 +2346,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				// 2023-09-29: eliminata la condizione 'DEDICATED' in modo che è possibile riservare
 				//	anche uno SHARED con la label (i.e.: viene selezionato dalla GUI)
 				sqlStatement = std::format(
-					"select confKey, label, rtmpURL, streamName, userName, password, "
+					"select confKey, label, rtmpURL, streamName, userName, password, playURLDetails, "
 					"reservedByIngestionJobKey from MMS_Conf_RTMPChannel "
 					"where workspaceKey = {} " // and type = 'DEDICATED' "
 					"and label = {} "
@@ -2369,6 +2358,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -2391,17 +2381,19 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				throw runtime_error(errorMessage);
 			}
 
-			reservedConfKey = res[0]["confKey"].as<int64_t>();
-			reservedLabel = res[0]["label"].as<string>();
-			reservedRtmpURL = res[0]["rtmpURL"].as<string>();
-			if (!res[0]["streamName"].is_null())
-				reservedStreamName = res[0]["streamName"].as<string>();
-			if (!res[0]["userName"].is_null())
-				reservedUserName = res[0]["userName"].as<string>();
-			if (!res[0]["password"].is_null())
-				reservedPassword = res[0]["password"].as<string>();
-			if (!res[0]["reservedByIngestionJobKey"].is_null())
-				reservedByIngestionJobKey = res[0]["reservedByIngestionJobKey"].as<int64_t>();
+			reservedConfKey = (*sqlResultSet)[0][0].as<int64_t>(static_cast<int64_t>(-1));
+			reservedLabel = (*sqlResultSet)[0][1].as<string>("");
+			reservedRtmpURL = (*sqlResultSet)[0][2].as<string>("");
+			if (!(*sqlResultSet)[0][3].isNull())
+				reservedStreamName = (*sqlResultSet)[0][3].as<string>("");
+			if (!(*sqlResultSet)[0][4].isNull())
+				reservedUserName = (*sqlResultSet)[0][4].as<string>("");
+			if (!(*sqlResultSet)[0][5].isNull())
+				reservedPassword = (*sqlResultSet)[0][5].as<string>("");
+			if (!(*sqlResultSet)[0][6].isNull())
+				reservedPlayURLDetails = (*sqlResultSet)[0][6].as<json>(nullptr);
+			if (!(*sqlResultSet)[0][7].isNull())
+				reservedByIngestionJobKey = (*sqlResultSet)[0][7].as<int64_t>(static_cast<int64_t>(-1));
 		}
 
 		if (reservedByIngestionJobKey == -1)
@@ -2445,8 +2437,8 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 		else
 			channelAlreadyReserved = true;
 
-		return make_tuple(
-			reservedLabel, reservedRtmpURL, reservedStreamName, reservedUserName, reservedPassword, channelAlreadyReserved
+		return make_tuple(reservedLabel, reservedRtmpURL, reservedStreamName, reservedUserName, reservedPassword,
+			channelAlreadyReserved, reservedPlayURLDetails
 		);
 	}
 	catch (exception const &e)
@@ -2474,7 +2466,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 	}
 }
 
-void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
+json MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex, int64_t ingestionJobKey)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -2490,17 +2482,18 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 		);
 
 		int64_t reservedConfKey;
-		string reservedChannelId;
+		json reservedPlayURLDetails = nullptr;
 
 		{
 			string sqlStatement = std::format(
-				"select confKey from MMS_Conf_RTMPChannel "
+				"select confKey, playURLDetails from MMS_Conf_RTMPChannel "
 				"where workspaceKey = {} and outputIndex = {} and reservedByIngestionJobKey = {} ",
 				workspaceKey, outputIndex, ingestionJobKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -2522,7 +2515,8 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 				throw runtime_error(errorMessage);
 			}
 
-			reservedConfKey = res[0]["confKey"].as<int64_t>();
+			reservedConfKey = (*sqlResultSet)[0][0].as<int64_t>(static_cast<int64_t>(-1));
+			reservedPlayURLDetails = (*sqlResultSet)[0][1].as<json>(nullptr);
 		}
 
 		{
@@ -2558,6 +2552,8 @@ void MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 				throw runtime_error(errorMessage);
 			}
 		}
+
+		return reservedPlayURLDetails;
 	}
 	catch (exception const &e)
 	{

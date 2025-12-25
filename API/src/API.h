@@ -619,6 +619,7 @@ class API final : public FastCGIAPI
 		const FCGIRequestData& requestData
 	);
 
+	/*
 	void addAWSChannelConf(
 		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
@@ -638,6 +639,7 @@ class API final : public FastCGIAPI
 		const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);
+	*/
 
 	void addCDN77ChannelConf(
 		const string_view& sThreadId, FCGX_Request &request,

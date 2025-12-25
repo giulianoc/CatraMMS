@@ -284,18 +284,18 @@
 		}
 
 #AWS
-		if ($request_method = POST) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=addAWSChannelConf last;
-		}
-		if ($request_method = PUT) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyAWSChannelConf&confKey=$2 last;
-		}
-		if ($request_method = DELETE) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAWSChannelConf&confKey=$2 last;
-		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=awsChannelConfList last;
-		}
+#		if ($request_method = POST) {
+#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=addAWSChannelConf last;
+#		}
+#		if ($request_method = PUT) {
+#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyAWSChannelConf&confKey=$2 last;
+#		}
+#		if ($request_method = DELETE) {
+#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAWSChannelConf&confKey=$2 last;
+#		}
+#		if ($request_method = GET) {
+#			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/aws/channel/?$ /api?x-api-version=$1&x-api-method=awsChannelConfList last;
+#		}
 
 #CDN77
 		if ($request_method = POST) {
