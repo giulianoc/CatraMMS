@@ -359,7 +359,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			json outputsRoot = JSONUtils::asJson(ingestionJobRoot, "outputs", json::array());
 
 			// Option 1: OutputType HLS with deliveryCode
-			// Option 2: OutputType RTMP_Channel/CDN_AWS/CDN_CDN77 with playURL
+			// Option 2: OutputType RTMP_Channel/CDN_CDN77 with playURL
 			// tuple<string, int64_t, string> means OutputType, deliveryCode, playURL
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -641,7 +641,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 			}
 
-			if (outputType == "RTMP_Channel" || outputType == "SRT_Channel" || outputType == "CDN_AWS" || outputType == "CDN_CDN77")
+			if (outputType == "RTMP_Channel" || outputType == "SRT_Channel" || outputType == "CDN_CDN77")
 			{
 				deliveryURL = playURL;
 			}

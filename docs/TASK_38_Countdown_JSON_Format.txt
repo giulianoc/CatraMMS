@@ -52,7 +52,7 @@
 		//	At least one Output has to be present
 		"outputs" = [
 			{
-				// optional, possible values: HLS, DASH, RTMP_Channel, SRT_Channel, CDN_AWS, CDN_CDN77.
+				// optional, possible values: HLS, DASH, RTMP_Channel, SRT_Channel, CDN_CDN77.
 				// HLS and DASH works also in case of an external transcoder
 				// Default: HLS
 				"outputType": "HLS",
@@ -74,21 +74,6 @@
 
 				// optional, used only in case of HLS, Default: 6
 				"playlistEntriesNumber": 6,
-
-				// optional, used only in case of CDN_AWS
-				// the configuration label of an AWS Channel defined in MMS.
-				// If not present, a SHARED free AWS channel is used
-				"awsChannelConfigurationLabel": "",
-
-				// optional, used only in case of CDN_AWS
-				// it specifies if a signed URL has to be used
-				// Default: false
-				"awsSignedURL": false,
-
-				// optional, used only in case of CDN_AWS and awsSignedURL is true
-				// it specifies the expiration of the signed URL
-				// Default: 1440 (1 day)
-				"awsExpirationInMinutes": 1440,
 
 				// optional, used only in case of CDN_CDN77
 				// the configuration label of an CDN77 Channel defined in MMS.

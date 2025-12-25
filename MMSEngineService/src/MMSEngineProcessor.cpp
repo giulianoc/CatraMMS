@@ -948,18 +948,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 
 		filtersRoot = getReviewedFiltersRoot(filtersRoot, workspace, ingestionJobKey);
 
-		if (outputType == "CDN_AWS")
-		{
-			field = "awsChannelConfigurationLabel";
-			awsChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
-
-			field = "awsSignedURL";
-			awsSignedURL = JSONUtils::asBool(outputRoot, field, false);
-
-			field = "awsExpirationInMinutes";
-			awsExpirationInMinutes = JSONUtils::asInt(outputRoot, field, 1440); // 1 day
-		}
-		else if (outputType == "CDN_CDN77")
+		if (outputType == "CDN_CDN77")
 		{
 			// it could not exist in case of SHARED CDN77
 			field = "cdn77ChannelConfigurationLabel";
