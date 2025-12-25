@@ -457,12 +457,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							"securityType": "token",
 							"cdnName": "medianova",
 							"playURLProtocol": "https",
-							"playURLHostName": "...",
-							"uri": "...",
-							"token": "...",
+							"playURLHostName": "cibortv-live.lg.mncdn.com",
+							"uri": "/mn-d1/dmax/index.m3u8",
+							"token": "svFTvs7d",
 							"medianova":
 							{
-								"uriEnabled": true
+								"uriEnabled": true,
+								"playerIPEnabled": false
 							}
 						}
 						*/
@@ -480,7 +481,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							if (cdnName == "medianova")
 							{
 								json medianovaRoot = JSONUtils::asJson(playURLDetailsRoot, "medianova", json(nullptr));
+								// uriEnabled deve essere consistente con la conf. in Medianova (security->Security Token->URI)
 								bool uriEnabled = JSONUtils::asBool(medianovaRoot, "uriEnabled", false);
+								// playerIPEnabled deve essere consistente con la conf. in Medianova (se ho capito bene dobbiamo
+								// chiedere Medianova di abilitare/disattivare questa opzione)
 								bool playerIPEnabled = JSONUtils::asBool(medianovaRoot, "playerIPEnabled", false);
 
 								playURL = getMedianovaSignedTokenURL(
@@ -2040,7 +2044,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 )
 {
 	SPDLOG_INFO(
-		"getMedianovaSignedTokenURL"
+		"https://test-cibortv-live.lg.mncdn.com/mn-m1/cnl52/index.m3u8?st=UKs6348dQptKUc8ShW-qdA&e=1829660036"
 		", playURLProtocol: {}"
 		", playURLHostname: {}"
 		", uri: {}"
@@ -2063,8 +2067,8 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 		if (uriEnabled)
 			newUri = StringUtils::uriPathPrefix(uri) + "/";
 
-		// Ordered fields: expiryTimestamp, secureToken, [playerIP], [newUri], [any query parameters]
-		// If userID is added, the signed URL should have also the userid parameter (&userid=$user_id)
+		// The order is important, fields: expiryTimestamp, secureToken, [playerIP], [newUri], [any query parameters]
+		// If userID is added, the signed URL should have also the 'userid' parameter (&userid=$user_id)
 		string toSign = std::format("{} {}{}{}", expiryTimestamp, secureToken,
 			playerIPEnabled ? std::format(" {}", playerIP) : "",
 			newUri ? std::format(" {}", *newUri) : "");
@@ -2144,7 +2148,7 @@ string MMSDeliveryAuthorization::getAWSSignedURL(const string& playURL, int expi
 		// playURL is like:
 		// https://d1nue3l1x0sz90.cloudfront.net/out/v1/ca8fd629f9204ca38daf18f04187c694/index.m3u8
 		string prefix("https://");
-		if (!(playURL.size() >= prefix.size() && 0 == playURL.compare(0, prefix.size(), prefix) && playURL.find('/', prefix.size()) != string::npos))
+		if (!(playURL.starts_with(prefix) && playURL.find('/', prefix.size()) != string::npos))
 		{
 			string errorMessage = std::format(
 				"awsSignedURL. playURL wrong format"
