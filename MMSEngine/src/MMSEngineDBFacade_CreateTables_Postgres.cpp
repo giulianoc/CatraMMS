@@ -452,6 +452,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/*
 		{
 			// type: SHARED or DEDICATED
 			string sqlStatement = "create table if not exists MMS_Conf_AWSChannel ("
@@ -497,6 +498,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			// type: SHARED or DEDICATED
