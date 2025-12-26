@@ -115,8 +115,8 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
+				int tvVideoPid = JSONUtils::asInt32(streamInputRoot, "tvVideoPid", -1);
+				int tvAudioItalianPid = JSONUtils::asInt32(streamInputRoot, "tvAudioItalianPid", -1);
 
 				// In case ffmpeg crashes and is automatically restarted, it should use the same
 				// IP-PORT it was using before because we already have a dbvlast sending the stream
@@ -195,7 +195,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 
 					if (streamSourceType == "IP_PUSH")
 					{
-						int pushListenTimeout = JSONUtils::asInt(streamInputRoot, "pushListenTimeout", -1);
+						int pushListenTimeout = JSONUtils::asInt32(streamInputRoot, "pushListenTimeout", -1);
 
 						if (utcProxyPeriodStart != -1)
 						{
@@ -269,8 +269,8 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-				int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-				int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
+				int tvVideoPid = JSONUtils::asInt32(streamInputRoot, "tvVideoPid", -1);
+				int tvAudioItalianPid = JSONUtils::asInt32(streamInputRoot, "tvAudioItalianPid", -1);
 
 				if (tvServiceId != -1) // this is just to be sure variables are initialized
 				{
@@ -315,8 +315,8 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
 					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
 					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt(streamInputRoot, "tvAudioItalianPid", -1);
+					int tvVideoPid = JSONUtils::asInt32(streamInputRoot, "tvVideoPid", -1);
+					int tvAudioItalianPid = JSONUtils::asInt32(streamInputRoot, "tvAudioItalianPid", -1);
 
 					if (tvServiceId != -1) // this is just to be sure variables are initialized
 					{

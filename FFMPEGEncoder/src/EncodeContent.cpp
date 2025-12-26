@@ -35,8 +35,8 @@ void EncodeContent::encodeContent(json metadataRoot)
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-		int videoTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot, "VideoTrackIndex", -1);
-		int audioTrackIndexToBeUsed = JSONUtils::asInt(ingestedParametersRoot, "AudioTrackIndex", -1);
+		int videoTrackIndexToBeUsed = JSONUtils::asInt32(ingestedParametersRoot, "VideoTrackIndex", -1);
+		int audioTrackIndexToBeUsed = JSONUtils::asInt32(ingestedParametersRoot, "AudioTrackIndex", -1);
 
 		json filtersRoot = nullptr;
 		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "filters"))

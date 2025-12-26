@@ -63,7 +63,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			if (faceRecognitionOutput == "FrameContainingFace")
 			{
 				field = "initialFramesNumberToBeSkipped";
-				initialFramesNumberToBeSkipped = JSONUtils::asInt(parametersRoot, field, 0);
+				initialFramesNumberToBeSkipped = JSONUtils::asInt32(parametersRoot, field, 0);
 
 				field = "oneFramePerSecond";
 				oneFramePerSecond = JSONUtils::asBool(parametersRoot, field, true);

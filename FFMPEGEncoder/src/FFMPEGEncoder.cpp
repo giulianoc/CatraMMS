@@ -3052,40 +3052,40 @@ void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, const
 void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 {
 	_configurationRoot = configurationRoot;
-	_encodingCompletedRetentionInSeconds = JSONUtils::asInt(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
+	_encodingCompletedRetentionInSeconds = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->encodingCompletedRetentionInSeconds: {}",
 		_encodingCompletedRetentionInSeconds
 	);
 
-	_mmsAPITimeoutInSeconds = JSONUtils::asInt(_configurationRoot["api"], "timeoutInSeconds", 120);
+	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->timeoutInSeconds: {}",
 		_mmsAPITimeoutInSeconds
 	);
 
-	_cpuUsageThresholdForEncoding = JSONUtils::asInt(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
+	_cpuUsageThresholdForEncoding = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForEncoding: {}",
 		_cpuUsageThresholdForEncoding
 	);
-	_cpuUsageThresholdForRecording = JSONUtils::asInt(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
+	_cpuUsageThresholdForRecording = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForRecording: {}",
 		_cpuUsageThresholdForRecording
 	);
-	_cpuUsageThresholdForProxy = JSONUtils::asInt(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
+	_cpuUsageThresholdForProxy = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForProxy: {}",
 		_cpuUsageThresholdForProxy
 	);
 	_intervalInSecondsBetweenEncodingAccept =
-		JSONUtils::asInt(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
+		JSONUtils::asInt32(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->intervalInSecondsBetweenEncodingAccept: {}",

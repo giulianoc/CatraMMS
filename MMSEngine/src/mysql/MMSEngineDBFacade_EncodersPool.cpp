@@ -1454,7 +1454,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, string protocol
 			MMSCURL::httpGetJson(ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders);
 
 		string field = "cpuUsage";
-		cpuUsage = JSONUtils::asInt(infoResponseRoot, field, 0);
+		cpuUsage = JSONUtils::asInt32(infoResponseRoot, field, 0);
 	}
 	catch (ServerNotReachable e)
 	{

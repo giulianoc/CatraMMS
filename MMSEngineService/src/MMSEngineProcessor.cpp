@@ -39,36 +39,36 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_cpuUsage = cpuUsage;
 	_cpuUsageThreadShutdown = false;
 
-	_processorThreads = JSONUtils::asInt(configurationRoot["mms"], "processorThreads", 1);
-	_cpuUsageThreshold = JSONUtils::asInt(configurationRoot["mms"], "cpuUsageThreshold", 10);
+	_processorThreads = JSONUtils::asInt32(configurationRoot["mms"], "processorThreads", 1);
+	_cpuUsageThreshold = JSONUtils::asInt32(configurationRoot["mms"], "cpuUsageThreshold", 10);
 
-	_maxDownloadAttemptNumber = JSONUtils::asInt(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
+	_maxDownloadAttemptNumber = JSONUtils::asInt32(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
 	SPDLOG_INFO(
 		"Configuration item"
 		", download->maxDownloadAttemptNumber: {}",
 		_maxDownloadAttemptNumber
 	);
-	_progressUpdatePeriodInSeconds = JSONUtils::asInt(configurationRoot["download"], "progressUpdatePeriodInSeconds", 5);
+	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(configurationRoot["download"], "progressUpdatePeriodInSeconds", 5);
 	SPDLOG_INFO(string() + "Configuration item" + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds));
-	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt(configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5);
+	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt32(configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5);
 	SPDLOG_INFO(
 		string() + "Configuration item" + ", download->secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
 	);
 
-	_maxIngestionJobsPerEvent = JSONUtils::asInt(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
+	_maxIngestionJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
 	SPDLOG_INFO(string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent));
-	_maxEncodingJobsPerEvent = JSONUtils::asInt(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
+	_maxEncodingJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
 	SPDLOG_INFO(string() + "Configuration item" + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent));
 
-	_maxEventManagementTimeInSeconds = JSONUtils::asInt(configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5);
+	_maxEventManagementTimeInSeconds = JSONUtils::asInt32(configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5);
 	SPDLOG_INFO(string() + "Configuration item" + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds));
 
-	_dependencyExpirationInHours = JSONUtils::asInt(configurationRoot["mms"], "dependencyExpirationInHours", 5);
+	_dependencyExpirationInHours = JSONUtils::asInt32(configurationRoot["mms"], "dependencyExpirationInHours", 5);
 	SPDLOG_INFO(string() + "Configuration item" + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours));
 
-	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt(configurationRoot["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
+	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(configurationRoot["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 
-	_downloadChunkSizeInMegaBytes = JSONUtils::asInt(configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5);
+	_downloadChunkSizeInMegaBytes = JSONUtils::asInt32(configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5);
 	SPDLOG_INFO(string() + "Configuration item" + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes));
 
 	_emailProviderURL = JSONUtils::asString(_configurationRoot["EmailNotification"], "providerURL", "");
@@ -92,11 +92,11 @@ MMSEngineProcessor::MMSEngineProcessor(
 	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName);
 	_facebookGraphAPIVideoHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "videoHostName", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName);
-	_facebookGraphAPIPort = JSONUtils::asInt(_configurationRoot["FacebookGraphAPI"], "port", 0);
+	_facebookGraphAPIPort = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "port", 0);
 	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort));
 	_facebookGraphAPIVersion = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "version", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion);
-	_facebookGraphAPITimeoutInSeconds = JSONUtils::asInt(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
+	_facebookGraphAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
 	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds));
 	_facebookGraphAPIClientId = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientId", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId);
@@ -113,7 +113,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol);
 	_youTubeDataAPIHostName = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "hostName", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName);
-	_youTubeDataAPIPort = JSONUtils::asInt(_configurationRoot["YouTubeDataAPI"], "port", 0);
+	_youTubeDataAPIPort = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "port", 0);
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort));
 	_youTubeDataAPIRefreshTokenURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "refreshTokenURI", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI);
@@ -125,9 +125,9 @@ MMSEngineProcessor::MMSEngineProcessor(
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI);
 	_youTubeDataAPILiveBroadcastBindURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastBindURI", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI);
-	_youTubeDataAPITimeoutInSeconds = JSONUtils::asInt(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
+	_youTubeDataAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
 	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds));
-	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::asInt(_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
+	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
 	SPDLOG_INFO(
 		string() + "Configuration item" + ", YouTubeDataAPI->timeoutForUploadVideo: " + to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
 	);
@@ -143,7 +143,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	SPDLOG_INFO(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 	string mmsAPIHostname = JSONUtils::asString(_configurationRoot["api"], "hostname", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
-	int mmsAPIPort = JSONUtils::asInt(_configurationRoot["api"], "port", 0);
+	int mmsAPIPort = JSONUtils::asInt32(_configurationRoot["api"], "port", 0);
 	SPDLOG_INFO(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 	string mmsAPIVersion = JSONUtils::asString(_configurationRoot["api"], "version", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
@@ -155,7 +155,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
 	string mmsBinaryHostname = JSONUtils::asString(_configurationRoot["api"]["binary"], "hostname", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
-	int mmsBinaryPort = JSONUtils::asInt(_configurationRoot["api"]["binary"], "port", 0);
+	int mmsBinaryPort = JSONUtils::asInt32(_configurationRoot["api"]["binary"], "port", 0);
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
 	string mmsBinaryVersion = JSONUtils::asString(_configurationRoot["api"]["binary"], "version", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
@@ -163,7 +163,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
 	_mmsAPIVODDeliveryURI = JSONUtils::asString(_configurationRoot["api"], "vodDeliveryURI", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI);
-	_mmsAPITimeoutInSeconds = JSONUtils::asInt(_configurationRoot["api"], "timeoutInSeconds", 120);
+	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
 	SPDLOG_INFO(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
 
 	_deliveryProtocol = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryProtocol", "");
@@ -171,12 +171,12 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_deliveryHost = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryHost", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", api->delivery->deliveryHost: " + _deliveryHost);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	SPDLOG_INFO(
 		string() + "Configuration item" + ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
-		JSONUtils::asInt(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	SPDLOG_INFO(
 		string() + "Configuration item" +
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: " + to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
@@ -937,10 +937,10 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
 
 		// field = "videoTrackIndexToBeUsed";
-		// videoTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
+		// videoTrackIndexToBeUsed = JSONUtils::asInt32(outputRoot, field, -1);
 
 		// field = "audioTrackIndexToBeUsed";
-		// audioTrackIndexToBeUsed = JSONUtils::asInt(outputRoot, field, -1);
+		// audioTrackIndexToBeUsed = JSONUtils::asInt32(outputRoot, field, -1);
 
 		field = "filters";
 		if (JSONUtils::isMetadataPresent(outputRoot, field))

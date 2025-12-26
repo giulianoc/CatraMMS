@@ -146,11 +146,11 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				// field = "playlistEntriesNumber";
 				// monitorPlaylistEntriesNumber =
-				// JSONUtils::asInt(monitorHLSRoot, field, 6);
+				// JSONUtils::asInt32(monitorHLSRoot, field, 6);
 
 				// field = "segmentDurationInSeconds";
 				// monitorSegmentDurationInSeconds =
-				// JSONUtils::asInt(monitorHLSRoot, field, 10);
+				// JSONUtils::asInt32(monitorHLSRoot, field, 10);
 
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
@@ -195,7 +195,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				// field = "segmentDurationInSeconds";
 				// virtualVODSegmentDurationInSeconds =
-				// JSONUtils::asInt(virtualVODRoot, field, 10);
+				// JSONUtils::asInt32(virtualVODRoot, field, 10);
 
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";

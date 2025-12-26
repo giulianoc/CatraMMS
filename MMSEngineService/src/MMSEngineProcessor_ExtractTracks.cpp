@@ -60,7 +60,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 					int trackNumber = 0;
 					field = "TrackNumber";
-					trackNumber = JSONUtils::asInt(trackRoot, field, 0);
+					trackNumber = JSONUtils::asInt32(trackRoot, field, 0);
 
 					tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
 				}

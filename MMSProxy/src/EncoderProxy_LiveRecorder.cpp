@@ -132,7 +132,7 @@ bool EncoderProxy::liveRecorder()
 		try
 		{
 			field = "monitorVirtualVODOutputRootIndex";
-			int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, -1);
+			int monitorVirtualVODOutputRootIndex = JSONUtils::asInt32(_encodingItem->_encodingParametersRoot, field, -1);
 
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
@@ -401,7 +401,7 @@ bool EncoderProxy::liveRecorder()
 								// 10 is the same default used in FFMpeg.cpp
 								int localSegmentDurationInSeconds = segmentDurationInSeconds > 0 ? segmentDurationInSeconds : 10;
 								int maxDurationInMinutes =
-									JSONUtils::asInt(_encodingItem->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
+									JSONUtils::asInt32(_encodingItem->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
 
 								playlistEntriesNumber = (maxDurationInMinutes * 60) / localSegmentDurationInSeconds;
 								outputRoot["playlistEntriesNumber"] = playlistEntriesNumber;

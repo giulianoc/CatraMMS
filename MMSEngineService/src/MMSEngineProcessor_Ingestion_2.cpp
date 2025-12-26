@@ -2694,8 +2694,8 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, 
 
 	string md5FileCheckSum = JSONUtils::asString(parametersRoot, "md5FileCheckSum");
 
-	int fileSizeInBytes = JSONUtils::asInt(parametersRoot, "fileSizeInBytes", -1);
-	int64_t encodingProfileKey = JSONUtils::asInt(parametersRoot, "encodingProfileKey", -1);
+	int fileSizeInBytes = JSONUtils::asInt32(parametersRoot, "fileSizeInBytes", -1);
+	int64_t encodingProfileKey = JSONUtils::asInt32(parametersRoot, "encodingProfileKey", -1);
 
 	SPDLOG_INFO(
 		"media source details"

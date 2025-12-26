@@ -561,7 +561,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 				ipPushStreamConfigurationLabel = JSONUtils::asString(proxyInputRoot, "configurationLabel", "");
 		}
 
-		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt(_encodingItem->_ingestedParametersRoot, "maxAttemptsNumberInCaseOfErrors", -1);
+		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt32(_encodingItem->_ingestedParametersRoot, "maxAttemptsNumberInCaseOfErrors", -1);
 		// 2022-07-20: this is to allow the next loop to exit after 2 errors
 		if (maxAttemptsNumberInCaseOfErrors == -1)
 			maxAttemptsNumberInCaseOfErrors = 2;

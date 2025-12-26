@@ -28,22 +28,22 @@ MMSEngineDBFacade::MMSEngineDBFacade(Json::Value configuration, size_t masterDbP
 
 	_defaultContentProviderName = "default";
 
-	_dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["database"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
+	_dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt32(configuration["database"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", database->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
 	);
 
-	_ingestionWorkflowCompletedRetentionInDays = JSONUtils::asInt(configuration["database"], "ingestionWorkflowCompletedRetentionInDays", 30);
+	_ingestionWorkflowCompletedRetentionInDays = JSONUtils::asInt32(configuration["database"], "ingestionWorkflowCompletedRetentionInDays", 30);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", database->ingestionWorkflowCompletedRetentionInDays: " + to_string(_ingestionWorkflowCompletedRetentionInDays)
 	);
-	_statisticRetentionInMonths = JSONUtils::asInt(configuration["database"], "statisticRetentionInMonths", 12);
+	_statisticRetentionInMonths = JSONUtils::asInt32(configuration["database"], "statisticRetentionInMonths", 12);
 	_logger->info(__FILEREF__ + "Configuration item" + ", database->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths));
 	_statisticsEnabled = JSONUtils::asBool(configuration["database"], "statisticsEnabled", true);
 	_logger->info(__FILEREF__ + "Configuration item" + ", database->statisticsEnabled: " + to_string(_statisticsEnabled));
-	_doNotManageIngestionsOlderThanDays = JSONUtils::asInt(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
+	_doNotManageIngestionsOlderThanDays = JSONUtils::asInt32(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
 	);
@@ -56,51 +56,51 @@ MMSEngineDBFacade::MMSEngineDBFacade(Json::Value configuration, size_t masterDbP
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI);
 	_ffmpegEncoderInfoURI = JSONUtils::asString(configuration["ffmpeg"], "encoderInfoURI", "");
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI);
-	_ffmpegEncoderInfoTimeout = JSONUtils::asInt(configuration["ffmpeg"], "encoderInfoTimeout", 2);
+	_ffmpegEncoderInfoTimeout = JSONUtils::asInt32(configuration["ffmpeg"], "encoderInfoTimeout", 2);
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoTimeout: " + to_string(_ffmpegEncoderInfoTimeout));
 
-	_ingestionJobsSelectPageSize = JSONUtils::asInt(configuration["mms"], "ingestionJobsSelectPageSize", 500);
+	_ingestionJobsSelectPageSize = JSONUtils::asInt32(configuration["mms"], "ingestionJobsSelectPageSize", 500);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize));
 
-	_maxEncodingFailures = JSONUtils::asInt(configuration["encoding"], "maxEncodingFailures", 3);
+	_maxEncodingFailures = JSONUtils::asInt32(configuration["encoding"], "maxEncodingFailures", 3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures));
 
-	_confirmationCodeExpirationInDays = JSONUtils::asInt(configuration["mms"], "confirmationCodeExpirationInDays", 3);
+	_confirmationCodeExpirationInDays = JSONUtils::asInt32(configuration["mms"], "confirmationCodeExpirationInDays", 3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays));
 
-	_contentRetentionInMinutesDefaultValue = JSONUtils::asInt(configuration["mms"], "contentRetentionInMinutesDefaultValue", 1);
+	_contentRetentionInMinutesDefaultValue = JSONUtils::asInt32(configuration["mms"], "contentRetentionInMinutesDefaultValue", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
 	);
 	_addContentIngestionJobsNotCompletedRetentionInDays =
-		JSONUtils::asInt(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
+		JSONUtils::asInt32(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->addContentIngestionJobsNotCompletedRetentionInDays: " + to_string(_addContentIngestionJobsNotCompletedRetentionInDays)
 	);
 
-	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
+	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateIngestionJobLock: " + to_string(_maxSecondsToWaitUpdateIngestionJobLock)
 	);
-	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 1);
+	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
 	);
-	_maxSecondsToWaitCheckIngestionLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitCheckIngestionLock", 1);
+	_maxSecondsToWaitCheckIngestionLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitCheckIngestionLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckIngestionLock: " + to_string(_maxSecondsToWaitCheckIngestionLock)
 	);
-	_maxSecondsToWaitCheckEncodingJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitCheckEncodingJobLock", 1);
+	_maxSecondsToWaitCheckEncodingJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitCheckEncodingJobLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckEncodingJobLock: " + to_string(_maxSecondsToWaitCheckEncodingJobLock)
 	);
-	_maxSecondsToWaitMainAndBackupLiveChunkLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitMainAndBackupLiveChunkLock", 1);
+	_maxSecondsToWaitMainAndBackupLiveChunkLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitMainAndBackupLiveChunkLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->maxSecondsToWaitMainAndBackupLiveChunkLock: " + to_string(_maxSecondsToWaitMainAndBackupLiveChunkLock)
 	);
-	_maxSecondsToWaitSetNotToBeExecutedLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitSetNotToBeExecutedLock", 1);
+	_maxSecondsToWaitSetNotToBeExecutedLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitSetNotToBeExecutedLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitSetNotToBeExecutedLock,: " + to_string(_maxSecondsToWaitSetNotToBeExecutedLock)
 	);

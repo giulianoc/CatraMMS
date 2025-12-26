@@ -72,13 +72,13 @@ void EncoderProxy::init(
 		_mpeg2TSEncoder
 	);
 
-	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt(_configuration["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
+	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt32(_configuration["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
 		_intervalInSecondsToCheckEncodingFinished
 	);
-	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 30);
+	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 30);
 	SPDLOG_INFO(
 		"Configuration item"
 		", encoding->maxSecondsToWaitUpdateEncodingJobLock: {}",
@@ -94,7 +94,7 @@ void EncoderProxy::init(
 	_ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
 	SPDLOG_INFO("Configuration item"
 				", ffmpeg->encoderPassword: ...");
-	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
+	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt32(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderTimeoutInSeconds: {}",
@@ -211,7 +211,7 @@ void EncoderProxy::init(
 		", computerVision->defaultScale: {}",
 		_computerVisionDefaultScale
 	);
-	_computerVisionDefaultMinNeighbors = JSONUtils::asInt(_configuration["computerVision"], "defaultMinNeighbors", 2);
+	_computerVisionDefaultMinNeighbors = JSONUtils::asInt32(_configuration["computerVision"], "defaultMinNeighbors", 2);
 	SPDLOG_INFO(
 		"Configuration item"
 		", computerVision->defaultMinNeighbors: {}",
@@ -224,21 +224,21 @@ void EncoderProxy::init(
 		_computerVisionDefaultTryFlip
 	);
 
-	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt(_configuration["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
+	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(_configuration["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 	SPDLOG_INFO(
 		"Configuration item"
 		", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: {}",
 		_timeBeforeToPrepareResourcesInMinutes
 	);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(_configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(_configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	SPDLOG_INFO(
 		"Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
-		JSONUtils::asInt(_configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+		JSONUtils::asInt32(_configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	SPDLOG_INFO(
 		"Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
@@ -1055,13 +1055,13 @@ tuple<bool, bool, bool, json, bool, bool, optional<double>, int, json, long> Enc
 				urlForbidden = JSONUtils::asBool(dataRoot, "urlForbidden", false);
 				urlNotFound = JSONUtils::asBool(dataRoot, "urlNotFound", false);
 				{
-					realTimeInfoRoot["framePerSeconds"] = JSONUtils::asInt(dataRoot, "framePerSeconds", -1);
+					realTimeInfoRoot["framePerSeconds"] = JSONUtils::asInt32(dataRoot, "framePerSeconds", -1);
 					realTimeInfoRoot["bitRateKbps"] = JSONUtils::asDouble(dataRoot, "bitRateKbps", -1.0);
 					realTimeInfoRoot["avgBitRateKbps"] = JSONUtils::asDouble(dataRoot, "avgBitRateKbps", -1.0);
-					realTimeInfoRoot["dropFrames"] = JSONUtils::asInt(dataRoot, "dropFrames", -1);
-					realTimeInfoRoot["dupFrames"] = JSONUtils::asInt(dataRoot, "dupFrames", -1);
-					realTimeInfoRoot["processedFrames"] = JSONUtils::asInt(dataRoot, "processedFrames", -1);
-					realTimeInfoRoot["processedOutputTimestampMilliSecs"] = JSONUtils::asInt(dataRoot, "processedOutputTimestampMilliSecs", -1);
+					realTimeInfoRoot["dropFrames"] = JSONUtils::asInt32(dataRoot, "dropFrames", -1);
+					realTimeInfoRoot["dupFrames"] = JSONUtils::asInt32(dataRoot, "dupFrames", -1);
+					realTimeInfoRoot["processedFrames"] = JSONUtils::asInt32(dataRoot, "processedFrames", -1);
+					realTimeInfoRoot["processedOutputTimestampMilliSecs"] = JSONUtils::asInt32(dataRoot, "processedOutputTimestampMilliSecs", -1);
 					realTimeInfoRoot["speed"] = JSONUtils::asDouble(dataRoot, "speed", -1.0);
 					realTimeInfoRoot["stream_0_0_q"] = JSONUtils::asDouble(dataRoot, "stream_0_0_q", -1.0);
 					realTimeInfoRoot["stream_1_0_q"] = JSONUtils::asDouble(dataRoot, "stream_1_0_q", -1.0);
@@ -1073,8 +1073,8 @@ tuple<bool, bool, bool, json, bool, bool, optional<double>, int, json, long> Enc
 			if (JSONUtils::isMetadataPresent(encodeStatusResponse, "encodingProgress")
 				&& !JSONUtils::isNull(encodeStatusResponse, "encodingProgress"))
 				encodingProgress = JSONUtils::asDouble(encodeStatusResponse, "encodingProgress", 0.0);
-			pid = JSONUtils::asInt(encodeStatusResponse, "pid", -1);
-			numberOfRestartBecauseOfFailure = JSONUtils::asInt(encodeStatusResponse, "numberOfRestartBecauseOfFailure", -1);
+			pid = JSONUtils::asInt32(encodeStatusResponse, "pid", -1);
+			numberOfRestartBecauseOfFailure = JSONUtils::asInt32(encodeStatusResponse, "numberOfRestartBecauseOfFailure", -1);
 		}
 		catch (exception& e)
 		{

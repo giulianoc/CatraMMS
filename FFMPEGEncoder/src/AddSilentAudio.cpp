@@ -29,7 +29,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
 		string addType = JSONUtils::asString(ingestedParametersRoot, "addType", "entireTrack");
-		int silentDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot, "silentDurationInSeconds", 1);
+		int silentDurationInSeconds = JSONUtils::asInt32(ingestedParametersRoot, "silentDurationInSeconds", 1);
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 

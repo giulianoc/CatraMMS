@@ -505,7 +505,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
 					throw runtime_error(errorMessage);
 				}
-				periodInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+				periodInSeconds = JSONUtils::asInt32(parametersRoot, field, 0);
 			}
 			else // if (ingestionType ==
 				 // MMSEngineDBFacade::IngestionType::IFrames || ingestionType
@@ -543,7 +543,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					 ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
 			{
 				field = "MaxFramesNumber";
-				maxFramesNumber = JSONUtils::asInt(parametersRoot, field, -1);
+				maxFramesNumber = JSONUtils::asInt32(parametersRoot, field, -1);
 			}
 		}
 
@@ -591,7 +591,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		int height = -1;
 		{
 			field = "height";
-			height = JSONUtils::asInt(parametersRoot, field, -1);
+			height = JSONUtils::asInt32(parametersRoot, field, -1);
 		}
 
 		int videoWidth;

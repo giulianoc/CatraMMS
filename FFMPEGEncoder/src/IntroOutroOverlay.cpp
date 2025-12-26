@@ -391,10 +391,10 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "mainSourceDurationInMilliSeconds", -1);
 		int64_t outroSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "outroSourceDurationInMilliSeconds", -1);
 
-		int introOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot, "introOverlayDurationInSeconds", -1);
-		int outroOverlayDurationInSeconds = JSONUtils::asInt(ingestedParametersRoot, "outroOverlayDurationInSeconds", -1);
-		bool muteIntroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteIntroOverlay", true);
-		bool muteOutroOverlay = JSONUtils::asInt(ingestedParametersRoot, "muteOutroOverlay", true);
+		int introOverlayDurationInSeconds = JSONUtils::asInt32(ingestedParametersRoot, "introOverlayDurationInSeconds", -1);
+		int outroOverlayDurationInSeconds = JSONUtils::asInt32(ingestedParametersRoot, "outroOverlayDurationInSeconds", -1);
+		bool muteIntroOverlay = JSONUtils::asInt32(ingestedParametersRoot, "muteIntroOverlay", true);
+		bool muteOutroOverlay = JSONUtils::asInt32(ingestedParametersRoot, "muteOutroOverlay", true);
 
 		_encoding->_encodingStart = chrono::system_clock::now();
 

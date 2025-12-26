@@ -18,7 +18,7 @@ LiveRecorder::LiveRecorder(
 	_tvChannelsPortsMutex = tvChannelsPortsMutex;
 	_tvChannelPort_CurrentOffset = tvChannelPort_CurrentOffset;
 
-	_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
+	_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
@@ -168,7 +168,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 				throw runtime_error(errorMessage);
 			}
-			segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
+			segmentDurationInSeconds = JSONUtils::asInt32(liveRecording->_ingestedParametersRoot, field, -1);
 
 			field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
@@ -191,8 +191,8 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs = -1;
 
 		liveRecording->_streamSourceType = JSONUtils::asString(encodingParametersRoot, "streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds = JSONUtils::asInt(encodingParametersRoot, "actAsServerListenTimeout", 300);
-		int pushListenTimeout = JSONUtils::asInt(encodingParametersRoot, "pushListenTimeout", -1);
+		int ipMMSAsServer_listenTimeoutInSeconds = JSONUtils::asInt32(encodingParametersRoot, "actAsServerListenTimeout", 300);
+		int pushListenTimeout = JSONUtils::asInt32(encodingParametersRoot, "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		string captureLive_videoInputFormat;
@@ -203,13 +203,13 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		int captureLive_channelsNumber = -1;
 		if (liveRecording->_streamSourceType == "CaptureLive")
 		{
-			captureLive_videoDeviceNumber = JSONUtils::asInt(encodingParametersRoot["capture"], "videoDeviceNumber", -1);
+			captureLive_videoDeviceNumber = JSONUtils::asInt32(encodingParametersRoot["capture"], "videoDeviceNumber", -1);
 			captureLive_videoInputFormat = JSONUtils::asString(encodingParametersRoot["capture"], "videoInputFormat", "");
-			captureLive_frameRate = JSONUtils::asInt(encodingParametersRoot["capture"], "frameRate", -1);
-			captureLive_width = JSONUtils::asInt(encodingParametersRoot["capture"], "width", -1);
-			captureLive_height = JSONUtils::asInt(encodingParametersRoot["capture"], "height", -1);
-			captureLive_audioDeviceNumber = JSONUtils::asInt(encodingParametersRoot["capture"], "audioDeviceNumber", -1);
-			captureLive_channelsNumber = JSONUtils::asInt(encodingParametersRoot["capture"], "channelsNumber", -1);
+			captureLive_frameRate = JSONUtils::asInt32(encodingParametersRoot["capture"], "frameRate", -1);
+			captureLive_width = JSONUtils::asInt32(encodingParametersRoot["capture"], "width", -1);
+			captureLive_height = JSONUtils::asInt32(encodingParametersRoot["capture"], "height", -1);
+			captureLive_audioDeviceNumber = JSONUtils::asInt32(encodingParametersRoot["capture"], "audioDeviceNumber", -1);
+			captureLive_channelsNumber = JSONUtils::asInt32(encodingParametersRoot["capture"], "channelsNumber", -1);
 		}
 
 		string liveURL;
@@ -222,8 +222,8 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			tvSymbolRate = JSONUtils::asInt64(encodingParametersRoot["tv"], "tvSymbolRate", -1);
 			tvBandwidthInHz = JSONUtils::asInt64(encodingParametersRoot["tv"], "tvBandwidthInHz", -1);
 			tvModulation = JSONUtils::asString(encodingParametersRoot["tv"], "tvModulation", "");
-			tvVideoPid = JSONUtils::asInt(encodingParametersRoot["tv"], "tvVideoPid", -1);
-			tvAudioItalianPid = JSONUtils::asInt(encodingParametersRoot["tv"], "tvAudioItalianPid", -1);
+			tvVideoPid = JSONUtils::asInt32(encodingParametersRoot["tv"], "tvVideoPid", -1);
+			tvAudioItalianPid = JSONUtils::asInt32(encodingParametersRoot["tv"], "tvAudioItalianPid", -1);
 
 			// In case ffmpeg crashes and is automatically restarted, it should use the same
 			// IP-PORT it was using before because we already have a dbvlast sending the stream
@@ -284,7 +284,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			if (monitorHLS || liveRecording->_virtualVOD)
 			{
 				// monitorVirtualVODOutputRootIndex has to be initialized in case of monitor/virtualVOD
-				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt(encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
+				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt32(encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
 
 				if (monitorVirtualVODOutputRootIndex >= 0)
 				{

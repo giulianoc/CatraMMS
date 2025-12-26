@@ -127,7 +127,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				}
 			}
 
-			maxWidth = JSONUtils::asInt(parametersRoot, "maxWidth", -1);
+			maxWidth = JSONUtils::asInt32(parametersRoot, "maxWidth", -1);
 
 			userAgent = JSONUtils::asString(parametersRoot, "userAgent", "");
 

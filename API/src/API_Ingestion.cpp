@@ -5269,7 +5269,7 @@ void API::changeLiveProxyPlaylist(
 						if (liveProxyRoot.contains("playlist") && liveProxyRoot["playlist"].is_object())
 						{
 							const json &playlistRoot = liveProxyRoot["playlist"];
-							playlistItemsRetentionInHours = JSONUtils::asInt(playlistRoot, "retentionInHours", playlistItemsRetentionInHours);
+							playlistItemsRetentionInHours = JSONUtils::asInt32(playlistRoot, "retentionInHours", playlistItemsRetentionInHours);
 						}
 					}
 				}

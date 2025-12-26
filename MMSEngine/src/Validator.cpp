@@ -2590,7 +2590,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		field = "textPercentageOpacity";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+			int textPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
 			if (textPercentageOpacity > 100)
 			{
@@ -2611,7 +2611,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		field = "boxPercentageOpacity";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+			int boxPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
 			if (boxPercentageOpacity > 100)
 			{
@@ -3989,7 +3989,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 
 	string field = "segmentDuration";
-	int segmentDuration = JSONUtils::asInt(parametersRoot, field, 1);
+	int segmentDuration = JSONUtils::asInt32(parametersRoot, field, 1);
 	if (segmentDuration % 2 != 0 || segmentDuration < 10)
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
@@ -5273,7 +5273,7 @@ void Validator::validateVideoSpeedMetadata(
 	field = "speedSize";
 	if (JSONUtils::isMetadataPresent(parametersRoot, field))
 	{
-		int speedSize = JSONUtils::asInt(parametersRoot, field, 3);
+		int speedSize = JSONUtils::asInt32(parametersRoot, field, 3);
 		if (speedSize < 1 || speedSize > 10)
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be between 1 and 10)" + ", Field: " + field +
@@ -5592,7 +5592,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	}
 
 	field = "introOverlayDurationInSeconds";
-	int introOverlayDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+	int introOverlayDurationInSeconds = JSONUtils::asInt32(parametersRoot, field, 0);
 	if (introOverlayDurationInSeconds <= 0)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
@@ -5603,7 +5603,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	}
 
 	field = "outroOverlayDurationInSeconds";
-	int outroOverlayDurationInSeconds = JSONUtils::asInt(parametersRoot, field, 0);
+	int outroOverlayDurationInSeconds = JSONUtils::asInt32(parametersRoot, field, 0);
 	if (outroOverlayDurationInSeconds <= 0)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
@@ -5652,7 +5652,7 @@ void Validator::validateLiveGridMetadata(
 	}
 
 	field = "columns";
-	int columns = JSONUtils::asInt(parametersRoot, field, 0);
+	int columns = JSONUtils::asInt32(parametersRoot, field, 0);
 	if (columns < 1)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
@@ -5663,7 +5663,7 @@ void Validator::validateLiveGridMetadata(
 	}
 
 	field = "gridWidth";
-	int gridWidth = JSONUtils::asInt(parametersRoot, field, 0);
+	int gridWidth = JSONUtils::asInt32(parametersRoot, field, 0);
 	if (gridWidth < 1)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
@@ -5674,7 +5674,7 @@ void Validator::validateLiveGridMetadata(
 	}
 
 	field = "gridHeight";
-	int gridHeight = JSONUtils::asInt(parametersRoot, field, 0);
+	int gridHeight = JSONUtils::asInt32(parametersRoot, field, 0);
 	if (gridHeight < 1)
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
@@ -7386,7 +7386,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		field = "textPercentageOpacity";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			int textPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+			int textPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
 			if (textPercentageOpacity > 100)
 			{
@@ -7407,7 +7407,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		field = "boxPercentageOpacity";
 		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
 		{
-			int boxPercentageOpacity = JSONUtils::asInt(drawTextDetailsRoot, field, 200);
+			int boxPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
 			if (boxPercentageOpacity > 100)
 			{

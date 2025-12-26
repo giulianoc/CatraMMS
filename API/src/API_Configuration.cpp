@@ -1398,37 +1398,37 @@ void API::addStream(
 			pushPublicEncoderName = JSONUtils::asBool(requestBodyRoot, field, false);
 
 			field = "pushServerPort";
-			pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);
+			pushServerPort = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "pushURI";
 			pushUri = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "pushListenTimeout";
-			pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);
+			pushListenTimeout = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "captureLiveVideoDeviceNumber";
-			captureLiveVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveVideoDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "captureLiveVideoInputFormat";
 			captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "captureLiveFrameRate";
-			captureLiveFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveFrameRate = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "captureLiveWidth";
-			captureLiveWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveWidth = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "captureLiveHeight";
-			captureLiveHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveHeight = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "captureLiveAudioDeviceNumber";
-			captureLiveAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveAudioDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "captureLiveChannelsNumber";
-			captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			captureLiveChannelsNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "sourceTVConfKey";
-			tvSourceTVConfKey = JSONUtils::asInt(requestBodyRoot, field, -1);
+			tvSourceTVConfKey = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "type";
 			type = JSONUtils::asString(requestBodyRoot, field, "");
@@ -1452,7 +1452,7 @@ void API::addStream(
 			imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "position";
-			position = JSONUtils::asInt(requestBodyRoot, field, -1);
+			position = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "userData";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -1656,7 +1656,7 @@ void API::modifyStream(
 			field = "pushServerPort";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				pushServerPort = JSONUtils::asInt(requestBodyRoot, field, -1);
+				pushServerPort = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				pushServerPortToBeModified = true;
 			}
 
@@ -1672,7 +1672,7 @@ void API::modifyStream(
 			field = "pushListenTimeout";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				pushListenTimeout = JSONUtils::asInt(requestBodyRoot, field, -1);
+				pushListenTimeout = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				pushListenTimeoutToBeModified = true;
 			}
 
@@ -1680,7 +1680,7 @@ void API::modifyStream(
 			field = "captureLiveVideoDeviceNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveVideoDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveVideoDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveVideoDeviceNumberToBeModified = true;
 			}
 
@@ -1696,7 +1696,7 @@ void API::modifyStream(
 			field = "captureLiveFrameRate";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveFrameRate = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveFrameRate = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveFrameRateToBeModified = true;
 			}
 
@@ -1704,7 +1704,7 @@ void API::modifyStream(
 			field = "captureLiveWidth";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveWidth = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveWidth = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveWidthToBeModified = true;
 			}
 
@@ -1712,7 +1712,7 @@ void API::modifyStream(
 			field = "captureLiveHeight";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveHeight = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveHeight = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveHeightToBeModified = true;
 			}
 
@@ -1720,7 +1720,7 @@ void API::modifyStream(
 			field = "captureLiveAudioDeviceNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveAudioDeviceNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveAudioDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveAudioDeviceNumberToBeModified = true;
 			}
 
@@ -1728,7 +1728,7 @@ void API::modifyStream(
 			field = "captureLiveChannelsNumber";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				captureLiveChannelsNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+				captureLiveChannelsNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveChannelsNumberToBeModified = true;
 			}
 
@@ -1800,7 +1800,7 @@ void API::modifyStream(
 			field = "position";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				position = JSONUtils::asInt(requestBodyRoot, field, -1);
+				position = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				positionToBeModified = true;
 			}
 			else if (JSONUtils::isNull(requestBodyRoot, field))
@@ -2184,19 +2184,19 @@ void API::addSourceTVStream(
 			lnb = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "videoPid";
-			videoPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+			videoPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "audioPids";
 			audioPids = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "audioItalianPid";
-			audioItalianPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+			audioItalianPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "audioEnglishPid";
-			audioEnglishPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+			audioEnglishPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "teletextPid";
-			teletextPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+			teletextPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "modulation";
 			modulation = JSONUtils::asString(requestBodyRoot, field, "");
@@ -2393,7 +2393,7 @@ void API::modifySourceTVStream(
 			field = "videoPid";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				videoPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+				videoPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				videoPidToBeModified = true;
 			}
 
@@ -2407,21 +2407,21 @@ void API::modifySourceTVStream(
 			field = "audioItalianPid";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				audioItalianPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+				audioItalianPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				audioItalianPidToBeModified = true;
 			}
 
 			field = "audioEnglishPid";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				audioEnglishPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+				audioEnglishPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				audioEnglishPidToBeModified = true;
 			}
 
 			field = "teletextPid";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				teletextPid = JSONUtils::asInt(requestBodyRoot, field, -1);
+				teletextPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				teletextPidToBeModified = true;
 			}
 
@@ -3510,10 +3510,10 @@ void API::addHLSChannelConf(
 			deliveryCode = JSONUtils::asInt64(requestBodyRoot, field, -1);
 
 			field = "segmentDuration";
-			segmentDuration = JSONUtils::asInt(requestBodyRoot, field, -1);
+			segmentDuration = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "playlistEntriesNumber";
-			playlistEntriesNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			playlistEntriesNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3652,7 +3652,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			segmentDuration = JSONUtils::asInt(requestBodyRoot, field, -1);
+			segmentDuration = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "playlistEntriesNumber";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3666,7 +3666,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			playlistEntriesNumber = JSONUtils::asInt(requestBodyRoot, field, -1);
+			playlistEntriesNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "type";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -3893,7 +3893,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			port = JSONUtils::asInt(requestBodyRoot, field, 0);
+			port = JSONUtils::asInt32(requestBodyRoot, field, 0);
 
 			field = "UserName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
@@ -4060,7 +4060,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			port = JSONUtils::asInt(requestBodyRoot, field, 0);
+			port = JSONUtils::asInt32(requestBodyRoot, field, 0);
 
 			field = "UserName";
 			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))

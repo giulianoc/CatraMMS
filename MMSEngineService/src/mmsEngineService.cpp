@@ -76,8 +76,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 		string logLevel = JSONUtils::asString(configurationRoot["log"]["mms"], "level", "");
 		if (logType == "daily")
 		{
-			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["mms"]["daily"], "rotationHour", 1);
-			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["mms"]["daily"], "rotationMinute", 1);
+			int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["mms"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["mms"]["daily"], "rotationMinute", 1);
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
@@ -100,7 +100,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 		else if (logType == "rotating")
 		{
 			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["mms"]["rotating"], "maxSizeInKBytes", 1000);
-			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["mms"]["rotating"], "maxFiles", 1);
+			int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["mms"]["rotating"], "maxFiles", 1);
 
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
@@ -161,8 +161,8 @@ void registerSlowQueryLogger(json configurationRoot)
 	{
 		if (logType == "daily")
 		{
-			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["mms"]["daily"], "rotationHour", 1);
-			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["mms"]["daily"], "rotationMinute", 1);
+			int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["mms"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["mms"]["daily"], "rotationMinute", 1);
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
@@ -171,7 +171,7 @@ void registerSlowQueryLogger(json configurationRoot)
 		else if (logType == "rotating")
 		{
 			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["mms"]["rotating"], "maxSizeInKBytes", 1000);
-			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["mms"]["rotating"], "maxFiles", 10);
+			int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["mms"]["rotating"], "maxFiles", 10);
 
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
@@ -259,14 +259,14 @@ int main(int iArgc, char *pArgv[])
 	// signal(SIGBUS, signalHandler);
 
 #ifdef __POSTGRES__
-	size_t masterDbPoolSize = JSONUtils::asInt(configurationRoot["postgres"]["master"], "enginePoolSize", 5);
+	size_t masterDbPoolSize = JSONUtils::asInt32(configurationRoot["postgres"]["master"], "enginePoolSize", 5);
 	logger->info(__FILEREF__ + "Configuration item" + ", postgres->master->enginePoolSize: " + to_string(masterDbPoolSize));
-	size_t slaveDbPoolSize = JSONUtils::asInt(configurationRoot["postgres"]["slave"], "enginePoolSize", 5);
+	size_t slaveDbPoolSize = JSONUtils::asInt32(configurationRoot["postgres"]["slave"], "enginePoolSize", 5);
 	logger->info(__FILEREF__ + "Configuration item" + ", postgres->slave->enginePoolSize: " + to_string(slaveDbPoolSize));
 #else
-	size_t masterDbPoolSize = JSONUtils::asInt(configurationRoot["database"]["master"], "enginePoolSize", 5);
+	size_t masterDbPoolSize = JSONUtils::asInt32(configurationRoot["database"]["master"], "enginePoolSize", 5);
 	logger->info(__FILEREF__ + "Configuration item" + ", database->master->enginePoolSize: " + to_string(masterDbPoolSize));
-	size_t slaveDbPoolSize = JSONUtils::asInt(configurationRoot["database"]["slave"], "enginePoolSize", 5);
+	size_t slaveDbPoolSize = JSONUtils::asInt32(configurationRoot["database"]["slave"], "enginePoolSize", 5);
 	logger->info(__FILEREF__ + "Configuration item" + ", database->slave->enginePoolSize: " + to_string(slaveDbPoolSize));
 #endif
 	logger->info(__FILEREF__ + "Creating MMSEngineDBFacade");
@@ -325,7 +325,7 @@ int main(int iArgc, char *pArgv[])
 
 	vector<shared_ptr<MMSEngineProcessor>> mmsEngineProcessors;
 	{
-		int processorThreads = JSONUtils::asInt(configurationRoot["mms"], "processorThreads", 1);
+		int processorThreads = JSONUtils::asInt32(configurationRoot["mms"], "processorThreads", 1);
 		shared_ptr<long> processorsThreadsNumber = make_shared<long>(0);
 
 		for (int processorThreadIndex = 0; processorThreadIndex < processorThreads; processorThreadIndex++)
@@ -339,7 +339,7 @@ int main(int iArgc, char *pArgv[])
 		}
 	}
 
-	unsigned long ulThreadSleepInMilliSecs = JSONUtils::asInt(configurationRoot["scheduler"], "threadSleepInMilliSecs", 5);
+	unsigned long ulThreadSleepInMilliSecs = JSONUtils::asInt32(configurationRoot["scheduler"], "threadSleepInMilliSecs", 5);
 	logger->info(__FILEREF__ + "Creating Scheduler2" + ", ulThreadSleepInMilliSecs: " + to_string(ulThreadSleepInMilliSecs));
 	Scheduler2 scheduler(ulThreadSleepInMilliSecs);
 
@@ -366,7 +366,7 @@ int main(int iArgc, char *pArgv[])
 	thread schedulerThread(ref(scheduler));
 
 	unsigned long checkIngestionTimesPeriodInMilliSecs =
-		JSONUtils::asInt(configurationRoot["scheduler"], "checkIngestionTimesPeriodInMilliSecs", 2000);
+		JSONUtils::asInt32(configurationRoot["scheduler"], "checkIngestionTimesPeriodInMilliSecs", 2000);
 	logger->info(
 		__FILEREF__ + "Creating and Starting CheckIngestionTimes" +
 		", checkIngestionTimesPeriodInMilliSecs: " + to_string(checkIngestionTimesPeriodInMilliSecs)
@@ -377,7 +377,7 @@ int main(int iArgc, char *pArgv[])
 	scheduler.activeTimes(checkIngestionTimes);
 
 	unsigned long checkEncodingTimesPeriodInMilliSecs =
-		JSONUtils::asInt(configurationRoot["scheduler"], "checkEncodingTimesPeriodInMilliSecs", 10000);
+		JSONUtils::asInt32(configurationRoot["scheduler"], "checkEncodingTimesPeriodInMilliSecs", 10000);
 	logger->info(
 		__FILEREF__ + "Creating and Starting CheckEncodingTimes" +
 		", checkEncodingTimesPeriodInMilliSecs: " + to_string(checkEncodingTimesPeriodInMilliSecs)
@@ -387,7 +387,7 @@ int main(int iArgc, char *pArgv[])
 	scheduler.activeTimes(checkEncodingTimes);
 
 	unsigned long threadsStatisticTimesPeriodInMilliSecs =
-		JSONUtils::asInt(configurationRoot["scheduler"], "threadsStatisticTimesPeriodInMilliSecs", 60000);
+		JSONUtils::asInt32(configurationRoot["scheduler"], "threadsStatisticTimesPeriodInMilliSecs", 60000);
 	logger->info(
 		__FILEREF__ + "Creating and Starting ThreadsStatisticTimes" +
 		", threadsStatisticTimesPeriodInMilliSecs: " + to_string(threadsStatisticTimesPeriodInMilliSecs)

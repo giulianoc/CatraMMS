@@ -142,7 +142,7 @@ void EncoderProxy::processSlideShow()
 
 		int outputFrameRate;
 		string field = "outputFrameRate";
-		outputFrameRate = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 25);
+		outputFrameRate = JSONUtils::asInt32(_encodingItem->_encodingParametersRoot, field, 25);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
 			_multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);

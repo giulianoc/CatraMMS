@@ -321,7 +321,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 				youTubeTags = parametersRoot[field];
 
 			field = "categoryId";
-			youTubeCategoryId = JSONUtils::asInt(parametersRoot, field, -1);
+			youTubeCategoryId = JSONUtils::asInt32(parametersRoot, field, -1);
 
 			field = "privacyStatus";
 			youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "private");

@@ -1301,7 +1301,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, string protocol
 		);
 
 		string field = "cpuUsage";
-		cpuUsage = JSONUtils::asInt(infoResponseRoot, field, 0);
+		cpuUsage = JSONUtils::asInt32(infoResponseRoot, field, 0);
 	}
 	catch (exception& e)
 	{

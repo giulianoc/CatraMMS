@@ -32,7 +32,7 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 	// string emailServerURL = "smtp://smtp.gmail.com:587";
 	string emailProtocol = JSONUtils::asString(_configuration["EmailNotification"], "protocol", "");
 	string emailServer = JSONUtils::asString(_configuration["EmailNotification"], "server", "");
-	int emailPort = JSONUtils::asInt(_configuration["EmailNotification"], "port", 0);
+	int emailPort = JSONUtils::asInt32(_configuration["EmailNotification"], "port", 0);
 	string userName = JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
 	string password;
 	{

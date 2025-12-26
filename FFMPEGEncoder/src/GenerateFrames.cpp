@@ -36,12 +36,12 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
-		int maxFramesNumber = JSONUtils::asInt(encodingParametersRoot, "maxFramesNumber", -1);
+		int maxFramesNumber = JSONUtils::asInt32(encodingParametersRoot, "maxFramesNumber", -1);
 		string videoFilter = JSONUtils::asString(encodingParametersRoot, "videoFilter", "");
-		int periodInSeconds = JSONUtils::asInt(encodingParametersRoot, "periodInSeconds", -1);
+		int periodInSeconds = JSONUtils::asInt32(encodingParametersRoot, "periodInSeconds", -1);
 		bool mjpeg = JSONUtils::asBool(encodingParametersRoot, "mjpeg", false);
-		int imageWidth = JSONUtils::asInt(encodingParametersRoot, "imageWidth", -1);
-		int imageHeight = JSONUtils::asInt(encodingParametersRoot, "imageHeight", -1);
+		int imageWidth = JSONUtils::asInt32(encodingParametersRoot, "imageWidth", -1);
+		int imageHeight = JSONUtils::asInt32(encodingParametersRoot, "imageHeight", -1);
 		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
 
 		string field = "sourceFileExtension";

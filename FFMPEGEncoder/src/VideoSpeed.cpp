@@ -36,7 +36,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 		videoSpeedType =
 			JSONUtils::asString(ingestedParametersRoot, "speedType", MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown));
 
-		int videoSpeedSize = JSONUtils::asInt(ingestedParametersRoot, "videoSpeedSize", 3);
+		int videoSpeedSize = JSONUtils::asInt32(ingestedParametersRoot, "videoSpeedSize", 3);
 
 		string sourceFileExtension;
 		{

@@ -957,11 +957,11 @@ tuple<string, int, int, bool, int, int, Magick::InterlaceType> EncoderProxy::rea
 		encodingProfileImageRoot = encodingProfileRoot["Image"];
 	}
 
-	newWidth = JSONUtils::asInt(encodingProfileImageRoot, "width", 0, true);
-	newHeight = JSONUtils::asInt(encodingProfileImageRoot, "height", 0, true);
+	newWidth = JSONUtils::asInt32(encodingProfileImageRoot, "width", 0, true);
+	newHeight = JSONUtils::asInt32(encodingProfileImageRoot, "height", 0, true);
 	newAspectRatio = JSONUtils::asBool(encodingProfileImageRoot, "aspectRatio", false, true);
-	newMaxWidth = JSONUtils::asInt(encodingProfileImageRoot, "maxWidth", 0, false);
-	newMaxHeight = JSONUtils::asInt(encodingProfileImageRoot, "maxHeight", 0, false);
+	newMaxWidth = JSONUtils::asInt32(encodingProfileImageRoot, "maxWidth", 0, false);
+	newMaxHeight = JSONUtils::asInt32(encodingProfileImageRoot, "maxHeight", 0, false);
 
 	// Interlace
 	{

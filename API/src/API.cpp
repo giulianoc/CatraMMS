@@ -1605,7 +1605,7 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 		_encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
 	}
 
-	_maxPageSize = JSONUtils::asInt(configurationRoot["postgres"], "maxPageSize", 5);
+	_maxPageSize = JSONUtils::asInt32(configurationRoot["postgres"], "maxPageSize", 5);
 	SPDLOG_INFO(
 		"Configuration item"
 		", postgres->maxPageSize: {}",
@@ -1623,19 +1623,19 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 	else
 		_encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
-	_maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt(configurationRoot["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
+	_maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->workspaceDefaults->maxIngestionsNumber: {}",
 		_maxIngestionsNumberWorkspaceDefaultValue
 	);
-	_maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt(configurationRoot["api"]["workspaceDefaults"], "maxStorageInMB", 100);
+	_maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "maxStorageInMB", 100);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: {}",
 		_maxStorageInMBWorkspaceDefaultValue
 	);
-	_expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt(configurationRoot["api"]["workspaceDefaults"], "expirationInDays", 30);
+	_expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "expirationInDays", 30);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: {}",
@@ -1662,7 +1662,7 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 
 	json apiRoot = configurationRoot["api"];
 
-	_defaultSharedHLSChannelsNumber = JSONUtils::asInt(apiRoot, "defaultSharedHLSChannelsNumber", 1);
+	_defaultSharedHLSChannelsNumber = JSONUtils::asInt32(apiRoot, "defaultSharedHLSChannelsNumber", 1);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->defaultSharedHLSChannelsNumber: {}",
@@ -1681,7 +1681,7 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 		", api->hostname: {}",
 		_apiHostname
 	);
-	_apiPort = JSONUtils::asInt(apiRoot, "port", 0);
+	_apiPort = JSONUtils::asInt32(apiRoot, "port", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->port: {}",
@@ -1698,25 +1698,25 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 	// SPDLOG_INFO(__FILEREF__ + "Configuration item"
 	//    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
 	// );
-	_progressUpdatePeriodInSeconds = JSONUtils::asInt(apiRoot["binary"], "progressUpdatePeriodInSeconds", 0);
+	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(apiRoot["binary"], "progressUpdatePeriodInSeconds", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->progressUpdatePeriodInSeconds: {}",
 		_progressUpdatePeriodInSeconds
 	);
-	_bandwidthUsagePeriodInSeconds = JSONUtils::asInt(apiRoot["binary"], "bandwidthUsagePeriodInSeconds", 15);
+	_bandwidthUsagePeriodInSeconds = JSONUtils::asInt32(apiRoot["binary"], "bandwidthUsagePeriodInSeconds", 15);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->bandwidthUsagePeriodInSeconds: {}",
 		_bandwidthUsagePeriodInSeconds
 	);
-	_webServerPort = JSONUtils::asInt(apiRoot["binary"], "webServerPort", 0);
+	_webServerPort = JSONUtils::asInt32(apiRoot["binary"], "webServerPort", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->webServerPort: {}",
 		_webServerPort
 	);
-	_maxProgressCallFailures = JSONUtils::asInt(apiRoot["binary"], "maxProgressCallFailures", 0);
+	_maxProgressCallFailures = JSONUtils::asInt32(apiRoot["binary"], "maxProgressCallFailures", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->binary->maxProgressCallFailures: {}",
@@ -1729,14 +1729,14 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 		_progressURI
 	);
 
-	_defaultTTLInSeconds = JSONUtils::asInt(apiRoot["delivery"], "defaultTTLInSeconds", 60);
+	_defaultTTLInSeconds = JSONUtils::asInt32(apiRoot["delivery"], "defaultTTLInSeconds", 60);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->defaultTTLInSeconds: {}",
 		_defaultTTLInSeconds
 	);
 
-	_defaultMaxRetries = JSONUtils::asInt(apiRoot["delivery"], "defaultMaxRetries", 60);
+	_defaultMaxRetries = JSONUtils::asInt32(apiRoot["delivery"], "defaultMaxRetries", 60);
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->delivery->defaultMaxRetries: {}",
@@ -1824,7 +1824,7 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 	SPDLOG_INFO(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
 	);
-	_ffmpegEncoderPort = JSONUtils::asInt(_configuration["ffmpeg"], "encoderPort", 0);
+	_ffmpegEncoderPort = JSONUtils::asInt32(_configuration["ffmpeg"], "encoderPort", 0);
 	SPDLOG_INFO(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
 	);
@@ -1841,7 +1841,7 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 		", ffmpeg->encoderPassword: {}",
 		"..."
 	);
-	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "encoderTimeoutInSeconds", 120);
+	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "encoderTimeoutInSeconds", 120);
 	SPDLOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderTimeoutInSeconds: {}",
@@ -1866,14 +1866,14 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 		_ffmpegEncoderChangeLiveProxyOverlayTextURI
 	);
 
-	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt(configurationRoot["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
+	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt32(configurationRoot["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
 		_intervalInSecondsToCheckEncodingFinished
 	);
 
-	_maxSecondsToWaitAPIIngestionLock = JSONUtils::asInt(configurationRoot["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
+	_maxSecondsToWaitAPIIngestionLock = JSONUtils::asInt32(configurationRoot["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", mms->locks->maxSecondsToWaitAPIIngestionLock: {}",
@@ -1942,21 +1942,21 @@ void API::loadConfiguration(json configurationRoot, FileUploadProgressData *file
 		", mms->guiHostname: {}",
 		_guiHostname
 	);
-	_guiPort = JSONUtils::asInt(_configurationRoot["mms"], "guiPort", 0);
+	_guiPort = JSONUtils::asInt32(_configurationRoot["mms"], "guiPort", 0);
 	SPDLOG_INFO(
 		"Configuration item"
 		", mms->guiPort: {}",
 		_guiPort
 	);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	SPDLOG_INFO(
 		"Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
-		JSONUtils::asInt(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	SPDLOG_INFO(
 		"Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",

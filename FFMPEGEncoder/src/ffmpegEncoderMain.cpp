@@ -49,8 +49,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 		string logLevel = JSONUtils::asString(configurationRoot["log"]["encoder"], "level", "");
 		if (logType == "daily")
 		{
-			int logRotationHour = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
-			int logRotationMinute = JSONUtils::asInt(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
+			int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
@@ -73,7 +73,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 		else if (logType == "rotating")
 		{
 			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
-			int maxFiles = JSONUtils::asInt(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
+			int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
 
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
@@ -154,7 +154,7 @@ int main(int argc, char **argv)
 
 		FCGX_Init();
 
-		int threadsNumber = JSONUtils::asInt(configurationRoot["ffmpeg"], "encoderThreadsNumber", 1);
+		int threadsNumber = JSONUtils::asInt32(configurationRoot["ffmpeg"], "encoderThreadsNumber", 1);
 		SPDLOG_INFO(
 			"Configuration item"
 			", ffmpeg->encoderThreadsNumber: {}",
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 		chrono::system_clock::time_point lastEncodingCompletedCheck;
 
 		{
-			// int maxEncodingsCapability =  JSONUtils::asInt(
+			// int maxEncodingsCapability =  JSONUtils::asInt32(
 			// 	encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
 			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 				encodingsCapability.push_back(encoding);
 			}
 
-			// int maxLiveProxiesCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+			// int maxLiveProxiesCapability =  JSONUtils::asInt32(encoderCapabilityConfiguration["ffmpeg"],
 			// 		"maxLiveProxiesCapability", 10);
 			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 				liveProxiesCapability.push_back(liveProxy);
 			}
 
-			// int maxLiveRecordingsCapability =  JSONUtils::asInt(encoderCapabilityConfiguration["ffmpeg"],
+			// int maxLiveRecordingsCapability =  JSONUtils::asInt32(encoderCapabilityConfiguration["ffmpeg"],
 			// 		"maxLiveRecordingsCapability", 10);
 			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)

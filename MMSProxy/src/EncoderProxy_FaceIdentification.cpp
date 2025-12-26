@@ -97,7 +97,7 @@ string EncoderProxy::faceIdentification()
 			if (totalImagesNumber == -1)
 			{
 				field = "numFound";
-				totalImagesNumber = JSONUtils::asInt(responseRoot, field, 0);
+				totalImagesNumber = JSONUtils::asInt32(responseRoot, field, 0);
 			}
 
 			field = "mediaItems";

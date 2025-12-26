@@ -28,7 +28,7 @@ LiveRecorderDaemons::LiveRecorderDaemons(
 		_liveRecorderChunksIngestionThreadShutdown = false;
 		_liveRecorderVirtualVODIngestionThreadShutdown = false;
 
-		_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
+		_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
 		SPDLOG_INFO(
 			"Configuration item"
 			", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
@@ -41,7 +41,7 @@ LiveRecorderDaemons::LiveRecorderDaemons(
 			", ffmpeg->liveRecorderVirtualVODRetention: {}",
 			_liveRecorderVirtualVODRetention
 		);
-		_liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt(configurationRoot["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
+		_liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
 		SPDLOG_INFO(
 			"Configuration item"
 			", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: {}",
@@ -114,7 +114,7 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 							string outputFileFormat;
 							{
 								string field = "segmentDuration";
-								segmentDurationInSeconds = JSONUtils::asInt(liveRecording->_ingestedParametersRoot, field, -1);
+								segmentDurationInSeconds = JSONUtils::asInt32(liveRecording->_ingestedParametersRoot, field, -1);
 
 								field = "outputFileFormat";
 								outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");

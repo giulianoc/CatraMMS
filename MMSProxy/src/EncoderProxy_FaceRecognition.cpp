@@ -72,7 +72,7 @@ string EncoderProxy::faceRecognition()
 		faceRecognitionOutput = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
 
 		field = "initialFramesNumberToBeSkipped";
-		initialFramesNumberToBeSkipped = JSONUtils::asInt(_encodingItem->_encodingParametersRoot, field, 0);
+		initialFramesNumberToBeSkipped = JSONUtils::asInt32(_encodingItem->_encodingParametersRoot, field, 0);
 
 		field = "oneFramePerSecond";
 		oneFramePerSecond = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);

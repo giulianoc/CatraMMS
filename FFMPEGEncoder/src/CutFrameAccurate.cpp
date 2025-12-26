@@ -191,7 +191,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 		_encoding->_ffmpeg->cutFrameAccurateWithEncoding(
 			_encoding->_ingestionJobKey, sourceAssetPathName, _encoding->_encodingJobKey, encodingProfileDetailsRoot,
 			JSONUtils::asString(ingestedParametersRoot, "startTime", ""), JSONUtils::asString(encodingParametersRoot, "endTime", ""),
-			JSONUtils::asInt(ingestedParametersRoot, "framesNumber", -1), encodedStagingAssetPathName,
+			JSONUtils::asInt32(ingestedParametersRoot, "framesNumber", -1), encodedStagingAssetPathName,
 
 			_encoding->_childProcessId, _encoding->_callbackData
 		);

@@ -7,13 +7,13 @@ FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot)
 {
 	try
 	{
-		_mmsAPITimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"], "timeoutInSeconds", 120);
+		_mmsAPITimeoutInSeconds = JSONUtils::asInt32(configurationRoot["api"], "timeoutInSeconds", 120);
 		SPDLOG_INFO(
 			"Configuration item"
 			", api->timeoutInSeconds: {}",
 			_mmsAPITimeoutInSeconds
 		);
-		_mmsBinaryTimeoutInSeconds = JSONUtils::asInt(configurationRoot["api"]["binary"], "timeoutInSeconds", 120);
+		_mmsBinaryTimeoutInSeconds = JSONUtils::asInt32(configurationRoot["api"]["binary"], "timeoutInSeconds", 120);
 		SPDLOG_INFO(
 			"Configuration item"
 			", api->binary->timeoutInSeconds: {}",

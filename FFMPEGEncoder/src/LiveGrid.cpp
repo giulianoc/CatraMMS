@@ -41,9 +41,9 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 
 		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
 
-		int gridColumns = JSONUtils::asInt(ingestedParametersRoot, "columns", 0);
-		int gridWidth = JSONUtils::asInt(ingestedParametersRoot, "gridWidth", 0);
-		int gridHeight = JSONUtils::asInt(ingestedParametersRoot, "gridHeight", 0);
+		int gridColumns = JSONUtils::asInt32(ingestedParametersRoot, "columns", 0);
+		int gridWidth = JSONUtils::asInt32(ingestedParametersRoot, "gridWidth", 0);
+		int gridHeight = JSONUtils::asInt32(ingestedParametersRoot, "gridHeight", 0);
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 

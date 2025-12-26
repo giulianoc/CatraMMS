@@ -74,9 +74,9 @@ void MMSEngineProcessor::httpCallbackThread(
 					httpPort = 443;
 			}
 			else
-				httpPort = JSONUtils::asInt(parametersRoot, field, 0);
+				httpPort = JSONUtils::asInt32(parametersRoot, field, 0);
 
-			callbackTimeoutInSeconds = JSONUtils::asInt(parametersRoot, "timeout", 120);
+			callbackTimeoutInSeconds = JSONUtils::asInt32(parametersRoot, "timeout", 120);
 
 			field = "uri";
 			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
@@ -113,7 +113,7 @@ void MMSEngineProcessor::httpCallbackThread(
 				// httpHeadersRoot = parametersRoot[field];
 			}
 
-			maxRetries = JSONUtils::asInt(parametersRoot, "maxRetries", 1);
+			maxRetries = JSONUtils::asInt32(parametersRoot, "maxRetries", 1);
 			forwardInputMedia = JSONUtils::asBool(parametersRoot, "forwardInputMedia", false);
 		}
 

@@ -124,7 +124,7 @@ void API::addEncoder(
 			field = "Port";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				port = JSONUtils::asInt(requestBodyRoot, field, 80);
+				port = JSONUtils::asInt32(requestBodyRoot, field, 80);
 			}
 			else
 			{
@@ -292,7 +292,7 @@ void API::modifyEncoder(
 			field = "Port";
 			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
 			{
-				port = JSONUtils::asInt(requestBodyRoot, field, 80);
+				port = JSONUtils::asInt32(requestBodyRoot, field, 80);
 				portToBeModified = true;
 			}
 			else

@@ -31,7 +31,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_configuration = configuration;
 	_maxRows = 1000;
 
-	_doNotManageIngestionsOlderThanDays = JSONUtils::asInt(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
+	_doNotManageIngestionsOlderThanDays = JSONUtils::asInt32(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
 	);
@@ -44,53 +44,53 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI);
 	_ffmpegEncoderInfoURI = JSONUtils::asString(configuration["ffmpeg"], "encoderInfoURI", "");
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI);
-	_ffmpegEncoderInfoTimeout = JSONUtils::asInt(configuration["ffmpeg"], "encoderInfoTimeout", 2);
+	_ffmpegEncoderInfoTimeout = JSONUtils::asInt32(configuration["ffmpeg"], "encoderInfoTimeout", 2);
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoTimeout: " + to_string(_ffmpegEncoderInfoTimeout));
 
-	_ingestionJobsSelectPageSize = JSONUtils::asInt(configuration["mms"], "ingestionJobsSelectPageSize", 500);
+	_ingestionJobsSelectPageSize = JSONUtils::asInt32(configuration["mms"], "ingestionJobsSelectPageSize", 500);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize));
 
-	_maxEncodingFailures = JSONUtils::asInt(configuration["encoding"], "maxEncodingFailures", 3);
+	_maxEncodingFailures = JSONUtils::asInt32(configuration["encoding"], "maxEncodingFailures", 3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures));
 
-	_confirmationCodeExpirationInDays = JSONUtils::asInt(configuration["mms"], "confirmationCodeExpirationInDays", 3);
+	_confirmationCodeExpirationInDays = JSONUtils::asInt32(configuration["mms"], "confirmationCodeExpirationInDays", 3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays));
 
-	_contentRetentionInMinutesDefaultValue = JSONUtils::asInt(configuration["mms"], "contentRetentionInMinutesDefaultValue", 1);
+	_contentRetentionInMinutesDefaultValue = JSONUtils::asInt32(configuration["mms"], "contentRetentionInMinutesDefaultValue", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
 	);
 	/*
 	_addContentIngestionJobsNotCompletedRetentionInDays =
-		JSONUtils::asInt(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
+		JSONUtils::asInt32(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->addContentIngestionJobsNotCompletedRetentionInDays: " + to_string(_addContentIngestionJobsNotCompletedRetentionInDays)
 	);
 	*/
 
-	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
+	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateIngestionJobLock: " + to_string(_maxSecondsToWaitUpdateIngestionJobLock)
 	);
-	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 1);
+	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
 	);
-	_maxSecondsToWaitCheckIngestionLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitCheckIngestionLock", 1);
+	_maxSecondsToWaitCheckIngestionLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitCheckIngestionLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckIngestionLock: " + to_string(_maxSecondsToWaitCheckIngestionLock)
 	);
-	_maxSecondsToWaitCheckEncodingJobLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitCheckEncodingJobLock", 1);
+	_maxSecondsToWaitCheckEncodingJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitCheckEncodingJobLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckEncodingJobLock: " + to_string(_maxSecondsToWaitCheckEncodingJobLock)
 	);
-	_maxSecondsToWaitMainAndBackupLiveChunkLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitMainAndBackupLiveChunkLock", 1);
+	_maxSecondsToWaitMainAndBackupLiveChunkLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitMainAndBackupLiveChunkLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->maxSecondsToWaitMainAndBackupLiveChunkLock: " + to_string(_maxSecondsToWaitMainAndBackupLiveChunkLock)
 	);
-	_maxSecondsToWaitSetNotToBeExecutedLock = JSONUtils::asInt(configuration["mms"]["locks"], "maxSecondsToWaitSetNotToBeExecutedLock", 1);
+	_maxSecondsToWaitSetNotToBeExecutedLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitSetNotToBeExecutedLock", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitSetNotToBeExecutedLock,: " + to_string(_maxSecondsToWaitSetNotToBeExecutedLock)
 	);
@@ -107,13 +107,13 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
 	_geoServiceEnabled = JSONUtils::asBool(configuration["mms"]["geoService"], "enabled", false);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->enabled: " + to_string(_geoServiceEnabled));
-	_geoServiceMaxDaysBeforeUpdate = JSONUtils::asInt(configuration["mms"]["geoService"], "maxDaysBeforeUpdate", 1);
+	_geoServiceMaxDaysBeforeUpdate = JSONUtils::asInt32(configuration["mms"]["geoService"], "maxDaysBeforeUpdate", 1);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->maxDaysBeforeUpdate: " + to_string(_geoServiceMaxDaysBeforeUpdate));
 	_geoServiceURL = JSONUtils::asString(configuration["mms"]["geoService"], "url", "");
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->url: " + _geoServiceURL);
 	_geoServiceKey = JSONUtils::asString(configuration["mms"]["geoService"], "key", "");
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->key: " + _geoServiceKey);
-	_geoServiceTimeoutInSeconds = JSONUtils::asInt(configuration["mms"]["geoService"], "timeoutInSeconds", 10);
+	_geoServiceTimeoutInSeconds = JSONUtils::asInt32(configuration["mms"]["geoService"], "timeoutInSeconds", 10);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->timeoutInSeconds: " + to_string(_geoServiceTimeoutInSeconds));
 
 	_getIngestionJobsCurrentIndex = 0;
@@ -127,17 +127,17 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 		_logger->info(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[adminEmailAddressesIndex]: " + adminEmailAddress);
 	}
 
-	_dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt(configuration["postgres"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
+	_dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt32(configuration["postgres"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", postgres->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
 	);
-	_ingestionWorkflowCompletedRetentionInDays = JSONUtils::asInt(configuration["postgres"], "ingestionWorkflowCompletedRetentionInDays", 30);
+	_ingestionWorkflowCompletedRetentionInDays = JSONUtils::asInt32(configuration["postgres"], "ingestionWorkflowCompletedRetentionInDays", 30);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", postgres->ingestionWorkflowCompletedRetentionInDays: " + to_string(_ingestionWorkflowCompletedRetentionInDays)
 	);
-	_statisticRetentionInMonths = JSONUtils::asInt(configuration["postgres"], "statisticRetentionInMonths", 12);
+	_statisticRetentionInMonths = JSONUtils::asInt32(configuration["postgres"], "statisticRetentionInMonths", 12);
 	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths));
 	_statisticsEnabled = JSONUtils::asBool(configuration["postgres"], "statisticsEnabled", true);
 	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticsEnabled: " + to_string(_statisticsEnabled));
@@ -145,11 +145,11 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	{
 		string masterDbServer = JSONUtils::asString(configuration["postgres"]["master"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->server: " + masterDbServer);
-		int masterDbPort = JSONUtils::asInt(configuration["postgres"]["master"], "port", 5432);
+		int masterDbPort = JSONUtils::asInt32(configuration["postgres"]["master"], "port", 5432);
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->port: " + to_string(masterDbPort));
 		string slaveDbServer = JSONUtils::asString(configuration["postgres"]["slave"], "server", "");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->server: " + slaveDbServer);
-		int slaveDbPort = JSONUtils::asInt(configuration["postgres"]["slave"], "port", 5432);
+		int slaveDbPort = JSONUtils::asInt32(configuration["postgres"]["slave"], "port", 5432);
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->port: " + to_string(slaveDbPort));
 		string masterDbUsername = JSONUtils::asString(configuration["postgres"]["master"], "userName", "");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->userName: " + masterDbUsername);
@@ -205,7 +205,7 @@ MMSEngineDBFacade::~MMSEngineDBFacade() = default;
 
 void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigurationRoot)
 {
-	_defaultMaxQueryElapsed = JSONUtils::asInt(slowQueryConfigurationRoot, "defaultMaxQueryElapsed", 100);
+	_defaultMaxQueryElapsed = JSONUtils::asInt32(slowQueryConfigurationRoot, "defaultMaxQueryElapsed", 100);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", defaultMaxQueryElapsed: {}",
@@ -221,7 +221,7 @@ void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigura
 			for (auto &[keyRoot, valRoot] : maxQueryElapsedRoot.items())
 			{
 				string queryLabel = JSONUtils::asString(json(keyRoot), "", "");
-				long maxQueryElapsed = JSONUtils::asInt(valRoot, "", 100);
+				long maxQueryElapsed = JSONUtils::asInt32(valRoot, "", 100);
 				_maxQueryElapsed.insert(make_pair(queryLabel, maxQueryElapsed));
 			}
 		}

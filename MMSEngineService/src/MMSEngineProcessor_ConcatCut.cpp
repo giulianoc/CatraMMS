@@ -755,7 +755,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			endTime = JSONUtils::asString(parametersRoot, "endTime", "");
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
-				framesNumber = JSONUtils::asInt(parametersRoot, "framesNumber", -1);
+				framesNumber = JSONUtils::asInt32(parametersRoot, "framesNumber", -1);
 
 			// 2021-02-05: default is set to true because often we have the error
 			//	endTimeInSeconds is bigger of few milliseconds of the duration

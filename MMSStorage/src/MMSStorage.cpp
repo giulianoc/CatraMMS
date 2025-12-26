@@ -25,7 +25,7 @@ MMSStorage::MMSStorage(
 
 		_hostName = System::hostName();
 
-		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 		SPDLOG_INFO(
 			"Configuration item"
 			", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
@@ -39,7 +39,7 @@ MMSStorage::MMSStorage(
 			_storage.string()
 		);
 
-		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
+		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt32(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
 		SPDLOG_INFO(
 			"Configuration item"
 			", storage->freeSpaceToLeaveInEachPartitionInMB: {}",
@@ -1919,7 +1919,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			pMMSPartitionName = std::format("{:0>4}", partitionKey);
 			string freeSpaceConfField = string("freeSpaceToLeaveInEachPartitionInMB_") + pMMSPartitionName;
 
-			localFreeSpaceToLeaveInMB = JSONUtils::asInt(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
+			localFreeSpaceToLeaveInMB = JSONUtils::asInt32(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
 		}
 
 		SPDLOG_INFO(
