@@ -1325,6 +1325,7 @@ void FFMPEGEncoder::encodingStatus(
 			responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 			responseBodyRoot["encodingJobKey"] = encodingJobKey;
 			responseBodyRoot["pid"] = 0;
+			responseBodyRoot["killTypeReceived"] = FFMpegWrapper::toString(FFMpegWrapper::KillType::None);
 			responseBodyRoot["killedByUser"] = false;
 			responseBodyRoot["encodingFinished"] = true;
 			responseBodyRoot["encodingProgress"] = 100.0;
@@ -1343,8 +1344,10 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["pid"] = 0;
 				// killedByUser true implica una uscita dal loop in EncoderProxy (nell'engine). Nel caso in cui pero' il kill era stato fatto
 				// solo per eseguire un restart dell'EncoderProxy verso un nuovo encoder, mettiamo killedByUser a false
+				responseBodyRoot["killTypeReceived"] = FFMpegWrapper::toString(selectedEncodingCompleted->_killTypeReceived);
 				responseBodyRoot["killedByUser"] =
-					selectedEncodingCompleted->_killedByUser && selectedEncodingCompleted->_killToRestartByEngine
+					selectedEncodingCompleted->_killedByUser
+						&& selectedEncodingCompleted->_killTypeReceived == FFMpegWrapper::KillType::KillToRestartByEngine
 					? false
 					: selectedEncodingCompleted->_killedByUser;
 				responseBodyRoot["completedWithError"] = selectedEncodingCompleted->_completedWithError;
@@ -1406,6 +1409,7 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["ingestionJobKey"] = ingestionJobKey;
 				responseBodyRoot["encodingJobKey"] = selectedEncoding->_encodingJobKey;
 				responseBodyRoot["pid"] = selectedEncoding->_childProcessId.pid;
+				responseBodyRoot["killTypeReceived"] = FFMpegWrapper::toString(FFMpegWrapper::KillType::None);
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 				if (encodingProgress == -2.0)
@@ -1430,6 +1434,7 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["encodingJobKey"] = selectedLiveProxy->_encodingJobKey;
 				responseBodyRoot["pid"] = selectedLiveProxy->_childProcessId.pid;
 				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveProxy->_numberOfRestartBecauseOfFailure;
+				responseBodyRoot["killTypeReceived"] = FFMpegWrapper::toString(FFMpegWrapper::KillType::None);
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
@@ -1448,6 +1453,7 @@ void FFMPEGEncoder::encodingStatus(
 				responseBodyRoot["encodingJobKey"] = selectedLiveRecording->_encodingJobKey;
 				responseBodyRoot["pid"] = selectedLiveRecording->_childProcessId.pid;
 				responseBodyRoot["numberOfRestartBecauseOfFailure"] = selectedLiveRecording->_numberOfRestartBecauseOfFailure;
+				responseBodyRoot["killTypeReceived"] = FFMpegWrapper::toString(FFMpegWrapper::KillType::None);
 				responseBodyRoot["killedByUser"] = false;
 				responseBodyRoot["encodingFinished"] = encodingCompleted;
 
@@ -1791,22 +1797,10 @@ void FFMPEGEncoder::killEncodingJob(
 		{
 			chrono::system_clock::time_point startKillProcess = chrono::system_clock::now();
 
-			// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
-			if (killType == "restartWithinEncoder")
-			{
-				// 2022-11-02: SIGQUIT is managed inside
-				// FFMpeg.cpp by liverecording e liveProxy
-				// 2023-02-18: using SIGQUIT, the process was
-				// not stopped, it worked with SIGTERM
-				//	SIGTERM now is managed by FFMpeg.cpp too
-				FFMPEGEncoderDaemons::termProcess(selectedEncoding, encodingJobKey, "unknown", "received killEncodingJob", false);
-			}
-			else
-			{
-				if (killType == "killToRestartByEngine")
-					selectedEncoding->_killToRestartByEngine = true;
-				FFMPEGEncoderDaemons::termProcess(selectedEncoding, encodingJobKey, "unknown", "received killEncodingJob", true);
-			}
+			selectedEncoding->_killTypeReceived = FFMpegWrapper::toKillType(killType);
+			FFMPEGEncoderDaemons::termProcess(selectedEncoding, encodingJobKey, "unknown", "received killEncodingJob",
+				selectedEncoding->_killTypeReceived != FFMpegWrapper::KillType::RestartWithinEncoder
+			);
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
 			SPDLOG_INFO(
@@ -2962,83 +2956,6 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 		throw;
 	}
 }
-
-// questo metodo è duplicato anche in FFMPEGEncoderDaemons
-/*
-void FFMPEGEncoder::termProcess(
-	shared_ptr<FFMPEGEncoderBase::Encoding> selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill
-)
-{
-	try
-	{
-		// 2022-11-02: SIGQUIT is managed inside FFMpeg.cpp by liveProxy
-		// 2023-02-18: using SIGQUIT, the process was not stopped, it worked with SIGTERM SIGTERM now is managed by FFMpeg.cpp too
-		chrono::system_clock::time_point start = chrono::system_clock::now();
-		ProcessUtility::ProcessId previousChildProcessId;
-		previousChildProcessId = selectedEncoding->_childProcessId;
-		if (!previousChildProcessId.isInitialized())
-			return;
-		long secondsToWait = 10;
-		int counter = 0;
-		do
-		{
-			if (!(selectedEncoding->_childProcessId).isInitialized() || selectedEncoding->_childProcessId != previousChildProcessId)
-				break;
-
-			if (kill)
-				ProcessUtility::killProcess(previousChildProcessId);
-			else
-				ProcessUtility::termProcess(previousChildProcessId);
-			SPDLOG_INFO(
-				"ProcessUtility::termProcess"
-				", ingestionJobKey: {}"
-				", encodingJobKey: {}"
-				", label: {}"
-				", message: {}"
-				", previousChildPid: {}"
-				", selectedEncoding->_childProcessId: {}"
-				", kill: {}"
-				", counter: {}",
-				ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, previousChildProcessId.toString(),
-				selectedEncoding->_childProcessId.toString(), kill, counter++
-			);
-			this_thread::sleep_for(chrono::seconds(1));
-			// ripete il loop se la condizione è true
-		} while (selectedEncoding->_childProcessId == previousChildProcessId && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait)
-		);
-	}
-	catch (runtime_error e)
-	{
-		SPDLOG_ERROR(
-			"termProcess failed"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", label: {}"
-			", message: {}"
-			", kill: {}"
-			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
-		);
-
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"termProcess failed"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", label: {}"
-			", message: {}"
-			", kill: {}"
-			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
-		);
-
-		throw e;
-	}
-}
-*/
 
 void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage)
 {

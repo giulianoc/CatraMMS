@@ -30,8 +30,8 @@ void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveE
 	);
 
 	{
-		bool killedByUser = encodeContent_VideoAudio_through_ffmpeg(ffmpegURI, maxConsecutiveEncodingStatusFailures);
-		if (killedByUser)
+		FFMpegWrapper::KillType killTypeReceived = encodeContent_VideoAudio_through_ffmpeg(ffmpegURI, maxConsecutiveEncodingStatusFailures);
+		if (killTypeReceived == FFMpegWrapper::KillType::Kill)
 		{
 			string errorMessage = std::format(
 				"Encoding killed by the User"
@@ -47,7 +47,7 @@ void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveE
 	}
 }
 
-bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
+FFMpegWrapper::KillType EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
 	string encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
 
@@ -216,7 +216,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 		); // stagingEncodedAssetPathName);
 
 		// int maxConsecutiveEncodingStatusFailures = 1;
-		bool killedByUser = waitingEncoding(maxConsecutiveEncodingStatusFailures);
+		FFMpegWrapper::KillType killTypeReceived = waitingEncoding(maxConsecutiveEncodingStatusFailures);
 
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
@@ -231,7 +231,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(), _intervalInSecondsToCheckEncodingFinished
 		);
 
-		return killedByUser;
+		return killTypeReceived;
 	}
 	catch (EncoderNotFound e)
 	{

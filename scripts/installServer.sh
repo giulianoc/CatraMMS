@@ -1504,7 +1504,6 @@ install-mms-tomee-package()
 	#echo "cp /opt/catramms/tomee/webapps/catramms/favicon_2.ico /opt/catramms/tomee/webapps/ROOT/"
 }
 
-
 install-mms-nginx-package()
 {
 	architecture=$1

@@ -34,7 +34,7 @@ class FFMPEGEncoderBase
 			_available = false;
 			_method = method;
 			_childProcessId.reset(); // not running
-			_killToRestartByEngine = false;
+			_killTypeReceived = FFMpegWrapper::KillType::None;
 			_encodingJobKey = encodingJobKey;
 			_ffmpegTerminatedSuccessful = false;
 			_encodingStart = nullopt;
@@ -61,7 +61,7 @@ class FFMPEGEncoderBase
 		bool _ffmpegTerminatedSuccessful{};
 		// quando inizia l'encoding, dopo la preparazione dei contenuti che in caso di externalContent può essere lunga per il download
 		optional<chrono::system_clock::time_point> _encodingStart;
-		bool _killToRestartByEngine{};
+		FFMpegWrapper::KillType _killTypeReceived = FFMpegWrapper::KillType::None;
 	};
 
 	struct LiveProxyAndGrid final : public Encoding
@@ -97,7 +97,7 @@ class FFMPEGEncoderBase
 
 			liveProxyAndGrid->_available = _available;
 			liveProxyAndGrid->_childProcessId = _childProcessId;
-			liveProxyAndGrid->_killToRestartByEngine = _killToRestartByEngine;
+			liveProxyAndGrid->_killTypeReceived = _killTypeReceived;
 			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveProxyAndGrid->_lastRealTimeInfo = _lastRealTimeInfo;
 			// liveProxyAndGrid->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
@@ -140,7 +140,7 @@ class FFMPEGEncoderBase
 		}
 	};
 
-	struct LiveRecording : public Encoding
+	struct LiveRecording final : public Encoding
 	{
 		bool _killedBecauseOfNotWorking{}; // by monitorThread
 
@@ -196,7 +196,7 @@ class FFMPEGEncoderBase
 
 			liveRecording->_available = _available;
 			liveRecording->_childProcessId = _childProcessId;
-			liveRecording->_killToRestartByEngine = _killToRestartByEngine;
+			liveRecording->_killTypeReceived = _killTypeReceived;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveRecording->_lastRealTimeInfo = _lastRealTimeInfo;
@@ -244,11 +244,8 @@ class FFMPEGEncoderBase
 	{
 		int64_t _encodingJobKey;
 		bool _completedWithError;
-		// string _errorMessage;
 		bool _killedByUser;
-		bool _killToRestartByEngine;
-		// bool _urlForbidden;
-		// bool _urlNotFound;
+		FFMpegWrapper::KillType _killTypeReceived;
 		chrono::system_clock::time_point _timestamp;
 
 		shared_ptr<FFMpegEngine::CallbackData> _callbackData;

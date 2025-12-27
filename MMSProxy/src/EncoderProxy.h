@@ -13,6 +13,7 @@
 
 #ifndef EncoderProxy_h
 #define EncoderProxy_h
+#include "FFMpegWrapper.h"
 
 #ifdef __LOCALENCODER__
 #include "FFMpeg.h"
@@ -179,14 +180,14 @@ class EncoderProxy
 	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
 	void encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
-	bool encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
+	FFMpegWrapper::KillType encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
 	void processEncodedContentVideoAudio();
 
-	void processOverlayedImageOnVideo(bool killedByUser);
+	void processOverlayedImageOnVideo(FFMpegWrapper::KillType killTypeReceived);
 
-	void processOverlayedTextOnVideo(bool killedByUser);
+	void processOverlayedTextOnVideo(FFMpegWrapper::KillType killTypeReceived);
 
-	void processGeneratedFrames(bool killedByUser);
+	void processGeneratedFrames(FFMpegWrapper::KillType killTypeReceived);
 
 	void processSlideShow();
 
@@ -196,27 +197,27 @@ class EncoderProxy
 	string faceIdentification();
 	void processFaceIdentification(string stagingEncodedAssetPathName);
 
-	bool liveRecorder();
-	bool liveRecorder_through_ffmpeg();
-	void processLiveRecorder(bool killedByUser);
+	FFMpegWrapper::KillType liveRecorder();
+	FFMpegWrapper::KillType liveRecorder_through_ffmpeg();
+	void processLiveRecorder(FFMpegWrapper::KillType killTypeReceived);
 
-	bool liveProxy(MMSEngineDBFacade::EncodingType encodingType);
-	bool liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType);
-	void processLiveProxy(bool killedByUser);
+	FFMpegWrapper::KillType liveProxy(MMSEngineDBFacade::EncodingType encodingType);
+	FFMpegWrapper::KillType liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType);
+	void processLiveProxy(FFMpegWrapper::KillType killTypeReceived);
 
-	void processLiveGrid(bool killedByUser);
+	void processLiveGrid(FFMpegWrapper::KillType killTypeReceived);
 
-	void processVideoSpeed(bool killedByUser);
+	void processVideoSpeed(FFMpegWrapper::KillType killTypeReceived);
 
-	void processAddSilentAudio(bool killedByUser);
+	void processAddSilentAudio(FFMpegWrapper::KillType killTypeReceived);
 
-	void processPictureInPicture(bool killedByUser);
+	void processPictureInPicture(FFMpegWrapper::KillType killTypeReceived);
 
 	void processIntroOutroOverlay();
 
 	void processCutFrameAccurate();
 
-	tuple<bool, bool, bool, json, bool, bool, optional<double>, int, json, long> getEncodingStatus();
+	tuple<bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> getEncodingStatus();
 
 	string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
@@ -228,8 +229,8 @@ class EncoderProxy
 
 	void awsStopChannel(int64_t ingestionJobKey, string awsChannelIdToBeStarted);
 
-	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
-	bool waitingLiveProxyOrLiveRecorder(
+	FFMpegWrapper::KillType waitingEncoding(int maxConsecutiveEncodingStatusFailures);
+	FFMpegWrapper::KillType waitingLiveProxyOrLiveRecorder(
 		MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
 		uint32_t maxAttemptsNumberInCaseOfErrors, string ipPushStreamConfigurationLabel
 	);

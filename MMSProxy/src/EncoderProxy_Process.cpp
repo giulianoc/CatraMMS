@@ -13,12 +13,13 @@
 
 #include "EncoderProxy.h"
 // #include "FFMpeg.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "LocalAssetIngestionEvent.h"
 #include "MultiLocalAssetIngestionEvent.h"
 #include "spdlog/spdlog.h"
 
-void EncoderProxy::processLiveGrid(bool killedByUser)
+void EncoderProxy::processLiveGrid(FFMpegWrapper::KillType killTypeReceived)
 {
 	try
 	{
@@ -526,7 +527,7 @@ void EncoderProxy::processCutFrameAccurate()
 	}
 }
 
-void EncoderProxy::processGeneratedFrames(bool killedByUser)
+void EncoderProxy::processGeneratedFrames(FFMpegWrapper::KillType killTypeReceived)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -583,7 +584,7 @@ void EncoderProxy::processGeneratedFrames(bool killedByUser)
 	}
 }
 
-void EncoderProxy::processAddSilentAudio(bool killedByUser)
+void EncoderProxy::processAddSilentAudio(FFMpegWrapper::KillType killTypeReceived)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -744,7 +745,7 @@ void EncoderProxy::processAddSilentAudio(bool killedByUser)
 	}
 }
 
-void EncoderProxy::processPictureInPicture(bool killedByUser)
+void EncoderProxy::processPictureInPicture(FFMpegWrapper::KillType killTypeReceived)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -883,7 +884,7 @@ void EncoderProxy::processPictureInPicture(bool killedByUser)
 	}
 }
 
-void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
+void EncoderProxy::processOverlayedTextOnVideo(FFMpegWrapper::KillType killTypeReceived)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -903,7 +904,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 	try
 	{
 		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
-		if (stagingEncodedAssetPathName == "")
+		if (stagingEncodedAssetPathName.empty())
 		{
 			string errorMessage = std::format(
 				"encodedNFSStagingAssetPathName cannot be empty"
@@ -1022,7 +1023,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killedByUser)
 	}
 }
 
-void EncoderProxy::processVideoSpeed(bool killedByUser)
+void EncoderProxy::processVideoSpeed(FFMpegWrapper::KillType killTypeReceived)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -1161,7 +1162,7 @@ void EncoderProxy::processVideoSpeed(bool killedByUser)
 	}
 }
 
-void EncoderProxy::processOverlayedImageOnVideo(bool killedByUser)
+void EncoderProxy::processOverlayedImageOnVideo(FFMpegWrapper::KillType killTypeReceived)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{

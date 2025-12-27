@@ -1534,7 +1534,7 @@ void FFMPEGEncoderTask::addEncodingCompleted()
 	encodingCompleted->_completedWithError = _completedWithError;
 	// encodingCompleted->_errorMessage = _encoding->_lastErrorMessage;
 	encodingCompleted->_killedByUser = _killedByUser;
-	encodingCompleted->_killToRestartByEngine = _encoding->_killToRestartByEngine;
+	encodingCompleted->_killTypeReceived = _encoding->_killTypeReceived;
 	// encodingCompleted->_urlForbidden = _urlForbidden;
 	// encodingCompleted->_urlNotFound = _urlNotFound;
 	encodingCompleted->_timestamp = chrono::system_clock::now();

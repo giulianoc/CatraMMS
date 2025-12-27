@@ -2192,7 +2192,6 @@ void FFMPEGEncoderDaemons::stopCPUUsageThread()
 	this_thread::sleep_for(chrono::seconds(1));
 }
 
-// questo metodo è duplicato anche in FFMPEGEncoder
 void FFMPEGEncoderDaemons::termProcess(
 	const shared_ptr<FFMPEGEncoderBase::Encoding>& selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill
 )
@@ -2205,7 +2204,7 @@ void FFMPEGEncoderDaemons::termProcess(
 		ProcessUtility::ProcessId previousChildProcessId = selectedEncoding->_childProcessId;
 		if (!previousChildProcessId.isInitialized())
 			return;
-		long secondsToWait = 10;
+		constexpr long secondsToWait = 10;
 		int counter = 0;
 		do
 		{
@@ -2234,7 +2233,7 @@ void FFMPEGEncoderDaemons::termProcess(
 		} while (selectedEncoding->_childProcessId == previousChildProcessId && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait)
 		);
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"termProcess failed"
@@ -2247,21 +2246,6 @@ void FFMPEGEncoderDaemons::termProcess(
 			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"termProcess failed"
-			", ingestionJobKey: {}"
-			", encodingJobKey: {}"
-			", label: {}"
-			", message: {}"
-			", kill: {}"
-			", exception: {}",
-			ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, kill, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 }

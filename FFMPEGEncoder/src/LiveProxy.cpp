@@ -244,8 +244,11 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			*/
 			liveProxyData->_ffmpeg->liveProxy(
 				liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
-				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot, liveProxyData->_childProcessId,
-				liveProxyData->_encodingStart, liveProxyData->_callbackData, &(liveProxyData->_numberOfRestartBecauseOfFailure)
+				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot,
+				liveProxyData->_encodingStart, liveProxyData->_callbackData,
+				liveProxyData->_numberOfRestartBecauseOfFailure, // IN/OUT
+				liveProxyData->_killTypeReceived, // IN/OUT
+				liveProxyData->_childProcessId // IN/OUT
 			);
 		}
 

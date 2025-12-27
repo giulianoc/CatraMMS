@@ -23,7 +23,7 @@
 #include <exception>
 #include <regex>
 
-bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
+FFMpegWrapper::KillType EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 {
 	bool timePeriod = false;
 	time_t utcProxyPeriodStart = -1;
@@ -108,7 +108,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 	{
 		json outputsRoot = (_encodingItem->_encodingParametersRoot)["outputsRoot"];
 
-		bool killedByUser = false;
+		auto killTypeReceived = FFMpegWrapper::KillType::None;
 		try
 		{
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -362,9 +362,9 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 				}
 			}
 
-			killedByUser = liveProxy_through_ffmpeg(encodingType);
+			killTypeReceived = liveProxy_through_ffmpeg(encodingType);
 
-			if (killedByUser)
+			if (killTypeReceived == FFMpegWrapper::KillType::Kill)
 			{
 				string errorMessage = std::format(
 					"Encoding killed by the User"
@@ -529,11 +529,11 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 			throw;
 		}
 
-		return killedByUser;
+		return killTypeReceived;
 	}
 }
 
-bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType)
+FFMpegWrapper::KillType EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType)
 {
 
 	bool timePeriod = false;
@@ -591,7 +591,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 	);
 }
 
-void EncoderProxy::processLiveProxy(bool killedByUser)
+void EncoderProxy::processLiveProxy(FFMpegWrapper::KillType killTypeReceived)
 {
 	try
 	{
