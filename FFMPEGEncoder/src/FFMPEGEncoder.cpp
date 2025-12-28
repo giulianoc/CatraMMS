@@ -1805,7 +1805,7 @@ void FFMPEGEncoder::killEncodingJob(
 				chrono::duration_cast<chrono::seconds>(endKillProcess - startKillProcess).count()
 			);
 		}
-		catch (runtime_error &e)
+		catch (exception &e)
 		{
 			string errorMessage = std::format(
 				"ProcessUtility::killProcess failed"
