@@ -59,7 +59,7 @@ MMSStorage::MMSStorage(
 	}
 }
 
-MMSStorage::~MMSStorage(void) {}
+MMSStorage::~MMSStorage(void) = default;
 
 /* Tutte le dir sono create da installServer.sh
  * Questo metodo è stato commentato perchè spesso MMSStorage viene istanziato in componenti (come ad es. api)
