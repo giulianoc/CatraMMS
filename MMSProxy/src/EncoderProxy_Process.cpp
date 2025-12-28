@@ -19,7 +19,7 @@
 #include "MultiLocalAssetIngestionEvent.h"
 #include "spdlog/spdlog.h"
 
-void EncoderProxy::processLiveGrid(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processLiveGrid(bool killed)
 {
 	try
 	{
@@ -527,7 +527,7 @@ void EncoderProxy::processCutFrameAccurate()
 	}
 }
 
-void EncoderProxy::processGeneratedFrames(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processGeneratedFrames(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -584,7 +584,7 @@ void EncoderProxy::processGeneratedFrames(FFMpegWrapper::KillType killTypeReceiv
 	}
 }
 
-void EncoderProxy::processAddSilentAudio(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processAddSilentAudio(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -745,7 +745,7 @@ void EncoderProxy::processAddSilentAudio(FFMpegWrapper::KillType killTypeReceive
 	}
 }
 
-void EncoderProxy::processPictureInPicture(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processPictureInPicture(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -884,7 +884,7 @@ void EncoderProxy::processPictureInPicture(FFMpegWrapper::KillType killTypeRecei
 	}
 }
 
-void EncoderProxy::processOverlayedTextOnVideo(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -1023,7 +1023,7 @@ void EncoderProxy::processOverlayedTextOnVideo(FFMpegWrapper::KillType killTypeR
 	}
 }
 
-void EncoderProxy::processVideoSpeed(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processVideoSpeed(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
@@ -1162,7 +1162,7 @@ void EncoderProxy::processVideoSpeed(FFMpegWrapper::KillType killTypeReceived)
 	}
 }
 
-void EncoderProxy::processOverlayedImageOnVideo(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{

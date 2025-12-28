@@ -1345,11 +1345,7 @@ void FFMPEGEncoder::encodingStatus(
 				// killedByUser true implica una uscita dal loop in EncoderProxy (nell'engine). Nel caso in cui pero' il kill era stato fatto
 				// solo per eseguire un restart dell'EncoderProxy verso un nuovo encoder, mettiamo killedByUser a false
 				responseBodyRoot["killTypeReceived"] = FFMpegWrapper::toString(selectedEncodingCompleted->_killTypeReceived);
-				responseBodyRoot["killedByUser"] =
-					selectedEncodingCompleted->_killedByUser
-						&& selectedEncodingCompleted->_killTypeReceived == FFMpegWrapper::KillType::KillToRestartByEngine
-					? false
-					: selectedEncodingCompleted->_killedByUser;
+				responseBodyRoot["killedByUser"] = selectedEncodingCompleted->_killedByUser;
 				responseBodyRoot["completedWithError"] = selectedEncodingCompleted->_completedWithError;
 				// responseBodyRoot["errorMessage"] = selectedEncodingCompleted->_errorMessage;
 				responseBodyRoot["encodingFinished"] = true;

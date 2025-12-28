@@ -20,7 +20,7 @@
 #include "spdlog/spdlog.h"
 #include <FFMpegWrapper.h>
 
-FFMpegWrapper::KillType EncoderProxy::liveRecorder()
+bool EncoderProxy::liveRecorder()
 {
 	time_t utcRecordingPeriodStart;
 	time_t utcRecordingPeriodEnd;
@@ -129,7 +129,7 @@ FFMpegWrapper::KillType EncoderProxy::liveRecorder()
 		string field = "outputsRoot";
 		json outputsRoot = (_encodingItem->_encodingParametersRoot)[field];
 
-		FFMpegWrapper::KillType killTypeReceived = FFMpegWrapper::KillType::None;
+		bool killed = false;
 		try
 		{
 			field = "monitorVirtualVODOutputRootIndex";
@@ -518,9 +518,9 @@ FFMpegWrapper::KillType EncoderProxy::liveRecorder()
 				}
 			}
 
-			killTypeReceived = liveRecorder_through_ffmpeg();
+			killed = liveRecorder_through_ffmpeg();
 
-			if (killTypeReceived == FFMpegWrapper::KillType::Kill)
+			if (killed)
 			{
 				SPDLOG_WARN(
 					"Encoding killed by the User"
@@ -690,11 +690,11 @@ FFMpegWrapper::KillType EncoderProxy::liveRecorder()
 			throw;
 		}
 
-		return killTypeReceived;
+		return killed;
 	}
 }
 
-FFMpegWrapper::KillType EncoderProxy::liveRecorder_through_ffmpeg()
+bool EncoderProxy::liveRecorder_through_ffmpeg()
 {
 	string streamSourceType;
 	string encodersPool;
@@ -763,7 +763,7 @@ FFMpegWrapper::KillType EncoderProxy::liveRecorder_through_ffmpeg()
 	);
 }
 
-void EncoderProxy::processLiveRecorder(FFMpegWrapper::KillType killTypeReceived)
+void EncoderProxy::processLiveRecorder(bool killed)
 {
 	try
 	{

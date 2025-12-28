@@ -294,7 +294,7 @@ void EncoderProxy::operator()()
 	);
 
 	string stagingEncodedAssetPathName;
-	FFMpegWrapper::KillType killTypeReceived;
+	bool killed;
 	try
 	{
 		if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
@@ -339,13 +339,13 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
 		{
-			killTypeReceived = liveRecorder();
+			killed = liveRecorder();
 			// tie(killedByUser, main) = killedByUserAndMain;
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy ||
 				 _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VODProxy ||
 				 _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::Countdown)
-			killTypeReceived = liveProxy(_encodingItem->_encodingType);
+			killed = liveProxy(_encodingItem->_encodingType);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveGrid)
 		{
 			int maxConsecutiveEncodingStatusFailures = 1;
@@ -706,7 +706,7 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
 		{
-			processOverlayedImageOnVideo(killTypeReceived);
+			processOverlayedImageOnVideo(killed);
 
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
@@ -715,7 +715,7 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
 		{
-			processOverlayedTextOnVideo(killTypeReceived);
+			processOverlayedTextOnVideo(killed);
 
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
@@ -724,7 +724,7 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
 		{
-			processGeneratedFrames(killTypeReceived);
+			processGeneratedFrames(killed);
 
 			isIngestionJobCompleted = false; // file has still to be ingested
 		}
@@ -751,39 +751,39 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
 		{
-			processLiveRecorder(killTypeReceived);
+			processLiveRecorder(killed);
 
 			isIngestionJobCompleted = false; // file has still to be ingested
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
 		{
-			processLiveProxy(killTypeReceived);
+			processLiveProxy(killed);
 
 			isIngestionJobCompleted = false; // file has still to be ingested
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VODProxy)
 		{
-			processLiveProxy(killTypeReceived);
+			processLiveProxy(killed);
 			// processVODProxy(killedByUser);
 
 			isIngestionJobCompleted = false; // file has still to be ingested
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::Countdown)
 		{
-			processLiveProxy(killTypeReceived);
+			processLiveProxy(killed);
 			// processAwaitingTheBeginning(killedByUser);
 
 			isIngestionJobCompleted = false; // file has still to be ingested
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveGrid)
 		{
-			processLiveGrid(killTypeReceived);
+			processLiveGrid(killed);
 
 			isIngestionJobCompleted = false; // file has still to be ingested
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed)
 		{
-			processVideoSpeed(killTypeReceived);
+			processVideoSpeed(killed);
 
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
@@ -792,7 +792,7 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AddSilentAudio)
 		{
-			processAddSilentAudio(killTypeReceived);
+			processAddSilentAudio(killed);
 
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
@@ -801,7 +801,7 @@ void EncoderProxy::operator()()
 		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture)
 		{
-			processPictureInPicture(killTypeReceived);
+			processPictureInPicture(killed);
 
 			if (_currentUsedFFMpegExternalEncoder)
 				isIngestionJobCompleted = true;
@@ -1008,10 +1008,11 @@ void EncoderProxy::operator()()
 	);
 }
 
-tuple<bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> EncoderProxy::getEncodingStatus()
+tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> EncoderProxy::getEncodingStatus()
 {
 	bool encodingFinished;
 	FFMpegWrapper::KillType killTypeReceived;
+	bool killed;
 	bool completedWithError;
 	json newErrorMessagesRoot;
 	bool urlNotFound;
@@ -1069,7 +1070,7 @@ tuple<bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, i
 				}
 			}
 			encodingFinished = JSONUtils::asBool(encodeStatusResponse, "encodingFinished", false);
-			// killedByUser = JSONUtils::asBool(encodeStatusResponse, "killedByUser", false);
+			killed = JSONUtils::asBool(encodeStatusResponse, "killedByUser", false);
 			killTypeReceived = FFMpegWrapper::toKillType(JSONUtils::asString(encodeStatusResponse, "killTypeReceived",
 				FFMpegWrapper::toString(FFMpegWrapper::KillType::None)));
 			if (JSONUtils::isMetadataPresent(encodeStatusResponse, "encodingProgress")
@@ -1118,7 +1119,7 @@ tuple<bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, i
 	}
 
 	return make_tuple(
-		encodingFinished, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, encodingProgress, pid,
+		encodingFinished, killed, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, encodingProgress, pid,
 		realTimeInfoRoot, numberOfRestartBecauseOfFailure
 	);
 }
@@ -1289,9 +1290,10 @@ Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(string 
 	return interlaceType;
 }
 
-FFMpegWrapper::KillType EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
+bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 {
 	auto killTypeReceived = FFMpegWrapper::KillType::None;
+	bool killed = false;
 
 	bool encodingFinished = false;
 	int encodingStatusFailures = 0;
@@ -1312,7 +1314,7 @@ FFMpegWrapper::KillType EncoderProxy::waitingEncoding(int maxConsecutiveEncoding
 			json realTimeInfoRoot;
 			long numberOfRestartBecauseOfFailure;
 
-			tie(encodingFinished, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound,
+			tie(encodingFinished, killed, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound,
 				encodingProgress, encodingPid, realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 
 			if (!newErrorMessagesRoot.empty())
@@ -1469,15 +1471,16 @@ FFMpegWrapper::KillType EncoderProxy::waitingEncoding(int maxConsecutiveEncoding
 		}
 	}
 
-	return killTypeReceived;
+	return killed;
 }
 
-FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
+bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
 	uint32_t maxAttemptsNumberInCaseOfErrors, string ipPushStreamConfigurationLabel
 )
 {
 	FFMpegWrapper::KillType killTypeReceived = FFMpegWrapper::KillType::None;
+	bool killed = false;
 	bool urlForbidden = false;
 	bool urlNotFound = false;
 
@@ -1503,8 +1506,8 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 		);
 
-		killTypeReceived = _mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey,
-			currentAttemptsNumberInCaseOfErrors) ? FFMpegWrapper::KillType::Kill : FFMpegWrapper::KillType::None;
+		killed = _mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey,
+			currentAttemptsNumberInCaseOfErrors);
 	}
 	catch (...)
 	{
@@ -1536,7 +1539,7 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	while (! // while we are NOT in the exit condition
 		   (
 			   // exit condition
-			   killTypeReceived == FFMpegWrapper::KillType::Kill ||
+			   (killed && killTypeReceived != FFMpegWrapper::KillType::KillToRestartByEngine) ||
 			   (!timePeriod && (urlForbidden || urlNotFound || currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)) ||
 			   (timePeriod && utcNowCheckToExit >= utcPeriodEnd)
 		   ))
@@ -1595,7 +1598,7 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 								", ingestionJobStatus: {}",
 								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sIngestionJobStatus
 							);
-							killTypeReceived = FFMpegWrapper::KillType::Kill;
+							killed = true;
 							continue;
 						}
 					}
@@ -1939,7 +1942,7 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 				try
 				{
-					tie(encodingFinished, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, ignore, encodingPid,
+					tie(encodingFinished, killed, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, ignore, encodingPid,
 						realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
 					SPDLOG_INFO(
 						"getEncodingStatus"
@@ -1949,12 +1952,13 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						", maxAttemptsNumberInCaseOfErrors: {}"
 						", encodingFinished: {}"
 						", killTypeReceived: {}"
+						", killed: {}"
 						", completedWithError: {}"
 						", newErrorMessagesRoot: {}"
 						", urlForbidden: {}"
 						", urlNotFound: {}",
 						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors,
-						maxAttemptsNumberInCaseOfErrors, encodingFinished, FFMpegWrapper::toString(killTypeReceived), completedWithError,
+						maxAttemptsNumberInCaseOfErrors, encodingFinished, FFMpegWrapper::toString(killTypeReceived), killed, completedWithError,
 						JSONUtils::toString(newErrorMessagesRoot), urlForbidden, urlNotFound
 					);
 				}
@@ -2115,7 +2119,7 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
 					}
 
-					if (killTypeReceived != FFMpegWrapper::KillType::Kill)
+					if (!killed)
 					{
 						// secondo l'encoder l'encoding non è stato killato. Eseguo per essere sicuro anche
 						// una verifica recuperando lo stato dell'IngestionJob
@@ -2128,28 +2132,28 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 								"getEncodingStatus killedByUser is false but the ingestionJob is terminated"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
-								", killTypeReceived: {}"
+								", killed: {}"
 								", ingestionStatus: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, FFMpegWrapper::toString(killTypeReceived),
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, killed,
 								ingestionStatus
 							);
 							encodingFinished = true;
-							killTypeReceived = FFMpegWrapper::KillType::Kill;
+							killed = true;
 						}
 					}
-					if (!encodingFinished && (killTypeReceived == FFMpegWrapper::KillType::Kill || urlForbidden || urlNotFound))
+					if (!encodingFinished && (killed || urlForbidden || urlNotFound))
 						SPDLOG_ERROR(
 							"Encoding was killedByUser or urlForbidden or urlNotFound but encodingFinished is false!!!"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
 							", _currentUsedFFMpegEncoderHost: {}"
-							", killTypeReceived: {}"
+							", killed: {}"
 							", urlForbidden: {}"
 							", urlNotFound: {}"
 							", completedWithError: {}"
 							", newErrorMessagesRoot: {}",
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost,
-							FFMpegWrapper::toString(killTypeReceived),
+							killed,
 							urlForbidden, urlNotFound, completedWithError, JSONUtils::toString(newErrorMessagesRoot)
 						);
 				}
@@ -2178,11 +2182,11 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					", still remaining seconds (utcProxyPeriodEnd - utcNow): {}"
 					", ffmpegEncoderURL: {}"
 					", encodingFinished: {}"
-					", killTypeReceived: {}"
+					", killed: {}"
 					", @MMS statistics@ - encodingDuration (secs): @{}@"
 					", _intervalInSecondsToCheckEncodingFinished: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcPeriodEnd - utcNowCheckToExit,
-					ffmpegEncoderURL, encodingFinished, FFMpegWrapper::toString(killTypeReceived),
+					ffmpegEncoderURL, encodingFinished, killed,
 					chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
 					_intervalInSecondsToCheckEncodingFinished
 				);
@@ -2226,11 +2230,11 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					", _encodingJobKey: {}"
 					", ffmpegEncoderURL: {}"
 					", encodingFinished: {}"
-					", killTypeReceived: {}"
+					", killed: {}"
 					", @MMS statistics@ - encodingDuration (secs): @{}@"
 					", _intervalInSecondsToCheckEncodingFinished: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, encodingFinished,
-					FFMpegWrapper::toString(killTypeReceived), chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
+					killed, chrono::duration_cast<chrono::seconds>(endEncoding - startEncoding).count(),
 					_intervalInSecondsToCheckEncodingFinished
 				);
 
@@ -2548,5 +2552,5 @@ FFMpegWrapper::KillType EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		}
 	}
 
-	return killTypeReceived;
+	return killed;
 }

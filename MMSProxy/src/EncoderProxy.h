@@ -180,14 +180,14 @@ class EncoderProxy
 	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
 
 	void encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
-	FFMpegWrapper::KillType encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
+	bool encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
 	void processEncodedContentVideoAudio();
 
-	void processOverlayedImageOnVideo(FFMpegWrapper::KillType killTypeReceived);
+	void processOverlayedImageOnVideo(bool killed);
 
-	void processOverlayedTextOnVideo(FFMpegWrapper::KillType killTypeReceived);
+	void processOverlayedTextOnVideo(bool killed);
 
-	void processGeneratedFrames(FFMpegWrapper::KillType killTypeReceived);
+	void processGeneratedFrames(bool killed);
 
 	void processSlideShow();
 
@@ -197,27 +197,27 @@ class EncoderProxy
 	string faceIdentification();
 	void processFaceIdentification(string stagingEncodedAssetPathName);
 
-	FFMpegWrapper::KillType liveRecorder();
-	FFMpegWrapper::KillType liveRecorder_through_ffmpeg();
-	void processLiveRecorder(FFMpegWrapper::KillType killTypeReceived);
+	bool liveRecorder();
+	bool liveRecorder_through_ffmpeg();
+	void processLiveRecorder(bool killed);
 
-	FFMpegWrapper::KillType liveProxy(MMSEngineDBFacade::EncodingType encodingType);
-	FFMpegWrapper::KillType liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType);
-	void processLiveProxy(FFMpegWrapper::KillType killTypeReceived);
+	bool liveProxy(MMSEngineDBFacade::EncodingType encodingType);
+	bool liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType encodingType);
+	void processLiveProxy(bool killed);
 
-	void processLiveGrid(FFMpegWrapper::KillType killTypeReceived);
+	void processLiveGrid(bool killed);
 
-	void processVideoSpeed(FFMpegWrapper::KillType killTypeReceived);
+	void processVideoSpeed(bool killed);
 
-	void processAddSilentAudio(FFMpegWrapper::KillType killTypeReceived);
+	void processAddSilentAudio(bool killed);
 
-	void processPictureInPicture(FFMpegWrapper::KillType killTypeReceived);
+	void processPictureInPicture(bool killed);
 
 	void processIntroOutroOverlay();
 
 	void processCutFrameAccurate();
 
-	tuple<bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> getEncodingStatus();
+	tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> getEncodingStatus();
 
 	string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
@@ -229,8 +229,8 @@ class EncoderProxy
 
 	void awsStopChannel(int64_t ingestionJobKey, string awsChannelIdToBeStarted);
 
-	FFMpegWrapper::KillType waitingEncoding(int maxConsecutiveEncodingStatusFailures);
-	FFMpegWrapper::KillType waitingLiveProxyOrLiveRecorder(
+	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
+	bool waitingLiveProxyOrLiveRecorder(
 		MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
 		uint32_t maxAttemptsNumberInCaseOfErrors, string ipPushStreamConfigurationLabel
 	);
