@@ -34,7 +34,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		string introSourceFileExtension;
 		{
 			string field = "introSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -53,7 +53,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		string mainSourceFileExtension;
 		{
 			string field = "mainSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -72,7 +72,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		string outroSourceFileExtension;
 		{
 			string field = "outroSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -97,7 +97,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		{
 			{
 				string field = "introSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -136,7 +136,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				}
 
 				field = "introSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -159,7 +159,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 			{
 				string field = "mainSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -198,7 +198,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				}
 
 				field = "mainSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -221,7 +221,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 			{
 				string field = "outroSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -260,7 +260,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				}
 
 				field = "outroSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -282,7 +282,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			}
 
 			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -323,7 +323,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		else
 		{
 			string field = "introSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -339,7 +339,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "mainSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -355,7 +355,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "outroSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -371,7 +371,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -480,7 +480,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			// sarebbe il path locale dell'asset path name in caso di transcoder remoto
 			// In questa directory creiamo una sottodirectory perchè avremo tanti files
 			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -724,7 +724,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			// Utilizziamo solo il path di encodedTranscoderStagingAssetPathName che
 			// sarebbe il path locale dell'asset path name in caso di transcoder remoto
 			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)

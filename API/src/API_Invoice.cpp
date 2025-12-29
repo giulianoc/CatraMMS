@@ -53,7 +53,7 @@ void API::addInvoice(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "userKey";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -67,7 +67,7 @@ void API::addInvoice(
 			userKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 
 			field = "description";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -81,7 +81,7 @@ void API::addInvoice(
 			description = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "amount";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -95,7 +95,7 @@ void API::addInvoice(
 			amount = JSONUtils::asInt64(requestBodyRoot, field, -1);
 
 			field = "expirationDate";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 				expirationDate = JSONUtils::asString(requestBodyRoot, field, "");
 		}
 		catch (exception &e)

@@ -38,7 +38,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 		string facebookNodeId;
 		{
 			string field = "facebookConfigurationLabel";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -49,7 +49,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "facebookNodeType";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -60,7 +60,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			facebookNodeType = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "facebookNodeId";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -300,7 +300,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		bool youTubeMadeForKids;
 		{
 			string field = "configurationLabel";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -317,7 +317,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			youTubeDescription = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "tags";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 				youTubeTags = parametersRoot[field];
 
 			field = "categoryId";
@@ -554,7 +554,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		json referencesRoot;
 		{
 			string field = "YouTubeConfigurationLabel";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -565,7 +565,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "title";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -588,7 +588,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			youTubeLiveBroadcastLatencyPreference = JSONUtils::asString(parametersRoot, field, "normal");
 
 			field = "youTubeSchedule";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -599,7 +599,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			scheduleRoot = parametersRoot[field];
 
 			field = "start";
-			if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
+			if (!JSONUtils::isPresent(scheduleRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
@@ -610,7 +610,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			scheduleStartTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
 
 			field = "end";
-			if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
+			if (!JSONUtils::isPresent(scheduleRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
@@ -621,7 +621,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			scheduleEndTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
 
 			field = "SourceType";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -634,7 +634,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			if (sourceType == "Live")
 			{
 				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -647,7 +647,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			else // if (sourceType == "MediaItem")
 			{
 				field = "references";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -899,7 +899,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			*/
 
 			string field = "id";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1086,7 +1086,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			*/
 
 			string field = "id";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1098,7 +1098,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			streamId = JSONUtils::asString(responseRoot, field, "");
 
 			field = "cdn";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1110,7 +1110,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			json cdnRoot = responseRoot[field];
 
 			field = "ingestionInfo";
-			if (!JSONUtils::isMetadataPresent(cdnRoot, field))
+			if (!JSONUtils::isPresent(cdnRoot, field))
 			{
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1122,7 +1122,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			json ingestionInfoRoot = cdnRoot[field];
 
 			field = "streamName";
-			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
+			if (!JSONUtils::isPresent(ingestionInfoRoot, field))
 			{
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1134,7 +1134,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			string streamName = JSONUtils::asString(ingestionInfoRoot, field, "");
 
 			field = "ingestionAddress";
-			if (!JSONUtils::isMetadataPresent(ingestionInfoRoot, field))
+			if (!JSONUtils::isPresent(ingestionInfoRoot, field))
 			{
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
@@ -1290,12 +1290,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		string apiKey;
 		{
 			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				json internalMMSRoot = parametersRoot[field];
 
 				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json credentialsRoot = internalMMSRoot[field];
 
@@ -1308,20 +1308,20 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				}
 
 				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						youTubeLiveBroadcastOnSuccess = eventsRoot[field];
 
 					field = "onError";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						youTubeLiveBroadcastOnError = eventsRoot[field];
 
 					field = "onComplete";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						youTubeLiveBroadcastOnComplete = eventsRoot[field];
 				}
 			}
@@ -1363,12 +1363,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					}
 					{
 						field = "internalMMS";
-						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+						if (JSONUtils::isPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.erase(field);
 					}
 					{
 						field = "youTubeSchedule";
-						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+						if (JSONUtils::isPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.erase(field);
 					}
 
@@ -1450,12 +1450,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					}
 					{
 						field = "internalMMS";
-						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+						if (JSONUtils::isPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.erase(field);
 					}
 					{
 						field = "youTubeSchedule";
-						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+						if (JSONUtils::isPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.erase(field);
 					}
 
@@ -1636,7 +1636,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		json referencesRoot;
 		{
 			string field = "facebookNodeType";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1647,7 +1647,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			facebookNodeType = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "facebookNodeId";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1658,7 +1658,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			facebookNodeId = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "facebookLiveType";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1669,7 +1669,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			facebookLiveType = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "facebookConfigurationLabel";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1680,7 +1680,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "title";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1694,7 +1694,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			description = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "facebookSchedule";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1705,7 +1705,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			scheduleRoot = parametersRoot[field];
 
 			field = "start";
-			if (!JSONUtils::isMetadataPresent(scheduleRoot, field))
+			if (!JSONUtils::isPresent(scheduleRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
@@ -1717,7 +1717,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			utcScheduleStartTimeInSeconds = Datetime::parseUtcStringToUtcInSecs(scheduleStartTimeInSeconds);
 
 			field = "sourceType";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -1730,7 +1730,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			if (sourceType == "Live")
 			{
 				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -1743,7 +1743,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			else // if (sourceType == "MediaItem")
 			{
 				field = "references";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -1817,7 +1817,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			*/
 
 			string field = "secure_stream_url";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field + ", response: " + JSONUtils::toString(responseRoot);
@@ -1858,12 +1858,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		string apiKey;
 		{
 			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				json internalMMSRoot = parametersRoot[field];
 
 				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json credentialsRoot = internalMMSRoot[field];
 
@@ -1876,20 +1876,20 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				}
 
 				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						facebookLiveBroadcastOnSuccess = eventsRoot[field];
 
 					field = "onError";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						facebookLiveBroadcastOnError = eventsRoot[field];
 
 					field = "onComplete";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						facebookLiveBroadcastOnComplete = eventsRoot[field];
 				}
 			}
@@ -1931,12 +1931,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					}
 					{
 						field = "internalMMS";
-						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+						if (JSONUtils::isPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.erase(field);
 					}
 					{
 						field = "facebookSchedule";
-						if (JSONUtils::isMetadataPresent(liveProxyParametersRoot, field))
+						if (JSONUtils::isPresent(liveProxyParametersRoot, field))
 							liveProxyParametersRoot.erase(field);
 					}
 
@@ -2046,12 +2046,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					}
 					{
 						field = "internalMMS";
-						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+						if (JSONUtils::isPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.erase(field);
 					}
 					{
 						field = "facebookSchedule";
-						if (JSONUtils::isMetadataPresent(vodProxyParametersRoot, field))
+						if (JSONUtils::isPresent(vodProxyParametersRoot, field))
 							vodProxyParametersRoot.erase(field);
 					}
 
@@ -2293,7 +2293,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			);
 
 			string field = "upload_session_id";
-			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+			if (!JSONUtils::isPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
@@ -2304,7 +2304,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			uploadSessionId = JSONUtils::asString(facebookResponseRoot, field, "");
 
 			field = "video_id";
-			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+			if (!JSONUtils::isPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
@@ -2315,7 +2315,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			videoId = JSONUtils::asString(facebookResponseRoot, field, "");
 
 			field = "start_offset";
-			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+			if (!JSONUtils::isPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
@@ -2327,7 +2327,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			startOffset = stoll(sStartOffset);
 
 			field = "end_offset";
-			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+			if (!JSONUtils::isPresent(facebookResponseRoot, field))
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
@@ -2375,7 +2375,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				);
 
 				string field = "start_offset";
-				if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+				if (!JSONUtils::isPresent(facebookResponseRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field +
 										  ", facebookResponseRoot: " + JSONUtils::toString(facebookResponseRoot);
@@ -2387,7 +2387,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				startOffset = stoll(sStartOffset);
 
 				field = "end_offset";
-				if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+				if (!JSONUtils::isPresent(facebookResponseRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
 					SPDLOG_ERROR(errorMessage);
@@ -2426,7 +2426,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			);
 
 			string field = "success";
-			if (!JSONUtils::isMetadataPresent(facebookResponseRoot, field))
+			if (!JSONUtils::isPresent(facebookResponseRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
 				SPDLOG_ERROR(errorMessage);
@@ -3223,7 +3223,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 		*/
 
 		string field = "access_token";
-		if (!JSONUtils::isMetadataPresent(youTubeResponseRoot, field))
+		if (!JSONUtils::isPresent(youTubeResponseRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -3285,7 +3285,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 		*/
 
 		string field = "access_token";
-		if (!JSONUtils::isMetadataPresent(responseRoot, field))
+		if (!JSONUtils::isPresent(responseRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);

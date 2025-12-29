@@ -32,7 +32,7 @@ void MMSEngineProcessor::manageCountdown(
 
 			encodersDetailsRoot["encodersPoolLabel"] = taskEncodersPoolLabel;
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+			if (JSONUtils::isPresent(parametersRoot, "internalMMS"))
 				parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
 			else
 			{
@@ -53,7 +53,7 @@ void MMSEngineProcessor::manageCountdown(
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
 			field = "schedule";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -67,7 +67,7 @@ void MMSEngineProcessor::manageCountdown(
 			json proxyPeriodRoot = parametersRoot[field];
 
 			field = "start";
-			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+			if (!JSONUtils::isPresent(proxyPeriodRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -79,7 +79,7 @@ void MMSEngineProcessor::manageCountdown(
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
 			field = "end";
-			if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+			if (!JSONUtils::isPresent(proxyPeriodRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -201,7 +201,7 @@ void MMSEngineProcessor::manageCountdown(
 		json outputsRoot;
 		{
 			string field = "outputs";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -209,9 +209,9 @@ void MMSEngineProcessor::manageCountdown(
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
-			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs",
+			else // if (JSONUtils::isPresent(parametersRoot, "Outputs",
 				 // false))
 				outputsRoot = parametersRoot["Outputs"];
 		}
@@ -223,9 +223,9 @@ void MMSEngineProcessor::manageCountdown(
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
 		// (inputsRoot) already ready
 		json inputsRoot;
-		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS") &&
-			JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster") &&
-			JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot"))
+		if (JSONUtils::isPresent(parametersRoot, "internalMMS") &&
+			JSONUtils::isPresent(parametersRoot["internalMMS"], "broadcaster") &&
+			JSONUtils::isPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot"))
 		{
 			inputsRoot = parametersRoot["internalMMS"]["broadcaster"]["broadcasterInputsRoot"];
 		}
@@ -240,7 +240,7 @@ void MMSEngineProcessor::manageCountdown(
 			json filtersRoot = nullptr;
 
 			string field = "broadcastFilters";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 				filtersRoot = parametersRoot[field];
 
 			// same json structure is used in

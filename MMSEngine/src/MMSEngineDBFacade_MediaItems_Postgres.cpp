@@ -4204,7 +4204,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			ingester = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "userData";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == json::value_t::string)
@@ -4217,7 +4217,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "retention";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
@@ -4227,7 +4227,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			string endPublishing = "FOREVER";
 			{
 				field = "publishing";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 				{
 					json publishingRoot = parametersRoot[field];
 
@@ -4294,7 +4294,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			{
 				json tagsRoot;
 				string field = "tags";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 					tagsRoot = parametersRoot[field];
 				tags = getPostgresArray(tagsRoot, true, trans);
 			}
@@ -4329,7 +4329,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 		{
 			string uniqueName;
-			if (JSONUtils::isMetadataPresent(parametersRoot, "uniqueName"))
+			if (JSONUtils::isPresent(parametersRoot, "uniqueName"))
 				uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
 
 			if (uniqueName != "")
@@ -4344,7 +4344,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		// cross references
 		{
 			string field = "crossReferences";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				json crossReferencesRoot = parametersRoot[field];
 
@@ -4365,7 +4365,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		int64_t physicalItemRetentionInMinutes = -1;
 		{
 			string field = "physicalItemRetention";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
@@ -4390,23 +4390,23 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 			{
 				string field = "userData";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 				{
 					json userDataRoot = parametersRoot[field];
 
 					field = "mmsData";
-					if (JSONUtils::isMetadataPresent(userDataRoot, field))
+					if (JSONUtils::isPresent(userDataRoot, field))
 					{
 						json mmsDataRoot = userDataRoot[field];
 
 						field = "ingestionJobKey";
-						if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveRecordingChunk"))
+						if (JSONUtils::isPresent(mmsDataRoot, "liveRecordingChunk"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveRecordingChunk"], field, -1);
-						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "generatedFrame"))
+						else if (JSONUtils::isPresent(mmsDataRoot, "generatedFrame"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["generatedFrame"], field, -1);
-						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder"))
+						else if (JSONUtils::isPresent(mmsDataRoot, "externalTranscoder"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["externalTranscoder"], field, -1);
-						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveCut"))
+						else if (JSONUtils::isPresent(mmsDataRoot, "liveCut"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveCut"], field, -1);
 					}
 				}
@@ -5348,7 +5348,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 
 			json crossReferenceParametersRoot;
 			field = "parameters";
-			if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
+			if (JSONUtils::isPresent(crossReferenceRoot, field))
 				crossReferenceParametersRoot = crossReferenceRoot[field];
 
 			addCrossReference(trans, ingestionJobKey, sourceMediaItemKey, crossReferenceType, targetMediaItemKey, crossReferenceParametersRoot);

@@ -379,7 +379,7 @@ void EncoderProxy::processEncodedImage()
 	int64_t physicalItemRetentionInMinutes = -1;
 	{
 		string field = "physicalItemRetention";
-		if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
+		if (JSONUtils::isPresent(_encodingItem->_ingestedParametersRoot, field))
 		{
 			string retention = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "1d");
 			physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
@@ -946,7 +946,7 @@ tuple<string, int, int, bool, int, int, Magick::InterlaceType> EncoderProxy::rea
 
 	json encodingProfileImageRoot;
 	{
-		if (!JSONUtils::isMetadataPresent(encodingProfileRoot, "Image"))
+		if (!JSONUtils::isPresent(encodingProfileRoot, "Image"))
 		{
 			string errorMessage = "Field is not present or it is null, Field: Image";
 			SPDLOG_ERROR(errorMessage);

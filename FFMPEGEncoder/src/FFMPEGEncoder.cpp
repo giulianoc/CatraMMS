@@ -1582,12 +1582,12 @@ void FFMPEGEncoder::filterNotification(
 				string apiKey;
 				{
 					string field = "internalMMS";
-					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+					if (JSONUtils::isPresent(ingestedParametersRoot, field))
 					{
 						json internalMMSRoot = ingestedParametersRoot[field];
 
 						field = "credentials";
-						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+						if (JSONUtils::isPresent(internalMMSRoot, field))
 						{
 							json credentialsRoot = internalMMSRoot[field];
 
@@ -1603,7 +1603,7 @@ void FFMPEGEncoder::filterNotification(
 
 				{
 					string field = "mmsWorkflowIngestionURL";
-					if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+					if (!JSONUtils::isPresent(encodingParametersRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -2876,12 +2876,12 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 		json eventTaskRoot = nullptr;
 		{
 			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			if (JSONUtils::isPresent(ingestedParametersRoot, field))
 			{
 				json internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json eventsRoot = internalMMSRoot[field];
 
@@ -2889,17 +2889,17 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 						|| filterName == "silentdetect")
 					{
 						field = "onError";
-						if (JSONUtils::isMetadataPresent(eventsRoot, field))
+						if (JSONUtils::isPresent(eventsRoot, field))
 							eventTaskRoot = eventsRoot[field];
 					}
 					/*
 							  field = "onSuccess";
-							  if (JSONUtils::isMetadataPresent(eventsRoot,
+							  if (JSONUtils::isPresent(eventsRoot,
 					   field)) addContentRoot[field] = eventsRoot[field];
 
 
 							  field = "onComplete";
-							  if (JSONUtils::isMetadataPresent(eventsRoot,
+							  if (JSONUtils::isPresent(eventsRoot,
 					   field)) addContentRoot[field] = eventsRoot[field];
 					*/
 				}

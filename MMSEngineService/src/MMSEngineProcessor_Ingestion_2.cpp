@@ -1869,11 +1869,11 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			string variantOfMediaItemKeyField = "variantOfMediaItemKey";
 			string variantOfUniqueNameField = "variantOfUniqueName";
 			string variantOfIngestionJobKeyField = "VariantOfIngestionJobKey";
-			if (JSONUtils::isMetadataPresent(parametersRoot, variantOfMediaItemKeyField))
+			if (JSONUtils::isPresent(parametersRoot, variantOfMediaItemKeyField))
 			{
 				variantOfMediaItemKey = JSONUtils::asInt64(parametersRoot, variantOfMediaItemKeyField, -1);
 			}
-			else if (JSONUtils::isMetadataPresent(parametersRoot, variantOfUniqueNameField))
+			else if (JSONUtils::isPresent(parametersRoot, variantOfUniqueNameField))
 			{
 				bool warningIfMissing = false;
 
@@ -1887,7 +1887,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				);
 				tie(variantOfMediaItemKey, ignore) = mediaItemKeyDetails;
 			}
-			else if (JSONUtils::isMetadataPresent(parametersRoot, variantOfIngestionJobKeyField))
+			else if (JSONUtils::isPresent(parametersRoot, variantOfIngestionJobKeyField))
 			{
 				int64_t variantOfIngestionJobKey = JSONUtils::asInt64(parametersRoot, variantOfIngestionJobKeyField, -1);
 				vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> mediaItemsDetails;
@@ -1980,7 +1980,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			int64_t physicalItemRetentionInMinutes = -1;
 			{
 				string field = "physicalItemRetention";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 				{
 					string retention = JSONUtils::asString(parametersRoot, field, "1d");
 					physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
@@ -1993,16 +1993,16 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			// of the ingestion job
 			{
 				string field = "userData";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 				{
 					json userDataRoot = parametersRoot[field];
 
 					field = "mmsData";
-					if (JSONUtils::isMetadataPresent(userDataRoot, field))
+					if (JSONUtils::isPresent(userDataRoot, field))
 					{
 						json mmsDataRoot = userDataRoot[field];
 
-						if (JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder"))
+						if (JSONUtils::isPresent(mmsDataRoot, "externalTranscoder"))
 						{
 							field = "ingestionJobKey";
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
@@ -2424,7 +2424,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				string title;
 				{
 					string field = "title";
-					if (JSONUtils::isMetadataPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
+					if (JSONUtils::isPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
 						title = JSONUtils::asString(multiLocalAssetIngestionEvent.getParametersRoot(), field, "");
 					title += (" (" + to_string(it - generatedFramesFileNames.begin() + 1) + " / " + to_string(generatedFramesFileNames.size()) + ")");
 				}
@@ -2674,7 +2674,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, 
 
 	externalReadOnlyStorage = false;
 	{
-		if (JSONUtils::isMetadataPresent(parametersRoot, "sourceURL"))
+		if (JSONUtils::isPresent(parametersRoot, "sourceURL"))
 			mediaSourceURL = JSONUtils::asString(parametersRoot, "sourceURL", "");
 
 		mediaFileFormat = JSONUtils::asString(parametersRoot, "fileFormat", "");

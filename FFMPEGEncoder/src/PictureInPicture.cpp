@@ -33,7 +33,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		string mainSourceFileExtension;
 		{
 			string field = "mainSourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -52,7 +52,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		string overlaySourceFileExtension;
 		{
 			string field = "overlaySourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -76,7 +76,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		{
 			{
 				string field = "mainSourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -115,7 +115,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				}
 
 				field = "mainSourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -138,7 +138,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 			{
 				string field = "overlaySourceTranscoderStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -177,7 +177,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				}
 
 				field = "overlaySourcePhysicalDeliveryURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -199,7 +199,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			}
 
 			string field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -240,7 +240,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		else
 		{
 			string field = "mainSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -256,7 +256,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "overlaySourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -272,7 +272,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

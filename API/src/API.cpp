@@ -672,7 +672,7 @@ void API::mmsSupport(
 		vector<string> mandatoryFields = {"UserEmailAddress", "Subject", "Text"};
 		for (string field : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (!JSONUtils::isPresent(metadataRoot, field))
 			{
 				string errorMessage = std::format(
 					"Json field is not present or it is null"

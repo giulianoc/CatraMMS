@@ -38,7 +38,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 		string sourceVideoFileExtension;
 		{
 			string field = "sourceVideoFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -61,7 +61,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			string field = "sourceVideoTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -100,7 +100,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			}
 
 			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -139,7 +139,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			}
 
 			field = "sourceImagePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -155,7 +155,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "sourceVideoPhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -178,7 +178,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 		else
 		{
 			string field = "mmsSourceVideoAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -194,7 +194,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -210,7 +210,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "mmsSourceImageAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

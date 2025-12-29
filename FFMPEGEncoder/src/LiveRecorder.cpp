@@ -118,7 +118,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			json recordingPeriodRoot = (liveRecording->_ingestedParametersRoot)[field];
 
 			field = "start";
-			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+			if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -135,7 +135,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 			field = "end";
-			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+			if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -155,7 +155,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
 
 			field = "segmentDuration";
-			if (!JSONUtils::isMetadataPresent(liveRecording->_ingestedParametersRoot, field))
+			if (!JSONUtils::isPresent(liveRecording->_ingestedParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

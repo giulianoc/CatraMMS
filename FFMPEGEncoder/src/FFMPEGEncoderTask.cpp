@@ -79,12 +79,12 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	string apiKey;
 	{
 		field = "internalMMS";
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+		if (JSONUtils::isPresent(ingestedParametersRoot, field))
 		{
 			json internalMMSRoot = ingestedParametersRoot[field];
 
 			field = "credentials";
-			if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+			if (JSONUtils::isPresent(internalMMSRoot, field))
 			{
 				json credentialsRoot = internalMMSRoot[field];
 
@@ -102,7 +102,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	if (encodingProfileDetailsRoot != nullptr)
 	{
 		field = "fileFormat";
-		if (!JSONUtils::isMetadataPresent(encodingProfileDetailsRoot, field))
+		if (!JSONUtils::isPresent(encodingProfileDetailsRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -131,7 +131,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	}
 
 	field = "mmsWorkflowIngestionURL";
-	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+	if (!JSONUtils::isPresent(encodingParametersRoot, field))
 	{
 		string errorMessage = std::format(
 			"Field is not present or it is null"
@@ -147,7 +147,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	string mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 
 	field = "mmsBinaryIngestionURL";
-	if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+	if (!JSONUtils::isPresent(encodingParametersRoot, field))
 	{
 		string errorMessage = std::format(
 			"Field is not present or it is null"
@@ -176,7 +176,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 	json userDataRoot;
 	{
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+		if (JSONUtils::isPresent(ingestedParametersRoot, "userData"))
 			userDataRoot = ingestedParametersRoot["userData"];
 
 		json mmsDataRoot;
@@ -253,7 +253,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	try
 	{
 		string field = "mmsIngestionURL";
-		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+		if (!JSONUtils::isPresent(encodingParametersRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -285,7 +285,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
+			if (!JSONUtils::isPresent(ingestionRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -301,7 +301,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			json responseRoot = ingestionRoot[field];
 
 			field = "ingestionJobs";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -332,7 +332,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			json ingestionJobRoot = ingestionJobsRoot[0];
 
 			field = "status";
-			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+			if (!JSONUtils::isPresent(ingestionJobRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -651,7 +651,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 				addContentParametersRoot = ingestedParametersRoot;
 
 				field = "internalMMS";
-				if (JSONUtils::isMetadataPresent(addContentParametersRoot, field))
+				if (JSONUtils::isPresent(addContentParametersRoot, field))
 					addContentParametersRoot.erase(field);
 			}
 

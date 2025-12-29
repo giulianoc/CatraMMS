@@ -141,16 +141,16 @@ void MMSEngineProcessor::manageConcatThread(
 					json sourceUserDataRoot = JSONUtils::toJson(lastUserData);
 
 					string field = "mmsData";
-					if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
+					if (JSONUtils::isPresent(sourceUserDataRoot, field))
 					{
 						json sourceMmsDataRoot = sourceUserDataRoot[field];
 
 						string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
 						// string utcChunkStartTimeField = "utcChunkStartTime";
-						if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
+						if (JSONUtils::isPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
 							utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
 						/*
-						else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot,
+						else if (JSONUtils::isPresent(sourceMmsDataRoot,
 						utcChunkStartTimeField))
 						{
 							utcStartTimeInMilliSecs =
@@ -247,16 +247,16 @@ void MMSEngineProcessor::manageConcatThread(
 				json sourceUserDataRoot = JSONUtils::toJson(lastUserData);
 
 				string field = "mmsData";
-				if (JSONUtils::isMetadataPresent(sourceUserDataRoot, field))
+				if (JSONUtils::isPresent(sourceUserDataRoot, field))
 				{
 					json sourceMmsDataRoot = sourceUserDataRoot[field];
 
 					string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
 					// string utcChunkEndTimeField = "utcChunkEndTime";
-					if (JSONUtils::isMetadataPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
+					if (JSONUtils::isPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
 						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
 					/*
-					else if (JSONUtils::isMetadataPresent(sourceMmsDataRoot,
+					else if (JSONUtils::isPresent(sourceMmsDataRoot,
 					utcChunkEndTimeField))
 					{
 						utcEndTimeInMilliSecs =
@@ -287,22 +287,22 @@ void MMSEngineProcessor::manageConcatThread(
 				*/
 
 				string field = "userData";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
 				json destMmsDataRoot;
 
 				field = "mmsData";
-				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
+				if (JSONUtils::isPresent(destUserDataRoot, field))
 					destMmsDataRoot = destUserDataRoot[field];
 
 				field = "utcStartTimeInMilliSecs";
-				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+				if (JSONUtils::isPresent(destMmsDataRoot, field))
 					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = utcStartTimeInMilliSecs;
 
 				field = "utcEndTimeInMilliSecs";
-				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+				if (JSONUtils::isPresent(destMmsDataRoot, field))
 					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = utcEndTimeInMilliSecs;
 
@@ -378,12 +378,12 @@ void MMSEngineProcessor::manageConcatThread(
 		double maxDurationInSeconds = 0.0;
 		double extraSecondsToCutWhenMaxDurationIsReached = 0.0;
 		string field = "MaxDurationInSeconds";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			maxDurationInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
 			field = "ExtraSecondsToCutWhenMaxDurationIsReached";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				extraSecondsToCutWhenMaxDurationIsReached = JSONUtils::asDouble(parametersRoot, field, 0.0);
 
@@ -736,7 +736,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		{
 			startTime = JSONUtils::asString(parametersRoot, "startTime", "");
 
-			if (!JSONUtils::isMetadataPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
+			if (!JSONUtils::isPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
 				// endTime in case of Audio is mandatory because we cannot use the other option (FramesNumber)
 
@@ -1006,7 +1006,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		int64_t newUtcEndTimeInMilliSecs = -1;
 		{
 			// In case the media has TimeCode, we will report them in the new content
-			if (framesNumber == -1 && JSONUtils::isMetadataPresent(sourceUserDataRoot, "mmsData"))
+			if (framesNumber == -1 && JSONUtils::isPresent(sourceUserDataRoot, "mmsData"))
 			{
 				json sourceMmsDataRoot = sourceUserDataRoot["mmsData"];
 
@@ -1090,17 +1090,17 @@ void MMSEngineProcessor::manageCutMediaThread(
 				json destUserDataRoot;
 
 				field = "userData";
-				if (JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (JSONUtils::isPresent(parametersRoot, field))
 					destUserDataRoot = parametersRoot[field];
 
 				json destMmsDataRoot;
 
 				field = "mmsData";
-				if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
+				if (JSONUtils::isPresent(destUserDataRoot, field))
 					destMmsDataRoot = destUserDataRoot[field];
 
 				field = "utcStartTimeInMilliSecs";
-				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+				if (JSONUtils::isPresent(destMmsDataRoot, field))
 					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
 
@@ -1114,7 +1114,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				}
 
 				field = "utcEndTimeInMilliSecs";
-				if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+				if (JSONUtils::isPresent(destMmsDataRoot, field))
 					destMmsDataRoot.erase(field);
 				destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
 
@@ -1219,7 +1219,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 			MMSEngineDBFacade::EncodingPriority encodingPriority;
 			string field = "encodingPriority";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 				encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 			else
 				encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
@@ -1229,11 +1229,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 			{
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
-				if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+				if (JSONUtils::isPresent(parametersRoot, keyField))
 				{
 					encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
 				}
-				else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+				else if (JSONUtils::isPresent(parametersRoot, labelField))
 				{
 					string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 

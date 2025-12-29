@@ -363,7 +363,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 
 			field = "parameters";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Cross Reference Parameters are not present"
@@ -423,7 +423,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 
 			field = "parameters";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Cross Reference Parameters are not present"

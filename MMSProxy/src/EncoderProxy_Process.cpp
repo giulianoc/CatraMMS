@@ -432,22 +432,22 @@ void EncoderProxy::processCutFrameAccurate()
 			json destUserDataRoot;
 
 			field = "userData";
-			if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
+			if (JSONUtils::isPresent(_encodingItem->_ingestedParametersRoot, field))
 				destUserDataRoot = _encodingItem->_ingestedParametersRoot[field];
 
 			json destMmsDataRoot;
 
 			field = "mmsData";
-			if (JSONUtils::isMetadataPresent(destUserDataRoot, field))
+			if (JSONUtils::isPresent(destUserDataRoot, field))
 				destMmsDataRoot = destUserDataRoot[field];
 
 			field = "utcStartTimeInMilliSecs";
-			if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+			if (JSONUtils::isPresent(destMmsDataRoot, field))
 				destMmsDataRoot.erase(field);
 			destMmsDataRoot[field] = newUtcStartTimeInMilliSecs;
 
 			field = "utcEndTimeInMilliSecs";
-			if (JSONUtils::isMetadataPresent(destMmsDataRoot, field))
+			if (JSONUtils::isPresent(destMmsDataRoot, field))
 				destMmsDataRoot.erase(field);
 			destMmsDataRoot[field] = newUtcEndTimeInMilliSecs;
 

@@ -112,7 +112,7 @@ void API::saveWorkflowAsLibrary(
 				validator.validateIngestedRootMetadata(apiAuthorizationDetails->workspace->_workspaceKey, requestBodyRoot);
 
 				string field = "label";
-				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				if (!JSONUtils::isPresent(requestBodyRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"

@@ -63,42 +63,42 @@ void API::updateMediaItem(
 
 		{
 			string field = "title";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				titleModified = true;
 				newTitle = JSONUtils::asString(metadataRoot, "title", "");
 			}
 
 			field = "userData";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				userDataModified = true;
 				newUserData = JSONUtils::asString(metadataRoot, "userData", "");
 			}
 
 			field = "RetentionInMinutes";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				retentionInMinutesModified = true;
 				newRetentionInMinutes = JSONUtils::asInt64(metadataRoot, "RetentionInMinutes", 0);
 			}
 
 			field = "tags";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				tagsModified = true;
 				newTagsRoot = metadataRoot[field];
 			}
 
 			field = "uniqueName";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				uniqueNameModified = true;
 				newUniqueName = JSONUtils::asString(metadataRoot, field, "");
 			}
 
 			field = "crossReferences";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 				crossReferencesRoot = metadataRoot[field];
 		}
 
@@ -195,7 +195,7 @@ void API::updatePhysicalPath(
 			vector<string> mandatoryFields = {"RetentionInMinutes"};
 			for (string field : mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+				if (!JSONUtils::isPresent(metadataRoot, field))
 				{
 					string errorMessage = std::format(
 						"Json field is not present or it is null"

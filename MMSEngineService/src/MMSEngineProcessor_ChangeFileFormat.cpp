@@ -33,7 +33,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 		string outputFileFormat;
 		{
 			string field = "outputFileFormat";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -380,7 +380,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 						int64_t physicalItemRetentionInMinutes = -1;
 						{
 							string field = "physicalItemRetention";
-							if (JSONUtils::isMetadataPresent(parametersRoot, field))
+							if (JSONUtils::isPresent(parametersRoot, field))
 							{
 								string retention = JSONUtils::asString(parametersRoot, field, "1d");
 								physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);

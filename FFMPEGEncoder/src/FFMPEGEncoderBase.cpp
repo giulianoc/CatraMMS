@@ -85,7 +85,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 		json ingestionResponseRoot = JSONUtils::toJson(ingestionResponse);
 
 		string field = "tasks";
-		if (!JSONUtils::isMetadataPresent(ingestionResponseRoot, field))
+		if (!JSONUtils::isPresent(ingestionResponseRoot, field))
 		{
 			string errorMessage = std::format(
 				"ingestion workflow. Response Body json is not well format"
@@ -104,7 +104,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 			json ingestionJobRoot = tasksRoot[taskIndex];
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+			if (!JSONUtils::isPresent(ingestionJobRoot, field))
 			{
 				string errorMessage = std::format(
 					"ingestion workflow. Response Body json is not well format"
@@ -121,7 +121,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 			if (type == "Add-Content")
 			{
 				field = "ingestionJobKey";
-				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+				if (!JSONUtils::isPresent(ingestionJobRoot, field))
 				{
 					string errorMessage = std::format(
 						"ingestion workflow. Response Body json is not well format"

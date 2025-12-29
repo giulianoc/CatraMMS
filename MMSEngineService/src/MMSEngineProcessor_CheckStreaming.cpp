@@ -22,7 +22,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		);
 
 		string field = "inputType";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -35,7 +35,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		if (inputType == "Stream")
 		{
 			string field = "configurationLabel";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 				SPDLOG_ERROR(errorMessage);
@@ -61,7 +61,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			// EMail task, the Email task may need the StreamingName information
 			// to add it into the email
 			string field = "streamingName";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 				SPDLOG_ERROR(errorMessage);
@@ -71,7 +71,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			string streamingName = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "streamingUrl";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 				SPDLOG_ERROR(errorMessage);

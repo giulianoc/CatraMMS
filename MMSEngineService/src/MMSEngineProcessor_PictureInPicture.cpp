@@ -21,7 +21,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		}
@@ -143,11 +143,11 @@ void MMSEngineProcessor::managePictureInPictureTask(
 
 			string keyField = "encodingProfileKey";
 			string labelField = "encodingProfileLabel";
-			if (JSONUtils::isMetadataPresent(parametersRoot, keyField))
+			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
 				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
 			}
-			else if (JSONUtils::isMetadataPresent(parametersRoot, labelField))
+			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
 				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
 

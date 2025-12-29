@@ -36,7 +36,7 @@ Validator::~Validator() = default;
 void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& root)
 {
 	string field = "type";
-	if (!JSONUtils::isMetadataPresent(root, field))
+	if (!JSONUtils::isPresent(root, field))
 	{
 		string sRoot = JSONUtils::toString(root);
 
@@ -60,7 +60,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 	}
 
 	field = "task";
-	if (!JSONUtils::isMetadataPresent(root, field))
+	if (!JSONUtils::isPresent(root, field))
 	{
 		string sRoot = JSONUtils::toString(root);
 
@@ -77,7 +77,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 	const json& taskRoot = root[field];
 
 	field = "type";
-	if (!JSONUtils::isMetadataPresent(taskRoot, field))
+	if (!JSONUtils::isPresent(taskRoot, field))
 	{
 		string sRoot = JSONUtils::toString(root);
 
@@ -110,7 +110,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& groupOfTasksRoot, bool validateDependenciesToo)
 {
 	string field = "parameters";
-	if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
+	if (!JSONUtils::isPresent(groupOfTasksRoot, field))
 	{
 		string sGroupOfTasksRoot = JSONUtils::toString(groupOfTasksRoot);
 
@@ -129,7 +129,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 	validateGroupOfTasksMetadata(workspaceKey, parametersRoot);
 
 	field = "tasks";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -161,7 +161,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 		const json& taskRoot = tasksRoot[taskIndex];
 
 		field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -193,7 +193,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& parametersRoot)
 {
 	string field = "executionType";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -221,12 +221,12 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& p
 void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTasksRoot, bool validateDependenciesToo)
 {
 	string field = "onSuccess";
-	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
 	{
 		json onSuccessRoot = taskOrGroupOfTasksRoot[field];
 
 		field = "task";
-		if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
+		if (!JSONUtils::isPresent(onSuccessRoot, field))
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
@@ -243,7 +243,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 		json taskRoot = onSuccessRoot[field];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
@@ -270,12 +270,12 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 	}
 
 	field = "onError";
-	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
 	{
 		json onErrorRoot = taskOrGroupOfTasksRoot[field];
 
 		field = "task";
-		if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
+		if (!JSONUtils::isPresent(onErrorRoot, field))
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
@@ -292,7 +292,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 		json taskRoot = onErrorRoot[field];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
@@ -319,12 +319,12 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 	}
 
 	field = "onComplete";
-	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
 	{
 		json onCompleteRoot = taskOrGroupOfTasksRoot[field];
 
 		field = "task";
-		if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
+		if (!JSONUtils::isPresent(onCompleteRoot, field))
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
@@ -341,7 +341,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 		json taskRoot = onCompleteRoot[field];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskOrGroupOfTasksRoot = JSONUtils::toString(taskOrGroupOfTasksRoot);
 
@@ -375,7 +375,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies;
 
 	string field = "type";
-	if (!JSONUtils::isMetadataPresent(taskRoot, field))
+	if (!JSONUtils::isPresent(taskRoot, field))
 	{
 		string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -400,7 +400,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -423,7 +423,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::AddSilentAudio;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -446,7 +446,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::RemoveContent;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -469,7 +469,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::Encode;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -492,7 +492,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::Frame;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -515,7 +515,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::PeriodicalFrames;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -538,7 +538,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -561,7 +561,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::IFrames;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -584,7 +584,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -607,7 +607,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::Slideshow;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -630,7 +630,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::ConcatDemuxer;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -653,7 +653,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::Cut;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -676,7 +676,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::OverlayImageOnVideo;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -699,7 +699,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::OverlayTextOnVideo;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -722,7 +722,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::EmailNotification;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -745,7 +745,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::CheckStreaming;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -768,7 +768,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::MediaCrossReference;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -791,7 +791,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::FTPDelivery;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -814,7 +814,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::HTTPCallback;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -837,7 +837,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::LocalCopy;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -860,7 +860,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::ExtractTracks;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -883,7 +883,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::PostOnFacebook;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -906,7 +906,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::PostOnYouTube;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -929,7 +929,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::FaceRecognition;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -952,7 +952,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::FaceIdentification;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -975,7 +975,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::LiveRecorder;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -998,7 +998,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::ChangeFileFormat;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1021,7 +1021,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1044,7 +1044,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::VideoSpeed;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1067,7 +1067,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::IntroOutroOverlay;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1090,7 +1090,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::LiveProxy;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1113,7 +1113,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1136,7 +1136,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1159,7 +1159,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::VODProxy;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1182,7 +1182,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::Countdown;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1205,7 +1205,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::LiveGrid;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1228,7 +1228,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::LiveCut;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1251,7 +1251,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		ingestionType = MMSEngineDBFacade::IngestionType::WorkflowAsLibrary;
 
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1456,7 +1456,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 	};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -1486,7 +1486,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 	// in case of externalContent, it cannot be inside mms storage
 	{
 		field = "sourceURL";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			string sourceURL = JSONUtils::asString(parametersRoot, field, "");
 
@@ -1508,7 +1508,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 	}
 
 	field = "crossReference";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		const json& crossReferenceRoot = parametersRoot[field];
 
@@ -1518,7 +1518,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -1536,7 +1536,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 	// Territories
 	{
 		field = "Territories";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			const json territories = parametersRoot[field];
 
@@ -1569,7 +1569,7 @@ void Validator::validateAddSilentAudioMetadata(
 	if (addType == "begin" || addType == "end")
 	{
 		string mandatoryField = "seconds";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -1589,7 +1589,7 @@ void Validator::validateAddSilentAudioMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -1620,7 +1620,7 @@ void Validator::validateAddSilentAudioMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -1643,7 +1643,7 @@ void Validator::validateRemoveContentMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -1674,7 +1674,7 @@ void Validator::validateRemoveContentMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -1695,7 +1695,7 @@ void Validator::validateEncodeMetadata(
 )
 {
 	string field = "encodingPriority";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string encodingPriority = JSONUtils::asString(parametersRoot, field, "");
 		try
@@ -1716,10 +1716,10 @@ void Validator::validateEncodeMetadata(
 	string encodingProfilesSetLabelField = "encodingProfilesSetLabel";
 	string encodingProfileKeyField = "encodingProfileKey";
 	string encodingProfileLabelField = "encodingProfileLabel";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField) &&
-		!JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField) &&
-		!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileLabelField) &&
-		!JSONUtils::isMetadataPresent(parametersRoot, encodingProfileKeyField))
+	if (!JSONUtils::isPresent(parametersRoot, encodingProfilesSetKeyField) &&
+		!JSONUtils::isPresent(parametersRoot, encodingProfilesSetLabelField) &&
+		!JSONUtils::isPresent(parametersRoot, encodingProfileLabelField) &&
+		!JSONUtils::isPresent(parametersRoot, encodingProfileKeyField))
 	{
 		string errorMessage = __FILEREF__ + "Neither of the following fields are present" + ", Field: " + encodingProfilesSetKeyField +
 							  ", Field: " + encodingProfilesSetLabelField + ", Field: " + encodingProfileLabelField +
@@ -1732,7 +1732,7 @@ void Validator::validateEncodeMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		// 2021-08-26: removed the check because we are adding the option to manage
 		// several contents
@@ -1767,7 +1767,7 @@ void Validator::validateEncodeMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -1792,7 +1792,7 @@ void Validator::validateFrameMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -1848,7 +1848,7 @@ void Validator::validateFrameMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -1873,7 +1873,7 @@ void Validator::validatePeriodicalFramesMetadata(
 	};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -1893,7 +1893,7 @@ void Validator::validatePeriodicalFramesMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -1947,7 +1947,7 @@ void Validator::validatePeriodicalFramesMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -1972,7 +1972,7 @@ void Validator::validateIFramesMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -2026,7 +2026,7 @@ void Validator::validateIFramesMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2049,7 +2049,7 @@ void Validator::validateSlideshowMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -2119,7 +2119,7 @@ void Validator::validateSlideshowMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2144,7 +2144,7 @@ void Validator::validateConcatDemuxerMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -2232,7 +2232,7 @@ void Validator::validateConcatDemuxerMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2255,7 +2255,7 @@ void Validator::validateCutMetadata(
 	// see sample in directory samples
 
 	string field = "startTime";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2268,7 +2268,7 @@ void Validator::validateCutMetadata(
 
 	string endTimeField = "endTime";
 	string framesNumberField = "framesNumber";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, endTimeField) && !JSONUtils::isMetadataPresent(parametersRoot, framesNumberField))
+	if (!JSONUtils::isPresent(parametersRoot, endTimeField) && !JSONUtils::isPresent(parametersRoot, framesNumberField))
 	{
 		string errorMessage = __FILEREF__ + "Both fields are not present or it is null" + ", Field: " + endTimeField +
 							  ", Field: " + framesNumberField + ", label: " + label;
@@ -2278,7 +2278,7 @@ void Validator::validateCutMetadata(
 	}
 
 	field = "cutType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string cutType = JSONUtils::asString(parametersRoot, field, "");
 
@@ -2293,7 +2293,7 @@ void Validator::validateCutMetadata(
 		if (cutType == "KeyFrameSeekingInterval")
 		{
 			field = "startKeyFrameSeekingInterval";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2305,7 +2305,7 @@ void Validator::validateCutMetadata(
 			}
 
 			field = "endKeyFrameSeekingInterval";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2321,7 +2321,7 @@ void Validator::validateCutMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -2381,7 +2381,7 @@ void Validator::validateCutMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2405,7 +2405,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		// json referencesRoot = parametersRoot[field];
 		// before the check was
@@ -2480,7 +2480,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2505,7 +2505,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	vector<string> mandatoryFields = {"drawTextDetails"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2528,7 +2528,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		vector<string> mandatoryFields = {"text"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
+			if (!JSONUtils::isPresent(drawTextDetailsRoot, mandatoryField))
 			{
 				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
 
@@ -2546,7 +2546,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		}
 
 		string field = "timecode";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			string timecode = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
@@ -2560,7 +2560,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		}
 
 		field = "fontType";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			string fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
@@ -2574,7 +2574,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		}
 
 		field = "fontColor";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			string fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
@@ -2588,7 +2588,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		}
 
 		field = "textPercentageOpacity";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			int textPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
@@ -2603,13 +2603,13 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		}
 
 		field = "boxEnable";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, true);
 		}
 
 		field = "boxPercentageOpacity";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			int boxPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
@@ -2625,7 +2625,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	}
 
 	string field = "encodingPriority";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string encodingPriority = JSONUtils::asString(parametersRoot, field, "");
 		try
@@ -2642,7 +2642,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	}
 
 	field = "boxColor";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string boxColor = JSONUtils::asString(parametersRoot, field, "");
 
@@ -2658,7 +2658,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -2712,7 +2712,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2737,7 +2737,7 @@ void Validator::validateEmailNotificationMetadata(
 	vector<string> mandatoryFields = {"configurationLabel"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2757,7 +2757,7 @@ void Validator::validateEmailNotificationMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -2796,10 +2796,10 @@ void Validator::validateEmailNotificationMetadata(
 				bool referenceLabel = false;
 
 				field = "ingestionJobKey";
-				if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+				if (!JSONUtils::isPresent(referenceRoot, field))
 				{
 					field = "label";
-					if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+					if (!JSONUtils::isPresent(referenceRoot, field))
 					{
 						string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2834,7 +2834,7 @@ void Validator::validateEmailNotificationMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2856,7 +2856,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 	vector<string> mandatoryFields = {"inputType"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2880,7 +2880,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 		vector<string> mandatoryFields = {"configurationLabel"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2902,7 +2902,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 		vector<string> mandatoryFields = {"streamingName", "streamingUrl"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -2931,7 +2931,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -2960,7 +2960,7 @@ void Validator::validateMediaCrossReferenceMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3008,7 +3008,7 @@ void Validator::validateMediaCrossReferenceMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3033,7 +3033,7 @@ void Validator::validateFTPDeliveryMetadata(
 	vector<string> mandatoryFields = {"configurationLabel"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3053,7 +3053,7 @@ void Validator::validateFTPDeliveryMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3088,7 +3088,7 @@ void Validator::validateFTPDeliveryMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3113,7 +3113,7 @@ void Validator::validateHTTPCallbackMetadata(
 	vector<string> mandatoryFields = {"hostName", "uri"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3131,7 +3131,7 @@ void Validator::validateHTTPCallbackMetadata(
 	}
 
 	string field = "method";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string method = JSONUtils::asString(parametersRoot, field, "");
 
@@ -3147,7 +3147,7 @@ void Validator::validateHTTPCallbackMetadata(
 	/*
 	 * 2020-03-07: headers is now a semicolon string
 	field = "Headers";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		json headersRoot = parametersRoot[field];
 
@@ -3181,7 +3181,7 @@ void Validator::validateHTTPCallbackMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3216,7 +3216,7 @@ void Validator::validateHTTPCallbackMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3241,7 +3241,7 @@ void Validator::validateLocalCopyMetadata(
 	vector<string> mandatoryFields = {"LocalPath"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3272,7 +3272,7 @@ void Validator::validateLocalCopyMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3307,7 +3307,7 @@ void Validator::validateLocalCopyMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3330,7 +3330,7 @@ void Validator::validateExtractTracksMetadata(
 	vector<string> mandatoryFields = {"Tracks", "outputFileFormat"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3360,7 +3360,7 @@ void Validator::validateExtractTracksMetadata(
 	for (const auto& trackRoot : tracksRoot)
 	{
 		field = "TrackType";
-		if (!JSONUtils::isMetadataPresent(trackRoot, field))
+		if (!JSONUtils::isPresent(trackRoot, field))
 		{
 			string sTrackRoot = JSONUtils::toString(trackRoot);
 
@@ -3400,7 +3400,7 @@ void Validator::validateExtractTracksMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3455,7 +3455,7 @@ void Validator::validateExtractTracksMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3481,7 +3481,7 @@ void Validator::validatePostOnFacebookMetadata(
 	};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3514,7 +3514,7 @@ void Validator::validatePostOnFacebookMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3569,7 +3569,7 @@ void Validator::validatePostOnFacebookMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3592,7 +3592,7 @@ void Validator::validatePostOnYouTubeMetadata(
 	vector<string> mandatoryFields = {"configurationLabel"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3610,7 +3610,7 @@ void Validator::validatePostOnYouTubeMetadata(
 	}
 
 	string field = "privacyStatus";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "");
 
@@ -3627,7 +3627,7 @@ void Validator::validatePostOnYouTubeMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3682,7 +3682,7 @@ void Validator::validatePostOnYouTubeMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3706,7 +3706,7 @@ void Validator::validateFaceRecognitionMetadata(
 	vector<string> mandatoryFields = {"cascadeName", "output"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3750,7 +3750,7 @@ void Validator::validateFaceRecognitionMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3815,7 +3815,7 @@ void Validator::validateFaceRecognitionMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3839,7 +3839,7 @@ void Validator::validateFaceIdentificationMetadata(
 	vector<string> mandatoryFields = {"cascadeName", "deepLearnedModelTags"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -3880,7 +3880,7 @@ void Validator::validateFaceIdentificationMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -3945,7 +3945,7 @@ void Validator::validateFaceIdentificationMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -3970,7 +3970,7 @@ void Validator::validateLiveRecorderMetadata(
 		vector<string> mandatoryFields = {"configurationLabel", "recordingCode", "schedule", "segmentDuration"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+			if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 			{
 				string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4002,7 +4002,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 
 	field = "uniqueName";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4016,7 +4016,7 @@ void Validator::validateLiveRecorderMetadata(
 	field = "schedule";
 	const json& recordingPeriodRoot = parametersRoot[field];
 	field = "start";
-	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+	if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4036,7 +4036,7 @@ void Validator::validateLiveRecorderMetadata(
 	time_t utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 	field = "end";
-	if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+	if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4069,7 +4069,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 
 	field = "OutputFormat";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string liveRecorderOutputFormat = JSONUtils::asString(parametersRoot, field, "");
 		if (!isLiveRecorderOutputValid(liveRecorderOutputFormat))
@@ -4083,12 +4083,12 @@ void Validator::validateLiveRecorderMetadata(
 	}
 
 	field = "outputs";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		json outputsRoot;
-		if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+		if (JSONUtils::isPresent(parametersRoot, "outputs"))
 			outputsRoot = parametersRoot["outputs"];
-		else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+		else // if (JSONUtils::isPresent(parametersRoot, "Outputs", false))
 			outputsRoot = parametersRoot["Outputs"];
 
 		for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
@@ -4100,7 +4100,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -4122,7 +4122,7 @@ void Validator::validateLiveProxyMetadata(
 {
 
 	string field = "configurationLabel";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4140,11 +4140,11 @@ void Validator::validateLiveProxyMetadata(
 
 	bool timePeriod = false;
 	field = "timePeriod";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 
 	field = "schedule";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		if (timePeriod)
 		{
@@ -4170,14 +4170,14 @@ void Validator::validateLiveProxyMetadata(
 		time_t utcProxyPeriodEnd = -1;
 
 		field = "start";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
@@ -4197,7 +4197,7 @@ void Validator::validateLiveProxyMetadata(
 	}
 
 	field = "outputs";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4213,9 +4213,9 @@ void Validator::validateLiveProxyMetadata(
 		throw runtime_error(errorMessage);
 	}
 	json outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+	if (JSONUtils::isPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
-	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+	else // if (JSONUtils::isPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
 
 	if (outputsRoot.empty())
@@ -4238,7 +4238,7 @@ void Validator::validateLiveProxyMetadata(
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -4261,7 +4261,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 
 	string sourceType;
 	string field = "SourceType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		sourceType = JSONUtils::asString(parametersRoot, field, "");
 
@@ -4275,7 +4275,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 	}
 
 	field = "PrivacyStatus";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "");
 
@@ -4292,7 +4292,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 	if (sourceType == "Live")
 	{
 		field = "configurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4313,7 +4313,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		// References is optional because in case of dependency managed automatically
 		// by MMS (i.e.: onSuccess)
 		field = "references";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -4378,7 +4378,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 	}
 
 	field = "youTubeSchedule";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4401,14 +4401,14 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		time_t utcProxyPeriodEnd = -1;
 
 		field = "start";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
@@ -4428,7 +4428,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -4456,7 +4456,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4499,7 +4499,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 
 	string sourceType;
 	string field = "sourceType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		sourceType = JSONUtils::asString(parametersRoot, field, "");
 
@@ -4515,7 +4515,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	if (sourceType == "Live")
 	{
 		field = "configurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4536,7 +4536,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		// References is optional because in case of dependency managed automatically
 		// by MMS (i.e.: onSuccess)
 		field = "references";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -4609,7 +4609,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	}
 
 	field = "facebookSchedule";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4632,14 +4632,14 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		time_t utcProxyPeriodEnd = -1;
 
 		field = "start";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
@@ -4664,7 +4664,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -4690,7 +4690,7 @@ void Validator::validateVODProxyMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey = false;
 		bool encodingProfileFieldsToBeManaged = false;
@@ -4729,11 +4729,11 @@ void Validator::validateVODProxyMetadata(
 
 	bool timePeriod = false;
 	field = "timePeriod";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 		timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 
 	field = "schedule";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		if (timePeriod)
 		{
@@ -4759,14 +4759,14 @@ void Validator::validateVODProxyMetadata(
 		time_t utcProxyPeriodEnd = -1;
 
 		field = "start";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
@@ -4791,7 +4791,7 @@ void Validator::validateVODProxyMetadata(
 	}
 
 	field = "outputs";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4807,9 +4807,9 @@ void Validator::validateVODProxyMetadata(
 		throw runtime_error(errorMessage);
 	}
 	json outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+	if (JSONUtils::isPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
-	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+	else // if (JSONUtils::isPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
 
 	if (outputsRoot.empty())
@@ -4835,7 +4835,7 @@ void Validator::validateVODProxyMetadata(
 		{
 			string keyField = "encodingProfileKey";
 			string labelField = "encodingProfileLabel";
-			if (!JSONUtils::isMetadataPresent(outputRoot, keyField) && !JSONUtils::isMetadataPresent(outputRoot, labelField))
+			if (!JSONUtils::isPresent(outputRoot, keyField) && !JSONUtils::isPresent(outputRoot, labelField))
 			{
 				string sParametersRoot = JSONUtils::toString(outputRoot);
 
@@ -4855,7 +4855,7 @@ void Validator::validateVODProxyMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -4879,7 +4879,7 @@ void Validator::validateCountdownMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -4938,7 +4938,7 @@ void Validator::validateCountdownMetadata(
 	}
 
 	field = "schedule";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -4960,14 +4960,14 @@ void Validator::validateCountdownMetadata(
 		time_t utcProxyPeriodEnd = -1;
 
 		field = "start";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
-		if (JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
@@ -4987,7 +4987,7 @@ void Validator::validateCountdownMetadata(
 	}
 
 	field = "outputs";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5003,9 +5003,9 @@ void Validator::validateCountdownMetadata(
 		throw runtime_error(errorMessage);
 	}
 	json outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+	if (JSONUtils::isPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
-	else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs", false))
+	else // if (JSONUtils::isPresent(parametersRoot, "Outputs", false))
 		outputsRoot = parametersRoot["Outputs"];
 
 	if (outputsRoot.empty())
@@ -5028,7 +5028,7 @@ void Validator::validateCountdownMetadata(
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, false);
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5051,7 +5051,7 @@ void Validator::validateWorkflowAsLibraryMetadata(
 	vector<string> mandatoryFields = {"workflowAsLibraryType", "workflowAsLibraryLabel"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5080,7 +5080,7 @@ void Validator::validateWorkflowAsLibraryMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5103,7 +5103,7 @@ void Validator::validateChangeFileFormatMetadata(
 	vector<string> mandatoryFields = {"outputFileFormat"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5141,7 +5141,7 @@ void Validator::validateChangeFileFormatMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -5213,7 +5213,7 @@ void Validator::validateChangeFileFormatMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5240,7 +5240,7 @@ void Validator::validateVideoSpeedMetadata(
 	};
 	for (string mandatoryField: mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5257,7 +5257,7 @@ void Validator::validateVideoSpeedMetadata(
 	*/
 
 	string field = "speedType";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string speedType = JSONUtils::asString(parametersRoot, field, "");
 		if (!isVideoSpeedTypeValid(speedType))
@@ -5271,7 +5271,7 @@ void Validator::validateVideoSpeedMetadata(
 	}
 
 	field = "speedSize";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		int speedSize = JSONUtils::asInt32(parametersRoot, field, 3);
 		if (speedSize < 1 || speedSize > 10)
@@ -5287,7 +5287,7 @@ void Validator::validateVideoSpeedMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -5352,7 +5352,7 @@ void Validator::validateVideoSpeedMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5376,7 +5376,7 @@ void Validator::validatePictureInPictureMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -5447,7 +5447,7 @@ void Validator::validatePictureInPictureMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5471,7 +5471,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	// References is optional because in case of dependency managed automatically
 	// by MMS (i.e.: onSuccess)
 	string field = "references";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		/* 2022-12-20: referencesRoot era composto da 2 ReferenceIngestionJobKey
 				Il primo non aveva media items as output
@@ -5563,7 +5563,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 
 	string keyField = "encodingProfileKey";
 	string labelField = "encodingProfileLabel";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, keyField) && !JSONUtils::isMetadataPresent(parametersRoot, labelField))
+	if (!JSONUtils::isPresent(parametersRoot, keyField) && !JSONUtils::isPresent(parametersRoot, labelField))
 	{
 		string errorMessage = __FILEREF__ + "Both fields are not present or it is null" + ", Field: " + keyField + ", Field: " + labelField;
 		SPDLOG_ERROR(errorMessage);
@@ -5574,7 +5574,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	vector<string> mandatoryFields = {"introOverlayDurationInSeconds", "outroOverlayDurationInSeconds"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5623,7 +5623,7 @@ void Validator::validateLiveGridMetadata(
 	vector<string> mandatoryFields = {"inputConfigurationLabels", "columns", "gridWidth", "gridHeight"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5685,7 +5685,7 @@ void Validator::validateLiveGridMetadata(
 	}
 
 	field = "outputs";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5701,7 +5701,7 @@ void Validator::validateLiveGridMetadata(
 		throw runtime_error(errorMessage);
 	}
 	json outputsRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+	if (JSONUtils::isPresent(parametersRoot, "outputs"))
 		outputsRoot = parametersRoot["outputs"];
 
 	if (outputsRoot.empty())
@@ -5724,7 +5724,7 @@ void Validator::validateLiveGridMetadata(
 		validateOutputRootMetadata(workspaceKey, label, outputRoot, true);
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5749,7 +5749,7 @@ void Validator::validateLiveCutMetadata(
 	vector<string> mandatoryFields = {"cutPeriod"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(parametersRoot, mandatoryField))
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
 		{
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5767,7 +5767,7 @@ void Validator::validateLiveCutMetadata(
 	}
 
 	string field = "recordingCode";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5784,7 +5784,7 @@ void Validator::validateLiveCutMetadata(
 	}
 
 	field = "cutPeriod";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5801,7 +5801,7 @@ void Validator::validateLiveCutMetadata(
 	}
 	const json& cutPeriodRoot = parametersRoot[field];
 	field = "start";
-	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+	if (!JSONUtils::isPresent(cutPeriodRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5821,7 +5821,7 @@ void Validator::validateLiveCutMetadata(
 	int64_t utcCutPeriodStart = Datetime::sDateMilliSecondsToUtc(cutPeriodStart);
 
 	field = "end";
-	if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+	if (!JSONUtils::isPresent(cutPeriodRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5853,7 +5853,7 @@ void Validator::validateLiveCutMetadata(
 	}
 
 	field = "processingStartingFrom";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 		// scenario:
@@ -5889,19 +5889,19 @@ void Validator::fillDependencies(
 		bool referenceLabel = false;
 
 		field = "mediaItemKey";
-		if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+		if (!JSONUtils::isPresent(referenceRoot, field))
 		{
 			field = "physicalPathKey";
-			if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+			if (!JSONUtils::isPresent(referenceRoot, field))
 			{
 				field = "ingestionJobKey";
-				if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+				if (!JSONUtils::isPresent(referenceRoot, field))
 				{
 					field = "uniqueName";
-					if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+					if (!JSONUtils::isPresent(referenceRoot, field))
 					{
 						field = "label";
-						if (!JSONUtils::isMetadataPresent(referenceRoot, field))
+						if (!JSONUtils::isPresent(referenceRoot, field))
 						{
 							string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -5968,7 +5968,7 @@ void Validator::fillDependencies(
 
 				string fieldEncodingProfileKey = "encodingProfileKey";
 				string fieldEncodingProfileLabel = "encodingProfileLabel";
-				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
+				if (JSONUtils::isPresent(referenceRoot, fieldEncodingProfileKey))
 				{
 					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, fieldEncodingProfileKey, 0);
 
@@ -5978,7 +5978,7 @@ void Validator::fillDependencies(
 						true
 					);
 				}
-				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
+				else if (JSONUtils::isPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
 					string referenceEncodingProfileLabel = JSONUtils::asString(referenceRoot, fieldEncodingProfileLabel, "");
 
@@ -6129,7 +6129,7 @@ void Validator::fillDependencies(
 
 				string fieldEncodingProfileKey = "encodingProfileKey";
 				string fieldEncodingProfileLabel = "encodingProfileLabel";
-				if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileKey))
+				if (JSONUtils::isPresent(referenceRoot, fieldEncodingProfileKey))
 				{
 					int64_t referenceEncodingProfileKey = JSONUtils::asInt64(referenceRoot, fieldEncodingProfileKey, 0);
 
@@ -6139,7 +6139,7 @@ void Validator::fillDependencies(
 						true
 					);
 				}
-				else if (JSONUtils::isMetadataPresent(referenceRoot, fieldEncodingProfileLabel))
+				else if (JSONUtils::isPresent(referenceRoot, fieldEncodingProfileLabel))
 				{
 					string referenceEncodingProfileLabel = JSONUtils::asString(referenceRoot, fieldEncodingProfileLabel, "");
 
@@ -6210,7 +6210,7 @@ void Validator::fillDependencies(
 					int64_t encodingProfileKey = -1;
 
 					field = "encodingProfileKey";
-					if (JSONUtils::isMetadataPresent(referenceRoot, field))
+					if (JSONUtils::isPresent(referenceRoot, field))
 					{
 						int64_t encodingProfileKey = JSONUtils::asInt64(referenceRoot, field, 0);
 
@@ -6224,7 +6224,7 @@ void Validator::fillDependencies(
 					else
 					{
 						field = "encodingProfileLabel";
-						if (JSONUtils::isMetadataPresent(referenceRoot, field))
+						if (JSONUtils::isPresent(referenceRoot, field))
 						{
 							string encodingProfileLabel = JSONUtils::asString(referenceRoot, field, "0");
 
@@ -6284,7 +6284,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 {
 
 	string field = "referencesOutput";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -6308,16 +6308,16 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 		string referenceUniqueName;
 
 		field = "mediaItemKey";
-		if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
+		if (!JSONUtils::isPresent(referenceOutputRoot, field))
 		{
 			field = "physicalPathKey";
-			if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
+			if (!JSONUtils::isPresent(referenceOutputRoot, field))
 			{
 				field = "ingestionJobKey";
-				if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
+				if (!JSONUtils::isPresent(referenceOutputRoot, field))
 				{
 					field = "uniqueName";
-					if (!JSONUtils::isMetadataPresent(referenceOutputRoot, field))
+					if (!JSONUtils::isPresent(referenceOutputRoot, field))
 					{
 						string sParametersRoot = JSONUtils::toString(parametersRoot);
 
@@ -6804,7 +6804,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 		vector<string> crossReferenceMandatoryFields = {"type", "mediaItemKey"};
 		for (string mandatoryField : crossReferenceMandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(crossReferenceRoot, mandatoryField))
+			if (!JSONUtils::isPresent(crossReferenceRoot, mandatoryField))
 			{
 				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
@@ -6828,7 +6828,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 		};
 		for (string mandatoryField : crossReferenceMandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(crossReferenceRoot, mandatoryField))
+			if (!JSONUtils::isPresent(crossReferenceRoot, mandatoryField))
 			{
 				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
@@ -6868,7 +6868,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 		crossReferenceType == MMSEngineDBFacade::CrossReferenceType::CutOfAudio)
 	{
 		field = "parameters";
-		if (!JSONUtils::isMetadataPresent(crossReferenceRoot, field))
+		if (!JSONUtils::isPresent(crossReferenceRoot, field))
 		{
 			string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
@@ -6883,7 +6883,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 		vector<string> crossReferenceCutMandatoryFields = {"startTimeInSeconds", "endTimeInSeconds"};
 		for (string mandatoryField : crossReferenceCutMandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(crossReferenceParameters, mandatoryField))
+			if (!JSONUtils::isPresent(crossReferenceParameters, mandatoryField))
 			{
 				string sCrossReferenceRoot = JSONUtils::toString(crossReferenceRoot);
 
@@ -6907,7 +6907,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::Conte
 	vector<string> mandatoryFields = {"label", "Profiles"};
 	for (string mandatoryField : mandatoryFields)
 	{
-		if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, mandatoryField))
+		if (!JSONUtils::isPresent(encodingProfilesSetRoot, mandatoryField))
 		{
 			string sEncodingProfilesSetRoot = JSONUtils::toString(encodingProfilesSetRoot);
 
@@ -6925,7 +6925,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::Conte
 
 	/*
 	string field = "Profiles";
-	if (JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
+	if (JSONUtils::isPresent(encodingProfilesSetRoot, field))
 	{
 		json profilesRoot = encodingProfilesSetRoot[field];
 
@@ -6955,7 +6955,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"label", "fileFormat", "video", "audio"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -6993,7 +6993,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"codec", "twoPasses", "bitRates"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileVideoRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileVideoRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7029,7 +7029,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 		{
 			for (string mandatoryField : mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
+				if (!JSONUtils::isPresent(bitRateRoot, mandatoryField))
 				{
 					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7055,7 +7055,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"codec", "bitRates"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileAudioRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7091,7 +7091,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 		{
 			for (string mandatoryField : mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
+				if (!JSONUtils::isPresent(bitRateRoot, mandatoryField))
 				{
 					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7116,7 +7116,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"label", "fileFormat", "audio"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7154,7 +7154,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"codec", "bitRates"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileAudioRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileAudioRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7190,7 +7190,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 		{
 			for (string mandatoryField : mandatoryFields)
 			{
-				if (!JSONUtils::isMetadataPresent(bitRateRoot, mandatoryField))
+				if (!JSONUtils::isPresent(bitRateRoot, mandatoryField))
 				{
 					string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7215,7 +7215,7 @@ void Validator::validateEncodingProfileRootImageMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"label", "fileFormat", "Image"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7252,7 +7252,7 @@ void Validator::validateEncodingProfileRootImageMetadata(const json& encodingPro
 		vector<string> mandatoryFields = {"width", "height", "aspectRatio", "interlaceType"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(encodingProfileImageRoot, mandatoryField))
+			if (!JSONUtils::isPresent(encodingProfileImageRoot, mandatoryField))
 			{
 				string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
@@ -7275,7 +7275,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 
 	string field = "outputType";
 	string liveProxyOutputType;
-	if (JSONUtils::isMetadataPresent(outputRoot, field))
+	if (JSONUtils::isPresent(outputRoot, field))
 	{
 		liveProxyOutputType = JSONUtils::asString(outputRoot, field, "");
 		if (!isLiveProxyOutputTypeValid(liveProxyOutputType))
@@ -7303,7 +7303,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		vector<string> mandatoryFields = {"udpUrl"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(outputRoot, mandatoryField))
+			if (!JSONUtils::isPresent(outputRoot, mandatoryField))
 			{
 				string sParametersRoot = JSONUtils::toString(outputRoot);
 
@@ -7321,14 +7321,14 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		}
 	}
 
-	if (JSONUtils::isMetadataPresent(outputRoot, "drawTextDetails"))
+	if (JSONUtils::isPresent(outputRoot, "drawTextDetails"))
 	{
 		const json& drawTextDetailsRoot = outputRoot["drawTextDetails"];
 
 		vector<string> mandatoryFields = {"text"};
 		for (string mandatoryField : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(drawTextDetailsRoot, mandatoryField))
+			if (!JSONUtils::isPresent(drawTextDetailsRoot, mandatoryField))
 			{
 				string sParametersRoot = JSONUtils::toString(drawTextDetailsRoot);
 
@@ -7346,7 +7346,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		}
 
 		string field = "fontType";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			string fontType = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
@@ -7365,7 +7365,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		}
 
 		field = "fontColor";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			string fontColor = JSONUtils::asString(drawTextDetailsRoot, field, "");
 
@@ -7384,7 +7384,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		}
 
 		field = "textPercentageOpacity";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			int textPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
@@ -7399,13 +7399,13 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		}
 
 		field = "boxEnable";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			bool boxEnable = JSONUtils::asBool(drawTextDetailsRoot, field, true);
 		}
 
 		field = "boxPercentageOpacity";
-		if (JSONUtils::isMetadataPresent(drawTextDetailsRoot, field))
+		if (JSONUtils::isPresent(drawTextDetailsRoot, field))
 		{
 			int boxPercentageOpacity = JSONUtils::asInt32(drawTextDetailsRoot, field, 200);
 
@@ -7422,7 +7422,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 
 	if (encodingMandatory)
 	{
-		if (!JSONUtils::isMetadataPresent(outputRoot, "encodingProfileKey") && !JSONUtils::isMetadataPresent(outputRoot, "encodingProfileLabel"))
+		if (!JSONUtils::isPresent(outputRoot, "encodingProfileKey") && !JSONUtils::isPresent(outputRoot, "encodingProfileLabel"))
 		{
 			string errorMessage = string("encodingProfile is missing") + ", label: " + label;
 			SPDLOG_ERROR(errorMessage);

@@ -349,12 +349,12 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 						string apiKey;
 						{
 							string field = "internalMMS";
-							if (JSONUtils::isMetadataPresent(copiedLiveRecording->_ingestedParametersRoot, field))
+							if (JSONUtils::isPresent(copiedLiveRecording->_ingestedParametersRoot, field))
 							{
 								json internalMMSRoot = copiedLiveRecording->_ingestedParametersRoot[field];
 
 								field = "credentials";
-								if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+								if (JSONUtils::isPresent(internalMMSRoot, field))
 								{
 									json credentialsRoot = internalMMSRoot[field];
 
@@ -372,7 +372,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 						string mmsBinaryIngestionURL;
 						{
 							string field = "mmsWorkflowIngestionURL";
-							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot, field))
+							if (!JSONUtils::isPresent(copiedLiveRecording->_encodingParametersRoot, field))
 							{
 								string errorMessage = std::format(
 									"Field is not present or it is null"
@@ -388,7 +388,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							mmsWorkflowIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
 
 							field = "mmsBinaryIngestionURL";
-							if (!JSONUtils::isMetadataPresent(copiedLiveRecording->_encodingParametersRoot, field))
+							if (!JSONUtils::isPresent(copiedLiveRecording->_encodingParametersRoot, field))
 							{
 								string errorMessage = std::format(
 									"Field is not present or it is null"
@@ -691,7 +691,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 			// UserData
 			json userDataRoot;
 			{
-				if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+				if (JSONUtils::isPresent(ingestedParametersRoot, "userData"))
 					userDataRoot = ingestedParametersRoot["userData"];
 
 				json mmsDataRoot;
@@ -1191,7 +1191,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 							// UserData
 							json userDataRoot;
 							{
-								if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+								if (JSONUtils::isPresent(ingestedParametersRoot, "userData"))
 									userDataRoot = ingestedParametersRoot["userData"];
 
 								json mmsDataRoot;
@@ -1595,12 +1595,12 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		string apiKey;
 		{
 			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			if (JSONUtils::isPresent(ingestedParametersRoot, field))
 			{
 				json internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json credentialsRoot = internalMMSRoot[field];
 
@@ -1616,7 +1616,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 
 		{
 			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1690,11 +1690,11 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			addContentTitle, uniqueName, userDataRoot, fileFormat, ingestedParametersRoot, encodingParametersRoot
 		);
 
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "internalMMS"))
+		if (JSONUtils::isPresent(ingestedParametersRoot, "internalMMS"))
 		{
 			json internalMMSRoot = ingestedParametersRoot["internalMMS"];
 
-			if (JSONUtils::isMetadataPresent(internalMMSRoot, "credentials"))
+			if (JSONUtils::isPresent(internalMMSRoot, "credentials"))
 			{
 				json credentialsRoot = internalMMSRoot["credentials"];
 
@@ -1706,7 +1706,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		{
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, "mmsWorkflowIngestionURL"))
+			if (!JSONUtils::isPresent(encodingParametersRoot, "mmsWorkflowIngestionURL"))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1790,7 +1790,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 		string mmsBinaryIngestionURL;
 		{
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, "mmsBinaryIngestionURL"))
+			if (!JSONUtils::isPresent(encodingParametersRoot, "mmsBinaryIngestionURL"))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1881,25 +1881,25 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 
 		{
 			field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			if (JSONUtils::isPresent(ingestedParametersRoot, field))
 			{
 				json internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						addContentRoot[field] = eventsRoot[field];
 
 					field = "onError";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						addContentRoot[field] = eventsRoot[field];
 
 					field = "onComplete";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						addContentRoot[field] = eventsRoot[field];
 				}
 			}

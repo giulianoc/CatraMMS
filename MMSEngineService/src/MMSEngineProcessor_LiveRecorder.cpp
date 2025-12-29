@@ -15,7 +15,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 	{
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		else
 			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
@@ -56,7 +56,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			bool pushPublicEncoderName = false;
 			{
 				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -97,7 +97,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				else
 					encodersDetailsRoot["encodersPoolLabel"] = encodersPoolLabel;
 
-				if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+				if (JSONUtils::isPresent(parametersRoot, "internalMMS"))
 					parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
 				else
 				{
@@ -113,7 +113,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			const json& recordingPeriodRoot = parametersRoot[field];
 
 			field = "start";
-			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+			if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -124,7 +124,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
 
 			field = "end";
-			if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+			if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -135,7 +135,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
 
 			field = "monitorHLS";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				const json& monitorHLSRoot = parametersRoot[field];
 
@@ -155,14 +155,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
 				string contentTypeField = "contentType";
-				if (JSONUtils::isMetadataPresent(monitorHLSRoot, keyField))
+				if (JSONUtils::isPresent(monitorHLSRoot, keyField))
 					monitorEncodingProfileKey = JSONUtils::asInt64(monitorHLSRoot, keyField, 0);
-				else if (JSONUtils::isMetadataPresent(monitorHLSRoot, labelField))
+				else if (JSONUtils::isPresent(monitorHLSRoot, labelField))
 				{
 					string encodingProfileLabel = JSONUtils::asString(monitorHLSRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType contentType;
-					if (JSONUtils::isMetadataPresent(monitorHLSRoot, contentTypeField))
+					if (JSONUtils::isPresent(monitorHLSRoot, contentTypeField))
 					{
 						contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(monitorHLSRoot, contentTypeField, ""));
 
@@ -184,7 +184,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 
 			field = "liveRecorderVirtualVOD";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				const json& virtualVODRoot = parametersRoot[field];
 
@@ -200,14 +200,14 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
 				string contentTypeField = "contentType";
-				if (JSONUtils::isMetadataPresent(virtualVODRoot, keyField))
+				if (JSONUtils::isPresent(virtualVODRoot, keyField))
 					virtualVODEncodingProfileKey = JSONUtils::asInt64(virtualVODRoot, keyField, 0);
-				else if (JSONUtils::isMetadataPresent(virtualVODRoot, labelField))
+				else if (JSONUtils::isPresent(virtualVODRoot, labelField))
 				{
 					string encodingProfileLabel = JSONUtils::asString(virtualVODRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
-					if (JSONUtils::isMetadataPresent(virtualVODRoot, contentTypeField))
+					if (JSONUtils::isPresent(virtualVODRoot, contentTypeField))
 					{
 						contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(virtualVODRoot, contentTypeField, ""));
 
@@ -230,7 +230,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			outputsRoot = JSONUtils::asJson(parametersRoot, "outputs", json::array());
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, "framesToBeDetected"))
+			if (JSONUtils::isPresent(parametersRoot, "framesToBeDetected"))
 			{
 				framesToBeDetectedRoot = parametersRoot["framesToBeDetected"];
 
@@ -238,7 +238,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				{
 					json frameToBeDetectedRoot = framesToBeDetectedRoot[pictureIndex];
 
-					if (JSONUtils::isMetadataPresent(frameToBeDetectedRoot, "picturePhysicalPathKey"))
+					if (JSONUtils::isPresent(frameToBeDetectedRoot, "picturePhysicalPathKey"))
 					{
 						int64_t physicalPathKey = JSONUtils::asInt64(frameToBeDetectedRoot, "picturePhysicalPathKey", -1);
 						string picturePathName;

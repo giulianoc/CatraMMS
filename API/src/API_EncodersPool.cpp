@@ -60,7 +60,7 @@ void API::addEncoder(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -80,7 +80,7 @@ void API::addEncoder(
 			enabled = JSONUtils::asBool(requestBodyRoot, field, true);
 
 			field = "Protocol";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -94,7 +94,7 @@ void API::addEncoder(
 			protocol = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "PublicServerName";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -108,7 +108,7 @@ void API::addEncoder(
 			publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "InternalServerName";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -122,7 +122,7 @@ void API::addEncoder(
 			internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Port";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				port = JSONUtils::asInt32(requestBodyRoot, field, 80);
 			}
@@ -236,7 +236,7 @@ void API::modifyEncoder(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				label = JSONUtils::asString(requestBodyRoot, field, "");
 				labelToBeModified = true;
@@ -245,7 +245,7 @@ void API::modifyEncoder(
 				labelToBeModified = false;
 
 			field = "External";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				external = JSONUtils::asBool(requestBodyRoot, field, false);
 				externalToBeModified = true;
@@ -254,7 +254,7 @@ void API::modifyEncoder(
 				externalToBeModified = false;
 
 			field = "Enabled";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				enabled = JSONUtils::asBool(requestBodyRoot, field, true);
 				enabledToBeModified = true;
@@ -263,7 +263,7 @@ void API::modifyEncoder(
 				enabledToBeModified = false;
 
 			field = "Protocol";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				protocol = JSONUtils::asString(requestBodyRoot, field, "");
 				protocolToBeModified = true;
@@ -272,7 +272,7 @@ void API::modifyEncoder(
 				protocolToBeModified = false;
 
 			field = "PublicServerName";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
 				publicServerNameToBeModified = true;
@@ -281,7 +281,7 @@ void API::modifyEncoder(
 				publicServerNameToBeModified = false;
 
 			field = "InternalServerName";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
 				internalServerNameToBeModified = true;
@@ -290,7 +290,7 @@ void API::modifyEncoder(
 				internalServerNameToBeModified = false;
 
 			field = "Port";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				port = JSONUtils::asInt32(requestBodyRoot, field, 80);
 				portToBeModified = true;
@@ -612,7 +612,7 @@ void API::addEncodersPool(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -626,7 +626,7 @@ void API::addEncodersPool(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "encoderKeys";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				json encoderKeysRoot = requestBodyRoot[field];
 
@@ -721,7 +721,7 @@ void API::modifyEncodersPool(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -735,7 +735,7 @@ void API::modifyEncodersPool(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "encoderKeys";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				json encoderKeysRoot = requestBodyRoot[field];
 

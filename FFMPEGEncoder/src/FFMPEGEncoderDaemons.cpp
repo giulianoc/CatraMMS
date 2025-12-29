@@ -142,7 +142,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					json inputRoot = copiedLiveProxy->_inputsRoot[0];
 					string field = "streamInput";
-					if (JSONUtils::isMetadataPresent(inputRoot, field))
+					if (JSONUtils::isPresent(inputRoot, field))
 					{
 						json streamInputRoot = inputRoot[field];
 						field = "configurationLabel";

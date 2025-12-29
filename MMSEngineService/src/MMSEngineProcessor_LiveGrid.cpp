@@ -14,7 +14,7 @@ void MMSEngineProcessor::manageLiveGrid(
 		 * commented because it will be High by default
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			encodingPriority =
 				static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
@@ -31,7 +31,7 @@ void MMSEngineProcessor::manageLiveGrid(
 		json outputsRoot;
 		{
 			string field = "inputConfigurationLabels";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -80,7 +80,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			}
 
 			field = "outputs";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -88,7 +88,7 @@ void MMSEngineProcessor::manageLiveGrid(
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
 		}
 

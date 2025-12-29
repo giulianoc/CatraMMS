@@ -30,7 +30,7 @@ bool EncoderProxy::liveRecorder()
 		json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
 
 		field = "start";
-		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+		if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -48,7 +48,7 @@ bool EncoderProxy::liveRecorder()
 		utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 		field = "end";
-		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+		if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -716,7 +716,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 		json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
 
 		field = "start";
-		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+		if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -734,7 +734,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 		utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 		field = "end";
-		if (!JSONUtils::isMetadataPresent(recordingPeriodRoot, field))
+		if (!JSONUtils::isPresent(recordingPeriodRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"

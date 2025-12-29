@@ -57,7 +57,7 @@ void API::addRequestStatistic(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "userId";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -71,7 +71,7 @@ void API::addRequestStatistic(
 			userId = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "ipAddress";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 				ipAddress = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "physicalPathKey";
@@ -93,7 +93,7 @@ void API::addRequestStatistic(
 			}
 
 			field = "title";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

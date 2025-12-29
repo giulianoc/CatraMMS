@@ -3132,7 +3132,7 @@ Json::Value MMSEngineDBFacade::addStream(
 				region, country, labelOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
+			if (!JSONUtils::isPresent(streamListRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -3143,7 +3143,7 @@ Json::Value MMSEngineDBFacade::addStream(
 			Json::Value responseRoot = streamListRoot[field];
 
 			field = "streams";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -3812,7 +3812,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 				start, rows, labelKey, labelLike, url, sourceType, type, name, region, country, labelOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(streamListRoot, field))
+			if (!JSONUtils::isPresent(streamListRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -3823,7 +3823,7 @@ Json::Value MMSEngineDBFacade::modifyStream(
 			Json::Value responseRoot = streamListRoot[field];
 
 			field = "streams";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -5212,7 +5212,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 				videoPid, audioPids, nameOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(sourceTVStreamRoot, field))
+			if (!JSONUtils::isPresent(sourceTVStreamRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -5223,7 +5223,7 @@ Json::Value MMSEngineDBFacade::addSourceTVStream(
 			Json::Value responseRoot = sourceTVStreamRoot[field];
 
 			field = "sourceTVStreams";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -5716,7 +5716,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 				videoPid, audioPids, nameOrder);
 
 			string field = "response";
-			if (!JSONUtils::isMetadataPresent(sourceTVStreamRoot, field))
+			if (!JSONUtils::isPresent(sourceTVStreamRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -5727,7 +5727,7 @@ Json::Value MMSEngineDBFacade::modifySourceTVStream(
 			Json::Value responseRoot = sourceTVStreamRoot[field];
 
 			field = "sourceTVStreams";
-			if (!JSONUtils::isMetadataPresent(responseRoot, field))
+			if (!JSONUtils::isPresent(responseRoot, field))
 			{
 				string errorMessage = __FILEREF__ + "Field is not present or it is null"
 					+ ", Field: " + field;
@@ -12475,7 +12475,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 		Json::Value mmsDataRoot;
 		{
 			field = "mmsData";
-			if (!JSONUtils::isMetadataPresent(channelDataRoot, field))
+			if (!JSONUtils::isPresent(channelDataRoot, field))
 			{
 				_logger->info(__FILEREF__ + "no mmsData present"                
 					+ ", ingestionKey: " + to_string(ingestionKey)
@@ -12492,7 +12492,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 		Json::Value youTubeURLsRoot(Json::arrayValue);
 		{
 			field = "youTubeURLs";
-			if (!JSONUtils::isMetadataPresent(mmsDataRoot, field))
+			if (!JSONUtils::isPresent(mmsDataRoot, field))
 			{
 				_logger->info(__FILEREF__ + "no youTubeURLs present"                
 					+ ", ingestionKey: " + to_string(ingestionKey)
@@ -12645,14 +12645,14 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 			Json::Value mmsDataRoot;
 			{
 				field = "mmsData";
-				if (JSONUtils::isMetadataPresent(channelDataRoot, field))
+				if (JSONUtils::isPresent(channelDataRoot, field))
 					mmsDataRoot = channelDataRoot[field];
 			}
 
 			Json::Value previousYouTubeURLsRoot(Json::arrayValue);
 			{
 				field = "youTubeURLs";
-				if (JSONUtils::isMetadataPresent(mmsDataRoot, field))
+				if (JSONUtils::isPresent(mmsDataRoot, field))
 					previousYouTubeURLsRoot = mmsDataRoot[field];
 			}
 

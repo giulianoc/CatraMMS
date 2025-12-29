@@ -27,7 +27,7 @@ void MMSEngineProcessor::localCopyContentThread(
 		string localFileName;
 		{
 			string field = "LocalPath";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;

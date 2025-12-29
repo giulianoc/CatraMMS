@@ -96,7 +96,7 @@ void API::ingestion(
 			// it starts from the root and validate recursively the entire body
 			validator.validateIngestedRootMetadata(apiAuthorizationDetails->workspace->_workspaceKey, requestBodyRoot);
 
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "type"))
+			if (!JSONUtils::isPresent(requestBodyRoot, "type"))
 			{
 				string errorMessage = std::format("Field is not present or it is null"
 												  ", Field: type");
@@ -119,7 +119,7 @@ void API::ingestion(
 #endif
 			requestBodyRoot["ingestionRootKey"] = ingestionRootKey;
 
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, "task"))
+			if (!JSONUtils::isPresent(requestBodyRoot, "task"))
 			{
 				string errorMessage = std::format("Field is not present or it is null"
 												  ", Field: task");
@@ -129,7 +129,7 @@ void API::ingestion(
 			}
 			json &taskRoot = requestBodyRoot["task"];
 
-			if (!JSONUtils::isMetadataPresent(taskRoot, "type"))
+			if (!JSONUtils::isPresent(taskRoot, "type"))
 			{
 				string errorMessage = std::format("Field is not present or it is null"
 												  ", Field: type");
@@ -342,7 +342,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 				}
 		 */
 		string field = "variables";
-		if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+		if (JSONUtils::isPresent(requestBodyRoot, field))
 		{
 			json variablesRoot = requestBodyRoot[field];
 			if (variablesRoot.begin() != variablesRoot.end())
@@ -644,7 +644,7 @@ void API::manageReferencesInput(
 	if (parametersSectionPresent)
 	{
 		field = "references";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			referencesRoot = parametersRoot[field];
 
@@ -673,7 +673,7 @@ void API::manageReferencesInput(
 
 		string dependenciesToBeAddedToReferencesAt;
 		field = "dependenciesToBeAddedToReferencesAt";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			dependenciesToBeAddedToReferencesAt = JSONUtils::asString(parametersRoot, field, "");
 			if (!dependenciesToBeAddedToReferencesAt.empty())
@@ -717,7 +717,7 @@ void API::manageReferencesInput(
 			json referenceRoot = referencesRoot[referenceIndex];
 
 			field = "label";
-			if (JSONUtils::isMetadataPresent(referenceRoot, field))
+			if (JSONUtils::isPresent(referenceRoot, field))
 			{
 				string referenceLabel = JSONUtils::asString(referenceRoot, field, "");
 
@@ -1000,7 +1000,7 @@ vector<int64_t> API::ingestionSingleTask(
 	field = "parameters";
 	json parametersRoot;
 	bool parametersSectionPresent = false;
-	if (JSONUtils::isMetadataPresent(taskRoot, field))
+	if (JSONUtils::isPresent(taskRoot, field))
 	{
 		parametersRoot = taskRoot[field];
 
@@ -1010,7 +1010,7 @@ vector<int64_t> API::ingestionSingleTask(
 	// 2022-11-19: in case of Broadcaster, internalMMS already exist
 	field = "internalMMS";
 	json internalMMSRoot;
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 		internalMMSRoot = parametersRoot[field];
 
 	// 2022-11-05: inizialmente internalMMSRoot con userKey e apiKey era
@@ -1047,10 +1047,10 @@ vector<int64_t> API::ingestionSingleTask(
 		if (parametersSectionPresent &&
 			(
 				// case 1
-				(JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField) ||
-				 JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField)) ||
+				(JSONUtils::isPresent(parametersRoot, encodingProfilesSetKeyField) ||
+				 JSONUtils::isPresent(parametersRoot, encodingProfilesSetLabelField)) ||
 				// case 2
-				(JSONUtils::isMetadataPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1)
+				(JSONUtils::isPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1)
 			))
 		{
 			// we will replace the single Task with a GroupOfTasks where every
@@ -1064,8 +1064,8 @@ vector<int64_t> API::ingestionSingleTask(
 			// we will use the vector for case 1
 			vector<int64_t> encodingProfilesSetKeys;
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField) ||
-				JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetLabelField))
+			if (JSONUtils::isPresent(parametersRoot, encodingProfilesSetKeyField) ||
+				JSONUtils::isPresent(parametersRoot, encodingProfilesSetLabelField))
 			{
 				// case 1
 
@@ -1073,7 +1073,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 				string encodingProfilesSetReference;
 
-				if (JSONUtils::isMetadataPresent(parametersRoot, encodingProfilesSetKeyField))
+				if (JSONUtils::isPresent(parametersRoot, encodingProfilesSetKeyField))
 				{
 					int64_t encodingProfilesSetKey = JSONUtils::asInt64(parametersRoot, encodingProfilesSetKeyField, 0);
 
@@ -1089,7 +1089,7 @@ vector<int64_t> API::ingestionSingleTask(
 						// );
 					}
 				}
-				else // if (JSONUtils::isMetadataPresent(parametersRoot,
+				else // if (JSONUtils::isPresent(parametersRoot,
 					 // encodingProfilesSetLabelField))
 				{
 					string encodingProfilesSetLabel = JSONUtils::asString(parametersRoot, encodingProfilesSetLabelField, "");
@@ -1120,7 +1120,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 			// both, case 1 and case 2 could have multiple references
 			json multiReferencesRoot;
-			if (JSONUtils::isMetadataPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1)
+			if (JSONUtils::isPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1)
 			{
 				multiReferencesPresent = true;
 
@@ -1255,19 +1255,19 @@ vector<int64_t> API::ingestionSingleTask(
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
 
 			field = "onSuccess";
-			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
 
 			field = "onError";
-			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
 
 			field = "onComplete";
-			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isPresent(taskRoot, field))
 			{
 				newTasksGroupRoot[field] = taskRoot[field];
 			}
@@ -1305,7 +1305,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 		string referencesField = "references";
 
-		if (parametersSectionPresent && (JSONUtils::isMetadataPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1))
+		if (parametersSectionPresent && (JSONUtils::isPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1))
 		{
 			// we will replace the single Task with a GroupOfTasks where every
 			// task is just for one reference
@@ -1341,15 +1341,15 @@ vector<int64_t> API::ingestionSingleTask(
 				newTaskRoot[field] = newParametersRoot;
 
 				field = "onSuccess";
-				if (JSONUtils::isMetadataPresent(taskRoot, field))
+				if (JSONUtils::isPresent(taskRoot, field))
 					newTaskRoot[field] = taskRoot[field];
 
 				field = "onError";
-				if (JSONUtils::isMetadataPresent(taskRoot, field))
+				if (JSONUtils::isPresent(taskRoot, field))
 					newTaskRoot[field] = taskRoot[field];
 
 				field = "onComplete";
-				if (JSONUtils::isMetadataPresent(taskRoot, field))
+				if (JSONUtils::isPresent(taskRoot, field))
 					newTaskRoot[field] = taskRoot[field];
 
 				newTasksRoot.push_back(newTaskRoot);
@@ -1424,10 +1424,10 @@ vector<int64_t> API::ingestionSingleTask(
 			string onSuccessField = "onSuccess";
 			string onErrorField = "onError";
 			string onCompleteField = "onComplete";
-			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField) || JSONUtils::isMetadataPresent(taskRoot, onErrorField) ||
-				JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+			if (JSONUtils::isPresent(taskRoot, onSuccessField) || JSONUtils::isPresent(taskRoot, onErrorField) ||
+				JSONUtils::isPresent(taskRoot, onCompleteField))
 			{
-				if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+				if (JSONUtils::isPresent(taskRoot, onSuccessField))
 				{
 					json onSuccessRoot = taskRoot[onSuccessField];
 
@@ -1435,7 +1435,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 					taskRoot.erase(onSuccessField);
 				}
-				if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
+				if (JSONUtils::isPresent(taskRoot, onErrorField))
 				{
 					json onErrorRoot = taskRoot[onErrorField];
 
@@ -1443,7 +1443,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 					taskRoot.erase(onErrorField);
 				}
-				if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+				if (JSONUtils::isPresent(taskRoot, onCompleteField))
 				{
 					json onCompleteRoot = taskRoot[onCompleteField];
 
@@ -1491,10 +1491,10 @@ json internalMMSRoot;
 			string onSuccessField = "onSuccess";
 			string onErrorField = "onError";
 			string onCompleteField = "onComplete";
-			if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField) || JSONUtils::isMetadataPresent(taskRoot, onErrorField) ||
-				JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+			if (JSONUtils::isPresent(taskRoot, onSuccessField) || JSONUtils::isPresent(taskRoot, onErrorField) ||
+				JSONUtils::isPresent(taskRoot, onCompleteField))
 			{
-				if (JSONUtils::isMetadataPresent(taskRoot, onSuccessField))
+				if (JSONUtils::isPresent(taskRoot, onSuccessField))
 				{
 					json onSuccessRoot = taskRoot[onSuccessField];
 
@@ -1502,7 +1502,7 @@ json internalMMSRoot;
 
 					taskRoot.erase(onSuccessField);
 				}
-				if (JSONUtils::isMetadataPresent(taskRoot, onErrorField))
+				if (JSONUtils::isPresent(taskRoot, onErrorField))
 				{
 					json onErrorRoot = taskRoot[onErrorField];
 
@@ -1510,7 +1510,7 @@ json internalMMSRoot;
 
 					taskRoot.erase(onErrorField);
 				}
-				if (JSONUtils::isMetadataPresent(taskRoot, onCompleteField))
+				if (JSONUtils::isPresent(taskRoot, onCompleteField))
 				{
 					json onCompleteRoot = taskRoot[onCompleteField];
 
@@ -1536,7 +1536,7 @@ json internalMMSRoot;
 		// the VariantOfIngestionJobKey parameter using variantOfReferencedLabel
 
 		string field = "variantOfReferencedLabel";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			string referenceLabel = JSONUtils::asString(parametersRoot, field, "");
 
@@ -1598,8 +1598,8 @@ json internalMMSRoot;
 		{
 			string workflowAsLibraryTypeField = "workflowAsLibraryType";
 			string workflowAsLibraryLabelField = "workflowAsLibraryLabel";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, workflowAsLibraryTypeField) ||
-				!JSONUtils::isMetadataPresent(parametersRoot, workflowAsLibraryLabelField))
+			if (!JSONUtils::isPresent(parametersRoot, workflowAsLibraryTypeField) ||
+				!JSONUtils::isPresent(parametersRoot, workflowAsLibraryLabelField))
 			{
 				string errorMessage = __FILEREF__ +
 									  "No workflowAsLibraryType/WorkflowAsLibraryLabel "
@@ -1630,7 +1630,7 @@ json internalMMSRoot;
 		json workflowLibraryTaskRoot;
 		{
 			string workflowRootTaskField = "task";
-			if (!JSONUtils::isMetadataPresent(workflowLibraryRoot, workflowRootTaskField))
+			if (!JSONUtils::isPresent(workflowLibraryRoot, workflowRootTaskField))
 			{
 				string errorMessage = __FILEREF__ +
 									  "Wrong Workflow-As-Library format. Root Task was not "
@@ -1667,19 +1667,19 @@ json internalMMSRoot;
 			newGroupOfTasksRoot[field] = newGroupOfTasksParametersRoot;
 
 			field = "onSuccess";
-			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isPresent(taskRoot, field))
 			{
 				newGroupOfTasksRoot[field] = taskRoot[field];
 			}
 
 			field = "onError";
-			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isPresent(taskRoot, field))
 			{
 				newGroupOfTasksRoot[field] = taskRoot[field];
 			}
 
 			field = "onComplete";
-			if (JSONUtils::isMetadataPresent(taskRoot, field))
+			if (JSONUtils::isPresent(taskRoot, field))
 			{
 				newGroupOfTasksRoot[field] = taskRoot[field];
 			}
@@ -1728,7 +1728,7 @@ JSONUtils::toString(parametersRoot)
 	vector<int64_t> waitForGlobalIngestionJobKeys;
 	{
 		field = "waitFor";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			json waitForRoot = parametersRoot[field];
 
@@ -1737,7 +1737,7 @@ JSONUtils::toString(parametersRoot)
 				json waitForLabelRoot = waitForRoot[waitForIndex];
 
 				field = "globalIngestionLabel";
-				if (JSONUtils::isMetadataPresent(waitForLabelRoot, field))
+				if (JSONUtils::isPresent(waitForLabelRoot, field))
 				{
 					string waitForGlobalIngestionLabel = JSONUtils::asString(waitForLabelRoot, field, "");
 
@@ -1764,7 +1764,7 @@ JSONUtils::toString(parametersRoot)
 	string processingStartingFrom;
 	{
 		field = "processingStartingFrom";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
 
 		if (processingStartingFrom.empty())
@@ -1946,7 +1946,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 
 	// initialize parametersRoot
 	field = "parameters";
-	if (!JSONUtils::isMetadataPresent(groupOfTasksRoot, field))
+	if (!JSONUtils::isPresent(groupOfTasksRoot, field))
 	{
 		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 		SPDLOG_ERROR(errorMessage);
@@ -1958,7 +1958,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	bool parallelTasks;
 
 	field = "executionType";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 		SPDLOG_ERROR(errorMessage);
@@ -1979,7 +1979,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 	}
 
 	field = "tasks";
-	if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (!JSONUtils::isPresent(parametersRoot, field))
 	{
 		string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 		SPDLOG_ERROR(errorMessage);
@@ -2019,7 +2019,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 		json &taskRoot = tasksRoot[taskIndex];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2173,7 +2173,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 		json referencesOutputRoot = json::array();
 
 		field = "referencesOutput";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			referencesOutputRoot = parametersRoot[field];
 
@@ -2194,7 +2194,7 @@ GroupOfTasks item"; SPDLOG_ERROR(errorMessage);
 				json referenceOutputRoot = referencesOutputRoot[referenceIndex];
 
 				field = "label";
-				if (JSONUtils::isMetadataPresent(referenceOutputRoot, field))
+				if (JSONUtils::isPresent(referenceOutputRoot, field))
 				{
 					string referenceLabel = JSONUtils::asString(referenceOutputRoot, field, "");
 
@@ -2523,12 +2523,12 @@ void API::ingestionEvents(
 {
 
 	string field = "onSuccess";
-	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
 	{
 		json &onSuccessRoot = taskOrGroupOfTasksRoot[field];
 
 		field = "task";
-		if (!JSONUtils::isMetadataPresent(onSuccessRoot, field))
+		if (!JSONUtils::isPresent(onSuccessRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2538,7 +2538,7 @@ void API::ingestionEvents(
 		json &taskRoot = onSuccessRoot[field];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2635,12 +2635,12 @@ void API::ingestionEvents(
 	}
 
 	field = "onError";
-	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
 	{
 		json &onErrorRoot = taskOrGroupOfTasksRoot[field];
 
 		field = "task";
-		if (!JSONUtils::isMetadataPresent(onErrorRoot, field))
+		if (!JSONUtils::isPresent(onErrorRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2650,7 +2650,7 @@ void API::ingestionEvents(
 		json &taskRoot = onErrorRoot[field];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2756,12 +2756,12 @@ void API::ingestionEvents(
 	}
 
 	field = "onComplete";
-	if (JSONUtils::isMetadataPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
 	{
 		json &onCompleteRoot = taskOrGroupOfTasksRoot[field];
 
 		field = "task";
-		if (!JSONUtils::isMetadataPresent(onCompleteRoot, field))
+		if (!JSONUtils::isPresent(onCompleteRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2771,7 +2771,7 @@ void API::ingestionEvents(
 		json &taskRoot = onCompleteRoot[field];
 
 		string field = "type";
-		if (!JSONUtils::isMetadataPresent(taskRoot, field))
+		if (!JSONUtils::isPresent(taskRoot, field))
 		{
 			string errorMessage = __FILEREF__ + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -2910,7 +2910,7 @@ void API::uploadedBinary(
 			);
 
 			string field = "fileFormat";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				string fileFormat = JSONUtils::asString(parametersRoot, field, "");
 				// 2022-08-11: I guess the correct fileFormat is m3u8-tar.gz and
@@ -4033,7 +4033,7 @@ void API::updateIngestionJob(
 			json metadataRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "IngestionType";
-			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (!JSONUtils::isPresent(metadataRoot, field))
 			{
 				string errorMessage = std::format(
 					"IngestionType field is missing"
@@ -4076,35 +4076,35 @@ void API::updateIngestionJob(
 
 					{
 						field = "IngestionJobLabel";
-						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							ingestionJobLabelModified = true;
 							newIngestionJobLabel = JSONUtils::asString(metadataRoot, "IngestionJobLabel", "");
 						}
 
 						field = "ChannelLabel";
-						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							channelLabelModified = true;
 							newChannelLabel = JSONUtils::asString(metadataRoot, "ChannelLabel", "");
 						}
 
 						field = "scheduleStart";
-						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							recordingPeriodStartModified = true;
 							newRecordingPeriodStart = JSONUtils::asString(metadataRoot, "scheduleStart", "");
 						}
 
 						field = "scheduleEnd";
-						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							recordingPeriodEndModified = true;
 							newRecordingPeriodEnd = JSONUtils::asString(metadataRoot, "scheduleEnd", "");
 						}
 
 						field = "RecordingVirtualVOD";
-						if (JSONUtils::isMetadataPresent(metadataRoot, field))
+						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							recordingVirtualVODModified = true;
 							newRecordingVirtualVOD = JSONUtils::asBool(metadataRoot, "RecordingVirtualVOD", false);
@@ -4610,12 +4610,12 @@ void API::changeLiveProxyPlaylist(
 			utcBroadcasterEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
 
 			field = "broadcastDefaultPlaylistItem";
-			if (JSONUtils::isMetadataPresent(broadcasterRoot, field))
+			if (JSONUtils::isPresent(broadcasterRoot, field))
 			{
 				json broadcastDefaultPlaylistItemRoot = broadcasterRoot[field];
 
 				field = "mediaType";
-				if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+				if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
 				{
 					broadcastDefaultMediaType = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
 
@@ -4629,7 +4629,7 @@ void API::changeLiveProxyPlaylist(
 
 						field = "filters";
 						json filtersRoot;
-						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+						if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
 							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
 
 						broadcastDefaultStreamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
@@ -4646,7 +4646,7 @@ void API::changeLiveProxyPlaylist(
 						MMSEngineDBFacade::ContentType vodContentType;
 
 						field = "referencePhysicalPathKeys";
-						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+						if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
 						{
 							json referencePhysicalPathKeysRoot = broadcastDefaultPlaylistItemRoot[field];
 
@@ -4759,7 +4759,7 @@ void API::changeLiveProxyPlaylist(
 						string otherInputOptions = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, "otherInputOptions");
 
 						/*
-						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+						if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
 							filtersRoot = broadcastDefaultPlaylistItemRoot[field];
 						*/
 
@@ -4846,18 +4846,18 @@ void API::changeLiveProxyPlaylist(
 						bool isDrawTextFilterPresent = false;
 						field = "filters";
 						json filtersRoot;
-						if (JSONUtils::isMetadataPresent(broadcastDefaultPlaylistItemRoot, field))
+						if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
 						{
 							filtersRoot = broadcastDefaultPlaylistItemRoot["filters"];
 							field = "video";
-							if (JSONUtils::isMetadataPresent(filtersRoot, field))
+							if (JSONUtils::isPresent(filtersRoot, field))
 							{
 								json videoFiltersRoot = broadcastDefaultPlaylistItemRoot["video"];
 								for (int videoFilterIndex = 0; videoFilterIndex < videoFiltersRoot.size(); videoFilterIndex++)
 								{
 									json videoFilterRoot = videoFiltersRoot[videoFilterIndex];
 									field = "type";
-									if (JSONUtils::isMetadataPresent(videoFilterRoot, field) && videoFilterRoot[field] == "drawtext")
+									if (JSONUtils::isPresent(videoFilterRoot, field) && videoFilterRoot[field] == "drawtext")
 										isDrawTextFilterPresent = true;
 								}
 							}
@@ -4961,14 +4961,14 @@ void API::changeLiveProxyPlaylist(
 					{
 						string sUtcScheduleStart;
 						string sUtcScheduleEnd;
-						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "timePeriod") && newReceivedPlaylistItemRoot["timePeriod"])
+						if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "timePeriod") && newReceivedPlaylistItemRoot["timePeriod"])
 						{
-							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleStart"))
+							if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "utcScheduleStart"))
 							{
 								sUtcScheduleStart = Datetime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleStart"]);
 								newReceivedPlaylistItemRoot["sUtcScheduleStart"] = sUtcScheduleStart;
 							}
-							if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "utcScheduleEnd"))
+							if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "utcScheduleEnd"))
 							{
 								sUtcScheduleEnd = Datetime::utcToUtcString(newReceivedPlaylistItemRoot["utcScheduleEnd"]);
 								newReceivedPlaylistItemRoot["sUtcScheduleEnd"] = sUtcScheduleEnd;
@@ -4984,7 +4984,7 @@ void API::changeLiveProxyPlaylist(
 						);
 					}
 					{
-						if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "streamInput"))
+						if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "streamInput"))
 						{
 							json streamInputRoot = newReceivedPlaylistItemRoot["streamInput"];
 
@@ -4992,7 +4992,7 @@ void API::changeLiveProxyPlaylist(
 
 							newReceivedPlaylistItemRoot["streamInput"] = streamInputRoot;
 						}
-						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "vodInput"))
+						else if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "vodInput"))
 						{
 							json vodInputRoot = newReceivedPlaylistItemRoot["vodInput"];
 
@@ -5026,7 +5026,7 @@ void API::changeLiveProxyPlaylist(
 								json sourceRoot = sourcesRoot[sourceIndex];
 
 								// field = "physicalPathKey";
-								if (!JSONUtils::isMetadataPresent(sourceRoot, "physicalPathKey"))
+								if (!JSONUtils::isPresent(sourceRoot, "physicalPathKey"))
 								{
 									string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestData.requestBody);
 									SPDLOG_ERROR(errorMessage);
@@ -5154,14 +5154,14 @@ void API::changeLiveProxyPlaylist(
 							// field = "vodInput";
 							newReceivedPlaylistItemRoot["vodInput"] = vodInputRoot;
 						}
-						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "countdownInput"))
+						else if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "countdownInput"))
 						{
 							json countdownInputRoot = newReceivedPlaylistItemRoot["countdownInput"];
 
 							countdownInputRoot["filters"] = getReviewedFiltersRoot(countdownInputRoot["filters"], apiAuthorizationDetails->workspace, -1);
 
 							// field = "physicalPathKey";
-							if (!JSONUtils::isMetadataPresent(countdownInputRoot, "physicalPathKey"))
+							if (!JSONUtils::isPresent(countdownInputRoot, "physicalPathKey"))
 							{
 								string errorMessage = std::format("physicalPathKey is missing, json data: {}", requestData.requestBody);
 								SPDLOG_ERROR(errorMessage);
@@ -5211,7 +5211,7 @@ void API::changeLiveProxyPlaylist(
 							// field = "countdownInput";
 							newReceivedPlaylistItemRoot["countdownInput"] = countdownInputRoot;
 						}
-						else if (JSONUtils::isMetadataPresent(newReceivedPlaylistItemRoot, "directURLInput"))
+						else if (JSONUtils::isPresent(newReceivedPlaylistItemRoot, "directURLInput"))
 						{
 							json directURLInputRoot = newReceivedPlaylistItemRoot["directURLInput"];
 
@@ -5818,11 +5818,11 @@ void API::changeLiveProxyPlaylist(
 				json broadcasterRoot;
 
 				string field = "internalMMS";
-				if (JSONUtils::isMetadataPresent(metadataContentRoot, field))
+				if (JSONUtils::isPresent(metadataContentRoot, field))
 					mmsInternalRoot = metadataContentRoot[field];
 
 				field = "broadcaster";
-				if (JSONUtils::isMetadataPresent(mmsInternalRoot, field))
+				if (JSONUtils::isPresent(mmsInternalRoot, field))
 					broadcasterRoot = mmsInternalRoot[field];
 
 				field = "broadcasterInputsRoot";
@@ -6019,15 +6019,15 @@ json API::getReviewedFiltersRoot(json filtersRoot, const shared_ptr<Workspace>& 
 	*/
 
 	// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
-	if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
+	if (JSONUtils::isPresent(filtersRoot, "complex"))
 	{
 		json complexFiltersRoot = filtersRoot["complex"];
 		for (int complexFilterIndex = 0; complexFilterIndex < complexFiltersRoot.size(); complexFilterIndex++)
 		{
 			json complexFilterRoot = complexFiltersRoot[complexFilterIndex];
-			if (JSONUtils::isMetadataPresent(complexFilterRoot, "type") && complexFilterRoot["type"] == "imageoverlay")
+			if (JSONUtils::isPresent(complexFilterRoot, "type") && complexFilterRoot["type"] == "imageoverlay")
 			{
-				if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathKey"))
+				if (!JSONUtils::isPresent(complexFilterRoot, "imagePhysicalPathKey"))
 				{
 					string errorMessage = std::format(
 						"imageoverlay filter without imagePhysicalPathKey"

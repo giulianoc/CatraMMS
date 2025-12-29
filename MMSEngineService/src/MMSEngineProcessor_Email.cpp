@@ -110,7 +110,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		string checkStreaming_streamingUrl;
 		{
 			string field = "references";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				json referencesRoot = parametersRoot[field];
 				for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); referenceIndex++)
@@ -119,7 +119,7 @@ void MMSEngineProcessor::emailNotificationThread(
 					{
 						json referenceRoot = referencesRoot[referenceIndex];
 						field = "ingestionJobKey";
-						if (JSONUtils::isMetadataPresent(referenceRoot, field))
+						if (JSONUtils::isPresent(referenceRoot, field))
 						{
 							int64_t referenceIngestionJobKey = JSONUtils::asInt64(referenceRoot, field, 0);
 
@@ -144,7 +144,7 @@ void MMSEngineProcessor::emailNotificationThread(
 								if (inputType == "Channel")
 								{
 									field = "channelConfigurationLabel";
-									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+									if (JSONUtils::isPresent(parametersRoot, field))
 									{
 										checkStreaming_streamingName = JSONUtils::asString(parametersRoot, field, "");
 
@@ -168,10 +168,10 @@ void MMSEngineProcessor::emailNotificationThread(
 								else
 								{
 									field = "streamingName";
-									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+									if (JSONUtils::isPresent(parametersRoot, field))
 										checkStreaming_streamingName = JSONUtils::asString(parametersRoot, field, "");
 									field = "streamingUrl";
-									if (JSONUtils::isMetadataPresent(parametersRoot, field))
+									if (JSONUtils::isPresent(parametersRoot, field))
 										checkStreaming_streamingUrl = JSONUtils::asString(parametersRoot, field, "");
 								}
 							}
@@ -207,7 +207,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 
 		string field = "configurationLabel";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 			SPDLOG_ERROR(errorMessage);
@@ -223,7 +223,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		tie(tosCommaSeparated, subject, message) = email;
 
 		field = "UserSubstitutions";
-		if (JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field))
 		{
 			json userSubstitutionsRoot = parametersRoot[field];
 
@@ -232,7 +232,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				json userSubstitutionRoot = userSubstitutionsRoot[userSubstitutionIndex];
 
 				field = "ToBeReplaced";
-				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
+				if (!JSONUtils::isPresent(userSubstitutionRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 					_logger->warn(errorMessage);
@@ -242,7 +242,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				string strToBeReplaced = JSONUtils::asString(userSubstitutionRoot, field, "");
 
 				field = "ReplaceWith";
-				if (!JSONUtils::isMetadataPresent(userSubstitutionRoot, field))
+				if (!JSONUtils::isPresent(userSubstitutionRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
 					_logger->warn(errorMessage);

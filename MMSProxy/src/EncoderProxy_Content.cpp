@@ -151,7 +151,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			genera un eccezione
 			{
 				string field = "error";
-				if (JSONUtils::isMetadataPresent(encodeContentResponse, field))
+				if (JSONUtils::isPresent(encodeContentResponse, field))
 				{
 					string error = JSONUtils::asString(encodeContentResponse,
 			field, "");
@@ -386,7 +386,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
 
 		field = "physicalItemRetention";
-		if (JSONUtils::isMetadataPresent(_encodingItem->_ingestedParametersRoot, field))
+		if (JSONUtils::isPresent(_encodingItem->_ingestedParametersRoot, field))
 		{
 			string retention = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "1d");
 			physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);

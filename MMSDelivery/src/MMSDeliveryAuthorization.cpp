@@ -345,7 +345,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			ingestionType == MMSEngineDBFacade::IngestionType::Countdown || ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
 		{
 			string field = "outputs";
-			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+			if (!JSONUtils::isPresent(ingestionJobRoot, field))
 			{
 				string errorMessage = std::format(
 					"A Proxy/Countdown/Recorder without outputs cannot be delivered"
@@ -757,7 +757,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			try
 			{
 				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+				if (!JSONUtils::isPresent(ingestionJobRoot, field))
 				{
 					string errorMessage = std::format(
 						"{} field missing"
@@ -799,7 +799,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		else // if (ingestionType != MMSEngineDBFacade::IngestionType::LiveGrid)
 		{
 			string field = "DeliveryCode";
-			if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+			if (!JSONUtils::isPresent(ingestionJobRoot, field))
 			{
 				string errorMessage = std::format(
 					"A LiveGrid without DeliveryCode cannot be delivered"

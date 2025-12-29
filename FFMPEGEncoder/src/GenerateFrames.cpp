@@ -45,7 +45,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
 
 		string field = "sourceFileExtension";
-		if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+		if (!JSONUtils::isPresent(encodingParametersRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -65,7 +65,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			field = "transcoderStagingImagesDirectory";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -127,7 +127,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		else
 		{
 			field = "sourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -143,7 +143,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "nfsImagesDirectory";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -192,7 +192,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 					json userDataRoot;
 					{
-						if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "userData"))
+						if (JSONUtils::isPresent(ingestedParametersRoot, "userData"))
 							userDataRoot = ingestedParametersRoot["userData"];
 
 						json mmsDataRoot;
@@ -344,7 +344,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			try
 			{
 				string field = "mmsIngestionURL";
-				if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -363,12 +363,12 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				string apiKey;
 				{
 					string field = "internalMMS";
-					if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+					if (JSONUtils::isPresent(ingestedParametersRoot, field))
 					{
 						json internalMMSRoot = ingestedParametersRoot[field];
 
 						field = "credentials";
-						if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+						if (JSONUtils::isPresent(internalMMSRoot, field))
 						{
 							json credentialsRoot = internalMMSRoot[field];
 
@@ -402,7 +402,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					);
 
 					string field = "response";
-					if (!JSONUtils::isMetadataPresent(ingestionRoot, field))
+					if (!JSONUtils::isPresent(ingestionRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -418,7 +418,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					json responseRoot = ingestionRoot[field];
 
 					field = "ingestionJobs";
-					if (!JSONUtils::isMetadataPresent(responseRoot, field))
+					if (!JSONUtils::isPresent(responseRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -448,7 +448,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					json ingestionJobRoot = ingestionJobsRoot[0];
 
 					field = "status";
-					if (!JSONUtils::isMetadataPresent(ingestionJobRoot, field))
+					if (!JSONUtils::isPresent(ingestionJobRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -649,12 +649,12 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 		{
 			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(ingestedParametersRoot, field))
+			if (JSONUtils::isPresent(ingestedParametersRoot, field))
 			{
 				json internalMMSRoot = ingestedParametersRoot[field];
 
 				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json credentialsRoot = internalMMSRoot[field];
 
@@ -670,7 +670,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 		{
 			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -742,7 +742,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 		string mmsBinaryIngestionURL;
 		{
 			string field = "mmsBinaryIngestionURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

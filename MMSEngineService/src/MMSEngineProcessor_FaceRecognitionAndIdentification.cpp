@@ -22,7 +22,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		}
@@ -37,7 +37,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		bool oneFramePerSecond;
 		{
 			string field = "cascadeName";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -48,7 +48,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "output";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -194,7 +194,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		}
@@ -207,7 +207,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		string deepLearnedModelTagsCommaSeparated;
 		{
 			string field = "cascadeName";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -218,7 +218,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "deepLearnedModelTags";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;

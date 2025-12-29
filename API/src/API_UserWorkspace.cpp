@@ -74,7 +74,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 		vector<string> mandatoryFields = {"email", "password"};
 		for (string field : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (!JSONUtils::isPresent(metadataRoot, field))
 			{
 				string errorMessage = std::format(
 					"Json field is not present or it is null"
@@ -685,7 +685,7 @@ void API::shareWorkspace_(
 		};
 		for (string field : mandatoryFields)
 		{
-			if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (!JSONUtils::isPresent(metadataRoot, field))
 			{
 				string errorMessage = std::format("Json field is not present or it is null", ", Json field: {}", field);
 				SPDLOG_ERROR(errorMessage);
@@ -1105,7 +1105,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				vector<string> mandatoryFields = {"email", "password"};
 				for (string field : mandatoryFields)
 				{
-					if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+					if (!JSONUtils::isPresent(metadataRoot, field))
 					{
 						string errorMessage = std::format(
 							"Json field is not present or it is null"
@@ -1172,7 +1172,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				vector<string> mandatoryFields = {"name", "password"};
 				for (string field : mandatoryFields)
 				{
-					if (!JSONUtils::isMetadataPresent(metadataRoot, field))
+					if (!JSONUtils::isPresent(metadataRoot, field))
 					{
 						string errorMessage = std::format("Json field is not present or it is null", ", Json field: {}", field);
 						SPDLOG_ERROR(errorMessage);
@@ -1514,14 +1514,14 @@ void API::updateUser(
 		if (!_ldapEnabled)
 		{
 			string field = "name";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				name = JSONUtils::asString(metadataRoot, field, "");
 				nameChanged = true;
 			}
 
 			field = "email";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				email = JSONUtils::asString(metadataRoot, field, "");
 				try
@@ -1544,14 +1544,14 @@ void API::updateUser(
 			}
 
 			field = "country";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
 			}
 
 			field = "timezone";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				timezone = JSONUtils::asString(metadataRoot, field, "CET");
 				timezoneChanged = true;
@@ -1560,7 +1560,7 @@ void API::updateUser(
 			if (apiAuthorizationDetails->admin)
 			{
 				field = "insolvent";
-				if (JSONUtils::isMetadataPresent(metadataRoot, field))
+				if (JSONUtils::isPresent(metadataRoot, field))
 				{
 					insolvent = JSONUtils::asBool(metadataRoot, field, false);
 					insolventChanged = true;
@@ -1570,14 +1570,14 @@ void API::updateUser(
 			if (apiAuthorizationDetails->admin)
 			{
 				field = "expirationDate";
-				if (JSONUtils::isMetadataPresent(metadataRoot, field))
+				if (JSONUtils::isPresent(metadataRoot, field))
 				{
 					expirationUtcDate = JSONUtils::asString(metadataRoot, field, "");
 					expirationDateChanged = true;
 				}
 			}
 
-			if (JSONUtils::isMetadataPresent(metadataRoot, "newPassword") && JSONUtils::isMetadataPresent(metadataRoot, "oldPassword"))
+			if (JSONUtils::isPresent(metadataRoot, "newPassword") && JSONUtils::isPresent(metadataRoot, "oldPassword"))
 			{
 				passwordChanged = true;
 				newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
@@ -1587,14 +1587,14 @@ void API::updateUser(
 		else
 		{
 			string field = "country";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				country = JSONUtils::asString(metadataRoot, field, "");
 				countryChanged = true;
 			}
 
 			field = "timezone";
-			if (JSONUtils::isMetadataPresent(metadataRoot, field))
+			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				timezone = JSONUtils::asString(metadataRoot, field, "CET");
 				timezoneChanged = true;
@@ -1985,159 +1985,159 @@ void API::updateWorkspace(
 		}
 
 		string field = "enabled";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			enabledChanged = true;
 			newEnabled = JSONUtils::asBool(metadataRoot, field, false);
 		}
 
 		field = "workspaceName";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			nameChanged = true;
 			newName = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "workspaceNotes";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			notesChanged = true;
 			newNotes = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "maxEncodingPriority";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			maxEncodingPriorityChanged = true;
 			newMaxEncodingPriority = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "encodingPeriod";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			encodingPeriodChanged = true;
 			newEncodingPeriod = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "maxIngestionsNumber";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			maxIngestionsNumberChanged = true;
 			newMaxIngestionsNumber = JSONUtils::asInt64(metadataRoot, field, 0);
 		}
 
 		field = "languageCode";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			languageCodeChanged = true;
 			newLanguageCode = JSONUtils::asString(metadataRoot, field, "");
 		}
 
 		field = "timezone";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			timezoneChanged = true;
 			newTimezone = JSONUtils::asString(metadataRoot, field, "CET");
 		}
 
-		if (JSONUtils::isMetadataPresent(metadataRoot, "preferences"))
+		if (JSONUtils::isPresent(metadataRoot, "preferences"))
 		{
 			preferencesChanged = true;
 			newPreferences = JSONUtils::asString(metadataRoot, "preferences", "");
 		}
 
-		if (JSONUtils::isMetadataPresent(metadataRoot, "externalDeliveries"))
+		if (JSONUtils::isPresent(metadataRoot, "externalDeliveries"))
 		{
 			externalDeliveriesChanged = true;
 			newExternalDeliveries = JSONUtils::asString(metadataRoot, "externalDeliveries", "");
 		}
 
 		field = "maxStorageInGB";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			maxStorageInGBChanged = true;
 			maxStorageInGB = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForStorage";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForStorageChanged = true;
 			currentCostForStorage = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "dedicatedEncoder_power_1";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			dedicatedEncoder_power_1Changed = true;
 			dedicatedEncoder_power_1 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForDedicatedEncoder_power_1";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForDedicatedEncoder_power_1Changed = true;
 			currentCostForDedicatedEncoder_power_1 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "dedicatedEncoder_power_2";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			dedicatedEncoder_power_2Changed = true;
 			dedicatedEncoder_power_2 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForDedicatedEncoder_power_2";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForDedicatedEncoder_power_2Changed = true;
 			currentCostForDedicatedEncoder_power_2 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "dedicatedEncoder_power_3";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			dedicatedEncoder_power_3Changed = true;
 			dedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForDedicatedEncoder_power_3";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForDedicatedEncoder_power_3Changed = true;
 			currentCostForDedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "CDN_type_1";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			CDN_type_1Changed = true;
 			CDN_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForCDN_type_1";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForCDN_type_1Changed = true;
 			currentCostForCDN_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "support_type_1";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			support_type_1Changed = true;
 			support_type_1 = JSONUtils::asBool(metadataRoot, field, false);
 		}
 
 		field = "currentCostForSupport_type_1";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForSupport_type_1Changed = true;
 			currentCostForSupport_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
 		}
 
 		field = "userAPIKey";
-		if (JSONUtils::isMetadataPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			json userAPIKeyRoot = metadataRoot[field];
 
@@ -2147,7 +2147,7 @@ void API::updateWorkspace(
 												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder", "createRemoveLiveChannel"};
 				for (string field : mandatoryFields)
 				{
-					if (!JSONUtils::isMetadataPresent(userAPIKeyRoot, field))
+					if (!JSONUtils::isPresent(userAPIKeyRoot, field))
 					{
 						string errorMessage = std::format(
 							"Json field is not present or it is null"
@@ -2162,7 +2162,7 @@ void API::updateWorkspace(
 			}
 
 			field = "expirationDate";
-			if (JSONUtils::isMetadataPresent(userAPIKeyRoot, field))
+			if (JSONUtils::isPresent(userAPIKeyRoot, field))
 			{
 				expirationDateChanged = true;
 				newExpirationUtcDate = JSONUtils::asString(userAPIKeyRoot, field, "");

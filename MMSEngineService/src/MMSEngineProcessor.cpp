@@ -943,7 +943,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		// audioTrackIndexToBeUsed = JSONUtils::asInt32(outputRoot, field, -1);
 
 		field = "filters";
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
+		if (JSONUtils::isPresent(outputRoot, field))
 			filtersRoot = outputRoot[field];
 
 		filtersRoot = getReviewedFiltersRoot(filtersRoot, workspace, ingestionJobKey);
@@ -974,7 +974,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		string keyField = "encodingProfileKey";
 		string labelField = "encodingProfileLabel";
 		string contentTypeField = "contentType";
-		if (JSONUtils::isMetadataPresent(outputRoot, keyField))
+		if (JSONUtils::isPresent(outputRoot, keyField))
 		{
 			encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
 
@@ -983,13 +983,13 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingProfileKey: " + to_string(encodingProfileKey)
 			);
 		}
-		else if (JSONUtils::isMetadataPresent(outputRoot, labelField))
+		else if (JSONUtils::isPresent(outputRoot, labelField))
 		{
 			string encodingProfileLabel = JSONUtils::asString(outputRoot, labelField, "");
 			if (encodingProfileLabel != "")
 			{
 				MMSEngineDBFacade::ContentType contentType;
-				if (JSONUtils::isMetadataPresent(outputRoot, contentTypeField))
+				if (JSONUtils::isPresent(outputRoot, contentTypeField))
 				{
 					contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(outputRoot, contentTypeField, ""));
 
@@ -1034,7 +1034,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		}
 
 		field = "drawTextDetails";
-		if (JSONUtils::isMetadataPresent(outputRoot, field))
+		if (JSONUtils::isPresent(outputRoot, field))
 			drawTextDetailsRoot = outputRoot[field];
 
 		json localOutputRoot;
@@ -1117,15 +1117,15 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Wor
 		return filtersRoot;
 
 	// se viene usato il filtro imageoverlay, è necessario recuperare sourcePhysicalPathName e sourcePhysicalDeliveryURL
-	if (JSONUtils::isMetadataPresent(filtersRoot, "complex"))
+	if (JSONUtils::isPresent(filtersRoot, "complex"))
 	{
 		json complexFiltersRoot = filtersRoot["complex"];
 		for (int complexFilterIndex = 0; complexFilterIndex < complexFiltersRoot.size(); complexFilterIndex++)
 		{
 			json complexFilterRoot = complexFiltersRoot[complexFilterIndex];
-			if (JSONUtils::isMetadataPresent(complexFilterRoot, "type") && complexFilterRoot["type"] == "imageoverlay")
+			if (JSONUtils::isPresent(complexFilterRoot, "type") && complexFilterRoot["type"] == "imageoverlay")
 			{
-				if (!JSONUtils::isMetadataPresent(complexFilterRoot, "imagePhysicalPathKey"))
+				if (!JSONUtils::isPresent(complexFilterRoot, "imagePhysicalPathKey"))
 				{
 					string errorMessage = std::format(
 						"imageoverlay filter without imagePhysicalPathKey"
@@ -1204,7 +1204,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 )
 {
 	string field = "fileFormat";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
 		if (fileFormatSpecifiedByUser != fileFormat)

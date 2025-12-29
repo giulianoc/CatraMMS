@@ -237,7 +237,7 @@ void API::createBulkOfDeliveryAuthorization(
 			bool save = false;
 
 			string field = "mediaItemKeyList";
-			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
+			if (JSONUtils::isPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				json mediaItemKeyListRoot = deliveryAutorizationDetailsRoot[field];
 
@@ -327,7 +327,7 @@ void API::createBulkOfDeliveryAuthorization(
 			}
 
 			field = "uniqueNameList";
-			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
+			if (JSONUtils::isPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				json uniqueNameListRoot = deliveryAutorizationDetailsRoot[field];
 
@@ -421,7 +421,7 @@ void API::createBulkOfDeliveryAuthorization(
 			}
 
 			field = "liveIngestionJobKeyList";
-			if (JSONUtils::isMetadataPresent(deliveryAutorizationDetailsRoot, field))
+			if (JSONUtils::isPresent(deliveryAutorizationDetailsRoot, field))
 			{
 				json liveIngestionJobKeyListRoot = deliveryAutorizationDetailsRoot[field];
 				for (int liveIngestionJobKeyIndex = 0; liveIngestionJobKeyIndex < liveIngestionJobKeyListRoot.size(); liveIngestionJobKeyIndex++)

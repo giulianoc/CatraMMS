@@ -354,7 +354,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		}
@@ -497,7 +497,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					 ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
 			{
 				field = "PeriodInSeconds";
-				if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -551,9 +551,9 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		//	endTimeInSeconds is bigger of few milliseconds of the duration of
 		// the media 	For this reason this field is set to true by default
 		bool fixStartTimeIfOvercomeDuration = true;
-		if (JSONUtils::isMetadataPresent(parametersRoot, "fixInstantInSecondsIfOvercomeDuration"))
+		if (JSONUtils::isPresent(parametersRoot, "fixInstantInSecondsIfOvercomeDuration"))
 			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, "fixInstantInSecondsIfOvercomeDuration", true);
-		else if (JSONUtils::isMetadataPresent(parametersRoot, "FixStartTimeIfOvercomeDuration"))
+		else if (JSONUtils::isPresent(parametersRoot, "FixStartTimeIfOvercomeDuration"))
 			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, "FixStartTimeIfOvercomeDuration", true);
 
 		{

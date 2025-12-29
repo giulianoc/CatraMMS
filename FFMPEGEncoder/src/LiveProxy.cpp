@@ -102,7 +102,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		{
 			json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
-			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
+			if (!JSONUtils::isPresent(inputRoot, "streamInput"))
 				continue;
 			json streamInputRoot = inputRoot["streamInput"];
 
@@ -187,7 +187,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				// if (utcProxyPeriodStart == -1)
 				// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
 
-				if (JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
+				if (JSONUtils::isPresent(inputRoot, "streamInput"))
 				{
 					json streamInputRoot = inputRoot["streamInput"];
 
@@ -256,7 +256,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		{
 			json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
-			if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
+			if (!JSONUtils::isPresent(inputRoot, "streamInput"))
 				continue;
 			json streamInputRoot = inputRoot["streamInput"];
 
@@ -302,7 +302,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			{
 				json inputRoot = liveProxyData->_inputsRoot[inputIndex];
 
-				if (!JSONUtils::isMetadataPresent(inputRoot, "streamInput"))
+				if (!JSONUtils::isPresent(inputRoot, "streamInput"))
 					continue;
 				json streamInputRoot = inputRoot["streamInput"];
 

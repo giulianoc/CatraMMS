@@ -41,7 +41,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 		string sourceFileExtension;
 		{
 			string field = "sourceFileExtension";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -63,7 +63,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			string field = "sourceTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -102,7 +102,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			}
 
 			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -141,7 +141,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			}
 
 			field = "sourcePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -163,7 +163,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 		else
 		{
 			string field = "sourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -179,7 +179,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

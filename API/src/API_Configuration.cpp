@@ -59,7 +59,7 @@ void API::addYouTubeConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -73,7 +73,7 @@ void API::addYouTubeConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "tokenType";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -89,7 +89,7 @@ void API::addYouTubeConf(
 			if (tokenType == "RefreshToken")
 			{
 				field = "refreshToken";
-				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				if (!JSONUtils::isPresent(requestBodyRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -105,7 +105,7 @@ void API::addYouTubeConf(
 			else // if (tokenType == "AccessToken")
 			{
 				field = "accessToken";
-				if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+				if (!JSONUtils::isPresent(requestBodyRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"
@@ -238,28 +238,28 @@ void API::modifyYouTubeConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				label = JSONUtils::asString(requestBodyRoot, field, "");
 				labelModified = true;
 			}
 
 			field = "tokenType";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				tokenType = JSONUtils::asString(requestBodyRoot, field, "");
 				tokenTypeModified = true;
 			}
 
 			field = "refreshToken";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
 				refreshTokenModified = true;
 			}
 
 			field = "accessToken";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				accessToken = JSONUtils::asString(requestBodyRoot, field, "");
 				accessTokenModified = true;
@@ -473,7 +473,7 @@ void API::addFacebookConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -487,7 +487,7 @@ void API::addFacebookConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "UserAccessToken";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -580,7 +580,7 @@ void API::modifyFacebookConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -594,7 +594,7 @@ void API::modifyFacebookConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "UserAccessToken";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -768,7 +768,7 @@ void API::addTwitchConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -782,7 +782,7 @@ void API::addTwitchConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "RefreshToken";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -875,7 +875,7 @@ void API::modifyTwitchConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -889,7 +889,7 @@ void API::modifyTwitchConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "RefreshToken";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1052,7 +1052,7 @@ void API::addTiktokConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1066,7 +1066,7 @@ void API::addTiktokConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Token";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1149,7 +1149,7 @@ void API::modifyTiktokConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1163,7 +1163,7 @@ void API::modifyTiktokConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Token";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1355,7 +1355,7 @@ void API::addStream(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1369,7 +1369,7 @@ void API::addStream(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "sourceType";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1455,7 +1455,7 @@ void API::addStream(
 			position = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "userData";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 				userData = requestBodyRoot[field];
 		}
 		catch (exception &e)
@@ -1598,7 +1598,7 @@ void API::modifyStream(
 
 			labelToBeModified = false;
 			string field = "label";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				label = JSONUtils::asString(requestBodyRoot, field, "");
 				labelToBeModified = true;
@@ -1606,7 +1606,7 @@ void API::modifyStream(
 
 			sourceTypeToBeModified = false;
 			field = "sourceType";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				sourceType = JSONUtils::asString(requestBodyRoot, field, "");
 				sourceTypeToBeModified = true;
@@ -1614,7 +1614,7 @@ void API::modifyStream(
 
 			encodersPoolKeyToBeModified = false;
 			field = "encodersPoolKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				encodersPoolKeyToBeModified = true;
@@ -1622,7 +1622,7 @@ void API::modifyStream(
 
 			urlToBeModified = false;
 			field = "url";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				url = JSONUtils::asString(requestBodyRoot, field, "");
 				urlToBeModified = true;
@@ -1630,7 +1630,7 @@ void API::modifyStream(
 
 			pushProtocolToBeModified = false;
 			field = "pushProtocol";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");
 				pushProtocolToBeModified = true;
@@ -1638,7 +1638,7 @@ void API::modifyStream(
 
 			pushEncoderKeyToBeModified = false;
 			field = "pushEncoderKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				pushEncoderKeyToBeModified = true;
@@ -1646,7 +1646,7 @@ void API::modifyStream(
 
 			pushPublicEncoderNameToBeModified = false;
 			field = "pushPublicEncoderName";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				pushPublicEncoderName = JSONUtils::asBool(requestBodyRoot, field, false);
 				pushPublicEncoderNameToBeModified = true;
@@ -1654,7 +1654,7 @@ void API::modifyStream(
 
 			pushServerPortToBeModified = false;
 			field = "pushServerPort";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				pushServerPort = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				pushServerPortToBeModified = true;
@@ -1662,7 +1662,7 @@ void API::modifyStream(
 
 			pushUriToBeModified = false;
 			field = "pushURI";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				pushUri = JSONUtils::asString(requestBodyRoot, field, "");
 				pushUriToBeModified = true;
@@ -1670,7 +1670,7 @@ void API::modifyStream(
 
 			pushListenTimeoutToBeModified = false;
 			field = "pushListenTimeout";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				pushListenTimeout = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				pushListenTimeoutToBeModified = true;
@@ -1678,7 +1678,7 @@ void API::modifyStream(
 
 			captureLiveVideoDeviceNumberToBeModified = false;
 			field = "captureLiveVideoDeviceNumber";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveVideoDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveVideoDeviceNumberToBeModified = true;
@@ -1686,7 +1686,7 @@ void API::modifyStream(
 
 			captureLiveVideoInputFormatToBeModified = false;
 			field = "captureLiveVideoInputFormat";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
 				captureLiveVideoInputFormatToBeModified = true;
@@ -1694,7 +1694,7 @@ void API::modifyStream(
 
 			captureLiveFrameRateToBeModified = false;
 			field = "captureLiveFrameRate";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveFrameRate = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveFrameRateToBeModified = true;
@@ -1702,7 +1702,7 @@ void API::modifyStream(
 
 			captureLiveWidthToBeModified = false;
 			field = "captureLiveWidth";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveWidth = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveWidthToBeModified = true;
@@ -1710,7 +1710,7 @@ void API::modifyStream(
 
 			captureLiveHeightToBeModified = false;
 			field = "captureLiveHeight";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveHeight = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveHeightToBeModified = true;
@@ -1718,7 +1718,7 @@ void API::modifyStream(
 
 			captureLiveAudioDeviceNumberToBeModified = false;
 			field = "captureLiveAudioDeviceNumber";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveAudioDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveAudioDeviceNumberToBeModified = true;
@@ -1726,7 +1726,7 @@ void API::modifyStream(
 
 			captureLiveChannelsNumberToBeModified = false;
 			field = "captureLiveChannelsNumber";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				captureLiveChannelsNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				captureLiveChannelsNumberToBeModified = true;
@@ -1734,7 +1734,7 @@ void API::modifyStream(
 
 			tvSourceTVConfKeyToBeModified = false;
 			field = "sourceTVConfKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				tvSourceTVConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				tvSourceTVConfKeyToBeModified = true;
@@ -1742,7 +1742,7 @@ void API::modifyStream(
 
 			typeToBeModified = false;
 			field = "type";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				type = JSONUtils::asString(requestBodyRoot, field, "");
 				typeToBeModified = true;
@@ -1750,7 +1750,7 @@ void API::modifyStream(
 
 			descriptionToBeModified = false;
 			field = "description";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				description = JSONUtils::asString(requestBodyRoot, field, "");
 				descriptionToBeModified = true;
@@ -1758,7 +1758,7 @@ void API::modifyStream(
 
 			nameToBeModified = false;
 			field = "name";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				name = JSONUtils::asString(requestBodyRoot, field, "");
 				nameToBeModified = true;
@@ -1766,7 +1766,7 @@ void API::modifyStream(
 
 			regionToBeModified = false;
 			field = "region";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				region = JSONUtils::asString(requestBodyRoot, field, "");
 				regionToBeModified = true;
@@ -1774,7 +1774,7 @@ void API::modifyStream(
 
 			countryToBeModified = false;
 			field = "country";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				country = JSONUtils::asString(requestBodyRoot, field, "");
 				countryToBeModified = true;
@@ -1782,7 +1782,7 @@ void API::modifyStream(
 
 			imageToBeModified = false;
 			field = "imageMediaItemKey";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				imageToBeModified = true;
@@ -1790,7 +1790,7 @@ void API::modifyStream(
 
 			imageToBeModified = false;
 			field = "imageUniqueName";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");
 				imageToBeModified = true;
@@ -1798,7 +1798,7 @@ void API::modifyStream(
 
 			positionToBeModified = false;
 			field = "position";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				position = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				positionToBeModified = true;
@@ -1811,7 +1811,7 @@ void API::modifyStream(
 
 			userDataToBeModified = false;
 			field = "userData";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				userData = requestBodyRoot[field];
 				userDataToBeModified = true;
@@ -2127,7 +2127,7 @@ void API::addSourceTVStream(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2150,7 +2150,7 @@ void API::addSourceTVStream(
 			transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 
 			field = "name";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2167,7 +2167,7 @@ void API::addSourceTVStream(
 			satellite = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "frequency";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2335,133 +2335,133 @@ void API::modifySourceTVStream(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "type";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				type = JSONUtils::asString(requestBodyRoot, field, "");
 				typeToBeModified = true;
 			}
 
 			field = "serviceId";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				serviceIdToBeModified = true;
 			}
 
 			field = "networkId";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				networkIdToBeModified = true;
 			}
 
 			field = "transportStreamId";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				transportStreamIdToBeModified = true;
 			}
 
 			field = "name";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				name = JSONUtils::asString(requestBodyRoot, field, "");
 				nameToBeModified = true;
 			}
 
 			field = "satellite";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				satellite = JSONUtils::asString(requestBodyRoot, field, "");
 				satelliteToBeModified = true;
 			}
 
 			field = "frequency";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				frequency = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				frequencyToBeModified = true;
 			}
 
 			field = "lnb";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				lnb = JSONUtils::asString(requestBodyRoot, field, "");
 				lnbToBeModified = true;
 			}
 
 			field = "videoPid";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				videoPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				videoPidToBeModified = true;
 			}
 
 			field = "audioPids";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				audioPids = JSONUtils::asString(requestBodyRoot, field, "");
 				audioPidsToBeModified = true;
 			}
 
 			field = "audioItalianPid";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				audioItalianPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				audioItalianPidToBeModified = true;
 			}
 
 			field = "audioEnglishPid";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				audioEnglishPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				audioEnglishPidToBeModified = true;
 			}
 
 			field = "teletextPid";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				teletextPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
 				teletextPidToBeModified = true;
 			}
 
 			field = "modulation";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				modulation = JSONUtils::asString(requestBodyRoot, field, "");
 				modulationToBeModified = true;
 			}
 
 			field = "polarization";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				polarization = JSONUtils::asString(requestBodyRoot, field, "");
 				polarizationToBeModified = true;
 			}
 
 			field = "symbolRate";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				symbolRateToBeModified = true;
 			}
 
 			field = "bandwidthInHz";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);
 				bandwidthInHzToBeModified = true;
 			}
 
 			field = "country";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				country = JSONUtils::asString(requestBodyRoot, field, "");
 				countryToBeModified = true;
 			}
 
 			field = "deliverySystem";
-			if (JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");
 				deliverySystemToBeModified = true;
@@ -2667,7 +2667,7 @@ void API::addRTMPChannelConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2681,7 +2681,7 @@ void API::addRTMPChannelConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "rtmpURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2707,7 +2707,7 @@ void API::addRTMPChannelConf(
 			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2809,7 +2809,7 @@ void API::modifyRTMPChannelConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2823,7 +2823,7 @@ void API::modifyRTMPChannelConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "rtmpURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2837,7 +2837,7 @@ void API::modifyRTMPChannelConf(
 			rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "streamName";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2851,7 +2851,7 @@ void API::modifyRTMPChannelConf(
 			streamName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "userName";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2865,7 +2865,7 @@ void API::modifyRTMPChannelConf(
 			userName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "password";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2879,7 +2879,7 @@ void API::modifyRTMPChannelConf(
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "playURLDetails";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -2893,7 +2893,7 @@ void API::modifyRTMPChannelConf(
 			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3080,7 +3080,7 @@ void API::addSRTChannelConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3094,7 +3094,7 @@ void API::addSRTChannelConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "srtURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3117,7 +3117,7 @@ void API::addSRTChannelConf(
 			playURL = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3216,7 +3216,7 @@ void API::modifySRTChannelConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3230,7 +3230,7 @@ void API::modifySRTChannelConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "srtURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3244,7 +3244,7 @@ void API::modifySRTChannelConf(
 			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "mode";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3258,7 +3258,7 @@ void API::modifySRTChannelConf(
 			mode = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "streamId";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3272,7 +3272,7 @@ void API::modifySRTChannelConf(
 			streamId = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "passphrase";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3286,7 +3286,7 @@ void API::modifySRTChannelConf(
 			passphrase = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "playURL";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3300,7 +3300,7 @@ void API::modifySRTChannelConf(
 			playURL = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3482,7 +3482,7 @@ void API::addHLSChannelConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3496,7 +3496,7 @@ void API::addHLSChannelConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "deliveryCode";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3516,7 +3516,7 @@ void API::addHLSChannelConf(
 			playlistEntriesNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3613,7 +3613,7 @@ void API::modifyHLSChannelConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3627,7 +3627,7 @@ void API::modifyHLSChannelConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "deliveryCode";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3641,7 +3641,7 @@ void API::modifyHLSChannelConf(
 			deliveryCode = JSONUtils::asInt64(requestBodyRoot, field, -1);
 
 			field = "segmentDuration";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3655,7 +3655,7 @@ void API::modifyHLSChannelConf(
 			segmentDuration = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "playlistEntriesNumber";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3669,7 +3669,7 @@ void API::modifyHLSChannelConf(
 			playlistEntriesNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
 
 			field = "type";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3854,7 +3854,7 @@ void API::addFTPConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3868,7 +3868,7 @@ void API::addFTPConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Server";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3882,7 +3882,7 @@ void API::addFTPConf(
 			server = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Port";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3896,7 +3896,7 @@ void API::addFTPConf(
 			port = JSONUtils::asInt32(requestBodyRoot, field, 0);
 
 			field = "UserName";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3910,7 +3910,7 @@ void API::addFTPConf(
 			userName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Password";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -3924,7 +3924,7 @@ void API::addFTPConf(
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "RemoteDirectory";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4021,7 +4021,7 @@ void API::modifyFTPConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4035,7 +4035,7 @@ void API::modifyFTPConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Server";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4049,7 +4049,7 @@ void API::modifyFTPConf(
 			server = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Port";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4063,7 +4063,7 @@ void API::modifyFTPConf(
 			port = JSONUtils::asInt32(requestBodyRoot, field, 0);
 
 			field = "UserName";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4077,7 +4077,7 @@ void API::modifyFTPConf(
 			userName = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Password";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4091,7 +4091,7 @@ void API::modifyFTPConf(
 			password = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "RemoteDirectory";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4259,7 +4259,7 @@ void API::addEMailConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4273,7 +4273,7 @@ void API::addEMailConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Addresses";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4287,7 +4287,7 @@ void API::addEMailConf(
 			addresses = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Subject";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4301,7 +4301,7 @@ void API::addEMailConf(
 			subject = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Message";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4396,7 +4396,7 @@ void API::modifyEMailConf(
 			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4410,7 +4410,7 @@ void API::modifyEMailConf(
 			label = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Addresses";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4424,7 +4424,7 @@ void API::modifyEMailConf(
 			addresses = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Subject";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -4438,7 +4438,7 @@ void API::modifyEMailConf(
 			subject = JSONUtils::asString(requestBodyRoot, field, "");
 
 			field = "Message";
-			if (!JSONUtils::isMetadataPresent(requestBodyRoot, field))
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

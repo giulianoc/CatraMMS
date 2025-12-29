@@ -35,7 +35,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 			encodersDetailsRoot["encodersPoolLabel"] = taskEncodersPoolLabel;
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+			if (JSONUtils::isPresent(parametersRoot, "internalMMS"))
 				parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
 			else
 			{
@@ -54,13 +54,13 @@ void MMSEngineProcessor::manageVODProxy(
 		bool defaultBroadcast = false;
 		{
 			string field = "timePeriod";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
 				if (timePeriod)
 				{
 					field = "schedule";
-					if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+					if (!JSONUtils::isPresent(parametersRoot, field))
 					{
 						string errorMessage = string() + "Field is not present or it is null" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -75,7 +75,7 @@ void MMSEngineProcessor::manageVODProxy(
 					json proxyPeriodRoot = parametersRoot[field];
 
 					field = "start";
-					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					if (!JSONUtils::isPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage = string() + "Field is not present or it is null" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -88,7 +88,7 @@ void MMSEngineProcessor::manageVODProxy(
 					utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
 					field = "end";
-					if (!JSONUtils::isMetadataPresent(proxyPeriodRoot, field))
+					if (!JSONUtils::isPresent(proxyPeriodRoot, field))
 					{
 						string errorMessage = string() + "Field is not present or it is null" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
@@ -106,7 +106,7 @@ void MMSEngineProcessor::manageVODProxy(
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
 
 			field = "outputs";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
@@ -114,9 +114,9 @@ void MMSEngineProcessor::manageVODProxy(
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 				outputsRoot = parametersRoot[field];
-			else // if (JSONUtils::isMetadataPresent(parametersRoot, "Outputs",
+			else // if (JSONUtils::isPresent(parametersRoot, "Outputs",
 				 // false))
 				outputsRoot = parametersRoot["Outputs"];
 		}
@@ -127,9 +127,9 @@ void MMSEngineProcessor::manageVODProxy(
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
 		// (inputsRoot)
 		//		already ready
-		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS") &&
-			JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster") &&
-			JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot"))
+		if (JSONUtils::isPresent(parametersRoot, "internalMMS") &&
+			JSONUtils::isPresent(parametersRoot["internalMMS"], "broadcaster") &&
+			JSONUtils::isPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot"))
 		{
 			inputsRoot = parametersRoot["internalMMS"]["broadcaster"]["broadcasterInputsRoot"];
 		}
@@ -262,7 +262,7 @@ void MMSEngineProcessor::manageVODProxy(
 			*/
 			json filtersRoot = nullptr;
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, "broadcastFilters"))
+			if (JSONUtils::isPresent(parametersRoot, "broadcastFilters"))
 				filtersRoot = parametersRoot["broadcastFilters"];
 
 			string otherInputOptions = JSONUtils::asString(parametersRoot, "otherInputOptions");

@@ -39,7 +39,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		int audioTrackIndexToBeUsed = JSONUtils::asInt32(ingestedParametersRoot, "AudioTrackIndex", -1);
 
 		json filtersRoot = nullptr;
-		if (JSONUtils::isMetadataPresent(ingestedParametersRoot, "filters"))
+		if (JSONUtils::isPresent(ingestedParametersRoot, "filters"))
 			filtersRoot = ingestedParametersRoot["filters"];
 
 		json sourcesToBeEncodedRoot = encodingParametersRoot["sourcesToBeEncoded"];
@@ -52,15 +52,15 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 		json videoTracksRoot;
 		string field = "videoTracks";
-		if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+		if (JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			videoTracksRoot = sourceToBeEncodedRoot[field];
 		json audioTracksRoot;
 		field = "audioTracks";
-		if (JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+		if (JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			audioTracksRoot = sourceToBeEncodedRoot[field];
 
 		field = "sourceFileExtension";
-		if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+		if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 		{
 			string errorMessage = std::format(
 				"Field is not present or it is null"
@@ -80,7 +80,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			field = "sourceTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -119,7 +119,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			}
 
 			field = "sourcePhysicalDeliveryURL";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -135,7 +135,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			string sourcePhysicalDeliveryURL = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
 
 			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -157,7 +157,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 		else
 		{
 			field = "mmsSourceAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -176,7 +176,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 				field = "encodedTranscoderStagingAssetPathName";
 			else
 				field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -233,7 +233,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			}
 
 			field = "sourceMediaItemKey";
-			if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -249,7 +249,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
 
 			field = "encodingProfileKey";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -278,7 +278,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 			if (useOfLocalStorageForProcessingOutput)
 			{
 				field = "encodedNFSStagingAssetPathName";
-				if (!JSONUtils::isMetadataPresent(sourceToBeEncodedRoot, field))
+				if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
 				{
 					string errorMessage = std::format(
 						"Field is not present or it is null"

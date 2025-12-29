@@ -764,7 +764,7 @@ void API::addUpdateEncodingProfilesSet(
 			validator.validateEncodingProfilesSetRootMetadata(contentType, encodingProfilesSetRoot);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(encodingProfilesSetRoot, field))
+			if (!JSONUtils::isPresent(encodingProfilesSetRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -885,7 +885,7 @@ void API::addEncodingProfile(
 			validator.validateEncodingProfileRootMetadata(contentType, encodingProfileRoot);
 
 			string field = "label";
-			if (!JSONUtils::isMetadataPresent(encodingProfileRoot, field))
+			if (!JSONUtils::isPresent(encodingProfileRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

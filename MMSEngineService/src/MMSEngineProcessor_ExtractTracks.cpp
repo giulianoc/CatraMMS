@@ -47,7 +47,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 					json trackRoot = tracksToot[trackIndex];
 
 					field = "TrackType";
-					if (!JSONUtils::isMetadataPresent(trackRoot, field))
+					if (!JSONUtils::isPresent(trackRoot, field))
 					{
 						string sTrackRoot = JSONUtils::toString(trackRoot);
 
@@ -67,7 +67,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 			}
 
 			string field = "outputFileFormat";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;

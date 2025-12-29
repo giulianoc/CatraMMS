@@ -50,7 +50,7 @@ void SlideShow::encodeContent(json metadataRoot)
 				if (externalEncoder)
 				{
 					field = "sourceFileExtension";
-					if (!JSONUtils::isMetadataPresent(imageRoot, field))
+					if (!JSONUtils::isPresent(imageRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -66,7 +66,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					string sourceFileExtension = JSONUtils::asString(imageRoot, field, "");
 
 					field = "sourcePhysicalDeliveryURL";
-					if (!JSONUtils::isMetadataPresent(imageRoot, field))
+					if (!JSONUtils::isPresent(imageRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -82,7 +82,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					string sourcePhysicalDeliveryURL = JSONUtils::asString(imageRoot, field, "");
 
 					field = "sourceTranscoderStagingAssetPathName";
-					if (!JSONUtils::isMetadataPresent(imageRoot, field))
+					if (!JSONUtils::isPresent(imageRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -142,7 +142,7 @@ void SlideShow::encodeContent(json metadataRoot)
 				if (externalEncoder)
 				{
 					field = "sourceFileExtension";
-					if (!JSONUtils::isMetadataPresent(audioRoot, field))
+					if (!JSONUtils::isPresent(audioRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -158,7 +158,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					string sourceFileExtension = JSONUtils::asString(audioRoot, field, "");
 
 					field = "sourcePhysicalDeliveryURL";
-					if (!JSONUtils::isMetadataPresent(audioRoot, field))
+					if (!JSONUtils::isPresent(audioRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -174,7 +174,7 @@ void SlideShow::encodeContent(json metadataRoot)
 					string sourcePhysicalDeliveryURL = JSONUtils::asString(audioRoot, field, "");
 
 					field = "sourceTranscoderStagingAssetPathName";
-					if (!JSONUtils::isMetadataPresent(audioRoot, field))
+					if (!JSONUtils::isPresent(audioRoot, field))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -228,7 +228,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			field = "encodedTranscoderStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -269,7 +269,7 @@ void SlideShow::encodeContent(json metadataRoot)
 		else
 		{
 			field = "encodedNFSStagingAssetPathName";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -330,7 +330,7 @@ void SlideShow::encodeContent(json metadataRoot)
 			}
 
 			field = "targetFileFormat";
-			if (!JSONUtils::isMetadataPresent(encodingParametersRoot, field))
+			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"

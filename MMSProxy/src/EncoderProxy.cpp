@@ -1073,7 +1073,7 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 			killed = JSONUtils::asBool(encodeStatusResponse, "killedByUser", false);
 			killTypeReceived = FFMpegWrapper::toKillType(JSONUtils::asString(encodeStatusResponse, "killTypeReceived",
 				FFMpegWrapper::toString(FFMpegWrapper::KillType::None)));
-			if (JSONUtils::isMetadataPresent(encodeStatusResponse, "encodingProgress")
+			if (JSONUtils::isPresent(encodeStatusResponse, "encodingProgress")
 				&& !JSONUtils::isNull(encodeStatusResponse, "encodingProgress"))
 				encodingProgress = JSONUtils::asDouble(encodeStatusResponse, "encodingProgress", 0.0);
 			pid = JSONUtils::asInt32(encodeStatusResponse, "pid", -1);
@@ -1130,7 +1130,7 @@ string EncoderProxy::generateMediaMetadataToIngest(
 )
 {
 	string field = "fileFormat";
-	if (JSONUtils::isMetadataPresent(parametersRoot, field))
+	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
 		if (fileFormatSpecifiedByUser != fileFormat)

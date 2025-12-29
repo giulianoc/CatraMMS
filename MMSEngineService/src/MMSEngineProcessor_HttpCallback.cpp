@@ -51,7 +51,7 @@ void MMSEngineProcessor::httpCallbackThread(
 			userName = JSONUtils::asString(parametersRoot, "userName", "");
 			password = JSONUtils::asString(parametersRoot, "password", "");
 			string field = "hostName";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -66,7 +66,7 @@ void MMSEngineProcessor::httpCallbackThread(
 			httpHostName = JSONUtils::asString(parametersRoot, field, "");
 
 			field = "port";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				if (httpProtocol == "http")
 					httpPort = 80;
@@ -79,7 +79,7 @@ void MMSEngineProcessor::httpCallbackThread(
 			callbackTimeoutInSeconds = JSONUtils::asInt32(parametersRoot, "timeout", 120);
 
 			field = "uri";
-			if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -99,7 +99,7 @@ void MMSEngineProcessor::httpCallbackThread(
 			httpBody = JSONUtils::asString(parametersRoot, "httpBody", "");
 
 			field = "headers";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				// semicolon as separator
 				stringstream ss(JSONUtils::asString(parametersRoot, field, ""));

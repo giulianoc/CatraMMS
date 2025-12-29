@@ -29,7 +29,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		{
 			/*
 			string field = "streamSourceType";
-			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+			if (!JSONUtils::isPresent(liveCutParametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it
 			is null"
@@ -46,7 +46,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			if (streamSourceType == "IP_PULL")
 			{
 				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				if (!JSONUtils::isPresent(liveCutParametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or
 			it is null"
@@ -64,7 +64,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			else if (streamSourceType == "Satellite")
 			{
 				field = "configurationLabel";
-				if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+				if (!JSONUtils::isPresent(liveCutParametersRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or
 			it is null"
@@ -83,7 +83,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 			// else if (streamSourceType == "IP_PUSH")
 			string field = "recordingCode";
-			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+			if (!JSONUtils::isPresent(liveCutParametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
@@ -103,7 +103,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			json cutPeriodRoot = liveCutParametersRoot[field];
 
 			field = "start";
-			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+			if (!JSONUtils::isPresent(cutPeriodRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
@@ -114,7 +114,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
 
 			field = "end";
-			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, field))
+			if (!JSONUtils::isPresent(cutPeriodRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
@@ -515,12 +515,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		string apiKey;
 		{
 			string field = "internalMMS";
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+			if (JSONUtils::isPresent(liveCutParametersRoot, field))
 			{
 				json internalMMSRoot = liveCutParametersRoot[field];
 
 				field = "credentials";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json credentialsRoot = internalMMSRoot[field];
 
@@ -533,20 +533,20 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				}
 
 				field = "events";
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, field))
+				if (JSONUtils::isPresent(internalMMSRoot, field))
 				{
 					json eventsRoot = internalMMSRoot[field];
 
 					field = "onSuccess";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						liveCutOnSuccess = eventsRoot[field];
 
 					field = "onError";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						liveCutOnError = eventsRoot[field];
 
 					field = "onComplete";
-					if (JSONUtils::isMetadataPresent(eventsRoot, field))
+					if (JSONUtils::isPresent(eventsRoot, field))
 						liveCutOnComplete = eventsRoot[field];
 				}
 			}
@@ -577,7 +577,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				}
 				{
 					field = "maxWaitingForLastChunkInSeconds";
-					if (JSONUtils::isMetadataPresent(concatDemuxerParametersRoot, field))
+					if (JSONUtils::isPresent(concatDemuxerParametersRoot, field))
 					{
 						concatDemuxerParametersRoot.erase(field);
 					}
@@ -642,7 +642,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					json userDataRoot;
 
 					field = "userData";
-					if (JSONUtils::isMetadataPresent(liveCutParametersRoot, field))
+					if (JSONUtils::isPresent(liveCutParametersRoot, field))
 					{
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type()))
 						// == 7 means objectValue
@@ -879,7 +879,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		int maxWaitingForLastChunkInSeconds = 90;
 		bool errorIfAChunkIsMissing = false;
 		{
-			if (!JSONUtils::isMetadataPresent(liveCutParametersRoot, "recordingCode"))
+			if (!JSONUtils::isPresent(liveCutParametersRoot, "recordingCode"))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -903,7 +903,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 			json cutPeriodRoot = liveCutParametersRoot["cutPeriod"];
 
-			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, "start"))
+			if (!JSONUtils::isPresent(cutPeriodRoot, "start"))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -918,7 +918,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			}
 			cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, "start", "");
 
-			if (!JSONUtils::isMetadataPresent(cutPeriodRoot, "end"))
+			if (!JSONUtils::isPresent(cutPeriodRoot, "end"))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -1283,11 +1283,11 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		int64_t userKey;
 		string apiKey;
 		{
-			if (JSONUtils::isMetadataPresent(liveCutParametersRoot, "internalMMS"))
+			if (JSONUtils::isPresent(liveCutParametersRoot, "internalMMS"))
 			{
 				json internalMMSRoot = liveCutParametersRoot["internalMMS"];
 
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, "credentials"))
+				if (JSONUtils::isPresent(internalMMSRoot, "credentials"))
 				{
 					json credentialsRoot = internalMMSRoot["credentials"];
 
@@ -1297,17 +1297,17 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
-				if (JSONUtils::isMetadataPresent(internalMMSRoot, "events"))
+				if (JSONUtils::isPresent(internalMMSRoot, "events"))
 				{
 					json eventsRoot = internalMMSRoot["events"];
 
-					if (JSONUtils::isMetadataPresent(eventsRoot, "onSuccess"))
+					if (JSONUtils::isPresent(eventsRoot, "onSuccess"))
 						liveCutOnSuccess = eventsRoot["onSuccess"];
 
-					if (JSONUtils::isMetadataPresent(eventsRoot, "onError"))
+					if (JSONUtils::isPresent(eventsRoot, "onError"))
 						liveCutOnError = eventsRoot["onError"];
 
-					if (JSONUtils::isMetadataPresent(eventsRoot, "onComplete"))
+					if (JSONUtils::isPresent(eventsRoot, "onComplete"))
 						liveCutOnComplete = eventsRoot["onComplete"];
 				}
 			}
@@ -1332,7 +1332,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				concatDemuxerParametersRoot.erase("cutPeriod");
 
-				if (JSONUtils::isMetadataPresent(concatDemuxerParametersRoot, "maxWaitingForLastChunkInSeconds"))
+				if (JSONUtils::isPresent(concatDemuxerParametersRoot, "maxWaitingForLastChunkInSeconds"))
 					concatDemuxerParametersRoot.erase("maxWaitingForLastChunkInSeconds");
 
 				concatDemuxerParametersRoot["retention"] = "0";
@@ -1382,7 +1382,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				{
 					json userDataRoot;
 
-					if (JSONUtils::isMetadataPresent(liveCutParametersRoot, "userData"))
+					if (JSONUtils::isPresent(liveCutParametersRoot, "userData"))
 					{
 						// to_string(static_cast<int>(liveCutParametersRoot[field].type()))
 						// == 7 means objectValue
@@ -1527,7 +1527,7 @@ task Live-Recorder.
 		{
 			int64_t cutIngestionJobKey = -1;
 			{
-				if (!JSONUtils::isMetadataPresent(workflowResponseRoot, "tasks"))
+				if (!JSONUtils::isPresent(workflowResponseRoot, "tasks"))
 				{
 					string errorMessage = std::format(
 						"LiveCut workflow ingestion: wrong response, tasks not found"

@@ -1394,7 +1394,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
                 mediaItemRoot[field] = localMediaItemKey;
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "title"))
+					|| JSONUtils::isPresent(responseFields, "title"))
 				{
 					string localTitle = static_cast<string>(resultSet->getString("title"));
 
@@ -1410,7 +1410,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "deliveryFileName"))
+					|| JSONUtils::isPresent(responseFields, "deliveryFileName"))
 				{
 					field = "deliveryFileName";
 					if (resultSet->isNull("deliveryFileName"))
@@ -1421,7 +1421,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "ingester"))
+					|| JSONUtils::isPresent(responseFields, "ingester"))
 				{
 					field = "ingester";
 					if (resultSet->isNull("ingester"))
@@ -1432,7 +1432,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "userData"))
+					|| JSONUtils::isPresent(responseFields, "userData"))
 				{
 					field = "userData";
 					if (resultSet->isNull("userData"))
@@ -1443,7 +1443,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "ingestionDate"))
+					|| JSONUtils::isPresent(responseFields, "ingestionDate"))
 				{
 					field = "ingestionDate";
 					mediaItemRoot[field] = static_cast<string>(
@@ -1451,14 +1451,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "startPublishing"))
+					|| JSONUtils::isPresent(responseFields, "startPublishing"))
 				{
 					field = "startPublishing";
 					mediaItemRoot[field] = static_cast<string>(
 						resultSet->getString("startPublishing"));
 				}
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "endPublishing"))
+					|| JSONUtils::isPresent(responseFields, "endPublishing"))
 				{
 					field = "endPublishing";
 					mediaItemRoot[field] = static_cast<string>(
@@ -1468,7 +1468,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				ContentType contentType = MMSEngineDBFacade::toContentType(
 					resultSet->getString("contentType"));
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "contentType"))
+					|| JSONUtils::isPresent(responseFields, "contentType"))
 				{
 					field = "contentType";
 					mediaItemRoot[field] = static_cast<string>(
@@ -1476,14 +1476,14 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "retentionInMinutes"))
+					|| JSONUtils::isPresent(responseFields, "retentionInMinutes"))
 				{
 					field = "retentionInMinutes";
 					mediaItemRoot[field] = resultSet->getInt64("retentionInMinutes");
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "providerName"))
+					|| JSONUtils::isPresent(responseFields, "providerName"))
 				{
 					int64_t contentProviderKey = resultSet->getInt64("contentProviderKey");
                 
@@ -1527,7 +1527,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "uniqueName"))
+					|| JSONUtils::isPresent(responseFields, "uniqueName"))
 				{
 					{
 						lastSQLCommand = 
@@ -1569,7 +1569,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "tags"))
+					|| JSONUtils::isPresent(responseFields, "tags"))
 				{
 					{
 						Json::Value mediaItemTagsRoot(Json::arrayValue);
@@ -1607,7 +1607,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 
 				// CrossReferences
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "crossReferences"))
+					|| JSONUtils::isPresent(responseFields, "crossReferences"))
 				{
 					// if (contentType == ContentType::Video)
 					{
@@ -1734,7 +1734,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 				}
 
 				if (responseFields == Json::nullValue
-					|| JSONUtils::isMetadataPresent(responseFields, "physicalPaths"))
+					|| JSONUtils::isPresent(responseFields, "physicalPaths"))
                 {
                     Json::Value mediaItemProfilesRoot(Json::arrayValue);
                     
@@ -5375,7 +5375,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			ingester = JSONUtils::asString(parametersRoot, field, "");
 
             field = "userData";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isPresent(parametersRoot, field))
             {
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == Json::stringValue)
@@ -5400,7 +5400,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
 
             field = "retention";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isPresent(parametersRoot, field))
             {
                 string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
@@ -5410,7 +5410,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string endPublishing = "FOREVER";
             {
                 field = "publishing";
-                if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                if (JSONUtils::isPresent(parametersRoot, field))
                 {
                     Json::Value publishingRoot = parametersRoot[field];
 
@@ -5539,7 +5539,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		// tags
         {
 			string field = "tags";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				Json::Value tagsRoot = parametersRoot[field];
 				addTags(conn, mediaItemKey, tagsRoot);
@@ -5548,7 +5548,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
         {
             string uniqueName;
-            if (JSONUtils::isMetadataPresent(parametersRoot, "uniqueName"))
+            if (JSONUtils::isPresent(parametersRoot, "uniqueName"))
                 uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
 
             if (uniqueName != "")
@@ -5565,7 +5565,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		// cross references
 		{
 			string field = "crossReference";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 			{
                 Json::Value crossReferenceRoot = parametersRoot[field];
 
@@ -5613,7 +5613,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
                 Json::Value crossReferenceParametersRoot;
 				field = "parameters";
-				if (JSONUtils::isMetadataPresent(crossReferenceRoot, field))
+				if (JSONUtils::isPresent(crossReferenceRoot, field))
 				{
 					crossReferenceParametersRoot = crossReferenceRoot[field];
 				}
@@ -5637,7 +5637,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		int64_t physicalItemRetentionInMinutes = -1;
 		{
             string field = "physicalItemRetention";
-            if (JSONUtils::isMetadataPresent(parametersRoot, field))
+            if (JSONUtils::isPresent(parametersRoot, field))
             {
                 string retention = JSONUtils::asString(parametersRoot, field, "1d");
 				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
@@ -5662,23 +5662,23 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 			{
                 string field = "userData";
-                if (JSONUtils::isMetadataPresent(parametersRoot, field))
+                if (JSONUtils::isPresent(parametersRoot, field))
                 {
                     Json::Value userDataRoot = parametersRoot[field];
 
                     field = "mmsData";
-                    if (JSONUtils::isMetadataPresent(userDataRoot, field))
+                    if (JSONUtils::isPresent(userDataRoot, field))
 					{
 						Json::Value mmsDataRoot = userDataRoot[field];
 
 						field = "ingestionJobKey";
-						if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveRecordingChunk"))
+						if (JSONUtils::isPresent(mmsDataRoot, "liveRecordingChunk"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveRecordingChunk"], field, -1);
-						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "generatedFrame"))
+						else if (JSONUtils::isPresent(mmsDataRoot, "generatedFrame"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["generatedFrame"], field, -1);
-						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "externalTranscoder"))
+						else if (JSONUtils::isPresent(mmsDataRoot, "externalTranscoder"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["externalTranscoder"], field, -1);
-						else if (JSONUtils::isMetadataPresent(mmsDataRoot, "liveCut"))
+						else if (JSONUtils::isPresent(mmsDataRoot, "liveCut"))
 							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveCut"], field, -1);
 					}
 				}

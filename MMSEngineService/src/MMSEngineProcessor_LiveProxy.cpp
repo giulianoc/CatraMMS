@@ -15,7 +15,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		 * commented because it will be High by default
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
-		if (!JSONUtils::isMetadataPresent(parametersRoot, field))
+		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			encodingPriority =
 				static_cast<MMSEngineDBFacade::EncodingPriority>(
@@ -82,7 +82,7 @@ void MMSEngineProcessor::manageLiveProxy(
 				else
 					encodersDetailsRoot["encodersPoolLabel"] = !taskEncodersPoolLabel.empty() ? taskEncodersPoolLabel : streamEncodersPoolLabel;
 
-				if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS"))
+				if (JSONUtils::isPresent(parametersRoot, "internalMMS"))
 					parametersRoot["internalMMS"]["encodersDetails"] = encodersDetailsRoot;
 				else
 				{
@@ -96,12 +96,12 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			defaultBroadcast = JSONUtils::asBool(parametersRoot, "defaultBroadcast", false);
 
-			if (JSONUtils::isMetadataPresent(parametersRoot, "timePeriod"))
+			if (JSONUtils::isPresent(parametersRoot, "timePeriod"))
 			{
 				timePeriod = JSONUtils::asBool(parametersRoot, "timePeriod", false);
 				if (timePeriod)
 				{
-					if (!JSONUtils::isMetadataPresent(parametersRoot, "schedule"))
+					if (!JSONUtils::isPresent(parametersRoot, "schedule"))
 					{
 						string errorMessage = std::format(
 							"Field is not present or it is null"
@@ -135,7 +135,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, "waitingSecondsBetweenAttemptsInCaseOfErrors", 5);
 
-			if (!JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+			if (!JSONUtils::isPresent(parametersRoot, "outputs"))
 			{
 				string errorMessage = std::format(
 					"Field is not present or it is null"
@@ -147,7 +147,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 				throw runtime_error(errorMessage);
 			}
-			if (JSONUtils::isMetadataPresent(parametersRoot, "outputs"))
+			if (JSONUtils::isPresent(parametersRoot, "outputs"))
 				outputsRoot = parametersRoot["outputs"];
 		}
 		string useVideoTrackFromPhysicalPathName;
@@ -214,9 +214,9 @@ void MMSEngineProcessor::manageLiveProxy(
 		// 2021-12-22: in case of a Broadcaster, we may have a playlist
 		// (inputsRoot) already ready
 		json inputsRoot;
-		if (JSONUtils::isMetadataPresent(parametersRoot, "internalMMS") &&
-			JSONUtils::isMetadataPresent(parametersRoot["internalMMS"], "broadcaster") &&
-			JSONUtils::isMetadataPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot"))
+		if (JSONUtils::isPresent(parametersRoot, "internalMMS") &&
+			JSONUtils::isPresent(parametersRoot["internalMMS"], "broadcaster") &&
+			JSONUtils::isPresent(parametersRoot["internalMMS"]["broadcaster"], "broadcasterInputsRoot"))
 		{
 			inputsRoot = parametersRoot["internalMMS"]["broadcaster"]["broadcasterInputsRoot"];
 		}
@@ -231,7 +231,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			json filtersRoot = nullptr;
 
 			string field = "broadcastFilters";
-			if (JSONUtils::isMetadataPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, field))
 				filtersRoot = parametersRoot[field];
 
 			json streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
