@@ -115,7 +115,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 					_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+				encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 			}
 		}
 
@@ -345,7 +345,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 					_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+				encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 			}
 		}
 
@@ -485,7 +485,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 					_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+				encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 			}
 		}
 

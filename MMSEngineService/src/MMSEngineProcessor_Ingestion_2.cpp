@@ -72,7 +72,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		while (sMetadataContent.size() > 0 && (sMetadataContent.back() == 10 || sMetadataContent.back() == 13))
 			sMetadataContent.pop_back();
 
-		parametersRoot = JSONUtils::toJson(sMetadataContent);
+		parametersRoot = JSONUtils::toJson<json>(sMetadataContent);
 	}
 	catch (runtime_error &e)
 	{

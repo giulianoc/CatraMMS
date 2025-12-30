@@ -303,7 +303,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 			);
 		}
 
-		requestBodyRoot = JSONUtils::toJson(requestBody);
+		requestBodyRoot = JSONUtils::toJson<json>(requestBody);
 
 		/*
 		 * Definition of the Variables into the Workflow:
@@ -574,7 +574,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 					localRequestBody
 				);
 
-				requestBodyRoot = JSONUtils::toJson(localRequestBody);
+				requestBodyRoot = JSONUtils::toJson<json>(localRequestBody);
 			}
 		}
 	}
@@ -3335,7 +3335,7 @@ void API::fileUploadProgressCheckThread()
 				try
 				{
 					// json uploadProgressResponse =
-					// JSONUtils::toJson(-1, -1, sResponse);
+					// JSONUtils::toJson<json>(-1, -1, sResponse);
 
 					// { "state" : "uploading", "received" : 731195032, "size" :
 					// 745871360 } At the end: { "state" : "done" } In case of
@@ -4030,7 +4030,7 @@ void API::updateIngestionJob(
 				throw runtime_error(errorMessage);
 			}
 
-			json metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			json metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "IngestionType";
 			if (!JSONUtils::isPresent(metadataRoot, field))
@@ -4946,7 +4946,7 @@ void API::changeLiveProxyPlaylist(
 		json newPlaylistRoot = json::array();
 		try
 		{
-			json newReceivedPlaylistRoot = JSONUtils::toJson(requestData.requestBody);
+			json newReceivedPlaylistRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			// check the received playlist
 			// in case of vodInput/countdownInput, the physicalPathKey is

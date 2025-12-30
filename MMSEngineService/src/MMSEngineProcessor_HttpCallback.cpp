@@ -276,7 +276,7 @@ void MMSEngineProcessor::httpCallbackThread(
 										callbackMedatada["userData"] = nullptr;
 									else
 									{
-										json userDataRoot = JSONUtils::toJson(userData);
+										json userDataRoot = JSONUtils::toJson<json>(userData);
 
 										callbackMedatada["userData"] = userDataRoot;
 									}
@@ -336,7 +336,7 @@ void MMSEngineProcessor::httpCallbackThread(
 										callbackMedatada["userData"] = nullptr;
 									else
 									{
-										json userDataRoot = JSONUtils::toJson(userData);
+										json userDataRoot = JSONUtils::toJson<json>(userData);
 
 										callbackMedatada["userData"] = userDataRoot;
 									}
@@ -620,7 +620,7 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					json formDataParametersRoot = JSONUtils::toJson(httpBody);
+					json formDataParametersRoot = JSONUtils::toJson<json>(httpBody);
 					for (int formFieldIndex = 0; formFieldIndex < formDataParametersRoot.size(); formFieldIndex++)
 					{
 						json formFieldRoot = formDataParametersRoot[formFieldIndex];
@@ -655,7 +655,7 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> formData;
 				{
-					json formDataParametersRoot = JSONUtils::toJson(httpBody);
+					json formDataParametersRoot = JSONUtils::toJson<json>(httpBody);
 					for (int formFieldIndex = 0; formFieldIndex < formDataParametersRoot.size(); formFieldIndex++)
 					{
 						json formFieldRoot = formDataParametersRoot[formFieldIndex];

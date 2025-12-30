@@ -1208,7 +1208,7 @@ class MMSEngineDBFacade
 
   public:
 	MMSEngineDBFacade(
-		json configuration, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
+		const json &configuration, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
 	);
 
 	~MMSEngineDBFacade();

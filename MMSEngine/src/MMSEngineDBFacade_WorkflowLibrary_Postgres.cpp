@@ -360,7 +360,7 @@ json MMSEngineDBFacade::getWorkflowsAsLibraryList(int64_t workspaceKey)
 					json workflowRoot;
 					try
 					{
-						workflowRoot = JSONUtils::toJson(jsonWorkflow);
+						workflowRoot = JSONUtils::toJson<json>(jsonWorkflow);
 					}
 					catch (runtime_error &e)
 					{

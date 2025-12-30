@@ -1020,7 +1020,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 				_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, encodingProfileKey);
 			tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-			encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+			encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 		}
 		else
 		{

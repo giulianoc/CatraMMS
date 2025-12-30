@@ -30,7 +30,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 	try
 	{
 		_liveProxyData->_killedBecauseOfNotWorking = false;
-		json metadataRoot = JSONUtils::toJson(requestBody);
+		json metadataRoot = JSONUtils::toJson<json>(requestBody);
 
 		_liveProxyData->_ingestionJobKey = _encoding->_ingestionJobKey; // JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
 

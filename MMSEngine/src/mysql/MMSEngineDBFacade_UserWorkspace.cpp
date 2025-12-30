@@ -2470,7 +2470,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 			if (resultSet->next())
 			{
 				string permissions = resultSet->getString("permissions");
-				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				Json::Value permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 				isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
@@ -2782,7 +2782,7 @@ MMSEngineDBFacade::checkAPIKey(string apiKey, bool fromMaster)
 				userKey = resultSet->getInt64("userKey");
 				workspaceKey = resultSet->getInt64("workspaceKey");
 				string permissions = resultSet->getString("permissions");
-				permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 			}
 			else
 			{
@@ -3570,7 +3570,7 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot(
 			userAPIKeyRoot[field] = static_cast<string>(resultSet->getString("expirationDate"));
 
 			string permissions = resultSet->getString("permissions");
-			Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+			Json::Value permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 
 			field = "admin";
 			bool admin = JSONUtils::asBool(permissionsRoot, "admin", false);
@@ -3745,7 +3745,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails(
 			if (resultSet->next())
 			{
 				string permissions = resultSet->getString("permissions");
-				Json::Value permissionsRoot = JSONUtils::toJson(-1, -1, permissions);
+				Json::Value permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 				isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";

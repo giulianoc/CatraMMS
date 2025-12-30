@@ -57,7 +57,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		{
 			workspace->_preferences =
 				res[0]["preferences"].is_null() ? nullptr
-				: JSONUtils::toJson(res[0]["preferences"].as<string>());
+				: JSONUtils::toJson<json>(res[0]["preferences"].as<string>());
 		}
 		catch (exception &e)
 		{
@@ -74,7 +74,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		{
 			workspace->_externalDeliveriesRoot =
 				res[0]["externalDeliveries"].is_null() ? nullptr
-				: JSONUtils::toJson(res[0]["externalDeliveries"].as<string>());
+				: JSONUtils::toJson<json>(res[0]["externalDeliveries"].as<string>());
 		}
 		catch (exception &e)
 		{
@@ -1562,7 +1562,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 			if (!empty(res))
 			{
 				string permissions = res[0]["permissions"].as<string>();
-				json permissionsRoot = JSONUtils::toJson(permissions);
+				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 				isOwner = res[0]["isOwner"].as<bool>();
@@ -1742,7 +1742,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 			if (!empty(res))
 			{
 				string permissions = res[0]["permissions"].as<string>();
-				json permissionsRoot = JSONUtils::toJson(permissions);
+				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 				isOwner = res[0]["isOwner"].as<bool>();
@@ -1927,7 +1927,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
 				userKey = res[0]["userKey"].as<int64_t>();
 				workspaceKey = res[0]["workspaceKey"].as<int64_t>();
 				auto permissions = res[0]["permissions"].as<string>();
-				permissionsRoot = JSONUtils::toJson(permissions);
+				permissionsRoot = JSONUtils::toJson<json>(permissions);
 			}
 			else
 			{
@@ -2537,7 +2537,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 			userAPIKeyRoot[field] = row["expirationDate"].as<string>();
 
 			string permissions = row["permissions"].as<string>();
-			json permissionsRoot = JSONUtils::toJson(permissions);
+			json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
 			bool admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 			userAPIKeyRoot["admin"] = admin;
@@ -2674,7 +2674,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			if (!empty(res))
 			{
 				string permissions = res[0]["permissions"].as<string>();
-				json permissionsRoot = JSONUtils::toJson(permissions);
+				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
 				isOwner = res[0]["isOwner"].as<bool>();

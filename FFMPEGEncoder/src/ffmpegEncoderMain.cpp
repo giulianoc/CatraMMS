@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
 		CurlWrapper::globalInitialize();
 
-		json configurationRoot = JSONUtils::loadConfigurationFile(configurationPathName, "MMS_");
+		auto configurationRoot = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
 
 		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
 

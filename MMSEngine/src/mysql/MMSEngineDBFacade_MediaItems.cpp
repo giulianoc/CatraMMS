@@ -1657,7 +1657,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									if (crossReferenceParameters != "")
 									{
 										Json::Value crossReferenceParametersRoot
-											= JSONUtils::toJson(-1, -1, crossReferenceParameters);
+											= JSONUtils::toJson<json>(-1, -1, crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
@@ -1712,7 +1712,7 @@ Json::Value MMSEngineDBFacade::getMediaItemsList (
 									if (crossReferenceParameters != "")
 									{
 										Json::Value crossReferenceParametersRoot
-											= JSONUtils::toJson(-1, -1, crossReferenceParameters);
+											= JSONUtils::toJson<json>(-1, -1, crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;

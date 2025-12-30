@@ -36,6 +36,8 @@
 
 #include "API.h"
 
+#include "JsonPath.h"
+
 API::API(
 	const bool noFileSystemAccess, const json &configurationRoot, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
 	const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSDeliveryAuthorization> &mmsDeliveryAuthorization, mutex *fcgiAcceptMutex,
@@ -667,7 +669,7 @@ void API::mmsSupport(
 		string subject;
 		string text;
 
-		json metadataRoot = JSONUtils::toJson(requestData.requestBody);
+		json metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 		vector<string> mandatoryFields = {"UserEmailAddress", "Subject", "Text"};
 		for (string field : mandatoryFields)
@@ -1570,9 +1572,9 @@ bool API::basicAuthenticationRequired(const FCGIRequestData &requestData)
 	return basicAuthenticationRequired;
 }
 
-void API::loadConfiguration(json configurationRoot, FileUploadProgressData *fileUploadProgressData)
+void API::loadConfiguration(const json &configurationRoot, FileUploadProgressData *fileUploadProgressData)
 {
-	string encodingPriority = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPriority", "low");
+	auto encodingPriority = JsonPath(&configurationRoot)["api"]["workspaceDefaults"]["encodingPriority"].as<string>("low");
 	SPDLOG_INFO(
 		"Configuration item"
 		", api->workspaceDefaults->encodingPriority: {}",

@@ -12467,7 +12467,7 @@ pair<long,string> MMSEngineDBFacade::getLastYouTubeURLDetails(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		Json::Value channelDataRoot = JSONUtils::toJson(ingestionKey, -1, channelData);
+		Json::Value channelDataRoot = JSONUtils::toJson<json>(ingestionKey, -1, channelData);
 
 
 		string field;
@@ -12612,7 +12612,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		Json::Value channelDataRoot = JSONUtils::toJson(ingestionJobKey, -1, channelData);
+		Json::Value channelDataRoot = JSONUtils::toJson<json>(ingestionJobKey, -1, channelData);
 
 		// add streamingYouTubeLiveURL info to the channelData
 		{

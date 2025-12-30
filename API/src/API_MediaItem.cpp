@@ -47,7 +47,7 @@ void API::updateMediaItem(
 	{
 		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), true);
 
-		json metadataRoot = JSONUtils::toJson(requestData.requestBody);
+		json metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 		bool titleModified = false;
 		string newTitle;
@@ -189,7 +189,7 @@ void API::updatePhysicalPath(
 		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), true);
 		int64_t physicalPathKey = requestData.getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), true);
 
-		json metadataRoot = JSONUtils::toJson(requestData.requestBody);
+		json metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 		{
 			vector<string> mandatoryFields = {"RetentionInMinutes"};

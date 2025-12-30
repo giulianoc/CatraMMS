@@ -54,7 +54,7 @@ void API::addRequestStatistic(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "userId";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))

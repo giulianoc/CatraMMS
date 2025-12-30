@@ -25,7 +25,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 	// int64_t ingestionJobKey = 1;
 	try
 	{
-		// json metadataRoot = JSONUtils::toJson(
+		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);

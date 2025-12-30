@@ -774,7 +774,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 							json profileRoot;
 							try
 							{
-								profileRoot = JSONUtils::toJson(jsonProfile);
+								profileRoot = JSONUtils::toJson<json>(jsonProfile);
 							}
 							catch (exception &e)
 							{
@@ -963,7 +963,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 					json profileRoot;
 					try
 					{
-						profileRoot = JSONUtils::toJson(jsonProfile);
+						profileRoot = JSONUtils::toJson<json>(jsonProfile);
 					}
 					catch (exception &e)
 					{

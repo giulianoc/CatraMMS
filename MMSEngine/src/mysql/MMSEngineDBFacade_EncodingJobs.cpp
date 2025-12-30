@@ -319,7 +319,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 
 				try
                 {
-					encodingItem->_encodingParametersRoot = JSONUtils::toJson(-1, encodingJobKey,
+					encodingItem->_encodingParametersRoot = JSONUtils::toJson<json>(-1, encodingJobKey,
 						encodingParameters);
                 }
 				catch (runtime_error e)
@@ -391,7 +391,7 @@ void MMSEngineDBFacade::getEncodingJobs(
 						try
 						{
 							encodingItem->_ingestedParametersRoot =
-								JSONUtils::toJson(encodingItem->_ingestionJobKey, -1, ingestionParameters);
+								JSONUtils::toJson<json>(encodingItem->_ingestionJobKey, -1, ingestionParameters);
 						}
 						catch(runtime_error& e)
 						{
@@ -4638,7 +4638,7 @@ Json::Value MMSEngineDBFacade::getEncodingJobsStatus (
 
                     Json::Value parametersRoot;
                     if (parameters != "")
-						parametersRoot = JSONUtils::toJson(-1, encodingJobKey, parameters);
+						parametersRoot = JSONUtils::toJson<json>(-1, encodingJobKey, parameters);
 
                     field = "parameters";
                     encodingJobRoot[field] = parametersRoot;

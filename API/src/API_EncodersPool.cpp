@@ -57,7 +57,7 @@ void API::addEncoder(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -233,7 +233,7 @@ void API::modifyEncoder(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -609,7 +609,7 @@ void API::addEncodersPool(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -718,7 +718,7 @@ void API::modifyEncodersPool(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))

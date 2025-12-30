@@ -82,7 +82,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 			}
 		}
 		*/
-		json ingestionResponseRoot = JSONUtils::toJson(ingestionResponse);
+		json ingestionResponseRoot = JSONUtils::toJson<json>(ingestionResponse);
 
 		string field = "tasks";
 		if (!JSONUtils::isPresent(ingestionResponseRoot, field))

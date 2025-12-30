@@ -209,7 +209,7 @@ void API::createBulkOfDeliveryAuthorization(
 		json deliveryAutorizationDetailsRoot;
 		try
 		{
-			deliveryAutorizationDetailsRoot = JSONUtils::toJson(requestData.requestBody);
+			deliveryAutorizationDetailsRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{

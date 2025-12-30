@@ -20,7 +20,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 	try
 	{
-		// json metadataRoot = JSONUtils::toJson(
+		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
 		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);

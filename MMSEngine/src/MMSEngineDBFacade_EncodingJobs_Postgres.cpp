@@ -258,7 +258,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 
 				try
 				{
-					encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
+					encodingItem->_encodingParametersRoot = JSONUtils::toJson<json>(encodingParameters);
 				}
 				catch (runtime_error e)
 				{
@@ -323,7 +323,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 
 						try
 						{
-							encodingItem->_ingestedParametersRoot = JSONUtils::toJson(ingestionParameters);
+							encodingItem->_ingestedParametersRoot = JSONUtils::toJson<json>(ingestionParameters);
 						}
 						catch (runtime_error &e)
 						{
@@ -639,7 +639,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 
 				try
 				{
-					encodingItem->_encodingParametersRoot = JSONUtils::toJson(encodingParameters);
+					encodingItem->_encodingParametersRoot = JSONUtils::toJson<json>(encodingParameters);
 
 					encodingItem->_ingestedParametersRoot = ingestionJob_columnAsJson(
 						encodingItem->_workspace->_workspaceKey, "metaDataContent", encodingItem->_ingestionJobKey,
@@ -3277,7 +3277,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 
 					json parametersRoot;
 					if (parameters != "")
-						parametersRoot = JSONUtils::toJson(parameters);
+						parametersRoot = JSONUtils::toJson<json>(parameters);
 
 					field = "parameters";
 					encodingJobRoot[field] = parametersRoot;
@@ -3339,7 +3339,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				if (row["realTimeInfo"].is_null())
 					encodingJobRoot[field] = nullptr;
 				else
-					encodingJobRoot[field] = JSONUtils::toJson(row["realTimeInfo"].as<string>());
+					encodingJobRoot[field] = JSONUtils::toJson<json>(row["realTimeInfo"].as<string>());
 
 				field = "numberOfRestartBecauseOfFailure";
 				if (row["numberOfRestartBecauseOfFailure"].is_null())

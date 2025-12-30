@@ -174,7 +174,7 @@ class API final : public FastCGIAPI
 
 	FileUploadProgressData *_fileUploadProgressData{};
 
-	void loadConfiguration(json configurationRoot, FileUploadProgressData *fileUploadProgressData);
+	void loadConfiguration(const json &configurationRoot, FileUploadProgressData *fileUploadProgressData);
 
 	void registerUser(const string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);

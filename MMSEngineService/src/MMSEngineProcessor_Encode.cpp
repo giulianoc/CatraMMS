@@ -76,7 +76,7 @@ void MMSEngineProcessor::manageEncodeTask(
 					_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, encodingProfileKey);
 				tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+				encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 			}
 		}
 

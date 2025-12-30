@@ -57,7 +57,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
@@ -654,7 +654,7 @@ void API::shareWorkspace_(
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
@@ -1081,7 +1081,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
@@ -1490,7 +1490,7 @@ void API::updateUser(
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
@@ -1777,7 +1777,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{
@@ -1970,7 +1970,7 @@ void API::updateWorkspace(
 		json metadataRoot;
 		try
 		{
-			metadataRoot = JSONUtils::toJson(requestData.requestBody);
+			metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 		}
 		catch (exception &e)
 		{

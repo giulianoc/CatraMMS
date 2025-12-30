@@ -368,7 +368,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 					_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, monitorVirtualVODEncodingProfileKey);
 				tie(ignore, encodingProfileContentType, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-				encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+				encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 			}
 
 			json localOutputRoot;

@@ -1212,7 +1212,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 									string crossReferenceParameters = row["parameters"].as<string>();
 									if (crossReferenceParameters != "")
 									{
-										json crossReferenceParametersRoot = JSONUtils::toJson(crossReferenceParameters);
+										json crossReferenceParametersRoot = JSONUtils::toJson<json>(crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;
@@ -1259,7 +1259,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 									string crossReferenceParameters = row["parameters"].as<string>();
 									if (crossReferenceParameters != "")
 									{
-										json crossReferenceParametersRoot = JSONUtils::toJson(crossReferenceParameters);
+										json crossReferenceParametersRoot = JSONUtils::toJson<json>(crossReferenceParameters);
 
 										field = "parameters";
 										crossReferenceRoot[field] = crossReferenceParametersRoot;

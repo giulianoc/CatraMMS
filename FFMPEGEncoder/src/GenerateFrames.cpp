@@ -27,7 +27,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 	string imagesDirectory;
 	try
 	{
-		// json metadataRoot = JSONUtils::toJson(
+		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);

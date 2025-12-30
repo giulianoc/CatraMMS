@@ -290,7 +290,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							throw runtime_error(errorMessage);
 						}
 
-						userDataRoot = JSONUtils::toJson(userData);
+						userDataRoot = JSONUtils::toJson<json>(userData);
 					}
 
 					field = "mmsData";
@@ -661,7 +661,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							string sUserData = JSONUtils::asString(liveCutParametersRoot, field, "");
 
 							if (sUserData != "")
-								userDataRoot = JSONUtils::toJson(sUserData);
+								userDataRoot = JSONUtils::toJson<json>(sUserData);
 						}
 						else // if (valueType == Json::ValueType::objectValue)
 						{
@@ -1030,7 +1030,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							throw runtime_error(errorMessage);
 						}
 
-						userDataRoot = JSONUtils::toJson(userData);
+						userDataRoot = JSONUtils::toJson<json>(userData);
 					}
 
 					json mmsDataRoot = userDataRoot["mmsData"];
@@ -1404,7 +1404,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							string sUserData = JSONUtils::asString(liveCutParametersRoot, "userData", "");
 
 							if (sUserData != "")
-								userDataRoot = JSONUtils::toJson(sUserData);
+								userDataRoot = JSONUtils::toJson<json>(sUserData);
 						}
 						else // if (valueType == Json::ValueType::objectValue)
 							userDataRoot = liveCutParametersRoot["userData"];

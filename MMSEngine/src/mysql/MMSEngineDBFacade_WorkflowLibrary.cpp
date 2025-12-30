@@ -545,7 +545,7 @@ Json::Value MMSEngineDBFacade::getWorkflowsAsLibraryList (
                     Json::Value workflowRoot;
                     try
                     {
-						workflowRoot = JSONUtils::toJson(-1, -1, jsonWorkflow);
+						workflowRoot = JSONUtils::toJson<json>(-1, -1, jsonWorkflow);
                     }
                     catch(runtime_error& e)
                     {

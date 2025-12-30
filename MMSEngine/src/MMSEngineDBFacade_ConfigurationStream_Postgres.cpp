@@ -1833,7 +1833,7 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 		vector<string> requestedColumns = {"mms_conf_stream:.userData"};
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = streamQuery(requestedColumns, workspaceKey, confKey);
 
-		return JSONUtils::toJson((*sqlResultSet)[0][0].as<string>("null source type!!!"));
+		return JSONUtils::toJson<json>((*sqlResultSet)[0][0].as<string>("null source type!!!"));
 	}
 	catch (DBRecordNotFound &e)
 	{
@@ -3168,7 +3168,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		json channelDataRoot = JSONUtils::toJson(channelData);
+		json channelDataRoot = JSONUtils::toJson<json>(channelData);
 		*/
 
 		string field;
@@ -3330,7 +3330,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 
 		tie(ignore, ignore, channelData) = channelDetails;
 
-		json channelDataRoot = JSONUtils::toJson(channelData);
+		json channelDataRoot = JSONUtils::toJson<json>(channelData);
 		*/
 
 		// add streamingYouTubeLiveURL info to the channelData

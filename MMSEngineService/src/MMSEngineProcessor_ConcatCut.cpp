@@ -138,7 +138,7 @@ void MMSEngineProcessor::manageConcatThread(
 				if (lastUserData != "")
 				{
 					// try to retrieve time codes
-					json sourceUserDataRoot = JSONUtils::toJson(lastUserData);
+					json sourceUserDataRoot = JSONUtils::toJson<json>(lastUserData);
 
 					string field = "mmsData";
 					if (JSONUtils::isPresent(sourceUserDataRoot, field))
@@ -244,7 +244,7 @@ void MMSEngineProcessor::manageConcatThread(
 			if (lastUserData != "")
 			{
 				// try to retrieve time codes
-				json sourceUserDataRoot = JSONUtils::toJson(lastUserData);
+				json sourceUserDataRoot = JSONUtils::toJson<json>(lastUserData);
 
 				string field = "mmsData";
 				if (JSONUtils::isPresent(sourceUserDataRoot, field))
@@ -1262,7 +1262,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 						_mmsEngineDBFacade->getEncodingProfileDetailsByKey(workspace->_workspaceKey, encodingProfileKey);
 					tie(ignore, ignore, ignore, jsonEncodingProfile) = encodingProfileDetails;
 
-					encodingProfileDetailsRoot = JSONUtils::toJson(jsonEncodingProfile);
+					encodingProfileDetailsRoot = JSONUtils::toJson<json>(jsonEncodingProfile);
 				}
 			}
 

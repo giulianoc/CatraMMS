@@ -754,7 +754,7 @@ void API::addUpdateEncodingProfilesSet(
 		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
 			requestData.getQueryParameter("contentType", "", true));
 
-		json encodingProfilesSetRoot = JSONUtils::toJson(requestData.requestBody);
+		json encodingProfilesSetRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 		string responseBody;
 
@@ -875,7 +875,7 @@ void API::addEncodingProfile(
 		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(
 			requestData.getQueryParameter("contentType", "", true));
 
-		json encodingProfileRoot = JSONUtils::toJson(requestData.requestBody);
+		json encodingProfileRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 		string responseBody;
 

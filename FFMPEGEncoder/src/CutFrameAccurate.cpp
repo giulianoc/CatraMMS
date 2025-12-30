@@ -20,7 +20,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 	try
 	{
-		// json metadataRoot = JSONUtils::toJson(-1, _encodingJobKey, requestBody);
+		// json metadataRoot = JSONUtils::toJson<json>(-1, _encodingJobKey, requestBody);
 
 		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];

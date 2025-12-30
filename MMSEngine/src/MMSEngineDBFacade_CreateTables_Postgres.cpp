@@ -1121,7 +1121,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							);
 						}
 
-						json encodingMedatada = JSONUtils::toJson(jsonProfile);
+						json encodingMedatada = JSONUtils::toJson<json>(jsonProfile);
 
 						string label = JSONUtils::asString(encodingMedatada, "label", "");
 						string fileFormat = JSONUtils::asString(encodingMedatada, "fileFormat", "");
@@ -1892,7 +1892,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							);
 						}
 
-						json workflowRoot = JSONUtils::toJson(jsonWorkflow);
+						json workflowRoot = JSONUtils::toJson<json>(jsonWorkflow);
 
 						string label = JSONUtils::asString(workflowRoot, "label", "");
 

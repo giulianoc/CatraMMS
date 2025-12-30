@@ -56,7 +56,7 @@ void API::addYouTubeConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -235,7 +235,7 @@ void API::modifyYouTubeConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -470,7 +470,7 @@ void API::addFacebookConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -577,7 +577,7 @@ void API::modifyFacebookConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -765,7 +765,7 @@ void API::addTwitchConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -872,7 +872,7 @@ void API::modifyTwitchConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1049,7 +1049,7 @@ void API::addTiktokConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1146,7 +1146,7 @@ void API::modifyTiktokConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1352,7 +1352,7 @@ void API::addStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1594,7 +1594,7 @@ void API::modifyStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			labelToBeModified = false;
 			string field = "label";
@@ -2124,7 +2124,7 @@ void API::addSourceTVStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2332,7 +2332,7 @@ void API::modifySourceTVStream(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "type";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -2664,7 +2664,7 @@ void API::addRTMPChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2806,7 +2806,7 @@ void API::modifyRTMPChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3077,7 +3077,7 @@ void API::addSRTChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3213,7 +3213,7 @@ void API::modifySRTChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3479,7 +3479,7 @@ void API::addHLSChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3610,7 +3610,7 @@ void API::modifyHLSChannelConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3851,7 +3851,7 @@ void API::addFTPConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4018,7 +4018,7 @@ void API::modifyFTPConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4256,7 +4256,7 @@ void API::addEMailConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4393,7 +4393,7 @@ void API::modifyEMailConf(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "label";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))

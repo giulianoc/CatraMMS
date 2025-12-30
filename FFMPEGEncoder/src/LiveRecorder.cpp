@@ -55,7 +55,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 	{
 		liveRecording->_killedBecauseOfNotWorking = false;
 
-		json metadataRoot = JSONUtils::toJson(requestBody);
+		json metadataRoot = JSONUtils::toJson<json>(requestBody);
 
 		liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];

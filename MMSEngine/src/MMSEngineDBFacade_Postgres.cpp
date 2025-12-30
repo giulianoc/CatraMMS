@@ -12,7 +12,7 @@
  */
 
 #include "Encrypt.h"
-#include "JSONUtils.h"
+#include "JsonPath.h"
 
 #include "MMSEngineDBFacade.h"
 #include "PersistenceLock.h"
@@ -24,39 +24,39 @@
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
 MMSEngineDBFacade::MMSEngineDBFacade(
-	json configuration, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
+	const json &configurationRoot, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
 )
 {
 	_logger = logger;
-	_configuration = configuration;
+	_configuration = configurationRoot;
 	_maxRows = 1000;
 
-	_doNotManageIngestionsOlderThanDays = JSONUtils::asInt32(configuration["mms"], "doNotManageIngestionsOlderThanDays", 7);
+	_doNotManageIngestionsOlderThanDays = JsonPath(&configurationRoot)["mms"]["doNotManageIngestionsOlderThanDays"].as<int32_t>(7);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
 	);
 
-	_ffmpegEncoderUser = JSONUtils::asString(configuration["ffmpeg"], "encoderUser", "");
+	_ffmpegEncoderUser = JsonPath(&configurationRoot)["ffmpeg"]["encoderUser"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser);
-	_ffmpegEncoderPassword = JSONUtils::asString(configuration["ffmpeg"], "encoderPassword", "");
+	_ffmpegEncoderPassword = JsonPath(&configurationRoot)["ffmpeg"]["encoderPassword"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderPassword: " + "...");
-	_ffmpegEncoderStatusURI = JSONUtils::asString(configuration["ffmpeg"], "encoderStatusURI", "");
+	_ffmpegEncoderStatusURI = JsonPath(&configurationRoot)["ffmpeg"]["encoderStatusURI"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI);
-	_ffmpegEncoderInfoURI = JSONUtils::asString(configuration["ffmpeg"], "encoderInfoURI", "");
+	_ffmpegEncoderInfoURI = JsonPath(&configurationRoot)["ffmpeg"]["encoderInfoURI"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI);
-	_ffmpegEncoderInfoTimeout = JSONUtils::asInt32(configuration["ffmpeg"], "encoderInfoTimeout", 2);
+	_ffmpegEncoderInfoTimeout = JsonPath(&configurationRoot)["ffmpeg"]["encoderInfoTimeout"].as<int32_t>(2);
 	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoTimeout: " + to_string(_ffmpegEncoderInfoTimeout));
 
-	_ingestionJobsSelectPageSize = JSONUtils::asInt32(configuration["mms"], "ingestionJobsSelectPageSize", 500);
+	_ingestionJobsSelectPageSize = JsonPath(&configurationRoot)["mms"]["ingestionJobsSelectPageSize"].as<int32_t>(500);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize));
 
-	_maxEncodingFailures = JSONUtils::asInt32(configuration["encoding"], "maxEncodingFailures", 3);
+	_maxEncodingFailures = JsonPath(&configurationRoot)["encoding"]["maxEncodingFailures"].as<int32_t>(3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures));
 
-	_confirmationCodeExpirationInDays = JSONUtils::asInt32(configuration["mms"], "confirmationCodeExpirationInDays", 3);
+	_confirmationCodeExpirationInDays = JsonPath(&configurationRoot)["mms"]["confirmationCodeExpirationInDays"].as<int32_t>(3);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays));
 
-	_contentRetentionInMinutesDefaultValue = JSONUtils::asInt32(configuration["mms"], "contentRetentionInMinutesDefaultValue", 1);
+	_contentRetentionInMinutesDefaultValue = JsonPath(&configurationRoot)["mms"]["contentRetentionInMinutesDefaultValue"].as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
 	);
@@ -69,101 +69,103 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	);
 	*/
 
-	_maxSecondsToWaitUpdateIngestionJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitUpdateIngestionJobLock", 1);
+	_maxSecondsToWaitUpdateIngestionJobLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitUpdateIngestionJobLock"].
+		as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateIngestionJobLock: " + to_string(_maxSecondsToWaitUpdateIngestionJobLock)
 	);
-	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 1);
+	_maxSecondsToWaitUpdateEncodingJobLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitUpdateEncodingJobLock"]
+		.as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
 	);
-	_maxSecondsToWaitCheckIngestionLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitCheckIngestionLock", 1);
+	_maxSecondsToWaitCheckIngestionLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitCheckIngestionLock"].as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckIngestionLock: " + to_string(_maxSecondsToWaitCheckIngestionLock)
 	);
-	_maxSecondsToWaitCheckEncodingJobLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitCheckEncodingJobLock", 1);
+	_maxSecondsToWaitCheckEncodingJobLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitCheckEncodingJobLock"].as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckEncodingJobLock: " + to_string(_maxSecondsToWaitCheckEncodingJobLock)
 	);
-	_maxSecondsToWaitMainAndBackupLiveChunkLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitMainAndBackupLiveChunkLock", 1);
+	_maxSecondsToWaitMainAndBackupLiveChunkLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitMainAndBackupLiveChunkLock"].as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->maxSecondsToWaitMainAndBackupLiveChunkLock: " + to_string(_maxSecondsToWaitMainAndBackupLiveChunkLock)
 	);
-	_maxSecondsToWaitSetNotToBeExecutedLock = JSONUtils::asInt32(configuration["mms"]["locks"], "maxSecondsToWaitSetNotToBeExecutedLock", 1);
+	_maxSecondsToWaitSetNotToBeExecutedLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitSetNotToBeExecutedLock"].as<int32_t>(1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitSetNotToBeExecutedLock,: " + to_string(_maxSecondsToWaitSetNotToBeExecutedLock)
 	);
 
-	_predefinedVideoProfilesDirectoryPath = JSONUtils::asString(configuration["encoding"]["predefinedProfiles"], "videoDir", "");
+	_predefinedVideoProfilesDirectoryPath = JsonPath(&configurationRoot)["encoding"]["predefinedProfiles"]["videoDir"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->videoDir: " + _predefinedVideoProfilesDirectoryPath);
-	_predefinedAudioProfilesDirectoryPath = JSONUtils::asString(configuration["encoding"]["predefinedProfiles"], "audioDir", "");
+	_predefinedAudioProfilesDirectoryPath = JsonPath(&configurationRoot)["encoding"]["predefinedProfiles"]["audioDir"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->audioDir: " + _predefinedAudioProfilesDirectoryPath);
-	_predefinedImageProfilesDirectoryPath = JSONUtils::asString(configuration["encoding"]["predefinedProfiles"], "imageDir", "");
+	_predefinedImageProfilesDirectoryPath = JsonPath(&configurationRoot)["encoding"]["predefinedProfiles"]["imageDir"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->imageDir: " + _predefinedImageProfilesDirectoryPath);
 
-	_predefinedWorkflowLibraryDirectoryPath = JSONUtils::asString(configuration["mms"], "predefinedWorkflowLibraryDir", "");
+	_predefinedWorkflowLibraryDirectoryPath = JsonPath(&configurationRoot)["mms"]["predefinedWorkflowLibraryDir"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath);
 
-	_geoServiceEnabled = JSONUtils::asBool(configuration["mms"]["geoService"], "enabled", false);
+	_geoServiceEnabled = JsonPath(&configurationRoot)["mms"]["geoService"]["enabled"].as<bool>(false);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->enabled: " + to_string(_geoServiceEnabled));
-	_geoServiceMaxDaysBeforeUpdate = JSONUtils::asInt32(configuration["mms"]["geoService"], "maxDaysBeforeUpdate", 1);
+	_geoServiceMaxDaysBeforeUpdate = JsonPath(&configurationRoot)["mms"]["geoService"]["maxDaysBeforeUpdate"].as<int32_t>(1);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->maxDaysBeforeUpdate: " + to_string(_geoServiceMaxDaysBeforeUpdate));
-	_geoServiceURL = JSONUtils::asString(configuration["mms"]["geoService"], "url", "");
+	_geoServiceURL = JsonPath(&configurationRoot)["mms"]["geoService"]["url"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->url: " + _geoServiceURL);
-	_geoServiceKey = JSONUtils::asString(configuration["mms"]["geoService"], "key", "");
+	_geoServiceKey = JsonPath(&configurationRoot)["mms"]["geoService"]["key"].as<string>("");
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->key: " + _geoServiceKey);
-	_geoServiceTimeoutInSeconds = JSONUtils::asInt32(configuration["mms"]["geoService"], "timeoutInSeconds", 10);
+	_geoServiceTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["geoService"]["timeoutInSeconds"].as<int32_t>(10);
 	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->timeoutInSeconds: " + to_string(_geoServiceTimeoutInSeconds));
 
 	_getIngestionJobsCurrentIndex = 0;
 	_getEncodingJobsCurrentIndex = 0;
 
 	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
-	for (int adminEmailAddressesIndex = 0; adminEmailAddressesIndex < configuration["api"]["adminEmailAddresses"].size(); adminEmailAddressesIndex++)
+	for (auto& adminEmailAddressesRoot : JsonPath(&configurationRoot)["api"]["adminEmailAddresses"].as<json>(json::array()))
 	{
-		string adminEmailAddress = JSONUtils::asString(configuration["api"]["adminEmailAddresses"][adminEmailAddressesIndex]);
+		auto adminEmailAddress = JsonPath(&adminEmailAddressesRoot).as<string>("");
 		_adminEmailAddresses.push_back(adminEmailAddress);
-		_logger->info(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[adminEmailAddressesIndex]: " + adminEmailAddress);
+		_logger->info(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[]: " + adminEmailAddress);
 	}
 
-	_dbConnectionPoolStatsReportPeriodInSeconds = JSONUtils::asInt32(configuration["postgres"], "dbConnectionPoolStatsReportPeriodInSeconds", 5);
+	_dbConnectionPoolStatsReportPeriodInSeconds = JsonPath(&configurationRoot)["postgres"]["dbConnectionPoolStatsReportPeriodInSeconds"].as<int32_t>(5);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", postgres->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
 	);
-	_ingestionWorkflowCompletedRetentionInDays = JSONUtils::asInt32(configuration["postgres"], "ingestionWorkflowCompletedRetentionInDays", 30);
+	_ingestionWorkflowCompletedRetentionInDays = JsonPath(&configurationRoot)["postgres"]["ingestionWorkflowCompletedRetentionInDays"].as<int32_t>(30);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", postgres->ingestionWorkflowCompletedRetentionInDays: " + to_string(_ingestionWorkflowCompletedRetentionInDays)
 	);
-	_statisticRetentionInMonths = JSONUtils::asInt32(configuration["postgres"], "statisticRetentionInMonths", 12);
+	_statisticRetentionInMonths = JsonPath(&configurationRoot)["postgres"]["statisticRetentionInMonths"].as<int32_t>(12);
 	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths));
-	_statisticsEnabled = JSONUtils::asBool(configuration["postgres"], "statisticsEnabled", true);
+	_statisticsEnabled = JsonPath(&configurationRoot)["postgres"]["statisticsEnabled"].as<bool>(true);
 	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticsEnabled: " + to_string(_statisticsEnabled));
 
 	{
-		string masterDbServer = JSONUtils::asString(configuration["postgres"]["master"], "server", "");
+		string masterDbServer = JsonPath(&configurationRoot)["postgres"]["master"]["server"].as<string>("");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->server: " + masterDbServer);
-		int masterDbPort = JSONUtils::asInt32(configuration["postgres"]["master"], "port", 5432);
+		int masterDbPort = JsonPath(&configurationRoot)["postgres"]["master"]["port"].as<int32_t>(5432);
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->port: " + to_string(masterDbPort));
-		string slaveDbServer = JSONUtils::asString(configuration["postgres"]["slave"], "server", "");
+		string slaveDbServer = JsonPath(&configurationRoot)["postgres"]["slave"]["server"].as<string>("");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->server: " + slaveDbServer);
-		int slaveDbPort = JSONUtils::asInt32(configuration["postgres"]["slave"], "port", 5432);
+		int slaveDbPort = JsonPath(&configurationRoot)["postgres"]["slave"]["port"].as<int32_t>(5432);
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->port: " + to_string(slaveDbPort));
-		string masterDbUsername = JSONUtils::asString(configuration["postgres"]["master"], "userName", "");
+		string masterDbUsername = JsonPath(&configurationRoot)["postgres"]["master"]["userName"].as<string>("");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->userName: " + masterDbUsername);
-		string slaveDbUsername = JSONUtils::asString(configuration["postgres"]["slave"], "userName", "");
+		string slaveDbUsername = JsonPath(&configurationRoot)["postgres"]["slave"]["userName"].as<string>("");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->userName: " + slaveDbUsername);
 		string dbPassword;
 		{
-			string encryptedPassword = JSONUtils::asString(configuration["postgres"], "password", "");
+			string encryptedPassword = JsonPath(&configurationRoot)["postgres"]["password"].as<string>("");
 			dbPassword = Encrypt::opensslDecrypt(encryptedPassword);
 			// dbPassword = encryptedPassword;
 		}
-		string dbName = JSONUtils::asString(configuration["postgres"], "dbName", "");
+		string dbName = JsonPath(&configurationRoot)["postgres"]["dbName"].as<string>("");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->dbName: " + dbName);
-		string selectTestingConnection = JSONUtils::asString(configuration["postgres"], "selectTestingConnection", "");
+		string selectTestingConnection = JsonPath(&configurationRoot)["postgres"]["selectTestingConnection"].as<string>("");
 		_logger->info(__FILEREF__ + "Configuration item" + ", database->selectTestingConnection: " + selectTestingConnection);
 
 		_logger->info(__FILEREF__ + "Creating PostgresConnectionFactory...");

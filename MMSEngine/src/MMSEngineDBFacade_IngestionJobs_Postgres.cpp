@@ -3850,7 +3850,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 
 					json parametersRoot;
 					if (parameters != "")
-						parametersRoot = JSONUtils::toJson(parameters);
+						parametersRoot = JSONUtils::toJson<json>(parameters);
 
 					field = "parameters";
 					encodingJobRoot[field] = parametersRoot;

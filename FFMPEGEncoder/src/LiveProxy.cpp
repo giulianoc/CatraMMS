@@ -36,7 +36,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 	try
 	{
 		liveProxyData->_killedBecauseOfNotWorking = false;
-		json metadataRoot = JSONUtils::toJson(requestBody);
+		json metadataRoot = JSONUtils::toJson<json>(requestBody);
 
 		liveProxyData->_encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];

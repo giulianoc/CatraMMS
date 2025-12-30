@@ -199,7 +199,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					json parametersRoot;
 					try
 					{
-						parametersRoot = JSONUtils::toJson(metaDataContent);
+						parametersRoot = JSONUtils::toJson<json>(metaDataContent);
 					}
 					catch (exception &e)
 					{

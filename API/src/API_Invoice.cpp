@@ -50,7 +50,7 @@ void API::addInvoice(
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson(requestData.requestBody);
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			string field = "userKey";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
