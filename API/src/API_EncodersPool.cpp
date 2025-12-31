@@ -560,10 +560,13 @@ void API::encodersPoolList(
 		}
 
 		{
+			SPDLOG_ERROR("allora 1ui 1");
 			json encodersPoolListRoot =
 				_mmsEngineDBFacade->getEncodersPoolList(start, rows, apiAuthorizationDetails->workspace->_workspaceKey, encodersPoolKey, label, labelOrder);
+			SPDLOG_ERROR("allora 1ui 2");
 
 			string responseBody = JSONUtils::toString(encodersPoolListRoot);
+			SPDLOG_ERROR("allora 1ui 3");
 
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
