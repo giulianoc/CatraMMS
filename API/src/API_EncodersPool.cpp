@@ -434,10 +434,14 @@ void API::encoderList(
 
 	try
 	{
+			SPDLOG_ERROR("1");
 		int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1));
+		SPDLOG_ERROR("1");
 
 		int32_t start = requestData.getQueryParameter("start", static_cast<int64_t>(0));
+			SPDLOG_ERROR("1");
 		int32_t rows = requestData.getQueryParameter("rows", static_cast<int64_t>(30));
+			SPDLOG_ERROR("1");
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -452,13 +456,18 @@ void API::encoderList(
 			throw runtime_error(errorMessage);
 		}
 
+			SPDLOG_ERROR("1");
 		string label = requestData.getQueryParameter("label", "");
+		SPDLOG_ERROR("1");
 
 		string serverName = requestData.getQueryParameter("serverName", "");
+		SPDLOG_ERROR("1");
 
 		int32_t port = requestData.getQueryParameter("port", static_cast<int64_t>(-1));
+		SPDLOG_ERROR("1");
 
 		string labelOrder = requestData.getQueryParameter("labelOrder", "");
+			SPDLOG_ERROR("1");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
 			SPDLOG_WARN(
@@ -469,8 +478,10 @@ void API::encoderList(
 			labelOrder = "";
 		}
 
+			SPDLOG_ERROR("1");
 		bool runningInfo = requestData.getQueryParameter("runningInfo", false);
 
+			SPDLOG_ERROR("1");
 		int64_t workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey;
 		bool allEncoders = false;
 		if (apiAuthorizationDetails->admin)
@@ -479,8 +490,11 @@ void API::encoderList(
 			// - get the list of all encoders
 			// - encoders for a specific workspace
 
+			SPDLOG_ERROR("1");
 			allEncoders = requestData.getQueryParameter("allEncoders", false);
+			SPDLOG_ERROR("1");
 			workspaceKey = requestData.getQueryParameter("workspaceKey", apiAuthorizationDetails->workspace->_workspaceKey);
+			SPDLOG_ERROR("1");
 		}
 
 		{
