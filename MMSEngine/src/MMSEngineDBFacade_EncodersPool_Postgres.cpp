@@ -1076,7 +1076,9 @@ json MMSEngineDBFacade::getEncoderList(
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";
+			SPDLOG_ERROR("error CCCCCCCCCC");
 			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			SPDLOG_ERROR("error DDDDDDDDDDD");
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1112,10 +1114,14 @@ json MMSEngineDBFacade::getEncoderList(
 					sqlWhere, orderByCondition, rows, start
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			SPDLOG_ERROR("error EEEEEEEEEE");
 			result res = trans.transaction->exec(sqlStatement);
+			SPDLOG_ERROR("error FFFFFFFFFF");
 			for (auto row : res)
 			{
+			SPDLOG_ERROR("error GGGGGGGGG");
 				json encoderRoot = getEncoderRoot(admin, runningInfo, row);
+				SPDLOG_ERROR("error HHHHHHHHH");
 
 				encodersRoot.push_back(encoderRoot);
 			}
