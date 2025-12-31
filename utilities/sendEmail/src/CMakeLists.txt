@@ -67,6 +67,7 @@ endif()
 add_executable(sendEmail ${SOURCES} ${HEADERS})
 
 target_link_libraries (sendEmail CurlWrapper)
+target_link_libraries (sendEmail Convert)
 target_link_libraries (sendEmail JSONUtils)
 target_link_libraries (sendEmail Datetime)
 target_link_libraries (sendEmail MMSEngine)
