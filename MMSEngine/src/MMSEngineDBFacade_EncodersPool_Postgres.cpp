@@ -1600,7 +1600,9 @@ json MMSEngineDBFacade::getEncodersPoolList(
 								bool admin = false;
 								bool runningInfo = false;
 								auto row1 = res[0];
+								SPDLOG_ERROR("qui 1");
 								json encoderRoot = getEncoderRoot(admin, runningInfo, row1);
+								SPDLOG_ERROR("qui 2");
 
 								encodersRoot.push_back(encoderRoot);
 							}
