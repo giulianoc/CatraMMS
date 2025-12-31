@@ -484,9 +484,11 @@ void API::encoderList(
 		}
 
 		{
+			SPDLOG_ERROR("AAAAAAA");
 			json encoderListRoot = _mmsEngineDBFacade->getEncoderList(
 				apiAuthorizationDetails->admin, start, rows, allEncoders, workspaceKey, runningInfo, encoderKey, label, serverName, port, labelOrder
 			);
+			SPDLOG_ERROR("BBBBBBBBB");
 
 			string responseBody = JSONUtils::toString(encoderListRoot);
 
