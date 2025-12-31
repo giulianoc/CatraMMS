@@ -11,8 +11,7 @@
  * Created on January 27, 2018, 9:38 AM
  */
 
-#ifndef MMSEngineDBFacade_h
-#define MMSEngineDBFacade_h
+#pragma once
 
 #include <filesystem>
 #include <memory>
@@ -2784,5 +2783,3 @@ class MMSEngineDBFacade
 	void
 	updateChannelDataWithNewYouTubeURL(std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t confKey, std::string streamingYouTubeLiveURL);
 };
-
-#endif /* MMSEngineDBFacade_h */
