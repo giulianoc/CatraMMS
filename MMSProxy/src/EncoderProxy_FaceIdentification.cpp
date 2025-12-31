@@ -22,6 +22,10 @@
 #include "opencv2/objdetect.hpp"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 string EncoderProxy::faceIdentification()
 {
 	{

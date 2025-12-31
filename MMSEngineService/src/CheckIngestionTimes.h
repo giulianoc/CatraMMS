@@ -1,6 +1,5 @@
 
-#ifndef CheckIngestionTimes_h
-#define CheckIngestionTimes_h
+#pragma once
 
 #include <memory>
 #ifndef SPDLOG_ACTIVE_LEVEL
@@ -27,15 +26,13 @@
 class CheckIngestionTimes : public Times2
 {
   protected:
-	shared_ptr<MultiEventsSet> _multiEventsSet;
-	shared_ptr<spdlog::logger> _logger;
+	std::shared_ptr<MultiEventsSet> _multiEventsSet;
+	std::shared_ptr<spdlog::logger> _logger;
 
   public:
-	CheckIngestionTimes(unsigned long ulPeriodInMilliSecs, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger);
+	CheckIngestionTimes(unsigned long ulPeriodInMilliSecs, std::shared_ptr<MultiEventsSet> multiEventsSet, std::shared_ptr<spdlog::logger> logger);
 
 	virtual ~CheckIngestionTimes(void);
 
 	virtual void handleTimeOut(void);
 };
-
-#endif

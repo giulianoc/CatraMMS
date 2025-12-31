@@ -1,6 +1,5 @@
 
-#ifndef FFMPEGEncoderDaemons_h
-#define FFMPEGEncoderDaemons_h
+#pragma once
 
 #include "FFMPEGEncoderBase.h"
 
@@ -29,9 +28,9 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 
   public:
 	FFMPEGEncoderDaemons(
-		json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
-		mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, shared_mutex *cpuUsageMutex,
-		deque<int> *cpuUsage
+		nlohmann::json configurationRoot, std::mutex *liveRecordingMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
+		std::mutex *liveProxyMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, std::shared_mutex *cpuUsageMutex,
+		std::deque<int> *cpuUsage
 	);
 	~FFMPEGEncoderDaemons();
 
@@ -43,7 +42,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 
 	void stopCPUUsageThread();
 
-	static void termProcess(const shared_ptr<FFMPEGEncoderBase::Encoding> &selectedEncoding, int64_t ingestionJobKey, string label, string message, bool kill);
+	static void termProcess(const std::shared_ptr<FFMPEGEncoderBase::Encoding> &selectedEncoding, int64_t ingestionJobKey, std::string label, std::string message, bool kill);
 
 private:
 	bool _monitorThreadShutdown;
@@ -54,14 +53,12 @@ private:
 	int _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow;
 	GetCpuUsage _getCpuUsage;
 
-	mutex *_liveRecordingMutex;
-	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
-	mutex *_liveProxyMutex;
-	vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
-	shared_mutex *_cpuUsageMutex;
-	deque<int> *_cpuUsage;
+	std::mutex *_liveRecordingMutex;
+	std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
+	std::mutex *_liveProxyMutex;
+	std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
+	std::shared_mutex *_cpuUsageMutex;
+	std::deque<int> *_cpuUsage;
 
-	static bool exists(const string& pathName, int retries = 3, int waitInSeconds = 1);
+	static bool exists(const std::string& pathName, int retries = 3, int waitInSeconds = 1);
 };
-
-#endif

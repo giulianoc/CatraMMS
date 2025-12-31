@@ -12,6 +12,10 @@
 #include <cstdint>
 #include <sstream>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
 	mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, shared_mutex *cpuUsageMutex, deque<int> *cpuUsage

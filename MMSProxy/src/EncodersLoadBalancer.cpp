@@ -15,6 +15,10 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 EncodersLoadBalancer::EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
 {
 	_mmsEngineDBFacade = mmsEngineDBFacade;

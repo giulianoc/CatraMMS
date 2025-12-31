@@ -4,6 +4,10 @@
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void MMSEngineProcessor::manageVODProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies

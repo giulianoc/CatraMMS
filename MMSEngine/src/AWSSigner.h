@@ -1,5 +1,4 @@
-#ifndef AWSSigner_H
-#define AWSSigner_H
+#pragma once
 
 #include <string>
 
@@ -9,7 +8,7 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
-using namespace std;
+// using namespace std;
 
 class AWSSigner
 {
@@ -22,72 +21,70 @@ class AWSSigner
 	const string AWS4_REQUEST{"aws4_request"};
 	*/
 
-	string sign(string pemPathName, string message);
+	std::string sign(std::string pemPathName, std::string message);
 
   public:
 	AWSSigner(void);
 
 	~AWSSigner(void);
 
-	string calculateSignedURL(string hostName, string uriPath, string keyPairId, string privateKeyPEMPathName, int expirationInSeconds);
+	std::string calculateSignedURL(std::string hostName, std::string uriPath, std::string keyPairId, std::string privateKeyPEMPathName, int expirationInSeconds);
 
 	/*
-	int awsV4Signature(string hostName,
-		string uriPath);
-	int awsV4Signature2(string hostName,
-		string uriPath);
+	int awsV4Signature(std::string hostName,
+		std::string uriPath);
+	int awsV4Signature2(std::string hostName,
+		std::string uriPath);
 	*/
 
   private:
 	/*
-	void sha256(const string str,
+	void sha256(const std::string str,
 		unsigned char outputBuffer[SHA256_DIGEST_LENGTH]) noexcept;
 
-	const string sha256_base16(const string) noexcept;
+	const std::string sha256_base16(const std::string) noexcept;
 
-	const string canonicalize_uri(const string& uriPath) noexcept;
+	const std::string canonicalize_uri(const std::string& uriPath) noexcept;
 
-	const string canonicalize_query(const string& queryString) noexcept;
+	const std::string canonicalize_query(const std::string& queryString) noexcept;
 
-	const map<string, string> canonicalize_headers(
-		const vector<string>& headers) noexcept;
+	const map<std::string, std::string> canonicalize_headers(
+		const vector<std::string>& headers) noexcept;
 
-	const string map_headers_string(
-		const map<string, string>& header_key2val) noexcept;
+	const std::string map_headers_std::string(
+		const map<std::string, std::string>& header_key2val) noexcept;
 
-	const string map_signed_headers(
-		const map<string, string>& header_key2val) noexcept;
+	const std::string map_signed_headers(
+		const map<std::string, std::string>& header_key2val) noexcept;
 
-	const string canonicalize_request(const string& http_request_method,
-		const string& canonical_uri,
-		const string& canonical_query_string,
-		const string& canonical_headers,
-		const string& signed_headers,
-		const string& payload) noexcept;
+	const std::string canonicalize_request(const std::string& http_request_method,
+		const std::string& canonical_uri,
+		const std::string& canonical_query_std::string,
+		const std::string& canonical_headers,
+		const std::string& signed_headers,
+		const std::string& payload) noexcept;
 
-	const string stringToSign(
-		const string& algorithm, const time_t& request_date,
-		const string& credential_scope,
-		const string& hashed_canonical_request) noexcept;
-	const string sign(const string key, const string msg);
-	const string ISO8601_date(const time_t& t) noexcept;
+	const std::string std::stringToSign(
+		const std::string& algorithm, const time_t& request_date,
+		const std::string& credential_scope,
+		const std::string& hashed_canonical_request) noexcept;
+	const std::string sign(const std::string key, const std::string msg);
+	const std::string ISO8601_date(const time_t& t) noexcept;
 
-	const string utc_yyyymmdd(const time_t& t) noexcept;
+	const std::string utc_yyyymmdd(const time_t& t) noexcept;
 
-	const string credentialScope(const time_t& t, const string region,
-		const string service,
-		const string s) noexcept;
-	const string credentialScope2(const string t, const string region,
-		const string service,
-		const string s) noexcept;
+	const std::string credentialScope(const time_t& t, const std::string region,
+		const std::string service,
+		const std::string s) noexcept;
+	const std::string credentialScope2(const std::string t, const std::string region,
+		const std::string service,
+		const std::string s) noexcept;
 
-	const string calculate_signature(const time_t& request_date,
-		const string secret, const string region,
-		const string service,
-		const string string_to_sign) noexcept;
+	const std::string calculate_signature(const time_t& request_date,
+		const std::string secret, const std::string region,
+		const std::string service,
+		const std::string std::string_to_sign) noexcept;
 
-	const string join(const vector<string>& ss, const string delim) noexcept;
+	const std::string join(const vector<std::string>& ss, const std::string delim) noexcept;
 	*/
 };
-
-#endif

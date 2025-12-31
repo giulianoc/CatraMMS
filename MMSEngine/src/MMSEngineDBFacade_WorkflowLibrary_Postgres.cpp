@@ -3,6 +3,11 @@
 #include "MMSEngineDBFacade.h"
 #include <random>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	int64_t userKey, int64_t workspaceKey, string label, int64_t thumbnailMediaItemKey, const string_view& jsonWorkflow, bool admin
 )

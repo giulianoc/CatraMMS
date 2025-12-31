@@ -17,6 +17,10 @@
 #include "spdlog/spdlog.h"
 #include <tuple>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void EncoderProxy::encodeContentImage()
 {
 	int64_t encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, "encodingProfileKey", 0);

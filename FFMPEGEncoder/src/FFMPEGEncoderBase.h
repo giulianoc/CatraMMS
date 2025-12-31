@@ -16,9 +16,9 @@
 
 #ifndef __FILEREF__
 #ifdef __APPLE__
-#define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+#define __FILEREF__ std::string("[") + std::string(__FILE__).substr(std::string(__FILE__).find_last_of("/") + 1) + ":" + to_std::string(__LINE__) + "] "
 #else
-#define __FILEREF__ string("[") + basename((char *)__FILE__) + ":" + to_string(__LINE__) + "] "
+#define __FILEREF__ std::string("[") + basename((char *)__FILE__) + ":" + to_std::string(__LINE__) + "] "
 #endif
 #endif
 
@@ -29,7 +29,7 @@ class FFMPEGEncoderBase
 	{
 		virtual ~Encoding() = default;
 
-		void initEncoding(const int64_t encodingJobKey, const string_view& method)
+		void initEncoding(const int64_t encodingJobKey, const std::string_view& method)
 		{
 			_available = false;
 			_method = method;
@@ -37,7 +37,7 @@ class FFMPEGEncoderBase
 			_killTypeReceived = FFMpegWrapper::KillType::None;
 			_encodingJobKey = encodingJobKey;
 			_ffmpegTerminatedSuccessful = false;
-			_encodingStart = nullopt;
+			_encodingStart = std::nullopt;
 		}
 
 		virtual void reset()
@@ -50,17 +50,17 @@ class FFMPEGEncoderBase
 			_callbackData->reset();
 		}
 
-		shared_ptr<FFMpegEngine::CallbackData> _callbackData;
+		std::shared_ptr<FFMpegEngine::CallbackData> _callbackData;
 
-		string _method;
+		std::string _method;
 		bool _available{};
 		ProcessUtility::ProcessId _childProcessId;
 		int64_t _ingestionJobKey{};
 		int64_t _encodingJobKey{};
-		shared_ptr<FFMpegWrapper> _ffmpeg;
+		std::shared_ptr<FFMpegWrapper> _ffmpeg;
 		bool _ffmpegTerminatedSuccessful{};
 		// quando inizia l'encoding, dopo la preparazione dei contenuti che in caso di externalContent può essere lunga per il download
-		optional<chrono::system_clock::time_point> _encodingStart;
+		std::optional<std::chrono::system_clock::time_point> _encodingStart;
 		FFMpegWrapper::KillType _killTypeReceived = FFMpegWrapper::KillType::None;
 	};
 
@@ -68,32 +68,32 @@ class FFMPEGEncoderBase
 	{
 		bool _killedBecauseOfNotWorking{}; // by monitorThread
 
-		// string					_liveGridOutputType;	// only for LiveGrid
-		json _outputsRoot;
+		// std::string					_liveGridOutputType;	// only for LiveGrid
+		nlohmann::json _outputsRoot;
 
 		bool _monitoringRealTimeInfoEnabled{};
 		// frames, time, size, bitrate, framerate
-		tuple<int32_t, chrono::milliseconds, size_t, double, double> _lastRealTimeInfo{};
+		std::tuple<int32_t, std::chrono::milliseconds, size_t, double, double> _lastRealTimeInfo{};
 		// int32_t _lastRealTimeFrame{};
 		// chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
 		// size_t _lastRealTimeSize{};
 		// double _lastRealTimeBitRate{};
 		// long _lastRealTimeFrameRate{};
-		chrono::system_clock::time_point _realTimeLastChange;
+		std::chrono::system_clock::time_point _realTimeLastChange;
 
 		long _numberOfRestartBecauseOfFailure{};
 
-		json _encodingParametersRoot;
-		json _ingestedParametersRoot;
+		nlohmann::json _encodingParametersRoot;
+		nlohmann::json _ingestedParametersRoot;
 
-		json _inputsRoot;
-		mutex _inputsRootMutex;
+		nlohmann::json _inputsRoot;
+		std::mutex _inputsRootMutex;
 
 		// chrono::system_clock::time_point _proxyStart;
 
-		[[nodiscard]] shared_ptr<LiveProxyAndGrid> cloneForMonitor() const
+		[[nodiscard]] std::shared_ptr<LiveProxyAndGrid> cloneForMonitor() const
 		{
-			auto liveProxyAndGrid = make_shared<LiveProxyAndGrid>();
+			auto liveProxyAndGrid = std::make_shared<LiveProxyAndGrid>();
 
 			liveProxyAndGrid->_available = _available;
 			liveProxyAndGrid->_childProcessId = _childProcessId;
@@ -148,36 +148,36 @@ class FFMPEGEncoderBase
 
 		bool _monitoringRealTimeInfoEnabled{};
 		// frames, time, size, bitrate, framerate
-		tuple<int32_t, chrono::milliseconds, size_t, double, double> _lastRealTimeInfo{};
+		std::tuple<int32_t, std::chrono::milliseconds, size_t, double, double> _lastRealTimeInfo{};
 		// int32_t _lastRealTimeFrame{};
 		// chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
 		// size_t _lastRealTimeSize{};
 		// double _lastRealTimeBitRate{};
 		// long _lastRealTimeFrameRate{};
 		uintmax_t _lastOutputFfmpegFileSize{};
-		chrono::system_clock::time_point _realTimeLastChange;
+		std::chrono::system_clock::time_point _realTimeLastChange;
 
 		long _numberOfRestartBecauseOfFailure{};
 
 		bool _externalEncoder{};
-		json _encodingParametersRoot;
-		json _ingestedParametersRoot;
-		string _streamSourceType;
-		string _chunksTranscoderStagingContentsPath;
-		string _chunksNFSStagingContentsPath;
-		string _segmentListFileName;
-		string _recordedFileNamePrefix;
-		string _lastRecordedAssetFileName;
+		nlohmann::json _encodingParametersRoot;
+		nlohmann::json _ingestedParametersRoot;
+		std::string _streamSourceType;
+		std::string _chunksTranscoderStagingContentsPath;
+		std::string _chunksNFSStagingContentsPath;
+		std::string _segmentListFileName;
+		std::string _recordedFileNamePrefix;
+		std::string _lastRecordedAssetFileName;
 		double _lastRecordedAssetDurationInSeconds{};
 		int64_t _lastRecordedSegmentUtcStartTimeInMillisecs{};
-		string _channelLabel;
-		string _segmenterType;
+		std::string _channelLabel;
+		std::string _segmenterType;
 		// chrono::system_clock::time_point _recordingStart;
 
 		bool _virtualVOD{};
-		string _monitorVirtualVODManifestDirectoryPath; // used to build virtualVOD
-		string _monitorVirtualVODManifestFileName;		// used to build virtualVOD
-		string _virtualVODStagingContentsPath;
+		std::string _monitorVirtualVODManifestDirectoryPath; // used to build virtualVOD
+		std::string _monitorVirtualVODManifestFileName;		// used to build virtualVOD
+		std::string _virtualVODStagingContentsPath;
 		int64_t _liveRecorderVirtualVODImageMediaItemKey{};
 
 		void reset() override
@@ -190,9 +190,9 @@ class FFMPEGEncoderBase
 			Encoding::reset();
 		}
 
-		[[nodiscard]] shared_ptr<LiveRecording> cloneForMonitorAndVirtualVOD() const
+		[[nodiscard]] std::shared_ptr<LiveRecording> cloneForMonitorAndVirtualVOD() const
 		{
-			auto liveRecording = make_shared<LiveRecording>();
+			auto liveRecording = std::make_shared<LiveRecording>();
 
 			liveRecording->_available = _available;
 			liveRecording->_childProcessId = _childProcessId;
@@ -246,18 +246,18 @@ class FFMPEGEncoderBase
 		bool _completedWithError;
 		bool _killedByUser;
 		FFMpegWrapper::KillType _killTypeReceived;
-		chrono::system_clock::time_point _timestamp;
+		std::chrono::system_clock::time_point _timestamp;
 
-		shared_ptr<FFMpegEngine::CallbackData> _callbackData;
+		std::shared_ptr<FFMpegEngine::CallbackData> _callbackData;
 	};
 
   public:
-	explicit FFMPEGEncoderBase(json configurationRoot);
+	explicit FFMPEGEncoderBase(nlohmann::json configurationRoot);
 	~FFMPEGEncoderBase();
 
   protected:
 	int64_t _mmsAPITimeoutInSeconds;
 	int64_t _mmsBinaryTimeoutInSeconds;
 
-	static long getAddContentIngestionJobKey(int64_t ingestionJobKey, string ingestionResponse);
+	static long getAddContentIngestionJobKey(int64_t ingestionJobKey, std::string ingestionResponse);
 };

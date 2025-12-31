@@ -3,6 +3,11 @@
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 void MMSEngineDBFacade::retentionOfIngestionData()
 {
 	_logger->info(__FILEREF__ + "retentionOfIngestionData");

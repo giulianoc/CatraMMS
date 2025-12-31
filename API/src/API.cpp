@@ -38,6 +38,10 @@
 
 #include "JsonPath.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 API::API(
 	const bool noFileSystemAccess, const json &configurationRoot, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
 	const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSDeliveryAuthorization> &mmsDeliveryAuthorization, mutex *fcgiAcceptMutex,

@@ -2,6 +2,8 @@
 #include "CheckRefreshPartitionFreeSizeTimes.h"
 #include "Event2.h"
 
+using namespace std;
+
 CheckRefreshPartitionFreeSizeTimes::CheckRefreshPartitionFreeSizeTimes(
 	string refreshPartitionFreeSizeTimesSchedule, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger
 )

@@ -17,6 +17,10 @@
 #include "spdlog/spdlog.h"
 #include <fstream>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 ActiveEncodingsManager::ActiveEncodingsManager(
 	json configuration, string processorMMS, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
 	shared_ptr<MMSStorage> mmsStorage

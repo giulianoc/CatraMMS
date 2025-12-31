@@ -4,6 +4,10 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/fmt/fmt.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies

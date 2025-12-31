@@ -8,6 +8,10 @@
 #include "spdlog/fmt/bundled/format.h"
 #include <openssl/evp.h>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 #define MD5BUFFERSIZE 16384
 
 void MMSEngineProcessor::handleLocalAssetIngestionEventThread(

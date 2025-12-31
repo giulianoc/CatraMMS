@@ -19,6 +19,10 @@
 #include <format>
 #include <regex>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void API::addYouTubeConf(
 	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData

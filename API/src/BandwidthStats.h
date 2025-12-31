@@ -16,24 +16,24 @@
 #include <chrono>
 #include <unordered_map>
 
-using namespace std;
+// using namespace std;
 
 class BandwidthStats
 {
   public:
-	void addSample(uint64_t bytesUsed, chrono::system_clock::time_point timestamp);
+	void addSample(uint64_t bytesUsed, std::chrono::system_clock::time_point timestamp);
 
   private:
 	// il mutex non serve visto che un solo thread gestisce la bandwidthUsage
 	// mutex _mutex;
 
-	string _currentDay;
+	std::string _currentDay;
 	int _currentHour;
 
-	unordered_map<int, vector<uint64_t>> _hourlyData; // hour → samples
+	std::unordered_map<int, std::vector<uint64_t>> _hourlyData; // hour → samples
 	uint64_t _dailyPeak = 0;
-	chrono::system_clock::time_point _dailyPeakTime;
-	vector<pair<chrono::system_clock::time_point, uint64_t>> _dailySamples;
+	std::chrono::system_clock::time_point _dailyPeakTime;
+	std::vector<std::pair<std::chrono::system_clock::time_point, uint64_t>> _dailySamples;
 
 	void logAndReset();
 };

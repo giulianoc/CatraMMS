@@ -5,6 +5,11 @@
 #include "spdlog/spdlog.h"
 #include <cstdint>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	string processorMMS, vector<tuple<shared_ptr<Workspace>, int64_t, int64_t>> &mediaItemKeyOrPhysicalPathKeyToBeRemoved, int maxEntriesNumber
 )

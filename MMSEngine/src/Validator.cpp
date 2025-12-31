@@ -17,6 +17,10 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 Validator::Validator(const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const json& configuration)
 {
 	_mmsEngineDBFacade = mmsEngineDBFacade;

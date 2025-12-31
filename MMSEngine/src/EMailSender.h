@@ -11,8 +11,7 @@
  * Created on March 29, 2018, 6:27 AM
  */
 
-#ifndef EMailSender_h
-#define EMailSender_h
+#pragma once
 
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
@@ -23,9 +22,11 @@
 #include <string>
 #include <vector>
 
+/*
 using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
+*/
 
 #ifndef __FILEREF__
 #ifdef __APPLE__
@@ -35,22 +36,20 @@ using namespace nlohmann::literals;
 #endif
 #endif
 
-using namespace std;
+// using namespace std;
 
 class EMailSender
 {
   public:
   public:
-	EMailSender(json configuration);
+	EMailSender(nlohmann::json configuration);
 
 	virtual ~EMailSender();
 
-	void sendEmail(string tosCommaSeparated, string subject, vector<string> &emailBody, bool useMMSCCToo);
+	void sendEmail(std::string tosCommaSeparated, std::string subject, std::vector<std::string> &emailBody, bool useMMSCCToo);
 
   private:
-	json _configuration;
+	nlohmann::json _configuration;
 
 	static size_t emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void *userp);
 };
-
-#endif

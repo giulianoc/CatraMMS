@@ -4,6 +4,10 @@
 #include "MMSEngineProcessor.h"
 #include "StringUtils.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void MMSEngineProcessor::manageLiveGrid(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot
 )

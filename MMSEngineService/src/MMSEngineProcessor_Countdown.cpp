@@ -4,6 +4,10 @@
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void MMSEngineProcessor::manageCountdown(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
 	// string ingestionDate, sotto non viene usato per cui lo commento

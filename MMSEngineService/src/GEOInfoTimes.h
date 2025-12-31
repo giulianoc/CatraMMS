@@ -1,6 +1,5 @@
 
-#ifndef GEOInfoTimes_h
-#define GEOInfoTimes_h
+#pragma once
 
 #include <memory>
 #ifndef SPDLOG_ACTIVE_LEVEL
@@ -27,15 +26,13 @@
 class GEOInfoTimes : public Times2
 {
   protected:
-	shared_ptr<MultiEventsSet> _multiEventsSet;
-	shared_ptr<spdlog::logger> _logger;
+	std::shared_ptr<MultiEventsSet> _multiEventsSet;
+	std::shared_ptr<spdlog::logger> _logger;
 
   public:
-	GEOInfoTimes(string geoInfoTimesSchedule, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger);
+	GEOInfoTimes(std::string geoInfoTimesSchedule, std::shared_ptr<MultiEventsSet> multiEventsSet, std::shared_ptr<spdlog::logger> logger);
 
 	virtual ~GEOInfoTimes(void);
 
 	virtual void handleTimeOut(void);
 };
-
-#endif

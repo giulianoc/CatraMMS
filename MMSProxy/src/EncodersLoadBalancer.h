@@ -11,8 +11,8 @@
  * Created on April 28, 2018, 2:33 PM
  */
 
-#ifndef EncodersLoadBalancer_h
-#define EncodersLoadBalancer_h
+#pragma once
+
 
 #include <map>
 #include <string>
@@ -25,45 +25,46 @@
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 
-using namespace std;
+// using namespace std;
 
+/*
 using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
+*/
 
 #ifndef __FILEREF__
 #ifdef __APPLE__
-#define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+#define __FILEREF__ std::string("[") + std::string(__FILE__).substr(std::string(__FILE__).find_last_of("/") + 1) + ":" + to_std::string(__LINE__) + "] "
 #else
-#define __FILEREF__ string("[") + basename((char *)__FILE__) + ":" + to_string(__LINE__) + "] "
+#define __FILEREF__ std::string("[") + basename((char *)__FILE__) + ":" + to_std::string(__LINE__) + "] "
 #endif
 #endif
 
 class EncodersLoadBalancer
 {
   public:
-	EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration);
+	EncodersLoadBalancer(std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, nlohmann::json configuration);
 
 	virtual ~EncodersLoadBalancer();
 
-	string getEncoderHost(string encodersPool, shared_ptr<Workspace> workspace, string encoderToSkip);
+	std::string getEncoderHost(std::string encodersPool, std::shared_ptr<Workspace> workspace, std::string encoderToSkip);
 
-	tuple<int64_t, string, bool> getEncoderURL(
-		int64_t ingestionJobKey, string encodersPoolLabel, shared_ptr<Workspace> workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+	std::tuple<int64_t, std::string, bool> getEncoderURL(
+		int64_t ingestionJobKey, std::string encodersPoolLabel, std::shared_ptr<Workspace> workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 	);
 
   private:
 	/*
 	struct EncodersPoolDetails {
-		vector<string>          _encoders;
+		vector<std::string>          _encoders;
 		int                     _lastEncoderUsed;
 	};
 
-	map<string, EncodersPoolDetails>    _encodersPools;
+	map<std::string, EncodersPoolDetails>    _encodersPools;
 	*/
-	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
 	void init();
 };
 
-#endif

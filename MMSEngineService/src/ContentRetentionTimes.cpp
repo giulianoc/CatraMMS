@@ -2,6 +2,8 @@
 #include "ContentRetentionTimes.h"
 #include "Event2.h"
 
+using namespace std;
+
 ContentRetentionTimes::ContentRetentionTimes(
 	string contentRetentionTimesSchedule, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger
 )

@@ -2,6 +2,8 @@
 #include "ThreadsStatistic.h"
 #include <sstream>
 
+using namespace std;
+
 ThreadsStatistic::ThreadStatistic::ThreadStatistic(
 	shared_ptr<ThreadsStatistic> mmsThreadsStatistic, string threadName, int processorIdentifier, int currentThreadsNumber, int64_t ingestionJobKey
 )
@@ -190,12 +192,9 @@ void ThreadsStatistic::logRunningThreads(bool asError)
 		else
 			SPDLOG_INFO("threadsStatistic, running threads: {}", message);
 	}
-	catch (runtime_error &e)
-	{
-		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed" + ", exception: " + e.what());
-	}
 	catch (exception &e)
 	{
-		_logger->error(__FILEREF__ + "threadsStatistic logRunningThreads failed" + ", exception: " + e.what());
+		SPDLOG_ERROR("threadsStatistic logRunningThreads failed"
+			", exception: {}", e.what());
 	}
 }

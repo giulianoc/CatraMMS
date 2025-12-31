@@ -26,264 +26,264 @@ class Validator final
 	};
 
   public:
-	Validator(const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const json& configuration);
+	Validator(const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const nlohmann::json& configuration);
 
 	Validator(const Validator &orig);
 	virtual ~Validator();
 
-	static bool isVideoAudioFileFormat(const string &fileFormat);
+	static bool isVideoAudioFileFormat(const std::string &fileFormat);
 
-	static bool isWorkflowAsLibraryTypeValid(const string& workflowAsLibraryType);
+	static bool isWorkflowAsLibraryTypeValid(const std::string& workflowAsLibraryType);
 
-	static bool isImageFileFormat(const string &fileFormat);
+	static bool isImageFileFormat(const std::string &fileFormat);
 
-	static bool isCutTypeValid(const string &cutType);
+	static bool isCutTypeValid(const std::string &cutType);
 
-	static bool isAddSilentTypeValid(const string &addType);
+	static bool isAddSilentTypeValid(const std::string &addType);
 
-	static bool isFacebookNodeTypeValid(const string &nodeType);
+	static bool isFacebookNodeTypeValid(const std::string &nodeType);
 
-	static bool isFacebookLiveTypeValid(const string& nodeType);
+	static bool isFacebookLiveTypeValid(const std::string& nodeType);
 
-	static bool isYouTubeLiveBroadcastSourceTypeValid(const string &sourceType);
+	static bool isYouTubeLiveBroadcastSourceTypeValid(const std::string &sourceType);
 
-	static bool isFacebookLiveBroadcastSourceTypeValid(const string &sourceType);
+	static bool isFacebookLiveBroadcastSourceTypeValid(const std::string &sourceType);
 
-	static bool isYouTubePrivacyStatusValid(const string &privacyStatus);
+	static bool isYouTubePrivacyStatusValid(const std::string &privacyStatus);
 
-	static bool isYouTubeTokenTypeValid(const string &tokenType);
+	static bool isYouTubeTokenTypeValid(const std::string &tokenType);
 
-	static bool isTimecodeValid(const string& timecode);
-	static bool isFontTypeValid(const string &fontType);
+	static bool isTimecodeValid(const std::string& timecode);
+	static bool isFontTypeValid(const std::string &fontType);
 
-	static bool isColorValid(const string& fontColor);
+	static bool isColorValid(const std::string& fontColor);
 
-	static bool isVideoSpeedTypeValid(const string& speed);
+	static bool isVideoSpeedTypeValid(const std::string& speed);
 
-	static bool isFaceRecognitionCascadeNameValid(const string &faceRecognitionCascadeName);
+	static bool isFaceRecognitionCascadeNameValid(const std::string &faceRecognitionCascadeName);
 
-	static bool isFaceRecognitionOutputValid(const string &faceRecognitionOutput);
+	static bool isFaceRecognitionOutputValid(const std::string &faceRecognitionOutput);
 
-	static bool isLiveRecorderOutputValid(const string& liveRecorderOutput);
+	static bool isLiveRecorderOutputValid(const std::string& liveRecorderOutput);
 
-	static bool isLiveProxyOutputTypeValid(const string &liveProxyOutputType);
+	static bool isLiveProxyOutputTypeValid(const std::string &liveProxyOutputType);
 
-	static bool isLiveGridOutputTypeValid(const string& liveGridOutputType);
+	static bool isLiveGridOutputTypeValid(const std::string& liveGridOutputType);
 
-	// time_t sDateSecondsToUtc(string sDate);
-	// int64_t sDateMilliSecondsToUtc(string sDate);
+	// time_t sDateSecondsToUtc(std::string sDate);
+	// int64_t sDateMilliSecondsToUtc(std::string sDate);
 
-	void validateIngestedRootMetadata(int64_t workspaceKey, const json& root);
+	void validateIngestedRootMetadata(int64_t workspaceKey, const nlohmann::json& root);
 
-	void validateGroupOfTasksMetadata(int64_t workspaceKey, const json &groupOfTasksRoot, bool validateDependenciesToo);
+	void validateGroupOfTasksMetadata(int64_t workspaceKey, const nlohmann::json &groupOfTasksRoot, bool validateDependenciesToo);
 
-	static void validateGroupOfTasksMetadata(int64_t workspaceKey, const json& parametersRoot);
+	static void validateGroupOfTasksMetadata(int64_t workspaceKey, const nlohmann::json& parametersRoot);
 
-	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
-	validateSingleTaskMetadata(int64_t workspaceKey, const json &taskRoot, bool validateDependenciesToo);
+	std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
+	validateSingleTaskMetadata(int64_t workspaceKey, const nlohmann::json &taskRoot, bool validateDependenciesToo);
 
-	void validateEvents(int64_t workspaceKey, const json &taskOrGroupOfTasksRoot, bool validateDependenciesToo);
+	void validateEvents(int64_t workspaceKey, const nlohmann::json &taskOrGroupOfTasksRoot, bool validateDependenciesToo);
 
-	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
-	validateSingleTaskMetadata(int64_t workspaceKey, MMSEngineDBFacade::IngestionType ingestionType, const json& parametersRoot);
+	std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
+	validateSingleTaskMetadata(int64_t workspaceKey, MMSEngineDBFacade::IngestionType ingestionType, const nlohmann::json& parametersRoot);
 
-	void validateAddContentMetadata(const string &label, const json &parametersRoot);
+	void validateAddContentMetadata(const std::string &label, const nlohmann::json &parametersRoot);
 
 	void validateAddSilentAudioMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateRemoveContentMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateEncodeMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateFrameMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validatePeriodicalFramesMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateIFramesMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateSlideshowMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateConcatDemuxerMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateCutMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateOverlayImageOnVideoMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateOverlayTextOnVideoMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	) const;
 
 	void validateEmailNotificationMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
-	static void validateCheckStreamingMetadata(int64_t workspaceKey, const string &label, const json &parametersRoot);
+	static void validateCheckStreamingMetadata(int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot);
 
 	void validateMediaCrossReferenceMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateFTPDeliveryMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateHTTPCallbackMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateLocalCopyMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateExtractTracksMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validatePostOnFacebookMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validatePostOnYouTubeMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateFaceRecognitionMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateFaceIdentificationMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateLiveRecorderMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateChangeFileFormatMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateVideoSpeedMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validatePictureInPictureMetadata(
-		int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string& label, const nlohmann::json& parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateIntroOutroOverlayMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateLiveProxyMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateYouTubeLiveBroadcastMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateFacebookLiveBroadcastMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateVODProxyMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateCountdownMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void validateLiveGridMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	static void validateLiveCutMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
-	static void validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::ContentType contentType, const json& encodingProfilesSetRoot);
+	static void validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::ContentType contentType, const nlohmann::json& encodingProfilesSetRoot);
 
-	void validateEncodingProfileRootMetadata(MMSEngineDBFacade::ContentType contentType, const json& encodingProfileRoot);
+	void validateEncodingProfileRootMetadata(MMSEngineDBFacade::ContentType contentType, const nlohmann::json& encodingProfileRoot);
 
 	void validateWorkflowAsLibraryMetadata(
-		int64_t workspaceKey, const string &label, const json &parametersRoot, bool validateDependenciesToo,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
-	void fillReferencesOutput(int64_t workspaceKey, const json &parametersRoot, vector<pair<int64_t, int64_t>> &referencesOutput) const;
+	void fillReferencesOutput(int64_t workspaceKey, const nlohmann::json &parametersRoot, std::vector<std::pair<int64_t, int64_t>> &referencesOutput) const;
 
   private:
-	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	string _storagePath;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	std::string _storagePath;
 
-	static void validateEncodingProfileRootVideoMetadata(const json &encodingProfileRoot);
+	static void validateEncodingProfileRootVideoMetadata(const nlohmann::json &encodingProfileRoot);
 
-	static void validateEncodingProfileRootAudioMetadata(const json &encodingProfileRoot);
+	static void validateEncodingProfileRootAudioMetadata(const nlohmann::json &encodingProfileRoot);
 
-	static void validateEncodingProfileRootImageMetadata(const json &encodingProfileRoot);
+	static void validateEncodingProfileRootImageMetadata(const nlohmann::json &encodingProfileRoot);
 
 	void fillDependencies(
-		int64_t workspaceKey, const string &label, const json &parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies,
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies,
 		bool priorityOnPhysicalPathKeyInCaseOfReferenceIngestionJobKey, bool encodingProfileFieldsToBeManaged
 	) const;
 
-	static void validateCrossReference(const string &label, const json &crossReferenceRoot, bool mediaItemKeyMandatory);
+	static void validateCrossReference(const std::string &label, const nlohmann::json &crossReferenceRoot, bool mediaItemKeyMandatory);
 
-	static void validateOutputRootMetadata(int64_t workspaceKey, const string &label, const json &outputRoot, bool encodingMandatory);
+	static void validateOutputRootMetadata(int64_t workspaceKey, const std::string &label, const nlohmann::json &outputRoot, bool encodingMandatory);
 };

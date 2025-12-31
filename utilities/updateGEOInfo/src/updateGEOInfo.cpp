@@ -5,6 +5,10 @@
 #include <fstream>
 #include <iostream>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 json loadConfigurationFile(const char *configurationPathName);
 
 int main(int iArgc, char *pArgv[])

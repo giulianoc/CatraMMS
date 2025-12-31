@@ -1,7 +1,6 @@
 
 
-#ifndef MMSStorage_h
-#define MMSStorage_h
+#pragma once
 
 #include <mutex>
 #include <vector>
@@ -28,8 +27,8 @@ class MMSStorage
 
   public:
 	MMSStorage(
-		bool noFileSystemAccess, bool noDatabaseAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration,
-		shared_ptr<spdlog::logger> logger
+		bool noFileSystemAccess, bool noDatabaseAccess, std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, nlohmann::json configuration,
+		std::shared_ptr<spdlog::logger> logger
 	);
 
 	~MMSStorage(void);
@@ -37,10 +36,10 @@ class MMSStorage
 	/*
 	static void createDirectories(
 		json configuration,
-		shared_ptr<spdlog::logger> logger);
+		std::shared_ptr<spdlog::logger> logger);
 	*/
 
-	fs::path getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace);
+	fs::path getWorkspaceIngestionRepository(std::shared_ptr<Workspace> workspace);
 
 	static fs::path getMMSRootRepository(fs::path storage);
 	fs::path getMMSRootRepository();
@@ -51,7 +50,7 @@ class MMSStorage
 
 	static fs::path getTranscoderStagingRootRepository(fs::path storage);
 
-	static string getDirectoryForLiveContents();
+	static std::string getDirectoryForLiveContents();
 
 	static fs::path getLiveRootRepository(fs::path storage);
 
@@ -65,21 +64,21 @@ class MMSStorage
 
 	fs::path getDoneRootRepository(void);
 
-	tuple<int64_t, fs::path, int, string, string, int64_t, string>
+	std::tuple<int64_t, fs::path, int, std::string, std::string, int64_t, std::string>
 	getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
 
-	tuple<fs::path, int, string, string, int64_t, string> getPhysicalPathDetails(int64_t physicalPathKey, bool fromMaster);
+	std::tuple<fs::path, int, std::string, std::string, int64_t, std::string> getPhysicalPathDetails(int64_t physicalPathKey, bool fromMaster);
 
-	tuple<string, int, string, string> getVODDeliveryURI(int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace);
+	std::tuple<std::string, int, std::string, std::string> getVODDeliveryURI(int64_t physicalPathKey, bool save, std::shared_ptr<Workspace> requestWorkspace);
 
-	tuple<string, int, int64_t, string, string>
-	getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save, shared_ptr<Workspace> requestWorkspace);
+	std::tuple<std::string, int, int64_t, std::string, std::string>
+	getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save, std::shared_ptr<Workspace> requestWorkspace);
 
-	fs::path getLiveDeliveryAssetPath(string directoryId, shared_ptr<Workspace> requestWorkspace);
+	fs::path getLiveDeliveryAssetPath(std::string directoryId, std::shared_ptr<Workspace> requestWorkspace);
 
-	fs::path getLiveDeliveryAssetPathName(string directoryId, string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
+	fs::path getLiveDeliveryAssetPathName(std::string directoryId, std::string liveFileExtension, std::shared_ptr<Workspace> requestWorkspace);
 
-	tuple<fs::path, fs::path, string> getLiveDeliveryDetails(string directoryId, string liveFileExtension, shared_ptr<Workspace> requestWorkspace);
+	std::tuple<fs::path, fs::path, std::string> getLiveDeliveryDetails(std::string directoryId, std::string liveFileExtension, std::shared_ptr<Workspace> requestWorkspace);
 
 	void removePhysicalPath(int64_t physicalPathKey);
 
@@ -87,12 +86,12 @@ class MMSStorage
 
 	void refreshPartitionsFreeSizes();
 
-	void moveContentInRepository(string filePathName, RepositoryType rtRepositoryType, string workspaceDirectoryName, bool addDateTimeToFileName);
+	void moveContentInRepository(std::string filePathName, RepositoryType rtRepositoryType, std::string workspaceDirectoryName, bool addDateTimeToFileName);
 
-	void copyFileInRepository(string filePathName, RepositoryType rtRepositoryType, string workspaceDirectoryName, bool addDateTimeToFileName);
+	void copyFileInRepository(std::string filePathName, RepositoryType rtRepositoryType, std::string workspaceDirectoryName, bool addDateTimeToFileName);
 
 	fs::path moveAssetInMMSRepository(
-		int64_t ingestionJobKey, fs::path sourceAssetPathName, string workspaceDirectoryName, string destinationFileName, string relativePath,
+		int64_t ingestionJobKey, fs::path sourceAssetPathName, std::string workspaceDirectoryName, std::string destinationFileName, std::string relativePath,
 
 		unsigned long *pulMMSPartitionIndexUsed, // OUT
 		// FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
@@ -101,9 +100,9 @@ class MMSStorage
 	);
 
 	fs::path getMMSAssetPathName(
-		bool externalReadOnlyStorage, int partitionKey, string workspaceDirectoryName,
-		string relativePath, // using '/'
-		string fileName
+		bool externalReadOnlyStorage, int partitionKey, std::string workspaceDirectoryName,
+		std::string relativePath, // using '/'
+		std::string fileName
 	);
 
 	// bRemoveLinuxPathIfExist: often this method is called
@@ -113,30 +112,30 @@ class MMSStorage
 	// to give to the encoder a clean place where to write
 	fs::path getStagingAssetPathName(
 		// neededForTranscoder=true uses a faster file system i.e. for recording
-		bool neededForTranscoder, string workspaceDirectoryName, string directoryNamePrefix, string relativePath,
-		string fileName,			 // may be empty ("")
+		bool neededForTranscoder, std::string workspaceDirectoryName, std::string directoryNamePrefix, std::string relativePath,
+		std::string fileName,			 // may be empty ("")
 		long long llMediaItemKey,	 // used only if fileName is ""
 		long long llPhysicalPathKey, // used only if fileName is ""
 		bool removeLinuxPathIfExist
 	);
 
-	unsigned long getWorkspaceStorageUsage(string workspaceDirectoryName);
+	unsigned long getWorkspaceStorageUsage(std::string workspaceDirectoryName);
 
-	void deleteWorkspace(shared_ptr<Workspace> workspace);
+	void deleteWorkspace(std::shared_ptr<Workspace> workspace);
 
 	void manageTarFileInCaseOfIngestionOfSegments(
-		int64_t ingestionJobKey, string tarBinaryPathName, string workspaceIngestionRepository, string sourcePathName
+		int64_t ingestionJobKey, std::string tarBinaryPathName, std::string workspaceIngestionRepository, std::string sourcePathName
 	);
 
 	static int64_t move(int64_t ingestionJobKey, fs::path source, fs::path dest);
 
   private:
 	bool _noFileSystemAccess;
-	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	shared_ptr<spdlog::logger> _logger;
-	json _configuration;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	std::shared_ptr<spdlog::logger> _logger;
+	nlohmann::json _configuration;
 
-	string _hostName;
+	std::string _hostName;
 
 	fs::path _storage;
 
@@ -144,23 +143,21 @@ class MMSStorage
 	int _freeSpaceToLeaveInEachPartitionInMB;
 
 	void contentInRepository(
-		unsigned long ulIsCopyOrMove, string contentPathName, RepositoryType rtRepositoryType, string workspaceDirectoryName,
+		unsigned long ulIsCopyOrMove, std::string contentPathName, RepositoryType rtRepositoryType, std::string workspaceDirectoryName,
 		bool addDateTimeToFileName
 	);
 
-	// string getRepository(RepositoryType rtRepositoryType);
+	// std::string getRepository(RepositoryType rtRepositoryType);
 
 	fs::path creatingDirsUsingTerritories(
-		unsigned long ulCurrentMMSPartitionIndex, string relativePath, string workspaceDirectoryName, bool deliveryRepositoriesToo,
+		unsigned long ulCurrentMMSPartitionIndex, std::string relativePath, std::string workspaceDirectoryName, bool deliveryRepositoriesToo,
 		Workspace::TerritoriesHashMap &phmTerritories
 	);
 
 	// void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
 
 	void removePhysicalPathFile(
-		int64_t mediaItemKey, int64_t physicalPathKey, MMSEngineDBFacade::DeliveryTechnology deliveryTechnology, string fileName,
-		bool externalReadOnlyStorage, int mmsPartitionNumber, string workspaceDirectoryName, string relativePath, uint64_t sizeInBytes
+		int64_t mediaItemKey, int64_t physicalPathKey, MMSEngineDBFacade::DeliveryTechnology deliveryTechnology, std::string fileName,
+		bool externalReadOnlyStorage, int mmsPartitionNumber, std::string workspaceDirectoryName, std::string relativePath, uint64_t sizeInBytes
 	);
 };
-
-#endif

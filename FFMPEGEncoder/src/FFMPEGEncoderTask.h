@@ -13,9 +13,9 @@
 
 #ifndef __FILEREF__
 #ifdef __APPLE__
-#define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "
+#define __FILEREF__ std::string("[") + std::string(__FILE__).substr(std::string(__FILE__).find_last_of("/") + 1) + ":" + to_std::string(__LINE__) + "] "
 #else
-#define __FILEREF__ string("[") + basename((char *)__FILE__) + ":" + to_string(__LINE__) + "] "
+#define __FILEREF__ std::string("[") + basename((char *)__FILE__) + ":" + to_std::string(__LINE__) + "] "
 #endif
 #endif
 
@@ -24,32 +24,32 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
   public:
 	FFMPEGEncoderTask(
-		const shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const json& configurationRoot,
-		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap
+		const std::shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, const nlohmann::json& configurationRoot,
+		std::mutex *encodingCompletedMutex, std::map<int64_t, std::shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap
 	);
 	~FFMPEGEncoderTask();
 
   private:
-	mutex *_encodingCompletedMutex;
-	map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *_encodingCompletedMap;
+	std::mutex *_encodingCompletedMutex;
+	std::map<int64_t, std::shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *_encodingCompletedMap;
 
-	string _tvChannelConfigurationDirectory;
+	std::string _tvChannelConfigurationDirectory;
 
 	void addEncodingCompleted();
 	void removeEncodingCompletedIfPresent() const;
 
 	int64_t ingestContentByPushingBinary(
-		int64_t ingestionJobKey, string workflowMetadata, string fileFormat, string binaryPathFileName, int64_t binaryFileSizeInBytes,
-		int64_t userKey, const string &apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
+		int64_t ingestionJobKey, std::string workflowMetadata, std::string fileFormat, std::string binaryPathFileName, int64_t binaryFileSizeInBytes,
+		int64_t userKey, const std::string &apiKey, std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL
 	) const;
 
 	int progressDownloadCallback(
-		int64_t ingestionJobKey, chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal,
+		int64_t ingestionJobKey, std::chrono::system_clock::time_point &lastTimeProgressUpdate, double &lastPercentageUpdated, double dltotal,
 		double dlnow, double ultotal, double ulnow
 	);
 
   protected:
-	shared_ptr<FFMPEGEncoderBase::Encoding> _encoding;
+	std::shared_ptr<FFMPEGEncoderBase::Encoding> _encoding;
 
 	bool _completedWithError;
 	bool _killedByUser;
@@ -59,15 +59,15 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	long _tvChannelPort_Start;
 	long _tvChannelPort_MaxNumberOfOffsets;
 
-	// void ffmpegLineCallback(const string_view& ffmpegLine) const;
+	// void ffmpegLineCallback(const std::string_view& ffmpegLine) const;
 
-	static string buildAddContentIngestionWorkflow(
-		int64_t ingestionJobKey, string label, string fileFormat, string ingester,
+	static std::string buildAddContentIngestionWorkflow(
+		int64_t ingestionJobKey, std::string label, std::string fileFormat, std::string ingester,
 
 		// in case of a new content
-		string sourceURL, // if empty it means binary is ingested later (PUSH)
-		string title, const json& userDataRoot,
-		const json& ingestedParametersRoot, // it could be also nullValue
+		std::string sourceURL, // if empty it means binary is ingested later (PUSH)
+		std::string title, const nlohmann::json& userDataRoot,
+		const nlohmann::json& ingestedParametersRoot, // it could be also nullValue
 
 		int64_t encodingProfileKey,
 
@@ -75,28 +75,28 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 	);
 
 	void uploadLocalMediaToMMS(
-		int64_t ingestionJobKey, int64_t encodingJobKey, json ingestedParametersRoot, const json &encodingProfileDetailsRoot,
-		const json &encodingParametersRoot, string sourceFileExtension, const string &encodedStagingAssetPathName, const string &workflowLabel,
-		const string &ingester, int64_t encodingProfileKey,
+		int64_t ingestionJobKey, int64_t encodingJobKey, nlohmann::json ingestedParametersRoot, const nlohmann::json &encodingProfileDetailsRoot,
+		const nlohmann::json &encodingParametersRoot, std::string sourceFileExtension, const std::string &encodedStagingAssetPathName, const std::string &workflowLabel,
+		const std::string &ingester, int64_t encodingProfileKey,
 		int64_t variantOfMediaItemKey = -1 // in case Media is a variant of a MediaItem already present
 	);
 
-	static string downloadMediaFromMMS(
-		int64_t ingestionJobKey, int64_t encodingJobKey, const shared_ptr<FFMpegWrapper> &ffmpeg, const string &sourceFileExtension,
-		const string &sourcePhysicalDeliveryURL, const string &destAssetPathName
+	static std::string downloadMediaFromMMS(
+		int64_t ingestionJobKey, int64_t encodingJobKey, const std::shared_ptr<FFMpegWrapper> &ffmpeg, const std::string &sourceFileExtension,
+		const std::string &sourcePhysicalDeliveryURL, const std::string &destAssetPathName
 	);
 
-	long getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset) const;
+	long getFreeTvChannelPortOffset(std::mutex *tvChannelsPortsMutex, long tvChannelPort_CurrentOffset) const;
 
 	void createOrUpdateTVDvbLastConfigurationFile(
-		int64_t ingestionJobKey, int64_t encodingJobKey, string multicastIP, string multicastPort, string tvType, int64_t tvServiceId,
-		int64_t tvFrequency, int64_t tvSymbolRate, int64_t tvBandwidthInMhz, string tvModulation, int tvVideoPid, int tvAudioItalianPid,
+		int64_t ingestionJobKey, int64_t encodingJobKey, std::string multicastIP, std::string multicastPort, std::string tvType, int64_t tvServiceId,
+		int64_t tvFrequency, int64_t tvSymbolRate, int64_t tvBandwidthInMhz, std::string tvModulation, int tvVideoPid, int tvAudioItalianPid,
 		bool toBeAdded
 	);
 
-	[[nodiscard]] pair<string, string> getTVMulticastFromDvblastConfigurationFile(
-		int64_t ingestionJobKey, int64_t encodingJobKey, string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
-		int64_t tvBandwidthInMhz, string tvModulation
+	[[nodiscard]] std::pair<std::string, std::string> getTVMulticastFromDvblastConfigurationFile(
+		int64_t ingestionJobKey, int64_t encodingJobKey, std::string tvType, int64_t tvServiceId, int64_t tvFrequency, int64_t tvSymbolRate,
+		int64_t tvBandwidthInMhz, std::string tvModulation
 	) const;
 };
 

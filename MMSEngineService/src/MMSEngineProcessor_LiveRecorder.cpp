@@ -6,6 +6,10 @@
 #include "MMSEngineProcessor.h"
 #include "StringUtils.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void MMSEngineProcessor::manageLiveRecorder(
 	int64_t ingestionJobKey, const string& ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
 	const shared_ptr<Workspace>& workspace, json parametersRoot

@@ -2,6 +2,8 @@
 #include "DBDataRetentionTimes.h"
 #include "Event2.h"
 
+using namespace std;
+
 DBDataRetentionTimes::DBDataRetentionTimes(
 	string dbDataRetentionTimesSchedule, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger
 )

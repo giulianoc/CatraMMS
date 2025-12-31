@@ -21,14 +21,13 @@
  with the authors.
 */
 
-#ifndef MultiLocalAssetIngestionEvent_h
-#define MultiLocalAssetIngestionEvent_h
+#pragma once
 
 #include "Event2.h"
 #include "MMSEngineDBFacade.h"
 #include <iostream>
 
-using namespace std;
+// using namespace std;
 
 #define MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT 5
 
@@ -37,8 +36,8 @@ class MultiLocalAssetIngestionEvent : public Event2
   private:
 	int64_t _ingestionJobKey;
 	int64_t _encodingJobKey;
-	shared_ptr<Workspace> _workspace;
-	json _parametersRoot;
+	std::shared_ptr<Workspace> _workspace;
+	nlohmann::json _parametersRoot;
 
   public:
 	void setIngestionJobKey(int64_t ingestionJobKey) { _ingestionJobKey = ingestionJobKey; }
@@ -47,11 +46,9 @@ class MultiLocalAssetIngestionEvent : public Event2
 	void setEncodingJobKey(int64_t encodingJobKey) { _encodingJobKey = encodingJobKey; }
 	int64_t getEncodingJobKey() { return _encodingJobKey; }
 
-	void setWorkspace(shared_ptr<Workspace> workspace) { _workspace = workspace; }
-	shared_ptr<Workspace> getWorkspace() { return _workspace; }
+	void setWorkspace(std::shared_ptr<Workspace> workspace) { _workspace = workspace; }
+	std::shared_ptr<Workspace> getWorkspace() { return _workspace; }
 
-	void setParametersRoot(json parametersRoot) { _parametersRoot = parametersRoot; }
-	json getParametersRoot() { return _parametersRoot; }
+	void setParametersRoot(nlohmann::json parametersRoot) { _parametersRoot = parametersRoot; }
+	nlohmann::json getParametersRoot() { return _parametersRoot; }
 };
-
-#endif

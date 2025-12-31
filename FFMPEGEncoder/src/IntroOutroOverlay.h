@@ -6,10 +6,10 @@ class IntroOutroOverlay : public FFMPEGEncoderTask
 
   public:
 	IntroOutroOverlay(
-		const shared_ptr<Encoding> &encoding, const json &configurationRoot, mutex *encodingCompletedMutex,
-		map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
+		const std::shared_ptr<Encoding> &encoding, const nlohmann::json &configurationRoot, std::mutex *encodingCompletedMutex,
+		std::map<int64_t, std::shared_ptr<EncodingCompleted>> *encodingCompletedMap
 	)
 		: FFMPEGEncoderTask(encoding, configurationRoot, encodingCompletedMutex, encodingCompletedMap) {};
 
-	void encodeContent(json metadataRoot);
+	void encodeContent(nlohmann::json metadataRoot);
 };

@@ -8,6 +8,11 @@
 #include <algorithm>
 #include <chrono>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 int64_t MMSEngineDBFacade::addEncoder(
 	string label, bool external, bool enabled, string protocol, string publicServerName, string internalServerName, int port
 )

@@ -6,23 +6,25 @@
 #include <string>
 #include <unordered_map>
 
+/*
 using namespace std;
 
 using json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
+*/
 
 struct Workspace
 {
-	using TerritoriesHashMap = unordered_map<long, string>;
+	using TerritoriesHashMap = std::unordered_map<long, std::string>;
 
 	long long _workspaceKey;
-	string _name;
-	string _directoryName;
+	std::string _name;
+	std::string _directoryName;
 	int _maxEncodingPriority;
-	string _notes;
-	json _externalDeliveriesRoot = nullptr;
-	json _preferences = nullptr;
+	std::string _notes;
+	nlohmann::json _externalDeliveriesRoot = nullptr;
+	nlohmann::json _preferences = nullptr;
 
 	unsigned long _maxStorageInGB;
 	unsigned long _currentCostForStorage;

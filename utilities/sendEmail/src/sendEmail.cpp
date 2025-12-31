@@ -13,6 +13,10 @@ using namespace std;
 extern char **environ;
 #endif
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 json loadConfigurationFile(string configurationPathName, string environmentPrefix);
 string applyEnvironmentToConfiguration(string configuration, string environmentPrefix);
 

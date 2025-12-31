@@ -3,6 +3,11 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 int64_t MMSEngineDBFacade::addRTMPChannelConf(
 	int64_t workspaceKey, const string& label, const string& rtmpURL, const string& streamName, const string& userName, const string& password,
 	const json& playURLDetailsRoot, const string& type

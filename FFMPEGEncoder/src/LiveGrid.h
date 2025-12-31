@@ -6,12 +6,12 @@ class LiveGrid : public FFMPEGEncoderTask
 
   public:
 	LiveGrid(
-		const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,
-		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap
+		const std::shared_ptr<LiveProxyAndGrid> &liveProxyData, const nlohmann::json &configurationRoot,
+		std::mutex *encodingCompletedMutex, std::map<int64_t, std::shared_ptr<EncodingCompleted>> *encodingCompletedMap
 	);
 
-	void encodeContent(const string_view& requestBody);
+	void encodeContent(const std::string_view& requestBody);
 
   private:
-	shared_ptr<LiveProxyAndGrid> _liveProxyData;
+	std::shared_ptr<LiveProxyAndGrid> _liveProxyData;
 };

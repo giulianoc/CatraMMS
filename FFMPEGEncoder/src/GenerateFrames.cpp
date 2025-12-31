@@ -11,6 +11,10 @@
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void GenerateFrames::encodeContent(json metadataRoot)
 {
 	string api = "generateFrames";

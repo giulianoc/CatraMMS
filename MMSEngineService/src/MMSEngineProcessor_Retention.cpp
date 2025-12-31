@@ -2,6 +2,10 @@
 #include "MMSEngineProcessor.h"
 #include "StatisticTimer.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> processorsThreadsNumber)
 {
 

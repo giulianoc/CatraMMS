@@ -1,6 +1,5 @@
 
-#ifndef CheckRefreshPartitionFreeSizeTimes_h
-#define CheckRefreshPartitionFreeSizeTimes_h
+#pragma once
 
 #include <memory>
 #ifndef SPDLOG_ACTIVE_LEVEL
@@ -27,12 +26,12 @@
 class CheckRefreshPartitionFreeSizeTimes : public Times2
 {
   protected:
-	shared_ptr<MultiEventsSet> _multiEventsSet;
-	shared_ptr<spdlog::logger> _logger;
+	std::shared_ptr<MultiEventsSet> _multiEventsSet;
+	std::shared_ptr<spdlog::logger> _logger;
 
   public:
 	CheckRefreshPartitionFreeSizeTimes(
-		string refreshPartitionFreeSizeTimesSchedule, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger
+		std::string refreshPartitionFreeSizeTimesSchedule, std::shared_ptr<MultiEventsSet> multiEventsSet, std::shared_ptr<spdlog::logger> logger
 	);
 
 	virtual ~CheckRefreshPartitionFreeSizeTimes(void);
@@ -40,4 +39,3 @@ class CheckRefreshPartitionFreeSizeTimes : public Times2
 	virtual void handleTimeOut(void);
 };
 
-#endif

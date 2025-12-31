@@ -6,16 +6,16 @@ class LiveRecorder : public FFMPEGEncoderTask
 
   public:
 	LiveRecorder(
-		const shared_ptr<LiveRecording> &liveRecording, const json& configurationRoot,
-		mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap, mutex *tvChannelsPortsMutex,
+		const std::shared_ptr<LiveRecording> &liveRecording, const nlohmann::json& configurationRoot,
+		std::mutex *encodingCompletedMutex, std::map<int64_t, std::shared_ptr<EncodingCompleted>> *encodingCompletedMap, std::mutex *tvChannelsPortsMutex,
 		long *tvChannelPort_CurrentOffset
 	);
 
-	void encodeContent(const string_view &requestBody);
+	void encodeContent(const std::string_view &requestBody);
 
   private:
 	int _liveRecorderChunksIngestionCheckInSeconds;
 
-	mutex *_tvChannelsPortsMutex;
+	std::mutex *_tvChannelsPortsMutex;
 	long *_tvChannelPort_CurrentOffset;
 };

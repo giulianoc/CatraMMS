@@ -16,6 +16,10 @@
 #include "spdlog/spdlog.h"
 #include <regex>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void API::addInvoice(
 	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData)

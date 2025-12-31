@@ -2,6 +2,8 @@
 #include "GEOInfoTimes.h"
 #include "Event2.h"
 
+using namespace std;
+
 GEOInfoTimes::GEOInfoTimes(string geoInfoTimesSchedule, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger)
 	: Times2(geoInfoTimesSchedule, MMSENGINE_GEOINFOTIMES_CLASSNAME)
 

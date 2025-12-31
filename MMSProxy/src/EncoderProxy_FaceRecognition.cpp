@@ -24,6 +24,10 @@
 #include "spdlog/spdlog.h"
 #include <format>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 string EncoderProxy::faceRecognition()
 {
 	{

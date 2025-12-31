@@ -21,14 +21,14 @@
  with the authors.
 */
 
-#ifndef LocalAssetIngestionEvent_h
-#define LocalAssetIngestionEvent_h
+#pragma once
+
 
 #include "Event2.h"
 #include "MMSEngineDBFacade.h"
 #include <iostream>
 
-using namespace std;
+// using namespace std;
 
 #define MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT 2
 
@@ -36,33 +36,33 @@ class LocalAssetIngestionEvent : public Event2
 {
   private:
 	int64_t _ingestionJobKey;
-	shared_ptr<Workspace> _workspace;
+	std::shared_ptr<Workspace> _workspace;
 	MMSEngineDBFacade::IngestionType _ingestionType;
 
 	bool _externalReadOnlyStorage;
-	string _externalStorageMediaSourceURL;
+	std::string _externalStorageMediaSourceURL;
 
-	string _metadataContent;
-	string _ingestionSourceFileName;
-	string _mmsSourceFileName;
-	string _forcedAvgFrameRate;
+	std::string _metadataContent;
+	std::string _ingestionSourceFileName;
+	std::string _mmsSourceFileName;
+	std::string _forcedAvgFrameRate;
 	bool _ingestionRowToBeUpdatedAsSuccess;
 
   public:
-	void setMMSSourceFileName(string mmsSourceFileName) { _mmsSourceFileName = mmsSourceFileName; }
-	string getMMSSourceFileName() { return _mmsSourceFileName; }
+	void setMMSSourceFileName(std::string mmsSourceFileName) { _mmsSourceFileName = mmsSourceFileName; }
+	std::string getMMSSourceFileName() { return _mmsSourceFileName; }
 
-	void setExternalStorageMediaSourceURL(string externalStorageMediaSourceURL) { _externalStorageMediaSourceURL = externalStorageMediaSourceURL; }
-	string getExternalStorageMediaSourceURL() { return _externalStorageMediaSourceURL; }
+	void setExternalStorageMediaSourceURL(std::string externalStorageMediaSourceURL) { _externalStorageMediaSourceURL = externalStorageMediaSourceURL; }
+	std::string getExternalStorageMediaSourceURL() { return _externalStorageMediaSourceURL; }
 
 	void setIngestionType(MMSEngineDBFacade::IngestionType ingestionType) { _ingestionType = ingestionType; }
 	MMSEngineDBFacade::IngestionType getIngestionType() { return _ingestionType; }
 
-	void setMetadataContent(string metadataContent) { _metadataContent = metadataContent; }
-	string getMetadataContent() { return _metadataContent; }
+	void setMetadataContent(std::string metadataContent) { _metadataContent = metadataContent; }
+	std::string getMetadataContent() { return _metadataContent; }
 
-	void setIngestionSourceFileName(string ingestionSourceFileName) { _ingestionSourceFileName = ingestionSourceFileName; }
-	string getIngestionSourceFileName() { return _ingestionSourceFileName; }
+	void setIngestionSourceFileName(std::string ingestionSourceFileName) { _ingestionSourceFileName = ingestionSourceFileName; }
+	std::string getIngestionSourceFileName() { return _ingestionSourceFileName; }
 
 	void setIngestionJobKey(int64_t ingestionJobKey) { _ingestionJobKey = ingestionJobKey; }
 	int64_t getIngestionJobKey() { return _ingestionJobKey; }
@@ -76,11 +76,9 @@ class LocalAssetIngestionEvent : public Event2
 	}
 	bool getIngestionRowToBeUpdatedAsSuccess() { return _ingestionRowToBeUpdatedAsSuccess; }
 
-	void setWorkspace(shared_ptr<Workspace> workspace) { _workspace = workspace; }
-	shared_ptr<Workspace> getWorkspace() { return _workspace; }
+	void setWorkspace(std::shared_ptr<Workspace> workspace) { _workspace = workspace; }
+	std::shared_ptr<Workspace> getWorkspace() { return _workspace; }
 
-	void setForcedAvgFrameRate(string forcedAvgFrameRate) { _forcedAvgFrameRate = forcedAvgFrameRate; }
-	string getForcedAvgFrameRate() { return _forcedAvgFrameRate; }
+	void setForcedAvgFrameRate(std::string forcedAvgFrameRate) { _forcedAvgFrameRate = forcedAvgFrameRate; }
+	std::string getForcedAvgFrameRate() { return _forcedAvgFrameRate; }
 };
-
-#endif

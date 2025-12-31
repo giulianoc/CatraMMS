@@ -45,6 +45,10 @@
 
 // extern char** environ;
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 FFMPEGEncoder::FFMPEGEncoder(
 
 	const json& configurationRoot,

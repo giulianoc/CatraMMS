@@ -23,6 +23,11 @@
 
 // http://download.nust.na/pub6/mysql/tech-resources/articles/mysql-connector-cpp.html#trx
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 MMSEngineDBFacade::MMSEngineDBFacade(
 	const json &configurationRoot, json slowQueryConfigurationRoot, size_t masterDbPoolSize, size_t slaveDbPoolSize, shared_ptr<spdlog::logger> logger
 )

@@ -31,6 +31,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	const json &configuration, const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade
 )

@@ -6,6 +6,10 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void OverlayTextOnVideo::encodeContent(json metadataRoot)
 {
 	string api = "overlayTextOnVideo";

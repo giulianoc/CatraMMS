@@ -3,6 +3,11 @@
 #include "JSONUtils.h"
 #include "MMSEngineDBFacade.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 json MMSEngineDBFacade::addRequestStatistic(
 	int64_t workspaceKey, string ipAddress, string userId, int64_t physicalPathKey, int64_t confStreamKey, string title
 )

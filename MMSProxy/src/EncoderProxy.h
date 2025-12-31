@@ -11,8 +11,8 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
-#ifndef EncoderProxy_h
-#define EncoderProxy_h
+#pragma once
+
 #include "FFMpegWrapper.h"
 
 #ifdef __LOCALENCODER__
@@ -31,17 +31,17 @@
 #define ENCODERPROXY "EncoderProxy"
 #define MMSENGINEPROCESSORNAME "MMSEngineProcessor"
 
-struct EncoderError : public exception
+struct EncoderError : public std::exception
 {
 	char const *what() const throw() { return "Encoder error"; };
 };
 
-struct EncodingKilledByUser : public exception
+struct EncodingKilledByUser : public std::exception
 {
 	char const *what() const throw() { return "Encoding was killed by the User"; };
 };
 
-struct EncoderNotReachable : public exception
+struct EncoderNotReachable : public std::exception
 {
 	char const *what() const throw() { return "Encoder not reachable"; };
 };
@@ -78,7 +78,7 @@ class EncoderProxy
 		case EncodingJobStatus::Running:
 			return "Running";
 		default:
-			throw runtime_error(string("Wrong encodingJobStatus"));
+			throw std::runtime_error(std::string("Wrong encodingJobStatus"));
 		}
 	}
 
@@ -87,9 +87,9 @@ class EncoderProxy
 	virtual ~EncoderProxy();
 
 	void init(
-		int proxyIdentifier, mutex *mtEncodingJobs, json configuration, shared_ptr<MultiEventsSet> multiEventsSet,
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage, shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
-		shared_ptr<long> faceRecognitionNumber,
+		int proxyIdentifier, std::mutex *mtEncodingJobs, nlohmann::json configuration, std::shared_ptr<MultiEventsSet> multiEventsSet,
+		std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, std::shared_ptr<MMSStorage> mmsStorage, std::shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
+		std::shared_ptr<long> faceRecognitionNumber,
 		int maxFaceRecognitionNumber
 #ifdef __LOCALENCODER__
 		int *pRunningEncodingsNumber,
@@ -97,7 +97,7 @@ class EncoderProxy
 #endif
 	);
 
-	void setEncodingData(EncodingJobStatus *status, shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	void setEncodingData(EncodingJobStatus *status, std::shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
 
 	void operator()();
 
@@ -105,44 +105,44 @@ class EncoderProxy
 
   private:
 	int _proxyIdentifier;
-	json _configuration;
-	mutex *_mtEncodingJobs;
+	nlohmann::json _configuration;
+	std::mutex *_mtEncodingJobs;
 	EncodingJobStatus *_status;
-	shared_ptr<MultiEventsSet> _multiEventsSet;
-	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	shared_ptr<MMSStorage> _mmsStorage;
-	shared_ptr<EncodersLoadBalancer> _encodersLoadBalancer;
-	shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
-	string _hostName;
+	std::shared_ptr<MultiEventsSet> _multiEventsSet;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	std::shared_ptr<MMSStorage> _mmsStorage;
+	std::shared_ptr<EncodersLoadBalancer> _encodersLoadBalancer;
+	std::shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
+	std::string _hostName;
 
-	shared_ptr<long> _faceRecognitionNumber;
+	std::shared_ptr<long> _faceRecognitionNumber;
 	int _maxFaceRecognitionNumber;
 
 	int _maxSecondsToWaitUpdateEncodingJobLock;
 
-	string _mp4Encoder;
-	string _mpeg2TSEncoder;
+	std::string _mp4Encoder;
+	std::string _mpeg2TSEncoder;
 	int _intervalInSecondsToCheckEncodingFinished;
 
-	string _ffmpegEncoderUser;
-	string _ffmpegEncoderPassword;
+	std::string _ffmpegEncoderUser;
+	std::string _ffmpegEncoderPassword;
 	int _ffmpegEncoderTimeoutInSeconds;
-	string _ffmpegEncoderProgressURI;
-	string _ffmpegEncoderStatusURI;
-	string _ffmpegEncoderKillEncodingURI;
-	string _ffmpegEncodeURI;
-	string _ffmpegOverlayImageOnVideoURI;
-	string _ffmpegOverlayTextOnVideoURI;
-	string _ffmpegGenerateFramesURI;
-	string _ffmpegSlideShowURI;
-	string _ffmpegLiveRecorderURI;
-	string _ffmpegLiveProxyURI;
-	string _ffmpegLiveGridURI;
-	string _ffmpegVideoSpeedURI;
-	string _ffmpegAddSilentAudioURI;
-	string _ffmpegPictureInPictureURI;
-	string _ffmpegIntroOutroOverlayURI;
-	string _ffmpegCutFrameAccurateURI;
+	std::string _ffmpegEncoderProgressURI;
+	std::string _ffmpegEncoderStatusURI;
+	std::string _ffmpegEncoderKillEncodingURI;
+	std::string _ffmpegEncodeURI;
+	std::string _ffmpegOverlayImageOnVideoURI;
+	std::string _ffmpegOverlayTextOnVideoURI;
+	std::string _ffmpegGenerateFramesURI;
+	std::string _ffmpegSlideShowURI;
+	std::string _ffmpegLiveRecorderURI;
+	std::string _ffmpegLiveProxyURI;
+	std::string _ffmpegLiveGridURI;
+	std::string _ffmpegVideoSpeedURI;
+	std::string _ffmpegAddSilentAudioURI;
+	std::string _ffmpegPictureInPictureURI;
+	std::string _ffmpegIntroOutroOverlayURI;
+	std::string _ffmpegCutFrameAccurateURI;
 
 	int _timeBeforeToPrepareResourcesInMinutes;
 
@@ -152,15 +152,15 @@ class EncoderProxy
 	long _retrieveStreamingYouTubeURLPeriodInHours;
 	int _maxEncoderNotReachableFailures;
 
-	string _keyPairId;
-	string _privateKeyPEMPathName;
+	std::string _keyPairId;
+	std::string _privateKeyPEMPathName;
 
 #ifdef __LOCALENCODER__
 	shared_ptr<FFMpeg> _ffmpeg;
 	int *_pRunningEncodingsNumber;
 	int _ffmpegMaxCapacity;
 #else
-	string _currentUsedFFMpegEncoderHost;
+	std::string _currentUsedFFMpegEncoderHost;
 	int64_t _currentUsedFFMpegEncoderKey;
 	bool _currentUsedFFMpegExternalEncoder;
 #endif
@@ -168,19 +168,19 @@ class EncoderProxy
 	// used only in case of face recognition/identification video generation
 	double _localEncodingProgress;
 
-	string _computerVisionCascadePath;
+	std::string _computerVisionCascadePath;
 	double _computerVisionDefaultScale;
 	int _computerVisionDefaultMinNeighbors;
 	bool _computerVisionDefaultTryFlip;
 
 	void encodeContentImage();
 	void processEncodedImage();
-	tuple<string, int, int, bool, int, int, Magick::InterlaceType> readingImageProfile(json encodingProfileRoot);
-	void encodingImageFormatValidation(string newFormat);
-	Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
+	std::tuple<std::string, int, int, bool, int, int, Magick::InterlaceType> readingImageProfile(nlohmann::json encodingProfileRoot);
+	void encodingImageFormatValidation(std::string newFormat);
+	Magick::InterlaceType encodingImageInterlaceTypeValidation(std::string sNewInterlaceType);
 
-	void encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
-	bool encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
+	void encodeContentVideoAudio(std::string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
+	bool encodeContent_VideoAudio_through_ffmpeg(std::string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
 	void processEncodedContentVideoAudio();
 
 	void processOverlayedImageOnVideo(bool killed);
@@ -191,11 +191,11 @@ class EncoderProxy
 
 	void processSlideShow();
 
-	string faceRecognition();
-	void processFaceRecognition(string stagingEncodedAssetPathName);
+	std::string faceRecognition();
+	void processFaceRecognition(std::string stagingEncodedAssetPathName);
 
-	string faceIdentification();
-	void processFaceIdentification(string stagingEncodedAssetPathName);
+	std::string faceIdentification();
+	void processFaceIdentification(std::string stagingEncodedAssetPathName);
 
 	bool liveRecorder();
 	bool liveRecorder_through_ffmpeg();
@@ -217,23 +217,21 @@ class EncoderProxy
 
 	void processCutFrameAccurate();
 
-	tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<double>, int, json, long> getEncodingStatus();
+	std::tuple<bool, bool, FFMpegWrapper::KillType, bool, nlohmann::json, bool, bool, std::optional<double>, int, nlohmann::json, long> getEncodingStatus();
 
-	string generateMediaMetadataToIngest(
-		int64_t ingestionJobKey, string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
-		double endTimeInSeconds, vector<int64_t> slideShowOfImageMediaItemKeys, vector<int64_t> slideShowOfAudioMediaItemKeys, json parametersRoot
+	std::string generateMediaMetadataToIngest(
+		int64_t ingestionJobKey, std::string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
+		double endTimeInSeconds, std::vector<int64_t> slideShowOfImageMediaItemKeys, std::vector<int64_t> slideShowOfAudioMediaItemKeys, nlohmann::json parametersRoot
 	);
 
-	// void killEncodingJob(string transcoderHost, int64_t encodingJobKey);
-	void awsStartChannel(int64_t ingestionJobKey, string awsChannelIdToBeStarted);
+	// void killEncodingJob(std::string transcoderHost, int64_t encodingJobKey);
+	void awsStartChannel(int64_t ingestionJobKey, std::string awsChannelIdToBeStarted);
 
-	void awsStopChannel(int64_t ingestionJobKey, string awsChannelIdToBeStarted);
+	void awsStopChannel(int64_t ingestionJobKey, std::string awsChannelIdToBeStarted);
 
 	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
 	bool waitingLiveProxyOrLiveRecorder(
-		MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
-		uint32_t maxAttemptsNumberInCaseOfErrors, string ipPushStreamConfigurationLabel
+		MMSEngineDBFacade::EncodingType encodingType, std::string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
+		uint32_t maxAttemptsNumberInCaseOfErrors, std::string ipPushStreamConfigurationLabel
 	);
 };
-
-#endif

@@ -3,6 +3,8 @@
 #include "Datetime.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+
 void BandwidthStats::addSample(uint64_t bytesUsed, chrono::system_clock::time_point timestamp)
 {
 	// lock_guard<std::mutex> lock(_mutex);

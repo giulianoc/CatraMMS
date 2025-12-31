@@ -3,6 +3,11 @@
 #include "MMSEngineDBFacade.h"
 #include <random>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 void MMSEngineDBFacade::addUpdatePartitionInfo(
 	int partitionKey, string partitionPathName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB
 )

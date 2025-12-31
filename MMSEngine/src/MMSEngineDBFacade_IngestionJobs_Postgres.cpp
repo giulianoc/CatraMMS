@@ -9,6 +9,11 @@
 #include <algorithm>
 #include <utility>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 void MMSEngineDBFacade::getIngestionsToBeManaged(
 	vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>> &ingestionsToBeManaged, string processorMMS,
 	int maxIngestionJobs, int timeBeforeToPrepareResourcesInMinutes, bool onlyTasksNotInvolvingMMSEngineThreads

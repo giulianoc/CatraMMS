@@ -2,6 +2,10 @@
 #include "JSONUtils.h"
 #include "MMSEngineProcessor.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 // this is to generate one Frame
 void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,

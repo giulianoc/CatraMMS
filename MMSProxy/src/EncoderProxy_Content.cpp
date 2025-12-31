@@ -19,6 +19,10 @@
 #include "spdlog/spdlog.h"
 #include <FFMpegWrapper.h>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
 	SPDLOG_INFO(

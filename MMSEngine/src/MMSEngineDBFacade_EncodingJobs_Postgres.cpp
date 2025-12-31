@@ -7,6 +7,11 @@
 #include <regex>
 #include <utility>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 	string processorMMS, vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &encodingItems, int timeBeforeToPrepareResourcesInMinutes,
 	int maxEncodingsNumber

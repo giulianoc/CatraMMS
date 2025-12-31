@@ -11,8 +11,7 @@
  * Created on February 4, 2018, 7:18 PM
  */
 
-#ifndef ActiveEncodingsManager_h
-#define ActiveEncodingsManager_h
+#pragma once
 
 #include "EncoderProxy.h"
 #include "MMSEngineDBFacade.h"
@@ -30,7 +29,7 @@
 #define MAXMEDIUMENCODINGSTOBEMANAGED 200
 #define MAXLOWENCODINGSTOBEMANAGED 200
 
-struct MaxEncodingsManagerCapacityReached : public exception
+struct MaxEncodingsManagerCapacityReached : public std::exception
 {
 	char const *what() const throw() { return "Max Encoding Manager capacity reached"; };
 };
@@ -39,41 +38,41 @@ class ActiveEncodingsManager
 {
   public:
 	ActiveEncodingsManager(
-		json configuration, string processorMMS, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		shared_ptr<MMSStorage> mmsStorage
+		nlohmann::json configuration, std::string processorMMS, std::shared_ptr<MultiEventsSet> multiEventsSet, std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
+		std::shared_ptr<MMSStorage> mmsStorage
 	);
 
 	virtual ~ActiveEncodingsManager();
 
 	void operator()();
 
-	unsigned long addEncodingItems(vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &vEncodingItems);
+	unsigned long addEncodingItems(std::vector<std::shared_ptr<MMSEngineDBFacade::EncodingItem>> &vEncodingItems);
 
-	// static void encodingImageFormatValidation(string newFormat);
-	// static Magick::InterlaceType encodingImageInterlaceTypeValidation(string sNewInterlaceType);
+	// static void encodingImageFormatValidation(std::string newFormat);
+	// static Magick::InterlaceType encodingImageInterlaceTypeValidation(std::string sNewInterlaceType);
 
   private:
 	struct EncodingJob
 	{
 		EncoderProxy::EncodingJobStatus _status;
-		chrono::system_clock::time_point _encodingJobStart;
+		std::chrono::system_clock::time_point _encodingJobStart;
 
-		shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
+		std::shared_ptr<MMSEngineDBFacade::EncodingItem> _encodingItem;
 		EncoderProxy _encoderProxy;
 
 		EncodingJob() { _status = EncoderProxy::EncodingJobStatus::Free; }
 	};
 
-	json _configuration;
-	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	shared_ptr<MMSStorage> _mmsStorage;
-	shared_ptr<EncodersLoadBalancer> _encodersLoadBalancer;
-	string _hostName;
+	nlohmann::json _configuration;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	std::shared_ptr<MMSStorage> _mmsStorage;
+	std::shared_ptr<EncodersLoadBalancer> _encodersLoadBalancer;
+	std::string _hostName;
 
 	int _maxSecondsToWaitUpdateEncodingJobLock;
 
-	condition_variable _cvAddedEncodingJob;
-	mutex _mtEncodingJobs;
+	std::condition_variable _cvAddedEncodingJob;
+	std::mutex _mtEncodingJobs;
 
 	EncodingJob _highPriorityEncodingJobs[MAXHIGHENCODINGSTOBEMANAGED];
 	EncodingJob _mediumPriorityEncodingJobs[MAXMEDIUMENCODINGSTOBEMANAGED];
@@ -88,24 +87,22 @@ class ActiveEncodingsManager
 	bool isProcessorShutdown();
 
 	void processEncodingJob(EncodingJob *encodingJob);
-	void addEncodingItem(shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	void addEncodingItem(std::shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
 	/*
-	string encodeContentImage(
-		shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	std::string encodeContentImage(
+		std::shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
 	int64_t processEncodedImage(
-		shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
-		string stagingEncodedAssetPathName);
+		std::shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem,
+		std::string stagingEncodedAssetPathName);
 
 	void readingImageProfile(
-		string jsonProfile,
-		string& newFormat,
+		std::string jsonProfile,
+		std::string& newFormat,
 		int& newWidth,
 		int& newHeight,
 		bool& newAspect,
-		string& sNewInterlaceType,
+		std::string& sNewInterlaceType,
 		Magick::InterlaceType& newInterlaceType
 	);
 	*/
 };
-
-#endif

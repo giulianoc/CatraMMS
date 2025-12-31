@@ -1,6 +1,5 @@
 
-#ifndef CheckEncodingTimes_h
-#define CheckEncodingTimes_h
+#pragma once
 
 #include <memory>
 #ifndef SPDLOG_ACTIVE_LEVEL
@@ -27,15 +26,13 @@
 class CheckEncodingTimes : public Times2
 {
   protected:
-	shared_ptr<MultiEventsSet> _multiEventsSet;
-	shared_ptr<spdlog::logger> _logger;
+	std::shared_ptr<MultiEventsSet> _multiEventsSet;
+	std::shared_ptr<spdlog::logger> _logger;
 
   public:
-	CheckEncodingTimes(unsigned long ulPeriodInMilliSecs, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<spdlog::logger> logger);
+	CheckEncodingTimes(unsigned long ulPeriodInMilliSecs, std::shared_ptr<MultiEventsSet> multiEventsSet, std::shared_ptr<spdlog::logger> logger);
 
 	virtual ~CheckEncodingTimes(void);
 
 	virtual void handleTimeOut(void);
 };
-
-#endif

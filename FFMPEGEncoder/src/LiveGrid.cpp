@@ -6,6 +6,10 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 LiveGrid::LiveGrid(
 	const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap

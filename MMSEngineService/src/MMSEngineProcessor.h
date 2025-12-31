@@ -1,6 +1,5 @@
 
-#ifndef MMSEngineProcessor_h
-#define MMSEngineProcessor_h
+#pragma once
 
 #include "ActiveEncodingsManager.h"
 #include "GetCpuUsage.h"
@@ -12,9 +11,11 @@
 #include "Validator.h"
 #include <fstream>
 
-using json = nlohmann::json;
+/*
+using nlohmann::json = nlohmann::json;
 using orderd_json = nlohmann::ordered_json;
 using namespace nlohmann::literals;
+*/
 
 #define MMSENGINEPROCESSORNAME "MMSEngineProcessor"
 
@@ -25,21 +26,21 @@ class MMSEngineProcessor
 	{
 		int64_t ingestionJobKey;
 		int currentChunkNumber;
-		string destBinaryPathName;
-		ofstream mediaSourceFileStream;
+		std::string destBinaryPathName;
+		std::ofstream mediaSourceFileStream;
 		size_t currentTotalSize;
 		size_t maxChunkFileSize;
 	};
 
 	struct CurlUploadFacebookData
 	{
-		ifstream mediaSourceFileStream;
+		std::ifstream mediaSourceFileStream;
 
 		bool bodyFirstPartSent;
-		string bodyFirstPart;
+		std::string bodyFirstPart;
 
 		bool bodyLastPartSent;
-		string bodyLastPart;
+		std::string bodyLastPart;
 
 		int64_t startOffset;
 		int64_t endOffset;
@@ -49,17 +50,17 @@ class MMSEngineProcessor
 
 	struct CurlUploadYouTubeData
 	{
-		ifstream mediaSourceFileStream;
+		std::ifstream mediaSourceFileStream;
 
 		int64_t lastByteSent;
 		int64_t fileSizeInBytes;
 	};
 
 	MMSEngineProcessor(
-		int processorIdentifier, shared_ptr<spdlog::logger> logger, shared_ptr<MultiEventsSet> multiEventsSet,
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage, shared_ptr<long> processorsThreadsNumber,
-		shared_ptr<ThreadsStatistic> mmsThreadsStatistic, shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
-		ActiveEncodingsManager *pActiveEncodingsManager, mutex *cpuUsageMutex, deque<int> *cpuUsage, json configurationRoot
+		int processorIdentifier, std::shared_ptr<spdlog::logger> logger, std::shared_ptr<MultiEventsSet> multiEventsSet,
+		std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, std::shared_ptr<MMSStorage> mmsStorage, std::shared_ptr<long> processorsThreadsNumber,
+		std::shared_ptr<ThreadsStatistic> mmsThreadsStatistic, std::shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization,
+		ActiveEncodingsManager *pActiveEncodingsManager, std::mutex *cpuUsageMutex, std::deque<int> *cpuUsage, nlohmann::json configurationRoot
 	);
 
 	~MMSEngineProcessor();
@@ -73,24 +74,24 @@ class MMSEngineProcessor
 	int _processorIdentifier;
 	int _processorThreads;
 	int _cpuUsageThreshold;
-	shared_ptr<spdlog::logger> _logger;
-	json _configurationRoot;
-	shared_ptr<MultiEventsSet> _multiEventsSet;
-	shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	shared_ptr<MMSStorage> _mmsStorage;
-	shared_ptr<long> _processorsThreadsNumber;
+	std::shared_ptr<spdlog::logger> _logger;
+	nlohmann::json _configurationRoot;
+	std::shared_ptr<MultiEventsSet> _multiEventsSet;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
+	std::shared_ptr<MMSStorage> _mmsStorage;
+	std::shared_ptr<long> _processorsThreadsNumber;
 	ActiveEncodingsManager *_pActiveEncodingsManager;
 
-	shared_ptr<ThreadsStatistic> _mmsThreadsStatistic;
+	std::shared_ptr<ThreadsStatistic> _mmsThreadsStatistic;
 
-	shared_ptr<MMSDeliveryAuthorization> _mmsDeliveryAuthorization;
+	std::shared_ptr<MMSDeliveryAuthorization> _mmsDeliveryAuthorization;
 
 	GetCpuUsage _getCpuUsage;
-	mutex *_cpuUsageMutex;
-	deque<int> *_cpuUsage;
+	std::mutex *_cpuUsageMutex;
+	std::deque<int> *_cpuUsage;
 	bool _cpuUsageThreadShutdown;
 
-	string _processorMMS;
+	std::string _processorMMS;
 
 	int _maxDownloadAttemptNumber;
 	int _progressUpdatePeriodInSeconds;
@@ -109,72 +110,72 @@ class MMSEngineProcessor
 	size_t _downloadChunkSizeInMegaBytes;
 	int _timeBeforeToPrepareResourcesInMinutes;
 
-	string _facebookGraphAPIProtocol;
-	string _facebookGraphAPIHostName;
-	string _facebookGraphAPIVideoHostName;
+	std::string _facebookGraphAPIProtocol;
+	std::string _facebookGraphAPIHostName;
+	std::string _facebookGraphAPIVideoHostName;
 	int _facebookGraphAPIPort;
-	string _facebookGraphAPIVersion;
+	std::string _facebookGraphAPIVersion;
 	long _facebookGraphAPITimeoutInSeconds;
-	string _facebookGraphAPIClientId;
-	string _facebookGraphAPIClientSecret;
-	string _facebookGraphAPIRedirectURL;
-	string _facebookGraphAPIAccessTokenURI;
-	string _facebookGraphAPILiveVideosURI;
+	std::string _facebookGraphAPIClientId;
+	std::string _facebookGraphAPIClientSecret;
+	std::string _facebookGraphAPIRedirectURL;
+	std::string _facebookGraphAPIAccessTokenURI;
+	std::string _facebookGraphAPILiveVideosURI;
 
-	string _youTubeDataAPIProtocol;
-	string _youTubeDataAPIHostName;
+	std::string _youTubeDataAPIProtocol;
+	std::string _youTubeDataAPIHostName;
 	int _youTubeDataAPIPort;
-	string _youTubeDataAPIRefreshTokenURI;
-	string _youTubeDataAPIUploadVideoURI;
-	string _youTubeDataAPILiveBroadcastURI;
-	string _youTubeDataAPILiveStreamURI;
-	string _youTubeDataAPILiveBroadcastBindURI;
+	std::string _youTubeDataAPIRefreshTokenURI;
+	std::string _youTubeDataAPIUploadVideoURI;
+	std::string _youTubeDataAPILiveBroadcastURI;
+	std::string _youTubeDataAPILiveStreamURI;
+	std::string _youTubeDataAPILiveBroadcastBindURI;
 	long _youTubeDataAPITimeoutInSeconds;
 	long _youTubeDataAPITimeoutInSecondsForUploadVideo;
-	string _youTubeDataAPIClientId;
-	string _youTubeDataAPIClientSecret;
+	std::string _youTubeDataAPIClientId;
+	std::string _youTubeDataAPIClientSecret;
 
-	string _deliveryProtocol;
-	string _deliveryHost;
+	std::string _deliveryProtocol;
+	std::string _deliveryHost;
 
 	bool _localCopyTaskEnabled;
 
-	string _mmsWorkflowIngestionURL;
-	string _mmsIngestionURL;
-	string _mmsBinaryIngestionURL;
+	std::string _mmsWorkflowIngestionURL;
+	std::string _mmsIngestionURL;
+	std::string _mmsBinaryIngestionURL;
 	int _mmsAPITimeoutInSeconds;
-	string _mmsAPIVODDeliveryURI;
+	std::string _mmsAPIVODDeliveryURI;
 
 	int _waitingNFSSync_maxMillisecondsToWait;
 	int _waitingNFSSync_milliSecondsWaitingBetweenChecks;
 
-	string _liveRecorderVirtualVODImageLabel;
+	std::string _liveRecorderVirtualVODImageLabel;
 
-	string _emailProviderURL;
-	string _emailUserName;
-	string _emailPassword;
-	string _emailCcsCommaSeparated;
+	std::string _emailProviderURL;
+	std::string _emailUserName;
+	std::string _emailPassword;
+	std::string _emailCcsCommaSeparated;
 
-	json getReviewedOutputsRoot(json outputsRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool encodingProfileMandatory);
+	nlohmann::json getReviewedOutputsRoot(nlohmann::json outputsRoot, std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool encodingProfileMandatory);
 
-	json getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
+	nlohmann::json getReviewedFiltersRoot(nlohmann::json filtersRoot, std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
 
-	bool newThreadPermission(shared_ptr<long> processorsThreadsNumber);
+	bool newThreadPermission(std::shared_ptr<long> processorsThreadsNumber);
 
 	bool isMaintenanceMode();
 	bool isProcessorShutdown();
 
 	void handleCheckIngestionEvent();
 
-	void handleLocalAssetIngestionEventThread(shared_ptr<long> processorsThreadsNumber, LocalAssetIngestionEvent localAssetIngestionEvent);
-	void handleLocalAssetIngestionEvent(shared_ptr<long> processorsThreadsNumber, LocalAssetIngestionEvent localAssetIngestionEvent);
+	void handleLocalAssetIngestionEventThread(std::shared_ptr<long> processorsThreadsNumber, LocalAssetIngestionEvent localAssetIngestionEvent);
+	void handleLocalAssetIngestionEvent(std::shared_ptr<long> processorsThreadsNumber, LocalAssetIngestionEvent localAssetIngestionEvent);
 
 	void
-	handleMultiLocalAssetIngestionEventThread(shared_ptr<long> processorsThreadsNumber, MultiLocalAssetIngestionEvent multiLocalAssetIngestionEvent);
+	handleMultiLocalAssetIngestionEventThread(std::shared_ptr<long> processorsThreadsNumber, MultiLocalAssetIngestionEvent multiLocalAssetIngestionEvent);
 
 	void handleCheckEncodingEvent();
 
-	void handleContentRetentionEventThread(shared_ptr<long> processorsThreadsNumber);
+	void handleContentRetentionEventThread(std::shared_ptr<long> processorsThreadsNumber);
 
 	void handleDBDataRetentionEventThread();
 
@@ -182,225 +183,225 @@ class MMSEngineProcessor
 
 	void handleCheckRefreshPartitionFreeSizeEventThread();
 
-	// void handleMainAndBackupOfRunnungLiveRecordingHA (shared_ptr<long> processorsThreadsNumber);
+	// void handleMainAndBackupOfRunnungLiveRecordingHA (std::shared_ptr<long> processorsThreadsNumber);
 
 	void removeContentThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void ftpDeliveryContentThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void postOnFacebookThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void postOnYouTubeThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void httpCallbackThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void userHttpCallback(
-		int64_t ingestionJobKey, string httpProtocol, string httpHostName, int httpPort, string httpURI, string httpURLParameters, bool formData,
-		string httpMethod, long callbackTimeoutInSeconds, json userHeadersRoot, string &data, string userName, string password, int maxRetries
+		int64_t ingestionJobKey, std::string httpProtocol, std::string httpHostName, int httpPort, std::string httpURI, std::string httpURLParameters, bool formData,
+		std::string httpMethod, long callbackTimeoutInSeconds, nlohmann::json userHeadersRoot, std::string &data, std::string userName, std::string password, int maxRetries
 	);
 
 	void localCopyContentThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
-	void copyContent(int64_t ingestionJobKey, string mmsAssetPathName, string localPath, string localFileName);
+	void copyContent(int64_t ingestionJobKey, std::string mmsAssetPathName, std::string localPath, std::string localFileName);
 
 	void manageFaceRecognitionMediaTask(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageFaceIdentificationMediaTask(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageLiveRecorder(
-		int64_t ingestionJobKey, const string &ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
-		const shared_ptr<Workspace> &workspace, json parametersRoot
+		int64_t ingestionJobKey, const std::string &ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
+		const std::shared_ptr<Workspace> &workspace, nlohmann::json parametersRoot
 	);
 
 	void manageLiveProxy(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot
 	);
 
 	void manageVODProxy(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageCountdown(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, /* string ingestionDate, */ shared_ptr<Workspace> workspace,
-		json parametersRoot, vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, /* std::string ingestionDate, */ std::shared_ptr<Workspace> workspace,
+		nlohmann::json parametersRoot, std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void
-	manageLiveGrid(int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot);
+	manageLiveGrid(int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot);
 
 	void manageLiveCutThread_streamSegmenter(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot
 	);
 	void manageLiveCutThread_hlsSegmenter(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string ingestionJobLabel, shared_ptr<Workspace> workspace,
-		json parametersRoot
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::string ingestionJobLabel, std::shared_ptr<Workspace> workspace,
+		nlohmann::json parametersRoot
 	);
 
 	void youTubeLiveBroadcastThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string ingestionJobLabel, shared_ptr<Workspace> workspace,
-		json parametersRoot
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::string ingestionJobLabel, std::shared_ptr<Workspace> workspace,
+		nlohmann::json parametersRoot
 	);
 
 	void facebookLiveBroadcastThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string ingestionJobLabel, shared_ptr<Workspace> workspace,
-		json parametersRoot
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::string ingestionJobLabel, std::shared_ptr<Workspace> workspace,
+		nlohmann::json parametersRoot
 	);
 
 	void extractTracksContentThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void changeFileFormatThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
-	string generateMediaMetadataToIngest(
-		int64_t ingestionJobKey, string fileFormat, string title, int64_t imageOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey,
-		int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds, json parametersRoot
+	std::string generateMediaMetadataToIngest(
+		int64_t ingestionJobKey, std::string fileFormat, std::string title, int64_t imageOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey,
+		int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds, nlohmann::json parametersRoot
 	);
 
 	void manageEncodeTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
-	void manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot);
+	void manageGroupOfTasks(int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot);
 
 	void manageVideoSpeedTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageAddSilentAudioTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void managePictureInPictureTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageIntroOutroOverlayTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageOverlayImageOnVideoTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void manageOverlayTextOnVideoTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void generateAndIngestFrameThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace,
-		MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace,
+		MMSEngineDBFacade::IngestionType ingestionType, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void manageGenerateFramesTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	void fillGenerateFramesParameters(
-		shared_ptr<Workspace> workspace, int64_t ingestionJobKey, MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot,
+		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, MMSEngineDBFacade::IngestionType ingestionType, nlohmann::json parametersRoot,
 		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
 
-		int &periodInSeconds, double &startTimeInSeconds, int &maxFramesNumber, string &videoFilter, bool &mjpeg, int &imageWidth, int &imageHeight,
+		int &periodInSeconds, double &startTimeInSeconds, int &maxFramesNumber, std::string &videoFilter, bool &mjpeg, int &imageWidth, int &imageHeight,
 		int64_t &durationInMilliSeconds
 	);
 
 	void manageSlideShowTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
 	/*
 	void generateAndIngestSlideshow(
 		int64_t ingestionJobKey,
-		shared_ptr<Workspace> workspace,
+		std::shared_ptr<Workspace> workspace,
 		json parametersRoot,
-		vector<pair<int64_t,Validator::DependencyType>>& dependencies);
+		std::vector<std::pair<int64_t,Validator::DependencyType>>& dependencies);
 	*/
 	void manageConcatThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void manageCutMediaThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void emailNotificationThread(
-		shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
+		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
 	void
-	checkStreamingThread(shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot);
+	checkStreamingThread(std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot);
 
 	void manageMediaCrossReferenceTask(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
-		vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
 	);
 
-	tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, bool> getMediaSourceDetails(
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType, json parametersRoot
+	std::tuple<MMSEngineDBFacade::IngestionStatus, std::string, std::string, int64_t, std::string, int, bool> getMediaSourceDetails(
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, MMSEngineDBFacade::IngestionType ingestionType, nlohmann::json parametersRoot
 	);
 
 	void
-	validateMediaSourceFile(int64_t ingestionJobKey, string mediaSourcePathName, string mediaFileFormat, string md5FileCheckSum, int fileSizeInBytes);
+	validateMediaSourceFile(int64_t ingestionJobKey, std::string mediaSourcePathName, std::string mediaFileFormat, std::string md5FileCheckSum, int fileSizeInBytes);
 
 	void downloadMediaSourceFileThread(
-		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrStreaming,
-		int64_t ingestionJobKey, shared_ptr<Workspace> workspace
+		std::shared_ptr<long> processorsThreadsNumber, std::string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrStreaming,
+		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace
 	);
 	void moveMediaSourceFileThread(
-		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
-		shared_ptr<Workspace> workspace
+		std::shared_ptr<long> processorsThreadsNumber, std::string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
+		std::shared_ptr<Workspace> workspace
 	);
 	void copyMediaSourceFileThread(
-		shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
-		shared_ptr<Workspace> workspace
+		std::shared_ptr<long> processorsThreadsNumber, std::string sourceReferenceURL, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
+		std::shared_ptr<Workspace> workspace
 	);
 
 	// void manageTarFileInCaseOfIngestionOfSegments(
 	// 	int64_t ingestionJobKey,
-	// 	string tarBinaryPathName, string workspaceIngestionRepository,
-	// 	string sourcePathName
+	// 	std::string tarBinaryPathName, std::string workspaceIngestionRepository,
+	// 	std::string sourcePathName
 	// 	);
 
 	/*
@@ -418,33 +419,31 @@ class MMSEngineProcessor
 	*/
 
 	void ftpUploadMediaSource(
-		string mmsAssetPathName, string fileName, int64_t sizeInBytes, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, int64_t mediaItemKey,
-		int64_t physicalPathKey, string ftpServer, int ftpPort, string ftpUserName, string ftpPassword, string ftpRemoteDirectory,
-		string ftpRemoteFileName
+		std::string mmsAssetPathName, std::string fileName, int64_t sizeInBytes, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, int64_t mediaItemKey,
+		int64_t physicalPathKey, std::string ftpServer, int ftpPort, std::string ftpUserName, std::string ftpPassword, std::string ftpRemoteDirectory,
+		std::string ftpRemoteFileName
 	);
 
 	void postVideoOnFacebook(
-		string mmsAssetPathName, int64_t sizeInBytes, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string facebookConfigurationLabel,
-		string facebookDestination, string facebookNodeId
+		std::string mmsAssetPathName, int64_t sizeInBytes, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, std::string facebookConfigurationLabel,
+		std::string facebookDestination, std::string facebookNodeId
 	);
 
 	void postVideoOnYouTube(
-		string mmsAssetPathName, int64_t sizeInBytes, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string youTubeConfigurationLabel,
-		string youTubeTitle, string youTubeDescription, json youTubeTags, int youTubeCategoryId, string youTubePrivacy, bool youTubeMadeForKids
+		std::string mmsAssetPathName, int64_t sizeInBytes, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, std::string youTubeConfigurationLabel,
+		std::string youTubeTitle, std::string youTubeDescription, nlohmann::json youTubeTags, int youTubeCategoryId, std::string youTubePrivacy, bool youTubeMadeForKids
 	);
-	pair<int64_t, int64_t>
-	youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, string youTubeUploadURL, string youTubeAccessToken, int64_t sizeInBytes);
+	std::pair<int64_t, int64_t>
+	youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, std::string youTubeUploadURL, std::string youTubeAccessToken, int64_t sizeInBytes);
 
-	string getYouTubeAccessTokenByConfigurationLabel(int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string youTubeConfigurationLabel);
+	std::string getYouTubeAccessTokenByConfigurationLabel(int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, std::string youTubeConfigurationLabel);
 
-	string getFacebookPageToken(int64_t ingestionJobKey, shared_ptr<Workspace> workspace, string facebookConfigurationLabel, string facebookPageId);
+	std::string getFacebookPageToken(int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, std::string facebookConfigurationLabel, std::string facebookPageId);
 
-	tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, string, string, string, string, int64_t, string, string, bool> processDependencyInfo(
-		shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
-		tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType
+	std::tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType, std::string, std::string, std::string, std::string, int64_t, std::string, std::string, bool> processDependencyInfo(
+		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> keyAndDependencyType
 	);
 
-	string getEncodedFileExtensionByEncodingProfile(json encodingProfileDetailsRoot);
+	std::string getEncodedFileExtensionByEncodingProfile(nlohmann::json encodingProfileDetailsRoot);
 };
-
-#endif

@@ -7,6 +7,11 @@
 #include "spdlog/spdlog.h"
 #include <ranges>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 /*
 shared_ptr<PostgresConnection> MMSEngineDBFacade::beginWorkflow()
 {

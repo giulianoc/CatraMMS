@@ -3,6 +3,11 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 	int64_t workspaceKey, MMSEngineDBFacade::ContentType contentType, string label, bool removeEncodingProfilesIfPresent
 )

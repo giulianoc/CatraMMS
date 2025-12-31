@@ -14,6 +14,10 @@
 #include <regex>
 #include <sstream>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 FFMPEGEncoderTask::FFMPEGEncoderTask(
 	const shared_ptr<Encoding> &encoding, const json& configurationRoot,
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<EncodingCompleted>> *encodingCompletedMap

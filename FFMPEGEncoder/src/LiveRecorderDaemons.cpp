@@ -15,6 +15,10 @@
 #include "spdlog/spdlog.h"
 #include <sstream>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 LiveRecorderDaemons::LiveRecorderDaemons(
 	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability
 )

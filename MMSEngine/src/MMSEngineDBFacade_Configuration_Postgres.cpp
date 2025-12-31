@@ -5,6 +5,11 @@
 #include "spdlog/spdlog.h"
 #include <cstdint>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 int64_t
 MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server, int port, string userName, string password, string remoteDirectory)
 {

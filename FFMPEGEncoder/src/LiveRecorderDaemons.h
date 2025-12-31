@@ -1,6 +1,5 @@
 
-#ifndef LiveRecorderDaemons_h
-#define LiveRecorderDaemons_h
+#pragma once
 
 #include "FFMPEGEncoderBase.h"
 
@@ -25,7 +24,7 @@ class LiveRecorderDaemons : public FFMPEGEncoderBase
 
   public:
 	LiveRecorderDaemons(
-		json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability
+		nlohmann::json configurationRoot, std::mutex *liveRecordingMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability
 	);
 	~LiveRecorderDaemons();
 
@@ -38,76 +37,75 @@ class LiveRecorderDaemons : public FFMPEGEncoderBase
 	void stopVirtualVODIngestionThread();
 
   private:
-	mutex *_liveRecordingMutex;
-	vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
+	std::mutex *_liveRecordingMutex;
+	std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
 
 	int _liveRecorderChunksIngestionCheckInSeconds;
-	string _liveRecorderVirtualVODRetention;
+	std::string _liveRecorderVirtualVODRetention;
 	int _liveRecorderVirtualVODIngestionInSeconds;
 	bool _liveRecorderChunksIngestionThreadShutdown;
 	bool _liveRecorderVirtualVODIngestionThreadShutdown;
 
-	tuple<string, double, int64_t> processStreamSegmenterOutput(
-		int64_t ingestionJobKey, int64_t encodingJobKey, string streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
-		string outputFileFormat, json encodingParametersRoot, json ingestedParametersRoot, string chunksTranscoderStagingContentsPath,
-		string chunksNFSStagingContentsPath, string segmentListFileName, string recordedFileNamePrefix, string lastRecordedAssetFileName,
+	std::tuple<std::string, double, int64_t> processStreamSegmenterOutput(
+		int64_t ingestionJobKey, int64_t encodingJobKey, std::string streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
+		std::string outputFileFormat, nlohmann::json encodingParametersRoot, nlohmann::json ingestedParametersRoot, std::string chunksTranscoderStagingContentsPath,
+		std::string chunksNFSStagingContentsPath, std::string segmentListFileName, std::string recordedFileNamePrefix, std::string lastRecordedAssetFileName,
 		double lastRecordedAssetDurationInSeconds, int64_t lastRecordedSegmentUtcStartTimeInMillisecs
 	);
 
-	tuple<string, double, int64_t> processHLSSegmenterOutput(
-		int64_t ingestionJobKey, int64_t encodingJobKey, string streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
-		string outputFileFormat, json encodingParametersRoot, json ingestedParametersRoot, string chunksTranscoderStagingContentsPath,
-		string chunksNFSStagingContentsPath, string segmentListFileName, string recordedFileNamePrefix, string lastRecordedAssetFileName,
+	std::tuple<std::string, double, int64_t> processHLSSegmenterOutput(
+		int64_t ingestionJobKey, int64_t encodingJobKey, std::string streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
+		std::string outputFileFormat, nlohmann::json encodingParametersRoot, nlohmann::json ingestedParametersRoot, std::string chunksTranscoderStagingContentsPath,
+		std::string chunksNFSStagingContentsPath, std::string segmentListFileName, std::string recordedFileNamePrefix, std::string lastRecordedAssetFileName,
 		double lastRecordedAssetDurationInSeconds, int64_t lastRecordedSegmentUtcStartTimeInMillisecs
 	);
 
 	void ingestRecordedMediaInCaseOfInternalTranscoder(
-		int64_t ingestionJobKey, string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName, string chunksNFSStagingContentsPath,
-		string addContentTitle, string uniqueName,
+		int64_t ingestionJobKey, std::string chunksTranscoderStagingContentsPath, std::string currentRecordedAssetFileName, std::string chunksNFSStagingContentsPath,
+		std::string addContentTitle, std::string uniqueName,
 		// bool highAvailability,
-		json userDataRoot, string fileFormat, json ingestedParametersRoot, json encodingParametersRoot, bool copy
+		nlohmann::json userDataRoot, std::string fileFormat, nlohmann::json ingestedParametersRoot, nlohmann::json encodingParametersRoot, bool copy
 	);
 
 	void ingestRecordedMediaInCaseOfExternalTranscoder(
-		int64_t ingestionJobKey, string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName, string addContentTitle,
-		string uniqueName, json userDataRoot, string fileFormat, json ingestedParametersRoot, json encodingParametersRoot
+		int64_t ingestionJobKey, std::string chunksTranscoderStagingContentsPath, std::string currentRecordedAssetFileName, std::string addContentTitle,
+		std::string uniqueName, nlohmann::json userDataRoot, std::string fileFormat, nlohmann::json ingestedParametersRoot, nlohmann::json encodingParametersRoot
 	);
 
-	string buildChunkIngestionWorkflow(
-		int64_t ingestionJobKey, bool externalEncoder, string currentRecordedAssetFileName, string chunksNFSStagingContentsPath,
-		string addContentTitle, string uniqueName, json userDataRoot, string fileFormat, json ingestedParametersRoot, json encodingParametersRoot
+	std::string buildChunkIngestionWorkflow(
+		int64_t ingestionJobKey, bool externalEncoder, std::string currentRecordedAssetFileName, std::string chunksNFSStagingContentsPath,
+		std::string addContentTitle, std::string uniqueName, nlohmann::json userDataRoot, std::string fileFormat, nlohmann::json ingestedParametersRoot,
+		nlohmann::json encodingParametersRoot
 	);
 
 	bool isLastLiveRecorderFile(
-		int64_t ingestionJobKey, int64_t encodingJobKey, time_t utcCurrentRecordedFileCreationTime, string chunksTranscoderStagingContentsPath,
-		string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk
+		int64_t ingestionJobKey, int64_t encodingJobKey, time_t utcCurrentRecordedFileCreationTime, std::string chunksTranscoderStagingContentsPath,
+		std::string recordedFileNamePrefix, int segmentDurationInSeconds, bool isFirstChunk
 	);
 
 	time_t getMediaLiveRecorderStartTime(
-		int64_t ingestionJobKey, int64_t encodingJobKey, string mediaLiveRecorderFileName, int segmentDurationInSeconds, bool isFirstChunk
+		int64_t ingestionJobKey, int64_t encodingJobKey, std::string mediaLiveRecorderFileName, int segmentDurationInSeconds, bool isFirstChunk
 	);
 
-	time_t getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey, string mediaLiveRecorderFileName);
+	time_t getMediaLiveRecorderEndTime(int64_t ingestionJobKey, int64_t encodingJobKey, std::string mediaLiveRecorderFileName);
 
 	long buildAndIngestVirtualVOD(
 		int64_t liveRecorderIngestionJobKey, int64_t liveRecorderEncodingJobKey, bool externalEncoder,
 
-		string sourceSegmentsDirectoryPathName, string sourceManifestFileName,
+		std::string sourceSegmentsDirectoryPathName, std::string sourceManifestFileName,
 		// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
-		string stagingLiveRecorderVirtualVODPathName,
+		std::string stagingLiveRecorderVirtualVODPathName,
 
-		int64_t recordingCode, string liveRecorderIngestionJobLabel, string liveRecorderVirtualVODUniqueName, string liveRecorderVirtualVODRetention,
-		int64_t liveRecorderVirtualVODImageMediaItemKey, int64_t liveRecorderUserKey, string liveRecorderApiKey, string mmsWorkflowIngestionURL,
-		string mmsBinaryIngestionURL
+		int64_t recordingCode, std::string liveRecorderIngestionJobLabel, std::string liveRecorderVirtualVODUniqueName, std::string liveRecorderVirtualVODRetention,
+		int64_t liveRecorderVirtualVODImageMediaItemKey, int64_t liveRecorderUserKey, std::string liveRecorderApiKey, std::string mmsWorkflowIngestionURL,
+		std::string mmsBinaryIngestionURL
 	);
 
-	string buildVirtualVODIngestionWorkflow(
+	std::string buildVirtualVODIngestionWorkflow(
 		int64_t liveRecorderIngestionJobKey, int64_t liveRecorderEncodingJobKey, bool externalEncoder,
 
-		int64_t utcStartTimeInMilliSecs, int64_t utcEndTimeInMilliSecs, int64_t recordingCode, string liveRecorderIngestionJobLabel,
-		string tarGzStagingLiveRecorderVirtualVODPathName, string liveRecorderVirtualVODUniqueName, string liveRecorderVirtualVODRetention,
+		int64_t utcStartTimeInMilliSecs, int64_t utcEndTimeInMilliSecs, int64_t recordingCode, std::string liveRecorderIngestionJobLabel,
+		std::string tarGzStagingLiveRecorderVirtualVODPathName, std::string liveRecorderVirtualVODUniqueName, std::string liveRecorderVirtualVODRetention,
 		int64_t liveRecorderVirtualVODImageMediaItemKey
 	);
 };
-
-#endif

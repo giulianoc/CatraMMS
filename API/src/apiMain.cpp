@@ -17,6 +17,10 @@
 #include "JSONUtils.h"
 #include "spdlog/spdlog.h"
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 chrono::system_clock::time_point lastSIGSEGVSignal = chrono::system_clock::now();
 void signalHandler(int signal)
 {

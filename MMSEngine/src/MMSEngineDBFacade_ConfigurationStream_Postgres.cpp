@@ -7,6 +7,11 @@
 #include <FFMpegWrapper.h>
 #include <cstdint>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+using namespace pqxx;
+
 json MMSEngineDBFacade::addStream(
 	int64_t workspaceKey, string label, string sourceType, int64_t encodersPoolKey, string url, string pushProtocol, int64_t pushEncoderKey,
 	bool pushPublicEncoderName, // indica se deve essere usato l'encoder pubblico (true) o quello privato (false)

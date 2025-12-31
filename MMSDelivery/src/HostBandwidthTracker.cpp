@@ -6,6 +6,10 @@
 #include <unordered_set>
 #include <utility>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 void HostBandwidthTracker::updateHosts(json hostAndRunningRoot)
 {
 	lock_guard<mutex> locker(_trackerMutex);

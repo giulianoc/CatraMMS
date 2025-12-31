@@ -13,9 +13,13 @@
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
-AWSSigner::AWSSigner(void) {}
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
 
-AWSSigner::~AWSSigner(void) {}
+AWSSigner::AWSSigner(void) = default;
+
+AWSSigner::~AWSSigner(void) = default;
 
 string AWSSigner::calculateSignedURL(string hostName, string uriPath, string keyPairId, string privateKeyPEMPathName, int expirationInSeconds)
 {
