@@ -1175,37 +1175,47 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row)
 
 	try
 	{
+			SPDLOG_ERROR("error GGGGGGGGG");
 		int64_t encoderKey = row["encoderKey"].as<int64_t>();
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		string field = "encoderKey";
 		encoderRoot[field] = encoderKey;
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "label";
 		encoderRoot[field] = row["label"].as<string>();
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "external";
 		bool external = row["external"].as<bool>();
 		encoderRoot[field] = external;
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "enabled";
 		encoderRoot[field] = row["enabled"].as<bool>();
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "protocol";
 		string protocol = row["protocol"].as<string>();
 		encoderRoot[field] = protocol;
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "publicServerName";
 		string publicServerName = row["publicServerName"].as<string>();
 		encoderRoot[field] = publicServerName;
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "internalServerName";
 		string internalServerName = row["internalServerName"].as<string>();
 		encoderRoot[field] = internalServerName;
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		field = "port";
 		int port = row["port"].as<int>();
 		encoderRoot[field] = port;
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		// 2022-1-30: running and cpu usage takes a bit of time
 		//		scenario: some MMS WEB pages loading encoder info, takes a bit of time
 		//		to be loaded because of this check and, in these pages, we do not care about
@@ -1214,7 +1224,9 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row)
 		{
 			bool running;
 			int cpuUsage = 0;
+			SPDLOG_ERROR("error GGGGGGGGG");
 			pair<bool, int> encoderRunningDetails = getEncoderInfo(external, protocol, publicServerName, internalServerName, port);
+			SPDLOG_ERROR("error GGGGGGGGG");
 			tie(running, cpuUsage) = encoderRunningDetails;
 
 			field = "running";
@@ -1224,11 +1236,13 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row)
 			encoderRoot[field] = cpuUsage;
 		}
 
+			SPDLOG_ERROR("error GGGGGGGGG");
 		if (admin)
 		{
 			field = "workspacesAssociated";
 			encoderRoot[field] = getEncoderWorkspacesAssociation(encoderKey);
 		}
+			SPDLOG_ERROR("error GGGGGGGGG");
 	}
 	catch (exception const &e)
 	{
