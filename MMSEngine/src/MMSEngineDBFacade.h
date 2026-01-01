@@ -2297,12 +2297,15 @@ class MMSEngineDBFacade
 
 	void releaseLock(LockType lockType, std::string label, std::string data = "no data");
 
-	int64_t addEncoder(std::string label, bool external, bool enabled, std::string protocol, std::string publicServerName, std::string internalServerName, int port);
+	int64_t addEncoder(
+		const std::string &label, bool external, bool enabled, const std::string &protocol, const std::string &publicServerName,
+		const std::string &internalServerName, int port
+	);
 
 	void modifyEncoder(
-		int64_t encoderKey, bool labelToBeModified, std::string label, bool externalToBeModified, bool external, bool enabledToBeModified, bool enabled,
-		bool protocolToBeModified, std::string protocol, bool publicServerNameToBeModified, std::string publicServerName, bool internalServerNameToBeModified,
-		std::string internalServerName, bool portToBeModified, int port
+		int64_t encoderKey, bool labelToBeModified, const std::string &label, bool externalToBeModified, bool external, bool enabledToBeModified,
+		bool enabled, bool protocolToBeModified, const std::string &protocol, bool publicServerNameToBeModified, const std::string &publicServerName,
+		bool internalServerNameToBeModified, const std::string &internalServerName, bool portToBeModified, int port
 		// bool maxTranscodingCapabilityToBeModified, int
 		// maxTranscodingCapability, bool
 		// maxLiveProxiesCapabilitiesToBeModified, int
@@ -2322,16 +2325,21 @@ class MMSEngineDBFacade
 		bool notFoundAsException = true, std::chrono::milliseconds *sqlDuration = nullptr
 	);
 
-	bool isEncoderRunning(bool external, std::string protocol, std::string publicServerName, std::string internalServerName, int port);
+	bool isEncoderRunning(
+		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port
+	) const;
 
-	std::pair<bool, int> getEncoderInfo(bool external, std::string protocol, std::string publicServerName, std::string internalServerName, int port);
+	std::pair<bool, int> getEncoderInfo(
+		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port,
+		std::chrono::milliseconds *duration = nullptr
+	) const;
 
 	void addAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey);
 	void addAssociationWorkspaceEncoder(int64_t workspaceKey, std::string sharedEncodersPoolLabel, nlohmann::json sharedEncodersLabel);
 	void removeAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey);
 	bool encoderWorkspaceMapping_isPresent(int64_t workspaceKey, int64_t encoderKey);
 
-	nlohmann::json getEncoderWorkspacesAssociation(int64_t encoderKey);
+	nlohmann::json getEncoderWorkspacesAssociation(int64_t encoderKey, std::chrono::milliseconds *sqlDuration = nullptr);
 
 	nlohmann::json getEncoderList(
 		bool admin, int start, int rows, bool allEncoders, int64_t workspaceKey, bool runningInfo, int64_t encoderKey, std::string label,
@@ -2353,7 +2361,7 @@ class MMSEngineDBFacade
 
 	std::pair<std::string, bool> getEncoderURL(int64_t encoderKey, std::string serverName = "");
 
-	int64_t addEncodersPool(int64_t workspaceKey, std::string label, std::vector<int64_t> &encoderKeys);
+	int64_t addEncodersPool(int64_t workspaceKey, const std::string &label, std::vector<int64_t> &encoderKeys);
 
 	int64_t modifyEncodersPool(int64_t encodersPoolKey, int64_t workspaceKey, std::string newLabel, std::vector<int64_t> &newEncoderKeys);
 
@@ -2723,7 +2731,7 @@ class MMSEngineDBFacade
 #endif
 
 #ifdef __POSTGRES__
-	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, pqxx::row &row);
+	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, pqxx::row &row, std::chrono::milliseconds *extraDuration = nullptr);
 #else
 	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, std::shared_ptr<sql::ResultSet> resultSet);
 #endif

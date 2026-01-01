@@ -14,18 +14,6 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	string processorMMS, vector<tuple<shared_ptr<Workspace>, int64_t, int64_t>> &mediaItemKeyOrPhysicalPathKeyToBeRemoved, int maxEntriesNumber
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -62,19 +50,19 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			{
 				noMoreRowsReturned = false;
 
-				int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
-				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
-				int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
-				int64_t retentionInMinutes = row["retentionInMinutes"].as<int64_t>();
-				string ingestionDate = row["ingestionDate"].as<string>();
-				string title = row["title"].as<string>();
+				auto ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+				auto workspaceKey = row["workspaceKey"].as<int64_t>();
+				auto mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				auto retentionInMinutes = row["retentionInMinutes"].as<int64_t>();
+				auto ingestionDate = row["ingestionDate"].as<string>();
+				auto title = row["title"].as<string>();
 
 				// check if there is still an ingestion depending on the ingestionJobKey
 				chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 				bool ingestionDependingOnMediaItemKey = false;
 				if (getNotFinishedIngestionDependenciesNumberByIngestionJobKey(trans, ingestionJobKey) > 0)
 					ingestionDependingOnMediaItemKey = true;
-				chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
+				auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 				internalSqlDuration += sqlDuration;
 
 				if (!ingestionDependingOnMediaItemKey)
@@ -88,7 +76,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 						chrono::system_clock::time_point startSql = chrono::system_clock::now();
 						result res = trans.transaction->exec(sqlStatement);
 						int rowsUpdated = res.affected_rows();
-						chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+						auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 						internalSqlDuration += sqlDuration;
 						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 						SQLQUERYLOG(
@@ -188,13 +176,13 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			{
 				noMoreRowsReturned = false;
 
-				int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
-				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
-				int64_t mediaItemKey = row["mediaItemKey"].as<int64_t>();
-				int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
-				int64_t physicalPathKeyRetentionInMinutes = row["retentionInMinutes"].as<int64_t>();
-				string ingestionDate = row["ingestionDate"].as<string>();
-				string title = row["title"].as<string>();
+				auto ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+				auto workspaceKey = row["workspaceKey"].as<int64_t>();
+				auto mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				auto physicalPathKey = row["physicalPathKey"].as<int64_t>();
+				auto physicalPathKeyRetentionInMinutes = row["retentionInMinutes"].as<int64_t>();
+				auto ingestionDate = row["ingestionDate"].as<string>();
+				auto title = row["title"].as<string>();
 
 				// check if there is still an ingestion depending on the ingestionJobKey
 				bool ingestionDependingOnMediaItemKey = false;

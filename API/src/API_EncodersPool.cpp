@@ -436,8 +436,8 @@ void API::encoderList(
 	{
 		int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1));
 
-		int32_t start = requestData.getQueryParameter("start", static_cast<int64_t>(0));
-		int32_t rows = requestData.getQueryParameter("rows", static_cast<int64_t>(30));
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30));
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -471,7 +471,6 @@ void API::encoderList(
 
 		bool runningInfo = requestData.getQueryParameter("runningInfo", false);
 
-			SPDLOG_ERROR("1");
 		int64_t workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey;
 		bool allEncoders = false;
 		if (apiAuthorizationDetails->admin)
@@ -480,11 +479,8 @@ void API::encoderList(
 			// - get the list of all encoders
 			// - encoders for a specific workspace
 
-			SPDLOG_ERROR("1");
 			allEncoders = requestData.getQueryParameter("allEncoders", false);
-			SPDLOG_ERROR("1");
 			workspaceKey = requestData.getQueryParameter("workspaceKey", apiAuthorizationDetails->workspace->_workspaceKey);
-			SPDLOG_ERROR("1");
 		}
 
 		{
