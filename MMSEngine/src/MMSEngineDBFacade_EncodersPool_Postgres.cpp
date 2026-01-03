@@ -1107,8 +1107,9 @@ json MMSEngineDBFacade::getEncoderList(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
+				", internalSqlDuration: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
+				sqlStatement, trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
 			);
 		}
 
@@ -1298,8 +1299,8 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, const string& p
 		ffmpegEncoderURL = std::format("{}://{}:{}{}", protocol,
 			(external ? publicServerName : internalServerName), port, _ffmpegEncoderInfoURI);
 
-		const vector<string> otherHeaders;
-		json infoResponseRoot = CurlWrapper::httpGetJson(
+		constexpr vector<string> otherHeaders;
+		const json infoResponseRoot = CurlWrapper::httpGetJson(
 			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
 		);
 
