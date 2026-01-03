@@ -897,8 +897,6 @@ json MMSEngineDBFacade::getEncoderList(
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		string field;
-
 		SPDLOG_INFO(
 			"getEncoderList"
 			", start: {}"
@@ -917,65 +915,20 @@ json MMSEngineDBFacade::getEncoderList(
 		{
 			json requestParametersRoot;
 
-			/*
-			{
-				field = "allEncoders";
-				requestParametersRoot[field] = allEncoders;
-			}
-
-			{
-				field = "workspaceKey";
-				requestParametersRoot[field] = workspaceKey;
-			}
-			*/
-
 			if (encoderKey != -1)
-			{
-				field = "encoderKey";
-				requestParametersRoot[field] = encoderKey;
-			}
-
-			{
-				field = "start";
-				requestParametersRoot[field] = start;
-			}
-
-			{
-				field = "rows";
-				requestParametersRoot[field] = rows;
-			}
-
+				requestParametersRoot["encoderKey"] = encoderKey;
+			requestParametersRoot["start"] = start;
+			requestParametersRoot["rows"] = rows;
 			if (!label.empty())
-			{
-				field = "label";
-				requestParametersRoot[field] = label;
-			}
-
+				requestParametersRoot["label"] = label;
 			if (!serverName.empty())
-			{
-				field = "serverName";
-				requestParametersRoot[field] = serverName;
-			}
-
+				requestParametersRoot["serverName"] = serverName;
 			if (port != -1)
-			{
-				field = "port";
-				requestParametersRoot[field] = port;
-			}
-
-			{
-				field = "runningInfo";
-				requestParametersRoot[field] = runningInfo;
-			}
-
+				requestParametersRoot["port"] = port;
+			requestParametersRoot["runningInfo"] = runningInfo;
 			if (!labelOrder.empty())
-			{
-				field = "labelOrder";
-				requestParametersRoot[field] = labelOrder;
-			}
-
-			field = "requestParameters";
-			encoderListRoot[field] = requestParametersRoot;
+				requestParametersRoot["labelOrder"] = labelOrder;
+			encoderListRoot["requestParameters"] = requestParametersRoot;
 		}
 
 		string sqlWhere;
@@ -1025,11 +978,9 @@ json MMSEngineDBFacade::getEncoderList(
 			// join with MMS_EncoderWorkspaceMapping
 			if (!sqlWhere.empty())
 				sqlWhere = std::format(
-							   "where e.encoderKey = ewm.encoderKey "
-							   "and ewm.workspaceKey = {} and ",
-							   workspaceKey
-						   ) +
-						   sqlWhere;
+				   "where e.encoderKey = ewm.encoderKey "
+				   "and ewm.workspaceKey = {} and {}",
+				   workspaceKey, sqlWhere);
 			else
 				sqlWhere = std::format(
 					"where e.encoderKey = ewm.encoderKey "
@@ -1042,9 +993,7 @@ json MMSEngineDBFacade::getEncoderList(
 		{
 			string sqlStatement;
 			if (allEncoders)
-			{
 				sqlStatement = std::format("select count(*) from MMS_Encoder e {}", sqlWhere);
-			}
 			else
 			{
 				sqlStatement = std::format(
@@ -1054,8 +1003,7 @@ json MMSEngineDBFacade::getEncoderList(
 				);
 			}
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1073,7 +1021,7 @@ json MMSEngineDBFacade::getEncoderList(
 			if (labelOrder.empty())
 				orderByCondition = " ";
 			else
-				orderByCondition = "order by label " + labelOrder + " ";
+				orderByCondition = std::format("order by label {} ", labelOrder);
 
 			string sqlStatement;
 			if (allEncoders)
@@ -1113,11 +1061,8 @@ json MMSEngineDBFacade::getEncoderList(
 			);
 		}
 
-		field = "encoders";
-		responseRoot[field] = encodersRoot;
-
-		field = "response";
-		encoderListRoot[field] = responseRoot;
+		responseRoot["encoders"] = encodersRoot;
+		encoderListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
 	{
@@ -1250,7 +1195,7 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 	{
 		ffmpegEncoderURL = protocol + "://" + (external ? publicServerName : internalServerName) + ":" + to_string(port) + _ffmpegEncoderStatusURI;
 
-		const vector<string> otherHeaders;
+		constexpr vector<string> otherHeaders;
 		json infoResponseRoot = CurlWrapper::httpGetJson(
 			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
 		);
@@ -1261,8 +1206,9 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 			SPDLOG_ERROR(
 				"Encoder is not reachable, is it down?"
 				", ffmpegEncoderURL: {}"
+				", _ffmpegEncoderInfoTimeout: {}"
 				", exception: {}",
-				ffmpegEncoderURL, e.what()
+				ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, e.what()
 			);
 		else if (dynamic_cast<runtime_error*>(&e))
 			SPDLOG_ERROR(
