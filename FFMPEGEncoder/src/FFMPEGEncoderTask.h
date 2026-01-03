@@ -35,7 +35,7 @@ class FFMPEGEncoderTask : public FFMPEGEncoderBase
 
 	std::string _tvChannelConfigurationDirectory;
 
-	void addEncodingCompleted();
+	void addEncodingCompleted() const;
 	void removeEncodingCompletedIfPresent() const;
 
 	int64_t ingestContentByPushingBinary(
