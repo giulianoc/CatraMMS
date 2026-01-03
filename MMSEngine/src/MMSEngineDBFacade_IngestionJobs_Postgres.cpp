@@ -3358,32 +3358,18 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(int64_t ingestionJobKey, boo
 }
 
 json MMSEngineDBFacade::getIngestionJobsStatus(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int start, int rows, string label, bool labelLike,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, int start, int rows, const string& label, bool labelLike,
 	/* bool startAndEndIngestionDatePresent, */
-	string startIngestionDate, string endIngestionDate, string startScheduleDate, string ingestionType, string configurationLabel,
-	string outputChannelLabel, int64_t recordingCode, bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition, bool asc, string status,
+	const string& startIngestionDate, const string& endIngestionDate, const string& startScheduleDate, const string& ingestionType,
+	const string& configurationLabel,
+	const string& outputChannelLabel, int64_t recordingCode, bool broadcastIngestionJobKeyNotNull, string jsonParametersCondition,
+	bool asc, const string& status,
 	bool dependencyInfo,
 	bool ingestionJobOutputs, // added because output could be thousands of entries
 	bool fromMaster
 )
 {
 	json statusListRoot;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
@@ -3491,15 +3477,15 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		*/
 		if (!startIngestionDate.empty())
 			sqlWhere += std::format(
-				"and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate)
+				R"(and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(startIngestionDate)
 			);
 		if (!endIngestionDate.empty())
 			sqlWhere += std::format(
-				"and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate)
+				R"(and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(endIngestionDate)
 			);
 		if (!startScheduleDate.empty())
 			sqlWhere += std::format(
-				"and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startScheduleDate)
+				R"(and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(startScheduleDate)
 			);
 		if (!ingestionType.empty())
 			sqlWhere += std::format("and ij.ingestionType = {} ", trans.transaction->quote(ingestionType));
@@ -3584,7 +3570,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"

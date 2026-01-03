@@ -3759,7 +3759,6 @@ void API::ingestionJobsStatus(
 	const FCGIRequestData& requestData
 )
 {
-	SPDLOG_INFO("CCCCCCCCCCC");
 	string api = "ingestionJobsStatus";
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
@@ -3775,9 +3774,9 @@ void API::ingestionJobsStatus(
 	{
 		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1));
 
-		int32_t start = requestData.getQueryParameter("start", static_cast<int64_t>(0));
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
 
-		int32_t rows = requestData.getQueryParameter("rows", static_cast<int64_t>(10));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(10));
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user

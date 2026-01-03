@@ -1584,10 +1584,12 @@ class MMSEngineDBFacade
 	);
 
 	nlohmann::json getIngestionJobsStatus(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int start, int rows, std::string label, bool labelLike,
-		/* bool startAndEndIngestionDatePresent, */ std::string startIngestionDate, std::string endIngestionDate, std::string startScheduleDate,
-		std::string ingestionType, std::string configurationLabel, std::string outputChannelLabel, int64_t recordingCode, bool broadcastIngestionJobKeyNotNull,
-		std::string jsonParametersCondition, bool asc, std::string status, bool dependencyInfo, bool ingestionJobOutputs, bool fromMaster
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, int start, int rows, const std::string &label, bool labelLike,
+		/* bool startAndEndIngestionDatePresent, */
+		const std::string &startIngestionDate, const std::string &endIngestionDate, const std::string &startScheduleDate,
+		const std::string &ingestionType, const std::string &configurationLabel, const std::string &outputChannelLabel, int64_t recordingCode,
+		bool broadcastIngestionJobKeyNotNull, std::string jsonParametersCondition, bool asc, const std::string &status, bool dependencyInfo,
+		bool ingestionJobOutputs, bool fromMaster
 	);
 
 	nlohmann::json getEncodingJobsStatus(
