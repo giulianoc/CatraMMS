@@ -1043,7 +1043,8 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
 		try
 		{
-			int32_t intervalInSecondsToUpdateBandwidth = 5;
+			// inizializzato a 12 considerando che BandwidthUsageThread aggiorna la bandwidth usage ogni 10 secondi
+			int32_t intervalInSecondsToUpdateBandwidth = 12;
 			this_thread::sleep_for(chrono::seconds(intervalInSecondsToUpdateBandwidth));
 
 			unordered_map<string, uint64_t> runningHostsBandwidth = getExternalDeliveriesRunningHosts();
