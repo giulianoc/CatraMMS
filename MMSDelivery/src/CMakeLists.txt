@@ -57,8 +57,8 @@ endif()
 
 add_library(MMSDelivery SHARED ${SOURCES} ${HEADERS})
 
+target_link_libraries(MMSDelivery BandwidthUsageThread)
 if(APPLE)
-    target_link_libraries(MMSDelivery BandwidthUsageThread)
     target_link_libraries(MMSDelivery MMSStorage)
     target_link_libraries(MMSDelivery FFMpegWrapper)
     target_link_libraries(MMSDelivery crypto)
