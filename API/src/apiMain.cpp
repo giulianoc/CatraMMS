@@ -13,6 +13,7 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
+#include "../../CatraLibraries/BandwidthUsageThread/src/BandwidthUsageThread.h"
 #include "API.h"
 #include "JSONUtils.h"
 #include "spdlog/spdlog.h"
@@ -275,6 +276,7 @@ int main(int argc, char **argv)
 
 		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
 			make_shared<MMSDeliveryAuthorization>(configuration, mmsStorage, mmsEngineDBFacade);
+		mmsDeliveryAuthorization->startUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
 		FCGX_Init();
 
@@ -288,7 +290,8 @@ int main(int argc, char **argv)
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
 
-		shared_ptr<atomic<uint64_t>> bandwidthUsage = make_shared<atomic<uint64_t>>(0);
+		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>();
+		bandwidthUsageThread->start();
 
 		vector<shared_ptr<API>> apis;
 		vector<thread> apiThreads;
@@ -296,7 +299,7 @@ int main(int argc, char **argv)
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
 			auto api = make_shared<API>(noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization,
-				&fcgiAcceptMutex, &fileUploadProgressData, bandwidthUsage);
+				&fcgiAcceptMutex, &fileUploadProgressData, bandwidthUsageThread);
 
 			apis.push_back(api);
 			apiThreads.emplace_back(&API::operator(), api);
@@ -308,13 +311,14 @@ int main(int argc, char **argv)
 		if (threadsNumber > 0)
 		{
 			thread fileUploadProgressThread(&API::fileUploadProgressCheckThread, apis[0]);
-			thread _bandwidthUsage(&API::bandwidthUsageThread, apis[0]);
 
 			apiThreads[0].join();
 
 			apis[0]->stopUploadFileProgressThread();
-			apis[0]->stopBandwidthUsageThread();
 		}
+
+		bandwidthUsageThread->stop();
+		mmsDeliveryAuthorization->stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
 		SPDLOG_INFO("API shutdown");
 

@@ -17,7 +17,7 @@
 #include "Convert.h"
 #include "CurlWrapper.h"
 #include "Encrypt.h"
-#include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
@@ -42,6 +42,11 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_configuration = configuration;
 	_mmsStorage = mmsStorage;
 	_mmsEngineDBFacade = mmsEngineDBFacade;
+	_updateExternalDeliveriesGroupsBandwidthUsageThreadStop = false;
+
+	_apiProtocol = JsonPath(&_configuration)["api"]["protocol"].as<string>();
+	_apiPort = JsonPath(&_configuration)["api"]["port"].as<int32_t>(0);
+	_apiVersion = JsonPath(&_configuration)["api"]["version"].as<string>();
 
 	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
 	SPDLOG_INFO(
@@ -931,7 +936,7 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
 		if (!hostGroupRoot.empty())
 		{
-			shared_ptr<HostBandwidthTracker> hostBandwidthTracker =
+			shared_ptr<HostsBandwidthTracker> hostBandwidthTracker =
 				getHostBandwidthTracker(requestWorkspace->_workspaceKey, externalDeliveriesGroup, hostGroupRoot);
 			optional<string> deliveryHostOpt = hostBandwidthTracker->getMinBandwidthHost();
 			if (deliveryHostOpt.has_value())
@@ -960,19 +965,19 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 	return deliveryHost;
 }
 
-shared_ptr<HostBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTracker(int64_t workspaceKey, const string& groupName,
+shared_ptr<HostsBandwidthTracker> MMSDeliveryAuthorization::getHostBandwidthTracker(int64_t workspaceKey, const string& groupName,
 	const json &hostGroupRoot)
 {
 	lock_guard<mutex> locker(_externalDeliveriesMutex);
 
-	shared_ptr<HostBandwidthTracker> hostBandwidthTracker;
+	shared_ptr<HostsBandwidthTracker> hostBandwidthTracker;
 
 	string key = std::format("{}-{}", workspaceKey, groupName);
 	auto it = _externalDeliveriesGroups.find(key);
 	if (it == _externalDeliveriesGroups.end())
 	{
-		hostBandwidthTracker = make_shared<HostBandwidthTracker>();
-		_externalDeliveriesGroups.insert(pair<string, shared_ptr<HostBandwidthTracker>>(key, hostBandwidthTracker));
+		hostBandwidthTracker = make_shared<HostsBandwidthTracker>();
+		_externalDeliveriesGroups.insert(pair<string, shared_ptr<HostsBandwidthTracker>>(key, hostBandwidthTracker));
 	}
 	else
 		hostBandwidthTracker = it->second;
@@ -989,13 +994,13 @@ unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesR
 {
 	unordered_map<string, uint64_t> hostsBandwidth;
 
-	lock_guard<mutex> locker(_externalDeliveriesMutex);
+	lock_guard locker(_externalDeliveriesMutex);
 
 	if (!_externalDeliveriesGroups.empty())
 	{
 		unordered_set<string> hosts;
-		for (const auto &[key, hostBandwidthTracker] : _externalDeliveriesGroups)
-			hostBandwidthTracker->addRunningHosts(hosts);
+		for (const auto &hostBandwidthTracker : _externalDeliveriesGroups | views::values)
+			hostBandwidthTracker->fillWithRunningHosts(hosts);
 
 		for (const string& host : hosts)
 			hostsBandwidth.insert(make_pair(host, 0));
@@ -1007,16 +1012,89 @@ unordered_map<string, uint64_t> MMSDeliveryAuthorization::getExternalDeliveriesR
 void MMSDeliveryAuthorization::updateExternalDeliveriesBandwidthHosts(const unordered_map<string, uint64_t>& hostsBandwidth)
 {
 
-	lock_guard<mutex> locker(_externalDeliveriesMutex);
+	lock_guard locker(_externalDeliveriesMutex);
 
 	for (const auto &hostBandwidthTracker : _externalDeliveriesGroups | views::values)
 	{
 		for (const auto &[host, hostBandwidth] : hostsBandwidth)
-			hostBandwidthTracker->updateBandwidth(host, hostBandwidth);
+			hostBandwidthTracker->setBandwidth(host, hostBandwidth);
 	}
 }
 
-string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(const string& contentURI, const string& tokenParameter)
+void MMSDeliveryAuthorization::startUpdateExternalDeliveriesGroupsBandwidthUsageThread()
+{
+	_updateExternalDeliveriesGroupsBandwidthUsageThreadStop = false;
+	_updateExternalDeliveriesGroupsBandwidthUsageThread = std::thread(&MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThread, this);
+}
+
+void MMSDeliveryAuthorization::stopUpdateExternalDeliveriesGroupsBandwidthUsageThread()
+{
+	_updateExternalDeliveriesGroupsBandwidthUsageThreadStop = true;
+
+	if (_updateExternalDeliveriesGroupsBandwidthUsageThread.joinable())
+		_updateExternalDeliveriesGroupsBandwidthUsageThread.join();
+}
+
+void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThread()
+{
+
+	while (!_updateExternalDeliveriesGroupsBandwidthUsageThreadStop)
+	{
+		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
+		try
+		{
+			int32_t intervalInSecondsToUpdateBandwidth = 5;
+			this_thread::sleep_for(chrono::seconds(intervalInSecondsToUpdateBandwidth));
+
+			unordered_map<string, uint64_t> runningHostsBandwidth = getExternalDeliveriesRunningHosts();
+
+			SPDLOG_INFO(
+				"bandwidthUsageThread, avgBandwidthInMbps"
+				", runningHostsBandwidth.size: {}",
+				runningHostsBandwidth.size()
+			);
+
+			if (!runningHostsBandwidth.empty())
+			{
+				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
+				{
+					string bandwidthUsageURL;
+					try
+					{
+						bandwidthUsageURL = std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage",
+							_apiProtocol, runningHost, _apiPort, _apiVersion);
+						constexpr int bandwidthUsageTimeoutInSeconds = 2;
+						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
+
+						bandwidth = JsonPath(&bandwidthUsageRoot)["avgBandwidthUsage"].as<uint64_t>();
+					}
+					catch (exception &e)
+					{
+						// se una culr fallisce comunque andiamo avanti
+						SPDLOG_ERROR(
+							"bandwidthUsage failed"
+							", bandwidthUsageURL: {}"
+							", exception: {}",
+							bandwidthUsageURL, e.what()
+						);
+					}
+				}
+
+				updateExternalDeliveriesBandwidthHosts(runningHostsBandwidth);
+			}
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"System::getBandwidthInMbps failed"
+				", exception: {}",
+				e.what()
+			);
+		}
+	}
+}
+
+string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(const string& contentURI, const string& tokenParameter) const
 {
 	string tokenComingFromURL;
 	try

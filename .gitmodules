@@ -64,3 +64,6 @@
 [submodule "CatraLibraries/FFMpegEngine"]
 	path = CatraLibraries/FFMpegEngine
 	url = https://github.com/giulianoc/FFMpegEngine.git
+[submodule "CatraLibraries/BandwidthUsageThread"]
+	path = CatraLibraries/BandwidthUsageThread
+	url = https://github.com/giulianoc/BandwidthUsageThread.git

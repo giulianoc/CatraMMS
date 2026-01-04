@@ -13,10 +13,11 @@
 
 #pragma once
 
-#include "BandwidthStats.h"
+#include "BandwidthUsageThread.h"
 #include "Datetime.h"
 #include "FastCGIAPI.h"
 #include "MMSDeliveryAuthorization.h"
+#include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "PostgresConnection.h"
 
@@ -65,7 +66,7 @@ class API final : public FastCGIAPI
 
 	API(bool noFileSystemAccess, const nlohmann::json& configurationRoot, const std::shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const std::shared_ptr<MMSStorage>& mmsStorage,
 		const std::shared_ptr<MMSDeliveryAuthorization>& mmsDeliveryAuthorization, std::mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-		const std::shared_ptr<std::atomic<uint64_t>>& avgBandwidthUsage);
+		const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread);
 
 	~API() override;
 
@@ -82,9 +83,6 @@ class API final : public FastCGIAPI
 	void fileUploadProgressCheckThread();
 	void stopUploadFileProgressThread();
 
-	void bandwidthUsageThread();
-	void stopBandwidthUsageThread();
-
   private:
 	nlohmann::json _configurationRoot;
 
@@ -93,8 +91,8 @@ class API final : public FastCGIAPI
 	std::shared_ptr<MMSStorage> _mmsStorage;
 	std::shared_ptr<MMSDeliveryAuthorization> _mmsDeliveryAuthorization;
 
-	MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue;
-	MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue;
+	MMSEngineDBFacade::EncodingPriority _encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
+	MMSEngineDBFacade::EncodingPeriod _encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 	int _maxIngestionsNumberWorkspaceDefaultValue{};
 	int _maxStorageInMBWorkspaceDefaultValue{};
 	int _expirationInDaysWorkspaceDefaultValue{};
@@ -110,10 +108,7 @@ class API final : public FastCGIAPI
 	int _maxProgressCallFailures{};
 	std::string _progressURI;
 
-	bool _bandwidthUsageThreadShutdown{};
-	unsigned long _bandwidthUsagePeriodInSeconds{};
-	std::shared_ptr<std::atomic<uint64_t>> _avgBandwidthUsage;
-	BandwidthStats _bandwidthStats;
+	std::shared_ptr<BandwidthUsageThread> _bandwidthUsageThread;
 
 	int _maxPageSize{};
 
@@ -141,8 +136,6 @@ class API final : public FastCGIAPI
 	std::string _deliveryProtocol;
 	std::string _deliveryHost_authorizationThroughParameter;
 	std::string _deliveryHost_authorizationThroughPath;
-
-	std::string _deliveryExternalNetworkInterface;
 
 	bool _ldapEnabled{};
 	std::string _ldapURL;
@@ -259,7 +252,7 @@ class API final : public FastCGIAPI
 		const FCGIRequestData& requestData
 	);
 
-	void avgBandwidthUsage_(
+	void avgBandwidthUsage(
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);

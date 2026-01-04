@@ -3374,88 +3374,35 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
-		string field;
-
 		{
 			json requestParametersRoot;
 
-			field = "start";
-			requestParametersRoot[field] = start;
-
-			field = "rows";
-			requestParametersRoot[field] = rows;
-
+			requestParametersRoot["start"] = start;
+			requestParametersRoot["rows"] = rows;
 			if (ingestionJobKey != -1)
-			{
-				field = "ingestionJobKey";
-				requestParametersRoot[field] = ingestionJobKey;
-			}
-
-			field = "label";
-			requestParametersRoot[field] = label;
-
-			field = "labelLike";
-			requestParametersRoot[field] = labelLike;
-
-			field = "status";
-			requestParametersRoot[field] = status;
-
+				requestParametersRoot["ingestionJobKey"] = ingestionJobKey;
+			requestParametersRoot["label"] = label;
+			requestParametersRoot["labelLike"] = labelLike;
+			requestParametersRoot["status"] = status;
 			if (!startIngestionDate.empty())
-			{
-				field = "startIngestionDate";
-				requestParametersRoot[field] = startIngestionDate;
-			}
+				requestParametersRoot["startIngestionDate"] = startIngestionDate;
 			if (!endIngestionDate.empty())
-			{
-				field = "endIngestionDate";
-				requestParametersRoot[field] = endIngestionDate;
-			}
+				requestParametersRoot["endIngestionDate"] = endIngestionDate;
 			if (!startScheduleDate.empty())
-			{
-				field = "startScheduleDate";
-				requestParametersRoot[field] = startScheduleDate;
-			}
-
+				requestParametersRoot["startScheduleDate"] = startScheduleDate;
 			if (!ingestionType.empty())
-			{
-				field = "ingestionType";
-				requestParametersRoot[field] = ingestionType;
-			}
-
+				requestParametersRoot["ingestionType"] = ingestionType;
 			if (!configurationLabel.empty())
-			{
-				field = "configurationLabel";
-				requestParametersRoot[field] = configurationLabel;
-			}
-
+				requestParametersRoot["configurationLabel"] = configurationLabel;
 			if (!outputChannelLabel.empty())
-			{
-				field = "outputChannelLabel";
-				requestParametersRoot[field] = outputChannelLabel;
-			}
-
+				requestParametersRoot["outputChannelLabel"] = outputChannelLabel;
 			if (recordingCode != -1)
-			{
-				field = "recordingCode";
-				requestParametersRoot[field] = recordingCode;
-			}
-
-			{
-				field = "broadcastIngestionJobKeyNotNull";
-				requestParametersRoot[field] = broadcastIngestionJobKeyNotNull;
-			}
-
+				requestParametersRoot["recordingCode"] = recordingCode;
+			requestParametersRoot["broadcastIngestionJobKeyNotNull"] = broadcastIngestionJobKeyNotNull;
 			if (!jsonParametersCondition.empty())
-			{
-				field = "jsonParametersCondition";
-				requestParametersRoot[field] = jsonParametersCondition;
-			}
-
-			field = "ingestionJobOutputs";
-			requestParametersRoot[field] = ingestionJobOutputs;
-
-			field = "requestParameters";
-			statusListRoot[field] = requestParametersRoot;
+				requestParametersRoot["jsonParametersCondition"] = jsonParametersCondition;
+			requestParametersRoot["ingestionJobOutputs"] = ingestionJobOutputs;
+			statusListRoot["requestParameters"] = requestParametersRoot;
 		}
 
 		string sqlWhere = "where ir.ingestionRootKey = ij.ingestionRootKey ";
@@ -3510,8 +3457,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 		{
 			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3562,11 +3508,8 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			);
 		}
 
-		field = "ingestionJobs";
-		responseRoot[field] = ingestionJobsRoot;
-
-		field = "response";
-		statusListRoot[field] = responseRoot;
+		responseRoot["ingestionJobs"] = ingestionJobsRoot;
+		statusListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
 	{

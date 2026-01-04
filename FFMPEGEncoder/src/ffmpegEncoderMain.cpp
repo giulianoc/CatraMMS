@@ -171,9 +171,7 @@ int main(int argc, char **argv)
 		deque<int> cpuUsage;
 		int numberOfLastCPUUsageToBeChecked = 3;
 		for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked; cpuUsageIndex++)
-		{
 			cpuUsage.push_front(0);
-		}
 
 		// 2021-09-24: chrono is already thread safe.
 		// mutex lastEncodingAcceptedTimeMutex;
@@ -257,7 +255,7 @@ int main(int argc, char **argv)
 
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
-			shared_ptr<FFMPEGEncoder> ffmpegEncoder = make_shared<FFMPEGEncoder>(
+			auto ffmpegEncoder = make_shared<FFMPEGEncoder>(
 				configurationRoot,
 				// encoderCapabilityConfigurationPathName,
 
@@ -279,18 +277,15 @@ int main(int argc, char **argv)
 			);
 
 			ffmpegEncoders.push_back(ffmpegEncoder);
-			ffmpegEncoderThreads.push_back(thread(&FFMPEGEncoder::operator(), ffmpegEncoder));
+			ffmpegEncoderThreads.emplace_back(&FFMPEGEncoder::operator(), ffmpegEncoder);
 		}
 
 		// shutdown should be managed in some way:
 		// - mod_fcgid send just one shutdown, so only one thread will go down
 		// - mod_fastcgi ???
 		// if (threadsNumber > 0)
+		//	thread _bandwidthUsage(&FFMPEGEncoder::bandwidthUsageThread, ffmpegEncoders[0]);
 		{
-			// thread liveRecorderChunksIngestion(&FFMPEGEncoder::liveRecorderChunksIngestionThread,
-			// 		ffmpegEncoders[0]);
-			// thread liveRecorderVirtualVODIngestion(&FFMPEGEncoder::liveRecorderVirtualVODIngestionThread,
-			// 		ffmpegEncoders[0]);
 			shared_ptr<LiveRecorderDaemons> liveRecorderDaemons =
 				make_shared<LiveRecorderDaemons>(configurationRoot, &liveRecordingMutex, &liveRecordingsCapability);
 

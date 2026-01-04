@@ -20,23 +20,23 @@
 add_definitions(-DNO_FCGI_DEFINES)
 
 set(SOURCES
-  apiMain.cpp
-    API.cpp
-    API_DeliveryAuthorization.cpp
-    API_Encoding.cpp
-    API_Ingestion.cpp
-    API_MediaItem.cpp
-    API_WorkflowLibrary.cpp
-    API_UserWorkspace.cpp
-    API_Invoice.cpp
-    API_Configuration.cpp
-    API_EncodersPool.cpp
-    API_Statistic.cpp
-    BandwidthStats.cpp)
+        apiMain.cpp
+        API.cpp
+        API_DeliveryAuthorization.cpp
+        API_Encoding.cpp
+        API_Ingestion.cpp
+        API_MediaItem.cpp
+        API_WorkflowLibrary.cpp
+        API_UserWorkspace.cpp
+        API_Invoice.cpp
+        API_Configuration.cpp
+        API_EncodersPool.cpp
+        API_Statistic.cpp
+)
 
 set(HEADERS
-    API.h
-    BandwidthStats.h)
+        API.h
+)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(
@@ -54,6 +54,7 @@ include_directories("${CURLWRAPPER_INCLUDE_DIR}")
 include_directories("${CONVERT_INCLUDE_DIR}")
 include_directories("${POSTGRESHELPER_INCLUDE_DIR}")
 include_directories("${PROCESSUTILITY_INCLUDE_DIR}")
+include_directories("${BANDWIDTHUSAGETHREAD_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
 include_directories("${FASTCGIAPI_INCLUDE_DIR}")
 include_directories("${FFMPEGWRAPPER_INCLUDE_DIR}")

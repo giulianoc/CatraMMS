@@ -45,13 +45,13 @@ using ordered_json = nlohmann::ordered_json;
 API::API(
 	const bool noFileSystemAccess, const json &configurationRoot, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
 	const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSDeliveryAuthorization> &mmsDeliveryAuthorization, mutex *fcgiAcceptMutex,
-	FileUploadProgressData *fileUploadProgressData, const shared_ptr<atomic<uint64_t>> &avgBandwidthUsage
+	FileUploadProgressData *fileUploadProgressData, const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
-	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization), _bandwidthStats()
+	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization)
 {
 	_configurationRoot = configurationRoot;
-	_avgBandwidthUsage = avgBandwidthUsage;
+	_bandwidthUsageThread = bandwidthUsageThread;
 
 	loadConfiguration(configurationRoot, fileUploadProgressData);
 
@@ -62,7 +62,7 @@ API::API(
 	registerHandler(
 		"avgBandwidthUsage",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ avgBandwidthUsage_(sThreadId, request, requestData); }
+		{ avgBandwidthUsage(sThreadId, request, requestData); }
 	);
 	registerHandler(
 		"binaryAuthorization",
@@ -773,7 +773,7 @@ void API::status(
 	}
 }
 
-void API::avgBandwidthUsage_(
+void API::avgBandwidthUsage(
 	const string_view &sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
 )
@@ -790,7 +790,7 @@ void API::avgBandwidthUsage_(
 	{
 		json statusRoot;
 
-		statusRoot["avgBandwidthUsage"] = _avgBandwidthUsage->load(memory_order_relaxed);
+		statusRoot["avgBandwidthUsage"] = _bandwidthUsageThread->getAvgBandwidthUsage();
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200, JSONUtils::toString(statusRoot));
 	}
@@ -1342,152 +1342,6 @@ void API::sendError(FCGX_Request &request, int htmlResponseCode, const string_vi
 	FastCGIAPI::sendError(request, htmlResponseCode, JSONUtils::toString(responseBodyRoot));
 }
 
-void API::stopBandwidthUsageThread()
-{
-	_bandwidthUsageThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
-}
-
-void API::bandwidthUsageThread()
-{
-	while (!_bandwidthUsageThreadShutdown)
-	{
-		// non serve lo sleep perchè lo sleep è già all'interno di System::getBandwidthInBytes
-		// this_thread::sleep_for(chrono::seconds(_bandwidthUsagePeriodInSeconds));
-
-		// aggiorniamo la banda usata da questo server. Ci server per rispondere alla API .../bandwidthUsage
-		double avgBandwidthUsage = 0;
-		try
-		{
-			// impieghera' 15 secs
-			// Ritorna la banda media secondo i parametri specificati ed anche i picchi
-			map<string, pair<uint64_t, uint64_t>> peakInBytes;
-			map<string, pair<uint64_t, uint64_t>> avgBandwidth = System::getAvgAndPeakBandwidthInBytes(peakInBytes, 2, 5);
-
-			bool deliveryExternalNetworkInterfaceFound = false;
-			for (const auto &[iface, stats] : avgBandwidth)
-			{
-				auto [rx, tx] = stats;
-				SPDLOG_INFO(
-					"bandwidthUsageThread, avgBandwidthInMbps"
-					", iface: {}"
-					", rx: {} ({}Mbps)"
-					", tx: {} ({}Mbps)",
-					iface, rx, static_cast<uint32_t>((rx * 8) / 1000000), tx, static_cast<uint32_t>((tx * 8) / 1000000)
-				);
-				if (_deliveryExternalNetworkInterface == iface)
-				{
-					avgBandwidthUsage = tx;
-					deliveryExternalNetworkInterfaceFound = true;
-					// break; commentato in modo da avere sempre il log della banda usata da tutte le reti (public e internal)
-				}
-			}
-			if (!deliveryExternalNetworkInterfaceFound)
-				SPDLOG_WARN(
-					"bandwidthUsageThread, getAvgAndPeakBandwidthInBytes"
-					", deliveryExternalNetworkInterface not found"
-					", _deliveryExternalNetworkInterface: {}",
-					_deliveryExternalNetworkInterface
-				);
-			else
-				_avgBandwidthUsage->store(avgBandwidthUsage, memory_order_relaxed);
-			SPDLOG_INFO(
-				"bandwidthUsageThread, avgBandwidthInMbps"
-				", avgBandwidthUsage: @{}@Mbps",
-				static_cast<uint32_t>((avgBandwidthUsage * 8) / 1000000)
-			);
-
-			// loggo il picco
-			for (const auto &[iface, stats] : peakInBytes)
-			{
-				if (_deliveryExternalNetworkInterface == iface)
-				{
-					auto [peakRx, peakTx] = stats;
-					// messaggio usato da servicesStatusLibrary::mms_delivery_check_bandwidth_usage
-					SPDLOG_INFO(
-						"bandwidthUsageThread, peakBandwidthInMbps"
-						", iface: {}"
-						", peakTx: @{}@Mbps",
-						iface, static_cast<uint32_t>((peakTx * 8) / 1000000)
-					);
-					break;
-				}
-			}
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"System::getBandwidthInMbps failed"
-				", exception: {}",
-				e.what()
-			);
-		}
-
-		// aggiorniamo le bande usate da _externalDeliveriesGroups in modo che getMinBandwidthHost possa funzionare bene
-		try
-		{
-			unordered_map<string, uint64_t> runningHostsBandwidth = _mmsDeliveryAuthorization->getExternalDeliveriesRunningHosts();
-
-			SPDLOG_INFO(
-				"bandwidthUsageThread, avgBandwidthInMbps"
-				", runningHostsBandwidth.size: {}",
-				runningHostsBandwidth.size()
-			);
-
-			if (!runningHostsBandwidth.empty())
-			{
-				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
-				{
-					try
-					{
-						string bandwidthUsageURL =
-							std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage", _apiProtocol, runningHost, _apiPort, _apiVersion);
-						constexpr int bandwidthUsageTimeoutInSeconds = 2;
-						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
-
-						bandwidth = JSONUtils::asUint64(bandwidthUsageRoot, "avgBandwidthUsage");
-					}
-					catch (exception &e)
-					{
-						// se una culr fallisce comunque andiamo avanti
-						SPDLOG_ERROR(
-							"bandwidthUsage failed"
-							", exception: {}",
-							e.what()
-						);
-					}
-				}
-
-				_mmsDeliveryAuthorization->updateExternalDeliveriesBandwidthHosts(runningHostsBandwidth);
-			}
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"System::getBandwidthInMbps failed"
-				", exception: {}",
-				e.what()
-			);
-		}
-
-		// inizializziamo la struttura BandwidthStats
-		try
-		{
-			// addSample logs when a new day is started
-			_bandwidthStats.addSample(avgBandwidthUsage, chrono::system_clock::now());
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				"System::getBandwidthInMbps failed"
-				", exception: {}",
-				e.what()
-			);
-		}
-	}
-}
-
 shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const string_view &sThreadId,
 	const FCGIRequestData& requestData, const string_view &userName, const string_view &password)
 {
@@ -1709,12 +1563,6 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 		"Configuration item"
 		", api->binary->progressUpdatePeriodInSeconds: {}",
 		_progressUpdatePeriodInSeconds
-	);
-	_bandwidthUsagePeriodInSeconds = JSONUtils::asInt32(apiRoot["binary"], "bandwidthUsagePeriodInSeconds", 15);
-	SPDLOG_INFO(
-		"Configuration item"
-		", api->binary->bandwidthUsagePeriodInSeconds: {}",
-		_bandwidthUsagePeriodInSeconds
 	);
 	_webServerPort = JSONUtils::asInt32(apiRoot["binary"], "webServerPort", 0);
 	SPDLOG_INFO(
@@ -1971,38 +1819,4 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 
 	_fileUploadProgressData = fileUploadProgressData;
 	_fileUploadProgressThreadShutdown = false;
-
-	_bandwidthUsageThreadShutdown = false;
-
-	try
-	{
-		vector<tuple<string, string, bool, string>> nativeNetworkInterfaces = System::getActiveNetworkInterface();
-		for (const auto &[interfaceName, interfaceType, privateIp, ipAddress] : nativeNetworkInterfaces)
-		{
-			SPDLOG_INFO(
-				"getActiveNetworkInterface"
-				", interface name: {}"
-				", interface type: {}"
-				", private ip: {}"
-				", ip address: {}",
-				interfaceName, interfaceType, privateIp, ipAddress
-			);
-			if (interfaceType != "IPv4" || privateIp)
-				continue; // rete interna
-			_deliveryExternalNetworkInterface = interfaceName;
-		}
-		SPDLOG_INFO(
-			"getActiveNetworkInterface"
-			", _deliveryExternalNetworkInterface: {}",
-			_deliveryExternalNetworkInterface
-		);
-	}
-	catch (exception &e)
-	{
-		SPDLOG_ERROR(
-			"System::getActiveNetworkInterface failed"
-			", exception: {}",
-			e.what()
-		);
-	}
 }

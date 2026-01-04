@@ -18,11 +18,9 @@
 # allowed only after express negotiation of conditions with the authors.
 
 set(SOURCES
-  HostBandwidthTracker.cpp
   MMSDeliveryAuthorization.cpp
 )
 set(HEADERS
-  HostBandwidthTracker.h
   MMSDeliveryAuthorization.h
 )
 
@@ -42,6 +40,7 @@ include_directories("${CURLWRAPPER_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
 include_directories("${SPDLOG_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
+include_directories("${BANDWIDTHUSAGETHREAD_INCLUDE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/MMSStorage/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
@@ -59,6 +58,7 @@ endif()
 add_library(MMSDelivery SHARED ${SOURCES} ${HEADERS})
 
 if(APPLE)
+    target_link_libraries(MMSDelivery BandwidthUsageThread)
     target_link_libraries(MMSDelivery MMSStorage)
     target_link_libraries(MMSDelivery FFMpegWrapper)
     target_link_libraries(MMSDelivery crypto)

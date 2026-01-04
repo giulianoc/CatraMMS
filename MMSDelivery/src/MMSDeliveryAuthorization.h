@@ -16,7 +16,7 @@
 #ifndef SPDLOG_ACTIVE_LEVEL
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
-#include "HostBandwidthTracker.h"
+#include "../../CatraLibraries/BandwidthUsageThread/src/HostsBandwidthTracker.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"
 // #include <fstream>
@@ -37,7 +37,7 @@ class MMSDeliveryAuthorization
 		const std::string &userId
 	);
 
-	std::string checkDeliveryAuthorizationThroughParameter(const std::string &contentURI, const std::string &tokenParameter);
+	[[nodiscard]] std::string checkDeliveryAuthorizationThroughParameter(const std::string &contentURI, const std::string &tokenParameter) const;
 
 	int64_t checkDeliveryAuthorizationThroughPath(const std::string &contentURI);
 
@@ -60,13 +60,16 @@ class MMSDeliveryAuthorization
 	std::unordered_map<std::string, uint64_t> getExternalDeliveriesRunningHosts();
 	void updateExternalDeliveriesBandwidthHosts(const std::unordered_map<std::string, uint64_t> &hostsBandwidth);
 
-  private:
+	void startUpdateExternalDeliveriesGroupsBandwidthUsageThread();
+	void stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
+
+private:
 	nlohmann::json _configuration;
 	std::shared_ptr<MMSStorage> _mmsStorage;
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
 	std::mutex _externalDeliveriesMutex;
-	std::map<std::string, std::shared_ptr<HostBandwidthTracker>> _externalDeliveriesGroups;
+	std::map<std::string, std::shared_ptr<HostsBandwidthTracker>> _externalDeliveriesGroups;
 
 	std::string _keyPairId;
 	std::string _privateKeyPEMPathName;
@@ -78,10 +81,18 @@ class MMSDeliveryAuthorization
 	std::string _deliveryHost_authorizationThroughParameter;
 	std::string _deliveryHost_authorizationThroughPath;
 
+	std::string _apiProtocol;
+	int32_t _apiPort;
+	std::string _apiVersion;
+	bool _updateExternalDeliveriesGroupsBandwidthUsageThreadStop;
+	std::thread _updateExternalDeliveriesGroupsBandwidthUsageThread;
+
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
 	static time_t getReusableExpirationTime(int ttlInSeconds);
 	std::string getDeliveryHost(
 		const std::shared_ptr<Workspace> &requestWorkspace, const std::string &playerCountry, const std::string &playerRegion, const std::string &defaultDeliveryHost
 	);
-	std::shared_ptr<HostBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, const std::string &groupName, const nlohmann::json &hostGroupRoot);
+	std::shared_ptr<HostsBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, const std::string &groupName, const nlohmann::json &hostGroupRoot);
+
+	void updateExternalDeliveriesGroupsBandwidthUsageThread();
 };
