@@ -770,8 +770,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
 				{
-					// Nel caso di VOD-Proxy non abbiamo il campo configurationLabel, non saprei cosa metterci
-					configurationLabel = "VODProxy";
+					// Nel caso di VOD-Proxy non abbiamo il campo configurationLabel, recuperiamo il campo label dell'ingestionJob
+					configurationLabel = _mmsEngineDBFacade->ingestionJob_columnAsString(requestWorkspace->_workspaceKey, "label",
+						ingestionJobKey, false);
 				}
 				else
 				{
