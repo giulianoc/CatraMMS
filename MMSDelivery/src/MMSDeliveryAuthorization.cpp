@@ -782,12 +782,6 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						-1, configurationLabel);
 					title = configurationLabel;
 				}
-				SPDLOG_INFO("AAAAAAAAA"
-					", ingestionType: {}"
-					", streamConfKey: {}"
-					", title: {}",
-					MMSEngineDBFacade::toString(ingestionType), streamConfKey, title
-					);
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey, playerIP, userId,
