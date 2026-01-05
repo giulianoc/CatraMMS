@@ -765,32 +765,21 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			try
 			{
-				auto configurationLabel = JsonPath(&ingestionJobRoot).required()["configurationLabel"].as<string>();
-				/*
-				if (!JSONUtils::isPresent(ingestionJobRoot, field))
+				string configurationLabel;
+				int64_t streamConfKey = -1;
+
+				if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
 				{
-					string errorMessage = std::format(
-						"{} field missing"
-						", ingestionJobKey: {}",
-						field, ingestionJobKey
-					);
-					SPDLOG_ERROR(errorMessage);
-
-					throw runtime_error(errorMessage);
+					// Nel caso di VOD-Proxy non abbiamo il campo configurationLabel, non saprei cosa metterci
+					configurationLabel = "VODProxy";
 				}
-				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
-				*/
+				else
+				{
+					configurationLabel = JsonPath(&ingestionJobRoot).required()["configurationLabel"].as<string>();
 
-				int64_t streamConfKey = _mmsEngineDBFacade->stream_columnAsInt64(requestWorkspace->_workspaceKey, "confKey", -1, configurationLabel);
-				/*
-				bool warningIfMissing = false;
-				tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-					streamDetails = _mmsEngineDBFacade->getStreamDetails(requestWorkspace->_workspaceKey, configurationLabel, warningIfMissing);
-
-				int64_t streamConfKey;
-				tie(streamConfKey, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
-					ignore, ignore, ignore) = streamDetails;
-				*/
+					streamConfKey = _mmsEngineDBFacade->stream_columnAsInt64(requestWorkspace->_workspaceKey, "confKey",
+						-1, configurationLabel);
+				}
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey, playerIP, userId,
