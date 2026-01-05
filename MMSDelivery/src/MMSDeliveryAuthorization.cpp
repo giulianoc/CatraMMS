@@ -765,7 +765,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			try
 			{
-				auto configurationLabel = JsonPath(&ingestionJobRoot).required().as<string>("configurationLabel");
+				auto configurationLabel = JsonPath(&ingestionJobRoot).required()["configurationLabel"].as<string>();
 				/*
 				if (!JSONUtils::isPresent(ingestionJobRoot, field))
 				{
