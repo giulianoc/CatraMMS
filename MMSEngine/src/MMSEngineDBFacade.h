@@ -2331,7 +2331,7 @@ class MMSEngineDBFacade
 		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port
 	) const;
 
-	std::pair<bool, int> getEncoderInfo(
+	std::tuple<bool, int32_t, int64_t> getEncoderInfo(
 		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port,
 		std::chrono::milliseconds *duration = nullptr
 	) const;

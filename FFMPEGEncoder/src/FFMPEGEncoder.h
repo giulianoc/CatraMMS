@@ -16,6 +16,7 @@
 #include "FFMPEGEncoderTask.h"
 #include "FFMpegWrapper.h"
 #include "FastCGIAPI.h"
+#include "BandwidthUsageThread.h"
 #include <deque>
 #include <shared_mutex>
 
@@ -49,7 +50,8 @@ class FFMPEGEncoder final : public FastCGIAPI
 		std::mutex *encodingCompletedMutex, std::map<int64_t, std::shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap,
 		std::chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
-		std::mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset
+		std::mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
+		const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread
 	);
 
 	~FFMPEGEncoder() override;
@@ -93,6 +95,8 @@ class FFMPEGEncoder final : public FastCGIAPI
 	int _cpuUsageThresholdForProxy{};
 	int _cpuUsageThresholdForRecording{};
 
+	std::shared_ptr<BandwidthUsageThread> _bandwidthUsageThread;
+
 	std::mutex *_encodingMutex;
 	std::vector<std::shared_ptr<FFMPEGEncoderBase::Encoding>> *_encodingsCapability;
 	// commented because retrieved dinamically
@@ -134,6 +138,11 @@ class FFMPEGEncoder final : public FastCGIAPI
 	void info(
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
+
+	void avgBandwidthUsage(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
 
 	void videoSpeed(
 		const std::string_view& sThreadId, FCGX_Request &request,

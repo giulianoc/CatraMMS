@@ -12,6 +12,7 @@
 
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/status/?$ /encoder?x-api-version=$1&x-api-method=status last;
+			rewrite ^/catramms/(v[0-9]+)/avgBandwidthUsage/?$ /encoder?x-api-version=$1&x-api-method=avgBandwidthUsage last;
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/(v[0-9]+)/encoder/info/?$ /encoder?x-api-version=$1&x-api-method=info last;

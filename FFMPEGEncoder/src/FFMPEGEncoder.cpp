@@ -69,7 +69,8 @@ FFMPEGEncoder::FFMPEGEncoder(
 	mutex *encodingCompletedMutex, map<int64_t, shared_ptr<FFMPEGEncoderBase::EncodingCompleted>> *encodingCompletedMap,
 	chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
-	mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset
+	mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
+	const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex)
 {
@@ -78,6 +79,7 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	_cpuUsageMutex = cpuUsageMutex;
 	_cpuUsage = cpuUsage;
+	_bandwidthUsageThread = bandwidthUsageThread;
 
 	// _lastEncodingAcceptedTime = lastEncodingAcceptedTime;
 
@@ -115,7 +117,13 @@ FFMPEGEncoder::FFMPEGEncoder(
 			info(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("videoSpeed", &FFMPEGEncoder::videoSpeed);
+	registerHandler(
+		"avgBandwidthUsage",
+		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{
+			avgBandwidthUsage(sThreadId, request, requestData);
+		}
+	);
 	registerHandler("videoSpeed",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -386,8 +394,9 @@ void FFMPEGEncoder::info(
 		json infoRoot;
 		infoRoot["status"] = "Encoder up and running";
 		infoRoot["cpuUsage"] = lastBiggerCpuUsage;
+		infoRoot["avgBandwidthUsage"] = _bandwidthUsageThread->getAvgBandwidthUsage();
 
-		string responseBody = JSONUtils::toString(infoRoot);
+		const string responseBody = JSONUtils::toString(infoRoot);
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
 			requestData.requestURI, requestData.requestMethod, 200, responseBody);
@@ -403,6 +412,41 @@ void FFMPEGEncoder::info(
 		);
 
 		throw FCGIRequestData::HTTPError(500);
+	}
+}
+
+void FFMPEGEncoder::avgBandwidthUsage(
+	const string_view &sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "avgBandwidthUsage";
+
+	SPDLOG_INFO(
+		"Received {}"
+		", requestData.requestBody: {}",
+		api, requestData.requestBody
+	);
+
+	try
+	{
+		json statusRoot;
+
+		statusRoot["avgBandwidthUsage"] = _bandwidthUsageThread->getAvgBandwidthUsage();
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200, JSONUtils::toString(statusRoot));
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"API failed"
+			", API: {}"
+			", requestData.requestBody: {}"
+			", e.what(): {}",
+			api, requestData.requestBody, e.what()
+		);
+
+		throw;
 	}
 }
 
@@ -2375,10 +2419,10 @@ bool FFMPEGEncoder::basicAuthenticationRequired(const FCGIRequestData& requestDa
 		return basicAuthenticationRequired;
 	}
 
-	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword" ||
-		method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter" ||
-		method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath" ||
-		method == "status" // often used as healthy check
+	if (method == "registerUser" || method == "confirmRegistration" || method == "createTokenToResetPassword" || method == "resetPassword"
+		|| method == "login" || method == "manageHTTPStreamingManifest_authorizationThroughParameter"
+		|| method == "deliveryAuthorizationThroughParameter" || method == "deliveryAuthorizationThroughPath"
+		|| method == "avgBandwidthUsage" || method == "status" // often used as healthy check
 	)
 		basicAuthenticationRequired = false;
 

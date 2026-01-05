@@ -5,6 +5,11 @@
 #include "MMSEngineDBFacade.h"
 #include <algorithm>
 
+using namespace std;
+using json = nlohmann::json;
+// using ordered_json = nlohmann::ordered_json;
+// using namespace pqxx;
+
 int64_t MMSEngineDBFacade::addEncoder(
 	string label, bool external, bool enabled, string protocol, string publicServerName, string internalServerName, int port
 )
@@ -1360,16 +1365,11 @@ Json::Value MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, shar
 		//		running info, so we made it optional
 		if (runningInfo)
 		{
-			bool running;
-			int cpuUsage = 0;
-			pair<bool, int> encoderRunningDetails = getEncoderInfo(external, protocol, publicServerName, internalServerName, port);
-			tie(running, cpuUsage) = encoderRunningDetails;
+			auto [running, cpuUsage, avgBandwidthUsage] = getEncoderInfo(external, protocol, publicServerName, internalServerName, port);
 
-			field = "running";
-			encoderRoot[field] = running;
-
-			field = "cpuUsage";
-			encoderRoot[field] = cpuUsage;
+			encoderRoot["running"] = running;
+			encoderRoot["cpuUsage"] = cpuUsage;
+			encoderRoot["avgBandwidthUsage"] = avgBandwidthUsage;
 		}
 
 		if (admin)

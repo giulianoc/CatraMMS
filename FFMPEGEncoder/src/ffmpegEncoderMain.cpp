@@ -1,4 +1,5 @@
 
+#include "BandwidthUsageThread.h"
 #include "spdlog/sinks/daily_file_sink.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
@@ -250,6 +251,9 @@ int main(int argc, char **argv)
 		mutex tvChannelsPortsMutex;
 		long tvChannelPort_CurrentOffset = 0;
 
+		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>();
+		bandwidthUsageThread->start();
+
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;
 		vector<thread> ffmpegEncoderThreads;
 
@@ -273,7 +277,7 @@ int main(int argc, char **argv)
 
 				&encodingCompletedMutex, &encodingCompletedMap, &lastEncodingCompletedCheck,
 
-				&tvChannelsPortsMutex, &tvChannelPort_CurrentOffset
+				&tvChannelsPortsMutex, &tvChannelPort_CurrentOffset, bandwidthUsageThread
 			);
 
 			ffmpegEncoders.push_back(ffmpegEncoder);
@@ -312,18 +316,13 @@ int main(int argc, char **argv)
 			// ffmpegEncoders[0]->stopCPUUsageThread();
 			ffmpegEncoderDaemons->stopMonitorThread();
 			ffmpegEncoderDaemons->stopCPUUsageThread();
+
+			bandwidthUsageThread->stop();
 		}
 
 		CurlWrapper::globalTerminate();
 
 		SPDLOG_INFO("FFMPEGEncoder shutdown");
-	}
-	catch (runtime_error &e)
-	{
-		cerr << __FILEREF__ + "main failed" + ", e.what(): " + e.what();
-
-		// throw e;
-		return 1;
 	}
 	catch (exception &e)
 	{

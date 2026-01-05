@@ -16,6 +16,7 @@
 #include "../../CatraLibraries/BandwidthUsageThread/src/BandwidthUsageThread.h"
 #include "API.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "spdlog/spdlog.h"
 
 using namespace std;
@@ -264,17 +265,18 @@ int main(int argc, char **argv)
 		info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
 #endif
 		SPDLOG_INFO("Creating MMSEngineDBFacade");
-		shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade =
-			make_shared<MMSEngineDBFacade>(configuration, configuration["log"]["api"]["slowQuery"], masterDbPoolSize, slaveDbPoolSize, logger);
+		auto mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configuration,
+			JsonPath(&configuration)["log"]["api"]["slowQuery"].as<json>(),
+			masterDbPoolSize, slaveDbPoolSize, logger);
 
 		SPDLOG_INFO(
 			"Creating MMSStorage"
 			", noFileSystemAccess: {}",
 			noFileSystemAccess
 		);
-		shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configuration, logger);
+		auto mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configuration, logger);
 
-		shared_ptr<MMSDeliveryAuthorization> mmsDeliveryAuthorization =
+		auto mmsDeliveryAuthorization =
 			make_shared<MMSDeliveryAuthorization>(configuration, mmsStorage, mmsEngineDBFacade);
 		mmsDeliveryAuthorization->startUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 

@@ -2,6 +2,7 @@
 #include "Convert.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -19,18 +20,6 @@ int64_t MMSEngineDBFacade::addEncoder(
 )
 {
 	int64_t encoderKey;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -1138,19 +1127,14 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row, c
 		//		running info, so we made it optional
 		if (runningInfo)
 		{
-			bool running;
-			int cpuUsage = 0;
 			chrono::milliseconds localDuration(0);
-			pair<bool, int> encoderRunningDetails = getEncoderInfo(external, protocol, publicServerName, internalServerName, port, &localDuration);
+			auto [running, cpuUsage, avgBandwidthUsage] = getEncoderInfo(external, protocol, publicServerName, internalServerName, port, &localDuration);
 			if (extraDuration != nullptr)
 				*extraDuration += localDuration;
-			tie(running, cpuUsage) = encoderRunningDetails;
 
-			field = "running";
-			encoderRoot[field] = running;
-
-			field = "cpuUsage";
-			encoderRoot[field] = cpuUsage;
+			encoderRoot["running"] = running;
+			encoderRoot["cpuUsage"] = cpuUsage;
+			encoderRoot["avgBandwidthUsage"] = avgBandwidthUsage;
 		}
 
 		if (admin)
@@ -1230,12 +1214,13 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 	return isRunning;
 }
 
-pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, const string& protocol, const string &publicServerName,
+tuple<bool, int32_t, int64_t> MMSEngineDBFacade::getEncoderInfo(bool external, const string& protocol, const string &publicServerName,
 	const string& internalServerName, const int port, chrono::milliseconds *duration
 ) const
 {
 	bool isRunning = true;
-	int cpuUsage = 0;
+	int32_t cpuUsage = 0;
+	uint64_t avgBandwidthUsage = 0;
 
 	string ffmpegEncoderURL;
 	try
@@ -1250,8 +1235,8 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, const string& p
 			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
 		);
 
-		const string field = "cpuUsage";
-		cpuUsage = JSONUtils::asInt32(infoResponseRoot, field, 0);
+		cpuUsage = JsonPath(&infoResponseRoot)["cpuUsage"].as<int32_t>(0);
+		avgBandwidthUsage = JsonPath(&infoResponseRoot)["avgBandwidthUsage"].as<int64_t>(0);
 
 		if (duration != nullptr)
 			*duration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);
@@ -1282,7 +1267,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, const string& p
 		isRunning = false;
 	}
 
-	return make_pair(isRunning, cpuUsage);
+	return make_tuple(isRunning, cpuUsage, avgBandwidthUsage);
 }
 
 string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono::milliseconds *sqlDuration)
