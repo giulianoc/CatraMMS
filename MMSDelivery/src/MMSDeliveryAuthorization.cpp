@@ -798,7 +798,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					streamConfKey, configurationLabel
 				);
 			}
-			catch (runtime_error &e)
+			catch (exception &e)
 			{
 				SPDLOG_ERROR(
 					"mmsEngineDBFacade->addRequestStatistic failed"
