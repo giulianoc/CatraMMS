@@ -765,27 +765,28 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			try
 			{
-				string configurationLabel;
+				string title;
 				int64_t streamConfKey = -1;
 
 				if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
 				{
 					// Nel caso di VOD-Proxy non abbiamo il campo configurationLabel, recuperiamo il campo label dell'ingestionJob
-					configurationLabel = _mmsEngineDBFacade->ingestionJob_columnAsString(requestWorkspace->_workspaceKey, "label",
-						ingestionJobKey, false);
+					title = std::format("VOD-Proxy: {}", _mmsEngineDBFacade->ingestionJob_columnAsString(
+						requestWorkspace->_workspaceKey, "label", ingestionJobKey, false));
 				}
 				else
 				{
-					configurationLabel = JsonPath(&ingestionJobRoot).required()["configurationLabel"].as<string>();
+					auto configurationLabel = JsonPath(&ingestionJobRoot).required()["configurationLabel"].as<string>();
 
 					streamConfKey = _mmsEngineDBFacade->stream_columnAsInt64(requestWorkspace->_workspaceKey, "confKey",
 						-1, configurationLabel);
+					title = configurationLabel;
 				}
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey, playerIP, userId,
 					-1, // localPhysicalPathKey,
-					streamConfKey, configurationLabel
+					streamConfKey, title
 				);
 			}
 			catch (exception &e)
