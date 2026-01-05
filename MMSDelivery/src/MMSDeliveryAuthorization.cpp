@@ -770,7 +770,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
 				{
-					// Nel caso di VOD-Proxy non abbiamo il campo configurationLabel, recuperiamo il campo label dell'ingestionJob
+					// Nel caso di VOD-Proxy non abbiamo il campo configurationLabel, usiamo il campo label dell'ingestionJob
 					title = std::format("VOD-Proxy: {}", _mmsEngineDBFacade->ingestionJob_columnAsString(
 						requestWorkspace->_workspaceKey, "label", ingestionJobKey, false));
 				}
@@ -782,6 +782,12 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						-1, configurationLabel);
 					title = configurationLabel;
 				}
+				SPDLOG_INFO("AAAAAAAAA"
+					", ingestionType: {}"
+					", streamConfKey: {}"
+					", title: {}",
+					MMSEngineDBFacade::toString(ingestionType), streamConfKey, title
+					);
 
 				_mmsEngineDBFacade->addRequestStatistic(
 					requestWorkspace->_workspaceKey, playerIP, userId,
