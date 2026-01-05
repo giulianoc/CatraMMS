@@ -765,7 +765,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 			try
 			{
-				field = "configurationLabel";
+				auto configurationLabel = JsonPath(&ingestionJobRoot).required().as<string>("configurationLabel");
+				/*
 				if (!JSONUtils::isPresent(ingestionJobRoot, field))
 				{
 					string errorMessage = std::format(
@@ -778,6 +779,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					throw runtime_error(errorMessage);
 				}
 				string configurationLabel = JSONUtils::asString(ingestionJobRoot, field, "");
+				*/
 
 				int64_t streamConfKey = _mmsEngineDBFacade->stream_columnAsInt64(requestWorkspace->_workspaceKey, "confKey", -1, configurationLabel);
 				/*
@@ -800,8 +802,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			{
 				SPDLOG_ERROR(
 					"mmsEngineDBFacade->addRequestStatistic failed"
+					", ingestionJobRoot: {}"
 					", e.what: {}",
-					e.what()
+					JSONUtils::toString(ingestionJobRoot), e.what()
 				);
 			}
 		}
