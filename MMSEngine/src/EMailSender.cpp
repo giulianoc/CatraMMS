@@ -22,9 +22,9 @@
 using namespace std;
 using json = nlohmann::json;
 
-EMailSender::EMailSender(json configuration) { _configuration = configuration; }
+EMailSender::EMailSender(const json &configuration) { _configuration = configuration; }
 
-EMailSender::~EMailSender() {}
+EMailSender::~EMailSender() = default;
 
 void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<string> &emailBody, bool useMMSCCToo)
 {
@@ -53,7 +53,6 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 
 	CURL *curl;
 	CURLcode res = CURLE_OK;
-	struct curl_slist *recipients = NULL;
 	deque<string> emailLines;
 
 	emailLines.push_back(string("From: <") + from + ">" + "\r\n");
@@ -67,7 +66,7 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 		{
 			if (!sTo.empty())
 			{
-				if (sTosForEmail == "")
+				if (sTosForEmail.empty())
 					sTosForEmail = string("<") + sTo + ">";
 				else
 					sTosForEmail += (string(", <") + sTo + ">");
@@ -84,17 +83,18 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 
 	emailLines.push_back(string("Subject: ") + subject + "\r\n");
 	emailLines.push_back(string("Content-Type: text/html; charset=\"UTF-8\"") + "\r\n");
-	emailLines.push_back("\r\n"); // empty line to divide headers from body, see RFC5322
+	emailLines.emplace_back("\r\n"); // empty line to divide headers from body, see RFC5322
 	emailLines.insert(emailLines.end(), emailBody.begin(), emailBody.end());
 
 	curl = curl_easy_init();
 
 	if (curl)
 	{
+		curl_slist *recipients = nullptr;
 		curl_easy_setopt(curl, CURLOPT_URL, emailServerURL.c_str());
-		if (userName != "")
+		if (!userName.empty())
 			curl_easy_setopt(curl, CURLOPT_USERNAME, userName.c_str());
-		if (password != "")
+		if (!password.empty())
 			curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
 
 		//        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
@@ -126,7 +126,7 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 		}
 		// recipients = curl_slist_append(recipients, to.c_str());
 
-		if (cc != "")
+		if (!cc.empty())
 			recipients = curl_slist_append(recipients, cc.c_str());
 		curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipients);
 
@@ -188,7 +188,7 @@ size_t EMailSender::emailPayloadFeed(void *ptr, size_t size, size_t nmemb, void 
 		return 0;
 	}
 
-	if (pEmailLines->size() == 0)
+	if (pEmailLines->empty())
 		return 0; // no more lines
 
 	string emailLine = pEmailLines->front();

@@ -36,7 +36,7 @@ class EMailSender
 {
   public:
   public:
-	EMailSender(nlohmann::json configuration);
+	EMailSender(const nlohmann::json &configuration);
 
 	virtual ~EMailSender();
 

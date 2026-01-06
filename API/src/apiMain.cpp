@@ -225,7 +225,7 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		json configuration = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
+		auto configuration = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
 
 		shared_ptr<spdlog::logger> logger = setMainLogger(configuration);
 		registerSlowQueryLogger(configuration);
