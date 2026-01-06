@@ -2545,7 +2545,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -3185,20 +3185,9 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 	return workspaceDetailRoot;
 }
 
-pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(int64_t workspaceKey)
+pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const int64_t workspaceKey)
 {
 	pair<int64_t, int64_t> workspaceUsage;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -3312,9 +3301,8 @@ json MMSEngineDBFacade::getWorkspaceCost(PostgresConnTrans &trans, int64_t works
 	return workspaceCost;
 }
 
-pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTrans &trans, int64_t workspaceKey)
+pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &trans, int64_t workspaceKey)
 {
-
 	try
 	{
 		int64_t maxStorageInMB;
@@ -3376,7 +3364,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const PostgresConnTr
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
