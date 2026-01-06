@@ -1718,7 +1718,7 @@ MMSEngineDBFacade::DeliveryTechnology MMSEngineDBFacade::fileFormatToDeliveryTec
 	return deliveryTechnology;
 }
 
-string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
+string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, const bool emptyElementToBeRemoved, PostgresConnTrans &trans)
 {
 	std::ostringstream oss;
 	bool first = true;
@@ -1736,7 +1736,7 @@ string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, 
 	return std::format("ARRAY[{}]", oss.str());
 }
 
-string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emptyElementToBeRemoved, const PostgresConnTrans &trans)
+string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emptyElementToBeRemoved, PostgresConnTrans &trans)
 {
 	if (!arrayRoot.is_array())
 	{

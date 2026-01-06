@@ -2501,8 +2501,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	void loadSqlColumnsSchema();
-	static std::string getPostgresArray(const std::vector<std::string> &arrayElements, bool emptyElementToBeRemoved, const PostgresConnTrans &trans);
-	static std::string getPostgresArray(const nlohmann::json &arrayRoot, bool emptyElementToBeRemoved, const PostgresConnTrans &trans);
+	static std::string getPostgresArray(const std::vector<std::string> &arrayElements, bool emptyElementToBeRemoved, PostgresConnTrans &trans);
+	static std::string getPostgresArray(const nlohmann::json &arrayRoot, bool emptyElementToBeRemoved, PostgresConnTrans &trans);
 	bool isTimezoneValid(std::string timezone);
 #endif
 
