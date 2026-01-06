@@ -2382,7 +2382,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -2506,6 +2506,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 			userAPIKeyRoot["editEncodersPool"] = admin ? true : JSONUtils::asBool(permissionsRoot, "editEncodersPool", false);
 			userAPIKeyRoot["applicationRecorder"] = admin ? true : JSONUtils::asBool(permissionsRoot, "applicationRecorder", false);
 			userAPIKeyRoot["createRemoveLiveChannel"] = admin ? true : JSONUtils::asBool(permissionsRoot, "createRemoveLiveChannel", false);
+			userAPIKeyRoot["updateEncoderStats"] = admin ? true : JSONUtils::asBool(permissionsRoot, "updateEncoderStats", false);
 
 			workspaceDetailRoot["userAPIKey"] = userAPIKeyRoot;
 
