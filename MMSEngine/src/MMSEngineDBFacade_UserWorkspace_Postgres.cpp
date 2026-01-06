@@ -1,6 +1,7 @@
 
 #include "Encrypt.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
@@ -226,10 +227,12 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			bool editEncodersPool = true;
 			bool applicationRecorder = true;
 			bool createRemoveLiveChannel = true;
+			bool updateEncoderStats = false;
 
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
+				updateEncoderStats,
 				trimWorkspaceName, notes, workspaceType, deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				languageCode, workspaceTimezone, userExpirationLocalDate
 			);
@@ -439,31 +442,21 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 }
 
 pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
-	int64_t userKey, string workspaceName, string notes, WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority,
-	EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, string languageCode, string workspaceTimezone, bool admin,
+	int64_t userKey, const string& workspaceName, const string& notes, WorkspaceType workspaceType, const string& deliveryURL,
+	EncodingPriority maxEncodingPriority,
+	EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, const string& languageCode,
+	const string& workspaceTimezone, bool admin,
 	chrono::system_clock::time_point userExpirationLocalDate
 )
 {
 	int64_t workspaceKey;
 	string confirmationCode;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
 		string trimWorkspaceName = StringUtils::trim(workspaceName);
-		if (trimWorkspaceName == "")
+		if (trimWorkspaceName.empty())
 		{
 			string errorMessage = string("WorkspaceName is not well formed.") + ", workspaceName: " + workspaceName;
 			_logger->error(__FILEREF__ + errorMessage);
@@ -484,10 +477,12 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 			bool editEncodersPool = true;
 			bool applicationRecorder = true;
 			bool createRemoveLiveChannel = true;
+			bool updateEncoderStats = false;
 
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
+				updateEncoderStats,
 				trimWorkspaceName, notes, workspaceType, deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				languageCode, workspaceTimezone, userExpirationLocalDate
 			);
@@ -498,7 +493,7 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -526,24 +521,13 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 }
 
 string MMSEngineDBFacade::createCode(
-	int64_t workspaceKey, int64_t userKey, string userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace, bool ingestWorkflow,
+	const int64_t workspaceKey, int64_t userKey, const string& userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
+	bool ingestWorkflow,
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel
+	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats
 )
 {
 	string code;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -551,12 +535,12 @@ string MMSEngineDBFacade::createCode(
 		code = createCode(
 			trans, workspaceKey, userKey, userEmail, codeType, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder,
-			createRemoveLiveChannel
+			createRemoveLiveChannel, updateEncoderStats
 		);
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -582,9 +566,11 @@ string MMSEngineDBFacade::createCode(
 }
 
 string MMSEngineDBFacade::createCode(
-	PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, string userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
+	PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, const string& userEmail, CodeType codeType, bool admin,
+	bool createRemoveWorkspace,
 	bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
-	bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel
+	bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel,
+	bool updateEncoderStats
 )
 {
 	string code;
@@ -612,6 +598,7 @@ string MMSEngineDBFacade::createCode(
 				permissionsRoot["editEncodersPool"] = editEncodersPool;
 				permissionsRoot["applicationRecorder"] = applicationRecorder;
 				permissionsRoot["createRemoveLiveChannel"] = createRemoveLiveChannel;
+				permissionsRoot["updateEncoderStats"] = updateEncoderStats;
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
 
@@ -638,7 +625,7 @@ string MMSEngineDBFacade::createCode(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -662,32 +649,22 @@ string MMSEngineDBFacade::createCode(
 }
 
 pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
-	string userName, string userEmailAddress, string userCountry, string userTimezone, bool createRemoveWorkspace, bool ingestWorkflow,
+	const string& userName, const string& userEmailAddress, const string& userCountry, string userTimezone, bool createRemoveWorkspace,
+	bool ingestWorkflow,
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, string defaultWorkspaceKeys,
+	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats,
+	const string& defaultWorkspaceKeys,
 	int expirationInDaysWorkspaceDefaultValue, chrono::system_clock::time_point userExpirationLocalDate
 )
 {
 	int64_t userKey;
 	string apiKey;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
 		{
-			string userPassword = "";
+			string userPassword;
 
 			if (!isTimezoneValid(userTimezone))
 				userTimezone = "CET";
@@ -695,17 +672,11 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 			// char strExpirationUtcDate[64];
 			string strExpirationUtcDate;
 			{
-				tm tmDateTime;
+				tm tmDateTime{};
 				time_t utcTime = chrono::system_clock::to_time_t(userExpirationLocalDate);
 
 				gmtime_r(&utcTime, &tmDateTime);
 
-				/*
-				sprintf(
-					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-				);
-				*/
 				strExpirationUtcDate = std::format(
 					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
@@ -750,7 +721,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 					string localApiKey = createAPIKeyForActiveDirectoryUser(
 						trans, userKey, userEmailAddress, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 						shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder,
-						createRemoveLiveChannel, llDefaultWorkspaceKey, expirationInDaysWorkspaceDefaultValue
+						createRemoveLiveChannel, updateEncoderStats, llDefaultWorkspaceKey, expirationInDaysWorkspaceDefaultValue
 					);
 					if (apiKey.empty())
 						apiKey = localApiKey;
@@ -760,7 +731,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -786,36 +757,29 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 }
 
 string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
-	int64_t userKey, string userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+	int64_t userKey, const string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
+	bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
-	bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+	bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+	int expirationInDaysWorkspaceDefaultValue
 )
 {
 	string apiKey;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		apiKey = createAPIKeyForActiveDirectoryUser(
-			trans, userKey, userEmailAddress, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
-			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, workspaceKey,
+			trans, userKey, userEmailAddress, createRemoveWorkspace, ingestWorkflow,
+			createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
+			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
+			applicationRecorder, createRemoveLiveChannel, updateEncoderStats, workspaceKey,
 			expirationInDaysWorkspaceDefaultValue
 		);
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -841,9 +805,11 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 }
 
 string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
-	PostgresConnTrans &trans, int64_t userKey, string userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
+	PostgresConnTrans &trans, int64_t userKey, const string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow,
+	bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+	int expirationInDaysWorkspaceDefaultValue
 )
 {
 	string apiKey;
@@ -870,6 +836,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				permissionsRoot["editEncodersPool"] = editEncodersPool;
 				permissionsRoot["applicationRecorder"] = applicationRecorder;
 				permissionsRoot["createRemoveLiveChannel"] = createRemoveLiveChannel;
+				permissionsRoot["updateEncoderStats"] = updateEncoderStats;
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
 
@@ -888,17 +855,11 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				chrono::system_clock::time_point apiKeyExpirationDate =
 					chrono::system_clock::now() + chrono::hours(24 * expirationInDaysWorkspaceDefaultValue);
 
-				tm tmDateTime;
+				tm tmDateTime{};
 				time_t utcTime = chrono::system_clock::to_time_t(apiKeyExpirationDate);
 
 				gmtime_r(&utcTime, &tmDateTime);
 
-				/*
-				sprintf(
-					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-				);
-				*/
 				strExpirationUtcDate = std::format(
 					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
@@ -929,7 +890,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -955,7 +916,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, const string& workspaceName, const string& notes,
+	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, const string& workspaceName, const string& notes,
 	WorkspaceType workspaceType, const string& deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber, long maxStorageInMB,
 	const string& languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
@@ -1060,9 +1021,9 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		}
 
 		confirmationCode = MMSEngineDBFacade::createCode(
-			trans, workspaceKey, userKey, "", // userEmail,
-			CodeType::UserRegistration, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace,
-			editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel
+			workspaceKey, userKey, "", CodeType::UserRegistration, // userEmail,
+			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
+			killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
 		);
 
 		{
@@ -1119,7 +1080,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1876,24 +1837,12 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 	}
 }
 
-tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
+tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 {
 	shared_ptr<Workspace> workspace;
 	int64_t userKey;
 	json permissionsRoot;
-
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
@@ -1907,7 +1856,8 @@ MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
 				trans.transaction->quote(apiKey)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			const result res = trans.transaction->exec(sqlStatement);
+			auto sqlResultSet = PostgresHelper::buildResult(res);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1919,10 +1869,9 @@ MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
 			);
 			if (!empty(res))
 			{
-				userKey = res[0]["userKey"].as<int64_t>();
-				workspaceKey = res[0]["workspaceKey"].as<int64_t>();
-				auto permissions = res[0]["permissions"].as<string>();
-				permissionsRoot = JSONUtils::toJson<json>(permissions);
+				userKey = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("userKey")].as<int64_t>();
+				workspaceKey = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("workspaceKey")].as<int64_t>();
+				permissionsRoot = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("permissions")].as<json>();
 			}
 			else
 			{
@@ -1938,7 +1887,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1961,13 +1910,21 @@ MMSEngineDBFacade::checkAPIKey(const string_view& apiKey, const bool fromMaster)
 	}
 
 	return make_tuple(
-		userKey, workspace, JSONUtils::asBool(permissionsRoot, "admin", false), JSONUtils::asBool(permissionsRoot, "createRemoveWorkspace", false),
-		JSONUtils::asBool(permissionsRoot, "ingestWorkflow", false), JSONUtils::asBool(permissionsRoot, "createProfiles", false),
-		JSONUtils::asBool(permissionsRoot, "deliveryAuthorization", false), JSONUtils::asBool(permissionsRoot, "shareWorkspace", false),
-		JSONUtils::asBool(permissionsRoot, "editMedia", false), JSONUtils::asBool(permissionsRoot, "editConfiguration", false),
-		JSONUtils::asBool(permissionsRoot, "killEncoding", false), JSONUtils::asBool(permissionsRoot, "cancelIngestionJob", false),
-		JSONUtils::asBool(permissionsRoot, "editEncodersPool", false), JSONUtils::asBool(permissionsRoot, "applicationRecorder", false),
-		JSONUtils::asBool(permissionsRoot, "createRemoveLiveChannel", false)
+		userKey, workspace,
+		JsonPath(&permissionsRoot)["admin"].as<bool>(false),
+		JsonPath(&permissionsRoot)["createRemoveWorkspace"].as<bool>(false),
+		JsonPath(&permissionsRoot)["ingestWorkflow"].as<bool>(false),
+		JsonPath(&permissionsRoot)["createProfiles"].as<bool>(false),
+		JsonPath(&permissionsRoot)["deliveryAuthorization"].as<bool>(false),
+		JsonPath(&permissionsRoot)["shareWorkspace"].as<bool>(false),
+		JsonPath(&permissionsRoot)["editMedia"].as<bool>(false),
+		JsonPath(&permissionsRoot)["editConfiguration"].as<bool>(false),
+		JsonPath(&permissionsRoot)["killEncoding"].as<bool>(false),
+		JsonPath(&permissionsRoot)["cancelIngestionJob"].as<bool>(false),
+		JsonPath(&permissionsRoot)["editEncodersPool"].as<bool>(false),
+		JsonPath(&permissionsRoot)["applicationRecorder"].as<bool>(false),
+		JsonPath(&permissionsRoot)["createRemoveLiveChannel"].as<bool>(false),
+		JsonPath(&permissionsRoot)["updateEncoderStats"].as<bool>(false)
 	);
 }
 
@@ -2611,11 +2568,12 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 }
 
 json MMSEngineDBFacade::updateWorkspaceDetails(
-	int64_t userKey, int64_t workspaceKey, bool notesChanged, string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged, string newName,
-	bool maxEncodingPriorityChanged, string newMaxEncodingPriority, bool encodingPeriodChanged, string newEncodingPeriod,
-	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, string newLanguageCode, bool timezoneChanged,
-	string newTimezone, bool preferencesChanged, string newPreferences, bool externalDeliveriesChanged, string newExternalDeliveries,
-	bool expirationDateChanged, string newExpirationUtcDate,
+	int64_t userKey, int64_t workspaceKey, bool notesChanged, const string& newNotes, bool enabledChanged, bool newEnabled,
+	bool nameChanged, const string& newName,
+	bool maxEncodingPriorityChanged, const string& newMaxEncodingPriority, bool encodingPeriodChanged, const std::string& newEncodingPeriod,
+	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, const string& newLanguageCode, bool timezoneChanged,
+	const string& newTimezone, bool preferencesChanged, const string& newPreferences, bool externalDeliveriesChanged, const string& newExternalDeliveries,
+	bool expirationDateChanged, const string& newExpirationUtcDate,
 
 	bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 	bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -2627,21 +2585,10 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 	bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles, bool newDeliveryAuthorization, bool newShareWorkspace,
 	bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob, bool newEditEncodersPool,
-	bool newApplicationRecorder, bool newCreateRemoveLiveChannel
+	bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderStats
 )
 {
 	json workspaceDetailRoot;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -3033,6 +2980,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			permissionsRoot["editEncodersPool"] = newEditEncodersPool;
 			permissionsRoot["applicationRecorder"] = newApplicationRecorder;
 			permissionsRoot["createRemoveLiveChannel"] = newCreateRemoveLiveChannel;
+			permissionsRoot["updateEncoderStats"] = newUpdateEncoderStats;
 
 			string permissions = JSONUtils::toString(permissionsRoot);
 
@@ -3101,7 +3049,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"

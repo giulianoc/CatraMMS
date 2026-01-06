@@ -14,6 +14,7 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "LdapWrapper.h"
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
@@ -672,19 +673,7 @@ void API::shareWorkspace_(
 		}
 
 		vector<string> mandatoryFields = {
-			"email",
-			"createRemoveWorkspace",
-			"ingestWorkflow",
-			"createProfiles",
-			"deliveryAuthorization",
-			"shareWorkspace",
-			"editMedia",
-			"editConfiguration",
-			"killEncoding",
-			"cancelIngestionJob",
-			"editEncodersPool",
-			"applicationRecorder",
-			"createRemoveLiveChannel"
+			"email"
 		};
 		for (string field : mandatoryFields)
 		{
@@ -726,12 +715,11 @@ void API::shareWorkspace_(
 			try
 			{
 				bool warningIfError = true;
-				pair<int64_t, string> userDetails = _mmsEngineDBFacade->getUserDetailsByEmail(email, warningIfError);
-				tie(userKey, name) = userDetails;
+				tie(userKey, name) = _mmsEngineDBFacade->getUserDetailsByEmail(email, warningIfError);
 
 				userAlreadyPresent = true;
 			}
-			catch (runtime_error &e)
+			catch (exception &e)
 			{
 				SPDLOG_WARN(
 					"API failed"
@@ -753,18 +741,19 @@ void API::shareWorkspace_(
 			throw runtime_error(errorMessage);
 		}
 
-		bool createRemoveWorkspace = JSONUtils::asBool(metadataRoot, "createRemoveWorkspace", false);
-		bool ingestWorkflow = JSONUtils::asBool(metadataRoot, "ingestWorkflow", false);
-		bool createProfiles = JSONUtils::asBool(metadataRoot, "createProfiles", false);
-		bool deliveryAuthorization = JSONUtils::asBool(metadataRoot, "deliveryAuthorization", false);
-		bool shareWorkspace = JSONUtils::asBool(metadataRoot, "shareWorkspace", false);
-		bool editMedia = JSONUtils::asBool(metadataRoot, "editMedia", false);
-		bool editConfiguration = JSONUtils::asBool(metadataRoot, "editConfiguration", false);
-		bool killEncoding = JSONUtils::asBool(metadataRoot, "killEncoding", false);
-		bool cancelIngestionJob = JSONUtils::asBool(metadataRoot, "cancelIngestionJob", false);
-		bool editEncodersPool = JSONUtils::asBool(metadataRoot, "editEncodersPool", false);
-		bool applicationRecorder = JSONUtils::asBool(metadataRoot, "applicationRecorder", false);
-		bool createRemoveLiveChannel = JSONUtils::asBool(metadataRoot, "createRemoveLiveChannel", false);
+		bool createRemoveWorkspace = JsonPath(&metadataRoot)["createRemoveWorkspace"].as<bool>(false);
+		bool ingestWorkflow = JsonPath(&metadataRoot)["ingestWorkflow"].as<bool>(false);
+		bool createProfiles = JsonPath(&metadataRoot)["createProfiles"].as<bool>(false);
+		bool deliveryAuthorization = JsonPath(&metadataRoot)["deliveryAuthorization"].as<bool>(false);
+		bool shareWorkspace = JsonPath(&metadataRoot)["shareWorkspace"].as<bool>(false);
+		bool editMedia = JsonPath(&metadataRoot)["editMedia"].as<bool>(false);
+		bool editConfiguration = JsonPath(&metadataRoot)["editConfiguration"].as<bool>(false);
+		bool killEncoding = JsonPath(&metadataRoot)["killEncoding"].as<bool>(false);
+		bool cancelIngestionJob = JsonPath(&metadataRoot)["cancelIngestionJob"].as<bool>(false);
+		bool editEncodersPool = JsonPath(&metadataRoot)["editEncodersPool"].as<bool>(false);
+		bool applicationRecorder = JsonPath(&metadataRoot)["applicationRecorder"].as<bool>(false);
+		bool createRemoveLiveChannel = JsonPath(&metadataRoot)["createRemoveLiveChannel"].as<bool>(false);
+		bool updateEncoderStats = JsonPath(&metadataRoot)["updateEncoderStats"].as<bool>(false);
 
 		try
 		{
@@ -790,9 +779,10 @@ void API::shareWorkspace_(
 				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
-					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email, MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
+					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email,
+					MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel
+					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
@@ -834,8 +824,8 @@ void API::shareWorkspace_(
 					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + confirmationURL +
 					"\">here</a> to confirm the registration</b></p>"
 				);
-				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
-				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				CurlWrapper::sendEmail(
 					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -860,9 +850,10 @@ void API::shareWorkspace_(
 				);
 
 				string shareWorkspaceCode = _mmsEngineDBFacade->createCode(
-					apiAuthorizationDetails->workspace->_workspaceKey, -1, email, MMSEngineDBFacade::CodeType::ShareWorkspace, admin, createRemoveWorkspace, ingestWorkflow,
-					createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob,
-					editEncodersPool, applicationRecorder, createRemoveLiveChannel
+					apiAuthorizationDetails->workspace->_workspaceKey, -1, email,
+					MMSEngineDBFacade::CodeType::ShareWorkspace, admin,
+					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
+					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
@@ -898,8 +889,8 @@ void API::shareWorkspace_(
 					string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + shareWorkspaceURL +
 					"\">here</a> to continue with the registration</b></p>"
 				);
-				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
-				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				CurlWrapper::sendEmail(
 					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -959,9 +950,9 @@ void API::workspaceList(
 		bool costDetails = requestData.getQueryParameter("costDetails", false);
 
 		{
-			json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(apiAuthorizationDetails->userKey, apiAuthorizationDetails->admin, costDetails);
+			const json workspaceListRoot = _mmsEngineDBFacade->getWorkspaceList(apiAuthorizationDetails->userKey, apiAuthorizationDetails->admin, costDetails);
 
-			string responseBody = JSONUtils::toString(workspaceListRoot);
+			const string responseBody = JSONUtils::toString(workspaceListRoot);
 
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
@@ -1022,13 +1013,13 @@ void API::confirmRegistration(
 
 			vector<string> emailBody;
 			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-			emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Thank you for choosing the CatraMMS services</p>"));
-			emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;Your registration is now completed and you can enjoy working with MMS</p>"));
+			emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Thank you for choosing the CatraMMS services</p>");
+			emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Your registration is now completed and you can enjoy working with MMS</p>");
 			emailBody.push_back(
 				string("<p>&emsp;&emsp;&emsp;&emsp;<b>Please click <a href=\"") + loginURL + "\">here</a> to login into the MMS platform</b></p>"
 			);
-			emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Best regards</p>");
-			emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+			emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Best regards</p>");
+			emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -1321,11 +1312,14 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						bool editEncodersPool = true;
 						bool applicationRecorder = true;
 						bool createRemoveLiveChannel = true;
+						bool updateEncoderStats = false;
 						pair<int64_t, string> userKeyAndEmail = _mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName, email,
-							string(""), // userCountry,
-							string("CET"), createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
+							"", // userCountry,
+							"CET", createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
+							shareWorkspace, editMedia,
 							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
+							updateEncoderStats,
 							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 							// chrono::system_clock::time_point userExpirationDate
@@ -1347,11 +1341,8 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							string("") // password in case of ActiveDirectory is empty
 						);
 
-						string field = "ldapEnabled";
-						loginDetailsRoot[field] = _ldapEnabled;
-
-						field = "userKey";
-						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
+						loginDetailsRoot["ldapEnabled"] = _ldapEnabled;
+						userKey = JSONUtils::asInt64(loginDetailsRoot, "userKey", 0);
 
 						SPDLOG_INFO(
 							"Login User"
@@ -1535,8 +1526,9 @@ void API::updateUser(
 				{
 					string errorMessage = std::format(
 						"Wrong email format"
-						", email: {}",
-						email
+						", email: {}"
+						", exception: {}",
+						email, e.what()
 					);
 					SPDLOG_ERROR(errorMessage);
 
@@ -1615,8 +1607,9 @@ void API::updateUser(
 			);
 
 			json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
-				apiAuthorizationDetails->admin, _ldapEnabled, apiAuthorizationDetails->userKey, nameChanged, name, emailChanged, email, countryChanged, country, timezoneChanged, timezone,
-				insolventChanged, insolvent, expirationDateChanged, expirationUtcDate, passwordChanged, newPassword, oldPassword
+				apiAuthorizationDetails->admin, _ldapEnabled, apiAuthorizationDetails->userKey, nameChanged, name, emailChanged, email,
+				countryChanged, country, timezoneChanged, timezone, insolventChanged, insolvent, expirationDateChanged,
+				expirationUtcDate, passwordChanged, newPassword, oldPassword
 			);
 
 			SPDLOG_INFO(
@@ -1719,10 +1712,10 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 				string("<p><b>Please click <a href=\"") + resetPasswordURL +
 				"\">here</a> to reset your password. This link is valid for a limited time.</b></p>"
 			);
-			emailBody.push_back(string("In case you did not request any reset of your password, just ignore this email</p>"));
+			emailBody.emplace_back("In case you did not request any reset of your password, just ignore this email</p>");
 
-			emailBody.push_back("<p>Have a nice day, best regards</p>");
-			emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.emplace_back("<p>Have a nice day, best regards</p>");
+			emailBody.emplace_back("<p>MMS technical support</p>");
 
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -1849,10 +1842,10 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 
 			vector<string> emailBody;
 			emailBody.push_back(string("<p>Dear ") + name + ",</p>");
-			emailBody.push_back(string("your password has been changed.</p>"));
+			emailBody.emplace_back("your password has been changed.</p>");
 
-			emailBody.push_back("<p>Have a nice day, best regards</p>");
-			emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.emplace_back("<p>Have a nice day, best regards</p>");
+			emailBody.emplace_back("<p>MMS technical support</p>");
 
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -1969,6 +1962,7 @@ void API::updateWorkspace(
 		bool newEditEncodersPool;
 		bool newApplicationRecorder;
 		bool newCreateRemoveLiveChannel;
+		bool newUpdateEncoderStats;
 
 		json metadataRoot;
 		try
@@ -2147,8 +2141,9 @@ void API::updateWorkspace(
 			{
 				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",	  "deliveryAuthorization",
 												  "shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
-												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder", "createRemoveLiveChannel"};
-				for (string field : mandatoryFields)
+												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder", "createRemoveLiveChannel",
+					                              "updateEncoderStats"};
+				for (const string& field : mandatoryFields)
 				{
 					if (!JSONUtils::isPresent(userAPIKeyRoot, field))
 					{
@@ -2205,6 +2200,7 @@ void API::updateWorkspace(
 			newApplicationRecorder = JSONUtils::asBool(userAPIKeyRoot, field, false);
 
 			newCreateRemoveLiveChannel = JSONUtils::asBool(userAPIKeyRoot, "createRemoveLiveChannel", false);
+			newUpdateEncoderStats = JSONUtils::asBool(userAPIKeyRoot, "updateEncoderStats", false);
 		}
 
 		try
@@ -2232,7 +2228,8 @@ void API::updateWorkspace(
 				currentCostForSupport_type_1,
 
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
-				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder, newCreateRemoveLiveChannel
+				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder,
+				newCreateRemoveLiveChannel, newUpdateEncoderStats
 			);
 #else
 			bool maxStorageInMBChanged = false;
@@ -2407,9 +2404,9 @@ void API::deleteWorkspace(
 				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey
 			);
 
-			if (usersRemoved.size() > 0)
+			if (!usersRemoved.empty())
 			{
-				for (tuple<int64_t, string, string> userDetails : usersRemoved)
+				for (const tuple<int64_t, string, string>& userDetails : usersRemoved)
 				{
 					string name;
 					string eMailAddress;
@@ -2425,11 +2422,11 @@ void API::deleteWorkspace(
 						"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + apiAuthorizationDetails->workspace->_name +
 						") was removed and</p>"
 					));
-					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
-					emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"
-					));
-					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
-					emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+					emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>");
+					emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"
+					);
+					emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+					emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 					CurlWrapper::sendEmail(
 						_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -2558,10 +2555,10 @@ void API::unshareWorkspace(
 					"<p>&emsp;&emsp;&emsp;&emsp;your account was removed because the only workspace you had (" + apiAuthorizationDetails->workspace->_name +
 					") was unshared and</p>"
 				));
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>"));
-				emailBody.push_back(string("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>"));
-				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
-				emailBody.push_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;your account remained without any workspace.</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;If you still need the CatraMMS services, please register yourself again<b>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;Have a nice day, best regards</p>");
+				emailBody.emplace_back("<p>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;MMS technical support</p>");
 
 				CurlWrapper::sendEmail(
 					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
@@ -2608,9 +2605,7 @@ void API::workspaceUsage(
 
 	string api = "workspaceUsage";
 
-	SPDLOG_INFO("AAAAAAAAAAAAA");
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
-	SPDLOG_INFO("AAAAAAAAAAAAA");
 
 	try
 	{
@@ -2628,10 +2623,8 @@ void API::workspaceUsage(
 		{
 			int64_t workSpaceUsageInBytes;
 
-	SPDLOG_INFO("AAAAAAAAAAAAA _workspaceKey: {}", apiAuthorizationDetails->workspace->_workspaceKey);
 			tie(workSpaceUsageInBytes, ignore) = _mmsEngineDBFacade->getWorkspaceUsage(
 				apiAuthorizationDetails->workspace->_workspaceKey);
-			SPDLOG_INFO("AAAAAAAAAAAAA");
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
 
@@ -2643,7 +2636,6 @@ void API::workspaceUsage(
 		workspaceUsageRoot[field] = responseRoot;
 
 		string responseBody = JSONUtils::toString(workspaceUsageRoot);
-		SPDLOG_INFO("AAAAAAAAAAAAA: {}", responseBody);
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 	}
@@ -2687,7 +2679,7 @@ void API::emailFormatCheck(string email)
 	// La parte domain (tutto a destra dell'estrema destra @) contiene almeno un punto (di nuovo, questo non è strettamente vero, ma
 	// pragmatico)
 
-	size_t endOfLocalPartIndex = email.find_last_of("@");
+	size_t endOfLocalPartIndex = email.find_last_of('@');
 	if (endOfLocalPartIndex == string::npos)
 	{
 		string errorMessage = std::format(

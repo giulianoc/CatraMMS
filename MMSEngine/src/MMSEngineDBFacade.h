@@ -1229,9 +1229,10 @@ class MMSEngineDBFacade
 	nlohmann::json getInvoicesList(int64_t userKey, bool admin, int start, int rows);
 
 	std::string createCode(
-		int64_t workspaceKey, int64_t userKey, std::string userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace, bool ingestWorkflow,
-		bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel
+		int64_t workspaceKey, int64_t userKey, const std::string &userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
+		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
+		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel,
+		bool updateEncoderStats
 	);
 
 #ifdef __POSTGRES__
@@ -1263,8 +1264,8 @@ class MMSEngineDBFacade
 #endif
 
 	std::pair<int64_t, std::string> createWorkspace(
-		int64_t userKey, std::string workspaceName, std::string notes, WorkspaceType workspaceType, std::string deliveryURL, EncodingPriority maxEncodingPriority,
-		EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, std::string languageCode, std::string workspaceTimezone, bool admin,
+		int64_t userKey, const std::string& workspaceName, const std::string& notes, WorkspaceType workspaceType, const std::string& deliveryURL, EncodingPriority maxEncodingPriority,
+		EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB, const std::string& languageCode, const std::string& workspaceTimezone, bool admin,
 		std::chrono::system_clock::time_point userExpirationDate
 	);
 
@@ -1277,10 +1278,11 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	std::pair<int64_t, std::string> registerActiveDirectoryUser(
-		std::string userName, std::string userEmailAddress, std::string userCountry, std::string userTimezone, bool createRemoveWorkspace, bool ingestWorkflow,
-		bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-		bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, std::string defaultWorkspaceKeys,
-		int expirationInDaysWorkspaceDefaultValue, std::chrono::system_clock::time_point userExpirationDate
+		const std::string &userName, const std::string &userEmailAddress, const std::string &userCountry, std::string userTimezone,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder,
+		bool createRemoveLiveChannel, bool updateEncoderStats, const std::string &defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
+		std::chrono::system_clock::time_point userExpirationLocalDate
 	);
 #else
 	std::pair<int64_t, std::string> registerActiveDirectoryUser(
@@ -1292,9 +1294,11 @@ class MMSEngineDBFacade
 #endif
 
 	std::string createAPIKeyForActiveDirectoryUser(
-		int64_t userKey, std::string userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization,
+		int64_t userKey, const std::string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
+		bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
-		bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+		bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+		int expirationInDaysWorkspaceDefaultValue
 	);
 
 	std::pair<std::string, std::string> getUserDetails(int64_t userKey, std::chrono::milliseconds *sqlDuration = nullptr);
@@ -1304,8 +1308,8 @@ class MMSEngineDBFacade
 	std::pair<int64_t, std::string> getUserDetailsByEmail(std::string email);
 #endif
 
-	std::tuple<int64_t, std::shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-	checkAPIKey(const std::string_view &apiKey, const bool fromMaster);
+	std::tuple<int64_t, std::shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
+		checkAPIKey(const std::string_view &apiKey, bool fromMaster);
 
 	nlohmann::json login(std::string eMailAddress, std::string password);
 
@@ -1330,11 +1334,14 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	nlohmann::json updateWorkspaceDetails(
-		int64_t userKey, int64_t workspaceKey, bool notesChanged, std::string newNotes, bool enabledChanged, bool newEnabled, bool nameChanged,
-		std::string newName, bool maxEncodingPriorityChanged, std::string newMaxEncodingPriority, bool encodingPeriodChanged, std::string newEncodingPeriod,
-		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, std::string newLanguageCode, bool timezoneChanged,
-		std::string newTimezone, bool preferencesChanged, std::string newPreferences, bool externalDeliveriesChanged, std::string newExternalDeliveries,
-		bool expirationDateChanged, std::string newExpirationDate,
+		int64_t userKey, int64_t workspaceKey, bool notesChanged, const std::string& newNotes, bool enabledChanged, bool newEnabled, bool nameChanged,
+		const std::string& newName, bool maxEncodingPriorityChanged, const std::string& newMaxEncodingPriority, bool encodingPeriodChanged,
+		const std::string& newEncodingPeriod,
+		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, const std::string& newLanguageCode,
+		bool timezoneChanged,
+		const std::string& newTimezone, bool preferencesChanged, const std::string& newPreferences, bool externalDeliveriesChanged,
+		const std::string& newExternalDeliveries,
+		bool expirationDateChanged, const std::string& newExpirationDate,
 
 		bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
 		bool dedicatedEncoder_power_1Changed, int64_t dedicatedEncoder_power_1, bool currentCostForDedicatedEncoder_power_1Changed,
@@ -1346,7 +1353,7 @@ class MMSEngineDBFacade
 
 		bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles, bool newDeliveryAuthorization, bool newShareWorkspace,
 		bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob, bool newEditEncodersPool,
-		bool newApplicationRecorder, bool newCreateRemoveLiveChannel
+		bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderStats
 	);
 #else
 	nlohmann::json updateWorkspaceDetails(
@@ -2513,9 +2520,11 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	std::string createAPIKeyForActiveDirectoryUser(
-		PostgresConnTrans &trans, int64_t userKey, std::string userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
+		PostgresConnTrans &trans, int64_t userKey, const std::string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow,
+		bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+		int expirationInDaysWorkspaceDefaultValue
 	);
 #else
 	std::string createAPIKeyForActiveDirectoryUser(
@@ -2533,9 +2542,10 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	std::string createCode(
-		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, std::string userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
-		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
-		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel
+		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, const std::string &userEmail, CodeType codeType, bool admin,
+		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder,
+		bool createRemoveLiveChannel, bool updateEncoderStats
 	);
 #else
 	std::string createCode(
@@ -2607,7 +2617,8 @@ class MMSEngineDBFacade
 	std::pair<int64_t, std::string> addWorkspace(
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, const std::string &workspaceName, const std::string &notes,
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats,
+		const std::string &workspaceName, const std::string &notes,
 		WorkspaceType workspaceType, const std::string &deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 		long maxIngestionsNumber, long maxStorageInMB, const std::string &languageCode, std::string workspaceTimezone,
 		std::chrono::system_clock::time_point userExpirationLocalDate

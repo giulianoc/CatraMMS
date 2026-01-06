@@ -588,26 +588,9 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 			", userKey: {}"
 			", workspace->_name: {}"
 			", requestData.requestBody: {}"
-			", admin: {}"
-			", createRemoveWorkspace: {}"
-			", ingestWorkflow: {}"
-			", createProfiles: {}"
-			", deliveryAuthorization: {}"
-			", shareWorkspace: {}"
-			", editMedia: {}"
-			", editConfiguration: {}"
-			", killEncoding: {}"
-			", cancelIngestionJob: {}"
-			", editEncodersPool: {}"
-			", applicationRecorder: {}"
-			", createRemoveLiveChannel: {}",
+			", flags: {}",
 			requestData.requestURI, requestData.requestMethod, requestData.contentLength, apiAuthorizationDetails->userKey,
-			apiAuthorizationDetails->workspace->_name, requestData.requestBody, apiAuthorizationDetails->admin,
-			apiAuthorizationDetails->canCreateRemoveWorkspace, apiAuthorizationDetails->canIngestWorkflow, apiAuthorizationDetails->canCreateProfiles,
-			apiAuthorizationDetails->canDeliveryAuthorization, apiAuthorizationDetails->canShareWorkspace, apiAuthorizationDetails->canEditMedia,
-			apiAuthorizationDetails->canEditConfiguration, apiAuthorizationDetails->canKillEncoding, apiAuthorizationDetails->canCancelIngestionJob,
-			apiAuthorizationDetails->canEditEncodersPool, apiAuthorizationDetails->canApplicationRecorder,
-			apiAuthorizationDetails->canCreateRemoveLiveChannel
+			apiAuthorizationDetails->workspace->_name, requestData.requestBody, apiAuthorizationDetails->toString()
 		);
 	}
 
@@ -1347,40 +1330,31 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 	auto apiAuthorizationDetails = make_shared<APIAuthorizationDetails>();
 	try
 	{
-		const tuple<int64_t, shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
-			userKeyWorkspaceAndFlags = _mmsEngineDBFacade->checkAPIKey(
-				password,
+		apiAuthorizationDetails->userName = userName;
+		apiAuthorizationDetails->password = password;
+		tie (apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace, apiAuthorizationDetails->admin,
+			apiAuthorizationDetails->canCreateRemoveWorkspace, apiAuthorizationDetails->canIngestWorkflow,
+			apiAuthorizationDetails->canCreateProfiles, apiAuthorizationDetails->canDeliveryAuthorization,
+			apiAuthorizationDetails->canShareWorkspace, apiAuthorizationDetails->canEditMedia,
+			apiAuthorizationDetails->canEditConfiguration, apiAuthorizationDetails->canKillEncoding,
+			apiAuthorizationDetails->canCancelIngestionJob, apiAuthorizationDetails->canEditEncodersPool,
+			apiAuthorizationDetails->canApplicationRecorder, apiAuthorizationDetails->canCreateRemoveLiveChannel,
+			apiAuthorizationDetails->canUpdateEncoderStats) =
+				_mmsEngineDBFacade->checkAPIKey(password,
 				// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
 				false
 			);
 
-		apiAuthorizationDetails->userName = userName;
-		apiAuthorizationDetails->password = password;
-		apiAuthorizationDetails->userKey = get<0>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->workspace = get<1>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->admin = get<2>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canCreateRemoveWorkspace = get<3>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canIngestWorkflow = get<4>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canCreateProfiles = get<5>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canDeliveryAuthorization = get<6>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canShareWorkspace = get<7>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canEditMedia = get<8>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canEditConfiguration = get<9>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canKillEncoding = get<10>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canCancelIngestionJob = get<11>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canEditEncodersPool = get<12>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canApplicationRecorder = get<13>(userKeyWorkspaceAndFlags);
-		apiAuthorizationDetails->canCreateRemoveLiveChannel = get<14>(userKeyWorkspaceAndFlags);
 		return apiAuthorizationDetails;
 	}
 	catch (exception &e)
 	{
 		SPDLOG_INFO(
 			"_mmsEngineDBFacade->checkAPIKey failed"
-			// ", _requestIdentifier: {}"
 			", threadId: {}"
-			", apiKey: {}",
-			/* _requestIdentifier, */sThreadId, password
+			", apiKey: {}"
+			", exception: {}",
+			sThreadId, password, e.what()
 		);
 
 		throw FCGIRequestData::HTTPError(401);
@@ -1390,12 +1364,11 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 	{
 		SPDLOG_INFO(
 			"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
-			// ", _requestIdentifier: {}"
 			", threadId: {}"
 			", username of basic authorization (userKey): {}"
 			", userKey associated to the APIKey: {}"
 			", apiKey: {}",
-			/*_requestIdentifier, */sThreadId, userName, apiAuthorizationDetails->userKey, password
+			sThreadId, userName, apiAuthorizationDetails->userKey, password
 		);
 
 		throw FCGIRequestData::HTTPError(401);

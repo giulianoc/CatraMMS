@@ -42,6 +42,30 @@ class API final : public FastCGIAPI
 		bool canEditEncodersPool{};
 		bool canApplicationRecorder{};
 		bool canCreateRemoveLiveChannel{};
+		bool canUpdateEncoderStats{};
+
+		std::string toString()
+		{
+			return std::format("userKey: {}"
+				", admin: {}"
+				", canCreateRemoveWorkspace: {}"
+				", canIngestWorkflow: {}"
+				", canCreateProfiles: {}"
+				", canDeliveryAuthorization: {}"
+				", canShareWorkspace: {}"
+				", canEditMedia: {}"
+				", canEditConfiguration: {}"
+				", canKillEncoding: {}"
+				", canCancelIngestionJob: {}"
+				", canEditEncodersPool: {}"
+				", canApplicationRecorder: {}"
+				", canCreateRemoveLiveChannel: {}"
+				", canUpdateEncoderStats: {}",
+				userKey, admin, canCreateRemoveWorkspace, canIngestWorkflow, canCreateProfiles, canDeliveryAuthorization,
+				canShareWorkspace, canEditMedia, canEditConfiguration, canKillEncoding, canCancelIngestionJob, canEditEncodersPool,
+				canApplicationRecorder, canCreateRemoveLiveChannel, canUpdateEncoderStats
+				);
+		}
 	};
 
 	struct FileUploadProgressData
