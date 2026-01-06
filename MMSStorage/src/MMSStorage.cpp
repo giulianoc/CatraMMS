@@ -12,7 +12,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 MMSStorage::MMSStorage(
 	bool noFileSystemAccess, bool noDatabaseAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration,

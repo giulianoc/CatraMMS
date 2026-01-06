@@ -4,7 +4,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 using namespace pqxx;
 
 int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int amount, string expirationDate)

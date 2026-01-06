@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageAddSilentAudioTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -135,8 +134,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 		}
 
 		_mmsEngineDBFacade->addEncoding_AddSilentAudio(
-			workspace, ingestionJobKey, sourcesRoot, encodingProfileKey, encodingProfileDetailsRoot, _mmsWorkflowIngestionURL, _mmsBinaryIngestionURL,
-			_mmsIngestionURL, encodingPriority
+			workspace, ingestionJobKey, sourcesRoot, encodingProfileKey, encodingProfileDetailsRoot, encodingPriority
 		);
 	}
 	catch (DBRecordNotFound &e)

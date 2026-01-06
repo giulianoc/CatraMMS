@@ -7,7 +7,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageLiveProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot
@@ -270,8 +269,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			// EncoderVideoAudioProxy.cpp
 			waitingSecondsBetweenAttemptsInCaseOfErrors, // used in
 														 // EncoderVideoAudioProxy.cpp
-			localOutputsRoot,							 // used by FFMPEGEncoder
-			_mmsWorkflowIngestionURL
+			localOutputsRoot
 		);
 	}
 	catch (exception &e)

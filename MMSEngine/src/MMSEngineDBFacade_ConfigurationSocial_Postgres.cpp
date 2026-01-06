@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 using namespace pqxx;
 
 json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, string tokenType, string refreshToken, string accessToken)

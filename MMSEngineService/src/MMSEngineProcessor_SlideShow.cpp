@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageSlideShowTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -170,8 +169,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 
 		_mmsEngineDBFacade->addEncoding_SlideShowJob(
 			workspace, ingestionJobKey, encodingProfileKey, encodingProfileDetailsRoot, targetFileFormat, imagesRoot, audiosRoot,
-			shortestAudioDurationInSeconds, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), _mmsWorkflowIngestionURL,
-			_mmsBinaryIngestionURL, _mmsIngestionURL, encodingPriority
+			shortestAudioDurationInSeconds, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), encodingPriority
 		);
 	}
 	catch (DBRecordNotFound &e)

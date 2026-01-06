@@ -6,14 +6,6 @@
 #include <string>
 #include <unordered_map>
 
-/*
-using namespace std;
-
-using json = nlohmann::json;
-using orderd_json = nlohmann::ordered_json;
-using namespace nlohmann::literals;
-*/
-
 struct Workspace
 {
 	using TerritoriesHashMap = std::unordered_map<long, std::string>;

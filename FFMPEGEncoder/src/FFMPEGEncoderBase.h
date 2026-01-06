@@ -256,6 +256,9 @@ class FFMPEGEncoderBase
 	~FFMPEGEncoderBase();
 
   protected:
+	std::string _mmsIngestionURL;
+	std::string _mmsWorkflowIngestionURL;
+	std::string _mmsBinaryIngestionURL;
 	int64_t _mmsAPITimeoutInSeconds;
 	int64_t _mmsBinaryTimeoutInSeconds;
 

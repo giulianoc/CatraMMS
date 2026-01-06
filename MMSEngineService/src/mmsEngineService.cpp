@@ -38,7 +38,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 #ifdef __APPLE__
 	extern char **environ;
@@ -318,9 +317,7 @@ int main(int iArgc, char *pArgv[])
 	deque<int> cpuUsage;
 	int numberOfLastCPUUsageToBeChecked = 3;
 	for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked; cpuUsageIndex++)
-	{
 		cpuUsage.push_front(0);
-	}
 
 	shared_ptr<ThreadsStatistic> mmsThreadsStatistic = make_shared<ThreadsStatistic>(logger);
 

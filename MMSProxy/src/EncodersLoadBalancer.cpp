@@ -17,18 +17,18 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
-EncodersLoadBalancer::EncodersLoadBalancer(shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration)
+EncodersLoadBalancer::EncodersLoadBalancer(const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
+	const json& configuration): _mmsEngineDBFacade(mmsEngineDBFacade)
 {
-	_mmsEngineDBFacade = mmsEngineDBFacade;
 }
 
-EncodersLoadBalancer::~EncodersLoadBalancer() {}
+EncodersLoadBalancer::~EncodersLoadBalancer() = default;
 
 tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
-	int64_t ingestionJobKey, string encodersPoolLabel, shared_ptr<Workspace> workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
-)
+	int64_t ingestionJobKey, string encodersPoolLabel, const shared_ptr<Workspace>& workspace, int64_t encoderKeyToBeSkipped,
+	bool externalEncoderAllowed
+) const
 {
 	SPDLOG_INFO(
 		"Received getEncoderURL"
@@ -46,11 +46,8 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 				workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
 			);
 
-		string encoderURL;
-		if (externalEncoder)
-			encoderURL = protocol + "://" + publicServerName + ":" + to_string(port);
-		else
-			encoderURL = protocol + "://" + internalServerName + ":" + to_string(port);
+		string encoderURL = std::format("{}://{}:{}", protocol,
+			externalEncoder ? publicServerName : internalServerName, port);
 
 		SPDLOG_INFO(
 			"getEncoderURL"
@@ -65,34 +62,6 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 
 		return make_tuple(encoderKey, encoderURL, externalEncoder);
 	}
-	catch (EncoderNotFound &e)
-	{
-		SPDLOG_ERROR(
-			"getEncoderURL failed"
-			", ingestionJobKey: {}"
-			", workspaceKey: {}"
-			", encodersPoolLabel: {}"
-			", encoderKeyToBeSkipped: {}"
-			", e.what(): {}",
-			ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, e.what()
-		);
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"getEncoderURL failed"
-			", ingestionJobKey: {}"
-			", workspaceKey: {}"
-			", encodersPoolLabel: {}"
-			", encoderKeyToBeSkipped: {}"
-			", e.what(): {}",
-			ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, e.what()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
 		string errorMessage = std::format(
@@ -106,6 +75,6 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 		);
 		SPDLOG_ERROR(errorMessage);
 
-		throw runtime_error(errorMessage);
+		throw;
 	}
 }

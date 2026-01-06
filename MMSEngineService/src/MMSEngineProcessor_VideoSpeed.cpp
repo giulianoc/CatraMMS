@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageVideoSpeedTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -136,8 +135,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		_mmsEngineDBFacade->addEncoding_VideoSpeed(
 			workspace, ingestionJobKey, sourceMediaItemKey, sourcePhysicalPathKey, sourceAssetPathName, sourceDurationInMilliSeconds,
 			sourceFileExtension, sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName, encodingProfileKey, encodingProfileDetailsRoot,
-			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), _mmsWorkflowIngestionURL, _mmsBinaryIngestionURL,
-			_mmsIngestionURL, encodingPriority
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), encodingPriority
 		);
 	}
 	catch (DBRecordNotFound &e)

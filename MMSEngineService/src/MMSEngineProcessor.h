@@ -11,12 +11,6 @@
 #include "Validator.h"
 #include <fstream>
 
-/*
-using nlohmann::json = nlohmann::json;
-using orderd_json = nlohmann::ordered_json;
-using namespace nlohmann::literals;
-*/
-
 #define MMSENGINEPROCESSORNAME "MMSEngineProcessor"
 
 class MMSEngineProcessor
@@ -141,10 +135,7 @@ class MMSEngineProcessor
 	bool _localCopyTaskEnabled;
 
 	std::string _mmsWorkflowIngestionURL;
-	std::string _mmsIngestionURL;
-	std::string _mmsBinaryIngestionURL;
 	int _mmsAPITimeoutInSeconds;
-	std::string _mmsAPIVODDeliveryURI;
 
 	int _waitingNFSSync_maxMillisecondsToWait;
 	int _waitingNFSSync_milliSecondsWaitingBetweenChecks;

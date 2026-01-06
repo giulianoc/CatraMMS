@@ -6,7 +6,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageCountdown(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -293,7 +292,7 @@ void MMSEngineProcessor::manageCountdown(
 
 		_mmsEngineDBFacade->addEncoding_CountdownJob(
 			workspace, ingestionJobKey, inputsRoot, utcProxyPeriodStart, localOutputsRoot, maxAttemptsNumberInCaseOfErrors,
-			waitingSecondsBetweenAttemptsInCaseOfErrors, _mmsWorkflowIngestionURL
+			waitingSecondsBetweenAttemptsInCaseOfErrors
 		);
 	}
 	catch (DBRecordNotFound &e)

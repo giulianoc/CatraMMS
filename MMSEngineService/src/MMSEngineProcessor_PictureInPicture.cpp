@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::managePictureInPictureTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -212,8 +211,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			mainSourceFileExtension, mainSourcePhysicalDeliveryURL, mainSourceTranscoderStagingAssetPathName, overlaySourceMediaItemKey,
 			overlaySourcePhysicalPathKey, overlaySourceAssetPathName, overlaySourceDurationInMilliSeconds, overlaySourceFileExtension,
 			overlaySourcePhysicalDeliveryURL, overlaySourceTranscoderStagingAssetPathName, soundOfMain, encodingProfileKey,
-			encodingProfileDetailsRoot, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), _mmsWorkflowIngestionURL,
-			_mmsBinaryIngestionURL, _mmsIngestionURL, encodingPriority
+			encodingProfileDetailsRoot, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), encodingPriority
 		);
 	}
 	catch (DBRecordNotFound &e)

@@ -9,7 +9,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 LiveProxy::LiveProxy(
 	const shared_ptr<LiveProxyAndGrid> &liveProxyData, const json &configurationRoot,

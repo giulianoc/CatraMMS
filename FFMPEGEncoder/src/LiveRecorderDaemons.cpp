@@ -17,7 +17,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 LiveRecorderDaemons::LiveRecorderDaemons(
 	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability
@@ -372,9 +371,10 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							}
 						}
 
-						string mmsWorkflowIngestionURL;
-						string mmsBinaryIngestionURL;
+						// string mmsWorkflowIngestionURL;
+						// string mmsBinaryIngestionURL;
 						{
+							/*
 							string field = "mmsWorkflowIngestionURL";
 							if (!JSONUtils::isPresent(copiedLiveRecording->_encodingParametersRoot, field))
 							{
@@ -406,6 +406,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 								throw runtime_error(errorMessage);
 							}
 							mmsBinaryIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
+							*/
 						}
 
 						segmentsNumber = buildAndIngestVirtualVOD(
@@ -415,8 +416,8 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 							copiedLiveRecording->_virtualVODStagingContentsPath,
 
 							recordingCode, ingestionJobLabel, liveRecorderVirtualVODUniqueName, _liveRecorderVirtualVODRetention,
-							copiedLiveRecording->_liveRecorderVirtualVODImageMediaItemKey, userKey, apiKey, mmsWorkflowIngestionURL,
-							mmsBinaryIngestionURL
+							copiedLiveRecording->_liveRecorderVirtualVODImageMediaItemKey, userKey, apiKey, _mmsWorkflowIngestionURL,
+							_mmsBinaryIngestionURL
 						);
 					}
 					catch (runtime_error &e)
@@ -1584,7 +1585,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		throw e;
 	}
 
-	string mmsWorkflowIngestionURL;
+	// string mmsWorkflowIngestionURL;
 	string workflowMetadata;
 	try
 	{
@@ -1619,6 +1620,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		}
 
 		{
+			/*
 			string field = "mmsWorkflowIngestionURL";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
@@ -1633,19 +1635,20 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 				throw runtime_error(errorMessage);
 			}
 			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			*/
 		}
 
 		vector<string> otherHeaders;
 		string sResponse =
 			CurlWrapper::httpPostString(
-				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
 				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
 			)
 				.second;
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"Ingested URL failed"
@@ -1653,23 +1656,10 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			", mmsWorkflowIngestionURL: {}"
 			", workflowMetadata: {}"
 			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
+			ingestionJobKey, _mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Ingested URL failed"
-			", ingestionJobKey: {}"
-			", mmsWorkflowIngestionURL: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 }
 
@@ -1682,7 +1672,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 	int64_t userKey;
 	string apiKey;
 	int64_t addContentIngestionJobKey = -1;
-	string mmsWorkflowIngestionURL;
+	// string mmsWorkflowIngestionURL;
 	// create the workflow and ingest it
 	try
 	{
@@ -1710,6 +1700,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		}
 
 		{
+			/*
 			if (!JSONUtils::isPresent(encodingParametersRoot, "mmsWorkflowIngestionURL"))
 			{
 				string errorMessage = std::format(
@@ -1723,12 +1714,13 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 				throw runtime_error(errorMessage);
 			}
 			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsWorkflowIngestionURL", "");
+			*/
 		}
 
 		vector<string> otherHeaders;
 		string sResponse =
 			CurlWrapper::httpPostString(
-				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
 				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetryNumber
@@ -1737,31 +1729,18 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 		addContentIngestionJobKey = getAddContentIngestionJobKey(ingestionJobKey, sResponse);
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
-			"Ingestion workflow failed (runtime_error)"
+			"Ingestion workflow failed"
 			", ingestionJobKey: {}"
 			", mmsWorkflowIngestionURL: {}"
 			", workflowMetadata: {}"
 			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
+			ingestionJobKey, _mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"Ingestion workflow failed (exception)"
-			", ingestionJobKey: {}"
-			", mmsWorkflowIngestionURL: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 
 	if (addContentIngestionJobKey == -1)
@@ -1792,6 +1771,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 		int64_t chunkFileSize = fs::file_size(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 #endif
 
+		/*
 		string mmsBinaryIngestionURL;
 		{
 			if (!JSONUtils::isPresent(encodingParametersRoot, "mmsBinaryIngestionURL"))
@@ -1808,8 +1788,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			}
 			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsBinaryIngestionURL", "");
 		}
+		*/
 
-		mmsBinaryURL = std::format("{}/{}", mmsBinaryIngestionURL, addContentIngestionJobKey);
+		mmsBinaryURL = std::format("{}/{}", _mmsBinaryIngestionURL, addContentIngestionJobKey);
 
 		string sResponse = CurlWrapper::httpPostFile(
 			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),

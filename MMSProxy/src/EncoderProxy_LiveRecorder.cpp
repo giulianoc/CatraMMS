@@ -22,7 +22,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 bool EncoderProxy::liveRecorder()
 {

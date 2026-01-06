@@ -130,6 +130,7 @@ class FFMPEGEncoder final : public FastCGIAPI
 	long *_tvChannelPort_CurrentOffset;
 
 	int64_t _mmsAPITimeoutInSeconds{};
+	std::string _mmsWorkflowIngestionURL;
 
 	void status(
 		const std::string_view& sThreadId, FCGX_Request &request,

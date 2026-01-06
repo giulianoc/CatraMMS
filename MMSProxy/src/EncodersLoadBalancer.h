@@ -25,14 +25,6 @@
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 
-// using namespace std;
-
-/*
-using json = nlohmann::json;
-using orderd_json = nlohmann::ordered_json;
-using namespace nlohmann::literals;
-*/
-
 #ifndef __FILEREF__
 #ifdef __APPLE__
 #define __FILEREF__ std::string("[") + std::string(__FILE__).substr(std::string(__FILE__).find_last_of("/") + 1) + ":" + to_std::string(__LINE__) + "] "
@@ -44,27 +36,19 @@ using namespace nlohmann::literals;
 class EncodersLoadBalancer
 {
   public:
-	EncodersLoadBalancer(std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, nlohmann::json configuration);
+	EncodersLoadBalancer(const std::shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const nlohmann::json& configuration);
 
 	virtual ~EncodersLoadBalancer();
 
-	std::string getEncoderHost(std::string encodersPool, std::shared_ptr<Workspace> workspace, std::string encoderToSkip);
+	// std::string getEncoderHost(std::string encodersPool, std::shared_ptr<Workspace> workspace, std::string encoderToSkip);
 
 	std::tuple<int64_t, std::string, bool> getEncoderURL(
-		int64_t ingestionJobKey, std::string encodersPoolLabel, std::shared_ptr<Workspace> workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
-	);
+		int64_t ingestionJobKey, std::string encodersPoolLabel, const std::shared_ptr<Workspace>& workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+	) const;
 
   private:
-	/*
-	struct EncodersPoolDetails {
-		vector<std::string>          _encoders;
-		int                     _lastEncoderUsed;
-	};
-
-	map<std::string, EncodersPoolDetails>    _encodersPools;
-	*/
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
-	void init();
+	// void init();
 };
 

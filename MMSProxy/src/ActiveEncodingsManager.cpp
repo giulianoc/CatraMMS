@@ -19,17 +19,12 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 ActiveEncodingsManager::ActiveEncodingsManager(
-	json configuration, string processorMMS, shared_ptr<MultiEventsSet> multiEventsSet, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-	shared_ptr<MMSStorage> mmsStorage
-)
+	const json& configuration, string processorMMS, const shared_ptr<MultiEventsSet>& multiEventsSet,
+	const shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const shared_ptr<MMSStorage>& mmsStorage
+): _configuration(configuration), _mmsEngineDBFacade(mmsEngineDBFacade), _mmsStorage(mmsStorage)
 {
-	_configuration = configuration;
-	_mmsEngineDBFacade = mmsEngineDBFacade;
-	_mmsStorage = mmsStorage;
-
 	_encodersLoadBalancer = make_shared<EncodersLoadBalancer>(_mmsEngineDBFacade, _configuration);
 
 	_hostName = System::hostName();
@@ -100,18 +95,6 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 			processorMMS, encodingItems.size()
 		);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"recoverEncodingsNotCompleted failed"
-			", _processorMMS: {}"
-			", e.what: {}",
-			processorMMS, e.what()
-		);
-
-		// è un thread/costruttore
-		// throw e;
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
@@ -126,13 +109,13 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 	}
 }
 
-ActiveEncodingsManager::~ActiveEncodingsManager() {}
+ActiveEncodingsManager::~ActiveEncodingsManager() = default;
 
 bool ActiveEncodingsManager::isProcessorShutdown()
 {
-	string processorShutdownPathName = "/tmp/processorShutdown.txt";
+	const string processorShutdownPathName = "/tmp/processorShutdown.txt";
 
-	ifstream f(processorShutdownPathName.c_str());
+	const ifstream f(processorShutdownPathName.c_str());
 
 	return f.good();
 }
@@ -226,66 +209,13 @@ void ActiveEncodingsManager::operator()()
 
 						continue;
 					}
-					else if (encodingJob->_status == EncoderProxy::EncodingJobStatus::Running ||
-							 encodingJob->_status == EncoderProxy::EncodingJobStatus::GoingToRun)
+					if (encodingJob->_status == EncoderProxy::EncodingJobStatus::Running ||
+						encodingJob->_status == EncoderProxy::EncodingJobStatus::GoingToRun)
 					{
 						if (encodingJob->_status == EncoderProxy::EncodingJobStatus::Running)
 							runningEncodingJobsNumber++;
 						else
 							goingToRunEncodingJobsNumber++;
-
-						/*
-						// We will start to check the encodingProgress after at least XXX
-						seconds.
-						// This is because the status is set to EncodingJobStatus::Running
-						as soon as it is created
-						// the encoderVideoAudioProxyThread thread. Many times the thread
-						returns soon because
-						// of 'No encoding available' and in this case getEncodingProgress
-						will return 'No encoding job key found'
-
-						if (chrono::system_clock::now() - encodingJob->_encodingJobStart >=
-						chrono::seconds(secondsToBlock))
-
-						2019-03-31: Above commented because it was introduced the
-						GoingToRun status
-						*/
-						/*
-						if (encodingJob->_status ==
-						EncoderProxy::EncodingJobStatus::Running)
-						{
-							try
-							{
-								int encodingPercentage =
-									encodingJob->_encoderProxy
-									.getEncodingProgress();
-
-								info(__FILEREF__ + "updateEncodingJobProgress"
-										+ ", encodingJobKey: "
-											+
-						to_string(encodingJob->_encodingItem->_encodingJobKey)
-										+ ", encodingPercentage: " +
-						to_string(encodingPercentage)
-										);
-								_mmsEngineDBFacade->updateEncodingJobProgress
-						(encodingJob->_encodingItem->_encodingJobKey, encodingPercentage);
-							}
-							catch(FFMpegEncodingStatusNotAvailable& e)
-							{
-
-							}
-							catch(runtime_error& e)
-							{
-								error(__FILEREF__ + "getEncodingProgress failed"
-									+ ", runtime_error: " + e.what()
-								);
-							}
-							catch(exception& e)
-							{
-								error(__FILEREF__ + "getEncodingProgress failed");
-							}
-						}
-						*/
 
 						if (encodingJob->_encodingItem->_encodingType != MMSEngineDBFacade::EncodingType::LiveRecorder &&
 							encodingJob->_encodingItem->_encodingType != MMSEngineDBFacade::EncodingType::LiveProxy &&
@@ -325,8 +255,7 @@ void ActiveEncodingsManager::operator()()
 							);
 						}
 					}
-					else // if (encodingJob._status ==
-						 // EncoderProxy::EncodingJobStatus::ToBeRun)
+					else // if (encodingJob._status == EncoderProxy::EncodingJobStatus::ToBeRun)
 					{
 						toBeRunEncodingJobsNumber++;
 
@@ -417,7 +346,9 @@ void ActiveEncodingsManager::operator()()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_INFO("ActiveEncodingsManager loop failed");
+			SPDLOG_INFO("ActiveEncodingsManager loop failed"
+				", exception: {}", e.what()
+				);
 		}
 	}
 }
@@ -504,8 +435,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 		encodingJobs = _mediumPriorityEncodingJobs;
 		maxEncodingsToBeManaged = MAXMEDIUMENCODINGSTOBEMANAGED;
 	}
-	else // if (encodingItem->_encodingPriority ==
-		 // MMSEngineDBFacade::EncodingPriority::Low)
+	else // if (encodingItem->_encodingPriority == MMSEngineDBFacade::EncodingPriority::Low)
 	{
 		encodingJobs = _lowPriorityEncodingJobs;
 		maxEncodingsToBeManaged = MAXLOWENCODINGSTOBEMANAGED;
@@ -519,8 +449,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 			(encodingJobs[encodingJobIndex])._status = EncoderProxy::EncodingJobStatus::ToBeRun;
 			(encodingJobs[encodingJobIndex])._encodingJobStart = chrono::system_clock::now();
 			(encodingJobs[encodingJobIndex])._encodingItem = encodingItem;
-			// (encodingJobs [encodingJobIndex])._petEncodingThread			= (void
-			// *) NULL;
+			// (encodingJobs [encodingJobIndex])._petEncodingThread			= (void *) NULL;
 
 			break;
 		}
@@ -554,11 +483,11 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> &vEncodingItems)
 {
 	unsigned long ulEncodingsNumberAdded = 0;
-	lock_guard<mutex> locker(_mtEncodingJobs);
+	lock_guard locker(_mtEncodingJobs);
 
 	int encodingItemIndex = 0;
 	int encodingItemsNumber = vEncodingItems.size();
-	for (shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem : vEncodingItems)
+	for (const shared_ptr<MMSEngineDBFacade::EncodingItem>& encodingItem : vEncodingItems)
 	{
 		SPDLOG_INFO(
 			"Adding Encoding Item {}/{}"
@@ -605,10 +534,11 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 				", encodingItem->_ingestionJobKey: {}"
 				", encodingItem->_encodingJobKey: {}"
 				", encodingItem->_encodingPriority: {}"
-				", encodingItem->_encodingType: {}",
+				", encodingItem->_encodingType: {}"
+				", exception: {}",
 				encodingItemIndex, encodingItemsNumber, encodingItem->_workspace->_name, encodingItem->_ingestionJobKey,
 				encodingItem->_encodingJobKey, static_cast<int>(encodingItem->_encodingPriority),
-				MMSEngineDBFacade::toString(encodingItem->_encodingType)
+				MMSEngineDBFacade::toString(encodingItem->_encodingType), e.what()
 			);
 			_mmsEngineDBFacade->updateEncodingJob(
 				encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::ErrorBeforeEncoding,
@@ -622,9 +552,7 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 	}
 
 	if (ulEncodingsNumberAdded > 0)
-	{
 		_cvAddedEncodingJob.notify_one();
-	}
 
 	return ulEncodingsNumberAdded;
 }

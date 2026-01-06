@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageEncodeTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -413,9 +412,7 @@ void MMSEngineProcessor::manageEncodeTask(
 		_mmsEngineDBFacade->addEncodingJob(
 			workspace, ingestionJobKey, contentType, encodingPriority, encodingProfileKey, encodingProfileDetailsRoot,
 
-			sourcesToBeEncodedRoot,
-
-			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL
+			sourcesToBeEncodedRoot
 		);
 	}
 	catch (DBRecordNotFound &e)

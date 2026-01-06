@@ -9,7 +9,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 LiveRecorder::LiveRecorder(
 	const shared_ptr<LiveRecording> &liveRecording, const json& configurationRoot,

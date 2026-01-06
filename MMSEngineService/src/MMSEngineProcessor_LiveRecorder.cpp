@@ -8,7 +8,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageLiveRecorder(
 	int64_t ingestionJobKey, const string& ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
@@ -625,9 +624,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			localOutputsRoot, framesToBeDetectedRoot,
 
 			chunksTranscoderStagingContentsPath, chunksNFSStagingContentsPath, segmentListFileName, recordedFileNamePrefix,
-			virtualVODStagingContentsPath, virtualVODTranscoderStagingContentsPath, liveRecorderVirtualVODImageMediaItemKey,
-
-			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL
+			virtualVODStagingContentsPath, virtualVODTranscoderStagingContentsPath, liveRecorderVirtualVODImageMediaItemKey
 		);
 	}
 	catch (DBRecordNotFound &e)

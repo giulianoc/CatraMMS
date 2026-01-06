@@ -4,7 +4,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 // this is to generate one Frame
 void MMSEngineProcessor::manageFaceRecognitionMediaTask(

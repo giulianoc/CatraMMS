@@ -8,7 +8,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageConcatThread(
 	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -1318,8 +1317,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 			_mmsEngineDBFacade->addEncoding_CutFrameAccurate(
 				workspace, ingestionJobKey, sourceMediaItemKey, sourcePhysicalPathKey, sourceAssetPathName, sourceDurationInMilliSecs,
 				sourceFileExtension, sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName, endTime, encodingProfileKey,
-				encodingProfileDetailsRoot, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), _mmsWorkflowIngestionURL,
-				_mmsBinaryIngestionURL, _mmsIngestionURL, encodingPriority, newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs
+				encodingProfileDetailsRoot, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), encodingPriority,
+				newUtcStartTimeInMilliSecs, newUtcEndTimeInMilliSecs
 			);
 		}
 	}

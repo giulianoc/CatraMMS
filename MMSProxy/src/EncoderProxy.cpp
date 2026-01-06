@@ -24,7 +24,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 EncoderProxy::EncoderProxy()
 	: _proxyIdentifier(0), _mtEncodingJobs(nullptr), _status(nullptr), _maxFaceRecognitionNumber(0), _maxSecondsToWaitUpdateEncodingJobLock(0),

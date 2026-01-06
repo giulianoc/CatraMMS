@@ -7,7 +7,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 // this is to generate one Frame
 void MMSEngineProcessor::generateAndIngestFrameThread(
@@ -441,8 +440,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			sourceTranscoderStagingAssetPathName, // used in case of external
 												  // encoder
 			sourceAssetPathName, sourcePhysicalPathKey, sourceFileExtension, sourceFileName, durationInMilliSeconds, startTimeInSeconds,
-			maxFramesNumber, videoFilter, periodInSeconds, mjpeg, imageWidth, imageHeight, _mmsWorkflowIngestionURL, _mmsBinaryIngestionURL,
-			_mmsIngestionURL
+			maxFramesNumber, videoFilter, periodInSeconds, mjpeg, imageWidth, imageHeight
 		);
 	}
 	catch (DBRecordNotFound &e)

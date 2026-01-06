@@ -15,7 +15,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 AWSSigner::AWSSigner(void) = default;
 

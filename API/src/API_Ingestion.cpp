@@ -32,7 +32,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void API::ingestion(
 	const string_view& sThreadId, FCGX_Request &request,

@@ -16,7 +16,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 FFMPEGEncoderTask::FFMPEGEncoderTask(
 	const shared_ptr<Encoding> &encoding, const json& configurationRoot,
@@ -134,6 +133,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		}
 	}
 
+	/*
 	field = "mmsWorkflowIngestionURL";
 	if (!JSONUtils::isPresent(encodingParametersRoot, field))
 	{
@@ -165,6 +165,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		throw runtime_error(errorMessage);
 	}
 	string mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+	*/
 
 	int64_t fileSizeInBytes = 0;
 	if (fileFormat != "hls")
@@ -221,8 +222,8 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	}
 
 	int64_t addContentIngestionJobKey = ingestContentByPushingBinary(
-		ingestionJobKey, workflowMetadata, fileFormat, encodedStagingAssetPathName, fileSizeInBytes, userKey, apiKey, mmsWorkflowIngestionURL,
-		mmsBinaryIngestionURL
+		ingestionJobKey, workflowMetadata, fileFormat, encodedStagingAssetPathName, fileSizeInBytes, userKey, apiKey,
+		_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL
 	);
 
 	/*
@@ -256,6 +257,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 	// wait the addContent to be executed
 	try
 	{
+		/*
 		string field = "mmsIngestionURL";
 		if (!JSONUtils::isPresent(encodingParametersRoot, field))
 		{
@@ -271,6 +273,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			throw runtime_error(errorMessage);
 		}
 		string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+		*/
 
 		chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
 		long maxSecondsWaiting = 5 * 60;
@@ -279,7 +282,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		while (addContentFinished == 0 &&
 			   chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startWaiting).count() < maxSecondsWaiting)
 		{
-			string mmsIngestionJobURL = mmsIngestionURL + "/" + to_string(addContentIngestionJobKey) + "?ingestionJobOutputs=false";
+			string mmsIngestionJobURL = std::format("{}/{}?ingestionJobOutputs=false", _mmsIngestionURL, addContentIngestionJobKey);
 
 			vector<string> otherHeaders;
 			json ingestionRoot = CurlWrapper::httpGetJson(

@@ -24,6 +24,7 @@
 #include "GenerateFrames.h"
 #include "IntroOutroOverlay.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "LiveGrid.h"
 #include "LiveProxy.h"
 #include "LiveRecorder.h"
@@ -47,7 +48,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 FFMPEGEncoder::FFMPEGEncoder(
 
@@ -81,8 +81,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 	_cpuUsage = cpuUsage;
 	_bandwidthUsageThread = bandwidthUsageThread;
 
-	// _lastEncodingAcceptedTime = lastEncodingAcceptedTime;
-
 	_encodingMutex = encodingMutex;
 	_encodingsCapability = encodingsCapability;
 
@@ -101,7 +99,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	*_lastEncodingCompletedCheck = chrono::system_clock::now();
 
-	// registerHandler<FFMPEGEncoder>("status", &FFMPEGEncoder::status);
 	registerHandler("status",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -109,7 +106,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			status(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("info", &FFMPEGEncoder::info);
 	registerHandler("info",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -131,7 +127,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			videoSpeed(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("encodeContent", &FFMPEGEncoder::encodeContent);
 	registerHandler("encodeContent",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -139,7 +134,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			encodeContent(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("cutFrameAccurate", &FFMPEGEncoder::cutFrameAccurate);
 	registerHandler("cutFrameAccurate",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -147,7 +141,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			cutFrameAccurate(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("overlayImageOnVideo", &FFMPEGEncoder::overlayImageOnVideo);
 	registerHandler("overlayImageOnVideo",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -155,7 +148,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			overlayImageOnVideo(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("overlayTextOnVideo", &FFMPEGEncoder::overlayTextOnVideo);
 	registerHandler("overlayTextOnVideo",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -163,7 +155,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			overlayTextOnVideo(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("generateFrames", &FFMPEGEncoder::generateFrames);
 	registerHandler("generateFrames",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -171,7 +162,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			generateFrames(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("slideShow", &FFMPEGEncoder::slideShow);
 	registerHandler("slideShow",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -179,7 +169,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			slideShow(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("addSilentAudio", &FFMPEGEncoder::addSilentAudio);
 	registerHandler("addSilentAudio",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -187,7 +176,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			addSilentAudio(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("pictureInPicture", &FFMPEGEncoder::pictureInPicture);
 	registerHandler("pictureInPicture",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -195,7 +183,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			pictureInPicture(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("introOutroOverlay", &FFMPEGEncoder::introOutroOverlay);
 	registerHandler("introOutroOverlay",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -203,7 +190,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			introOutroOverlay(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("liveRecorder", &FFMPEGEncoder::liveRecorder);
 	registerHandler("liveRecorder",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -211,7 +197,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			liveRecorder(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("liveProxy", &FFMPEGEncoder::liveProxy);
 	registerHandler("liveProxy",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -219,7 +204,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			liveProxy(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("liveGrid", &FFMPEGEncoder::liveGrid);
 	registerHandler("liveGrid",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -227,7 +211,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			liveGrid(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("encodingStatus", &FFMPEGEncoder::encodingStatus);
 	registerHandler("encodingStatus",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -235,7 +218,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			encodingStatus(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("filterNotification", &FFMPEGEncoder::filterNotification);
 	registerHandler("filterNotification",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -243,7 +225,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			filterNotification(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("killEncodingJob", &FFMPEGEncoder::killEncodingJob);
 	registerHandler("killEncodingJob",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -251,7 +232,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			killEncodingJob(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("changeLiveProxyPlaylist", &FFMPEGEncoder::changeLiveProxyPlaylist);
 	registerHandler("changeLiveProxyPlaylist",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -259,7 +239,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			changeLiveProxyPlaylist(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("changeLiveProxyOverlayText", &FFMPEGEncoder::changeLiveProxyOverlayText);
 	registerHandler("changeLiveProxyOverlayText",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -267,7 +246,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			changeLiveProxyOverlayText(sThreadId, request, requestData);
 		}
 	);
-	// registerHandler<FFMPEGEncoder>("encodingProgress", &FFMPEGEncoder::encodingProgress);
 	registerHandler("encodingProgress",
 		[this](const string_view& sThreadId, FCGX_Request& request,
 			const FCGIRequestData& requestData)
@@ -1616,7 +1594,7 @@ void FFMPEGEncoder::filterNotification(
 			throw runtime_error(errorMessage);
 		}
 
-		string mmsWorkflowIngestionURL;
+		// string mmsWorkflowIngestionURL;
 		string workflowMetadata;
 		try
 		{
@@ -1650,6 +1628,7 @@ void FFMPEGEncoder::filterNotification(
 				}
 
 				{
+					/*
 					string field = "mmsWorkflowIngestionURL";
 					if (!JSONUtils::isPresent(encodingParametersRoot, field))
 					{
@@ -1664,11 +1643,12 @@ void FFMPEGEncoder::filterNotification(
 						throw runtime_error(errorMessage);
 					}
 					mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+					*/
 				}
 
 				vector<string> otherHeaders;
 				string sResponse = CurlWrapper::httpPostString(
-				   mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
+				   _mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
 				   workflowMetadata,
 				   "application/json", // contentType
 				   otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
@@ -1684,7 +1664,7 @@ void FFMPEGEncoder::filterNotification(
 				", mmsWorkflowIngestionURL: {}"
 				", workflowMetadata: {}"
 				", exception: {}",
-				ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
+				ingestionJobKey, _mmsWorkflowIngestionURL, workflowMetadata, e.what()
 			);
 			SPDLOG_ERROR(errorMessage);
 
@@ -3020,13 +3000,6 @@ void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 		_encodingCompletedRetentionInSeconds
 	);
 
-	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
-	SPDLOG_INFO(
-		"Configuration item"
-		", api->timeoutInSeconds: {}",
-		_mmsAPITimeoutInSeconds
-	);
-
 	_cpuUsageThresholdForEncoding = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
 	SPDLOG_INFO(
 		"Configuration item"
@@ -3065,4 +3038,24 @@ void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 		", ffmpeg->encoderPassword: {}",
 		_encoderPassword
 	);
+
+	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
+	SPDLOG_INFO(
+		"Configuration item"
+		", api->timeoutInSeconds: {}",
+		_mmsAPITimeoutInSeconds
+	);
+
+	const auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
+	SPDLOG_INFO(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+	const auto mmsAPIHostname = JsonPath(&_configurationRoot)["api"]["hostname"].as<string>();
+	SPDLOG_INFO(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+	const auto mmsAPIPort = JsonPath(&_configurationRoot)["api"]["port"].as<int32_t>(0);
+	SPDLOG_INFO(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+	const auto mmsAPIVersion = JsonPath(&_configurationRoot)["api"]["version"].as<string>();
+	SPDLOG_INFO(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+	auto mmsAPIWorkflowURI = JsonPath(&_configurationRoot)["api"]["workflowURI"].as<string>();
+	SPDLOG_INFO(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
+		mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
 }

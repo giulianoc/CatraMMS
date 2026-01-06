@@ -22,12 +22,6 @@
 #include <string>
 #include <vector>
 
-/*
-using json = nlohmann::json;
-using orderd_json = nlohmann::ordered_json;
-using namespace nlohmann::literals;
-*/
-
 #ifndef __FILEREF__
 #ifdef __APPLE__
 #define __FILEREF__ string("[") + string(__FILE__).substr(string(__FILE__).find_last_of("/") + 1) + ":" + to_string(__LINE__) + "] "

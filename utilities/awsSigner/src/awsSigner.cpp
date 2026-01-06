@@ -16,8 +16,6 @@
 using namespace std;
 
 using json = nlohmann::json;
-using orderd_json = nlohmann::ordered_json;
-using namespace nlohmann::literals;
 
 json loadConfigurationFile(const char *configurationPathName);
 

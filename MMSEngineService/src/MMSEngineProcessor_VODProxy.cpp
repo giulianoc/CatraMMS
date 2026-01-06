@@ -6,7 +6,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageVODProxy(
 	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -316,8 +315,7 @@ void MMSEngineProcessor::manageVODProxy(
 		_mmsEngineDBFacade->addEncoding_VODProxyJob(
 			workspace, ingestionJobKey, inputsRoot,
 
-			utcProxyPeriodStart, localOutputsRoot, maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors,
-			_mmsWorkflowIngestionURL
+			utcProxyPeriodStart, localOutputsRoot, maxAttemptsNumberInCaseOfErrors, waitingSecondsBetweenAttemptsInCaseOfErrors
 		);
 	}
 	catch (DBRecordNotFound &e)

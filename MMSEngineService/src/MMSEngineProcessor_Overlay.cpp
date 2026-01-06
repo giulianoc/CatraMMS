@@ -5,7 +5,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
@@ -165,10 +164,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			outroSourcePhysicalPathKey, outroSourceAssetPathName, outroSourceFileExtension, outroSourceDurationInMilliSeconds,
 			outroSourcePhysicalDeliveryURL, outroSourceTranscoderStagingAssetPathName,
 
-			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), _mmsWorkflowIngestionURL, _mmsBinaryIngestionURL,
-			_mmsIngestionURL,
-
-			encodingPriority
+			encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(), encodingPriority
 		);
 	}
 	catch (DBRecordNotFound &e)
@@ -394,7 +390,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			videoDurationInMilliSeconds, mmsSourceVideoAssetPathName, sourceVideoPhysicalDeliveryURL, sourceVideoFileExtension,
 			sourceImageMediaItemKey, sourceImagePhysicalPathKey, mmsSourceImageAssetPathName, sourceImagePhysicalDeliveryURL,
 			sourceVideoTranscoderStagingAssetPathName, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
-			encodingPriority, _mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL
+			encodingPriority
 		);
 	}
 	catch (runtime_error &e)
@@ -539,8 +535,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 
 			sourceAssetPathName, sourceDurationInMilliSecs, sourcePhysicalDeliveryURL, sourceFileExtension,
 
-			sourceTranscoderStagingAssetPathName, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string(),
-			_mmsWorkflowIngestionURL, _mmsBinaryIngestionURL, _mmsIngestionURL
+			sourceTranscoderStagingAssetPathName, encodedTranscoderStagingAssetPathName, encodedNFSStagingAssetPathName.string()
 		);
 	}
 	catch (runtime_error &e)

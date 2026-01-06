@@ -38,8 +38,8 @@ class ActiveEncodingsManager
 {
   public:
 	ActiveEncodingsManager(
-		nlohmann::json configuration, std::string processorMMS, std::shared_ptr<MultiEventsSet> multiEventsSet, std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade,
-		std::shared_ptr<MMSStorage> mmsStorage
+		const nlohmann::json& configuration, std::string processorMMS, const std::shared_ptr<MultiEventsSet>& multiEventsSet,
+		const std::shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const std::shared_ptr<MMSStorage>& mmsStorage
 	);
 
 	virtual ~ActiveEncodingsManager();
@@ -84,9 +84,9 @@ class ActiveEncodingsManager
 
 	// void getEncodingsProgressThread();
 
-	bool isProcessorShutdown();
+	static bool isProcessorShutdown();
 
-	void processEncodingJob(EncodingJob *encodingJob);
+	static void processEncodingJob(EncodingJob *encodingJob);
 	void addEncodingItem(std::shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
 	/*
 	std::string encodeContentImage(

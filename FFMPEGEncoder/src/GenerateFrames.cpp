@@ -13,7 +13,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 void GenerateFrames::encodeContent(json metadataRoot)
 {
@@ -347,6 +346,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			// wait the addContent to be executed
 			try
 			{
+				/*
 				string field = "mmsIngestionURL";
 				if (!JSONUtils::isPresent(encodingParametersRoot, field))
 				{
@@ -362,7 +362,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					throw runtime_error(errorMessage);
 				}
 				string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
-
+				*/
 				int64_t userKey;
 				string apiKey;
 				{
@@ -396,7 +396,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				{
 					int64_t addContentIngestionJobKey = *(addContentIngestionJobKeys.begin());
 
-					string mmsIngestionJobURL = mmsIngestionURL + "/" + to_string(addContentIngestionJobKey) + "?ingestionJobOutputs=false";
+					string mmsIngestionJobURL = std::format("{}/{}?ingestionJobOutputs=false", _mmsIngestionURL, addContentIngestionJobKey);
 
 					vector<string> otherHeaders;
 					json ingestionRoot = CurlWrapper::httpGetJson(
@@ -640,7 +640,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	int64_t userKey;
 	string apiKey;
 	int64_t addContentIngestionJobKey = -1;
-	string mmsWorkflowIngestionURL;
+	// string mmsWorkflowIngestionURL;
 	// create the workflow and ingest it
 	try
 	{
@@ -673,6 +673,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 		}
 
 		{
+			/*
 			string field = "mmsWorkflowIngestionURL";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
 			{
@@ -688,12 +689,13 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 				throw runtime_error(errorMessage);
 			}
 			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			*/
 		}
 
 		vector<string> otherHeaders;
 		string sResponse =
 			CurlWrapper::httpPostString(
-				mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
 				"application/json", // contentType
 				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
 				3 // maxRetries
@@ -710,7 +712,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			", mmsWorkflowIngestionURL: {}"
 			", workflowMetadata: {}"
 			", exception: {}",
-			ingestionJobKey, mmsWorkflowIngestionURL, workflowMetadata, e.what()
+			ingestionJobKey, _mmsWorkflowIngestionURL, workflowMetadata, e.what()
 		);
 
 		throw;
@@ -743,6 +745,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 		int64_t frameFileSize = fs::file_size(imagesDirectory + "/" + generatedFrameFileName);
 #endif
 
+		/*
 		string mmsBinaryIngestionURL;
 		{
 			string field = "mmsBinaryIngestionURL";
@@ -761,8 +764,9 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			}
 			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
 		}
+		*/
 
-		mmsBinaryURL = mmsBinaryIngestionURL + "/" + to_string(addContentIngestionJobKey);
+		mmsBinaryURL = std::format("{}/{}", _mmsBinaryIngestionURL, addContentIngestionJobKey);
 
 		string sResponse = CurlWrapper::httpPostFile(
 			mmsBinaryURL, _mmsBinaryTimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),

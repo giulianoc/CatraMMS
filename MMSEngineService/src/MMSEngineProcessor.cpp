@@ -10,6 +10,7 @@
 #include "FFMpegWrapper.h"
 #include "GEOInfoTimes.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "StatisticTimer.h"
 #include "System.h"
 #include "ThreadsStatisticTimes.h"
@@ -17,7 +18,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 
 MMSEngineProcessor::MMSEngineProcessor(
 	int processorIdentifier, shared_ptr<spdlog::logger> logger, shared_ptr<MultiEventsSet> multiEventsSet,
@@ -143,31 +143,29 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_localCopyTaskEnabled = JSONUtils::asBool(_configurationRoot["mms"], "localCopyTaskEnabled", false);
 	SPDLOG_INFO(string() + "Configuration item" + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled));
 
-	string mmsAPIProtocol = JSONUtils::asString(_configurationRoot["api"], "protocol", "");
+	auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
-	string mmsAPIHostname = JSONUtils::asString(_configurationRoot["api"], "hostname", "");
+	auto mmsAPIHostname = JsonPath(&_configurationRoot)["api"]["hostname"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
-	int mmsAPIPort = JSONUtils::asInt32(_configurationRoot["api"], "port", 0);
+	auto mmsAPIPort = JsonPath(&_configurationRoot)["api"]["port"].as<int32_t>(0);
 	SPDLOG_INFO(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
-	string mmsAPIVersion = JSONUtils::asString(_configurationRoot["api"], "version", "");
+	auto mmsAPIVersion = JsonPath(&_configurationRoot)["api"]["version"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
-	string mmsAPIWorkflowURI = JSONUtils::asString(_configurationRoot["api"], "workflowURI", "");
+	auto mmsAPIWorkflowURI = JsonPath(&_configurationRoot)["api"]["workflowURI"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
-	string mmsAPIIngestionURI = JSONUtils::asString(_configurationRoot["api"], "ingestionURI", "");
+	auto mmsAPIIngestionURI = JsonPath(&_configurationRoot)["api"]["ingestionURI"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
-	string mmsBinaryProtocol = JSONUtils::asString(_configurationRoot["api"]["binary"], "protocol", "");
+	auto mmsBinaryProtocol = JsonPath(&_configurationRoot)["api"]["binary"]["protocol"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
-	string mmsBinaryHostname = JSONUtils::asString(_configurationRoot["api"]["binary"], "hostname", "");
+	auto mmsBinaryHostname = JsonPath(&_configurationRoot)["api"]["binary"]["hostname"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
-	int mmsBinaryPort = JSONUtils::asInt32(_configurationRoot["api"]["binary"], "port", 0);
+	auto mmsBinaryPort = JsonPath(&_configurationRoot)["api"]["binary"]["port"].as<int32_t>(0);
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
-	string mmsBinaryVersion = JSONUtils::asString(_configurationRoot["api"]["binary"], "version", "");
+	auto mmsBinaryVersion = JsonPath(&_configurationRoot)["api"]["binary"]["version"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
-	string mmsBinaryIngestionURI = JSONUtils::asString(_configurationRoot["api"]["binary"], "ingestionURI", "");
+	auto mmsBinaryIngestionURI = JsonPath(&_configurationRoot)["api"]["binary"]["ingestionURI"].as<string>();
 	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
-	_mmsAPIVODDeliveryURI = JSONUtils::asString(_configurationRoot["api"], "vodDeliveryURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI);
-	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
+	_mmsAPITimeoutInSeconds = JsonPath(&_configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
 	SPDLOG_INFO(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
 
 	_deliveryProtocol = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryProtocol", "");
@@ -189,13 +187,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_liveRecorderVirtualVODImageLabel = JSONUtils::asString(_configurationRoot["ffmpeg"], "liveRecorderVirtualVODImageLabel", "");
 	SPDLOG_INFO(string() + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel);
 
-	_mmsWorkflowIngestionURL =
-		mmsAPIProtocol + "://" + mmsAPIHostname + ":" + to_string(mmsAPIPort) + "/catramms/" + mmsAPIVersion + mmsAPIWorkflowURI;
-
-	_mmsIngestionURL = mmsAPIProtocol + "://" + mmsAPIHostname + ":" + to_string(mmsAPIPort) + "/catramms/" + mmsAPIVersion + mmsAPIIngestionURI;
-
-	_mmsBinaryIngestionURL =
-		mmsBinaryProtocol + "://" + mmsBinaryHostname + ":" + to_string(mmsBinaryPort) + "/catramms/" + mmsBinaryVersion + mmsBinaryIngestionURI;
+	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
+		mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
 
 	if (_processorIdentifier == 0)
 	{

@@ -9,7 +9,6 @@
 
 using namespace std;
 using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
 using namespace pqxx;
 
 void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
@@ -3538,26 +3537,12 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 }
 
 void MMSEngineDBFacade::addEncodingJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, MMSEngineDBFacade::ContentType contentType, EncodingPriority encodingPriority,
-	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, MMSEngineDBFacade::ContentType contentType,
+	EncodingPriority encodingPriority, int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 
-	json sourcesToBeEncodedRoot,
-
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
+	json sourcesToBeEncodedRoot
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -3583,14 +3568,14 @@ void MMSEngineDBFacade::addEncodingJob(
 			field = "sourcesToBeEncoded";
 			parametersRoot[field] = sourcesToBeEncodedRoot;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -3676,26 +3661,14 @@ void MMSEngineDBFacade::addEncodingJob(
 }
 
 void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, json encodingProfileDetailsRoot,
-	int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds, string mmsSourceVideoAssetPathName,
-	string sourceVideoPhysicalDeliveryURL, string sourceVideoFileExtension, int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
-	string mmsSourceImageAssetPathName, string sourceImagePhysicalDeliveryURL, string sourceVideoTranscoderStagingAssetPathName,
-	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName, EncodingPriority encodingPriority,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, json encodingProfileDetailsRoot,
+	int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
+	const string& mmsSourceVideoAssetPathName, const string& sourceVideoPhysicalDeliveryURL, const string& sourceVideoFileExtension,
+	int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey, const string& mmsSourceImageAssetPathName,
+	const string& sourceImagePhysicalDeliveryURL, const string& sourceVideoTranscoderStagingAssetPathName,
+	const string& encodedTranscoderStagingAssetPathName, const string& encodedNFSStagingAssetPathName, EncodingPriority encodingPriority
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -3750,14 +3723,14 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -3842,28 +3815,15 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 }
 
 void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
 
 	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 
-	string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, string sourcePhysicalDeliveryURL, string sourceFileExtension,
-
-	string sourceTranscoderStagingAssetPathName, string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
+	const string& sourceAssetPathName, int64_t sourceDurationInMilliSeconds, const string& sourcePhysicalDeliveryURL,
+	const string& sourceFileExtension, const string& sourceTranscoderStagingAssetPathName, const string& encodedTranscoderStagingAssetPathName,
+	const string& encodedNFSStagingAssetPathName
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -3900,14 +3860,14 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -3991,26 +3951,15 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 }
 
 void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
 
-	string nfsImagesDirectory, string transcoderStagingImagesDirectory, string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
-	string sourceAssetPathName, int64_t sourceVideoPhysicalPathKey, string sourceFileExtension, string sourceFileName,
-	int64_t videoDurationInMilliSeconds, double startTimeInSeconds, int maxFramesNumber, string videoFilter, int periodInSeconds, bool mjpeg,
-	int imageWidth, int imageHeight, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL
+	const string& nfsImagesDirectory, const string& transcoderStagingImagesDirectory, const string& sourcePhysicalDeliveryURL,
+	const string& sourceTranscoderStagingAssetPathName, const string& sourceAssetPathName, int64_t sourceVideoPhysicalPathKey,
+	const string& sourceFileExtension, const string& sourceFileName, int64_t videoDurationInMilliSeconds, double startTimeInSeconds,
+	int maxFramesNumber, const string& videoFilter, int periodInSeconds, bool mjpeg,
+	int imageWidth, int imageHeight
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -4071,14 +4020,14 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 			field = "imageHeight";
 			parametersRoot[field] = imageHeight;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -4163,24 +4112,12 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 }
 
 void MMSEngineDBFacade::addEncoding_SlideShowJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, json encodingProfileDetailsRoot, string targetFileFormat,
-	json imagesRoot, json audiosRoot, float shortestAudioDurationInSeconds, string encodedTranscoderStagingAssetPathName,
-	string encodedNFSStagingAssetPathName, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, json encodingProfileDetailsRoot,
+	const string& targetFileFormat, json imagesRoot, json audiosRoot, float shortestAudioDurationInSeconds,
+	const string& encodedTranscoderStagingAssetPathName, const string& encodedNFSStagingAssetPathName,
 	EncodingPriority encodingPriority
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -4214,14 +4151,14 @@ work trans{*(conn->_sqlConnection)};
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -4521,7 +4458,7 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, string ingestionJobLabel, string streamSourceType,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, string ingestionJobLabel, string streamSourceType,
 
 	string configurationLabel, int64_t confKey, string liveURL, string encodersPoolLabel, EncodingPriority encodingPriority,
 
@@ -4529,26 +4466,13 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 
 	bool monitorHLS, bool liveRecorderVirtualVOD, int monitorVirtualVODOutputRootIndex,
 
-	json outputsRoot, json framesToBeDetectedRoot,
+	const json& outputsRoot, json framesToBeDetectedRoot,
 
-	string chunksTranscoderStagingContentsPath, string chunksNFSStagingContentsPath, string segmentListFileName, string recordedFileNamePrefix,
-	string virtualVODStagingContentsPath, string virtualVODTranscoderStagingContentsPath, int64_t liveRecorderVirtualVODImageMediaItemKey,
-
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
+	const string& chunksTranscoderStagingContentsPath, const string& chunksNFSStagingContentsPath, const string& segmentListFileName,
+	const string& recordedFileNamePrefix, const string& virtualVODStagingContentsPath, const string& virtualVODTranscoderStagingContentsPath,
+	int64_t liveRecorderVirtualVODImageMediaItemKey
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -4645,11 +4569,11 @@ work trans{*(conn->_sqlConnection)};
 				field = "liveRecorderVirtualVODImageMediaItemKey";
 				parametersRoot[field] = liveRecorderVirtualVODImageMediaItemKey;
 
-				field = "mmsWorkflowIngestionURL";
-				parametersRoot[field] = mmsWorkflowIngestionURL;
+				// field = "mmsWorkflowIngestionURL";
+				// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-				field = "mmsBinaryIngestionURL";
-				parametersRoot[field] = mmsBinaryIngestionURL;
+				// field = "mmsBinaryIngestionURL";
+				// parametersRoot[field] = mmsBinaryIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
@@ -4741,23 +4665,10 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_LiveProxyJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, json inputsRoot, string streamSourceType, int64_t utcProxyPeriodStart,
-	// long maxAttemptsNumberInCaseOfErrors,
-	long waitingSecondsBetweenAttemptsInCaseOfErrors, json outputsRoot, string mmsWorkflowIngestionURL
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, json inputsRoot, string streamSourceType, int64_t utcProxyPeriodStart,
+	long waitingSecondsBetweenAttemptsInCaseOfErrors, const json& outputsRoot
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -4797,8 +4708,8 @@ work trans{*(conn->_sqlConnection)};
 				field = "outputsRoot";
 				parametersRoot[field] = outputsRoot;
 
-				field = "mmsWorkflowIngestionURL";
-				parametersRoot[field] = mmsWorkflowIngestionURL;
+				// field = "mmsWorkflowIngestionURL";
+				// parametersRoot[field] = mmsWorkflowIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
@@ -4878,22 +4789,10 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_VODProxyJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, json inputsRoot, int64_t utcProxyPeriodStart, json outputsRoot,
-	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors, string mmsWorkflowIngestionURL
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, json inputsRoot, int64_t utcProxyPeriodStart, const json& outputsRoot,
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -4928,8 +4827,8 @@ work trans{*(conn->_sqlConnection)};
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				field = "mmsWorkflowIngestionURL";
-				parametersRoot[field] = mmsWorkflowIngestionURL;
+				// field = "mmsWorkflowIngestionURL";
+				// parametersRoot[field] = mmsWorkflowIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
@@ -5009,22 +4908,10 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_CountdownJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, json inputsRoot, int64_t utcProxyPeriodStart, json outputsRoot,
-	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors, string mmsWorkflowIngestionURL
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, json inputsRoot, int64_t utcProxyPeriodStart, json outputsRoot,
+	long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -5052,8 +4939,8 @@ work trans{*(conn->_sqlConnection)};
 				field = "waitingSecondsBetweenAttemptsInCaseOfErrors";
 				parametersRoot[field] = waitingSecondsBetweenAttemptsInCaseOfErrors;
 
-				field = "mmsWorkflowIngestionURL";
-				parametersRoot[field] = mmsWorkflowIngestionURL;
+				// field = "mmsWorkflowIngestionURL";
+				// parametersRoot[field] = mmsWorkflowIngestionURL;
 
 				parameters = JSONUtils::toString(parametersRoot);
 			}
@@ -5248,24 +5135,14 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_VideoSpeed(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey, string sourceAssetPathName,
-	int64_t sourceDurationInMilliSeconds, string sourceFileExtension, string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName,
-	int64_t encodingProfileKey, json encodingProfileDetailsRoot, string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL, EncodingPriority encodingPriority
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
+	const string& sourceAssetPathName, int64_t sourceDurationInMilliSeconds, const string& sourceFileExtension,
+	const string& sourcePhysicalDeliveryURL, const string& sourceTranscoderStagingAssetPathName,
+	int64_t encodingProfileKey, json encodingProfileDetailsRoot, const string& encodedTranscoderStagingAssetPathName,
+	const string& encodedNFSStagingAssetPathName,
+	EncodingPriority encodingPriority
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -5310,14 +5187,14 @@ work trans{*(conn->_sqlConnection)};
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -5402,22 +5279,10 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_AddSilentAudio(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, json sourcesRoot, int64_t encodingProfileKey, json encodingProfileDetailsRoot,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL, EncodingPriority encodingPriority
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, json sourcesRoot, int64_t encodingProfileKey, json encodingProfileDetailsRoot,
+	EncodingPriority encodingPriority
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -5438,14 +5303,14 @@ work trans{*(conn->_sqlConnection)};
 			field = "encodingProfileDetails";
 			parametersRoot[field] = encodingProfileDetailsRoot;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -5530,27 +5395,17 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t mainSourceMediaItemKey, int64_t mainSourcePhysicalPathKey,
-	string mainSourceAssetPathName, int64_t mainSourceDurationInMilliSeconds, string mainSourceFileExtension, string mainSourcePhysicalDeliveryURL,
-	string mainSourceTranscoderStagingAssetPathName, int64_t overlaySourceMediaItemKey, int64_t overlaySourcePhysicalPathKey,
-	string overlaySourceAssetPathName, int64_t overlaySourceDurationInMilliSeconds, string overlaySourceFileExtension,
-	string overlaySourcePhysicalDeliveryURL, string overlaySourceTranscoderStagingAssetPathName, bool soundOfMain, int64_t encodingProfileKey,
-	json encodingProfileDetailsRoot, string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName,
-	string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL, string mmsIngestionURL, EncodingPriority encodingPriority
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, int64_t mainSourceMediaItemKey, int64_t mainSourcePhysicalPathKey,
+	const string& mainSourceAssetPathName, int64_t mainSourceDurationInMilliSeconds, const string& mainSourceFileExtension,
+	const string& mainSourcePhysicalDeliveryURL,
+	const string& mainSourceTranscoderStagingAssetPathName, int64_t overlaySourceMediaItemKey, int64_t overlaySourcePhysicalPathKey,
+	const string& overlaySourceAssetPathName, int64_t overlaySourceDurationInMilliSeconds, const string& overlaySourceFileExtension,
+	const string& overlaySourcePhysicalDeliveryURL, const string& overlaySourceTranscoderStagingAssetPathName, bool soundOfMain,
+	int64_t encodingProfileKey,
+	json encodingProfileDetailsRoot, const string& encodedTranscoderStagingAssetPathName, const string& encodedNFSStagingAssetPathName,
+	EncodingPriority encodingPriority
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -5619,14 +5474,14 @@ work trans{*(conn->_sqlConnection)};
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -5711,37 +5566,27 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey,
 
 	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 
-	int64_t introSourcePhysicalPathKey, string introSourceAssetPathName, string introSourceFileExtension, int64_t introSourceDurationInMilliSeconds,
-	string introSourcePhysicalDeliveryURL, string introSourceTranscoderStagingAssetPathName,
+	int64_t introSourcePhysicalPathKey, const string& introSourceAssetPathName, const string& introSourceFileExtension,
+	int64_t introSourceDurationInMilliSeconds,
+	const string& introSourcePhysicalDeliveryURL, const string& introSourceTranscoderStagingAssetPathName,
 
-	int64_t mainSourcePhysicalPathKey, string mainSourceAssetPathName, string mainSourceFileExtension, int64_t mainSourceDurationInMilliSeconds,
-	string mainSourcePhysicalDeliveryURL, string mainSourceTranscoderStagingAssetPathName,
+	int64_t mainSourcePhysicalPathKey, const string& mainSourceAssetPathName, const string& mainSourceFileExtension,
+	int64_t mainSourceDurationInMilliSeconds,
+	const string& mainSourcePhysicalDeliveryURL, const string& mainSourceTranscoderStagingAssetPathName,
 
-	int64_t outroSourcePhysicalPathKey, string outroSourceAssetPathName, string outroSourceFileExtension, int64_t outroSourceDurationInMilliSeconds,
-	string outroSourcePhysicalDeliveryURL, string outroSourceTranscoderStagingAssetPathName,
+	int64_t outroSourcePhysicalPathKey, const string& outroSourceAssetPathName, const string& outroSourceFileExtension,
+	int64_t outroSourceDurationInMilliSeconds,
+	const string& outroSourcePhysicalDeliveryURL, const string& outroSourceTranscoderStagingAssetPathName,
 
-	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL,
-	string mmsIngestionURL,
+	const string& encodedTranscoderStagingAssetPathName, const string& encodedNFSStagingAssetPathName,
 
 	EncodingPriority encodingPriority
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -5816,14 +5661,14 @@ work trans{*(conn->_sqlConnection)};
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			parameters = JSONUtils::toString(parametersRoot);
 		}
@@ -5909,31 +5754,19 @@ work trans{*(conn->_sqlConnection)};
 }
 
 void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
-	shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey,
 
-	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey, string sourceAssetPathName, int64_t sourceDurationInMilliSeconds,
-	string sourceFileExtension, string sourcePhysicalDeliveryURL, string sourceTranscoderStagingAssetPathName, string endTime,
+	int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey, const string& sourceAssetPathName, int64_t sourceDurationInMilliSeconds,
+	const string& sourceFileExtension, const string& sourcePhysicalDeliveryURL, const string& sourceTranscoderStagingAssetPathName,
+	const string& endTime,
 
 	int64_t encodingProfileKey, json encodingProfileDetailsRoot,
 
-	string encodedTranscoderStagingAssetPathName, string encodedNFSStagingAssetPathName, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL,
-	string mmsIngestionURL,
+	const string& encodedTranscoderStagingAssetPathName, const string& encodedNFSStagingAssetPathName,
 
 	EncodingPriority encodingPriority, int64_t newUtcStartTimeInMilliSecs, int64_t newUtcEndTimeInMilliSecs
 )
 {
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -5978,14 +5811,14 @@ work trans{*(conn->_sqlConnection)};
 			field = "encodedNFSStagingAssetPathName";
 			parametersRoot[field] = encodedNFSStagingAssetPathName;
 
-			field = "mmsWorkflowIngestionURL";
-			parametersRoot[field] = mmsWorkflowIngestionURL;
+			// field = "mmsWorkflowIngestionURL";
+			// parametersRoot[field] = mmsWorkflowIngestionURL;
 
-			field = "mmsBinaryIngestionURL";
-			parametersRoot[field] = mmsBinaryIngestionURL;
+			// field = "mmsBinaryIngestionURL";
+			// parametersRoot[field] = mmsBinaryIngestionURL;
 
-			field = "mmsIngestionURL";
-			parametersRoot[field] = mmsIngestionURL;
+			// field = "mmsIngestionURL";
+			// parametersRoot[field] = mmsIngestionURL;
 
 			field = "newUtcStartTimeInMilliSecs";
 			parametersRoot[field] = newUtcStartTimeInMilliSecs;

@@ -1769,47 +1769,46 @@ class MMSEngineDBFacade
 	);
 
 	void addEncodingJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, MMSEngineDBFacade::ContentType contentType, EncodingPriority encodingPriority,
-		int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, MMSEngineDBFacade::ContentType contentType,
+		EncodingPriority encodingPriority, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
 
-		nlohmann::json sourcesToBeEncodedRoot,
-
-		std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL
+		nlohmann::json sourcesToBeEncodedRoot
 	);
 
 	void addEncoding_OverlayImageOnVideoJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
-		int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds, std::string mmsSourceVideoAssetPathName,
-		std::string sourceVideoPhysicalDeliveryURL, std::string sourceVideoFileExtension, int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
-		std::string mmsSourceImageAssetPathName, std::string sourceImagePhysicalDeliveryURL, std::string sourceVideoTranscoderStagingAssetPathName,
-		std::string encodedTranscoderStagingAssetPathName, std::string encodedNFSStagingAssetPathName, EncodingPriority encodingPriority,
-		std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
+		int64_t sourceVideoMediaItemKey, int64_t sourceVideoPhysicalPathKey, int64_t videoDurationInMilliSeconds,
+		const std::string &mmsSourceVideoAssetPathName, const std::string &sourceVideoPhysicalDeliveryURL,
+		const std::string &sourceVideoFileExtension, int64_t sourceImageMediaItemKey, int64_t sourceImagePhysicalPathKey,
+		const std::string &mmsSourceImageAssetPathName, const std::string &sourceImagePhysicalDeliveryURL,
+		const std::string &sourceVideoTranscoderStagingAssetPathName, const std::string &encodedTranscoderStagingAssetPathName,
+		const std::string &encodedNFSStagingAssetPathName, EncodingPriority encodingPriority
 	);
 
 	void addEncoding_OverlayTextOnVideoJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
 
 		int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
 
-		std::string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, std::string sourcePhysicalDeliveryURL, std::string sourceFileExtension,
+		const std::string &sourceAssetPathName, int64_t sourceDurationInMilliSeconds, const std::string &sourcePhysicalDeliveryURL,
+		const std::string &sourceFileExtension,
 
-		std::string sourceTranscoderStagingAssetPathName, std::string encodedTranscoderStagingAssetPathName, std::string encodedNFSStagingAssetPathName,
-		std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL
+		const std::string &sourceTranscoderStagingAssetPathName, const std::string &encodedTranscoderStagingAssetPathName,
+		const std::string &encodedNFSStagingAssetPathName
 	);
 
 	void addEncoding_GenerateFramesJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority, std::string nfsImagesDirectory,
-		std::string transcoderStagingImagesDirectory, std::string sourcePhysicalDeliveryURL, std::string sourceTranscoderStagingAssetPathName,
-		std::string sourceAssetPathName, int64_t sourceVideoPhysicalPathKey, std::string sourceFileExtension, std::string sourceFileName,
-		int64_t videoDurationInMilliSeconds, double startTimeInSeconds, int maxFramesNumber, std::string videoFilter, int periodInSeconds, bool mjpeg,
-		int imageWidth, int imageHeight, std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, EncodingPriority encodingPriority,
+		const std::string &nfsImagesDirectory, const std::string &transcoderStagingImagesDirectory, const std::string &sourcePhysicalDeliveryURL,
+		const std::string &sourceTranscoderStagingAssetPathName, const std::string &sourceAssetPathName, int64_t sourceVideoPhysicalPathKey,
+		const std::string &sourceFileExtension, const std::string &sourceFileName, int64_t videoDurationInMilliSeconds, double startTimeInSeconds,
+		int maxFramesNumber, const std::string &videoFilter, int periodInSeconds, bool mjpeg, int imageWidth, int imageHeight
 	);
 
 	void addEncoding_SlideShowJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
-		std::string targetFileFormat, nlohmann::json imagesRoot, nlohmann::json audiosRoot, float shortestAudioDurationInSeconds, std::string encodedTranscoderStagingAssetPathName,
-		std::string encodedNFSStagingAssetPathName, std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL,
-		EncodingPriority encodingPriority
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
+		const std::string &targetFileFormat, nlohmann::json imagesRoot, nlohmann::json audiosRoot, float shortestAudioDurationInSeconds,
+		const std::string &encodedTranscoderStagingAssetPathName, const std::string &encodedNFSStagingAssetPathName, EncodingPriority encodingPriority
 	);
 
 	void addEncoding_FaceRecognitionJob(
@@ -1824,95 +1823,97 @@ class MMSEngineDBFacade
 	);
 
 	void addEncoding_LiveRecorderJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, std::string ingestionJobLabel, std::string streamSourceType,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, std::string ingestionJobLabel, std::string streamSourceType,
 		// bool highAvailability,
-		std::string configurationLabel, int64_t confKey, std::string url, std::string encodersPoolLabel, EncodingPriority encodingPriority,
+		std::string configurationLabel, int64_t confKey, std::string liveURL, std::string encodersPoolLabel, EncodingPriority encodingPriority,
 
 		int pushListenTimeout, int64_t pushEncoderKey, nlohmann::json captureRoot, nlohmann::json tvRoot,
 
 		bool monitorHLS, bool liveRecorderVirtualVOD, int monitorVirtualVODOutputRootIndex,
 
-		nlohmann::json outputsRoot, nlohmann::json framesToBeDetectedRoot,
+		const nlohmann::json &outputsRoot, nlohmann::json framesToBeDetectedRoot,
 
-		std::string chunksTranscoderStagingContentsPath, std::string chunksNFSStagingContentsPath, std::string segmentListFileName, std::string recordedFileNamePrefix,
-		std::string virtualVODStagingContentsPath, std::string virtualVODTranscoderStagingContentsPath, int64_t liveRecorderVirtualVODImageMediaItemKey,
-
-		std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL
+		const std::string &chunksTranscoderStagingContentsPath, const std::string &chunksNFSStagingContentsPath,
+		const std::string &segmentListFileName, const std::string &recordedFileNamePrefix, const std::string &virtualVODStagingContentsPath,
+		const std::string &virtualVODTranscoderStagingContentsPath, int64_t liveRecorderVirtualVODImageMediaItemKey
 	);
 
 	void addEncoding_LiveProxyJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, nlohmann::json inputsRoot, std::string streamSourceType,
-		int64_t utcProxyPeriodStart, // int64_t utcProxyPeriodEnd,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, nlohmann::json inputsRoot, std::string streamSourceType,
+		int64_t utcProxyPeriodStart,
+		// int64_t utcProxyPeriodEnd,
 		// long maxAttemptsNumberInCaseOfErrors,
-		long waitingSecondsBetweenAttemptsInCaseOfErrors, nlohmann::json outputsRoot, std::string mmsWorkflowIngestionURL
+		long waitingSecondsBetweenAttemptsInCaseOfErrors, const nlohmann::json &outputsRoot
 	);
 
 	void addEncoding_VODProxyJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, nlohmann::json inputsRoot, int64_t utcProxyPeriodStart, nlohmann::json outputsRoot,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors, std::string mmsWorkflowIngestionURL
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, nlohmann::json inputsRoot, int64_t utcProxyPeriodStart,
+		const nlohmann::json &outputsRoot, long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 	);
 
 	void addEncoding_CountdownJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, nlohmann::json inputsRoot, int64_t utcProxyPeriodStart, nlohmann::json outputsRoot,
-		long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors, std::string mmsWorkflowIngestionURL
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, nlohmann::json inputsRoot, int64_t utcProxyPeriodStart,
+		nlohmann::json outputsRoot, long maxAttemptsNumberInCaseOfErrors, long waitingSecondsBetweenAttemptsInCaseOfErrors
 	);
 
 	void addEncoding_LiveGridJob(std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, nlohmann::json inputChannelsRoot, nlohmann::json outputsRoot);
 
 	void addEncoding_VideoSpeed(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
-		std::string sourceAssetPathName, int64_t sourceDurationInMilliSeconds, std::string sourceFileExtension, std::string sourcePhysicalDeliveryURL,
-		std::string sourceTranscoderStagingAssetPathName, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
-		std::string encodedTranscoderStagingAssetPathName, std::string encodedNFSStagingAssetPathName, std::string mmsWorkflowIngestionURL,
-		std::string mmsBinaryIngestionURL, std::string mmsIngestionURL, EncodingPriority encodingPriority
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey,
+		const std::string &sourceAssetPathName, int64_t sourceDurationInMilliSeconds, const std::string &sourceFileExtension,
+		const std::string &sourcePhysicalDeliveryURL, const std::string &sourceTranscoderStagingAssetPathName, int64_t encodingProfileKey,
+		nlohmann::json encodingProfileDetailsRoot, const std::string &encodedTranscoderStagingAssetPathName,
+		const std::string &encodedNFSStagingAssetPathName, EncodingPriority encodingPriority
 	);
 
 	void addEncoding_AddSilentAudio(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, nlohmann::json sourcesRoot, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
-		std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL, EncodingPriority encodingPriority
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, nlohmann::json sourcesRoot, int64_t encodingProfileKey,
+		nlohmann::json encodingProfileDetailsRoot, EncodingPriority encodingPriority
 	);
 
 	void addEncoding_PictureInPictureJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, int64_t mainSourceMediaItemKey, int64_t mainSourcePhysicalPathKey,
-		std::string mainSourceAssetPathName, int64_t mainSourceDurationInMilliSeconds, std::string mainSourceFileExtension,
-		std::string mainSourcePhysicalDeliveryURL, std::string mainSourceTranscoderStagingAssetPathName, int64_t overlaySourceMediaItemKey,
-		int64_t overlaySourcePhysicalPathKey, std::string overlaySourceAssetPathName, int64_t overlaySourceDurationInMilliSeconds,
-		std::string overlaySourceFileExtension, std::string overlaySourcePhysicalDeliveryURL, std::string overlaySourceTranscoderStagingAssetPathName,
-		bool soundOfMain, int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot, std::string encodedTranscoderStagingAssetPathName,
-		std::string encodedNFSStagingAssetPathName, std::string mmsWorkflowIngestionURL, std::string mmsBinaryIngestionURL, std::string mmsIngestionURL,
-		EncodingPriority encodingPriority
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, int64_t mainSourceMediaItemKey, int64_t mainSourcePhysicalPathKey,
+		const std::string &mainSourceAssetPathName, int64_t mainSourceDurationInMilliSeconds, const std::string &mainSourceFileExtension,
+		const std::string &mainSourcePhysicalDeliveryURL, const std::string &mainSourceTranscoderStagingAssetPathName,
+		int64_t overlaySourceMediaItemKey, int64_t overlaySourcePhysicalPathKey, const std::string &overlaySourceAssetPathName,
+		int64_t overlaySourceDurationInMilliSeconds, const std::string &overlaySourceFileExtension,
+		const std::string &overlaySourcePhysicalDeliveryURL, const std::string &overlaySourceTranscoderStagingAssetPathName, bool soundOfMain,
+		int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot, const std::string &encodedTranscoderStagingAssetPathName,
+		const std::string &encodedNFSStagingAssetPathName, EncodingPriority encodingPriority
 	);
 
 	void addEncoding_IntroOutroOverlayJob(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey,
 
 		int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
 
-		int64_t introSourcePhysicalPathKey, std::string introSourceAssetPathName, std::string introSourceFileExtension,
-		int64_t introSourceDurationInMilliSeconds, std::string introSourcePhysicalDeliveryURL, std::string introSourceTranscoderStagingAssetPathName,
+		int64_t introSourcePhysicalPathKey, const std::string &introSourceAssetPathName, const std::string &introSourceFileExtension,
+		int64_t introSourceDurationInMilliSeconds, const std::string &introSourcePhysicalDeliveryURL,
+		const std::string &introSourceTranscoderStagingAssetPathName,
 
-		int64_t mainSourcePhysicalPathKey, std::string mainSourceAssetPathName, std::string mainSourceFileExtension, int64_t mainSourceDurationInMilliSeconds,
-		std::string mainSourcePhysicalDeliveryURL, std::string mainSourceTranscoderStagingAssetPathName,
+		int64_t mainSourcePhysicalPathKey, const std::string &mainSourceAssetPathName, const std::string &mainSourceFileExtension,
+		int64_t mainSourceDurationInMilliSeconds, const std::string &mainSourcePhysicalDeliveryURL,
+		const std::string &mainSourceTranscoderStagingAssetPathName,
 
-		int64_t outroSourcePhysicalPathKey, std::string outroSourceAssetPathName, std::string outroSourceFileExtension,
-		int64_t outroSourceDurationInMilliSeconds, std::string outroSourcePhysicalDeliveryURL, std::string outroSourceTranscoderStagingAssetPathName,
+		int64_t outroSourcePhysicalPathKey, const std::string &outroSourceAssetPathName, const std::string &outroSourceFileExtension,
+		int64_t outroSourceDurationInMilliSeconds, const std::string &outroSourcePhysicalDeliveryURL,
+		const std::string &outroSourceTranscoderStagingAssetPathName,
 
-		std::string encodedTranscoderStagingAssetPathName, std::string encodedNFSStagingAssetPathName, std::string mmsWorkflowIngestionURL,
-		std::string mmsBinaryIngestionURL, std::string mmsIngestionURL,
+		const std::string &encodedTranscoderStagingAssetPathName, const std::string &encodedNFSStagingAssetPathName,
 
 		EncodingPriority encodingPriority
 	);
 
 	void addEncoding_CutFrameAccurate(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey,
 
-		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey, std::string sourceAssetPathName, int64_t sourceDurationInMilliSeconds,
-		std::string sourceFileExtension, std::string sourcePhysicalDeliveryURL, std::string sourceTranscoderStagingAssetPathName, std::string endTime,
+		int64_t sourceMediaItemKey, int64_t sourcePhysicalPathKey, const std::string &sourceAssetPathName, int64_t sourceDurationInMilliSeconds,
+		const std::string &sourceFileExtension, const std::string &sourcePhysicalDeliveryURL, const std::string &sourceTranscoderStagingAssetPathName,
+		const std::string &endTime,
 
 		int64_t encodingProfileKey, nlohmann::json encodingProfileDetailsRoot,
 
-		std::string encodedTranscoderStagingAssetPathName, std::string encodedNFSStagingAssetPathName, std::string mmsWorkflowIngestionURL,
-		std::string mmsBinaryIngestionURL, std::string mmsIngestionURL,
+		const std::string &encodedTranscoderStagingAssetPathName, const std::string &encodedNFSStagingAssetPathName,
 
 		EncodingPriority encodingPriority, int64_t newUtcStartTimeInMilliSecs, int64_t newUtcEndTimeInMilliSecs
 	);
