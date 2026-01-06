@@ -45,9 +45,12 @@ add_executable(registerAndConfirmUser ${SOURCES} ${HEADERS})
 
 target_link_libraries(registerAndConfirmUser MMSEngine)
 #target_link_libraries(registerAndConfirmUser Encrypt)
+target_link_libraries(registerAndConfirmUser PostgresHelper)
+target_link_libraries(registerAndConfirmUser CurlWrapper)
+target_link_libraries(registerAndConfirmUser Datetime)
+target_link_libraries(registerAndConfirmUser curl)
 target_link_libraries(registerAndConfirmUser pqxx)
 target_link_libraries(registerAndConfirmUser pq)
-target_link_libraries(registerAndConfirmUser PostgresHelper)
 
 install (TARGETS registerAndConfirmUser DESTINATION bin)
 
