@@ -60,10 +60,8 @@ int main(const int iArgc, char *pArgv[])
 			name, email, password, workspaceName
 		);
 		tie(workspaceKey, userKey, confirmationCode) = mmsEngineDBFacade->registerUserAndAddWorkspace(
-			name, email, password, "", "", workspaceName, "",
-			MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,
-			"", encodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
-			"", "",
+			name, email, password, "", "", workspaceName, "", MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery, "", encodingPriority,
+			encodingPeriod, maxIngestionsNumber, maxStorageInMB, "", "",
 			chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // userExpirationDate
 		);
 

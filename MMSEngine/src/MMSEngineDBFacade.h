@@ -1236,10 +1236,11 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	std::tuple<int64_t, int64_t, std::string> registerUserAndAddWorkspace(
-		std::string userName, std::string userEmailAddress, std::string userPassword, std::string userCountry, std::string userTimezone, std::string workspaceName, std::string notes,
-		WorkspaceType workspaceType, std::string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
-		long maxIngestionsNumber, long maxStorageInMB, std::string languageCode, std::string workspaceTimezone,
-		std::chrono::system_clock::time_point userExpirationDate
+		const std::string &userName, const std::string &userEmailAddress, const std::string &userPassword, const std::string &userCountry,
+		std::string userTimezone, const std::string &workspaceName, const std::string &notes, WorkspaceType workspaceType,
+		const std::string &deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber,
+		long maxStorageInMB, const std::string &languageCode, const std::string &workspaceTimezone,
+		std::chrono::system_clock::time_point userExpirationLocalDate
 	);
 #else
 	std::tuple<int64_t, int64_t, std::string> registerUserAndAddWorkspace(
@@ -2606,10 +2607,10 @@ class MMSEngineDBFacade
 	std::pair<int64_t, std::string> addWorkspace(
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, std::string workspaceName, std::string notes,
-		WorkspaceType workspaceType, std::string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
-		long maxIngestionsNumber, long maxStorageInMB, std::string languageCode, std::string workspaceTimezone,
-		std::chrono::system_clock::time_point userExpirationDate
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, const std::string &workspaceName, const std::string &notes,
+		WorkspaceType workspaceType, const std::string &deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
+		long maxIngestionsNumber, long maxStorageInMB, const std::string &languageCode, std::string workspaceTimezone,
+		std::chrono::system_clock::time_point userExpirationLocalDate
 	);
 #else
 	std::pair<int64_t, std::string> addWorkspace(

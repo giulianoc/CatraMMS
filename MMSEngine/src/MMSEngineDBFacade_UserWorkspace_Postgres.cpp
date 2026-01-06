@@ -135,32 +135,21 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 }
 
 tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
-	string userName, string userEmailAddress, string userPassword, string userCountry, string userTimezone, string workspaceName, string notes,
-	WorkspaceType workspaceType, string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber,
-	long maxStorageInMB, string languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
+	const string& userName, const string& userEmailAddress, const string& userPassword, const string& userCountry, string userTimezone,
+	const string& workspaceName, const string& notes, WorkspaceType workspaceType, const string& deliveryURL,
+	EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber,
+	long maxStorageInMB, const string& languageCode, const string& workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
 )
 {
 	int64_t workspaceKey;
 	int64_t userKey;
 	string userRegistrationCode;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
 		string trimUserName = StringUtils::trim(userName);
-		if (trimUserName == "")
+		if (trimUserName.empty())
 		{
 			string errorMessage = string("userName is not well formed.") + ", userName: " + userName;
 			_logger->error(__FILEREF__ + errorMessage);
@@ -176,7 +165,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			// char strExpirationUtcDate[64];
 			string sExpirationUtcDate;
 			{
-				tm tmDateTime;
+				tm tmDateTime{};
 				time_t utcTime = chrono::system_clock::to_time_t(userExpirationLocalDate);
 
 				gmtime_r(&utcTime, &tmDateTime);
@@ -215,7 +204,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 
 		{
 			string trimWorkspaceName = StringUtils::trim(workspaceName);
-			if (trimWorkspaceName == "")
+			if (trimWorkspaceName.empty())
 			{
 				string errorMessage = string("WorkspaceName is not well formed.") + ", workspaceName: " + workspaceName;
 				_logger->error(__FILEREF__ + errorMessage);
@@ -251,7 +240,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -966,9 +955,10 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, string workspaceName, string notes, WorkspaceType workspaceType,
-	string deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod, long maxIngestionsNumber, long maxStorageInMB,
-	string languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
+	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, const string& workspaceName, const string& notes,
+	WorkspaceType workspaceType, const string& deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
+	long maxIngestionsNumber, long maxStorageInMB,
+	const string& languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
 )
 {
 	int64_t workspaceKey;
@@ -992,8 +982,9 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				"NOW() at time zone 'utc',  {},   {},            {},    {}, "
 				"{},          {},     {},                   {}, "
 				"{},                  {},           {}) returning workspaceKey",
-				trans.transaction->quote(workspaceName), trans.transaction->quote(workspaceDirectoryName), notes, static_cast<int>(workspaceType),
-				deliveryURL == "" ? "null" : trans.transaction->quote(deliveryURL), enabled, trans.transaction->quote(toString(maxEncodingPriority)),
+				trans.transaction->quote(workspaceName), trans.transaction->quote(workspaceDirectoryName),
+				notes.empty() ? "null" : trans.transaction->quote(notes), static_cast<int>(workspaceType),
+				deliveryURL.empty() ? "null" : trans.transaction->quote(deliveryURL), enabled, trans.transaction->quote(toString(maxEncodingPriority)),
 				trans.transaction->quote(toString(encodingPeriod)), maxIngestionsNumber, trans.transaction->quote(languageCode),
 				trans.transaction->quote(workspaceTimezone)
 			);
