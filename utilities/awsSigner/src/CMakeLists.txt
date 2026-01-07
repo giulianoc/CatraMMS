@@ -39,6 +39,7 @@ include_directories("${LIBPQXX_INCLUDE_DIR}")
 
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
+link_directories("${FFMPEG_LIB_DIR}")
 link_directories("${LIBPQXX_LIB_DIR}")
 link_directories("${LIBPQ_LIB_DIR}")
 link_directories("${IMAGEMAGICK_LIB_DIR}")
