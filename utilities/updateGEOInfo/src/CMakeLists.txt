@@ -40,7 +40,6 @@ include_directories("${LIBPQXX_INCLUDE_DIR}")
 
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
-#link_directories("${IMAGEMAGICK_LIB_DIR}")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 #if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
 #  link_directories("${PROJECT_SOURCE_DIR}/../deploy/jsoncpp/lib64")
@@ -50,6 +49,7 @@ link_directories("${LIBPQ_LIB_DIR}")
 link_directories("${OPENCV_LIB_DIR}")
 link_directories("${FFMPEG_LIB_DIR}")
 link_directories("${OPENSSL_LIB_DIR}")
+link_directories("${IMAGEMAGICK_LIB_DIR}")
 
 add_executable(updateGEOInfo ${SOURCES} ${HEADERS})
 
