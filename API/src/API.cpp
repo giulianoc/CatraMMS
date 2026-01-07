@@ -163,6 +163,14 @@ API::API(
 		{ modifyEncoder(sThreadId, request, requestData); }
 	);
 	registerHandler(
+		"updateEncoderBandwidthStats", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ updateEncoderBandwidthStats(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"updateEncoderCPUUsageStats", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ updateEncoderCPUUsageStats(sThreadId, request, requestData); }
+	);
+	registerHandler(
 		"encoderList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ encoderList(sThreadId, request, requestData); }
 	);

@@ -2317,12 +2317,14 @@ class MMSEngineDBFacade
 		int64_t encoderKey, bool labelToBeModified, const std::string &label, bool externalToBeModified, bool external, bool enabledToBeModified,
 		bool enabled, bool protocolToBeModified, const std::string &protocol, bool publicServerNameToBeModified, const std::string &publicServerName,
 		bool internalServerNameToBeModified, const std::string &internalServerName, bool portToBeModified, int port
-		// bool maxTranscodingCapabilityToBeModified, int
-		// maxTranscodingCapability, bool
-		// maxLiveProxiesCapabilitiesToBeModified, int
-		// maxLiveProxiesCapabilities, bool
-		// maxLiveRecordingCapabilitiesToBeModified, int
-		// maxLiveRecordingCapabilities
+	);
+
+	void updateEncoderAvgBandwidthUsage(
+		int64_t encoderKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
+	);
+
+	void updateEncoderCPUUsage(
+		int64_t encoderKey, uint32_t& cpuUsage
 	);
 
 	void removeEncoder(int64_t encoderKey);

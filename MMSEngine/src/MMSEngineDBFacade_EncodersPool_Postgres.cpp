@@ -78,18 +78,6 @@ void MMSEngineDBFacade::modifyEncoder(
 	bool internalServerNameToBeModified, const string& internalServerName, bool portToBeModified, int port
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -195,6 +183,132 @@ void MMSEngineDBFacade::modifyEncoder(
 			throw runtime_error(errorMessage);
 		}
 			*/
+		}
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(
+	int64_t encoderKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
+)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		{
+			string sqlStatement = std::format(
+				"update MMS_Encoder set txAvgBandwidthUsage = {}, rxAvgBandwidthUsage = {} "
+				"where encoderKey = {} ",
+				txAvgBandwidthUsage, rxAvgBandwidthUsage, encoderKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec0(sqlStatement);
+			const int rowsUpdated = res.affected_rows();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (rowsUpdated != 1)
+			{
+				const string errorMessage = std::format("no update was done"
+					", encoderKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encoderKey, rowsUpdated, sqlStatement);
+				SPDLOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+void MMSEngineDBFacade::updateEncoderCPUUsage(
+	int64_t encoderKey, uint32_t& cpuUsage
+)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		{
+			string sqlStatement = std::format(
+				"update MMS_Encoder set cpuUsage = {} "
+				"where encoderKey = {} ",
+				cpuUsage, encoderKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec0(sqlStatement);
+			const int rowsUpdated = res.affected_rows();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (rowsUpdated != 1)
+			{
+				const string errorMessage = std::format("no update was done"
+					", encoderKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					encoderKey, rowsUpdated, sqlStatement);
+				SPDLOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
 		}
 	}
 	catch (exception const &e)

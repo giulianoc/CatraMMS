@@ -1872,6 +1872,11 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 				userKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("userKey")].as<int64_t>();
 				workspaceKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("workspaceKey")].as<int64_t>();
 				permissionsRoot = (*sqlResultSet)[0][sqlResultSet->columnIndex("permissions")].as<json>();
+				SPDLOG_INFO("checkAPIKey"
+					", userKey: {}"
+					", workspaceKey: {}"
+					", permissionsRoot: {}", userKey, workspaceKey, JSONUtils::toString(permissionsRoot)
+					);
 			}
 			else
 			{
@@ -2616,7 +2621,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			);
 			if (!empty(res))
 			{
-				string permissions = res[0]["permissions"].as<string>();
+				auto permissions = res[0]["permissions"].as<string>();
 				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
 				admin = JSONUtils::asBool(permissionsRoot, "admin", false);

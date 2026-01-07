@@ -353,6 +353,144 @@ void API::modifyEncoder(
 	}
 }
 
+void API::updateEncoderBandwidthStats(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "updateEncoderBandwidthStats";
+
+	const shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
+	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canUpdateEncoderStats)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw FCGIRequestData::HTTPError(403);
+	}
+
+	int64_t encoderKey;
+	try
+	{
+		json response;
+		try
+		{
+			encoderKey = requestData.getQueryParameter<int64_t>("encoderKey", -1, true);
+			auto txAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("txAvgBandwidthUsage", 0, true);
+			auto rxAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("rxAvgBandwidthUsage", 0, true);
+
+			_mmsEngineDBFacade->updateEncoderAvgBandwidthUsage(encoderKey, txAvgBandwidthUsage, rxAvgBandwidthUsage);
+
+			response["encoderKey"] = encoderKey;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->updateEncoderBandwidthStats failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
+			JSONUtils::toString(response));
+	}
+	catch (exception &e)
+	{
+		const string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", encoderKey: {}"
+			", e.what(): {}",
+			api, encoderKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
+void API::updateEncoderCPUUsageStats(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+	)
+{
+	string api = "updateEncoderCPUUsageStats";
+
+	const shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails =
+		static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	SPDLOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
+	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canUpdateEncoderStats)
+	{
+		const string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw FCGIRequestData::HTTPError(403);
+	}
+
+	int64_t encoderKey;
+	try
+	{
+		json response;
+		try
+		{
+			encoderKey = requestData.getQueryParameter<int64_t>("encoderKey", -1, true);
+			auto cpuUsage = requestData.getQueryParameter<uint32_t>("cpuUsage", 0, true);
+
+			_mmsEngineDBFacade->updateEncoderCPUUsage(encoderKey, cpuUsage);
+
+			response["encoderKey"] = encoderKey;
+		}
+		catch (exception &e)
+		{
+			SPDLOG_ERROR(
+				"_mmsEngineDBFacade->updateEncoderCPUUsageStats failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
+			JSONUtils::toString(response));
+	}
+	catch (exception &e)
+	{
+		const string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", encoderKey: {}"
+			", e.what(): {}",
+			api, encoderKey, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
 void API::removeEncoder(
 	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData

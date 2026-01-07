@@ -787,6 +787,16 @@ class API final : public FastCGIAPI
 		const FCGIRequestData& requestData
 	);
 
+	void updateEncoderBandwidthStats(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void updateEncoderCPUUsageStats(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
 	void removeEncoder(
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData

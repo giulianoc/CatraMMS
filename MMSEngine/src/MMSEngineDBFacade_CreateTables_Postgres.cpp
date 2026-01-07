@@ -1288,16 +1288,19 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement = "create table if not exists MMS_Encoder ("
-								  "encoderKey				bigint GENERATED ALWAYS AS IDENTITY,"
-								  "label					text NOT NULL,"
-								  "external				boolean NOT NULL,"
-								  "enabled				boolean NOT NULL,"
-								  "protocol				text NOT NULL,"
-								  "publicServerName		text NOT NULL,"
-								  "internalServerName		text NOT NULL,"
-								  "port					integer NOT NULL,"
-								  "constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
-								  "UNIQUE (label)) ";
+				"encoderKey				bigint GENERATED ALWAYS AS IDENTITY,"
+				"label					text NOT NULL,"
+				"external				boolean NOT NULL,"
+				"enabled				boolean NOT NULL,"
+				"protocol				text NOT NULL,"
+				"publicServerName		text NOT NULL,"
+				"internalServerName		text NOT NULL,"
+				"port					integer NOT NULL,"
+				"txAvgBandwidthUsage	bigint,"
+				"rxAvgBandwidthUsage	bigint,"
+				"cpuUsage				integer,"
+				"constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
+				"UNIQUE (label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -1312,7 +1315,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create index if not exists MMS_Encoder_idx on MMS_Encoder (publicServerName)";
+			string sqlStatement = "create UNIQUE index if not exists MMS_Encoder_idx on MMS_Encoder (publicServerName)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

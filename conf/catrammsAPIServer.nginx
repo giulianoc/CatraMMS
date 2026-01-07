@@ -97,6 +97,8 @@
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyEncoder&encoderKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/bandwidthStats/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateEncoderBandwidthStats&encoderKey=$2&txAvgBandwidthUsage=$3&rxAvgBandwidthUsage=$4 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encoder/([0-9]+)/cpuStats/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateEncoderCPUUsageStats&encoderKey=$2&cpuUsage=$3 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/encodersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyEncodersPool&encodersPoolKey=$2 last;
 		}
 		if ($request_method = DELETE) {
