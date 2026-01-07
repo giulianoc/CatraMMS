@@ -30,6 +30,7 @@ SET (HEADERS
 include_directories ("${SPDLOG_INCLUDE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
+include_directories("${STRINGUTILS_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
 include_directories("${POSTGRESHELPER_INCLUDE_DIR}")
 include_directories("${DBCONN_INCLUDE_DIR}")

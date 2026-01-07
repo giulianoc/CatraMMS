@@ -1869,9 +1869,9 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 			);
 			if (!sqlResultSet->empty())
 			{
-				userKey = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("userKey")].as<int64_t>();
-				workspaceKey = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("workspaceKey")].as<int64_t>();
-				permissionsRoot = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("permissions")].as<json>();
+				userKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("userKey")].as<int64_t>();
+				workspaceKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("workspaceKey")].as<int64_t>();
+				permissionsRoot = (*sqlResultSet)[0][sqlResultSet->columnIndex("permissions")].as<json>();
 			}
 			else
 			{
