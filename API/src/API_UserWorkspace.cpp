@@ -2623,10 +2623,8 @@ void API::workspaceUsage(
 		{
 			int64_t workSpaceUsageInBytes;
 
-			SPDLOG_INFO("AAAAAAAA");
 			tie(workSpaceUsageInBytes, ignore) = _mmsEngineDBFacade->getWorkspaceUsage(
 				apiAuthorizationDetails->workspace->_workspaceKey);
-			SPDLOG_INFO("BBBBBBBBB");
 
 			int64_t workSpaceUsageInMB = workSpaceUsageInBytes / 1000000;
 
@@ -2637,12 +2635,9 @@ void API::workspaceUsage(
 		field = "response";
 		workspaceUsageRoot[field] = responseRoot;
 
-			SPDLOG_INFO("AAAAAAAA");
 		string responseBody = JSONUtils::toString(workspaceUsageRoot);
-		SPDLOG_INFO("AAAAAAAA");
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
-			SPDLOG_INFO("AAAAAAAA");
 	}
 	catch (exception &e)
 	{

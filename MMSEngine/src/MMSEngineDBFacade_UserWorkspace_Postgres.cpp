@@ -1857,7 +1857,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			const result res = trans.transaction->exec(sqlStatement);
-			auto sqlResultSet = PostgresHelper::buildResult(res);
+			const auto sqlResultSet = PostgresHelper::buildResult(res);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -1867,7 +1867,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			if (!empty(res))
+			if (!sqlResultSet->empty())
 			{
 				userKey = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("userKey")].as<int64_t>();
 				workspaceKey = (*sqlResultSet)[0][sqlResultSet->getColumnIndexByName("workspaceKey")].as<int64_t>();
