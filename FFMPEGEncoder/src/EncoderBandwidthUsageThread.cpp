@@ -58,13 +58,20 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 		", api->updateBandwidthStatsPassword: {}", _updateBandwidthStatsPassword);
 	_updateBandwidthStatsPassword = Encrypt::opensslDecrypt(updateBandwidthStatsPasswordEncrypted);
 
-	_encoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<int32_t>(0);
+	_encoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<int32_t>(-1);
 	SPDLOG_INFO("Configuration item"
 		", ffmpeg->encoderKey: {}", _encoderKey);
 }
 
 void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const
 {
+
+	if (_encoderKey < 0)
+	{
+		SPDLOG_ERROR("The 'encoderKey' configuration item is not valid and bandwidth stats is not sent to API"
+			", encoderKey: {}", _encoderKey);
+		return;
+	}
 
 	const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/encoder/{}{}/{}/{}",
 		_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _encoderKey, _mmsAPIUpdateBandwidthStatsURI,
