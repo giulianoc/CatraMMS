@@ -10,9 +10,32 @@
 using namespace std;
 using json = nlohmann::json;
 
+string base64_decode(const string &in)
+{
+	string out;
+
+	vector<int> T(256, -1);
+	for (int i = 0; i < 64; i++)
+		T["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i;
+
+	int val = 0, valb = -8;
+	for (unsigned char c : in)
+	{
+		if (T[c] == -1)
+			break;
+		val = (val << 6) + T[c];
+		valb += 6;
+		if (valb >= 0)
+		{
+			out.push_back(char((val >> valb) & 0xFF));
+			valb -= 8;
+		}
+	}
+	return out;
+}
+
 int main(const int iArgc, char *pArgv[])
 {
-
 	if (iArgc != 5)
 	{
 		std::cerr << "Usage: " << pArgv[0] << " name email password workspace-name" << endl;
@@ -99,14 +122,14 @@ int main(const int iArgc, char *pArgv[])
 
 			vector<string> emailBody;
 			emailBody.push_back(string("<p>Hi ") + name + ",</p>");
-			emailBody.push_back(string("<p>the registration has been done successfully, user and default Workspace have been created</p>"));
+			emailBody.emplace_back("<p>the registration has been done successfully, user and default Workspace have been created</p>");
 			emailBody.push_back(
 				string("<p>here follows the user key <b>") + to_string(userKey) + "</b>, email <b>" + email +
 				"</b> and the password <b>" + password + "</b></p>"
 			);
-			emailBody.push_back(string("<p>Please make sure to change the password once login is done</p>"));
-			emailBody.push_back("<p>Have a nice day, best regards</p>");
-			emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.emplace_back("<p>Please make sure to change the password once login is done</p>");
+			emailBody.emplace_back("<p>Have a nice day, best regards</p>");
+			emailBody.emplace_back("<p>MMS technical support</p>");
 
 			EMailSender emailSender(configuration);
 			bool useMMSCCToo = true;
