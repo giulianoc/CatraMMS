@@ -24,6 +24,7 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #include "EncoderBandwidthUsageThread.h"
 
+#include "../../../../homebrew/Cellar/opencv/4.12.0_14/include/opencv4/opencv2/core.hpp"
 #include "CurlWrapper.h"
 #include "Encrypt.h"
 
@@ -56,7 +57,17 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	auto updateBandwidthStatsPasswordEncrypted = JsonPath(&configurationRoot)["api"]["updateBandwidthStatsPassword"].as<std::string>();
 	SPDLOG_INFO("Configuration item"
 		", api->updateBandwidthStatsPassword: {}", _updateBandwidthStatsPassword);
-	_updateBandwidthStatsPassword = Encrypt::opensslDecrypt(updateBandwidthStatsPasswordEncrypted);
+	try
+	{
+		_updateBandwidthStatsPassword = Encrypt::opensslDecrypt(updateBandwidthStatsPasswordEncrypted);
+	}
+	catch (std::exception& e)
+	{
+		SPDLOG_ERROR("Encrypt::opensslDecrypt failed"
+			", updateBandwidthStatsPasswordEncrypted: {}"
+			", exception: {}", updateBandwidthStatsPasswordEncrypted, e.what()
+			);
+	}
 
 	_encoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<int32_t>(-1);
 	SPDLOG_INFO("Configuration item"
