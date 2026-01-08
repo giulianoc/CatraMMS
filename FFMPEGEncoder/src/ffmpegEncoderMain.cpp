@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "CurlWrapper.h"
+#include "EncoderBandwidthUsageThread.h"
 #include "FFMPEGEncoder.h"
 #include "FFMPEGEncoderDaemons.h"
 #include "JSONUtils.h"
@@ -250,7 +251,7 @@ int main(int argc, char **argv)
 		mutex tvChannelsPortsMutex;
 		long tvChannelPort_CurrentOffset = 0;
 
-		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>();
+		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot);
 		bandwidthUsageThread->start();
 
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;

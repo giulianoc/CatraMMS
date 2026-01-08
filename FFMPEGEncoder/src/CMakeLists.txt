@@ -20,46 +20,48 @@
 add_definitions(-DNO_FCGI_DEFINES)
 
 set(SOURCES
-    ffmpegEncoderMain.cpp
-    FFMPEGEncoder.cpp
-    FFMPEGEncoderDaemons.cpp
-    FFMPEGEncoderBase.cpp
-    FFMPEGEncoderTask.cpp
-    EncodeContent.cpp
-    OverlayImageOnVideo.cpp
-    OverlayTextOnVideo.cpp
-    GenerateFrames.cpp
-    SlideShow.cpp
-    VideoSpeed.cpp
-    AddSilentAudio.cpp
-    PictureInPicture.cpp
-    IntroOutroOverlay.cpp
-    CutFrameAccurate.cpp
-    LiveRecorder.cpp
-    LiveRecorderDaemons.cpp
-    LiveProxy.cpp
-    LiveGrid.cpp)
+        ffmpegEncoderMain.cpp
+        EncoderBandwidthUsageThread.cpp
+        FFMPEGEncoder.cpp
+        FFMPEGEncoderDaemons.cpp
+        FFMPEGEncoderBase.cpp
+        FFMPEGEncoderTask.cpp
+        EncodeContent.cpp
+        OverlayImageOnVideo.cpp
+        OverlayTextOnVideo.cpp
+        GenerateFrames.cpp
+        SlideShow.cpp
+        VideoSpeed.cpp
+        AddSilentAudio.cpp
+        PictureInPicture.cpp
+        IntroOutroOverlay.cpp
+        CutFrameAccurate.cpp
+        LiveRecorder.cpp
+        LiveRecorderDaemons.cpp
+        LiveProxy.cpp
+        LiveGrid.cpp)
 
 set(HEADERS
-    AddSilentAudio.h
-    FFMPEGEncoderBase.h
-    IntroOutroOverlay.h
-    OverlayImageOnVideo.h
-    VideoSpeed.h
-    FFMPEGEncoderDaemons.h
-    LiveGrid.h
-    OverlayTextOnVideo.h
-    FFMPEGEncoder.h
-    LiveProxy.h
-    PictureInPicture.h
-    CutFrameAccurate.h
-    FFMPEGEncoderTask.h
-    LiveRecorderDaemons.h
-    SlideShow.h
-    EncodeContent.h
-    GenerateFrames.h
-    LiveRecorder.h
-    )
+        AddSilentAudio.h
+        FFMPEGEncoderBase.h
+        EncoderBandwidthUsageThread.h
+        IntroOutroOverlay.h
+        OverlayImageOnVideo.h
+        VideoSpeed.h
+        FFMPEGEncoderDaemons.h
+        LiveGrid.h
+        OverlayTextOnVideo.h
+        FFMPEGEncoder.h
+        LiveProxy.h
+        PictureInPicture.h
+        CutFrameAccurate.h
+        FFMPEGEncoderTask.h
+        LiveRecorderDaemons.h
+        SlideShow.h
+        EncodeContent.h
+        GenerateFrames.h
+        LiveRecorder.h
+)
 
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(
