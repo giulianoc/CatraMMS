@@ -24,7 +24,6 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #include "EncoderBandwidthUsageThread.h"
 
-#include "../../../../homebrew/Cellar/opencv/4.12.0_14/include/opencv4/opencv2/core.hpp"
 #include "CurlWrapper.h"
 #include "Encrypt.h"
 
