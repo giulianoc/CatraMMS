@@ -1755,20 +1755,28 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 		time_t utcNow = chrono::system_clock::to_time_t(chrono::system_clock::now());
 		if (expirationTime < utcNow)
 		{
-			string errorMessage = std::format(
+			const string errorMessage = std::format(
 				"Token expired"
 				", expirationTime: {}"
-				", utcNow: {}",
-				expirationTime, utcNow
+				", utcNow: {}"
+				", expired since {} seconds",
+				expirationTime, utcNow, (utcNow - expirationTime)
 			);
 			SPDLOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
+		SPDLOG_INFO("Token not expired"
+			", expirationTime: {}"
+			", utcNow: {}"
+			", to expire misses {} seconds",
+			expirationTime, utcNow, (expirationTime - utcNow)
+		);
 	}
 	catch (exception &e)
 	{
-		string errorMessage = "Not authorized: exception managing token";
+		string errorMessage = std::format("Not authorized: exception managing token"
+			", exception: {}", e.what());
 		SPDLOG_WARN(errorMessage);
 
 		throw;
