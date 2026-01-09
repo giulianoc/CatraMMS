@@ -43,8 +43,7 @@ private:
 	int32_t _mmsAPIPort;
 	std::string _mmsAPIVersion;
 	std::string _mmsAPIUpdateBandwidthStatsURI;
-	int32_t _mmsAPITimeoutInSeconds;
-	std::string _updateBandwidthStatsUser;
-	std::string _updateBandwidthStatsPassword;
+	std::string _updateStatsUser;
+	std::string _updateStatsPassword;
 	int32_t _encoderKey;
 };

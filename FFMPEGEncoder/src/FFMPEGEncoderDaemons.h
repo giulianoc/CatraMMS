@@ -60,5 +60,14 @@ private:
 	std::shared_mutex *_cpuUsageMutex;
 	std::deque<int> *_cpuUsage;
 
+	std::string _mmsAPIProtocol;
+	std::string _mmsAPIHostname;
+	int32_t _mmsAPIPort;
+	std::string _mmsAPIVersion;
+	std::string _mmsAPIUpdateCPUStatsURI;
+	std::string _updateStatsUser;
+	std::string _updateStatsPassword;
+	int32_t _encoderKey;
+
 	static bool exists(const std::string& pathName, int retries = 3, int waitInSeconds = 1);
 };
