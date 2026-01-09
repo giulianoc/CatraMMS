@@ -53,12 +53,12 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	_updateBandwidthStatsUser = JsonPath(&configurationRoot)["api"]["updateBandwidthStatsUser"].as<std::string>();
 	SPDLOG_INFO("Configuration item"
 		", api->updateBandwidthStatsUser: {}", _updateBandwidthStatsUser);
-	auto updateBandwidthStatsPasswordEncrypted = JsonPath(&configurationRoot)["api"]["updateBandwidthStatsPassword"].as<std::string>();
+	auto updateBandwidthStatsCryptedPassword = JsonPath(&configurationRoot)["api"]["updateBandwidthStatsCryptedPassword"].as<std::string>();
 	SPDLOG_INFO("Configuration item"
-		", api->updateBandwidthStatsPassword: {}", _updateBandwidthStatsPassword);
+		", api->updateBandwidthStatsCryptedPassword: {}", updateBandwidthStatsCryptedPassword);
 	try
 	{
-		_updateBandwidthStatsPassword = Encrypt::opensslDecrypt(updateBandwidthStatsPasswordEncrypted);
+		_updateBandwidthStatsPassword = Encrypt::opensslDecrypt(updateBandwidthStatsCryptedPassword);
 	}
 	catch (std::exception& e)
 	{
