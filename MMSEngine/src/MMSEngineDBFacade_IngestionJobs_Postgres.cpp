@@ -3487,7 +3487,8 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			chrono::milliseconds internalSqlDuration(0);
 			result res = trans.transaction->exec(sqlStatement);
-			for (auto row : res)
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _postgresHelper.buildResult(res);
+			for (const auto& row : *sqlResultSet)
 			{
 				chrono::system_clock::time_point startGetIngestionJobRoot = chrono::system_clock::now();
 				json ingestionJobRoot = getIngestionJobRoot(workspace, row, dependencyInfo, ingestionJobOutputs, trans);
@@ -3538,7 +3539,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 }
 
 json MMSEngineDBFacade::getIngestionJobRoot(
-	const shared_ptr<Workspace>& workspace, row &row,
+	const shared_ptr<Workspace>& workspace, PostgresHelper::SqlResultSet::SqlRow &row,
 	bool dependencyInfo,	  // added for performance issue
 	bool ingestionJobOutputs, // added because output could be thousands of entries
 	PostgresConnTrans &trans, chrono::milliseconds *sqlDuration
@@ -3565,13 +3566,13 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		ingestionJobRoot[field] = row["metaDataContent"].as<string>();
 
 		field = "processorMMS";
-		if (row["processorMMS"].is_null())
+		if (row["processorMMS"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
 			ingestionJobRoot[field] = row["processorMMS"].as<string>();
 
 		field = "label";
-		if (row["label"].is_null())
+		if (row["label"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
 			ingestionJobRoot[field] = row["label"].as<string>();
@@ -3609,20 +3610,21 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
-			for (auto row : res)
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _postgresHelper.buildResult(res);
+			for (auto localRow : *sqlResultSet)
 			{
 				json mediaItemRoot;
 
 				field = "mediaItemKey";
-				auto mediaItemKey = row["mediaItemKey"].as<int64_t>();
+				auto mediaItemKey = localRow["mediaItemKey"].as<int64_t>();
 				mediaItemRoot[field] = mediaItemKey;
 
 				field = "physicalPathKey";
-				auto physicalPathKey = row["physicalPathKey"].as<int64_t>();
+				auto physicalPathKey = localRow["physicalPathKey"].as<int64_t>();
 				mediaItemRoot[field] = physicalPathKey;
 
 				field = "position";
-				mediaItemRoot[field] = row["position"].as<int>();
+				mediaItemRoot[field] = localRow["position"].as<int32_t>();
 
 				mediaItemsRoot.push_back(mediaItemRoot);
 			}
@@ -3645,13 +3647,13 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		ingestionJobRoot[field] = row["processingStartingFrom"].as<string>();
 
 		field = "startProcessing";
-		if (row["startProcessing"].is_null())
+		if (row["startProcessing"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
 			ingestionJobRoot[field] = row["startProcessing"].as<string>();
 
 		field = "endProcessing";
-		if (row["endProcessing"].is_null())
+		if (row["endProcessing"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
 			ingestionJobRoot[field] = row["endProcessing"].as<string>();
@@ -3659,7 +3661,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		// if (ingestionType == IngestionType::AddContent)
 		{
 			field = "downloadingProgress";
-			if (row["downloadingProgress"].is_null())
+			if (row["downloadingProgress"].isNull())
 				ingestionJobRoot[field] = nullptr;
 			else
 				ingestionJobRoot[field] = row["downloadingProgress"].as<float>();
@@ -3668,7 +3670,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		// if (ingestionType == IngestionType::AddContent)
 		{
 			field = "uploadingProgress";
-			if (row["uploadingProgress"].is_null())
+			if (row["uploadingProgress"].isNull())
 				ingestionJobRoot[field] = nullptr;
 			else
 				ingestionJobRoot[field] = (int)row["uploadingProgress"].as<float>();
@@ -3678,13 +3680,16 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		ingestionJobRoot[field] = row["ingestionRootKey"].as<int64_t>();
 
 		field = "errorMessages";
-		if (row["errorMessages"].is_null())
+		if (row["errorMessages"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
 		{
 			json errorMessagesRoot = json::array();
 
-			auto array = row["errorMessages"].as_array();
+			const auto& arr = row["errorMessages"].asArray<string>();
+			for (const string& errorMessage: arr)
+				errorMessagesRoot.push_back(errorMessage);
+			/*
 			pair<array_parser::juncture, string> elem;
 			do
 			{
@@ -3692,6 +3697,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 				if (elem.first == array_parser::juncture::string_value)
 					errorMessagesRoot.push_back(elem.second);
 			} while (elem.first != array_parser::juncture::done);
+			*/
 
 			ingestionJobRoot[field] = errorMessagesRoot;
 
