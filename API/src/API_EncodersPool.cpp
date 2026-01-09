@@ -593,7 +593,7 @@ void API::encoderList(
 
 		string serverName = requestData.getQueryParameter("serverName", "");
 
-		int32_t port = requestData.getQueryParameter("port", static_cast<int64_t>(-1));
+		int32_t port = requestData.getQueryParameter("port", static_cast<int32_t>(-1));
 
 		string labelOrder = requestData.getQueryParameter("labelOrder", "");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")

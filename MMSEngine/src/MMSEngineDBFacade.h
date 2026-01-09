@@ -2339,13 +2339,16 @@ class MMSEngineDBFacade
 	);
 
 	bool isEncoderRunning(
-		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port
+		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port,
+		std::chrono::milliseconds *duration = nullptr
 	) const;
 
+	/*
 	std::tuple<bool, int32_t, int64_t> getEncoderInfo(
 		bool external, const std::string &protocol, const std::string &publicServerName, const std::string &internalServerName, int port,
 		std::chrono::milliseconds *duration = nullptr
 	) const;
+	*/
 
 	void addAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey);
 	void addAssociationWorkspaceEncoder(int64_t workspaceKey, std::string sharedEncodersPoolLabel, nlohmann::json sharedEncodersLabel);
@@ -2749,7 +2752,7 @@ class MMSEngineDBFacade
 #endif
 
 #ifdef __POSTGRES__
-	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, pqxx::row &row, std::chrono::milliseconds *extraDuration = nullptr);
+	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, PostgresHelper::SqlResultSet::SqlRow &row, std::chrono::milliseconds *extraDuration = nullptr);
 #else
 	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, std::shared_ptr<sql::ResultSet> resultSet);
 #endif

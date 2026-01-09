@@ -1129,24 +1129,27 @@ json MMSEngineDBFacade::getEncoderList(
 			if (allEncoders)
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-					"e.publicServerName, e.internalServerName, e.port "
+					"e.publicServerName, e.internalServerName, e.port, "
+					"e.cpuUsage, e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage "
 					"from MMS_Encoder e {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
 			else
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
-					"e.publicServerName, e.internalServerName, e.port "
+					"e.publicServerName, e.internalServerName, e.port, "
+					"e.cpuUsage, e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 			chrono::milliseconds internalSqlDuration(0);
-			for (auto row : res)
+			for (auto& sqlRow : *sqlResultSet)
 			{
 				chrono::milliseconds localSqlDuration(0);
-				json encoderRoot = getEncoderRoot(admin, runningInfo, row, &localSqlDuration);
+				json encoderRoot = getEncoderRoot(admin, runningInfo, sqlRow, &localSqlDuration);
 				internalSqlDuration += localSqlDuration;
 
 				encodersRoot.push_back(encoderRoot);
@@ -1193,7 +1196,8 @@ json MMSEngineDBFacade::getEncoderList(
 	return encoderListRoot;
 }
 
-json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row, chrono::milliseconds *extraDuration)
+json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, PostgresHelper::SqlResultSet::SqlRow &row,
+	chrono::milliseconds *extraDuration)
 {
 	json encoderRoot;
 
@@ -1231,8 +1235,12 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row, c
 		encoderRoot[field] = internalServerName;
 
 		field = "port";
-		int port = row["port"].as<int>();
+		int port = row["port"].as<int32_t>();
 		encoderRoot[field] = port;
+
+		encoderRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
+		encoderRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
+		encoderRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
 
 		// 2022-1-30: running and cpu usage takes a bit of time
 		//		scenario: some MMS WEB pages loading encoder info, takes a bit of time
@@ -1240,14 +1248,19 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row, c
 		//		running info, so we made it optional
 		if (runningInfo)
 		{
+			/*
 			chrono::milliseconds localDuration(0);
 			auto [running, cpuUsage, avgBandwidthUsage] = getEncoderInfo(external, protocol, publicServerName, internalServerName, port, &localDuration);
 			if (extraDuration != nullptr)
 				*extraDuration += localDuration;
+			*/
 
-			encoderRoot["running"] = running;
-			encoderRoot["cpuUsage"] = cpuUsage;
-			encoderRoot["avgBandwidthUsage"] = avgBandwidthUsage;
+			chrono::milliseconds localDuration(0);
+			encoderRoot["running"] = isEncoderRunning(external, protocol, publicServerName, internalServerName, port, &localDuration);
+			if (extraDuration != nullptr)
+				*extraDuration += localDuration;
+			// encoderRoot["cpuUsage"] = cpuUsage;
+			// encoderRoot["avgBandwidthUsage"] = avgBandwidthUsage;
 		}
 
 		if (admin)
@@ -1282,7 +1295,7 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, row &row, c
 }
 
 bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, const string& publicServerName,
-	const string& internalServerName, const int port
+	const string& internalServerName, const int port, chrono::milliseconds *duration
 ) const
 {
 	bool isRunning = true;
@@ -1290,12 +1303,17 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 	string ffmpegEncoderURL;
 	try
 	{
-		ffmpegEncoderURL = protocol + "://" + (external ? publicServerName : internalServerName) + ":" + to_string(port) + _ffmpegEncoderStatusURI;
+		const chrono::system_clock::time_point start = chrono::system_clock::now();
 
+		ffmpegEncoderURL = std::format("{}://{}:{}{}",
+			protocol, (external ? publicServerName : internalServerName), port, _ffmpegEncoderStatusURI);
 		constexpr vector<string> otherHeaders;
 		json infoResponseRoot = CurlWrapper::httpGetJson(
 			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
 		);
+
+		if (duration != nullptr)
+			*duration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);
 	}
 	catch (exception& e)
 	{
@@ -1327,6 +1345,7 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 	return isRunning;
 }
 
+/*
 tuple<bool, int32_t, int64_t> MMSEngineDBFacade::getEncoderInfo(bool external, const string& protocol, const string &publicServerName,
 	const string& internalServerName, const int port, chrono::milliseconds *duration
 ) const
@@ -1382,6 +1401,7 @@ tuple<bool, int32_t, int64_t> MMSEngineDBFacade::getEncoderInfo(bool external, c
 
 	return make_tuple(isRunning, cpuUsage, avgBandwidthUsage);
 }
+*/
 
 string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono::milliseconds *sqlDuration)
 {
@@ -1574,20 +1594,23 @@ json MMSEngineDBFacade::getEncodersPoolList(
 					);
 					// chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.transaction->exec(sqlStatement);
-					for (auto row : res)
+					shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+					for (auto& sqlRow : *sqlResultSet)
 					{
-						auto encoderKey = row["encoderKey"].as<int64_t>();
+						auto encoderKey = sqlRow["encoderKey"].as<int64_t>();
 
 						{
 							string sqlStatement = std::format(
 								"select encoderKey, label, external, enabled, protocol, "
-								"publicServerName, internalServerName, port "
+								"publicServerName, internalServerName, port, "
+								"cpuUsage, txAvgBandwidthUsage, rxAvgBandwidthUsage "
 								"from MMS_Encoder "
 								"where encoderKey = {} ",
 								encoderKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
 							result res = trans.transaction->exec(sqlStatement);
+							shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
@@ -1597,11 +1620,11 @@ json MMSEngineDBFacade::getEncodersPoolList(
 								", elapsed (millisecs): @{}@",
 								sqlStatement, trans.connection->getConnectionId(), elapsed
 							);
-							if (!empty(res))
+							if (!sqlResultSet->empty())
 							{
 								bool admin = false;
 								bool runningInfo = false;
-								auto row1 = res[0];
+								auto& row1 = (*sqlResultSet)[0];
 								json encoderRoot = getEncoderRoot(admin, runningInfo, row1);
 
 								encodersRoot.push_back(encoderRoot);
