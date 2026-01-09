@@ -63,8 +63,8 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	catch (std::exception& e)
 	{
 		SPDLOG_ERROR("Encrypt::opensslDecrypt failed"
-			", updateBandwidthStatsPasswordEncrypted: {}"
-			", exception: {}", updateBandwidthStatsPasswordEncrypted, e.what()
+			", updateBandwidthStatsCryptedPassword: {}"
+			", exception: {}", updateBandwidthStatsCryptedPassword, e.what()
 			);
 	}
 
