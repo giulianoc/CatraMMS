@@ -68,9 +68,22 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 			);
 	}
 
-	_encoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<int32_t>(-1);
+	std::string sEncoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<std::string>();
 	SPDLOG_INFO("Configuration item"
 		", ffmpeg->encoderKey: {}", _encoderKey);
+	try
+	{
+		_encoderKey = std::stoi(sEncoderKey);
+	}
+	catch (std::exception& e)
+	{
+		_encoderKey = -1;
+
+		SPDLOG_ERROR("stoi failed"
+			", sEncoderKey: {}"
+			", exception: {}", sEncoderKey, e.what()
+			);
+	}
 }
 
 void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const
