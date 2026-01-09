@@ -3488,7 +3488,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			chrono::milliseconds internalSqlDuration(0);
 			result res = trans.transaction->exec(sqlStatement);
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _postgresHelper.buildResult(res);
-			for (const auto& row : *sqlResultSet)
+			for (auto& row : *sqlResultSet)
 			{
 				chrono::system_clock::time_point startGetIngestionJobRoot = chrono::system_clock::now();
 				json ingestionJobRoot = getIngestionJobRoot(workspace, row, dependencyInfo, ingestionJobOutputs, trans);

@@ -540,9 +540,10 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 					// "order by newStartProcessing asc, newEndProcessing asc";
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
 					result res = trans.transaction->exec(sqlStatement);
-					for (auto row : res)
+					shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+					for (auto& sqlRow : *sqlResultSet)
 					{
-						json ingestionJobRoot = getIngestionJobRoot(workspace, row, dependencyInfo, ingestionJobOutputs, trans);
+						json ingestionJobRoot = getIngestionJobRoot(workspace, sqlRow, dependencyInfo, ingestionJobOutputs, trans);
 
 						ingestionJobsRoot.push_back(ingestionJobRoot);
 					}
