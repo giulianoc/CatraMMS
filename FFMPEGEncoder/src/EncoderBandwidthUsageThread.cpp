@@ -100,6 +100,12 @@ void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBand
 		_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _encoderKey, _mmsAPIUpdateBandwidthStatsURI,
 		txAvgBandwidthUsage, rxAvgBandwidthUsage);
 
+	SPDLOG_INFO("AAAAAAAAAAAA"
+		", mmsAPIUpdateBandwidthStatsURL: {}"
+		", _updateBandwidthStatsUser: {}"
+		", _updateBandwidthStatsPassword: {}",
+		mmsAPIUpdateBandwidthStatsURL, _updateBandwidthStatsUser, _updateBandwidthStatsPassword
+		);
 	constexpr std::vector<std::string> otherHeaders;
 	nlohmann::json encoderResponse = CurlWrapper::httpPutStringAndGetJson(
 		mmsAPIUpdateBandwidthStatsURL, _mmsAPITimeoutInSeconds,
