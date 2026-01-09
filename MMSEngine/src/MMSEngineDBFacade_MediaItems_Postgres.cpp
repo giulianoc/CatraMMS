@@ -1045,18 +1045,18 @@ json MMSEngineDBFacade::getMediaItemsList(
 		json mediaItemsRoot = json::array();
 		{
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
-			for (auto row : *sqlResultSet)
+			for (auto sqlRow : *sqlResultSet)
 			{
 				json mediaItemRoot;
 
-				auto localMediaItemKey = row["mediaItemKey"].as<int64_t>();
+				auto localMediaItemKey = sqlRow["mediaItemKey"].as<int64_t>();
 
 				field = "mediaItemKey";
 				mediaItemRoot[field] = localMediaItemKey;
 
 				if (responseFields.empty() || responseFields.find("title") != responseFields.end())
 				{
-					auto localTitle = row["title"].as<string>();
+					auto localTitle = sqlRow["title"].as<string>();
 
 					// a printf is used to pring into the output, so % has to be changed to %%
 					for (int titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
@@ -1072,71 +1072,71 @@ json MMSEngineDBFacade::getMediaItemsList(
 				if (responseFields.empty() || responseFields.find("deliveryFileName") != responseFields.end())
 				{
 					field = "deliveryFileName";
-					if (row["deliveryFileName"].isNull())
+					if (sqlRow["deliveryFileName"].isNull())
 						mediaItemRoot[field] = nullptr;
 					else
-						mediaItemRoot[field] = row["deliveryFileName"].as<string>();
+						mediaItemRoot[field] = sqlRow["deliveryFileName"].as<string>();
 				}
 
 				if (responseFields.empty() || responseFields.find("ingester") != responseFields.end())
 				{
 					field = "ingester";
-					if (row["ingester"].isNull())
+					if (sqlRow["ingester"].isNull())
 						mediaItemRoot[field] = nullptr;
 					else
-						mediaItemRoot[field] = row["ingester"].as<string>();
+						mediaItemRoot[field] = sqlRow["ingester"].as<string>();
 				}
 
 				if (responseFields.empty() || responseFields.find("userData") != responseFields.end())
 				{
 					field = "userData";
-					if (row["userData"].isNull())
+					if (sqlRow["userData"].isNull())
 						mediaItemRoot[field] = nullptr;
 					else
-						mediaItemRoot[field] = row["userData"].as<string>();
+						mediaItemRoot[field] = sqlRow["userData"].as<json>();
 				}
 
 				if (responseFields.empty() || responseFields.find("ingestionDate") != responseFields.end())
 				{
 					field = "ingestionDate";
-					mediaItemRoot[field] = row["formattedIngestionDate"].as<string>();
+					mediaItemRoot[field] = sqlRow["formattedIngestionDate"].as<string>();
 				}
 
 				if (responseFields.empty() || responseFields.find("startPublishing") != responseFields.end())
 				{
 					field = "startPublishing";
-					mediaItemRoot[field] = row["formattedStartPublishing"].as<string>();
+					mediaItemRoot[field] = sqlRow["formattedStartPublishing"].as<string>();
 				}
 				if (responseFields.empty() || responseFields.find("endPublishing") != responseFields.end())
 				{
 					field = "endPublishing";
-					mediaItemRoot[field] = row["formattedEndPublishing"].as<string>();
+					mediaItemRoot[field] = sqlRow["formattedEndPublishing"].as<string>();
 				}
 
 				if (responseFields.empty() || responseFields.find("willBeRemovedAt") != responseFields.end())
 				{
 					field = "willBeRemovedAt";
-					mediaItemRoot[field] = row["formattedWillBeRemovedAt"].as<string>();
+					mediaItemRoot[field] = sqlRow["formattedWillBeRemovedAt"].as<string>();
 				}
 
-				ContentType contentType = toContentType(row["contentType"].as<string>());
+				ContentType contentType = toContentType(sqlRow["contentType"].as<string>());
 				if (responseFields.empty() || responseFields.find("contentType") != responseFields.end())
 				{
 					field = "contentType";
-					mediaItemRoot[field] = row["contentType"].as<string>();
+					mediaItemRoot[field] = sqlRow["contentType"].as<string>();
 				}
 
 				if (responseFields.empty() || responseFields.find("retentionInMinutes") != responseFields.end())
 				{
 					field = "retentionInMinutes";
-					mediaItemRoot[field] = row["retentionInMinutes"].as<int64_t>();
+					mediaItemRoot[field] = sqlRow["retentionInMinutes"].as<int64_t>();
 				}
 
 				if (responseFields.empty() || responseFields.find("tags") != responseFields.end())
 				{
 					json mediaItemTagsRoot = json::array();
 
-					auto tagsArray = row["tags"].asArray<string>();
+					auto tagsArray = sqlRow["tags"].asArray<string>();
 					for (const string& tag: tagsArray)
 						mediaItemTagsRoot.push_back(tag);
 					/*
