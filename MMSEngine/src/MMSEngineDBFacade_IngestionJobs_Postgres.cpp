@@ -3539,7 +3539,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 }
 
 json MMSEngineDBFacade::getIngestionJobRoot(
-	const shared_ptr<Workspace>& workspace, PostgresHelper::SqlResultSet::SqlRow &row,
+	const shared_ptr<Workspace>& workspace, PostgresHelper::SqlResultSet::SqlRow &sqlRow,
 	bool dependencyInfo,	  // added for performance issue
 	bool ingestionJobOutputs, // added because output could be thousands of entries
 	PostgresConnTrans &trans, chrono::milliseconds *sqlDuration
@@ -3549,33 +3549,33 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 
 	try
 	{
-		auto ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+		auto ingestionJobKey = sqlRow["ingestionJobKey"].as<int64_t>();
 
 		string field = "ingestionType";
-		ingestionJobRoot[field] = row["ingestionType"].as<string>();
-		IngestionType ingestionType = toIngestionType(row["ingestionType"].as<string>());
+		ingestionJobRoot[field] = sqlRow["ingestionType"].as<string>();
+		IngestionType ingestionType = toIngestionType(sqlRow["ingestionType"].as<string>());
 
 		field = "ingestionJobKey";
 		ingestionJobRoot[field] = ingestionJobKey;
 
 		field = "status";
-		ingestionJobRoot[field] = row["status"].as<string>();
-		IngestionStatus ingestionStatus = toIngestionStatus(row["status"].as<string>());
+		ingestionJobRoot[field] = sqlRow["status"].as<string>();
+		IngestionStatus ingestionStatus = toIngestionStatus(sqlRow["status"].as<string>());
 
 		field = "metaDataContent";
-		ingestionJobRoot[field] = row["metaDataContent"].as<string>();
+		ingestionJobRoot[field] = sqlRow["metaDataContent"].as<json>();
 
 		field = "processorMMS";
-		if (row["processorMMS"].isNull())
+		if (sqlRow["processorMMS"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
-			ingestionJobRoot[field] = row["processorMMS"].as<string>();
+			ingestionJobRoot[field] = sqlRow["processorMMS"].as<string>();
 
 		field = "label";
-		if (row["label"].isNull())
+		if (sqlRow["label"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
-			ingestionJobRoot[field] = row["label"].as<string>();
+			ingestionJobRoot[field] = sqlRow["label"].as<string>();
 
 		if (sqlDuration != nullptr)
 			*sqlDuration = chrono::milliseconds(0);
@@ -3644,49 +3644,49 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		ingestionJobRoot[field] = mediaItemsRoot;
 
 		field = "processingStartingFrom";
-		ingestionJobRoot[field] = row["processingStartingFrom"].as<string>();
+		ingestionJobRoot[field] = sqlRow["processingStartingFrom"].as<string>();
 
 		field = "startProcessing";
-		if (row["startProcessing"].isNull())
+		if (sqlRow["startProcessing"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
-			ingestionJobRoot[field] = row["startProcessing"].as<string>();
+			ingestionJobRoot[field] = sqlRow["startProcessing"].as<string>();
 
 		field = "endProcessing";
-		if (row["endProcessing"].isNull())
+		if (sqlRow["endProcessing"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
-			ingestionJobRoot[field] = row["endProcessing"].as<string>();
+			ingestionJobRoot[field] = sqlRow["endProcessing"].as<string>();
 
 		// if (ingestionType == IngestionType::AddContent)
 		{
 			field = "downloadingProgress";
-			if (row["downloadingProgress"].isNull())
+			if (sqlRow["downloadingProgress"].isNull())
 				ingestionJobRoot[field] = nullptr;
 			else
-				ingestionJobRoot[field] = row["downloadingProgress"].as<float>();
+				ingestionJobRoot[field] = sqlRow["downloadingProgress"].as<double>();
 		}
 
 		// if (ingestionType == IngestionType::AddContent)
 		{
 			field = "uploadingProgress";
-			if (row["uploadingProgress"].isNull())
+			if (sqlRow["uploadingProgress"].isNull())
 				ingestionJobRoot[field] = nullptr;
 			else
-				ingestionJobRoot[field] = (int)row["uploadingProgress"].as<float>();
+				ingestionJobRoot[field] = static_cast<int32_t>(sqlRow["uploadingProgress"].as<double>());
 		}
 
 		field = "ingestionRootKey";
-		ingestionJobRoot[field] = row["ingestionRootKey"].as<int64_t>();
+		ingestionJobRoot[field] = sqlRow["ingestionRootKey"].as<int64_t>();
 
 		field = "errorMessages";
-		if (row["errorMessages"].isNull())
+		if (sqlRow["errorMessages"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
 		{
 			json errorMessagesRoot = json::array();
 
-			const auto& arr = row["errorMessages"].asArray<string>();
+			const auto& arr = sqlRow["errorMessages"].asArray<string>();
 			for (const string& errorMessage: arr)
 				errorMessagesRoot.push_back(errorMessage);
 			/*
@@ -3862,7 +3862,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"

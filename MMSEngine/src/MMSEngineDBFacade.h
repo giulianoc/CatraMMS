@@ -2710,7 +2710,7 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	nlohmann::json getIngestionJobRoot(
-		const std::shared_ptr<Workspace> &workspace, PostgresHelper::SqlResultSet::SqlRow &row, bool dependencyInfo,
+		const std::shared_ptr<Workspace> &workspace, PostgresHelper::SqlResultSet::SqlRow &sqlRow, bool dependencyInfo,
 		// added for performance issue
 		bool ingestionJobOutputs,
 		// added because output could be thousands of entries
