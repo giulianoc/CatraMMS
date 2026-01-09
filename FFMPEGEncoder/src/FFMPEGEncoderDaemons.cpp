@@ -2214,7 +2214,7 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 		if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastCPUStats).count() >= cpuStatsUpdateIntervalInSeconds)
 		{
 			lastCPUStats = chrono::system_clock::now();
-			
+
 			shared_lock locker(*_cpuUsageMutex);
 
 			SPDLOG_INFO(
@@ -2255,12 +2255,10 @@ void FFMPEGEncoderDaemons::startCPUUsageThread()
 					_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _encoderKey, _mmsAPIUpdateCPUStatsURI,
 					lastBiggerCpuUsage);
 
-				const int32_t mmsAPITimeoutInSeconds = 3;
-				SPDLOG_TRACE("UpdateCPUStats"
-					", mmsAPIUpdateCPUStatsURL: {}"
-					", _updateCPUStatsUser: {}"
-					", _updateCPUStatsPassword: {}",
-					mmsAPIUpdateCPUStatsURL, _updateStatsUser, _updateStatsPassword
+				constexpr int32_t mmsAPITimeoutInSeconds = 3;
+				SPDLOG_INFO("UpdateCPUStats"
+					", lastBiggerCpuUsage: {}",
+					lastBiggerCpuUsage
 					);
 				constexpr std::vector<std::string> otherHeaders;
 				nlohmann::json encoderResponse = CurlWrapper::httpPutStringAndGetJson(
