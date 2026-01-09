@@ -68,9 +68,9 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 			);
 	}
 
-	std::string sEncoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<std::string>();
+	auto sEncoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<std::string>();
 	SPDLOG_INFO("Configuration item"
-		", ffmpeg->encoderKey: {}", _encoderKey);
+		", ffmpeg->encoderKey: {}", sEncoderKey);
 	try
 	{
 		_encoderKey = std::stoi(sEncoderKey);
