@@ -1034,6 +1034,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 		chrono::milliseconds internalSqlDuration(0);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
 		result res = trans.transaction->exec(sqlStatement);
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 
 		json responseRoot;
 		{
@@ -1044,18 +1045,18 @@ json MMSEngineDBFacade::getMediaItemsList(
 		json mediaItemsRoot = json::array();
 		{
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
-			for (auto row : res)
+			for (auto row : *sqlResultSet)
 			{
 				json mediaItemRoot;
 
-				int64_t localMediaItemKey = row["mediaItemKey"].as<int64_t>();
+				auto localMediaItemKey = row["mediaItemKey"].as<int64_t>();
 
 				field = "mediaItemKey";
 				mediaItemRoot[field] = localMediaItemKey;
 
 				if (responseFields.empty() || responseFields.find("title") != responseFields.end())
 				{
-					string localTitle = row["title"].as<string>();
+					auto localTitle = row["title"].as<string>();
 
 					// a printf is used to pring into the output, so % has to be changed to %%
 					for (int titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
@@ -1071,7 +1072,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				if (responseFields.empty() || responseFields.find("deliveryFileName") != responseFields.end())
 				{
 					field = "deliveryFileName";
-					if (row["deliveryFileName"].is_null())
+					if (row["deliveryFileName"].isNull())
 						mediaItemRoot[field] = nullptr;
 					else
 						mediaItemRoot[field] = row["deliveryFileName"].as<string>();
@@ -1080,7 +1081,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				if (responseFields.empty() || responseFields.find("ingester") != responseFields.end())
 				{
 					field = "ingester";
-					if (row["ingester"].is_null())
+					if (row["ingester"].isNull())
 						mediaItemRoot[field] = nullptr;
 					else
 						mediaItemRoot[field] = row["ingester"].as<string>();
@@ -1089,7 +1090,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				if (responseFields.empty() || responseFields.find("userData") != responseFields.end())
 				{
 					field = "userData";
-					if (row["userData"].is_null())
+					if (row["userData"].isNull())
 						mediaItemRoot[field] = nullptr;
 					else
 						mediaItemRoot[field] = row["userData"].as<string>();
@@ -1118,7 +1119,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					mediaItemRoot[field] = row["formattedWillBeRemovedAt"].as<string>();
 				}
 
-				ContentType contentType = MMSEngineDBFacade::toContentType(row["contentType"].as<string>());
+				ContentType contentType = toContentType(row["contentType"].as<string>());
 				if (responseFields.empty() || responseFields.find("contentType") != responseFields.end())
 				{
 					field = "contentType";
@@ -1135,11 +1136,10 @@ json MMSEngineDBFacade::getMediaItemsList(
 				{
 					json mediaItemTagsRoot = json::array();
 
+					auto tagsArray = row["tags"].asArray<string>();
+					for (const string& tag: tagsArray)
+						mediaItemTagsRoot.push_back(tag);
 					/*
-					auto const array{row["tags"].as_sql_array<string>()};
-					for (int index = 0; index < array.size(); index++)
-						mediaItemTagsRoot.push_back(array[index]);
-					*/
 					{
 						// pqxx::array<string> tagsArray = row["tags"].as<array>();
 						auto tagsArray = row["tags"].as_array();
@@ -1151,6 +1151,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 								mediaItemTagsRoot.push_back(elem.second);
 						} while (elem.first != pqxx::array_parser::juncture::done);
 					}
+					*/
 
 					field = "tags";
 					mediaItemRoot[field] = mediaItemTagsRoot;
@@ -1202,7 +1203,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 								if (!row["parameters"].is_null())
 								{
 									string crossReferenceParameters = row["parameters"].as<string>();
-									if (crossReferenceParameters != "")
+									if (!crossReferenceParameters.empty())
 									{
 										json crossReferenceParametersRoot = JSONUtils::toJson<json>(crossReferenceParameters);
 
