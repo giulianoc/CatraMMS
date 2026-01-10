@@ -2611,22 +2611,21 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "user/workspace are not found" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", userKey: " + to_string(userKey) + ", sqlStatement: " + sqlStatement;
-				_logger->error(errorMessage);
-
+				string errorMessage = std::format("user/workspace are not found"
+					", workspaceKey: {}"
+					", userKey: {}"
+					", sqlStatement: {}", workspaceKey, userKey, sqlStatement);
+				SPDLOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 		}
 
 		if (!admin && !isOwner)
 		{
-			string errorMessage =
-				__FILEREF__ +
-				"The user requesting the update does not have neither the admin nor the ownership rights and the update cannot be done" +
-				", workspaceKey: " + to_string(workspaceKey);
+			string errorMessage = std::format(
+				"The user requesting the update does not have neither the admin nor the ownership rights and the update cannot be done"
+				", workspaceKey: {}", workspaceKey);
 			_logger->error(errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 
@@ -2718,6 +2717,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					"where workspaceKey = {} ",
 					trans.transaction->quote(newExpirationUtcDate), workspaceKey
 				);
+				SPDLOG_INFO("AAAAAAAAAA: {}", sqlStatement);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				trans.transaction->exec0(sqlStatement);
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
