@@ -88,7 +88,7 @@ private:
 	std::thread _updateExternalDeliveriesGroupsBandwidthUsageThread;
 
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
-	static time_t getReusableExpirationTime(int ttlInSeconds);
+	static time_t getExpirationTime(int ttlInSeconds, bool reusable);
 	std::string getDeliveryHost(
 		const std::shared_ptr<Workspace> &requestWorkspace, const std::string &playerCountry, const std::string &playerRegion, const std::string &defaultDeliveryHost
 	);
