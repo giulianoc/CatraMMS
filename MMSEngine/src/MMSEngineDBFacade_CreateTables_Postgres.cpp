@@ -1059,25 +1059,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				//       && 0 == predefinedProfileDirectoryPath.compare(predefinedProfileDirectoryPath.size()-videoSuffix.size(),
 				//         videoSuffix.size(), videoSuffix))
 				if (predefinedProfileDirectoryPath.ends_with(videoSuffix))
-				{
 					contentType = MMSEngineDBFacade::ContentType::Video;
-				}
 				else if (predefinedProfileDirectoryPath.ends_with(audioSuffix))
-				// else if (predefinedProfileDirectoryPath.size() >= audioSuffix.size() &&
-				// 	 0 == predefinedProfileDirectoryPath.compare(
-				// 		  predefinedProfileDirectoryPath.size() - audioSuffix.size(), audioSuffix.size(), audioSuffix
-				//   ))
-				{
 					contentType = MMSEngineDBFacade::ContentType::Audio;
-				}
 				else if (predefinedProfileDirectoryPath.ends_with(imageSuffix))
-				// else if (predefinedProfileDirectoryPath.size() >= imageSuffix.size() &&
-				// 	 0 == predefinedProfileDirectoryPath.compare(
-				// 				  predefinedProfileDirectoryPath.size() - imageSuffix.size(), imageSuffix.size(), imageSuffix
-				// 		  ))
-				{
 					contentType = MMSEngineDBFacade::ContentType::Image;
-				}
 				else
 				{
 					string errorMessage = std::format(
@@ -1117,7 +1103,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonProfile = buffer.str();
 
-							SPDLOG_INFO(
+							SPDLOG_TRACE(
 								"Reading profile"
 								", profile pathname: {}"
 								", profile: {}",
@@ -1132,7 +1118,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 
-						SPDLOG_INFO(
+						SPDLOG_TRACE(
 							"Encoding technology"
 							", predefinedProfileDirectoryPath: {}"
 							", label: {}"
@@ -1891,7 +1877,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonWorkflow = buffer.str();
 
-							SPDLOG_INFO(
+							SPDLOG_TRACE(
 								"Reading workflow"
 								", workflow pathname: {}"
 								", workflow: {}",
@@ -1906,17 +1892,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						int64_t workspaceKey = -1;
 						addUpdateWorkflowAsLibrary(trans, -1, workspaceKey, label, -1, jsonWorkflow, true);
 					}
-					catch (runtime_error &e)
-					{
-						string errorMessage = std::format(
-							"listing directory failed"
-							", e.what(): {}",
-							e.what()
-						);
-						SPDLOG_ERROR(errorMessage);
-
-						throw e;
-					}
 					catch (exception &e)
 					{
 						string errorMessage = std::format(
@@ -1926,22 +1901,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						);
 						SPDLOG_ERROR(errorMessage);
 
-						throw e;
+						throw;
 					}
 				}
 			}
-		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(", e.what(): {}", e.what());
-
-			throw e;
 		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(", e.what(): {}", e.what());
 
-			throw e;
+			throw;
 		}
 
 		{
@@ -2523,7 +2492,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
