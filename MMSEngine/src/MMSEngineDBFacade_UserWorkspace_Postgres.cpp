@@ -1,4 +1,5 @@
 
+#include "Datetime.h"
 #include "Encrypt.h"
 #include "JSONUtils.h"
 #include "JsonPath.h"
@@ -153,8 +154,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 		if (trimUserName.empty())
 		{
 			string errorMessage = string("userName is not well formed.") + ", userName: " + userName;
-			_logger->error(__FILEREF__ + errorMessage);
-
+			SPDLOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 
@@ -164,24 +164,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 		{
 			// This method is called only in case of MMS user (no ldapEnabled)
 			// char strExpirationUtcDate[64];
-			string sExpirationUtcDate;
-			{
-				tm tmDateTime{};
-				time_t utcTime = chrono::system_clock::to_time_t(userExpirationLocalDate);
-
-				gmtime_r(&utcTime, &tmDateTime);
-
-				/*
-				sprintf(
-					strExpirationUtcDate, "%04d-%02d-%02d %02d:%02d:%02d", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-				);
-				*/
-				sExpirationUtcDate = std::format(
-					"{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-					tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-				);
-			}
+			string sExpirationUtcDate = Datetime::dateTimeFormat(userExpirationLocalDate, "%Y-%m-%d %H:%M:%S");
 			string sqlStatement = std::format(
 				"insert into MMS_User (name, eMailAddress, password, country, timezone, "
 				"creationDate, insolvent, expirationDate, lastSuccessfulLogin) values ("
@@ -207,9 +190,9 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			string trimWorkspaceName = StringUtils::trim(workspaceName);
 			if (trimWorkspaceName.empty())
 			{
-				string errorMessage = string("WorkspaceName is not well formed.") + ", workspaceName: " + workspaceName;
-				_logger->error(__FILEREF__ + errorMessage);
-
+				string errorMessage = std::format("WorkspaceName is not well formed"
+					", workspaceName: {}", workspaceName);
+				SPDLOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 
@@ -577,9 +560,9 @@ string MMSEngineDBFacade::createCode(
 
 	try
 	{
-		unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+		const unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
 		default_random_engine e(seed);
-		code = to_string(e());
+		code = std::format("{}", e());
 
 		{
 			json permissionsRoot;
@@ -981,10 +964,11 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 			);
 			if (rowsUpdated != 1)
 			{
-				string errorMessage = __FILEREF__ + "no update was done" + ", workspaceKey: " + to_string(workspaceKey) +
-									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format("no update was done"
+					", workspaceKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}", workspaceKey, rowsUpdated, sqlStatement);
 				_logger->error(errorMessage);
-
 				throw runtime_error(errorMessage);
 			}
 		}
@@ -1020,7 +1004,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 			);
 		}
 
-		confirmationCode = MMSEngineDBFacade::createCode(
+		confirmationCode = createCode(trans,
 			workspaceKey, userKey, "", CodeType::UserRegistration, // userEmail,
 			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 			killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
@@ -1100,9 +1084,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		throw;
 	}
 
-	pair<int64_t, string> workspaceKeyAndConfirmationCode = make_pair(workspaceKey, confirmationCode);
-
-	return workspaceKeyAndConfirmationCode;
+	return make_pair(workspaceKey, confirmationCode);
 }
 
 tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string confirmationCode, int expirationInDaysWorkspaceDefaultValue)
