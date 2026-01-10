@@ -642,8 +642,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string uriToBeSigned;
 					{
 						string m3u8Suffix(".m3u8");
-						if (deliveryURI.size() >= m3u8Suffix.size() &&
-							0 == deliveryURI.compare(deliveryURI.size() - m3u8Suffix.size(), m3u8Suffix.size(), m3u8Suffix))
+						if (deliveryURI.ends_with(m3u8Suffix))
 						{
 							size_t endPathIndex = deliveryURI.find_last_of('/');
 							if (endPathIndex == string::npos)
