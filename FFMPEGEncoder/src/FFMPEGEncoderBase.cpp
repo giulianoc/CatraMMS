@@ -19,27 +19,27 @@ FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot)
 		*/
 
 		const auto mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 		const auto mmsAPIHostname = JsonPath(&configurationRoot)["api"]["hostname"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
 		const auto mmsAPIPort = JsonPath(&configurationRoot)["api"]["port"].as<int32_t>(0);
-		SPDLOG_INFO(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 		const auto mmsAPIVersion = JsonPath(&configurationRoot)["api"]["version"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
 		const auto mmsAPIIngestionURI = JsonPath(&configurationRoot)["api"]["ingestionURI"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
 		auto mmsAPIWorkflowURI = JsonPath(&configurationRoot)["api"]["workflowURI"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
 		auto mmsBinaryProtocol = JsonPath(&configurationRoot)["api"]["binary"]["protocol"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
 		auto mmsBinaryHostname = JsonPath(&configurationRoot)["api"]["binary"]["hostname"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
 		auto mmsBinaryPort = JsonPath(&configurationRoot)["api"]["binary"]["port"].as<int32_t>(0);
-		SPDLOG_INFO(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
 		auto mmsBinaryVersion = JsonPath(&configurationRoot)["api"]["binary"]["version"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
 		auto mmsBinaryIngestionURI = JsonPath(&configurationRoot)["api"]["binary"]["ingestionURI"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
+		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
 
 		_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
 			mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
@@ -51,23 +51,17 @@ FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot)
 			mmsBinaryProtocol, mmsBinaryHostname, mmsBinaryPort, mmsBinaryVersion, mmsBinaryIngestionURI);
 
 		_mmsAPITimeoutInSeconds = JsonPath(&configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			"Configuration item"
 			", api->timeoutInSeconds: {}",
 			_mmsAPITimeoutInSeconds
 		);
 		_mmsBinaryTimeoutInSeconds = JsonPath(&configurationRoot)["api"]["binary"]["timeoutInSeconds"].as<int32_t>(120);
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			"Configuration item"
 			", api->binary->timeoutInSeconds: {}",
 			_mmsBinaryTimeoutInSeconds
 		);
-	}
-	catch (runtime_error &e)
-	{
-		// error(__FILEREF__ + "threadsStatistic addThread failed"
-		// 	+ ", exception: " + e.what()
-		// );
 	}
 	catch (exception &e)
 	{

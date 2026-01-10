@@ -268,7 +268,7 @@ int main(int argc, char **argv)
 			JsonPath(&configuration)["log"]["api"]["slowQuery"].as<json>(),
 			masterDbPoolSize, slaveDbPoolSize, logger);
 
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			"Creating MMSStorage"
 			", noFileSystemAccess: {}",
 			noFileSystemAccess

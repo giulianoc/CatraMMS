@@ -47,145 +47,145 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_cpuUsageThreshold = JSONUtils::asInt32(configurationRoot["mms"], "cpuUsageThreshold", 10);
 
 	_maxDownloadAttemptNumber = JSONUtils::asInt32(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", download->maxDownloadAttemptNumber: {}",
 		_maxDownloadAttemptNumber
 	);
 	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(configurationRoot["download"], "progressUpdatePeriodInSeconds", 5);
-	SPDLOG_INFO(string() + "Configuration item" + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds));
+	SPDLOG_TRACE(string() + "Configuration item" + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds));
 	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt32(configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		string() + "Configuration item" + ", download->secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
 	);
 
 	_maxIngestionJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
-	SPDLOG_INFO(string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent));
+	SPDLOG_TRACE(string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent));
 	_maxEncodingJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
-	SPDLOG_INFO(string() + "Configuration item" + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent));
+	SPDLOG_TRACE(string() + "Configuration item" + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent));
 
 	_maxEventManagementTimeInSeconds = JSONUtils::asInt32(configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5);
-	SPDLOG_INFO(string() + "Configuration item" + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds));
+	SPDLOG_TRACE(string() + "Configuration item" + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds));
 
 	_dependencyExpirationInHours = JSONUtils::asInt32(configurationRoot["mms"], "dependencyExpirationInHours", 5);
-	SPDLOG_INFO(string() + "Configuration item" + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours));
+	SPDLOG_TRACE(string() + "Configuration item" + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours));
 
 	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(configurationRoot["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 
 	_downloadChunkSizeInMegaBytes = JSONUtils::asInt32(configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5);
-	SPDLOG_INFO(string() + "Configuration item" + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes));
+	SPDLOG_TRACE(string() + "Configuration item" + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes));
 
 	_emailProviderURL = JSONUtils::asString(_configurationRoot["EmailNotification"], "providerURL", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", EmailNotification->providerURL: " + _emailProviderURL);
+	SPDLOG_TRACE(string() + "Configuration item" + ", EmailNotification->providerURL: " + _emailProviderURL);
 	_emailUserName = JSONUtils::asString(_configurationRoot["EmailNotification"], "userName", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", EmailNotification->userName: " + _emailUserName);
+	SPDLOG_TRACE(string() + "Configuration item" + ", EmailNotification->userName: " + _emailUserName);
 	{
 		string encryptedPassword = JSONUtils::asString(_configurationRoot["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			string() + "Configuration item" + ", EmailNotification->password: " + encryptedPassword
 			// + ", EmailNotification->password: " + _emailPassword
 		);
 	}
 	_emailCcsCommaSeparated = JSONUtils::asString(_configurationRoot["EmailNotification"], "cc", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", EmailNotification->cc: " + _emailCcsCommaSeparated);
+	SPDLOG_TRACE(string() + "Configuration item" + ", EmailNotification->cc: " + _emailCcsCommaSeparated);
 
 	_facebookGraphAPIProtocol = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "protocol", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol);
 	_facebookGraphAPIHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "hostName", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName);
 	_facebookGraphAPIVideoHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "videoHostName", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName);
 	_facebookGraphAPIPort = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "port", 0);
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort));
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort));
 	_facebookGraphAPIVersion = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "version", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion);
 	_facebookGraphAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds));
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds));
 	_facebookGraphAPIClientId = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientId", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId);
 	_facebookGraphAPIClientSecret = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientSecret", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret);
 	_facebookGraphAPIRedirectURL = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "redirectURL", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL);
 	_facebookGraphAPIAccessTokenURI = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "accessTokenURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI);
 	_facebookGraphAPILiveVideosURI = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "liveVideosURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI);
 
 	_youTubeDataAPIProtocol = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "protocol", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol);
 	_youTubeDataAPIHostName = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "hostName", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName);
 	_youTubeDataAPIPort = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "port", 0);
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort));
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort));
 	_youTubeDataAPIRefreshTokenURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "refreshTokenURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI);
 	_youTubeDataAPIUploadVideoURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "uploadVideoURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI);
 	_youTubeDataAPILiveBroadcastURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI);
 	_youTubeDataAPILiveStreamURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveStreamURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI);
 	_youTubeDataAPILiveBroadcastBindURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastBindURI", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI);
 	_youTubeDataAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds));
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds));
 	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		string() + "Configuration item" + ", YouTubeDataAPI->timeoutForUploadVideo: " + to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
 	);
 	_youTubeDataAPIClientId = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientId", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId);
 	_youTubeDataAPIClientSecret = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientSecret", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret);
+	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret);
 
 	_localCopyTaskEnabled = JSONUtils::asBool(_configurationRoot["mms"], "localCopyTaskEnabled", false);
-	SPDLOG_INFO(string() + "Configuration item" + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled));
+	SPDLOG_TRACE(string() + "Configuration item" + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled));
 
 	auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 	auto mmsAPIHostname = JsonPath(&_configurationRoot)["api"]["hostname"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
 	auto mmsAPIPort = JsonPath(&_configurationRoot)["api"]["port"].as<int32_t>(0);
-	SPDLOG_INFO(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 	auto mmsAPIVersion = JsonPath(&_configurationRoot)["api"]["version"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
 	auto mmsAPIWorkflowURI = JsonPath(&_configurationRoot)["api"]["workflowURI"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
 	auto mmsAPIIngestionURI = JsonPath(&_configurationRoot)["api"]["ingestionURI"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
 	auto mmsBinaryProtocol = JsonPath(&_configurationRoot)["api"]["binary"]["protocol"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
 	auto mmsBinaryHostname = JsonPath(&_configurationRoot)["api"]["binary"]["hostname"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
 	auto mmsBinaryPort = JsonPath(&_configurationRoot)["api"]["binary"]["port"].as<int32_t>(0);
-	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
 	auto mmsBinaryVersion = JsonPath(&_configurationRoot)["api"]["binary"]["version"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
 	auto mmsBinaryIngestionURI = JsonPath(&_configurationRoot)["api"]["binary"]["ingestionURI"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
 	_mmsAPITimeoutInSeconds = JsonPath(&_configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
-	SPDLOG_INFO(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
 
 	_deliveryProtocol = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryProtocol", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
 	_deliveryHost = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryHost", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", api->delivery->deliveryHost: " + _deliveryHost);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryHost: " + _deliveryHost);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		string() + "Configuration item" + ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
 		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		string() + "Configuration item" +
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: " + to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
 	_liveRecorderVirtualVODImageLabel = JSONUtils::asString(_configurationRoot["ffmpeg"], "liveRecorderVirtualVODImageLabel", "");
-	SPDLOG_INFO(string() + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel);
+	SPDLOG_TRACE(string() + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel);
 
 	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
 		mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
@@ -196,7 +196,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 		{
 			_mmsEngineDBFacade->resetProcessingJobsIfNeeded(_processorMMS);
 		}
-		catch (runtime_error &e)
+		catch (exception &e)
 		{
 			SPDLOG_ERROR(
 				string() + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -205,18 +205,10 @@ MMSEngineProcessor::MMSEngineProcessor(
 
 			// throw e;
 		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR(
-				string() + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed" + ", _processorIdentifier: " + to_string(_processorIdentifier)
-			);
-
-			// throw e;
-		}
 	}
 }
 
-MMSEngineProcessor::~MMSEngineProcessor() {}
+MMSEngineProcessor::~MMSEngineProcessor() = default;
 
 bool MMSEngineProcessor::isMaintenanceMode()
 {

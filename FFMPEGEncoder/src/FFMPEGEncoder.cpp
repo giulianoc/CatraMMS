@@ -2994,68 +2994,68 @@ void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 {
 	_configurationRoot = configurationRoot;
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encodingCompletedRetentionInSeconds: {}",
 		_encodingCompletedRetentionInSeconds
 	);
 
 	_cpuUsageThresholdForEncoding = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForEncoding: {}",
 		_cpuUsageThresholdForEncoding
 	);
 	_cpuUsageThresholdForRecording = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForRecording: {}",
 		_cpuUsageThresholdForRecording
 	);
 	_cpuUsageThresholdForProxy = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForProxy: {}",
 		_cpuUsageThresholdForProxy
 	);
 	_intervalInSecondsBetweenEncodingAccept =
 		JSONUtils::asInt32(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->intervalInSecondsBetweenEncodingAccept: {}",
 		_intervalInSecondsBetweenEncodingAccept
 	);
 
 	_encoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_encoderUser
 	);
 	_encoderPassword = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderPassword: {}",
 		_encoderPassword
 	);
 
 	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"Configuration item"
 		", api->timeoutInSeconds: {}",
 		_mmsAPITimeoutInSeconds
 	);
 
 	const auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 	const auto mmsAPIHostname = JsonPath(&_configurationRoot)["api"]["hostname"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
 	const auto mmsAPIPort = JsonPath(&_configurationRoot)["api"]["port"].as<int32_t>(0);
-	SPDLOG_INFO(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 	const auto mmsAPIVersion = JsonPath(&_configurationRoot)["api"]["version"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
 	auto mmsAPIWorkflowURI = JsonPath(&_configurationRoot)["api"]["workflowURI"].as<string>();
-	SPDLOG_INFO(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+	SPDLOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
 	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
 		mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
 }

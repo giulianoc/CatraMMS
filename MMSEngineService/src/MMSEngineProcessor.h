@@ -153,8 +153,8 @@ class MMSEngineProcessor
 
 	bool newThreadPermission(std::shared_ptr<long> processorsThreadsNumber);
 
-	bool isMaintenanceMode();
-	bool isProcessorShutdown();
+	static bool isMaintenanceMode();
+	static bool isProcessorShutdown();
 
 	void handleCheckIngestionEvent();
 

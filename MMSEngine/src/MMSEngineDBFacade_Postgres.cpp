@@ -36,32 +36,32 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_maxRows = 1000;
 
 	_doNotManageIngestionsOlderThanDays = JsonPath(&configurationRoot)["mms"]["doNotManageIngestionsOlderThanDays"].as<int32_t>(7);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->doNotManageIngestionsOlderThanDays: " + to_string(_doNotManageIngestionsOlderThanDays)
 	);
 
 	_ffmpegEncoderUser = JsonPath(&configurationRoot)["ffmpeg"]["encoderUser"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderUser: " + _ffmpegEncoderUser);
 	_ffmpegEncoderPassword = JsonPath(&configurationRoot)["ffmpeg"]["encoderPassword"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderPassword: " + "...");
+	_logger->trace(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderPassword: " + "...");
 	_ffmpegEncoderStatusURI = JsonPath(&configurationRoot)["ffmpeg"]["encoderStatusURI"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderStatusURI: " + _ffmpegEncoderStatusURI);
 	_ffmpegEncoderInfoURI = JsonPath(&configurationRoot)["ffmpeg"]["encoderInfoURI"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoURI: " + _ffmpegEncoderInfoURI);
 	_ffmpegEncoderInfoTimeout = JsonPath(&configurationRoot)["ffmpeg"]["encoderInfoTimeout"].as<int32_t>(2);
-	_logger->info(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoTimeout: " + to_string(_ffmpegEncoderInfoTimeout));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", ffmpeg->encoderInfoTimeout: " + to_string(_ffmpegEncoderInfoTimeout));
 
 	_ingestionJobsSelectPageSize = JsonPath(&configurationRoot)["mms"]["ingestionJobsSelectPageSize"].as<int32_t>(500);
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->ingestionJobsSelectPageSize: " + to_string(_ingestionJobsSelectPageSize));
 
 	_maxEncodingFailures = JsonPath(&configurationRoot)["encoding"]["maxEncodingFailures"].as<int32_t>(3);
-	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", encoding->maxEncodingFailures: " + to_string(_maxEncodingFailures));
 
 	_confirmationCodeExpirationInDays = JsonPath(&configurationRoot)["mms"]["confirmationCodeExpirationInDays"].as<int32_t>(3);
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->confirmationCodeExpirationInDays: " + to_string(_confirmationCodeExpirationInDays));
 
 	_contentRetentionInMinutesDefaultValue = JsonPath(&configurationRoot)["mms"]["contentRetentionInMinutesDefaultValue"].as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->contentRetentionInMinutesDefaultValue: " + to_string(_contentRetentionInMinutesDefaultValue)
 	);
 	/*
@@ -75,52 +75,52 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
 	_maxSecondsToWaitUpdateIngestionJobLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitUpdateIngestionJobLock"].
 		as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateIngestionJobLock: " + to_string(_maxSecondsToWaitUpdateIngestionJobLock)
 	);
 	_maxSecondsToWaitUpdateEncodingJobLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitUpdateEncodingJobLock"]
 		.as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitUpdateEncodingJobLock: " + to_string(_maxSecondsToWaitUpdateEncodingJobLock)
 	);
 	_maxSecondsToWaitCheckIngestionLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitCheckIngestionLock"].as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckIngestionLock: " + to_string(_maxSecondsToWaitCheckIngestionLock)
 	);
 	_maxSecondsToWaitCheckEncodingJobLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitCheckEncodingJobLock"].as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitCheckEncodingJobLock: " + to_string(_maxSecondsToWaitCheckEncodingJobLock)
 	);
 	_maxSecondsToWaitMainAndBackupLiveChunkLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitMainAndBackupLiveChunkLock"].as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" +
 		", mms->maxSecondsToWaitMainAndBackupLiveChunkLock: " + to_string(_maxSecondsToWaitMainAndBackupLiveChunkLock)
 	);
 	_maxSecondsToWaitSetNotToBeExecutedLock = JsonPath(&configurationRoot)["mms"]["locks"]["maxSecondsToWaitSetNotToBeExecutedLock"].as<int32_t>(1);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" + ", mms->maxSecondsToWaitSetNotToBeExecutedLock,: " + to_string(_maxSecondsToWaitSetNotToBeExecutedLock)
 	);
 
 	_predefinedVideoProfilesDirectoryPath = JsonPath(&configurationRoot)["encoding"]["predefinedProfiles"]["videoDir"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->videoDir: " + _predefinedVideoProfilesDirectoryPath);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->videoDir: " + _predefinedVideoProfilesDirectoryPath);
 	_predefinedAudioProfilesDirectoryPath = JsonPath(&configurationRoot)["encoding"]["predefinedProfiles"]["audioDir"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->audioDir: " + _predefinedAudioProfilesDirectoryPath);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->audioDir: " + _predefinedAudioProfilesDirectoryPath);
 	_predefinedImageProfilesDirectoryPath = JsonPath(&configurationRoot)["encoding"]["predefinedProfiles"]["imageDir"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->imageDir: " + _predefinedImageProfilesDirectoryPath);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", encoding->predefinedProfiles->imageDir: " + _predefinedImageProfilesDirectoryPath);
 
 	_predefinedWorkflowLibraryDirectoryPath = JsonPath(&configurationRoot)["mms"]["predefinedWorkflowLibraryDir"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->predefinedWorkflowLibraryDir: " + _predefinedWorkflowLibraryDirectoryPath);
 
 	_geoServiceEnabled = JsonPath(&configurationRoot)["mms"]["geoService"]["enabled"].as<bool>(false);
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->enabled: " + to_string(_geoServiceEnabled));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->geoService->enabled: " + to_string(_geoServiceEnabled));
 	_geoServiceMaxDaysBeforeUpdate = JsonPath(&configurationRoot)["mms"]["geoService"]["maxDaysBeforeUpdate"].as<int32_t>(1);
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->maxDaysBeforeUpdate: " + to_string(_geoServiceMaxDaysBeforeUpdate));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->geoService->maxDaysBeforeUpdate: " + to_string(_geoServiceMaxDaysBeforeUpdate));
 	_geoServiceURL = JsonPath(&configurationRoot)["mms"]["geoService"]["url"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->url: " + _geoServiceURL);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->geoService->url: " + _geoServiceURL);
 	_geoServiceKey = JsonPath(&configurationRoot)["mms"]["geoService"]["key"].as<string>("");
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->key: " + _geoServiceKey);
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->geoService->key: " + _geoServiceKey);
 	_geoServiceTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["geoService"]["timeoutInSeconds"].as<int32_t>(10);
-	_logger->info(__FILEREF__ + "Configuration item" + ", mms->geoService->timeoutInSeconds: " + to_string(_geoServiceTimeoutInSeconds));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->geoService->timeoutInSeconds: " + to_string(_geoServiceTimeoutInSeconds));
 
 	_getIngestionJobsCurrentIndex = 0;
 	_getEncodingJobsCurrentIndex = 0;
@@ -130,37 +130,37 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	{
 		auto adminEmailAddress = JsonPath(&adminEmailAddressesRoot).as<string>("");
 		_adminEmailAddresses.push_back(adminEmailAddress);
-		_logger->info(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[]: " + adminEmailAddress);
+		_logger->trace(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[]: " + adminEmailAddress);
 	}
 
 	_dbConnectionPoolStatsReportPeriodInSeconds = JsonPath(&configurationRoot)["postgres"]["dbConnectionPoolStatsReportPeriodInSeconds"].as<int32_t>(5);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" +
 		", postgres->dbConnectionPoolStatsReportPeriodInSeconds: " + to_string(_dbConnectionPoolStatsReportPeriodInSeconds)
 	);
 	_ingestionWorkflowCompletedRetentionInDays = JsonPath(&configurationRoot)["postgres"]["ingestionWorkflowCompletedRetentionInDays"].as<int32_t>(30);
-	_logger->info(
+	_logger->trace(
 		__FILEREF__ + "Configuration item" +
 		", postgres->ingestionWorkflowCompletedRetentionInDays: " + to_string(_ingestionWorkflowCompletedRetentionInDays)
 	);
 	_statisticRetentionInMonths = JsonPath(&configurationRoot)["postgres"]["statisticRetentionInMonths"].as<int32_t>(12);
-	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", postgres->statisticRetentionInMonths: " + to_string(_statisticRetentionInMonths));
 	_statisticsEnabled = JsonPath(&configurationRoot)["postgres"]["statisticsEnabled"].as<bool>(true);
-	_logger->info(__FILEREF__ + "Configuration item" + ", postgres->statisticsEnabled: " + to_string(_statisticsEnabled));
+	_logger->trace(__FILEREF__ + "Configuration item" + ", postgres->statisticsEnabled: " + to_string(_statisticsEnabled));
 
 	{
 		string masterDbServer = JsonPath(&configurationRoot)["postgres"]["master"]["server"].as<string>("");
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->server: " + masterDbServer);
+		_logger-> trace(__FILEREF__ + "Configuration item" + ", database->master->server: " + masterDbServer);
 		int masterDbPort = JsonPath(&configurationRoot)["postgres"]["master"]["port"].as<int32_t>(5432);
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->port: " + to_string(masterDbPort));
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->master->port: " + to_string(masterDbPort));
 		string slaveDbServer = JsonPath(&configurationRoot)["postgres"]["slave"]["server"].as<string>("");
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->server: " + slaveDbServer);
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->slave->server: " + slaveDbServer);
 		int slaveDbPort = JsonPath(&configurationRoot)["postgres"]["slave"]["port"].as<int32_t>(5432);
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->port: " + to_string(slaveDbPort));
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->slave->port: " + to_string(slaveDbPort));
 		string masterDbUsername = JsonPath(&configurationRoot)["postgres"]["master"]["userName"].as<string>("");
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->master->userName: " + masterDbUsername);
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->master->userName: " + masterDbUsername);
 		string slaveDbUsername = JsonPath(&configurationRoot)["postgres"]["slave"]["userName"].as<string>("");
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->slave->userName: " + slaveDbUsername);
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->slave->userName: " + slaveDbUsername);
 		string dbPassword;
 		{
 			string encryptedPassword = JsonPath(&configurationRoot)["postgres"]["password"].as<string>("");
@@ -168,9 +168,9 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 			// dbPassword = encryptedPassword;
 		}
 		string dbName = JsonPath(&configurationRoot)["postgres"]["dbName"].as<string>("");
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->dbName: " + dbName);
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->dbName: " + dbName);
 		string selectTestingConnection = JsonPath(&configurationRoot)["postgres"]["selectTestingConnection"].as<string>("");
-		_logger->info(__FILEREF__ + "Configuration item" + ", database->selectTestingConnection: " + selectTestingConnection);
+		_logger->trace(__FILEREF__ + "Configuration item" + ", database->selectTestingConnection: " + selectTestingConnection);
 
 		_logger->info(__FILEREF__ + "Creating PostgresConnectionFactory...");
 		bool reconnect = true;
