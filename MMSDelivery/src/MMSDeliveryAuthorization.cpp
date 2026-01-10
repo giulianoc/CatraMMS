@@ -228,7 +228,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			else
 			{
-				time_t expirationTime = getExpirationTime(ttlInSeconds, false);
+				// 2026-01-10: reusable true indica che l'URL non cambia.
+				// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+				// Per ora, in caso di VOD, lo metto true
+				time_t expirationTime = getExpirationTime(ttlInSeconds, true);
 
 				string uriToBeSigned;
 				{
@@ -258,7 +261,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 		}
 		else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 		{
-			time_t expirationTime = getExpirationTime(ttlInSeconds, false);
+			// 2026-01-10: reusable true indica che l'URL non cambia.
+			// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+			// Per ora, in caso di VOD, lo metto true
+			time_t expirationTime = getExpirationTime(ttlInSeconds, true);
 
 			string uriToBeSigned;
 			{
@@ -608,6 +614,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					else
 					{
+						// 2026-01-10: reusable true indica che l'URL non cambia.
+						// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+						// Per ora, in caso di Live, lo metto false in questo modo sono sicuro che l'URL
+						// scade dopo il periodo indicato
 						time_t expirationTime = getExpirationTime(ttlInSeconds, false);
 
 						string uriToBeSigned;
@@ -637,6 +647,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 				{
+					// 2026-01-10: reusable true indica che l'URL non cambia.
+					// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+					// Per ora, in caso di Live, lo metto false in questo modo sono sicuro che l'URL
+					// scade dopo il periodo indicato
 					time_t expirationTime = getExpirationTime(ttlInSeconds, false);
 
 					string uriToBeSigned;
@@ -698,6 +712,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					else
 					{
+						// 2026-01-10: reusable true indica che l'URL non cambia.
+						// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+						// Per ora, in caso di Live, lo metto false in questo modo sono sicuro che l'URL
+						// scade dopo il periodo indicato
 						time_t expirationTime = getExpirationTime(ttlInSeconds, false);
 
 						string uriToBeSigned;
@@ -726,6 +744,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 				{
+					// 2026-01-10: reusable true indica che l'URL non cambia.
+					// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+					// Per ora, in caso di Live, lo metto false in questo modo sono sicuro che l'URL
+					// scade dopo il periodo indicato
 					time_t expirationTime = getExpirationTime(ttlInSeconds, false);
 
 					string uriToBeSigned;
@@ -833,6 +855,10 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			else // if (deliveryType == "MMS_SignedURL" || deliveryType == "AWSMMS_SignedURL")
 			{
+				// 2026-01-10: reusable true indica che l'URL non cambia.
+				// Per ora, non mi è ancora chiaro quando sia meglio avere la stessa URL.
+				// Per ora, in caso di Live, lo metto false in questo modo sono sicuro che l'URL
+				// scade dopo il periodo indicato
 				time_t expirationTime = getExpirationTime(ttlInSeconds, false);
 
 				string uriToBeSigned;
