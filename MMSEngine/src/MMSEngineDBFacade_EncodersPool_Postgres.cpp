@@ -1121,7 +1121,7 @@ json MMSEngineDBFacade::getEncoderList(
 		{
 			string orderByCondition;
 			if (labelOrder.empty())
-				orderByCondition = " ";
+				orderByCondition = "order by e.encoderKey "; // aggiunto solo perchè in base a explain analyze, è piu veloce nella sua esecuzione
 			else
 				orderByCondition = std::format("order by label {} ", labelOrder);
 

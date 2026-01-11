@@ -35,6 +35,8 @@ include_directories("${JSONUTILS_INCLUDE_DIR}")
 include_directories("${POSTGRESHELPER_INCLUDE_DIR}")
 include_directories("${DBCONN_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
+include_directories("${CURLWRAPPER_INCLUDE_DIR}")
+include_directories("${ENCRYPT_INCLUDE_DIR}")
 
 link_directories("${LIBPQXX_LIB_DIR}")
 link_directories("${LIBPQ_LIB_DIR}")

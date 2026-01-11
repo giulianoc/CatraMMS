@@ -1,11 +1,13 @@
 
 // #include "Convert.h"
+#include "CurlWrapper.h"
 #include "EMailSender.h"
+#include "Encrypt.h"
 #include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
-#include <fstream>
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+#include "spdlog/spdlog.h"
+#include <fstream>
 
 using namespace std;
 using json = nlohmann::json;
@@ -118,6 +120,12 @@ int main(const int iArgc, char *pArgv[])
 		);
 
 		{
+			auto emailProviderURL = JsonPath(&configuration)["EmailNotification"]["providerURL"].as<string>();
+			auto emailUserName = JsonPath(&configuration)["EmailNotification"]["userName"].as<string>();
+
+			auto encryptedPassword = JsonPath(&configuration)["EmailNotification"]["password"].as<string>();
+			string emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
+
 			string to = email;
 			string subject = "MMS User creation";
 
@@ -132,19 +140,29 @@ int main(const int iArgc, char *pArgv[])
 			emailBody.emplace_back("<p>Have a nice day, best regards</p>");
 			emailBody.emplace_back("<p>MMS technical support</p>");
 
+			CurlWrapper::sendEmail(
+				emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
+				emailUserName,	   // i.e.: info@catramms-cloud.com
+				emailPassword, emailUserName, to, "",
+				subject, emailBody, "text/html; charset=\"UTF-8\""
+			);
+			/*
 			EMailSender emailSender(configuration);
 			bool useMMSCCToo = true;
 			emailSender.sendEmail(to, subject, emailBody, useMMSCCToo);
+			*/
 		}
 	}
 	catch (exception &e)
 	{
-		logger->error(__FILEREF__ + "mmsEngineDBFacade->confirmRegistration failed");
+		SPDLOG_ERROR("mmsEngineDBFacade->confirmRegistration failed"
+			", exception: {}", e.what()
+			);
 
 		return 1;
 	}
 
-	logger->info(__FILEREF__ + "Shutdown done");
+	SPDLOG_INFO("Shutdown done");
 
 	return 0;
 }
