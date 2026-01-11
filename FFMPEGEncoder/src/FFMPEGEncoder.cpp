@@ -56,10 +56,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 
 	mutex *fcgiAcceptMutex,
 
-	shared_mutex *cpuUsageMutex, deque<int> *cpuUsage,
-
-	// chrono::system_clock::time_point *lastEncodingAcceptedTime,
-
 	mutex *encodingMutex, vector<shared_ptr<FFMPEGEncoderBase::Encoding>> *encodingsCapability,
 
 	mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability,
@@ -70,15 +66,15 @@ FFMPEGEncoder::FFMPEGEncoder(
 	chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
 	mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
-	const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread
+	const std::shared_ptr<EncoderCPUUsageThread>& cpuUsageThread,
+	const std::shared_ptr<EncoderBandwidthUsageThread>& bandwidthUsageThread
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex)
 {
 
 	loadConfiguration(configurationRoot);
 
-	_cpuUsageMutex = cpuUsageMutex;
-	_cpuUsage = cpuUsage;
+	_cpuUsageThread = cpuUsageThread;
 	_bandwidthUsageThread = bandwidthUsageThread;
 
 	_encodingMutex = encodingMutex;
@@ -358,20 +354,9 @@ void FFMPEGEncoder::info(
 
 	try
 	{
-		int lastBiggerCpuUsage = -1;
-		{
-			shared_lock locker(*_cpuUsageMutex);
-
-			for (int cpuUsage : *_cpuUsage)
-			{
-				if (cpuUsage > lastBiggerCpuUsage)
-					lastBiggerCpuUsage = cpuUsage;
-			}
-		}
-
 		json infoRoot;
 		infoRoot["status"] = "Encoder up and running";
-		infoRoot["cpuUsage"] = lastBiggerCpuUsage;
+		infoRoot["cpuUsage"] = _cpuUsageThread->getCPUUsage();
 		infoRoot["avgBandwidthUsage"] = _bandwidthUsageThread->getAvgBandwidthUsage();
 
 		const string responseBody = JSONUtils::toString(infoRoot);
@@ -2790,29 +2775,17 @@ int FFMPEGEncoder::getMaxEncodingsCapability() const
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to
 	// be done
 	{
-		shared_lock locker(*_cpuUsageMutex);
-
 		int maxCapability = VECTOR_MAX_CAPACITY; // it could be done
 
-		for (const int cpuUsage : *_cpuUsage)
-		{
-			if (cpuUsage > _cpuUsageThresholdForEncoding)
-			{
-				maxCapability = 0; // no to be done
-
-				break;
-			}
-		}
+		uint16_t cpuUsage = _cpuUsageThread->getCPUUsage();
+		if (cpuUsage > _cpuUsageThresholdForEncoding)
+			maxCapability = 0; // no to be done
 
 		SPDLOG_INFO(
 			"getMaxXXXXCapability"
 			", lastCPUUsage: {}"
 			", maxCapability: {}",
-			accumulate(
-				begin(*_cpuUsage), end(*_cpuUsage), string(),
-				[](const string &s, int cpuUsage)
-				{ return (s.empty() ? std::format("{}", cpuUsage) : std::format("{}, {}", s, cpuUsage)); }
-			), maxCapability
+			cpuUsage, maxCapability
 		);
 
 		return maxCapability;
@@ -2824,30 +2797,18 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey) const
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to
 	// be done
 	{
-		shared_lock locker(*_cpuUsageMutex);
-
 		int maxCapability = VECTOR_MAX_CAPACITY; // it could be done
 
-		for (const int cpuUsage : *_cpuUsage)
-		{
-			if (cpuUsage > _cpuUsageThresholdForProxy)
-			{
-				maxCapability = 0; // no to be done
-
-				break;
-			}
-		}
+		uint16_t cpuUsage = _cpuUsageThread->getCPUUsage();
+		if (cpuUsage > _cpuUsageThresholdForProxy)
+			maxCapability = 0; // no to be done
 
 		SPDLOG_INFO(
 			"getMaxXXXXCapability"
 			", ingestionJobKey: {}"
-			", lastCPUUsage: {}"
+			", cpuUsage: {}"
 			", maxCapability: {}",
-			ingestionJobKey, accumulate(
-				begin(*_cpuUsage), end(*_cpuUsage), string(),
-				[](const string &s, int cpuUsage)
-				{ return (s.empty() ? std::format("{}", cpuUsage) : std::format("{}, {}", s, cpuUsage)); }
-			), maxCapability
+			ingestionJobKey, cpuUsage, maxCapability
 		);
 
 		return maxCapability;
@@ -2859,29 +2820,17 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability() const
 	// 2021-08-23: Use of the cpu usage to determine if an activity has to
 	// be done
 	{
-		shared_lock locker(*_cpuUsageMutex);
-
 		int maxCapability = VECTOR_MAX_CAPACITY; // it could be done
 
-		for (const int cpuUsage : *_cpuUsage)
-		{
-			if (cpuUsage > _cpuUsageThresholdForRecording)
-			{
-				maxCapability = 0; // no to be done
-
-				break;
-			}
-		}
+		uint16_t cpuUsage = _cpuUsageThread->getCPUUsage();
+		if (cpuUsage > _cpuUsageThresholdForRecording)
+			maxCapability = 0; // no to be done
 
 		SPDLOG_INFO(
 			"getMaxXXXXCapability"
-			", lastCPUUsage: {}"
+			", cpuUsage: {}"
 			", maxCapability: {}",
-			accumulate(
-				begin(*_cpuUsage), end(*_cpuUsage), string(),
-				[](const string &s, int cpuUsage)
-				{ return (s.empty() ? std::format("{}", cpuUsage) : std::format("{}, {}", s, cpuUsage)); }
-			), maxCapability
+			cpuUsage, maxCapability
 		);
 
 		return maxCapability;

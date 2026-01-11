@@ -13,10 +13,12 @@
 
 #pragma once
 
+#include "EncoderBandwidthUsageThread.h"
+#include "EncoderCPUUsageThread.h"
 #include "FFMPEGEncoderTask.h"
 #include "FFMpegWrapper.h"
 #include "FastCGIAPI.h"
-#include "BandwidthUsageThread.h"
+
 #include <deque>
 #include <shared_mutex>
 
@@ -37,10 +39,6 @@ class FFMPEGEncoder final : public FastCGIAPI
 
 		std::mutex *fcgiAcceptMutex,
 
-		std::shared_mutex *cpuUsageMutex, std::deque<int> *cpuUsage,
-
-		// std::chrono::system_clock::time_point *lastEncodingAcceptedTime,
-
 		std::mutex *encodingMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::Encoding>> *encodingsCapability,
 
 		std::mutex *liveProxyMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability,
@@ -51,7 +49,8 @@ class FFMPEGEncoder final : public FastCGIAPI
 		std::chrono::system_clock::time_point *lastEncodingCompletedCheck,
 
 		std::mutex *tvChannelsPortsMutex, long *tvChannelPort_CurrentOffset,
-		const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread
+		const std::shared_ptr<EncoderCPUUsageThread>& cpuUsageThread,
+		const std::shared_ptr<EncoderBandwidthUsageThread>& bandwidthUsageThread
 	);
 
 	~FFMPEGEncoder() override;
@@ -71,21 +70,8 @@ class FFMPEGEncoder final : public FastCGIAPI
   private:
 	nlohmann::json _configurationRoot;
 
-	std::shared_mutex *_cpuUsageMutex;
-	std::deque<int> *_cpuUsage;
-	// bool						_cpuUsageThreadShutdown;
+	std::shared_ptr<EncoderCPUUsageThread> _cpuUsageThread;
 
-	// 2021-09-24: std::chrono is already thread safe.
-	// std::mutex*						_lastEncodingAcceptedTimeMutex;
-	// lastEncodingAccepted: scenario, this process receives 10 encoding
-	// requests concurrently and,
-	//	since the cpu usage is OK at this time, all the requestes are accepted
-	// overloading the process 	To solve this issue, we will force to wait at
-	// lease 5 seconds to accept a second encoding request. 	That will allow
-	// the cpuUsage to be updated for the next encoding request
-	// int _intervalInSecondsBetweenEncodingAcceptForInternalEncoder{};
-	// int _intervalInSecondsBetweenEncodingAcceptForExternalEncoder{};
-	// std::chrono::system_clock::time_point *_lastEncodingAcceptedTime;
 	int _intervalInSecondsBetweenEncodingAccept{};
 
 	std::string _encoderUser;
@@ -95,7 +81,7 @@ class FFMPEGEncoder final : public FastCGIAPI
 	int _cpuUsageThresholdForProxy{};
 	int _cpuUsageThresholdForRecording{};
 
-	std::shared_ptr<BandwidthUsageThread> _bandwidthUsageThread;
+	std::shared_ptr<EncoderBandwidthUsageThread> _bandwidthUsageThread;
 
 	std::mutex *_encodingMutex;
 	std::vector<std::shared_ptr<FFMPEGEncoderBase::Encoding>> *_encodingsCapability;

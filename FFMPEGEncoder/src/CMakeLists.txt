@@ -22,6 +22,7 @@ add_definitions(-DNO_FCGI_DEFINES)
 set(SOURCES
         ffmpegEncoderMain.cpp
         EncoderBandwidthUsageThread.cpp
+        EncoderCPUUsageThread.cpp
         FFMPEGEncoder.cpp
         FFMPEGEncoderDaemons.cpp
         FFMPEGEncoderBase.cpp
@@ -45,6 +46,7 @@ set(HEADERS
         AddSilentAudio.h
         FFMPEGEncoderBase.h
         EncoderBandwidthUsageThread.h
+        EncoderCPUUsageThread.h
         IntroOutroOverlay.h
         OverlayImageOnVideo.h
         VideoSpeed.h

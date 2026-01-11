@@ -19,7 +19,7 @@ using json = nlohmann::json;
 
 FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 	json configurationRoot, mutex *liveRecordingMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
-	mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, shared_mutex *cpuUsageMutex, deque<int> *cpuUsage
+	mutex *liveProxyMutex, vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability
 )
 	: FFMPEGEncoderBase(configurationRoot)
 {
@@ -29,11 +29,8 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_liveRecordingsCapability = liveRecordingsCapability;
 		_liveProxyMutex = liveProxyMutex;
 		_liveProxiesCapability = liveProxiesCapability;
-		_cpuUsageMutex = cpuUsageMutex;
-		_cpuUsage = cpuUsage;
 
 		_monitorThreadShutdown = false;
-		_cpuUsageThreadShutdown = false;
 
 		_monitorCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		SPDLOG_INFO(
@@ -44,57 +41,6 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 
 		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
 		_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = 1000; // ne ho contati 1300 in 30 secondi in un caso
-
-		_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", api->protocol: {}", _mmsAPIProtocol);
-		_mmsAPIHostname = JsonPath(&configurationRoot)["api"]["hostname"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", api->hostname: {}", _mmsAPIHostname);
-		_mmsAPIPort = JsonPath(&configurationRoot)["api"]["port"].as<int32_t>(0);
-		SPDLOG_INFO("Configuration item"
-			", api->port: {}", _mmsAPIPort);
-		_mmsAPIVersion = JsonPath(&configurationRoot)["api"]["version"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", api->version: {}", _mmsAPIVersion);
-		_mmsAPIUpdateCPUStatsURI = JsonPath(&configurationRoot)["api"]["updateCPUStatsURI"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", api->updateCPUStatsURI: {}", _mmsAPIUpdateCPUStatsURI);
-		_updateStatsUser = JsonPath(&configurationRoot)["api"]["updateStatsUser"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", api->updateStatsUser: {}", _updateStatsUser);
-		auto updateStatsCryptedPassword = JsonPath(&configurationRoot)["api"]["updateStatsCryptedPassword"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", api->updateStatsCryptedPassword: {}", updateStatsCryptedPassword);
-		try
-		{
-			_updateStatsPassword = Encrypt::opensslDecrypt(updateStatsCryptedPassword);
-		}
-		catch (std::exception& e)
-		{
-			_updateStatsPassword = "";
-
-			SPDLOG_ERROR("Encrypt::opensslDecrypt failed"
-				", updateBandwidthStatsCryptedPassword: {}"
-				", exception: {}", updateStatsCryptedPassword, e.what()
-				);
-		}
-		auto sEncoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<std::string>();
-		SPDLOG_INFO("Configuration item"
-			", ffmpeg->encoderKey: {}", sEncoderKey);
-		try
-		{
-			_encoderKey = std::stoi(sEncoderKey);
-		}
-		catch (std::exception& e)
-		{
-			_encoderKey = -1;
-
-			SPDLOG_ERROR("stoi failed"
-				", sEncoderKey: {}"
-				", exception: {}", sEncoderKey, e.what()
-				);
-		}
 	}
 	catch (exception &e)
 	{
@@ -2187,102 +2133,6 @@ void FFMPEGEncoderDaemons::stopMonitorThread()
 	_monitorThreadShutdown = true;
 
 	this_thread::sleep_for(chrono::seconds(_monitorCheckInSeconds));
-}
-
-void FFMPEGEncoderDaemons::startCPUUsageThread()
-{
-	int cpuStatsUpdateIntervalInSeconds = 20;
-	chrono::system_clock::time_point lastCPUStats = chrono::system_clock::now();
-
-	while (!_cpuUsageThreadShutdown)
-	{
-		this_thread::sleep_for(chrono::milliseconds(200));
-
-		try
-		{
-			unique_lock locker(*_cpuUsageMutex);
-
-			_cpuUsage->pop_back();
-			_cpuUsage->push_front(_getCpuUsage.getCpuUsage());
-		}
-		catch (exception &e)
-		{
-			SPDLOG_ERROR("cpuUsage thread failed"
-				", e.what(): {}", e.what());
-		}
-
-		if (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - lastCPUStats).count() >= cpuStatsUpdateIntervalInSeconds)
-		{
-			lastCPUStats = chrono::system_clock::now();
-
-			shared_lock locker(*_cpuUsageMutex);
-
-			SPDLOG_INFO(
-				"cpuUsageThread"
-				", lastCPUUsage: {}",
-				accumulate(
-					begin(*_cpuUsage), end(*_cpuUsage), string(),
-					[](const string &s, int cpuUsage)
-					{ return (s.empty() ? std::format("{}", cpuUsage) : std::format("{}, {}", s, cpuUsage)); }
-				)
-			);
-
-			if (_encoderKey < 0)
-			{
-				SPDLOG_ERROR("The 'encoderKey' configuration item is not valid and CPU stats is not sent to API MMS Server"
-					", encoderKey: {}", _encoderKey);
-				continue;
-			}
-			if (_updateStatsPassword.empty())
-			{
-				SPDLOG_ERROR("The 'updateBandwidthStatsPassword' configuration item is not valid and bandwidth stats is not sent to API MMS Server"
-					", _updateStatsPassword: {}", _updateStatsPassword);
-				continue;
-			}
-
-			try
-			{
-				int lastBiggerCpuUsage = -1;
-				{
-					for (int cpuUsage : *_cpuUsage)
-					{
-						if (cpuUsage > lastBiggerCpuUsage)
-							lastBiggerCpuUsage = cpuUsage;
-					}
-				}
-
-				const std::string mmsAPIUpdateCPUStatsURL = std::format("{}://{}:{}/catramms/{}/encoder/{}{}/{}",
-					_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _encoderKey, _mmsAPIUpdateCPUStatsURI,
-					lastBiggerCpuUsage);
-
-				constexpr int32_t mmsAPITimeoutInSeconds = 3;
-				SPDLOG_INFO("UpdateCPUStats"
-					", lastBiggerCpuUsage: {}",
-					lastBiggerCpuUsage
-					);
-				constexpr std::vector<std::string> otherHeaders;
-				nlohmann::json encoderResponse = CurlWrapper::httpPutStringAndGetJson(
-					mmsAPIUpdateCPUStatsURL, mmsAPITimeoutInSeconds,
-					CurlWrapper::basicAuthorization(_updateStatsUser, _updateStatsPassword),
-					"", "application/json", // contentType
-					otherHeaders, ""
-				);
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR("UpdateCPUStats failed"
-					", exception: {}", e.what());
-			}
-		}
-	}
-}
-
-void FFMPEGEncoderDaemons::stopCPUUsageThread()
-{
-
-	_cpuUsageThreadShutdown = true;
-
-	this_thread::sleep_for(chrono::seconds(1));
 }
 
 void FFMPEGEncoderDaemons::termProcess(

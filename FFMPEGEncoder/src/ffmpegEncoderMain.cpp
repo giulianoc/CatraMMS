@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "CurlWrapper.h"
-#include "EncoderBandwidthUsageThread.h"
 #include "FFMPEGEncoder.h"
 #include "FFMPEGEncoderDaemons.h"
 #include "JSONUtils.h"
@@ -168,12 +167,6 @@ int main(int argc, char **argv)
 
 		mutex fcgiAcceptMutex;
 
-		shared_mutex cpuUsageMutex;
-		deque<int> cpuUsage;
-		int numberOfLastCPUUsageToBeChecked = 3;
-		for (int cpuUsageIndex = 0; cpuUsageIndex < numberOfLastCPUUsageToBeChecked; cpuUsageIndex++)
-			cpuUsage.push_front(0);
-
 		// 2021-09-24: chrono is already thread safe.
 		// mutex lastEncodingAcceptedTimeMutex;
 		// chrono::system_clock::time_point lastEncodingAcceptedTime = chrono::system_clock::now();
@@ -254,6 +247,9 @@ int main(int argc, char **argv)
 		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot);
 		bandwidthUsageThread->start();
 
+		auto cpuUsageThread = make_shared<EncoderCPUUsageThread>(configurationRoot);
+		cpuUsageThread->start();
+
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;
 		vector<thread> ffmpegEncoderThreads;
 
@@ -265,10 +261,6 @@ int main(int argc, char **argv)
 
 				&fcgiAcceptMutex,
 
-				&cpuUsageMutex, &cpuUsage,
-
-				// &lastEncodingAcceptedTime,
-
 				&encodingMutex, &encodingsCapability,
 
 				&liveProxyMutex, &liveProxiesCapability,
@@ -277,7 +269,7 @@ int main(int argc, char **argv)
 
 				&encodingCompletedMutex, &encodingCompletedMap, &lastEncodingCompletedCheck,
 
-				&tvChannelsPortsMutex, &tvChannelPort_CurrentOffset, bandwidthUsageThread
+				&tvChannelsPortsMutex, &tvChannelPort_CurrentOffset, cpuUsageThread, bandwidthUsageThread
 			);
 
 			ffmpegEncoders.push_back(ffmpegEncoder);
@@ -287,8 +279,6 @@ int main(int argc, char **argv)
 		// shutdown should be managed in some way:
 		// - mod_fcgid send just one shutdown, so only one thread will go down
 		// - mod_fastcgi ???
-		// if (threadsNumber > 0)
-		//	thread _bandwidthUsage(&FFMPEGEncoder::bandwidthUsageThread, ffmpegEncoders[0]);
 		{
 			shared_ptr<LiveRecorderDaemons> liveRecorderDaemons =
 				make_shared<LiveRecorderDaemons>(configurationRoot, &liveRecordingMutex, &liveRecordingsCapability);
@@ -297,13 +287,11 @@ int main(int argc, char **argv)
 			thread liveRecorderVirtualVODIngestion(&LiveRecorderDaemons::startVirtualVODIngestionThread, liveRecorderDaemons);
 
 			// thread monitor(&FFMPEGEncoder::monitorThread, ffmpegEncoders[0]);
-			// thread cpuUsage(&FFMPEGEncoder::cpuUsageThread, ffmpegEncoders[0]);
 			shared_ptr<FFMPEGEncoderDaemons> ffmpegEncoderDaemons = make_shared<FFMPEGEncoderDaemons>(
-				configurationRoot, &liveRecordingMutex, &liveRecordingsCapability, &liveProxyMutex, &liveProxiesCapability, &cpuUsageMutex, &cpuUsage
+				configurationRoot, &liveRecordingMutex, &liveRecordingsCapability, &liveProxyMutex, &liveProxiesCapability
 			);
 
 			thread monitor(&FFMPEGEncoderDaemons::startMonitorThread, ffmpegEncoderDaemons);
-			thread cpuUsage(&FFMPEGEncoderDaemons::startCPUUsageThread, ffmpegEncoderDaemons);
 
 			ffmpegEncoderThreads[0].join();
 
@@ -312,11 +300,9 @@ int main(int argc, char **argv)
 			liveRecorderDaemons->stopVirtualVODIngestionThread();
 			liveRecorderDaemons->stopChunksIngestionThread();
 
-			// ffmpegEncoders[0]->stopMonitorThread();
-			// ffmpegEncoders[0]->stopCPUUsageThread();
 			ffmpegEncoderDaemons->stopMonitorThread();
-			ffmpegEncoderDaemons->stopCPUUsageThread();
 
+			cpuUsageThread->stop();
 			bandwidthUsageThread->stop();
 		}
 

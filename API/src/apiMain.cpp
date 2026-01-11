@@ -13,8 +13,9 @@
 #include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
-#include "../../CatraLibraries/BandwidthUsageThread/src/BandwidthUsageThread.h"
 #include "API.h"
+#include "CPUUsageThread.h"
+#include "BandwidthUsageThread.h"
 #include "JSONUtils.h"
 #include "JsonPath.h"
 #include "spdlog/spdlog.h"
@@ -294,6 +295,9 @@ int main(int argc, char **argv)
 		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>();
 		bandwidthUsageThread->start();
 
+		const auto cpuUsageThread = make_shared<CPUUsageThread>();
+		cpuUsageThread->start();
+
 		vector<shared_ptr<API>> apis;
 		vector<thread> apiThreads;
 
@@ -318,6 +322,7 @@ int main(int argc, char **argv)
 			apis[0]->stopUploadFileProgressThread();
 		}
 
+		cpuUsageThread->stop();
 		bandwidthUsageThread->stop();
 		mmsDeliveryAuthorization->stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 

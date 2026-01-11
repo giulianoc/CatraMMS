@@ -9,7 +9,6 @@
 #define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 #endif
 #include "FFMpegWrapper.h"
-#include "GetCpuUsage.h"
 #include "spdlog/spdlog.h"
 #include <chrono>
 #include <deque>
@@ -29,8 +28,7 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
   public:
 	FFMPEGEncoderDaemons(
 		nlohmann::json configurationRoot, std::mutex *liveRecordingMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveRecording>> *liveRecordingsCapability,
-		std::mutex *liveProxyMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability, std::shared_mutex *cpuUsageMutex,
-		std::deque<int> *cpuUsage
+		std::mutex *liveProxyMutex, std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *liveProxiesCapability
 	);
 	~FFMPEGEncoderDaemons();
 
@@ -38,36 +36,19 @@ class FFMPEGEncoderDaemons : public FFMPEGEncoderBase
 
 	void stopMonitorThread();
 
-	void startCPUUsageThread();
-
-	void stopCPUUsageThread();
-
 	static void termProcess(const std::shared_ptr<FFMPEGEncoderBase::Encoding> &selectedEncoding, int64_t ingestionJobKey, std::string label, std::string message, bool kill);
 
 private:
 	bool _monitorThreadShutdown;
-	bool _cpuUsageThreadShutdown;
 	int _monitorCheckInSeconds;
 
 	int _maxRealTimeInfoNotChangedToleranceInSeconds;
 	int _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow;
-	GetCpuUsage _getCpuUsage;
 
 	std::mutex *_liveRecordingMutex;
-	std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveRecording>> *_liveRecordingsCapability;
+	std::vector<std::shared_ptr<LiveRecording>> *_liveRecordingsCapability;
 	std::mutex *_liveProxyMutex;
-	std::vector<std::shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> *_liveProxiesCapability;
-	std::shared_mutex *_cpuUsageMutex;
-	std::deque<int> *_cpuUsage;
-
-	std::string _mmsAPIProtocol;
-	std::string _mmsAPIHostname;
-	int32_t _mmsAPIPort;
-	std::string _mmsAPIVersion;
-	std::string _mmsAPIUpdateCPUStatsURI;
-	std::string _updateStatsUser;
-	std::string _updateStatsPassword;
-	int32_t _encoderKey;
+	std::vector<std::shared_ptr<LiveProxyAndGrid>> *_liveProxiesCapability;
 
 	static bool exists(const std::string& pathName, int retries = 3, int waitInSeconds = 1);
 };
