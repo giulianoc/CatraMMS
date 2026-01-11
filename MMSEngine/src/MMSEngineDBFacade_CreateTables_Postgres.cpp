@@ -1284,7 +1284,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"port					integer NOT NULL,"
 				"txAvgBandwidthUsage	bigint,"
 				"rxAvgBandwidthUsage	bigint,"
+				"bandwidthUsageUpdateTime	timestamp without time zone,"
 				"cpuUsage				integer,"
+				"cpuUsageUpdateTime		timestamp without time zone,"
 				"constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
 				"UNIQUE (label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
