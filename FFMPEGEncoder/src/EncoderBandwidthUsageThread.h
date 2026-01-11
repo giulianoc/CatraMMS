@@ -33,7 +33,8 @@ using json = nlohmann::json;
 class EncoderBandwidthUsageThread final : public BandwidthUsageThread
 {
 public:
-	explicit EncoderBandwidthUsageThread(const json & configurationRoot);
+	explicit EncoderBandwidthUsageThread(const json & configurationRoot,
+		const std::optional<std::string> &interfaceNameToMonitor = std::nullopt);
 
 	void newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const override;
 

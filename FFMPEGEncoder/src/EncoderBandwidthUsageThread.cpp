@@ -27,7 +27,9 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 #include "CurlWrapper.h"
 #include "Encrypt.h"
 
-EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurationRoot)
+EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurationRoot,
+	const std::optional<std::string> &interfaceNameToMonitor):
+	BandwidthUsageThread(interfaceNameToMonitor)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
 	SPDLOG_INFO("Configuration item"

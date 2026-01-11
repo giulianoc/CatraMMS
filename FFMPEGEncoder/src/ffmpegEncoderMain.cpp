@@ -244,7 +244,11 @@ int main(int argc, char **argv)
 		mutex tvChannelsPortsMutex;
 		long tvChannelPort_CurrentOffset = 0;
 
-		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot);
+		auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["ffmpeg"]["bandwithUsageInterfaceName"].as<string>();
+		std::optional<std::string> optInterfaceNameToMonitor = nullopt;
+		if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
+			optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
+		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor);
 		bandwidthUsageThread->start();
 
 		auto cpuUsageThread = make_shared<EncoderCPUUsageThread>(configurationRoot);

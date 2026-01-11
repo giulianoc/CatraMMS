@@ -292,7 +292,11 @@ int main(int argc, char **argv)
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
 
-		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>();
+		auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configuration)["api"]["bandwithUsageInterfaceName"].as<string>();
+		std::optional<std::string> optInterfaceNameToMonitor = nullopt;
+		if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
+			optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
+		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>(optInterfaceNameToMonitor);
 		bandwidthUsageThread->start();
 
 		const auto cpuUsageThread = make_shared<CPUUsageThread>();
