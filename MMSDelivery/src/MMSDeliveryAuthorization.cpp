@@ -1086,7 +1086,7 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 						constexpr int bandwidthUsageTimeoutInSeconds = 2;
 						bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
 
-						bandwidth = JsonPath(&bandwidthUsageRoot)["avgBandwidthUsage"].as<uint64_t>();
+						bandwidth = JsonPath(&bandwidthUsageRoot)["txAvgBandwidthUsage"].as<uint64_t>();
 					}
 					catch (exception &e)
 					{

@@ -780,7 +780,10 @@ void API::avgBandwidthUsage(
 	{
 		json statusRoot;
 
-		statusRoot["avgBandwidthUsage"] = _bandwidthUsageThread->getAvgBandwidthUsage();
+		auto [txAvgBandwidthUsage, rxAvgBandwidthUsage] = _bandwidthUsageThread->getAvgBandwidthUsage();
+
+		statusRoot["txAvgBandwidthUsage"] = txAvgBandwidthUsage;
+		statusRoot["rxAvgBandwidthUsage"] = rxAvgBandwidthUsage;
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200, JSONUtils::toString(statusRoot));
 	}
