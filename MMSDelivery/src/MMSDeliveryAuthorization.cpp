@@ -1078,12 +1078,13 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
 				{
 					string bandwidthUsageURL;
+					json bandwidthUsageRoot;
 					try
 					{
 						bandwidthUsageURL = std::format("{}://{}:{}/catramms/{}/avgBandwidthUsage",
 							_apiProtocol, runningHost, _apiPort, _apiVersion);
 						constexpr int bandwidthUsageTimeoutInSeconds = 2;
-						json bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
+						bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
 
 						bandwidth = JsonPath(&bandwidthUsageRoot)["avgBandwidthUsage"].as<uint64_t>();
 					}
@@ -1093,8 +1094,9 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 						SPDLOG_ERROR(
 							"bandwidthUsage failed"
 							", bandwidthUsageURL: {}"
+							", bandwidthUsageRoot: {}"
 							", exception: {}",
-							bandwidthUsageURL, e.what()
+							bandwidthUsageURL, JSONUtils::toString(bandwidthUsageRoot), e.what()
 						);
 					}
 				}
