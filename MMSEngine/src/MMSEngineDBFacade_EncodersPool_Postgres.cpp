@@ -2476,6 +2476,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				encodersKeyList, externalEncoderCondition, encodersUnavailableAfterSelectedForSeconds,
 				encodersUnavailableIfNotReceivedStatsUpdatesForSeconds, encodersUnavailableIfNotReceivedStatsUpdatesForSeconds
 			);
+			SPDLOG_INFO("AAAAAAA: sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
