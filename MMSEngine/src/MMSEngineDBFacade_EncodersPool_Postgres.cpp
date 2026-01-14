@@ -2447,7 +2447,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 		{
 			string externalEncoderCondition;
 			if (!externalEncoderAllowed)
-				externalEncoderCondition = "and external = false ";
+				externalEncoderCondition = "AND e.external = false ";
 
 			int16_t encodersUnavailableAfterSelectedForSeconds = 45;
 			int16_t encodersUnavailableIfNotReceivedStatsUpdatesForSeconds = 30;
@@ -2455,22 +2455,24 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			"WITH params AS ( "
 					"SELECT NOW() AS ts), "
 				"selectedEncoder AS ( "
-					"SELECT encoderKey "
-					"from MMS_Encoder "
-					"where encoderKey in ({}) and enabled = true {} "
-					"AND (ts - selectedLastTime) >= INTERVAL '{} seconds' "
-					"AND (ts - bandwidthUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
-					"AND (ts - cpuUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
-					"ORDER BY cpuUsage ASC NULLS LAST, (txAvgBandwidthUsage + rxAvgBandwidthUsage) ASC NULLS LAST "
+					"SELECT e.encoderKey "
+					"from MMS_Encoder e "
+					"CROSS JOIN params p "
+					"where e.encoderKey in ({}) and e.enabled = true {} "
+					"AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds' "
+					"AND (p.ts - e.bandwidthUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
+					"AND (p.ts - e.cpuUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
+					"ORDER BY e.cpuUsage ASC NULLS LAST, (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST "
 					"limit 1 FOR UPDATE SKIP LOCKED "
 				") "
 				"UPDATE MMS_Encoder e "
-				"SET selectedLastTime = (SELECT ts FROM params) "
-				"FROM selectedEncoder "
-				"WHERE e.encoderKey = selectedEncoder.encoderKey "
-				"RETURNING selectedEncoder.encoderKey, selectedEncoder.external, "
-				"selectedEncoder.protocol, selectedEncoder.publicServerName, "
-				"selectedEncoder.internalServerName, selectedEncoder.port ",
+				"SET selectedLastTime = p.ts "
+				"FROM selectedEncoder s "
+				"CROSS JOIN params p "
+				"WHERE e.encoderKey = s.encoderKey "
+				"RETURNING e.encoderKey, e.external, "
+				"e.protocol, e.publicServerName, "
+				"e.internalServerName, e.port ",
 				encodersKeyList, externalEncoderCondition, encodersUnavailableAfterSelectedForSeconds,
 				encodersUnavailableIfNotReceivedStatsUpdatesForSeconds, encodersUnavailableIfNotReceivedStatsUpdatesForSeconds
 			);
