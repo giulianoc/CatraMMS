@@ -2449,8 +2449,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			if (!externalEncoderAllowed)
 				externalEncoderCondition = "AND e.external = false ";
 
-			int16_t encodersUnavailableAfterSelectedForSeconds = 45;
-			int16_t encodersUnavailableIfNotReceivedStatsUpdatesForSeconds = 30;
+			int16_t encodersUnavailableAfterSelectedInSeconds = 45;
+			int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 30;
 			string sqlStatement = std::format(
 			"WITH params AS ( "
 					"SELECT NOW() AS ts), "
@@ -2460,8 +2460,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					"CROSS JOIN params p "
 					"where e.encoderKey in ({}) and e.enabled = true {} "
 					"AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds' "
-					"AND (p.ts - e.bandwidthUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
-					"AND (p.ts - e.cpuUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
+					"AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds' " // indica anche che è running
+					"AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds' " // indica anche che è running
 					"ORDER BY e.cpuUsage ASC NULLS LAST, (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST "
 					"limit 1 FOR UPDATE SKIP LOCKED "
 				") "
@@ -2473,8 +2473,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				"RETURNING e.encoderKey, e.external, "
 				"e.protocol, e.publicServerName, "
 				"e.internalServerName, e.port ",
-				encodersKeyList, externalEncoderCondition, encodersUnavailableAfterSelectedForSeconds,
-				encodersUnavailableIfNotReceivedStatsUpdatesForSeconds, encodersUnavailableIfNotReceivedStatsUpdatesForSeconds
+				encodersKeyList, externalEncoderCondition, encodersUnavailableAfterSelectedInSeconds,
+				encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
 			);
 			SPDLOG_INFO("AAAAAAA: sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
