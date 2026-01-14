@@ -1075,7 +1075,7 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 
 			if (!runningHostsBandwidth.empty())
 			{
-				for (auto &[runningHost, bandwidth] : runningHostsBandwidth)
+				for (auto &[runningHost, txAvgBandwidthUsage] : runningHostsBandwidth)
 				{
 					string bandwidthUsageURL;
 					json bandwidthUsageRoot;
@@ -1086,7 +1086,7 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 						constexpr int bandwidthUsageTimeoutInSeconds = 2;
 						bandwidthUsageRoot = CurlWrapper::httpGetJson(bandwidthUsageURL, bandwidthUsageTimeoutInSeconds);
 
-						bandwidth = JsonPath(&bandwidthUsageRoot)["txAvgBandwidthUsage"].as<uint64_t>();
+						txAvgBandwidthUsage = JsonPath(&bandwidthUsageRoot)["txAvgBandwidthUsage"].as<uint64_t>();
 					}
 					catch (exception &e)
 					{

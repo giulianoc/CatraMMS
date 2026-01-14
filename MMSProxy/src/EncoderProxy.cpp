@@ -1622,7 +1622,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				// IN ingestionJob->metadataParameters abbiamo già il campo encodersPool.
 				// Aggiungiamo encoderKey nel caso di IP_PUSH in modo da avere un posto unico (ingestionJob->metadataParameters)
 				// per questa informazione
-				if (ipPushStreamConfigurationLabel != "")
+				if (!ipPushStreamConfigurationLabel.empty())
 				{
 					// scenario:
 					// 	- viene configurato uno Stream per un IP_PUSH su un encoder specifico
@@ -2386,58 +2386,55 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 				throw MaxConcurrentJobsReached();
 			}
-			else
+			SPDLOG_ERROR(
+				"Encoding URL failed/runtime_error"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}"
+				", ffmpegEncoderURL: {}"
+				", response.str: {}"
+				", e.what(): {}",
+				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL,
+				responseInitialized ? response.str() : "", e.what()
+			);
+
+			// update EncodingJob failures number to notify the GUI EncodingJob is failing
+			try
 			{
-				SPDLOG_ERROR(
-					"Encoding URL failed/runtime_error"
-					", _proxyIdentifier: {}"
+				// 2021-02-12: scenario, encodersPool does not exist, a runtime_error is generated contiuosly. The task will
+				// never exist from this loop because currentAttemptsNumberInCaseOfErrors always remain to 0
+				// and the main loop look currentAttemptsNumberInCaseOfErrors. So added currentAttemptsNumberInCaseOfErrors++
+				currentAttemptsNumberInCaseOfErrors++;
+
+				SPDLOG_INFO(
+					"updateEncodingJobFailuresNumber"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
-					", ffmpegEncoderURL: {}"
-					", response.str: {}"
-					", e.what(): {}",
-					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL,
-					responseInitialized ? response.str() : "", e.what()
+					", currentAttemptsNumberInCaseOfErrors: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
 				);
 
-				// update EncodingJob failures number to notify the GUI EncodingJob is failing
-				try
-				{
-					// 2021-02-12: scenario, encodersPool does not exist, a runtime_error is generated contiuosly. The task will
-					// never exist from this loop because currentAttemptsNumberInCaseOfErrors always remain to 0
-					// and the main loop look currentAttemptsNumberInCaseOfErrors. So added currentAttemptsNumberInCaseOfErrors++
-					currentAttemptsNumberInCaseOfErrors++;
-
-					SPDLOG_INFO(
-						"updateEncodingJobFailuresNumber"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}"
-						", currentAttemptsNumberInCaseOfErrors: {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
-					);
-
-					int64_t mediaItemKey = -1;
-					int64_t encodedPhysicalPathKey = -1;
-					_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
-				}
-				catch (...)
-				{
-					SPDLOG_ERROR(
-						"updateEncodingJobFailuresNumber failed"
-						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
-					);
-				}
-
-				// sleep a bit and try again
-				int sleepTime = 30;
-				this_thread::sleep_for(chrono::seconds(sleepTime));
-
-				utcNowCheckToExit = chrono::system_clock::to_time_t(chrono::system_clock::now());
-
-				// throw e;
+				int64_t mediaItemKey = -1;
+				int64_t encodedPhysicalPathKey = -1;
+				_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
 			}
+			catch (...)
+			{
+				SPDLOG_ERROR(
+					"updateEncodingJobFailuresNumber failed"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+				);
+			}
+
+			// sleep a bit and try again
+			int sleepTime = 30;
+			this_thread::sleep_for(chrono::seconds(sleepTime));
+
+			utcNowCheckToExit = chrono::system_clock::to_time_t(chrono::system_clock::now());
+
+			// throw e;
 		}
 		catch (exception& e)
 		{

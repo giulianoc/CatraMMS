@@ -1287,6 +1287,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"bandwidthUsageUpdateTime	timestamp without time zone,"
 				"cpuUsage				integer,"
 				"cpuUsageUpdateTime		timestamp without time zone,"
+				"selectedLastTime		timestamp without time zone not null default current_timestamp,"
 				"constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
 				"UNIQUE (label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1304,6 +1305,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 		{
 			string sqlStatement = "create UNIQUE index if not exists MMS_Encoder_idx on MMS_Encoder (publicServerName)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_Encoder_idx2 ON MMS_Encoder ("
+				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

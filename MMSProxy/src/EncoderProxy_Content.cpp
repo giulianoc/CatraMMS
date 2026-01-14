@@ -236,7 +236,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 
 		return killed;
 	}
-	catch (EncoderNotFound e)
+	catch (EncoderNotFound& e)
 	{
 		SPDLOG_ERROR(
 			"Encoder not found"
@@ -248,7 +248,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
 		);
 
-		throw e;
+		throw;
 	}
 	catch (MaxConcurrentJobsReached &e)
 	{
@@ -261,9 +261,9 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 		);
 		SPDLOG_WARN(errorMessage);
 
-		throw e;
+		throw;
 	}
-	catch (runtime_error e)
+	catch (runtime_error& e)
 	{
 		string error = e.what();
 		if (error.find(NoEncodingAvailable().what()) != string::npos || error.find(MaxConcurrentJobsReached().what()) != string::npos)
@@ -279,22 +279,19 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 
 			throw MaxConcurrentJobsReached();
 		}
-		else
-		{
-			SPDLOG_ERROR(
-				"Encoding URL failed"
-				", _proxyIdentifier: {}"
-				", _ingestionJobKey: {}"
-				", _encodingJobKey: {}"
-				", ffmpegEncoderURL: {}"
-				", exception: {}",
-				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
-			);
+		SPDLOG_ERROR(
+			"Encoding URL failed"
+			", _proxyIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", _encodingJobKey: {}"
+			", ffmpegEncoderURL: {}"
+			", exception: {}",
+			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
+		);
 
-			throw e;
-		}
+		throw;
 	}
-	catch (exception e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"Encoding URL failed"
@@ -306,7 +303,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
 		);
 
-		throw e;
+		throw;
 	}
 }
 

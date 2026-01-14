@@ -59,77 +59,58 @@ using namespace nlohmann::literals;
 	else                                                                                                                                             \
 		SPDLOG_DEBUG(__VA_ARGS__);
 
-struct LoginFailed : public std::exception
+struct LoginFailed final : std::exception
 {
-	char const *what() const throw() { return "email and/or password are wrong"; };
+	[[nodiscard]] char const *what() const noexcept override { return "email and/or password are wrong"; };
 };
 
-struct APIKeyNotFoundOrExpired : public std::exception
+struct APIKeyNotFoundOrExpired final : std::exception
 {
-	char const *what() const throw() { return "APIKey was not found or it is expired"; };
+	[[nodiscard]] char const *what() const noexcept override { return "APIKey was not found or it is expired"; };
 };
 
-struct DBRecordNotFound : public std::exception
+struct DBRecordNotFound final : std::runtime_error
 {
-
-	std::string _errorMessage;
-
-	DBRecordNotFound(std::string errorMessage) { _errorMessage = errorMessage; }
-
-	char const *what() const throw() { return _errorMessage.c_str(); };
+	explicit DBRecordNotFound(const std::string& errorMessage): runtime_error(errorMessage) {};
 };
 
-struct MediaItemKeyNotFound : public std::exception
+struct MediaItemKeyNotFound final : std::runtime_error
 {
-
-	std::string _errorMessage;
-
-	MediaItemKeyNotFound(std::string errorMessage) { _errorMessage = errorMessage; }
-
-	char const *what() const throw() { return _errorMessage.c_str(); };
+	explicit MediaItemKeyNotFound(const std::string& errorMessage): runtime_error(errorMessage) {};
 };
 
-struct DeadlockFound : public std::exception
+struct DeadlockFound final : std::runtime_error
 {
-
-	std::string _errorMessage;
-
-	DeadlockFound(std::string errorMessage) { _errorMessage = errorMessage; }
-
-	char const *what() const throw() { return _errorMessage.c_str(); };
+	explicit DeadlockFound(const std::string& errorMessage): runtime_error(errorMessage) {};
 };
 
-struct EncoderNotFound : public std::exception
+struct EncoderNotFound final : std::runtime_error
 {
-
-	std::string _errorMessage;
-
-	EncoderNotFound(std::string errorMessage) { _errorMessage = errorMessage; }
-
-	char const *what() const throw() { return _errorMessage.c_str(); };
+	explicit EncoderNotFound(const std::string& errorMessage): runtime_error(errorMessage) {};
 };
 
-struct AlreadyLocked : public std::exception
+struct AlreadyLocked final : public std::exception
 {
 	std::string _errorMessage;
 
-	AlreadyLocked(std::string label, std::string owner, int currentLockDuration)
+	AlreadyLocked(const std::string& label, const std::string& owner, const int currentLockDuration)
 	{
 		_errorMessage =
-			std::string("Already locked") + ", label: " + label + ", owner: " + owner + ", currentLockDuration (secs): " + std::to_string(currentLockDuration);
+			std::string("Already locked") + ", label: " + label + ", owner: " + owner
+		+ ", currentLockDuration (secs): " + std::to_string(currentLockDuration);
 	}
 
-	char const *what() const throw() { return _errorMessage.c_str(); };
+	[[nodiscard]] char const *what() const noexcept override { return _errorMessage.c_str(); };
 };
 
-struct YouTubeURLNotRetrieved : public std::exception
+struct YouTubeURLNotRetrieved final : std::exception
 {
-	char const *what() const throw() { return "YouTube URL was not retrieved"; };
+	[[nodiscard]] char const *what() const noexcept override { return "YouTube URL was not retrieved"; };
 };
 
-struct NoMoreSpaceInMMSPartition : public std::exception
+struct NoMoreSpaceInMMSPartition final : std::exception
 {
-	char const *what() const throw() { return "No more space in MMS Partitions"; };
+	[[nodiscard]] char const *what() const noexcept override { return "No more space in MMS Partitions"; };
 };
 
 class MMSEngineDBFacade
@@ -2370,9 +2351,14 @@ class MMSEngineDBFacade
 		std::string labelOrder // "" or "asc" or "desc"
 	);
 
-	std::tuple<int64_t, bool, std::string, std::string, std::string, int>
-	getRunningEncoderByEncodersPool(int64_t workspaceKey, std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
+	std::tuple<int64_t, bool, std::string, std::string, std::string, int> getEncoderUsingRoundRobin(int64_t workspaceKey,
+		std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
 
+	std::tuple<int64_t, bool, std::string, std::string, std::string, int> getEncoderUsingLeastResources(int64_t workspaceKey,
+		std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
+
+	std::string getEncodersKeyListByEncodersPool(int64_t workspaceKey, std::string encodersPoolLabel,
+		int64_t encoderKeyToBeSkipped);
 	int getEncodersNumberByEncodersPool(int64_t workspaceKey, std::string encodersPoolLabel);
 
 	std::pair<std::string, bool> getEncoderURL(int64_t encoderKey, std::string serverName = "");

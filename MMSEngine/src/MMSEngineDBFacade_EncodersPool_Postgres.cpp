@@ -8,6 +8,7 @@
 #include "spdlog/spdlog.h"
 #include <algorithm>
 #include <chrono>
+#include <spdlog/fmt/bundled/ranges.h>
 
 using namespace std;
 using json = nlohmann::json;
@@ -2107,7 +2108,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 	}
 }
 
-tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningEncoderByEncodersPool(
+tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderUsingRoundRobin(
 	int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 )
 {
@@ -2117,7 +2118,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		string field;
 
 		SPDLOG_INFO(
-			"Received getRunningEncoderByEncodersPool"
+			"Received getEncoderUsingRoundRobin"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
 			", encoderKeyToBeSkipped: {}"
@@ -2278,7 +2279,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			if (external && !externalEncoderAllowed)
 			{
 				SPDLOG_INFO(
-					"getEncoderByEncodersPool, skipped encoderKey because external encoder are not allowed"
+					"getEncoderUsingRoundRobin, skipped encoderKey because external encoder are not allowed"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}"
 					", enabled: {}",
@@ -2290,7 +2291,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			if (!enabled)
 			{
 				SPDLOG_INFO(
-					"getEncoderByEncodersPool, skipped encoderKey because encoder not enabled"
+					"getEncoderUsingRoundRobin, skipped encoderKey because encoder not enabled"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}"
 					", enabled: {}",
@@ -2302,7 +2303,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 			if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
 			{
 				SPDLOG_INFO(
-					"getEncoderByEncodersPool, skipped encoderKey"
+					"getEncoderUsingRoundRobin, skipped encoderKey"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}"
 					", encoderKeyToBeSkipped: {}",
@@ -2316,7 +2317,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 				if (!isEncoderRunning(external, protocol, publicServerName, internalServerName, port))
 				{
 					SPDLOG_INFO(
-						"getEncoderByEncodersPool, dicarded encoderKey because not running"
+						"getEncoderUsingRoundRobin, discarded encoderKey because not running"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}",
 						workspaceKey, encodersPoolLabel
@@ -2332,7 +2333,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		if (!encoderFound)
 		{
 			string errorMessage = std::format(
-				"Encoder was not found"
+				"getEncoderUsingRoundRobin, encoder was not found"
 				", workspaceKey: {}"
 				", encodersPoolLabel: {}"
 				", encoderKeyToBeSkipped: {}",
@@ -2381,6 +2382,214 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getRunningE
 		}
 
 		return make_tuple(encoderKey, external, protocol, publicServerName, internalServerName, port);
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderUsingLeastResources(
+	int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
+	try
+	{
+		SPDLOG_INFO(
+			"Received getEncoderUsingLeastResources"
+			", workspaceKey: {}"
+			", encodersPoolLabel: {}"
+			", encoderKeyToBeSkipped: {}"
+			", externalEncoderAllowed: {}",
+			workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
+		);
+
+		string encodersKeyList = getEncodersKeyListByEncodersPool(workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped);
+		if (encodersKeyList.empty())
+		{
+			string errorMessage = std::format(
+				"Encoder not found"
+				", workspaceKey: {}"
+				", encodersPoolLabel: {}",
+				workspaceKey, encodersPoolLabel
+			);
+			SPDLOG_ERROR(errorMessage);
+
+			throw EncoderNotFound(errorMessage);
+		}
+
+		int64_t encoderKey;
+		bool external = false;
+		string protocol;
+		string publicServerName;
+		string internalServerName;
+		int port;
+		{
+			string externalEncoderCondition;
+			if (!externalEncoderAllowed)
+				externalEncoderCondition = "and external = false ";
+
+			int16_t encodersUnavailableAfterSelectedForSeconds = 45;
+			int16_t encodersUnavailableIfNotReceivedStatsUpdatesForSeconds = 30;
+			string sqlStatement = std::format(
+			"WITH params AS ("
+					"SELECT NOW() AS ts), "
+				"selectedEncoder AS ("
+					"SELECT encoderKey "
+					"from MMS_Encoder "
+					"where encoderKey in ({}) and enabled = true {}"
+					"AND (ts - selectedLastTime) >= INTERVAL '{} seconds' "
+					"AND (ts - bandwidthUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
+					"AND (ts - cpuUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
+					"ORDER BY cpuUsage ASC NULLS LAST, (txAvgBandwidthUsage + rxAvgBandwidthUsage) ASC NULLS LAST "
+					"limit 1 FOR UPDATE SKIP LOCKED"
+				")"
+				"UPDATE MMS_Encoder e "
+				"SET selectedLastTime = (SELECT ts FROM params) "
+				"FROM selectedEncoder"
+				"WHERE e.encoderKey = selectedEncoder.encoderKey"
+				"RETURNING selectedEncoder.encoderKey, selectedEncoder.external, "
+				"selectedEncoder.protocol, selectedEncoder.publicServerName, "
+				"selectedEncoder.internalServerName, selectedEncoder.port ",
+				encodersKeyList, externalEncoderCondition, encodersUnavailableAfterSelectedForSeconds,
+				encodersUnavailableIfNotReceivedStatsUpdatesForSeconds, encodersUnavailableIfNotReceivedStatsUpdatesForSeconds
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (sqlResultSet->empty())
+			{
+				string errorMessage = std::format(
+					"Encoder not found"
+					", workspaceKey: {}"
+					", encodersPoolLabel: {}",
+					workspaceKey, encodersPoolLabel
+				);
+				SPDLOG_ERROR(errorMessage);
+
+				throw EncoderNotFound(errorMessage);
+			}
+
+			encoderKey = (*sqlResultSet)[0]["encoderKey"].as<int64_t>();
+			external = (*sqlResultSet)[0]["external"].as<bool>();
+			protocol = (*sqlResultSet)[0]["protocol"].as<string>();
+			publicServerName = (*sqlResultSet)[0]["publicServerName"].as<string>();
+			internalServerName = (*sqlResultSet)[0]["internalServerName"].as<string>();
+			port = (*sqlResultSet)[0]["port"].as<int>();
+		}
+
+		return make_tuple(encoderKey, external, protocol, publicServerName, internalServerName, port);
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			SPDLOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			SPDLOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+string MMSEngineDBFacade::getEncodersKeyListByEncodersPool(int64_t workspaceKey, string encodersPoolLabel,
+	int64_t encoderKeyToBeSkipped)
+{
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		SPDLOG_INFO(
+			"Received getEncodersKeyListByEncodersPool"
+			", workspaceKey: {}"
+			", encodersPoolLabel: {}"
+			", encoderKeyToBeSkipped: {}",
+			workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
+		);
+
+		string encodersKeyList;
+		{
+			string sqlStatement;
+			if (encodersPoolLabel.empty())
+				sqlStatement = std::format(
+					"select encoderKey from MMS_EncoderWorkspaceMapping "
+					"where workspaceKey = {} ",
+					workspaceKey
+				);
+			else
+				sqlStatement = std::format(
+					"select epm.encoderKey from MMS_EncodersPool ep, MMS_EncoderEncodersPoolMapping epm"
+					" where ep.encodersPoolKey = epm.encodersPoolKey and ep.workspaceKey = {} "
+					" and ep.label = {} ",
+					workspaceKey, encodersPoolLabel
+				);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+
+			encodersKeyList.reserve(256);  // opzionale, ma consigliato
+			bool first = true;
+			for (auto& row : *sqlResultSet)
+			{
+				auto encoderKey = row["encoderKey"].as<int64_t>();
+				if (encoderKey == encoderKeyToBeSkipped)
+					continue;
+				if (!first)
+					encodersKeyList.append(", ");
+				first = false;
+				encodersKeyList.append(std::format("{}", encoderKey));
+			}
+		}
+
+		return encodersKeyList;
 	}
 	catch (exception const &e)
 	{

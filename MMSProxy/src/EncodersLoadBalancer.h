@@ -38,15 +38,16 @@ class EncodersLoadBalancer
   public:
 	EncodersLoadBalancer(const std::shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const nlohmann::json& configuration);
 
-	virtual ~EncodersLoadBalancer();
+	virtual ~EncodersLoadBalancer() = default;
 
 	// std::string getEncoderHost(std::string encodersPool, std::shared_ptr<Workspace> workspace, std::string encoderToSkip);
 
-	std::tuple<int64_t, std::string, bool> getEncoderURL(
-		int64_t ingestionJobKey, std::string encodersPoolLabel, const std::shared_ptr<Workspace>& workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+	[[nodiscard]] std::tuple<int64_t, std::string, bool> getEncoderURL(int64_t ingestionJobKey, std::string encodersPoolLabel,
+		const std::shared_ptr<Workspace>& workspace, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 	) const;
 
   private:
+	std::string _encoderLoadBalancer;
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 
 	// void init();

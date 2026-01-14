@@ -12,6 +12,8 @@
  */
 
 #include "EncodersLoadBalancer.h"
+
+#include "JsonPath.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
@@ -21,9 +23,8 @@ using json = nlohmann::json;
 EncodersLoadBalancer::EncodersLoadBalancer(const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
 	const json& configuration): _mmsEngineDBFacade(mmsEngineDBFacade)
 {
+	_encoderLoadBalancer = JsonPath(&configuration)["ffmpeg"]["encoderLoadBalancer"].as<string>("roundRobin");
 }
-
-EncodersLoadBalancer::~EncodersLoadBalancer() = default;
 
 tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 	int64_t ingestionJobKey, string encodersPoolLabel, const shared_ptr<Workspace>& workspace, int64_t encoderKeyToBeSkipped,
@@ -35,16 +36,27 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 		", ingestionJobKey: {}"
 		", workspaceKey: {}"
 		", encodersPoolLabel: {}"
-		", encoderKeyToBeSkipped: {}",
-		ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
+		", encoderKeyToBeSkipped: {}"
+		", _encoderLoadBalancer: {}",
+		ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, _encoderLoadBalancer
 	);
 
 	try
 	{
-		auto [encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port] =
-			_mmsEngineDBFacade->getRunningEncoderByEncodersPool(
-				workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
-			);
+		int64_t encoderKey;
+		bool externalEncoder;
+		string protocol;
+		string publicServerName;
+		string internalServerName;
+		int port;
+		if (_encoderLoadBalancer == "roundRobin")
+			tie (encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port) =
+				_mmsEngineDBFacade->getEncoderUsingRoundRobin(workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped,
+					externalEncoderAllowed);
+		else // if (_encoderLoadBalancer == "leastResources")
+			tie (encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port) =
+				_mmsEngineDBFacade->getEncoderUsingLeastResources(workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped,
+					externalEncoderAllowed);
 
 		string encoderURL = std::format("{}://{}:{}", protocol,
 			externalEncoder ? publicServerName : internalServerName, port);
