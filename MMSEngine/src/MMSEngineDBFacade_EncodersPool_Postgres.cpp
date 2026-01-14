@@ -2452,22 +2452,22 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			int16_t encodersUnavailableAfterSelectedForSeconds = 45;
 			int16_t encodersUnavailableIfNotReceivedStatsUpdatesForSeconds = 30;
 			string sqlStatement = std::format(
-			"WITH params AS ("
+			"WITH params AS ( "
 					"SELECT NOW() AS ts), "
-				"selectedEncoder AS ("
+				"selectedEncoder AS ( "
 					"SELECT encoderKey "
 					"from MMS_Encoder "
-					"where encoderKey in ({}) and enabled = true {}"
+					"where encoderKey in ({}) and enabled = true {} "
 					"AND (ts - selectedLastTime) >= INTERVAL '{} seconds' "
 					"AND (ts - bandwidthUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
 					"AND (ts - cpuUsageUpdateTime) >= INTERVAL '{} seconds' " // indica anche che è running
 					"ORDER BY cpuUsage ASC NULLS LAST, (txAvgBandwidthUsage + rxAvgBandwidthUsage) ASC NULLS LAST "
-					"limit 1 FOR UPDATE SKIP LOCKED"
-				")"
+					"limit 1 FOR UPDATE SKIP LOCKED "
+				") "
 				"UPDATE MMS_Encoder e "
 				"SET selectedLastTime = (SELECT ts FROM params) "
-				"FROM selectedEncoder"
-				"WHERE e.encoderKey = selectedEncoder.encoderKey"
+				"FROM selectedEncoder "
+				"WHERE e.encoderKey = selectedEncoder.encoderKey "
 				"RETURNING selectedEncoder.encoderKey, selectedEncoder.external, "
 				"selectedEncoder.protocol, selectedEncoder.publicServerName, "
 				"selectedEncoder.internalServerName, selectedEncoder.port ",
