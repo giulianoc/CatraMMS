@@ -2427,12 +2427,9 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 )
 {
-			SPDLOG_INFO("AAAAAAAAA");
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
-			SPDLOG_INFO("AAAAAAAAA");
 	try
 	{
-			SPDLOG_INFO("AAAAAAAAA");
 		SPDLOG_INFO(
 			"Received getEncoderUsingLeastResources"
 			", workspaceKey: {}"
@@ -2441,7 +2438,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			", externalEncoderAllowed: {}",
 			workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
 		);
-		SPDLOG_INFO("AAAAAAAAA");
 
 		string encodersKeyList = getEncodersKeyListByEncodersPool(workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped);
 		if (encodersKeyList.empty())
@@ -2472,7 +2468,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 30;
 			string sqlStatement = std::format(
 			"WITH params AS ( "
-					"SELECT NOW() AS ts), "
+					"SELECT NOW() at time zone 'utc' AS ts), "
 				"selectedEncoder AS ( "
 					"SELECT e.encoderKey "
 					"from MMS_Encoder e "
