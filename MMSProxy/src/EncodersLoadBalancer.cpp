@@ -54,9 +54,13 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 				_mmsEngineDBFacade->getEncoderUsingRoundRobin(workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped,
 					externalEncoderAllowed);
 		else // if (_encoderLoadBalancer == "leastResources")
+		{
+			SPDLOG_INFO("AAAAAAAAA");
 			tie (encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port) =
 				_mmsEngineDBFacade->getEncoderUsingLeastResources(workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped,
 					externalEncoderAllowed);
+			SPDLOG_INFO("AAAAAAAAA");
+		}
 
 		string encoderURL = std::format("{}://{}:{}", protocol,
 			externalEncoder ? publicServerName : internalServerName, port);
