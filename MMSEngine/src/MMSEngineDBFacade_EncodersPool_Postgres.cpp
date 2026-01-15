@@ -1612,7 +1612,9 @@ json MMSEngineDBFacade::getEncodersPoolList(
 							string sqlStatement = std::format(
 								"select encoderKey, label, external, enabled, protocol, "
 								"publicServerName, internalServerName, port, "
-								"cpuUsage, txAvgBandwidthUsage, rxAvgBandwidthUsage "
+								"(EXTRACT(EPOCH FROM selectedLastTime) * 1000) as selectedLastTime, "
+								"cpuUsage, (EXTRACT(EPOCH FROM cpuUsageUpdateTime) * 1000) as cpuUsageUpdateTime, "
+								"txAvgBandwidthUsage, rxAvgBandwidthUsage, (EXTRACT(EPOCH FROM bandwidthUsageUpdateTime) * 1000) as bandwidthUsageUpdateTime "
 								"from MMS_Encoder "
 								"where encoderKey = {} ",
 								encoderKey
