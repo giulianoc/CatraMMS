@@ -221,7 +221,7 @@ void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(
 		{
 			string sqlStatement = std::format(
 				"update MMS_Encoder set txAvgBandwidthUsage = {}, rxAvgBandwidthUsage = {}, "
-				"bandwidthUsageUpdateTime = NOW() "
+				"bandwidthUsageUpdateTime = NOW() at time zone 'utc' "
 				"where encoderKey = {} ",
 				txAvgBandwidthUsage, rxAvgBandwidthUsage, encoderKey
 			);
@@ -285,7 +285,7 @@ void MMSEngineDBFacade::updateEncoderCPUUsage(
 		{
 			string sqlStatement = std::format(
 				"update MMS_Encoder set cpuUsage = {}, "
-				"cpuUsageUpdateTime = NOW() "
+				"cpuUsageUpdateTime = NOW() at time zone 'utc' "
 				"where encoderKey = {} ",
 				cpuUsage, encoderKey
 			);
