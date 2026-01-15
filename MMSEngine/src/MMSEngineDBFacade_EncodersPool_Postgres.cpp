@@ -1133,7 +1133,8 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port, "
-					"e.cpuUsage, e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage "
+					"e.selectedLastTime, e.cpuUsage, e.cpuUsageUpdateTime, "
+					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, e.bandwidthUsageUpdateTime "
 					"from MMS_Encoder e {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
@@ -1141,7 +1142,9 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port, "
-					"e.cpuUsage, e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage "
+					"(EXTRACT(EPOCH FROM e.selectedLastTime) * 1000) as selectedLastTime, "
+					"e.cpuUsage, (EXTRACT(EPOCH FROM e.cpuUsageUpdateTime) * 1000) as cpuUsageUpdateTime, "
+					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, (EXTRACT(EPOCH FROM e.bandwidthUsageUpdateTime) * 1000) as bandwidthUsageUpdateTime "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
@@ -1241,9 +1244,12 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, PostgresHel
 		int port = row["port"].as<int32_t>();
 		encoderRoot[field] = port;
 
+		encoderRoot["selectedLastTime"] = static_cast<int64_t>(row["selectedLastTime"].as<double>());
 		encoderRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
+		encoderRoot["cpuUsageUpdateTime"] = static_cast<int64_t>(row["cpuUsageUpdateTime"].as<double>());
 		encoderRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
 		encoderRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
+		encoderRoot["bandwidthUsageUpdateTime"] = static_cast<int64_t>(row["bandwidthUsageUpdateTime"].as<double>());
 
 		// 2022-1-30: running and cpu usage takes a bit of time
 		//		scenario: some MMS WEB pages loading encoder info, takes a bit of time
