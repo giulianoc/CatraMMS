@@ -1246,10 +1246,16 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, PostgresHel
 
 		encoderRoot["selectedLastTime"] = static_cast<int64_t>(row["selectedLastTime"].as<double>());
 		encoderRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
-		encoderRoot["cpuUsageUpdateTime"] = static_cast<int64_t>(row["cpuUsageUpdateTime"].as<double>());
+		if (row["cpuUsageUpdateTime"].isNull())
+			encoderRoot["cpuUsageUpdateTime"] = nullptr;
+		else
+			encoderRoot["cpuUsageUpdateTime"] = static_cast<int64_t>(row["cpuUsageUpdateTime"].as<double>());
 		encoderRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
 		encoderRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
-		encoderRoot["bandwidthUsageUpdateTime"] = static_cast<int64_t>(row["bandwidthUsageUpdateTime"].as<double>());
+		if (row["bandwidthUsageUpdateTime"].isNull())
+			encoderRoot["bandwidthUsageUpdateTime"] = nullptr;
+		else
+			encoderRoot["bandwidthUsageUpdateTime"] = static_cast<int64_t>(row["bandwidthUsageUpdateTime"].as<double>());
 
 		// 2022-1-30: running and cpu usage takes a bit of time
 		//		scenario: some MMS WEB pages loading encoder info, takes a bit of time
