@@ -1133,8 +1133,9 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port, "
-					"e.selectedLastTime, e.cpuUsage, e.cpuUsageUpdateTime, "
-					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, e.bandwidthUsageUpdateTime "
+					"(EXTRACT(EPOCH FROM e.selectedLastTime) * 1000)::bigint as selectedLastTime, "
+					"e.cpuUsage, (EXTRACT(EPOCH FROM e.cpuUsageUpdateTime) * 1000)::bigint as cpuUsageUpdateTime, "
+					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, (EXTRACT(EPOCH FROM e.bandwidthUsageUpdateTime) * 1000)::bigint as bandwidthUsageUpdateTime "
 					"from MMS_Encoder e {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
@@ -1142,9 +1143,9 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port, "
-					"(EXTRACT(EPOCH FROM e.selectedLastTime) * 1000) as selectedLastTime, "
-					"e.cpuUsage, (EXTRACT(EPOCH FROM e.cpuUsageUpdateTime) * 1000) as cpuUsageUpdateTime, "
-					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, (EXTRACT(EPOCH FROM e.bandwidthUsageUpdateTime) * 1000) as bandwidthUsageUpdateTime "
+					"to_char(e.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime"
+					"e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
+					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
@@ -1244,18 +1245,18 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, PostgresHel
 		int port = row["port"].as<int32_t>();
 		encoderRoot[field] = port;
 
-		encoderRoot["selectedLastTime"] = static_cast<int64_t>(row["selectedLastTime"].as<double>());
+		encoderRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
 		encoderRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
 		if (row["cpuUsageUpdateTime"].isNull())
 			encoderRoot["cpuUsageUpdateTime"] = nullptr;
 		else
-			encoderRoot["cpuUsageUpdateTime"] = static_cast<int64_t>(row["cpuUsageUpdateTime"].as<double>());
+			encoderRoot["cpuUsageUpdateTime"] = row["cpuUsageUpdateTime"].as<string>();
 		encoderRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
 		encoderRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
 		if (row["bandwidthUsageUpdateTime"].isNull())
 			encoderRoot["bandwidthUsageUpdateTime"] = nullptr;
 		else
-			encoderRoot["bandwidthUsageUpdateTime"] = static_cast<int64_t>(row["bandwidthUsageUpdateTime"].as<double>());
+			encoderRoot["bandwidthUsageUpdateTime"] = row["bandwidthUsageUpdateTime"].as<string>();
 
 		// 2022-1-30: running and cpu usage takes a bit of time
 		//		scenario: some MMS WEB pages loading encoder info, takes a bit of time
@@ -1618,9 +1619,9 @@ json MMSEngineDBFacade::getEncodersPoolList(
 							string sqlStatement = std::format(
 								"select encoderKey, label, external, enabled, protocol, "
 								"publicServerName, internalServerName, port, "
-								"(EXTRACT(EPOCH FROM selectedLastTime) * 1000) as selectedLastTime, "
-								"cpuUsage, (EXTRACT(EPOCH FROM cpuUsageUpdateTime) * 1000) as cpuUsageUpdateTime, "
-								"txAvgBandwidthUsage, rxAvgBandwidthUsage, (EXTRACT(EPOCH FROM bandwidthUsageUpdateTime) * 1000) as bandwidthUsageUpdateTime "
+								"to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
+								"cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
+								"txAvgBandwidthUsage, rxAvgBandwidthUsage, to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
 								"from MMS_Encoder "
 								"where encoderKey = {} ",
 								encoderKey

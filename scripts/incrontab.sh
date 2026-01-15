@@ -160,6 +160,8 @@ then
 			'{
 					SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 					echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
+					#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+					#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 					# 1. Sincronizza solo i file .ts
 					timeout 15s rsync -e "ssh $SSH_OPTS" \
 						--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
@@ -188,6 +190,8 @@ then
 		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 			'{
 					SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+					#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+					#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 					# 1. Sincronizza solo i file .ts
 					timeout 15s rsync -e "ssh $SSH_OPTS" \
 						--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
