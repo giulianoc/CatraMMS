@@ -1133,9 +1133,9 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port, "
-					"(EXTRACT(EPOCH FROM e.selectedLastTime) * 1000)::bigint as selectedLastTime, "
-					"e.cpuUsage, (EXTRACT(EPOCH FROM e.cpuUsageUpdateTime) * 1000)::bigint as cpuUsageUpdateTime, "
-					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, (EXTRACT(EPOCH FROM e.bandwidthUsageUpdateTime) * 1000)::bigint as bandwidthUsageUpdateTime "
+					"to_char(e.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
+					"e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
+					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
 					"from MMS_Encoder e {} {} limit {} offset {}",
 					sqlWhere, orderByCondition, rows, start
 				);
@@ -1143,7 +1143,7 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format(
 					"select e.encoderKey, e.label, e.external, e.enabled, e.protocol, "
 					"e.publicServerName, e.internalServerName, e.port, "
-					"to_char(e.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime"
+					"to_char(e.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 					"e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
 					"e.txAvgBandwidthUsage, e.rxAvgBandwidthUsage, to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
 					"from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {} {} limit {} offset {}",
