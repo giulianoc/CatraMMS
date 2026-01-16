@@ -2395,6 +2395,24 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			}
 			*/
 		}
+		{
+			string sqlStatement = std::format(
+				"update MMS_Encoder SET selectedLastTime = NOW() at time zone 'utc' "
+				"where encoderKey = {} ",
+				encoderKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
 
 		return make_tuple(encoderKey, external, protocol, publicServerName, internalServerName, port);
 	}
