@@ -21,22 +21,27 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 	try
 	{
-		SPDLOG_INFO(
-			string() + "generateAndIngestFrameThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		SPDLOG_INFO("generateAndIngestFrameThread"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _processorsThreadsNumber.use_count(): {}", _processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 		);
 
 		string field;
 
 		if (dependencies.empty())
 		{
-			string errorMessage = string() + "No dependencies found" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format("No dependencies found"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}", _processorIdentifier, ingestionJobKey, dependencies.size());
 			_logger->warn(errorMessage);
 
-			SPDLOG_INFO(
-				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
+			SPDLOG_INFO("Update IngestionJob"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", IngestionStatus: End_TaskSuccess"
+				", errorMessage: ", _processorIdentifier, ingestionJobKey
 			);
 			try
 			{
@@ -45,18 +50,12 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					"" // errorMessage
 				);
 			}
-			catch (runtime_error &re)
+			catch (exception &e)
 			{
-				SPDLOG_INFO(
-					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-				);
-			}
-			catch (exception &ex)
-			{
-				SPDLOG_INFO(
-					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
+				SPDLOG_ERROR("Update IngestionJob failed"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", errorMessage: {}", _processorIdentifier, ingestionJobKey, e.what()
 				);
 			}
 
@@ -85,8 +84,9 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					", ingestionJobKey: {}", ingestionJobKey);
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = string() + "ContentTpe is not a Video" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-										  ", ingestionJobKey: " + to_string(ingestionJobKey);
+					string errorMessage = std::format("ContentTpe is not a Video"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -170,10 +170,11 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					", ingestionJobKey: {}", ingestionJobKey);
 
 				{
-					SPDLOG_INFO(
-						string() + "Generated Frame to ingest" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-						", ingestionJobKey: " + to_string(ingestionJobKey) + ", frameAssetPathName: " + frameAssetPathName +
-						", fileFormat: " + fileFormat
+					SPDLOG_INFO("Generated Frame to ingest"
+						", _processorIdentifier: {}"
+						", ingestionJobKey: {}"
+						", frameAssetPathName: {}"
+						", fileFormat: {}", _processorIdentifier, ingestionJobKey, frameAssetPathName, fileFormat
 					);
 
 					string title;
@@ -189,8 +190,12 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 					try
 					{
-						shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent = make_shared<LocalAssetIngestionEvent>();
+						SPDLOG_INFO("AAAAAAAA"
+							", ingestionJobKey: {}", ingestionJobKey);
+						auto localAssetIngestionEvent = make_shared<LocalAssetIngestionEvent>();
 
+						SPDLOG_INFO("AAAAAAAA"
+							", ingestionJobKey: {}", ingestionJobKey);
 						localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
 						localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
 						localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
@@ -206,24 +211,27 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 						localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
+						SPDLOG_INFO("AAAAAAAA"
+							", ingestionJobKey: {}", ingestionJobKey);
 						handleLocalAssetIngestionEvent(processorsThreadsNumber, *localAssetIngestionEvent);
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
-							string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", exception: " + e.what()
+						SPDLOG_ERROR("handleLocalAssetIngestionEvent failed"
+							", _processorIdentifier: {}"
+							", exception: {}", _processorIdentifier, e.what()
 						);
 
 						{
-							SPDLOG_INFO(
-								string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								", ingestionJobKey: " + to_string(ingestionJobKey) + ", frameAssetPathName: " + frameAssetPathName
+							SPDLOG_INFO("Remove file"
+								", _processorIdentifier: {}"
+								", ingestionJobKey: {}"
+								", frameAssetPathName: {}", _processorIdentifier, ingestionJobKey, frameAssetPathName
 							);
 							fs::remove_all(frameAssetPathName);
 						}
 
-						throw e;
+						throw;
 					}
 				}
 			}
@@ -252,67 +260,31 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			dependencyIndex++;
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "generateAndIngestFrame failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
-		);
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
-			);
-		}
-
-		// it's a thread, no throw
-		// throw e;
-		return;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			string() + "generateAndIngestFrame failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_ERROR("generateAndIngestFrame failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 
-		SPDLOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
+		SPDLOG_INFO("Update IngestionJob"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", IngestionStatus: End_IngestionFailure"
+			", errorMessage: {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 		try
 		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
+			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure,
+				e.what());
 		}
-		catch (runtime_error &re)
+		catch (exception &e)
 		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			SPDLOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
+			SPDLOG_INFO("Update IngestionJob failed"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", errorMessage: {}", _processorIdentifier, ingestionJobKey, e.what()
 			);
 		}
 
@@ -331,8 +303,10 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 	{
 		if (dependencies.size() != 1)
 		{
-			string errorMessage = string() + "Wrong number of dependencies" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format("Wrong number of dependencies"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}", _processorIdentifier, ingestionJobKey, dependencies.size());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -368,8 +342,9 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 
 		if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 		{
-			string errorMessage = string() + "ContentTpe is not a Video" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								  ", ingestionJobKey: " + to_string(ingestionJobKey);
+			string errorMessage = std::format("ContentTpe is not a Video"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -426,38 +401,17 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			maxFramesNumber, videoFilter, periodInSeconds, mjpeg, imageWidth, imageHeight
 		);
 	}
-	catch (DBRecordNotFound &e)
-	{
-		SPDLOG_ERROR(
-			string() + "manageGenerateFramesTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		// Update IngestionJob done in the calling method
-
-		throw e;
-	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "manageGenerateFramesTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		// Update IngestionJob done in the calling method
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			string() + "manageGenerateFramesTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_ERROR("manageGenerateFramesTask failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		// Update IngestionJob done in the calling method
 
-		throw e;
+		throw;
 	}
 }
 
@@ -484,8 +438,9 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				field = "PeriodInSeconds";
 				if (!JSONUtils::isPresent(parametersRoot, field))
 				{
-					string errorMessage = string() + "Field is not present or it is null" +
-										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
+					string errorMessage = std::format("Field is not present or it is null"
+						", _processorIdentifier: {}"
+						", Field: {}", _processorIdentifier, field);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -570,7 +525,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		int width = -1;
 		{
 			field = "width";
-			width = JSONUtils::asInt64(parametersRoot, field, -1);
+			width = JSONUtils::asInt32(parametersRoot, field, -1);
 		}
 
 		int height = -1;
@@ -591,10 +546,11 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				// 2022-12-18: MIK potrebbe essere stato appena aggiunto
 				true, videoTracks, audioTracks
 			);
-			if (videoTracks.size() == 0)
+			if (videoTracks.empty())
 			{
-				string errorMessage = string() + "No video track are present" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format("No video track are present"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
 
 				SPDLOG_ERROR(errorMessage);
 
@@ -614,22 +570,12 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				);
 			}
 		}
-		catch (runtime_error &e)
-		{
-			string errorMessage = string() + "_mmsEngineDBFacade->getVideoDetails failed" +
-								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", e.what(): " + e.what();
-
-			SPDLOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
 		catch (exception &e)
 		{
-			string errorMessage = string() + "_mmsEngineDBFacade->getVideoDetails failed" +
-								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", e.what(): " + e.what();
-
+			string errorMessage = std::format("_mmsEngineDBFacade->getVideoDetails failed"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -645,44 +591,39 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				double previousStartTimeInSeconds = startTimeInSeconds;
 				startTimeInSeconds = durationInMilliSeconds / 1000;
 
-				SPDLOG_INFO(
-					string() + "startTimeInSeconds was changed to durationInMilliSeconds" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", fixStartTimeIfOvercomeDuration: " + to_string(fixStartTimeIfOvercomeDuration) + ", previousStartTimeInSeconds: " +
-					to_string(previousStartTimeInSeconds) + ", new startTimeInSeconds: " + to_string(startTimeInSeconds)
+				SPDLOG_INFO("startTimeInSeconds was changed to durationInMilliSeconds"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", fixStartTimeIfOvercomeDuration: {}"
+					", previousStartTimeInSeconds: {}"
+					", new startTimeInSeconds: {}", _processorIdentifier, ingestionJobKey, fixStartTimeIfOvercomeDuration,
+					previousStartTimeInSeconds, startTimeInSeconds
 				);
 			}
 			else
 			{
-				string errorMessage =
-					string() +
-					"Frame was not generated because instantInSeconds is "
-					"bigger than the video duration" +
-					", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-					", video sourceMediaItemKey: " + to_string(sourceMediaItemKey) + ", startTimeInSeconds: " + to_string(startTimeInSeconds) +
-					", durationInMilliSeconds: " + to_string(durationInMilliSeconds);
+				string errorMessage = std::format("Frame was not generated because instantInSeconds is "
+					"bigger than the video duration"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", video sourceMediaItemKey: {}"
+					", startTimeInSeconds: {}"
+					", durationInMilliSeconds: {}", _processorIdentifier, ingestionJobKey, sourceMediaItemKey,
+					startTimeInSeconds, durationInMilliSeconds);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "fillGenerateFramesParameters failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			string() + "fillGenerateFramesParameters failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_ERROR("fillGenerateFramesParameters failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 
-		throw e;
+		throw;
 	}
 }
