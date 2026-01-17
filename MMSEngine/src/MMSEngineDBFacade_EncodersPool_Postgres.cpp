@@ -2604,7 +2604,7 @@ string MMSEngineDBFacade::getEncodersKeyListByEncodersPool(int64_t workspaceKey,
 					"select epm.encoderKey from MMS_EncodersPool ep, MMS_EncoderEncodersPoolMapping epm"
 					" where ep.encodersPoolKey = epm.encodersPoolKey and ep.workspaceKey = {} "
 					" and ep.label = {} ",
-					workspaceKey, encodersPoolLabel
+					workspaceKey, trans.transaction->quote(encodersPoolLabel)
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
