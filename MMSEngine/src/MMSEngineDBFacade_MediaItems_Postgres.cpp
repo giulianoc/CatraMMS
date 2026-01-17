@@ -1,5 +1,6 @@
 
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/spdlog.h"
@@ -4276,9 +4277,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 			string tags;
 			{
-				json tagsRoot;
-				if (JSONUtils::isPresent(parametersRoot, "tags"))
-					tagsRoot = parametersRoot["tags"];
+				json tagsRoot = JsonPath(&parametersRoot)["tags"].as<json>(json::array());
 				SPDLOG_INFO("AAAAAAAAA"
 					", ingestionJobKey: {}"
 					", tagsRoot: {}",

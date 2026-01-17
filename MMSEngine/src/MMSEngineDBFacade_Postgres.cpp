@@ -1622,6 +1622,9 @@ string MMSEngineDBFacade::getPostgresArray(const vector<string> &arrayElements, 
 
 string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emptyElementToBeRemoved, PostgresConnTrans &trans)
 {
+	if (arrayRoot == nullptr)
+		return "ARRAY[]::text[]";
+
 	if (!arrayRoot.is_array())
 	{
 		string errorMessage = std::format("Expected JSON array"
