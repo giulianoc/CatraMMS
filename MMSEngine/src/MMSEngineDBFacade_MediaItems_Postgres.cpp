@@ -4274,16 +4274,16 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 			}
 
-			SPDLOG_INFO("AAAAAAAAA"
-				", ingestionJobKey: {}",
-				ingestionJobKey
-			);
 			string tags;
 			{
 				json tagsRoot;
-				string field = "tags";
-				if (JSONUtils::isPresent(parametersRoot, field))
-					tagsRoot = parametersRoot[field];
+				if (JSONUtils::isPresent(parametersRoot, "tags"))
+					tagsRoot = parametersRoot["tags"];
+				SPDLOG_INFO("AAAAAAAAA"
+					", ingestionJobKey: {}"
+					", tagsRoot: {}",
+					ingestionJobKey, JSONUtils::toString(tagsRoot)
+				);
 				tags = getPostgresArray(tagsRoot, true, trans);
 			}
 
