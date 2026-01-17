@@ -28,7 +28,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 		string field;
 
-		if (dependencies.size() == 0)
+		if (dependencies.empty())
 		{
 			string errorMessage = string() + "No dependencies found" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
@@ -73,12 +73,16 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 			try
 			{
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 				int64_t key;
 				MMSEngineDBFacade::ContentType referenceContentType;
 				Validator::DependencyType dependencyType;
 
 				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
 
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
 					string errorMessage = string() + "ContentTpe is not a Video" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -88,6 +92,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					throw runtime_error(errorMessage);
 				}
 
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 				int64_t sourceMediaItemKey;
 				int64_t sourcePhysicalPathKey;
 				string sourcePhysicalPath;
@@ -130,6 +136,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 				}
 
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 				int periodInSeconds;
 				double startTimeInSeconds;
 				int maxFramesNumber;
@@ -144,16 +152,22 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					periodInSeconds, startTimeInSeconds, maxFramesNumber, videoFilter, mjpeg, imageWidth, imageHeight, durationInMilliSeconds
 				);
 
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 				string fileFormat = "jpg";
 				string frameFileName = to_string(ingestionJobKey) + "." + fileFormat;
 				string frameAssetPathName = workspaceIngestionRepository + "/" + frameFileName;
 
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 				ProcessUtility::ProcessId childProcessId;
 				FFMpegWrapper ffmpeg(_configurationRoot);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight,
 					childProcessId, nullptr
 				);
+				SPDLOG_INFO("AAAAAAAA"
+					", ingestionJobKey: {}", ingestionJobKey);
 
 				{
 					SPDLOG_INFO(
@@ -194,23 +208,6 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 						handleLocalAssetIngestionEvent(processorsThreadsNumber, *localAssetIngestionEvent);
 					}
-					catch (runtime_error &e)
-					{
-						SPDLOG_ERROR(
-							string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", exception: " + e.what()
-						);
-
-						{
-							SPDLOG_INFO(
-								string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-								", ingestionJobKey: " + to_string(ingestionJobKey) + ", frameAssetPathName: " + frameAssetPathName
-							);
-							fs::remove_all(frameAssetPathName);
-						}
-
-						throw e;
-					}
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
@@ -230,30 +227,16 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					}
 				}
 			}
-			catch (runtime_error &e)
-			{
-				string errorMessage = string() + "generate and ingest frame failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
-									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
-
-				if (dependencies.size() > 1)
-				{
-					if (stopIfReferenceProcessingError)
-						throw runtime_error(errorMessage);
-				}
-				else
-					throw runtime_error(errorMessage);
-			}
-			catch (exception e)
+			catch (exception& e)
 			{
 				string errorMessage = std::format(
 					"generate and ingest frame failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
 					", dependencyIndex: {}"
-					", dependencies.size(): {}",
-					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
+					", dependencies.size(): {}"
+					", e.what(): {}",
+					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size(), e.what()
 				);
 				SPDLOG_ERROR(errorMessage);
 
