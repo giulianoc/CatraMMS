@@ -2945,18 +2945,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 				}
 			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() + "Exception managing the Ingestion entry" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
-				);
-			}
 			catch (exception &e)
 			{
 				SPDLOG_ERROR(
-					string() + "Exception managing the Ingestion entry" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
+					"Exception managing the Ingestion entry"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
 				);
 			}
 		}
