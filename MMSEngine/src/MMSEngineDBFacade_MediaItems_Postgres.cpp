@@ -4163,29 +4163,20 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	int imageWidth, int imageHeight, string imageFormat, int imageQuality
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	pair<int64_t, int64_t> mediaItemKeyAndPhysicalPathKey;
 	string title = "";
 	try
 	{
-		SPDLOG_INFO("Insert into MMS_MediaItem");
+		SPDLOG_INFO("Insert into MMS_MediaItem"
+			", ingestionJobKey: {}",
+			ingestionJobKey
+		);
 		int64_t mediaItemKey;
 		{
-			string ingester = "";
-			string userData = "";
-			string deliveryFileName = "";
+			string ingester;
+			string userData;
+			string deliveryFileName;
 			string sContentType;
 			int64_t retentionInMinutes = _contentRetentionInMinutesDefaultValue;
 			// string encodingProfilesSet;
@@ -4283,6 +4274,10 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 			}
 
+			SPDLOG_INFO("AAAAAAAAA"
+				", ingestionJobKey: {}",
+				ingestionJobKey
+			);
 			string tags;
 			{
 				json tagsRoot;
@@ -4292,6 +4287,10 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				tags = getPostgresArray(tagsRoot, true, trans);
 			}
 
+			SPDLOG_INFO("AAAAAAAAA"
+				", ingestionJobKey: {}",
+				ingestionJobKey
+			);
 			string sqlStatement = std::format(
 				"insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, "
 				"deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
@@ -4320,6 +4319,10 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			);
 		}
 
+		SPDLOG_INFO("AAAAAAAAA"
+			", ingestionJobKey: {}",
+			ingestionJobKey
+		);
 		{
 			string uniqueName;
 			if (JSONUtils::isPresent(parametersRoot, "uniqueName"))
@@ -4334,6 +4337,10 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 		}
 
+		SPDLOG_INFO("AAAAAAAAA"
+			", ingestionJobKey: {}",
+			ingestionJobKey
+		);
 		// cross references
 		{
 			string field = "crossReferences";
