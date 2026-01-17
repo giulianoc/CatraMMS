@@ -646,7 +646,6 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 		}
 
 		IngestionStatus ingestionStatus;
-		string errorMessage;
 		{
 			{
 				string sqlStatement = std::format(
@@ -654,13 +653,13 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 					"metaDataContent, ingestionType, priority, "
 					"processingStartingFrom, "
 					"startProcessing, endProcessing, downloadingProgress, "
-					"uploadingProgress, sourceBinaryTransferred, processorMMS, status, errorMessage) "
+					"uploadingProgress, sourceBinaryTransferred, processorMMS, status) "
 					"values ("
 					"DEFAULT,          {},                {}, "
 					"{},               {},             {}, "
 					"to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"'), "
 					"NULL,            NULL,         NULL, "
-					"NULL,              false,                   NULL,         {},      NULL) "
+					"NULL,              false,                   NULL,         {}) "
 					"returning ingestionJobKey",
 					ingestionRootKey, trans.transaction->quote(label), trans.transaction->quote(metadataContent),
 					trans.transaction->quote(toString(ingestionType)), getIngestionTypePriority(ingestionType),
@@ -2334,20 +2333,21 @@ string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspa
 }
 */
 
-tuple<string, MMSEngineDBFacade::IngestionType, json, string>
+tuple<string, MMSEngineDBFacade::IngestionType, json, vector<string>>
 MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster)
 {
 	try
 	{
 		vector<string> requestedColumns = {
 			"mms_ingestionjob:ij.label", "mms_ingestionjob:ij.ingestionType", "mms_ingestionjob:ij.metaDataContent",
-			"mms_ingestionjob:ij.errorMessage"
+			"mms_ingestionjob:ij.errorMessages"
 		};
-		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey, ingestionJobKey, "", fromMaster);
+		const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = ingestionJobQuery(requestedColumns, workspaceKey,
+			ingestionJobKey, "", fromMaster);
 
 		return make_tuple(
-			(*sqlResultSet)[0][0].as<string>(""), toIngestionType((*sqlResultSet)[0][1].as<string>("")), (*sqlResultSet)[0][2].as<json>(json()),
-			(*sqlResultSet)[0][3].as<string>("")
+			(*sqlResultSet)[0][0].as<string>(""), toIngestionType((*sqlResultSet)[0][1].as<string>("")),
+			(*sqlResultSet)[0][2].as<json>(json()), (*sqlResultSet)[0][3].asArray<string>(vector<string>())
 		);
 	}
 	catch (DBRecordNotFound &e)
@@ -2982,7 +2982,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 
 			throw runtime_error(errorMessage);
 		}
-		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		else if ((startIndex != -1 || rows != -1) && orderBy.empty())
 		{
 			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
 			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
@@ -3653,44 +3653,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 		if (sqlRow["errorMessages"].isNull())
 			ingestionJobRoot[field] = nullptr;
 		else
-		{
-			json errorMessagesRoot = json::array();
-
-			const auto& arr = sqlRow["errorMessages"].asArray<string>();
-			for (const string& errorMessage: arr)
-				errorMessagesRoot.push_back(errorMessage);
-			/*
-			pair<array_parser::juncture, string> elem;
-			do
-			{
-				elem = array.get_next();
-				if (elem.first == array_parser::juncture::string_value)
-					errorMessagesRoot.push_back(elem.second);
-			} while (elem.first != array_parser::juncture::done);
-			*/
-
-			ingestionJobRoot[field] = errorMessagesRoot;
-
-			/*
-			int maxErrorMessageLength = 2000;
-
-			string errorMessage = row["errorMessage"].as<string>();
-			if (errorMessage.size() > maxErrorMessageLength)
-			{
-				ingestionJobRoot[field] = errorMessage.substr(0, maxErrorMessageLength);
-
-				field = "errorMessageTruncated";
-				ingestionJobRoot[field] = true;
-			}
-			else
-			{
-				ingestionJobRoot[field] = errorMessage;
-
-				field = "errorMessageTruncated";
-				ingestionJobRoot[field] = false;
-			}
-			*/
-		}
+			ingestionJobRoot[field] = sqlRow["errorMessages"].asArray<string>();
 
 		switch (ingestionType)
 		{

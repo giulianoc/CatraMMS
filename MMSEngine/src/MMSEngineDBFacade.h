@@ -1551,10 +1551,10 @@ class MMSEngineDBFacade
 	std::pair<MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
 	ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	std::string ingestionJob_columnAsString(int64_t workspaceKey, std::string columnName, int64_t ingestionJobKey, bool fromMaster);
-	MMSEngineDBFacade::IngestionStatus ingestionJob_Status(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
-	std::tuple<std::string, MMSEngineDBFacade::IngestionType, nlohmann::json, std::string>
-	ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
-	std::pair<MMSEngineDBFacade::IngestionType, nlohmann::json>
+	IngestionStatus ingestionJob_Status(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	std::tuple<std::string, IngestionType, nlohmann::json, std::vector<std::string>>
+		ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
+	std::pair<IngestionType, nlohmann::json>
 	ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	MMSEngineDBFacade::IngestionType ingestionJob_IngestionType(int64_t workspaceKey, int64_t ingestionJobKey, bool fromMaster);
 	nlohmann::json ingestionJob_columnAsJson(int64_t workspaceKey, std::string columnName, int64_t ingestionJobKey, bool fromMaster);

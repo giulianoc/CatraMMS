@@ -5,6 +5,8 @@
 #include "MMSEngineProcessor.h"
 #include "spdlog/fmt/fmt.h"
 
+#include <spdlog/fmt/bundled/ranges.h>
+
 using namespace std;
 using json = nlohmann::json;
 
@@ -134,9 +136,12 @@ void MMSEngineProcessor::emailNotificationThread(
 									true
 								);
 
-							sReferencies += string("<br>IngestionJob") + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType) +
-											", ingestionJobKey: " + to_string(referenceIngestionJobKey) + ", label: " + referenceLabel +
-											", errorMessage: " + referenceErrorMessage + ". ";
+							sReferencies += fmt::format("<br>IngestionJob"
+								", ingestionType: {}"
+								", ingestionJobKey: {}"
+								", label: {}"
+								", errorMessage: {}", MMSEngineDBFacade::toString(ingestionType), referenceIngestionJobKey,
+								referenceLabel, fmt::join(referenceErrorMessage, ", "));
 
 							if (ingestionType == MMSEngineDBFacade::IngestionType::CheckStreaming)
 							{
