@@ -1170,7 +1170,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 				else
 					sqlStatement = std::format(
 						"update MMS_IngestionJob set status = {}, "
-						"errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}] "
+						"errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}], "
 						"{} endProcessing = NOW() at time zone 'utc' "
 						"where ingestionJobKey = {} ",
 						trans.transaction->quote(toString(newIngestionStatus)), arrayErrorMessage,
@@ -1224,7 +1224,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 				else
 					sqlStatement = std::format(
 						"update MMS_IngestionJob set status = {}, "
-						"errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}] "
+						"errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}], "
 						"{} "
 						"where ingestionJobKey = {} ",
 						trans.transaction->quote(toString(newIngestionStatus)), arrayErrorMessage,
