@@ -14,8 +14,8 @@ using json = nlohmann::json;
 using namespace pqxx;
 
 void MMSEngineDBFacade::getIngestionsToBeManaged(
-	vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>> &ingestionsToBeManaged, string processorMMS,
-	int maxIngestionJobs, int timeBeforeToPrepareResourcesInMinutes, bool onlyTasksNotInvolvingMMSEngineThreads
+	vector<tuple<int64_t, string, shared_ptr<Workspace>, string, string, IngestionType, IngestionStatus>> &ingestionsToBeManaged,
+	const string& processorMMS, int maxIngestionJobs, int timeBeforeToPrepareResourcesInMinutes, bool onlyTasksNotInvolvingMMSEngineThreads
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
@@ -179,10 +179,10 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				int resultSetIndex = 0;
 				for (auto row : res)
 				{
-					int64_t ingestionRootKey = row["ingestionRootKey"].as<int64_t>();
-					int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
-					string ingestionJobLabel = row["label"].as<string>();
-					string metaDataContent = row["metaDataContent"].as<string>();
+					auto ingestionRootKey = row["ingestionRootKey"].as<int64_t>();
+					auto ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
+					auto ingestionJobLabel = row["label"].as<string>();
+					auto metaDataContent = row["metaDataContent"].as<string>();
 					IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(row["status"].as<string>());
 					IngestionType ingestionType = MMSEngineDBFacade::toIngestionType(row["ingestionType"].as<string>());
 
@@ -261,7 +261,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					_getIngestionJobsCurrentIndex, res.size(), ingestionsToBeManaged.size(), moreRows
 				);
 
-				if (res.size() == 0)
+				if (res.empty())
 					_getIngestionJobsCurrentIndex = 0;
 			}
 			// if (ingestionsToBeManaged.size() < maxIngestionJobs)
@@ -367,7 +367,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -441,7 +441,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				);
 				if (!empty(res))
 				{
-					string sStatus = res[0]["status"].as<string>();
+					auto sStatus = res[0]["status"].as<string>();
 
 					// info(__FILEREF__ + "Dependency for the IngestionJob"
 					// + ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -465,7 +465,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 					}
 					else
 					{
-						if (MMSEngineDBFacade::isIngestionStatusFinalState(ingestionStatusDependency))
+						if (isIngestionStatusFinalState(ingestionStatusDependency))
 						{
 							if (dependOnSuccess == 1 && MMSEngineDBFacade::isIngestionStatusFailed(ingestionStatusDependency))
 							{
@@ -473,7 +473,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 
 								break;
 							}
-							else if (dependOnSuccess == 0 && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
+							if (dependOnSuccess == 0 && MMSEngineDBFacade::isIngestionStatusSuccess(ingestionStatusDependency))
 							{
 								ingestionJobToBeManaged = false;
 
@@ -555,7 +555,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -577,8 +577,8 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 }
 
 int64_t MMSEngineDBFacade::addIngestionJob(
-	PostgresConnTrans &trans, int64_t workspaceKey, int64_t ingestionRootKey, string label, string metadataContent,
-	MMSEngineDBFacade::IngestionType ingestionType, string processingStartingFrom, vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
+	PostgresConnTrans &trans, int64_t workspaceKey, int64_t ingestionRootKey, const string& label, const string& metadataContent,
+	IngestionType ingestionType, const string& processingStartingFrom, vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
 	vector<int64_t> waitForGlobalIngestionJobKeys
 )
 {
@@ -616,8 +616,8 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 
 					throw runtime_error(errorMessage);
 				}
-				else if (workspaceType != static_cast<int>(WorkspaceType::IngestionAndDelivery) &&
-						 workspaceType != static_cast<int>(WorkspaceType::EncodingOnly))
+				if (workspaceType != static_cast<int>(WorkspaceType::IngestionAndDelivery) &&
+					workspaceType != static_cast<int>(WorkspaceType::EncodingOnly))
 				{
 					string errorMessage = std::format(
 						"Workspace is not enabled to ingest content"
@@ -683,7 +683,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 			{
 				int orderNumber = 0;
 				bool referenceOutputDependency = false;
-				if (dependOnIngestionJobKeys.size() == 0)
+				if (dependOnIngestionJobKeys.empty())
 				{
 					addIngestionJobDependency(trans, ingestionJobKey, dependOnSuccess, -1, orderNumber, referenceOutputDependency);
 					orderNumber++;
@@ -716,7 +716,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -739,7 +739,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 	return ingestionJobKey;
 }
 
-int MMSEngineDBFacade::getIngestionTypePriority(MMSEngineDBFacade::IngestionType ingestionType)
+int MMSEngineDBFacade::getIngestionTypePriority(IngestionType ingestionType)
 {
 	// The priority is used when engine retrieves the ingestion jobs to be executed
 	//
@@ -754,16 +754,15 @@ int MMSEngineDBFacade::getIngestionTypePriority(MMSEngineDBFacade::IngestionType
 	if (ingestionType == IngestionType::LiveProxy || ingestionType == IngestionType::VODProxy || ingestionType == IngestionType::Countdown ||
 		ingestionType == IngestionType::YouTubeLiveBroadcast)
 		return 1;
-	else if (ingestionType == IngestionType::LiveRecorder)
+	if (ingestionType == IngestionType::LiveRecorder)
 		return 5;
-	else if (ingestionType == IngestionType::AddContent)
+	if (ingestionType == IngestionType::AddContent)
 		return 10;
-	else
-		return 15;
+	return 15;
 }
 
 void MMSEngineDBFacade::addIngestionJobDependency(
-	PostgresConnTrans &trans, int64_t ingestionJobKey, int dependOnSuccess, int64_t dependOnIngestionJobKey, int orderNumber,
+	PostgresConnTrans &trans, int64_t ingestionJobKey, int dependOnSuccess, const int64_t dependOnIngestionJobKey, const int orderNumber,
 	bool referenceOutputDependency
 )
 {
@@ -825,7 +824,7 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -848,18 +847,6 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 
 void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIngestionJobKey, int64_t newDependOnIngestionJobKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -902,7 +889,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -925,20 +912,8 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 	}
 }
 
-void MMSEngineDBFacade::updateIngestionJobMetadataContent(int64_t ingestionJobKey, string metadataContent)
+void MMSEngineDBFacade::updateIngestionJobMetadataContent(const int64_t ingestionJobKey, const string &metadataContent)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -946,7 +921,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(int64_t ingestionJobKe
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1012,7 +987,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(PostgresConnTrans &tra
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1082,7 +1057,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1103,20 +1078,10 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 	}
 }
 
-void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus, string errorMessage, string processorMMS)
+void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus,
+	const string &errorMessage, const string &processorMMS
+)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -1124,7 +1089,7 @@ void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionSta
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -1148,20 +1113,21 @@ void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionSta
 }
 
 void MMSEngineDBFacade::updateIngestionJob(
-	PostgresConnTrans &trans, int64_t ingestionJobKey, IngestionStatus newIngestionStatus, string errorMessage, string processorMMS
+	PostgresConnTrans &trans, int64_t ingestionJobKey, IngestionStatus newIngestionStatus, const string& errorMessage,
+	const string& processorMMS
 )
 {
-	string errorMessageForSQL;
-	if (errorMessage.length() >= 1024)
-		errorMessageForSQL = errorMessage.substr(0, 1024);
-	else
-		errorMessageForSQL = errorMessage;
+	string arrayErrorMessage;
+	if (!errorMessage.empty())
+		arrayErrorMessage = getPostgresArray(vector(1, errorMessage), true, trans);
+	/*
 	{
 		string strToBeReplaced = "FFMpeg";
 		string strToReplace = "XXX";
 		if (errorMessageForSQL.find(strToBeReplaced) != string::npos)
-			errorMessageForSQL.replace(errorMessageForSQL.find(strToBeReplaced), strToBeReplaced.length(), strToReplace);
+			errorMessageForSQL= StringUtils::replaceAll(errorMessageForSQL, strToBeReplaced, strToReplace);
 	}
+	*/
 
 	// 2022-12-08: in case of deadlock we will retry.
 	//	Penso che il Deadlock sia causato dal fatto che, insieme a questo update dell'IngestionJob,
@@ -1171,6 +1137,8 @@ void MMSEngineDBFacade::updateIngestionJob(
 	//	Inizialmente il retry era fatto sul metodo updateIngestionJob, come questo ma senza MySQLConnection,
 	//	poi è stato spostato qui perchè tanti scenari chiamano direttamente questo metodo con MySQLConnection
 	//	e serviva anche qui il retry.
+	// 2026-01-17: Da quando uso Postgres non penso abbiamo piu questo problema
+	int maxErrorMessagesNumber = 1000;
 	bool updateToBeTriedAgain = true;
 	int retriesNumber = 0;
 	int maxRetriesNumber = 3;
@@ -1181,32 +1149,33 @@ void MMSEngineDBFacade::updateIngestionJob(
 
 		try
 		{
-			if (MMSEngineDBFacade::isIngestionStatusFinalState(newIngestionStatus))
+			if (isIngestionStatusFinalState(newIngestionStatus))
 			{
 				string sqlStatement;
 				string processorMMSUpdate;
 				if (processorMMS != "noToBeUpdated")
 				{
-					if (processorMMS == "")
+					if (processorMMS.empty())
 						processorMMSUpdate = std::format("processorMMS = null, ");
 					else
 						processorMMSUpdate = std::format("processorMMS = {}, ", trans.transaction->quote(processorMMS));
 				}
 
-				if (errorMessageForSQL == "")
+				if (arrayErrorMessage.empty())
 					sqlStatement = std::format(
-						"update MMS_IngestionJob set status = {}, "
+						"UPDATE MMS_IngestionJob SET status = {}, "
 						"{} endProcessing = NOW() at time zone 'utc' "
-						"where ingestionJobKey = {} ",
+						"WHERE ingestionJobKey = {} ",
 						trans.transaction->quote(toString(newIngestionStatus)), processorMMSUpdate, ingestionJobKey
 					);
 				else
 					sqlStatement = std::format(
 						"update MMS_IngestionJob set status = {}, "
-						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20), "
+						"errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}] "
 						"{} endProcessing = NOW() at time zone 'utc' "
 						"where ingestionJobKey = {} ",
-						trans.transaction->quote(toString(newIngestionStatus)), trans.transaction->quote(errorMessageForSQL), processorMMSUpdate,
+						trans.transaction->quote(toString(newIngestionStatus)), arrayErrorMessage,
+						maxErrorMessagesNumber, processorMMSUpdate,
 						ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1240,13 +1209,13 @@ void MMSEngineDBFacade::updateIngestionJob(
 				string processorMMSUpdate;
 				if (processorMMS != "noToBeUpdated")
 				{
-					if (processorMMS == "")
+					if (processorMMS.empty())
 						processorMMSUpdate = std::format(", processorMMS = null ");
 					else
 						processorMMSUpdate = std::format(", processorMMS = {} ", trans.transaction->quote(processorMMS));
 				}
 
-				if (errorMessageForSQL == "")
+				if (arrayErrorMessage.empty())
 					sqlStatement = std::format(
 						"update MMS_IngestionJob set status = {} "
 						"{} "
@@ -1256,10 +1225,11 @@ void MMSEngineDBFacade::updateIngestionJob(
 				else
 					sqlStatement = std::format(
 						"update MMS_IngestionJob set status = {}, "
-						"errorMessage = SUBSTRING({} || '\n' || coalesce(errorMessage, ''), 1, 1024 * 20) "
+						"errorMessages = ({} || COALESCE(errorMessages, ARRAY[]::text[]))[1:{}] "
 						"{} "
 						"where ingestionJobKey = {} ",
-						trans.transaction->quote(toString(newIngestionStatus)), trans.transaction->quote(errorMessageForSQL), processorMMSUpdate,
+						trans.transaction->quote(toString(newIngestionStatus)), arrayErrorMessage,
+						maxErrorMessagesNumber, processorMMSUpdate,
 						ingestionJobKey
 					);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1303,7 +1273,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 		}
 		catch (exception const &e)
 		{
-			sql_error const *se = dynamic_cast<sql_error const *>(&e);
+			auto const *se = dynamic_cast<sql_error const *>(&e);
 			if (se != nullptr)
 			{
 				// in caso di Postgres non so ancora la parola da cercare nell'errore che indica un deadlock,

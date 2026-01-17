@@ -68,15 +68,6 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			return;
 			// throw e;
 		}
-		catch (runtime_error &e)
-		{
-			SPDLOG_ERROR(
-				string() + "getIngestionsToBeManaged failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", exception: " + e.what()
-			);
-
-			throw e;
-		}
 		catch (exception &e)
 		{
 			SPDLOG_ERROR(
@@ -84,7 +75,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				", exception: " + e.what()
 			);
 
-			throw e;
+			throw;
 		}
 
 		for (tuple<int64_t, string, shared_ptr<Workspace>, string, string, MMSEngineDBFacade::IngestionType, MMSEngineDBFacade::IngestionStatus>
@@ -255,16 +246,20 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					catch (exception &e)
 					{
 						SPDLOG_ERROR(
-							string() + "validateMetadata failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
+							"validateMetadata failed"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
 						);
 
 						string errorMessage = e.what();
 
 						SPDLOG_INFO(
-							string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_ValidationMetadataFailed" +
-							", errorMessage: " + errorMessage + ", processorMMS: " + ""
+							"Update IngestionJob"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", IngestionStatus: {}"
+							", errorMessage: {}", _processorIdentifier, ingestionJobKey, "End_ValidationMetadataFailed", errorMessage
 						);
 						try
 						{

@@ -1429,8 +1429,9 @@ class MMSEngineDBFacade
 #endif
 
 	void getIngestionsToBeManaged(
-		std::vector<std::tuple<int64_t, std::string, std::shared_ptr<Workspace>, std::string, std::string, IngestionType, IngestionStatus>> &ingestionsToBeManaged,
-		std::string processorMMS, int maxIngestionJobs, int timeBeforeToPrepareResourcesInMinutes, bool onlyTasksNotInvolvingMMSEngineThreads
+		std::vector<std::tuple<int64_t, std::string, std::shared_ptr<Workspace>, std::string, std::string, IngestionType, IngestionStatus>>
+			&ingestionsToBeManaged,
+		const std::string &processorMMS, int maxIngestionJobs, int timeBeforeToPrepareResourcesInMinutes, bool onlyTasksNotInvolvingMMSEngineThreads
 	);
 
 	void setNotToBeExecutedStartingFromBecauseChunkNotSelected(int64_t ingestionJobKey, std::string processorMMS);
@@ -1478,9 +1479,9 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	int64_t addIngestionJob(
-		PostgresConnTrans &trans, int64_t workspaceKey, int64_t ingestionRootKey, std::string label, std::string metadataContent,
-		MMSEngineDBFacade::IngestionType ingestionType, std::string processingStartingFrom, std::vector<int64_t> dependOnIngestionJobKeys, int dependOnSuccess,
-		std::vector<int64_t> waitForGlobalIngestionJobKeys
+		PostgresConnTrans &trans, int64_t workspaceKey, int64_t ingestionRootKey, const std::string &label, const std::string &metadataContent,
+		IngestionType ingestionType, const std::string &processingStartingFrom, std::vector<int64_t> dependOnIngestionJobKeys,
+		int dependOnSuccess, std::vector<int64_t> waitForGlobalIngestionJobKeys
 	);
 #else
 	int64_t addIngestionJob(
@@ -1490,7 +1491,7 @@ class MMSEngineDBFacade
 	);
 #endif
 
-	void updateIngestionJobMetadataContent(int64_t ingestionJobKey, std::string metadataContent);
+	void updateIngestionJobMetadataContent(int64_t ingestionJobKey, const std::string &metadataContent);
 
 #ifdef __POSTGRES__
 	void updateIngestionJobMetadataContent(PostgresConnTrans &trans, int64_t ingestionJobKey, std::string metadataContent);
@@ -1525,7 +1526,8 @@ class MMSEngineDBFacade
 	endIngestionJobs(std::shared_ptr<MySQLConnection> conn, bool commit, int64_t ingestionRootKey, std::string processedMetadataContent);
 #endif
 
-	void updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus, std::string errorMessage, std::string processorMMS = "noToBeUpdated");
+	void updateIngestionJob(int64_t ingestionJobKey, IngestionStatus newIngestionStatus, const std::string &errorMessage,
+		const std::string &processorMMS = "noToBeUpdated");
 
 	void addIngestionJobErrorMessages(int64_t ingestionJobKey, nlohmann::json &newErrorMessagesRoot);
 	// void updateIngestionJobErrorMessages(int64_t ingestionJobKey, std::string errorMessages);
@@ -1725,8 +1727,8 @@ class MMSEngineDBFacade
 	);
 
 	int64_t createDeliveryAuthorization(
-		int64_t userKey, std::string clientIPAddress, int64_t physicalPathKey, int64_t liveDeliveryKey, std::string deliveryURI, int ttlInSeconds,
-		int maxRetries, bool reuseAuthIfPresent
+		int64_t userKey, const std::string &clientIPAddress, int64_t physicalPathKey, int64_t liveDeliveryKey, const std::string &deliveryURI,
+		int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent
 	);
 
 	std::shared_ptr<PostgresHelper::SqlResultSet> deliveryAuthorizationQuery(
@@ -2567,7 +2569,7 @@ class MMSEngineDBFacade
 	);
 #endif
 
-	int getIngestionTypePriority(MMSEngineDBFacade::IngestionType);
+	static int getIngestionTypePriority(MMSEngineDBFacade::IngestionType);
 
 	int getEncodingTypePriority(MMSEngineDBFacade::EncodingType);
 
@@ -2594,8 +2596,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	void updateIngestionJob(
-		PostgresConnTrans &trans, int64_t ingestionJobKey, IngestionStatus newIngestionStatus, std::string errorMessage,
-		std::string processorMMS = "noToBeUpdated"
+		PostgresConnTrans &trans, int64_t ingestionJobKey, IngestionStatus newIngestionStatus, const std::string &errorMessage,
+		const std::string &processorMMS = "noToBeUpdated"
 	);
 #else
 	void updateIngestionJob(
