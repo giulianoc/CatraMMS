@@ -2482,7 +2482,13 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			if (!externalEncoderAllowed)
 				externalEncoderCondition = "AND e.external = false ";
 
+			// lo stesso encoder non puo essere riutilizzato se non sono passati almeno XX seconds
+			// Viene in questo modo anche implementato una sorta di roundrobin nel caso in cui un encoder fallisce
+			// e viene rieseguita la select
 			int16_t encodersUnavailableAfterSelectedInSeconds = 45;
+			int16_t maxCPUUsage = 70;
+
+			// un encoder non viene considerato se non ha ricevuto aggiornamenti delle statistiche da almeno XX seconds
 			int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 30;
 			string sqlStatement = std::format(
 			"WITH params AS ( "
@@ -2492,6 +2498,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					"from MMS_Encoder e "
 					"CROSS JOIN params p "
 					"where e.encoderKey in ({}) and e.enabled = true {} "
+					"AND (e.cpuUsage IS NULL OR e.cpuUsage <= {}) "
 					"AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds' "
 					"AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds' " // indica anche che è running
 					"AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds' " // indica anche che è running
@@ -2506,7 +2513,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				"RETURNING e.encoderKey, e.external, "
 				"e.protocol, e.publicServerName, "
 				"e.internalServerName, e.port ",
-				encodersKeyList, externalEncoderCondition, encodersUnavailableAfterSelectedInSeconds,
+				encodersKeyList, externalEncoderCondition, maxCPUUsage, encodersUnavailableAfterSelectedInSeconds,
 				encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
 			);
 			SPDLOG_INFO("AAAAAAA: sqlStatement: {}", sqlStatement);
