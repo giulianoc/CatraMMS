@@ -1039,9 +1039,9 @@ vector<int64_t> API::ingestionSingleTask(
 
 	if (type == "Encode")
 	{
-		// we will create a group of tasks and add there the Encode task in two
-		// scenarios: case 1. in case of EncodingProfilesSet case 2. in case we
-		// will have more than one References
+		// we will create a group of tasks and add there the Encode task in two scenarios:
+		// case 1. in case of EncodingProfilesSet
+		// case 2. in case we will have more than one References
 
 		string encodingProfilesSetKeyField = "encodingProfilesSetKey";
 		string encodingProfilesSetLabelField = "encodingProfilesSetLabel";
@@ -1271,8 +1271,8 @@ vector<int64_t> API::ingestionSingleTask(
 
 #ifdef __POSTGRES__
 			return ingestionGroupOfTasks(
-				trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
-				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+				trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting,
+				dependOnSuccess, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
 #else
@@ -1283,26 +1283,25 @@ vector<int64_t> API::ingestionSingleTask(
 			);
 #endif
 		}
-		else
-		{
-			SPDLOG_INFO(
-				"No special management for Encode"
-				", ingestionRootKey: {}"
-				", taskLabel: {}"
-				", workspace->_workspaceKey: {}",
-				ingestionRootKey, taskLabel, workspace->_workspaceKey
-			);
-		}
+		SPDLOG_INFO(
+			"No special management for Encode"
+			", ingestionRootKey: {}"
+			", taskLabel: {}"
+			", workspace->_workspaceKey: {}",
+			ingestionRootKey, taskLabel, workspace->_workspaceKey
+		);
 	}
 	else if (type == "Face-Recognition")
 	{
-		// In case we will have more than one References,
-		//  we will create a group of tasks and add there the Face-Recognition
-		//  task
+		// In case we will have more than one References, we will create a group of tasks and add there the Face-Recognition task
 
+		SPDLOG_INFO("AAAAAAA Face-Recognition"
+			", parametersRoot: {}", JSONUtils::toString(parametersRoot)
+		);
 		string referencesField = "references";
 
-		if (parametersSectionPresent && (JSONUtils::isPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1))
+		if (parametersSectionPresent
+			&& (JSONUtils::isPresent(parametersRoot, referencesField) && parametersRoot[referencesField].size() > 1))
 		{
 			// we will replace the single Task with a GroupOfTasks where every
 			// task is just for one reference
@@ -1382,16 +1381,13 @@ vector<int64_t> API::ingestionSingleTask(
 			);
 #endif
 		}
-		else
-		{
-			SPDLOG_INFO(
-				"No special management for Face-Recognition"
-				", ingestionRootKey: {}"
-				", taskLabel: {}"
-				", workspace->_workspaceKey: {}",
-				ingestionRootKey, taskLabel, workspace->_workspaceKey
-			);
-		}
+		SPDLOG_INFO(
+			"No special management for Face-Recognition"
+			", ingestionRootKey: {}"
+			", taskLabel: {}"
+			", workspace->_workspaceKey: {}",
+			ingestionRootKey, taskLabel, workspace->_workspaceKey
+		);
 	}
 	else if (type == "Live-Recorder" || type == "Live-Proxy" || type == "VOD-Proxy" || type == "Countdown")
 	{
@@ -1539,7 +1535,7 @@ json internalMMSRoot;
 		{
 			string referenceLabel = JSONUtils::asString(parametersRoot, field, "");
 
-			if (referenceLabel == "")
+			if (referenceLabel.empty())
 			{
 				string errorMessage = std::format(
 					"The 'label' value cannot be empty"
@@ -1570,7 +1566,7 @@ json internalMMSRoot;
 
 				throw runtime_error(errorMessage);
 			}
-			else if (ingestionJobKeys.size() > 1)
+			if (ingestionJobKeys.size() > 1)
 			{
 				string errorMessage = std::format(
 					"The 'label' value cannot be used in more than one Task"
@@ -1612,7 +1608,7 @@ json internalMMSRoot;
 			string workflowAsLibraryType = JSONUtils::asString(parametersRoot, workflowAsLibraryTypeField, "");
 			string workflowAsLibraryLabel = JSONUtils::asString(parametersRoot, workflowAsLibraryLabelField, "");
 
-			int workspaceKey;
+			int64_t workspaceKey;
 			if (workflowAsLibraryType == "MMS")
 				workspaceKey = -1;
 			else
@@ -1680,8 +1676,8 @@ json internalMMSRoot;
 
 #ifdef __POSTGRES__
 		return ingestionGroupOfTasks(
-			trans, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
-			dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+			trans, userKey, apiKey, workspace, ingestionRootKey, newGroupOfTasksRoot, dependOnIngestionJobKeysForStarting,
+			dependOnSuccess, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 			/* responseBody, */ responseBodyTasksRoot
 		);
 #else

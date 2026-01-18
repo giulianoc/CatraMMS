@@ -133,7 +133,11 @@ class MMSEngineDBFacade
 		case CodeType::UserRegistrationComingFromShareWorkspace:
 			return "UserRegistrationComingFromShareWorkspace";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong CodeType: {}", static_cast<int>(codeType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong CodeType: {}", static_cast<int>(codeType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static CodeType toCodeType(const std::string &codeType)
@@ -144,16 +148,17 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "userregistration")
 			return CodeType::UserRegistration;
-		else if (lowerCase == "shareworkspace")
+		if (lowerCase == "shareworkspace")
 			return CodeType::ShareWorkspace;
-		else if (lowerCase == "userregistrationcomingfromshareworkspace")
+		if (lowerCase == "userregistrationcomingfromshareworkspace")
 			return CodeType::UserRegistrationComingFromShareWorkspace;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage = fmt::format(
 				"toCodeType with a wrong CodeType"
 				", codeType: {}",
 				codeType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class LockType
@@ -170,7 +175,11 @@ class MMSEngineDBFacade
 		case LockType::Encoding:
 			return "Encoding";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong LockType: {}", static_cast<int>(lockType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong LockType: {}", static_cast<int>(lockType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static LockType toLockType(const std::string &lockType)
@@ -181,14 +190,15 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "ingestion")
 			return LockType::Ingestion;
-		else if (lowerCase == "encoding")
+		if (lowerCase == "encoding")
 			return LockType::Encoding;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage = fmt::format(
 				"toLockType with a wrong LockType"
 				", lockType: {}",
 				lockType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class OnceType
@@ -205,7 +215,11 @@ class MMSEngineDBFacade
 		case OnceType::GEOInfo:
 			return "GEOInfo";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong onceType: {}", static_cast<int>(onceType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong onceType: {}", static_cast<int>(onceType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static OnceType toOnceType(const std::string &onceType)
@@ -218,12 +232,13 @@ class MMSEngineDBFacade
 			return OnceType::DBDataRetention;
 		if (lowerCase == "geoinfo")
 			return OnceType::GEOInfo;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage = fmt::format(
 				"toOnceType with a wrong OnceType"
 				", onceType: {}",
 				onceType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class ContentType
@@ -247,7 +262,11 @@ class MMSEngineDBFacade
 		case ContentType::Image:
 			return "Image";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong contentType: {}", static_cast<int>(contentType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong contentType: {}", static_cast<int>(contentType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static ContentType toContentType(const std::string &contentType)
@@ -258,16 +277,17 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "video")
 			return ContentType::Video;
-		else if (lowerCase == "audio")
+		if (lowerCase == "audio")
 			return ContentType::Audio;
-		else if (lowerCase == "image")
+		if (lowerCase == "image")
 			return ContentType::Image;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage = fmt::format(
 				"toContentType with a wrong ContentType"
 				", contentType: {}",
 				contentType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class EncodingPriority
@@ -287,7 +307,11 @@ class MMSEngineDBFacade
 		case EncodingPriority::High:
 			return "High";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong encodingPriority: {}", static_cast<int>(priority)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong encodingPriority: {}", static_cast<int>(priority));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static EncodingPriority toEncodingPriority(const std::string &priority)
@@ -298,16 +322,17 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "low")
 			return EncodingPriority::Low;
-		else if (lowerCase == "medium")
+		if (lowerCase == "medium")
 			return EncodingPriority::Medium;
-		else if (lowerCase == "high")
+		if (lowerCase == "high")
 			return EncodingPriority::High;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage = fmt::format(
 				"toEncodingPriority with a wrong EncodingPriority"
 				", encodingPriority: {}",
 				priority
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	// se si aggiungono/eliminano status, verificare le query dove compare status in (...)
@@ -340,7 +365,11 @@ class MMSEngineDBFacade
 		case EncodingStatus::End_CanceledByMMS:
 			return "End_CanceledByMMS";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong EncodingStatus: {}", static_cast<int>(encodingStatus)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong EncodingStatus: {}", static_cast<int>(encodingStatus));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static EncodingStatus toEncodingStatus(const std::string &encodingStatus)
@@ -351,24 +380,25 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "tobeprocessed")
 			return EncodingStatus::ToBeProcessed;
-		else if (lowerCase == "processing")
+		if (lowerCase == "processing")
 			return EncodingStatus::Processing;
-		else if (lowerCase == "end_success")
+		if (lowerCase == "end_success")
 			return EncodingStatus::End_Success;
-		else if (lowerCase == "end_failed")
+		if (lowerCase == "end_failed")
 			return EncodingStatus::End_Failed;
-		else if (lowerCase == "end_killedbyuser")
+		if (lowerCase == "end_killedbyuser")
 			return EncodingStatus::End_KilledByUser;
-		else if (lowerCase == "end_canceledbyuser")
+		if (lowerCase == "end_canceledbyuser")
 			return EncodingStatus::End_CanceledByUser;
-		else if (lowerCase == "end_canceledbymms")
+		if (lowerCase == "end_canceledbymms")
 			return EncodingStatus::End_CanceledByMMS;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage = fmt::format(
 				"toEncodingStatus with a wrong EncodingStatus"
 				", encodingStatus: {}",
 				encodingStatus
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class EncodingType
@@ -433,7 +463,11 @@ class MMSEngineDBFacade
 		case EncodingType::AddSilentAudio:
 			return "AddSilentAudio";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong encodingType: {}", static_cast<int>(encodingType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong encodingType: {}", static_cast<int>(encodingType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static EncodingType toEncodingType(const std::string &encodingType)
@@ -446,44 +480,46 @@ class MMSEngineDBFacade
 			return EncodingType::EncodeVideoAudio;
 		if (lowerCase == "encodeimage")
 			return EncodingType::EncodeImage;
-		else if (lowerCase == "overlayimageonvideo")
+		if (lowerCase == "overlayimageonvideo")
 			return EncodingType::OverlayImageOnVideo;
-		else if (lowerCase == "overlaytextonvideo")
+		if (lowerCase == "overlaytextonvideo")
 			return EncodingType::OverlayTextOnVideo;
-		else if (lowerCase == "generateframes")
+		if (lowerCase == "generateframes")
 			return EncodingType::GenerateFrames;
-		else if (lowerCase == "slideshow")
+		if (lowerCase == "slideshow")
 			return EncodingType::SlideShow;
-		else if (lowerCase == "facerecognition")
+		if (lowerCase == "facerecognition")
 			return EncodingType::FaceRecognition;
-		else if (lowerCase == "faceidentification")
+		if (lowerCase == "faceidentification")
 			return EncodingType::FaceIdentification;
-		else if (lowerCase == "liverecorder")
+		if (lowerCase == "liverecorder")
 			return EncodingType::LiveRecorder;
-		else if (lowerCase == "videospeed")
+		if (lowerCase == "videospeed")
 			return EncodingType::VideoSpeed;
-		else if (lowerCase == "pictureinpicture")
+		if (lowerCase == "pictureinpicture")
 			return EncodingType::PictureInPicture;
-		else if (lowerCase == "liveproxy")
+		if (lowerCase == "liveproxy")
 			return EncodingType::LiveProxy;
-		else if (lowerCase == "livegrid")
+		if (lowerCase == "livegrid")
 			return EncodingType::LiveGrid;
-		else if (lowerCase == "countdown")
+		if (lowerCase == "countdown")
 			return EncodingType::Countdown;
-		else if (lowerCase == "introoutrooverlay")
+		if (lowerCase == "introoutrooverlay")
 			return EncodingType::IntroOutroOverlay;
-		else if (lowerCase == "cutframeaccurate")
+		if (lowerCase == "cutframeaccurate")
 			return EncodingType::CutFrameAccurate;
-		else if (lowerCase == "vodproxy")
+		if (lowerCase == "vodproxy")
 			return EncodingType::VODProxy;
-		else if (lowerCase == "addsilentaudio")
+		if (lowerCase == "addsilentaudio")
 			return EncodingType::AddSilentAudio;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage =
+			fmt::format(
 				"toEncodingType with a wrong EncodingType"
 				", encodingType: {}",
 				encodingType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class EncodingError
@@ -515,7 +551,11 @@ class MMSEngineDBFacade
 		case EncodingError::CanceledByMMS:
 			return "CanceledByMMS";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong encodingError: {}", static_cast<int>(encodingError)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong encodingError: {}", static_cast<int>(encodingError));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static EncodingError toEncodingError(const std::string &encodingError)
@@ -526,24 +566,26 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "noerror")
 			return EncodingError::NoError;
-		else if (lowerCase == "punctualerror")
+		if (lowerCase == "punctualerror")
 			return EncodingError::PunctualError;
-		else if (lowerCase == "maxcapacityreached")
+		if (lowerCase == "maxcapacityreached")
 			return EncodingError::MaxCapacityReached;
-		else if (lowerCase == "errorbeforeencoding")
+		if (lowerCase == "errorbeforeencoding")
 			return EncodingError::ErrorBeforeEncoding;
-		else if (lowerCase == "killedbyuser")
+		if (lowerCase == "killedbyuser")
 			return EncodingError::KilledByUser;
-		else if (lowerCase == "canceledbyuser")
+		if (lowerCase == "canceledbyuser")
 			return EncodingError::CanceledByUser;
-		else if (lowerCase == "canceledbymms")
+		if (lowerCase == "canceledbymms")
 			return EncodingError::CanceledByMMS;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage =
+			fmt::format(
 				"toEncodingError with a wrong EncodingError"
 				", encodingError: {}",
 				encodingError
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class DeliveryTechnology
@@ -566,7 +608,11 @@ class MMSEngineDBFacade
 		case DeliveryTechnology::HTTPStreaming:
 			return "HTTPStreaming";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong deliveryTechnology: {}", static_cast<int>(deliveryTechnology)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong deliveryTechnology: {}", static_cast<int>(deliveryTechnology));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static DeliveryTechnology toDeliveryTechnology(const std::string &deliveryTechnology)
@@ -577,16 +623,18 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "download")
 			return DeliveryTechnology::Download;
-		else if (lowerCase == "downloadandstreaming")
+		if (lowerCase == "downloadandstreaming")
 			return DeliveryTechnology::DownloadAndStreaming;
-		else if (lowerCase == "httpstreaming")
+		if (lowerCase == "httpstreaming")
 			return DeliveryTechnology::HTTPStreaming;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage =
+			fmt::format(
 				"toDeliveryTechnology with a wrong DeliveryTechnology"
 				", deliveryTechnology: {}",
 				deliveryTechnology
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class EncodingPeriod
@@ -609,7 +657,11 @@ class MMSEngineDBFacade
 		case EncodingPeriod::Yearly:
 			return "Yearly";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong encodingPeriod: {}", static_cast<int>(encodingPeriod)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong encodingPeriod: {}", static_cast<int>(encodingPeriod));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static EncodingPeriod toEncodingPeriod(const std::string &encodingPeriod)
@@ -620,18 +672,20 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "daily")
 			return EncodingPeriod::Daily;
-		else if (lowerCase == "weekly")
+		if (lowerCase == "weekly")
 			return EncodingPeriod::Weekly;
-		else if (lowerCase == "monthly")
+		if (lowerCase == "monthly")
 			return EncodingPeriod::Monthly;
-		else if (lowerCase == "yearly")
+		if (lowerCase == "yearly")
 			return EncodingPeriod::Yearly;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage =
+			fmt::format(
 				"toEncodingPeriod with a wrong EncodingPeriod"
 				", encodingPeriod: {}",
 				encodingPeriod
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class VideoSpeedType
@@ -648,7 +702,11 @@ class MMSEngineDBFacade
 		case VideoSpeedType::SpeedUp:
 			return "SpeedUp";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong videoSpeedType: {}", static_cast<int>(videoSpeedType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong videoSpeedType: {}", static_cast<int>(videoSpeedType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static VideoSpeedType toVideoSpeedType(const std::string &videoSpeedType)
@@ -659,14 +717,16 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "slowdown")
 			return VideoSpeedType::SlowDown;
-		else if (lowerCase == "speedup")
+		if (lowerCase == "speedup")
 			return VideoSpeedType::SpeedUp;
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage =
+			fmt::format(
 				"toVideoSpeedType with a wrong VideoSpeedType"
 				", videoSpeedType: {}",
 				videoSpeedType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	struct EncodingItem
@@ -834,7 +894,11 @@ class MMSEngineDBFacade
 			return "GroupOfTasks";
 
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong ingestionType: {}", static_cast<int>(ingestionType)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong ingestionType: {}", static_cast<int>(ingestionType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static IngestionType toIngestionType(const std::string &ingestionType)
@@ -845,96 +909,97 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "add-content")
 			return IngestionType::AddContent;
-		else if (lowerCase == "remove-content")
+		if (lowerCase == "remove-content")
 			return IngestionType::RemoveContent;
-		else if (lowerCase == "encode")
+		if (lowerCase == "encode")
 			return IngestionType::Encode;
-		else if (lowerCase == "frame")
+		if (lowerCase == "frame")
 			return IngestionType::Frame;
-		else if (lowerCase == "periodical-frames")
+		if (lowerCase == "periodical-frames")
 			return IngestionType::PeriodicalFrames;
-		else if (lowerCase == "i-frames")
+		if (lowerCase == "i-frames")
 			return IngestionType::IFrames;
-		else if (lowerCase == "motion-jpeg-by-periodical-frames")
+		if (lowerCase == "motion-jpeg-by-periodical-frames")
 			return IngestionType::MotionJPEGByPeriodicalFrames;
-		else if (lowerCase == "motion-jpeg-by-i-frames")
+		if (lowerCase == "motion-jpeg-by-i-frames")
 			return IngestionType::MotionJPEGByIFrames;
-		else if (lowerCase == "slideshow")
+		if (lowerCase == "slideshow")
 			return IngestionType::Slideshow;
-		else if (lowerCase == "concat-demuxer")
+		if (lowerCase == "concat-demuxer")
 			return IngestionType::ConcatDemuxer;
-		else if (lowerCase == "cut")
+		if (lowerCase == "cut")
 			return IngestionType::Cut;
-		else if (lowerCase == "overlay-image-on-video")
+		if (lowerCase == "overlay-image-on-video")
 			return IngestionType::OverlayImageOnVideo;
-		else if (lowerCase == "overlay-text-on-video")
+		if (lowerCase == "overlay-text-on-video")
 			return IngestionType::OverlayTextOnVideo;
-		else if (lowerCase == "ftp-delivery")
+		if (lowerCase == "ftp-delivery")
 			return IngestionType::FTPDelivery;
-		else if (lowerCase == "http-callback")
+		if (lowerCase == "http-callback")
 			return IngestionType::HTTPCallback;
-		else if (lowerCase == "local-copy")
+		if (lowerCase == "local-copy")
 			return IngestionType::LocalCopy;
-		else if (lowerCase == "extract-tracks")
+		if (lowerCase == "extract-tracks")
 			return IngestionType::ExtractTracks;
-		else if (lowerCase == "post-on-facebook")
+		if (lowerCase == "post-on-facebook")
 			return IngestionType::PostOnFacebook;
-		else if (lowerCase == "post-on-youtube")
+		if (lowerCase == "post-on-youtube")
 			return IngestionType::PostOnYouTube;
-		else if (lowerCase == "face-recognition")
+		if (lowerCase == "face-recognition")
 			return IngestionType::FaceRecognition;
-		else if (lowerCase == "face-identification")
+		if (lowerCase == "face-identification")
 			return IngestionType::FaceIdentification;
-		else if (lowerCase == "live-recorder")
+		if (lowerCase == "live-recorder")
 			return IngestionType::LiveRecorder;
-		else if (lowerCase == "change-file-format")
+		if (lowerCase == "change-file-format")
 			return IngestionType::ChangeFileFormat;
-		else if (lowerCase == "video-speed")
+		if (lowerCase == "video-speed")
 			return IngestionType::VideoSpeed;
-		else if (lowerCase == "picture-in-picture")
+		if (lowerCase == "picture-in-picture")
 			return IngestionType::PictureInPicture;
-		else if (lowerCase == "live-proxy")
+		if (lowerCase == "live-proxy")
 			return IngestionType::LiveProxy;
-		else if (lowerCase == "live-cut")
+		if (lowerCase == "live-cut")
 			return IngestionType::LiveCut;
-		else if (lowerCase == "live-grid")
+		if (lowerCase == "live-grid")
 			return IngestionType::LiveGrid;
-		else if (lowerCase == "countdown")
+		if (lowerCase == "countdown")
 			return IngestionType::Countdown;
-		else if (lowerCase == "intro-outro-overlay")
+		if (lowerCase == "intro-outro-overlay")
 			return IngestionType::IntroOutroOverlay;
-		else if (lowerCase == "vod-proxy")
+		if (lowerCase == "vod-proxy")
 			return IngestionType::VODProxy;
-		else if (lowerCase == "youtube-live-broadcast")
+		if (lowerCase == "youtube-live-broadcast")
 			return IngestionType::YouTubeLiveBroadcast;
-		else if (lowerCase == "facebook-live-broadcast")
+		if (lowerCase == "facebook-live-broadcast")
 			return IngestionType::FacebookLiveBroadcast;
-		else if (lowerCase == "add-silent-audio")
+		if (lowerCase == "add-silent-audio")
 			return IngestionType::AddSilentAudio;
 
-		else if (lowerCase == "email-notification")
+		if (lowerCase == "email-notification")
 			return IngestionType::EmailNotification;
-		else if (lowerCase == "media-cross-reference")
+		if (lowerCase == "media-cross-reference")
 			return IngestionType::MediaCrossReference;
-		else if (lowerCase == "workflow-as-library")
+		if (lowerCase == "workflow-as-library")
 			return IngestionType::WorkflowAsLibrary;
-		else if (lowerCase == "check-streaming")
+		if (lowerCase == "check-streaming")
 			return IngestionType::CheckStreaming;
 
-		else if (lowerCase == "contentupdate")
+		if (lowerCase == "contentupdate")
 			return IngestionType::ContentUpdate;
-		else if (lowerCase == "contentremove")
+		if (lowerCase == "contentremove")
 			return IngestionType::ContentRemove;
 
-		else if (lowerCase == "groupoftasks")
+		if (lowerCase == "groupoftasks")
 			return IngestionType::GroupOfTasks;
-
-		else
-			throw std::runtime_error(fmt::format(
+		const std::string errorMessage =
+			fmt::format(
 				"toIngestionType with a wrong IngestionType"
 				", ingestionType: {}",
 				ingestionType
-			));
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	// se si aggiungono/eliminano status, verificare le query dove compare status in (...)
@@ -1000,7 +1065,11 @@ class MMSEngineDBFacade
 		case IngestionStatus::End_TaskSuccess:
 			return "End_TaskSuccess";
 		default:
-			throw std::runtime_error(fmt::format("toString with a wrong IngestionStatus: {}", static_cast<int>(ingestionStatus)));
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong IngestionStatus: {}", static_cast<int>(ingestionStatus));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static IngestionStatus toIngestionStatus(const std::string &ingestionStatus)
@@ -1011,36 +1080,42 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "start_taskqueued")
 			return IngestionStatus::Start_TaskQueued;
-		else if (lowerCase == "sourcedownloadinginprogress")
+		if (lowerCase == "sourcedownloadinginprogress")
 			return IngestionStatus::SourceDownloadingInProgress;
-		else if (lowerCase == "sourcemovinginprogress")
+		if (lowerCase == "sourcemovinginprogress")
 			return IngestionStatus::SourceMovingInProgress;
-		else if (lowerCase == "sourcecopinginprogress")
+		if (lowerCase == "sourcecopinginprogress")
 			return IngestionStatus::SourceCopingInProgress;
-		else if (lowerCase == "sourceuploadinginprogress")
+		if (lowerCase == "sourceuploadinginprogress")
 			return IngestionStatus::SourceUploadingInProgress;
-		else if (lowerCase == "encodingqueued")
+		if (lowerCase == "encodingqueued")
 			return IngestionStatus::EncodingQueued;
-		else if (lowerCase == "end_canceledbyuser")
+		if (lowerCase == "end_canceledbyuser")
 			return IngestionStatus::End_CanceledByUser;
-		else if (lowerCase == "end_canceledbymms")
+		if (lowerCase == "end_canceledbymms")
 			return IngestionStatus::End_CanceledByMMS;
-		else if (lowerCase == "end_validationmetadatafailed")
+		if (lowerCase == "end_validationmetadatafailed")
 			return IngestionStatus::End_ValidationMetadataFailed;
-		else if (lowerCase == "end_validationmediasourcefailed")
+		if (lowerCase == "end_validationmediasourcefailed")
 			return IngestionStatus::End_ValidationMediaSourceFailed;
-		else if (lowerCase == "end_workspacereachedmaxstorageoringestionnumber")
+		if (lowerCase == "end_workspacereachedmaxstorageoringestionnumber")
 			return IngestionStatus::End_WorkspaceReachedMaxStorageOrIngestionNumber;
-		else if (lowerCase == "end_ingestionfailure")
+		if (lowerCase == "end_ingestionfailure")
 			return IngestionStatus::End_IngestionFailure;
-		else if (lowerCase == "end_nottobeexecuted")
+		if (lowerCase == "end_nottobeexecuted")
 			return IngestionStatus::End_NotToBeExecuted;
-		else if (lowerCase == "end_nottobeexecuted_chunknotselected")
+		if (lowerCase == "end_nottobeexecuted_chunknotselected")
 			return IngestionStatus::End_NotToBeExecuted_ChunkNotSelected;
-		else if (lowerCase == "end_tasksuccess")
+		if (lowerCase == "end_tasksuccess")
 			return IngestionStatus::End_TaskSuccess;
-		else
-			throw std::runtime_error(std::string("Wrong IngestionStatus") + ", ingestionStatus: " + ingestionStatus);
+		const std::string errorMessage =
+			fmt::format(
+				"Wrong IngestionStatus"
+				", ingestionStatus: {}",
+				ingestionStatus
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 	static bool isIngestionStatusFinalState(const IngestionStatus &ingestionStatus)
 	{
@@ -1078,7 +1153,11 @@ class MMSEngineDBFacade
 		case IngestionRootStatus::CompletedWithFailures:
 			return "CompletedWithFailures";
 		default:
-			throw std::runtime_error(std::string("Wrong IngestionRootStatus"));
+		{
+			const std::string errorMessage = "Wrong IngestionRootStatus";
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static IngestionRootStatus toIngestionRootStatus(const std::string &ingestionRootStatus)
@@ -1089,12 +1168,18 @@ class MMSEngineDBFacade
 
 		if (lowerCase == "notcompleted")
 			return IngestionRootStatus::NotCompleted;
-		else if (lowerCase == "completedsuccessful")
+		if (lowerCase == "completedsuccessful")
 			return IngestionRootStatus::CompletedSuccessful;
-		else if (lowerCase == "completedwithfailures")
+		if (lowerCase == "completedwithfailures")
 			return IngestionRootStatus::CompletedWithFailures;
-		else
-			throw std::runtime_error(std::string("Wrong IngestionRootStatus") + ", ingestionRootStatus: " + ingestionRootStatus);
+		const std::string errorMessage =
+			fmt::format(
+				"Wrong IngestionRootStatus"
+				", ingestionRootStatus: {}",
+				ingestionRootStatus
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
 	enum class CrossReferenceType
@@ -1147,7 +1232,11 @@ class MMSEngineDBFacade
 		case CrossReferenceType::VideoOfPoster:
 			return "VideoOfPoster";
 		default:
-			throw std::runtime_error(std::string("Wrong CrossReferenceType"));
+		{
+			const std::string errorMessage = "Wrong CrossReferenceType";
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
 		}
 	}
 	static CrossReferenceType toCrossReferenceType(const std::string &crossReferenceType)
@@ -1160,32 +1249,38 @@ class MMSEngineDBFacade
 			return CrossReferenceType::ImageOfVideo;
 		if (lowerCase == "videoofimage")
 			return CrossReferenceType::VideoOfImage;
-		else if (lowerCase == "imageofaudio")
+		if (lowerCase == "imageofaudio")
 			return CrossReferenceType::ImageOfAudio;
-		else if (lowerCase == "audioofimage")
+		if (lowerCase == "audioofimage")
 			return CrossReferenceType::AudioOfImage;
-		else if (lowerCase == "faceofvideo")
+		if (lowerCase == "faceofvideo")
 			return CrossReferenceType::FaceOfVideo;
-		else if (lowerCase == "videoofface")
+		if (lowerCase == "videoofface")
 			return CrossReferenceType::VideoOfFace;
-		else if (lowerCase == "slideshowofimage")
+		if (lowerCase == "slideshowofimage")
 			return CrossReferenceType::SlideShowOfImage;
-		else if (lowerCase == "imageforslideshow")
+		if (lowerCase == "imageforslideshow")
 			return CrossReferenceType::ImageForSlideShow;
-		else if (lowerCase == "slideshowofaudio")
+		if (lowerCase == "slideshowofaudio")
 			return CrossReferenceType::SlideShowOfAudio;
-		else if (lowerCase == "audioforslideshow")
+		if (lowerCase == "audioforslideshow")
 			return CrossReferenceType::AudioForSlideShow;
-		else if (lowerCase == "cutofvideo")
+		if (lowerCase == "cutofvideo")
 			return CrossReferenceType::CutOfVideo;
-		else if (lowerCase == "cutofaudio")
+		if (lowerCase == "cutofaudio")
 			return CrossReferenceType::CutOfAudio;
-		else if (lowerCase == "posterofvideo")
+		if (lowerCase == "posterofvideo")
 			return CrossReferenceType::PosterOfVideo;
-		else if (lowerCase == "videoofposter")
+		if (lowerCase == "videoofposter")
 			return CrossReferenceType::VideoOfPoster;
-		else
-			throw std::runtime_error(std::string("Wrong CrossReferenceType") + ", crossReferenceType: " + crossReferenceType);
+		const std::string errorMessage =
+			fmt::format(
+				"Wrong CrossReferenceType"
+				", crossReferenceType: {}",
+				crossReferenceType
+			);
+		SPDLOG_ERROR(errorMessage);
+		throw std::runtime_error(errorMessage);
 	}
 
   public:

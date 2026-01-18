@@ -24,6 +24,24 @@ class Validator final
 		PhysicalPathKey,
 		IngestionJobKey
 	};
+	static const char *toString(const DependencyType &dependencyType)
+	{
+		switch (dependencyType)
+		{
+		case DependencyType::MediaItemKey:
+			return "MediaItemKey";
+		case DependencyType::PhysicalPathKey:
+			return "PhysicalPathKey";
+		case DependencyType::IngestionJobKey:
+			return "IngestionJobKey";
+		default:
+		{
+			const std::string errorMessage = fmt::format("toString with a wrong DependencyType: {}", static_cast<int>(dependencyType));
+			SPDLOG_ERROR(errorMessage);
+			throw std::runtime_error(errorMessage);
+		}
+		}
+	}
 
   public:
 	Validator(const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const nlohmann::json& configuration);
@@ -189,7 +207,7 @@ class Validator final
 	void validateFaceRecognitionMetadata(
 		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
 		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-	);
+	) const;
 
 	void validateFaceIdentificationMetadata(
 		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,

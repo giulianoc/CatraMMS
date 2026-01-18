@@ -1288,165 +1288,205 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>>
 Validator::validateSingleTaskMetadata(int64_t workspaceKey, const MMSEngineDBFacade::IngestionType ingestionType, const json& parametersRoot)
 {
-	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies;
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, DependencyType, bool>> dependencies;
 
 	// we can validate dependencies too because this method is called by the processor
 	// when the dependencies would be already generated
-	bool validateDependenciesToo = true;
+	constexpr bool validateDependenciesToo = true;
 
-	string label;
+	constexpr string label;
 
-	if (ingestionType == MMSEngineDBFacade::IngestionType::AddContent)
+	switch (ingestionType)
+	{
+	case MMSEngineDBFacade::IngestionType::AddContent:
 	{
 		validateAddContentMetadata(label, parametersRoot);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::AddSilentAudio)
+	case MMSEngineDBFacade::IngestionType::AddSilentAudio:
 	{
 		validateAddSilentAudioMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::RemoveContent)
+	case MMSEngineDBFacade::IngestionType::RemoveContent:
 	{
 		validateRemoveContentMetadata(workspaceKey, label, parametersRoot, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::Encode)
+	case MMSEngineDBFacade::IngestionType::Encode:
 	{
 		validateEncodeMetadata(workspaceKey, label, parametersRoot, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
+	case MMSEngineDBFacade::IngestionType::Frame:
 	{
 		validateFrameMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames ||
-			 ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames)
+	case MMSEngineDBFacade::IngestionType::PeriodicalFrames:
+	case MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames:
 	{
 		validatePeriodicalFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::IFrames || ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
+	case MMSEngineDBFacade::IngestionType::IFrames:
+	case MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames:
 	{
 		validateIFramesMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::Slideshow)
+	case MMSEngineDBFacade::IngestionType::Slideshow:
 	{
 		validateSlideshowMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::ConcatDemuxer)
+	case MMSEngineDBFacade::IngestionType::ConcatDemuxer:
 	{
 		validateConcatDemuxerMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::Cut)
+	case MMSEngineDBFacade::IngestionType::Cut:
 	{
 		validateCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayImageOnVideo)
+	case MMSEngineDBFacade::IngestionType::OverlayImageOnVideo:
 	{
 		validateOverlayImageOnVideoMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::OverlayTextOnVideo)
+	case MMSEngineDBFacade::IngestionType::OverlayTextOnVideo:
 	{
 		validateOverlayTextOnVideoMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::EmailNotification)
+	case MMSEngineDBFacade::IngestionType::EmailNotification:
 	{
 		validateEmailNotificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::CheckStreaming)
+	case MMSEngineDBFacade::IngestionType::CheckStreaming:
 	{
 		validateCheckStreamingMetadata(workspaceKey, label, parametersRoot);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::MediaCrossReference)
+	case MMSEngineDBFacade::IngestionType::MediaCrossReference:
 	{
 		validateMediaCrossReferenceMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::FTPDelivery)
+	case MMSEngineDBFacade::IngestionType::FTPDelivery:
 	{
 		validateFTPDeliveryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::HTTPCallback)
+	case MMSEngineDBFacade::IngestionType::HTTPCallback:
 	{
 		validateHTTPCallbackMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::LocalCopy)
+	case MMSEngineDBFacade::IngestionType::LocalCopy:
 	{
 		validateLocalCopyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::ExtractTracks)
+	case MMSEngineDBFacade::IngestionType::ExtractTracks:
 	{
 		validateExtractTracksMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnFacebook)
+	case MMSEngineDBFacade::IngestionType::PostOnFacebook:
 	{
 		validatePostOnFacebookMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::PostOnYouTube)
+	case MMSEngineDBFacade::IngestionType::PostOnYouTube:
 	{
 		validatePostOnYouTubeMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceRecognition)
+	case MMSEngineDBFacade::IngestionType::FaceRecognition:
 	{
 		validateFaceRecognitionMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::FaceIdentification)
+	case MMSEngineDBFacade::IngestionType::FaceIdentification:
 	{
 		validateFaceIdentificationMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveRecorder)
+	case MMSEngineDBFacade::IngestionType::LiveRecorder:
 	{
 		validateLiveRecorderMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::ChangeFileFormat)
+	case MMSEngineDBFacade::IngestionType::ChangeFileFormat:
 	{
 		validateChangeFileFormatMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::VideoSpeed)
+	case MMSEngineDBFacade::IngestionType::VideoSpeed:
 	{
 		validateVideoSpeedMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::PictureInPicture)
+	case MMSEngineDBFacade::IngestionType::PictureInPicture:
 	{
 		validatePictureInPictureMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::IntroOutroOverlay)
+	case MMSEngineDBFacade::IngestionType::IntroOutroOverlay:
 	{
 		validateIntroOutroOverlayMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
+	case MMSEngineDBFacade::IngestionType::LiveProxy:
 	{
 		validateLiveProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast)
+	case MMSEngineDBFacade::IngestionType::YouTubeLiveBroadcast:
 	{
 		validateYouTubeLiveBroadcastMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast)
+	case MMSEngineDBFacade::IngestionType::FacebookLiveBroadcast:
 	{
 		validateFacebookLiveBroadcastMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::VODProxy)
+	case MMSEngineDBFacade::IngestionType::VODProxy:
 	{
 		validateVODProxyMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::Countdown)
+	case MMSEngineDBFacade::IngestionType::Countdown:
 	{
 		validateCountdownMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveGrid)
+	case MMSEngineDBFacade::IngestionType::LiveGrid:
 	{
 		validateLiveGridMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::LiveCut)
+	case MMSEngineDBFacade::IngestionType::LiveCut:
 	{
 		validateLiveCutMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else if (ingestionType == MMSEngineDBFacade::IngestionType::WorkflowAsLibrary)
+	case MMSEngineDBFacade::IngestionType::WorkflowAsLibrary:
 	{
 		validateWorkflowAsLibraryMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
 	}
-	else
+	default:
 	{
 		string errorMessage = __FILEREF__ + "Unknown IngestionType" + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
+	}
 	}
 
 	return dependencies;
@@ -1838,10 +1878,12 @@ void Validator::validateFrameMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -1937,10 +1979,12 @@ void Validator::validatePeriodicalFramesMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -2016,10 +2060,12 @@ void Validator::validateIFramesMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -2100,10 +2146,12 @@ void Validator::validateSlideshowMetadata(
 					audiosNumber++;
 				else
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer an image-audio content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					string errorMessage = std::format("Reference... does not refer an image/audio content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -2204,10 +2252,12 @@ void Validator::validateConcatDemuxerMetadata(
 				{
 					if (referenceContentType != firstContentType)
 					{
-						string errorMessage = __FILEREF__ + "Reference... does not refer the correct ContentType" +
-											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-											  ", referenceMediaItemKey: " + to_string(key) +
-											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+						string errorMessage = std::format("Reference... does not refer the correct contenttype"
+							", dependencyType: {}"
+							", referenceMediaItemKey: {}"
+							", referenceContentType: {}"
+							", label: {}",
+							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -2218,10 +2268,12 @@ void Validator::validateConcatDemuxerMetadata(
 					if (referenceContentType != MMSEngineDBFacade::ContentType::Video &&
 						referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 					{
-						string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content" +
-											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-											  ", referenceMediaItemKey: " + to_string(key) +
-											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+						const string errorMessage = std::format("Reference... does not refer a video/audio content"
+							", dependencyType: {}"
+							", referenceMediaItemKey: {}"
+							", referenceContentType: {}"
+							", label: {}",
+							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -2371,10 +2423,12 @@ void Validator::validateCutMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video-audio content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video/audio content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -2468,12 +2522,16 @@ void Validator::validateOverlayImageOnVideoMetadata(
 				}
 				else
 				{
-					string errorMessage =
-						__FILEREF__ + "Reference... does not refer a video and an image content" +
-						", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1)) + ", referenceMediaItemKey_1: " + to_string(key_1) +
-						", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1) +
-						", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2)) + ", referenceMediaItemKey_2: " + to_string(key_2) +
-						", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video and an image content"
+						", dependencyType_1: {}"
+						", referenceMediaItemKey_1: {}"
+						", referenceContentType_1: {}"
+						", dependencyType_2: {}"
+						", referenceMediaItemKey_2: {}"
+						", referenceContentType_2: {}"
+						", label: {}",
+						toString(dependencyType_1), key_1, MMSEngineDBFacade::toString(referenceContentType_1),
+						toString(dependencyType_2), key_2, MMSEngineDBFacade::toString(referenceContentType_2), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -2702,10 +2760,12 @@ void Validator::validateOverlayTextOnVideoMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -3381,8 +3441,11 @@ void Validator::validateExtractTracksMetadata(
 		string trackType = JSONUtils::asString(trackRoot, field, "");
 		if (trackType != "video" && trackType != "audio")
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'" + ", Field: " + field +
-								  ", trackType: " + trackType + ", label: " + label;
+			string errorMessage = std::format("{} is wrong (it could be only "
+				"video or audio"
+				"), Field: {}"
+				", trackType: {}"
+				", label: {}", field, field, trackType, label);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -3393,8 +3456,11 @@ void Validator::validateExtractTracksMetadata(
 	string outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 	if (!isVideoAudioFileFormat(outputFileFormat))
 	{
-		string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'video' or 'audio'" + ", Field: " + field +
-							  ", outputFileFormat: " + outputFileFormat + ", label: " + label;
+		string errorMessage = std::format("{} is wrong (it could be only "
+			"video or audio"
+			"), Field: {}"
+			", outputFileFormat: {}"
+			", label: {}", field, field, outputFileFormat, label);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -3445,10 +3511,12 @@ void Validator::validateExtractTracksMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video/audio content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -3559,10 +3627,12 @@ void Validator::validatePostOnFacebookMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video && referenceContentType != MMSEngineDBFacade::ContentType::Image)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video or image content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video/image content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -3619,8 +3689,11 @@ void Validator::validatePostOnYouTubeMetadata(
 
 		if (!isYouTubePrivacyStatusValid(youTubePrivacyStatus))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'private', 'public' or unlisted" + ", Field: " + field +
-								  ", youTubePrivacyStatus: " + youTubePrivacyStatus + ", label: " + label;
+			string errorMessage = std::format("{} is wrong (it could be only "
+				"private, public or unlisted"
+				"), Field: {}"
+				", youTubePrivacyStatus: {}"
+				", label: {}", field, field, youTubePrivacyStatus, label);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -3672,10 +3745,12 @@ void Validator::validatePostOnYouTubeMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -3702,10 +3777,9 @@ void Validator::validatePostOnYouTubeMetadata(
 
 void Validator::validateFaceRecognitionMetadata(
 	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-)
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, DependencyType, bool>> &dependencies
+) const
 {
-
 	vector<string> mandatoryFields = {"cascadeName", "output"};
 	for (string mandatoryField : mandatoryFields)
 	{
@@ -3730,9 +3804,11 @@ void Validator::validateFaceRecognitionMetadata(
 	string faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
 	if (!isFaceRecognitionCascadeNameValid(faceRecognitionCascadeName))
 	{
-		string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, " +
-							  "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default" + ")" + ", Field: " + field +
-							  ", cascadeName: " + faceRecognitionCascadeName + ", label: " + label;
+		string errorMessage = std::format("{} is wrong (it could be only "
+			"haarcascade_frontalface_alt, haarcascade_frontalface_alt2, haarcascade_frontalface_alt_tree or haarcascade_frontalface_default"
+			"), Field: {}"
+			", cascadeName: {}"
+			", label: {}", field, field, faceRecognitionCascadeName, label);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -3742,9 +3818,11 @@ void Validator::validateFaceRecognitionMetadata(
 	string faceRecognitionOutput = JSONUtils::asString(parametersRoot, field, "");
 	if (!isFaceRecognitionOutputValid(faceRecognitionOutput))
 	{
-		string errorMessage = __FILEREF__ + field + " is wrong (it could be only " +
-							  "VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace" + ")" + ", Field: " + field +
-							  ", Output: " + faceRecognitionOutput + ", label: " + label;
+		string errorMessage = std::format("{} is wrong (it could be only "
+			"VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or FrameContainingFace"
+			"), Field: {}"
+			", Output: {}"
+			", label: {}", field, field, faceRecognitionOutput, label);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -3786,29 +3864,24 @@ void Validator::validateFaceRecognitionMetadata(
 		{
 			if (dependencies.size() != 1)
 			{
-				string errorMessage =
-					__FILEREF__ + "No dependencies found" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
+				string errorMessage = std::format("No dependencies found"
+					", dependencies.size: {}"
+					", label: {}", dependencies.size(), label);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
-			// for (tuple<int64_t,MMSEngineDBFacade::ContentType,Validator::DependencyType>& keyAndDependencyType: dependencies)
-			tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool> &keyAndDependencyType = dependencies[0];
 			{
-				int64_t key;
-				MMSEngineDBFacade::ContentType referenceContentType;
-				Validator::DependencyType dependencyType;
-				bool stopIfReferenceProcessingError;
-
-				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
-
+				auto [key, referenceContentType, dependencyType, stopIfReferenceProcessingError] = dependencies[0];
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -3835,7 +3908,7 @@ void Validator::validateFaceRecognitionMetadata(
 
 void Validator::validateFaceIdentificationMetadata(
 	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
-	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, DependencyType, bool>> &dependencies
 )
 {
 
@@ -3863,9 +3936,11 @@ void Validator::validateFaceIdentificationMetadata(
 	string faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
 	if (!isFaceRecognitionCascadeNameValid(faceIdentificationCascadeName))
 	{
-		string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "haarcascade_frontalface_alt, haarcascade_frontalface_alt2, " +
-							  "haarcascade_frontalface_alt_tree or haarcascade_frontalface_default" + ")" + ", Field: " + field +
-							  ", cascadeName: " + faceIdentificationCascadeName + ", label: " + label;
+		string errorMessage = std::format("{} is wrong (it could be only "
+			"haarcascade_frontalface_alt, haarcascade_frontalface_alt2, haarcascade_frontalface_alt_tree or haarcascade_frontalface_default"
+			"), Field: {}"
+			", cascadeName: {}"
+			", label: {}", field, field, faceIdentificationCascadeName, label);
 		SPDLOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -3916,8 +3991,9 @@ void Validator::validateFaceIdentificationMetadata(
 		{
 			if (dependencies.size() != 1)
 			{
-				string errorMessage =
-					__FILEREF__ + "No Dependencies found" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
+				string errorMessage = std::format("No dependencies found"
+					", dependencies.size: {}"
+					", label: {}", dependencies.size(), label);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -3935,10 +4011,12 @@ void Validator::validateFaceIdentificationMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -4077,8 +4155,11 @@ void Validator::validateLiveRecorderMetadata(
 		string liveRecorderOutputFormat = JSONUtils::asString(parametersRoot, field, "");
 		if (!isLiveRecorderOutputValid(liveRecorderOutputFormat))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "ts" + ")" + ", Field: " + field +
-								  ", liveRecorderOutputFormat: " + liveRecorderOutputFormat + ", label: " + label;
+			string errorMessage = std::format("{} is wrong (it could be only "
+				"ts"
+				"), Field: {}"
+				", liveRecorderOutputFormat: {}"
+				", label: {}", field, field, liveRecorderOutputFormat, label);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4284,8 +4365,11 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 
 		if (!isYouTubePrivacyStatusValid(youTubePrivacyStatus))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only 'private', 'public' or unlisted" + ", Field: " + field +
-								  ", youTubePrivacyStatus: " + youTubePrivacyStatus + ", label: " + label;
+			string errorMessage = std::format("{} is wrong (it could be only "
+				"private, public or unlisted"
+				"), Field: {}"
+				", youTubePrivacyStatus: {}"
+				", label: {}", field, field, youTubePrivacyStatus, label);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -4366,10 +4450,12 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 						if (referenceContentType != MMSEngineDBFacade::ContentType::Video &&
 							referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 						{
-							string errorMessage =
-								__FILEREF__ + "Reference... does not refer a video-audio content" +
-								", dependencyType: " + to_string(static_cast<int>(dependencyType)) + ", referenceMediaItemKey: " + to_string(key) +
-								", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+							string errorMessage = std::format("Reference... does not refer a video-audio content"
+								", dependencyType: {}"
+								", referenceMediaItemKey: {}"
+								", referenceContentType: {}"
+								", label: {}",
+								toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -4593,14 +4679,12 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 						if (referenceContentType != MMSEngineDBFacade::ContentType::Video &&
 							referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 						{
-							string errorMessage = std::format(
-								"reference... does not refer a video-audio content"
+							string errorMessage = std::format("Reference... does not refer a video-audio content"
 								", dependencyType: {}"
 								", referenceMediaItemKey: {}"
 								", referenceContentType: {}"
 								", label: {}",
-								static_cast<int>(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label
-							);
+								toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 							SPDLOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
@@ -4924,7 +5008,7 @@ void Validator::validateCountdownMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = std::format(
+					const string errorMessage = std::format(
 						"Reference... does not refer a video content"
 						", dependencyType: {}"
 						", referenceMediaItemKey: {}"
@@ -5188,10 +5272,12 @@ void Validator::validateChangeFileFormatMetadata(
 				{
 					if (referenceContentType != MMSEngineDBFacade::ContentType::Image)
 					{
-						string errorMessage = __FILEREF__ + "Reference... does not refer an image content" +
-											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-											  ", referenceMediaItemKey: " + to_string(key) +
-											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+						string errorMessage = std::format("Reference... does not refer an image content"
+							", dependencyType: {}"
+							", referenceMediaItemKey: {}"
+							", referenceContentType: {}"
+							", label: {}",
+							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -5202,10 +5288,12 @@ void Validator::validateChangeFileFormatMetadata(
 					if (referenceContentType != MMSEngineDBFacade::ContentType::Video &&
 						referenceContentType != MMSEngineDBFacade::ContentType::Audio)
 					{
-						string errorMessage = __FILEREF__ + "Reference... does not refer a video or audio content" +
-											  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-											  ", referenceMediaItemKey: " + to_string(key) +
-											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+						string errorMessage = std::format("Reference... does not refer a video/audio content"
+							", dependencyType: {}"
+							", referenceMediaItemKey: {}"
+							", referenceContentType: {}"
+							", label: {}",
+							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 						SPDLOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
@@ -5265,8 +5353,11 @@ void Validator::validateVideoSpeedMetadata(
 		string speedType = JSONUtils::asString(parametersRoot, field, "");
 		if (!isVideoSpeedTypeValid(speedType))
 		{
-			string errorMessage = __FILEREF__ + field + " is wrong (it could be only " + "SlowDown, or SpeedUp" + ")" + ", Field: " + field +
-								  ", speedType " + speedType + ", label: " + label;
+			string errorMessage = std::format("{} is wrong (it could be only "
+				"SlowDown, or SpeedUp"
+				"), Field: {}"
+				", speedType: {}"
+				", label: {}", field, field, speedType, label);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -5342,10 +5433,12 @@ void Validator::validateVideoSpeedMetadata(
 
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage = __FILEREF__ + "Reference... does not refer a video content" +
-										  ", dependencyType: " + to_string(static_cast<int>(dependencyType)) +
-										  ", referenceMediaItemKey: " + to_string(key) +
-										  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType) + ", label: " + label;
+					string errorMessage = std::format("Reference... does not refer a video content"
+						", dependencyType: {}"
+						", referenceMediaItemKey: {}"
+						", referenceContentType: {}"
+						", label: {}",
+						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -5435,12 +5528,16 @@ void Validator::validatePictureInPictureMetadata(
 				if (referenceContentType_1 != MMSEngineDBFacade::ContentType::Video ||
 					referenceContentType_2 != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage =
-						__FILEREF__ + "Reference... does not refer both a video content" +
-						", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1)) + ", referenceMediaItemKey_1: " + to_string(key_1) +
-						", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1) +
-						", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2)) + ", referenceMediaItemKey_2: " + to_string(key_2) +
-						", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer both a video content"
+						", dependencyType_1: {}"
+						", referenceMediaItemKey_1: {}"
+						", referenceContentType_1: {}"
+						", dependencyType_2: {}"
+						", referenceMediaItemKey_2: {}"
+						", referenceContentType_2: {}"
+						", label: {}",
+						toString(dependencyType_1), key_1, MMSEngineDBFacade::toString(referenceContentType_1),
+						toString(dependencyType_2), key_2, MMSEngineDBFacade::toString(referenceContentType_2), label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -5548,14 +5645,21 @@ void Validator::validateIntroOutroOverlayMetadata(
 					referenceContentType_2 != MMSEngineDBFacade::ContentType::Video ||
 					referenceContentType_3 != MMSEngineDBFacade::ContentType::Video)
 				{
-					string errorMessage =
-						__FILEREF__ + "Reference... does not refer all a video content" +
-						", dependencyType_1: " + to_string(static_cast<int>(dependencyType_1)) + ", referenceMediaItemKey_1: " + to_string(key_1) +
-						", referenceContentType_1: " + MMSEngineDBFacade::toString(referenceContentType_1) +
-						", dependencyType_2: " + to_string(static_cast<int>(dependencyType_2)) + ", referenceMediaItemKey_2: " + to_string(key_2) +
-						", referenceContentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) +
-						", dependencyType_3: " + to_string(static_cast<int>(dependencyType_3)) + ", referenceMediaItemKey_3: " + to_string(key_3) +
-						", referenceContentType_3: " + MMSEngineDBFacade::toString(referenceContentType_3) + ", label: " + label;
+					const string errorMessage = std::format("Reference... does not refer all a video and an image content"
+						", dependencyType_1: {}"
+						", referenceMediaItemKey_1: {}"
+						", referenceContentType_1: {}"
+						", dependencyType_2: {}"
+						", referenceMediaItemKey_2: {}"
+						", referenceContentType_2: {}"
+						", dependencyType_3: {}"
+						", referenceMediaItemKey_3: {}"
+						", referenceContentType_3: {}"
+						", label: {}",
+						toString(dependencyType_1), key_1, MMSEngineDBFacade::toString(referenceContentType_1),
+						toString(dependencyType_2), key_2, MMSEngineDBFacade::toString(referenceContentType_2),
+						toString(dependencyType_3), key_3, MMSEngineDBFacade::toString(referenceContentType_3),
+						label);
 					SPDLOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
