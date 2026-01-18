@@ -646,7 +646,7 @@ void API::manageReferencesInput(
 		}
 	}
 
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"manageReferencesInput (2) referencesSectionPresent"
 		", taskOrGroupOfTasksLabel: {}"
 		", IngestionType: {}"
@@ -805,7 +805,7 @@ void API::manageReferencesInput(
 		localDependOnIngestionJobKeyExecution, taskMetadata);
 		}
 		*/
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			"manageReferencesInput (3) new references because referencesSectionPresent (parametersRoot)"
 			", taskOrGroupOfTasksLabel: {}"
 			", IngestionType: {}"
@@ -818,7 +818,7 @@ void API::manageReferencesInput(
 			referencesSectionPresent, JSONUtils::toString(parametersRoot)
 		);
 	}
-	
+
 	// add to referencesRoot all the inherited references
 	if ((!referencesSectionPresent || dependenciesToBeAddedToReferencesAtIndex != -1) && !dependOnIngestionJobKeysOverallInput.empty())
 	{
@@ -832,7 +832,7 @@ void API::manageReferencesInput(
 				int previousReferencesRootSize = referencesRoot.size();
 				int dependOnIngestionJobKeysSize = dependOnIngestionJobKeysOverallInput.size();
 
-				SPDLOG_INFO(
+				SPDLOG_TRACE(
 					"add to referencesRoot all the inherited references"
 					", ingestionRootKey: {}"
 					", taskOrGroupOfTasksLabel: |{}"
@@ -875,29 +875,6 @@ void API::manageReferencesInput(
 					referencesRoot[index] = referenceRoot;
 				}
 			}
-
-			/*
-			for (int referenceIndex =
-			dependOnIngestionJobKeysOverallInput.size(); referenceIndex > 0;
-			--referenceIndex)
-			{
-					json referenceRoot;
-					string addedField = "ingestionJobKey";
-					referenceRoot[addedField] =
-			dependOnIngestionJobKeysOverallInput.at(referenceIndex - 1);
-
-					// add at the beginning in referencesRoot
-					{
-							int previousSize = referencesRoot.size();
-							referencesRoot.resize(previousSize + 1);
-							for(int index = previousSize; index >
-			dependenciesToBeAddedToReferencesAtIndex; index--)
-									referencesRoot[index] = referencesRoot[index
-			- 1]; referencesRoot[dependenciesToBeAddedToReferencesAtIndex] =
-			referenceRoot;
-					}
-			}
-			*/
 		}
 		else
 		{
@@ -941,9 +918,11 @@ void API::manageReferencesInput(
 			", parametersSectionPresent: {}"
 			", referencesSectionPresent: {}"
 			", dependenciesToBeAddedToReferencesAtIndex: {}"
-			", dependOnIngestionJobKeysOverallInput: {}",
+			", dependOnIngestionJobKeysOverallInput: {}"
+			", parametersRoot: {}",
 			ingestionRootKey, taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, referencesSectionPresent,
-			dependenciesToBeAddedToReferencesAtIndex, fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
+			dependenciesToBeAddedToReferencesAtIndex, fmt::join(dependOnIngestionJobKeysOverallInput, ", "),
+			JSONUtils::toString(parametersRoot)
 		);
 }
 
