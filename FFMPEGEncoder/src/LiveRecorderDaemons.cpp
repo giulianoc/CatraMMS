@@ -5,6 +5,7 @@
 #include "Datetime.h"
 #include "Encrypt.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "ProcessUtility.h"
@@ -1828,8 +1829,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 }
 
 string LiveRecorderDaemons::buildChunkIngestionWorkflow(
-	int64_t ingestionJobKey, bool externalEncoder, string currentRecordedAssetFileName, string chunksNFSStagingContentsPath, string addContentTitle,
-	string uniqueName, json userDataRoot, string fileFormat, json ingestedParametersRoot, json encodingParametersRoot
+	int64_t ingestionJobKey, bool externalEncoder, const string& currentRecordedAssetFileName, const string& chunksNFSStagingContentsPath,
+	const string& addContentTitle, const string& uniqueName, const json& userDataRoot, string fileFormat, const json& ingestedParametersRoot,
+	const json& encodingParametersRoot
 )
 {
 	string workflowMetadata;
@@ -1850,111 +1852,59 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			}
 		}
 		*/
-		json mmsDataRoot = userDataRoot["mmsData"];
-		json liveRecordingChunkRoot = mmsDataRoot["liveRecordingChunk"];
-		int64_t utcPreviousChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcPreviousChunkStartTime", -1);
-		time_t utcChunkStartTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkStartTime", -1);
-		int64_t utcChunkEndTime = JSONUtils::asInt64(liveRecordingChunkRoot, "utcChunkEndTime", -1);
+		json mmsDataRoot = JsonPath(&userDataRoot)["mmsData"].as<json>();
+		json liveRecordingChunkRoot = JsonPath(&mmsDataRoot)["liveRecordingChunk"].as<json>();
+		auto utcPreviousChunkStartTime = JsonPath(&liveRecordingChunkRoot)["utcPreviousChunkStartTime"].as<int64_t>(-1);
+		time_t utcChunkStartTime = JsonPath(&liveRecordingChunkRoot)["utcChunkStartTime"].as<int64_t>(-1);
+		auto utcChunkEndTime = JsonPath(&liveRecordingChunkRoot)["utcChunkEndTime"].as<int64_t>(-1);
 
 		json addContentRoot;
 
-		string field = "label";
-		addContentRoot[field] = to_string(utcChunkStartTime);
-
-		field = "type";
-		addContentRoot[field] = "Add-Content";
+		addContentRoot["label"] = to_string(utcChunkStartTime);
+		addContentRoot["type"] = "Add-Content";
 
 		{
-			field = "internalMMS";
-			if (JSONUtils::isPresent(ingestedParametersRoot, field))
+			json internalMMSRoot = JsonPath(&ingestedParametersRoot)["internalMMS"].as<json>(nullptr);
+			if (internalMMSRoot != nullptr)
 			{
-				json internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "events";
-				if (JSONUtils::isPresent(internalMMSRoot, field))
+				json eventsRoot = JsonPath(&internalMMSRoot)["events"].as<json>(nullptr);
+				if (eventsRoot != nullptr)
 				{
-					json eventsRoot = internalMMSRoot[field];
-
-					field = "onSuccess";
-					if (JSONUtils::isPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-
-					field = "onError";
-					if (JSONUtils::isPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
-
-					field = "onComplete";
-					if (JSONUtils::isPresent(eventsRoot, field))
-						addContentRoot[field] = eventsRoot[field];
+					addContentRoot["onSuccess"] = JsonPath(&eventsRoot)["onSuccess"].as<json>(nullptr);
+					addContentRoot["onError"] = JsonPath(&eventsRoot)["onError"].as<json>(nullptr);
+					addContentRoot["onComplete"] = JsonPath(&eventsRoot)["onComplete"].as<json>(nullptr);
 				}
 			}
 		}
 
 		json addContentParametersRoot = ingestedParametersRoot;
-		// if (internalMMSRootPresent)
-		{
-			field = "internalMMS";
-			addContentParametersRoot.erase(field);
-		}
-
-		field = "fileFormat";
-		addContentParametersRoot[field] = fileFormat;
-
+		addContentParametersRoot.erase("internalMMS");
+		addContentParametersRoot["fileFormat"] = fileFormat;
 		if (!externalEncoder)
-		{
-			string sourceURL = string("move") + "://" + chunksNFSStagingContentsPath + currentRecordedAssetFileName;
-			field = "sourceURL";
-			addContentParametersRoot[field] = sourceURL;
-		}
-
-		field = "ingester";
-		addContentParametersRoot[field] = "Live Recorder Task";
-
-		field = "title";
-		addContentParametersRoot[field] = addContentTitle;
-
-		field = "userData";
-		addContentParametersRoot[field] = userDataRoot;
-
-		// if (!highAvailability)
-		{
-			// in case of no high availability, we can set just now the
-			// UniqueName for this content in case of high availability, the
-			// unique name will be set only of the selected content
-			//		choosing between main and bqckup
-			field = "uniqueName";
-			addContentParametersRoot[field] = uniqueName;
-		}
-
-		field = "parameters";
-		addContentRoot[field] = addContentParametersRoot;
+			addContentParametersRoot["sourceURL"] = std::format("move://{}{}",
+				chunksNFSStagingContentsPath, currentRecordedAssetFileName);
+		addContentParametersRoot["ingester"] = "Live Recorder Task";
+		addContentParametersRoot["title"] = addContentTitle;
+		addContentParametersRoot["userData"] = userDataRoot;
+		addContentParametersRoot["uniqueName"] = uniqueName;
+		addContentParametersRoot["retention"] = "1d";
+		addContentRoot["parameters"] = addContentParametersRoot;
 
 		json workflowRoot;
-
-		field = "label";
-		workflowRoot[field] = addContentTitle;
-
-		field = "type";
-		workflowRoot[field] = "Workflow";
-
+		workflowRoot["label"] = addContentTitle;
+		workflowRoot["type"] = "Workflow";
 		{
 			json variablesWorkflowRoot;
 
 			{
 				json variableWorkflowRoot;
-
-				field = "type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "value";
-				variableWorkflowRoot[field] = utcChunkStartTime;
-
-				// name of the variable
-				field = "currentUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
+				variableWorkflowRoot["type"] = "integer";
+				variableWorkflowRoot["value"] = utcChunkStartTime;
+				variablesWorkflowRoot["currentUtcChunkStartTime"] = variableWorkflowRoot;
 			}
 
 			// char currentUtcChunkStartTime_HHMISS[64];
+			/*
 			string currentUtcChunkStartTime_HHMISS;
 			{
 				tm tmDateTime;
@@ -1965,74 +1915,41 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				// sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				currentUtcChunkStartTime_HHMISS = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 			}
+			*/
 			{
 				json variableWorkflowRoot;
-
-				field = "type";
-				variableWorkflowRoot[field] = "string";
-
-				field = "value";
-				variableWorkflowRoot[field] = string(currentUtcChunkStartTime_HHMISS);
-
-				// name of the variable
-				field = "currentUtcChunkStartTime_HHMISS";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
+				variableWorkflowRoot["type"] = "string";
+				variableWorkflowRoot["value"] = Datetime::dateTimeFormat(utcChunkStartTime * 1000, "%H:%M:%S");
+				variablesWorkflowRoot["currentUtcChunkStartTime_HHMISS"] = variableWorkflowRoot;
 			}
 
 			{
 				json variableWorkflowRoot;
-
-				field = "type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "value";
-				variableWorkflowRoot[field] = utcPreviousChunkStartTime;
-
-				// name of the variable
-				field = "previousUtcChunkStartTime";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
+				variableWorkflowRoot["type"] = "integer";
+				variableWorkflowRoot["value"] = utcPreviousChunkStartTime;
+				variablesWorkflowRoot["previousUtcChunkStartTime"] = variableWorkflowRoot;
 			}
 
-			int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
 			{
 				json variableWorkflowRoot;
-
-				field = "type";
-				variableWorkflowRoot[field] = "integer";
-
-				field = "value";
-				variableWorkflowRoot[field] = recordingCode;
-
-				// name of the variable
-				field = "recordingCode";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
+				variableWorkflowRoot["type"] = "integer";
+				variableWorkflowRoot["value"] = JsonPath(&ingestedParametersRoot)["recordingCode"].as<int64_t>(0);
+				variablesWorkflowRoot["recordingCode"] = variableWorkflowRoot;
 			}
 
-			string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
 			{
 				json variableWorkflowRoot;
-
-				field = "type";
-				variableWorkflowRoot[field] = "string";
-
-				field = "value";
-				variableWorkflowRoot[field] = ingestionJobLabel;
-
-				// name of the variable
-				field = "ingestionJobLabel";
-				variablesWorkflowRoot[field] = variableWorkflowRoot;
+				variableWorkflowRoot["type"] = "string";
+				variableWorkflowRoot["value"] = JsonPath(&encodingParametersRoot)["ingestionJobLabel"].as<string>("");
+				variablesWorkflowRoot["ingestionJobLabel"] = variableWorkflowRoot;
 			}
 
-			field = "variables";
-			workflowRoot[field] = variablesWorkflowRoot;
+			workflowRoot["variables"] = variablesWorkflowRoot;
 		}
 
-		field = "task";
-		workflowRoot[field] = addContentRoot;
+		workflowRoot["task"] = addContentRoot;
 
-		{
-			workflowMetadata = JSONUtils::toString(workflowRoot);
-		}
+		workflowMetadata = JSONUtils::toString(workflowRoot);
 
 		SPDLOG_INFO(
 			"Recording Workflow metadata generated"
@@ -2043,7 +1960,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 
 		return workflowMetadata;
 	}
-	catch (runtime_error e)
+	catch (exception& e)
 	{
 		SPDLOG_ERROR(
 			"buildRecordedMediaWorkflow failed"
@@ -2053,19 +1970,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			ingestionJobKey, workflowMetadata, e.what()
 		);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		SPDLOG_ERROR(
-			"buildRecordedMediaWorkflow failed"
-			", ingestionJobKey: {}"
-			", workflowMetadata: {}"
-			", exception: {}",
-			ingestionJobKey, workflowMetadata, e.what()
-		);
-
-		throw e;
+		throw;
 	}
 }
 

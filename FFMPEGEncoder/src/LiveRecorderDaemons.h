@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include "EncoderBandwidthUsageThread.h"
 #include "FFMPEGEncoderBase.h"
 
 #ifndef SPDLOG_ACTIVE_LEVEL
@@ -72,10 +73,10 @@ class LiveRecorderDaemons : public FFMPEGEncoderBase
 		std::string uniqueName, nlohmann::json userDataRoot, std::string fileFormat, nlohmann::json ingestedParametersRoot, nlohmann::json encodingParametersRoot
 	);
 
-	std::string buildChunkIngestionWorkflow(
-		int64_t ingestionJobKey, bool externalEncoder, std::string currentRecordedAssetFileName, std::string chunksNFSStagingContentsPath,
-		std::string addContentTitle, std::string uniqueName, nlohmann::json userDataRoot, std::string fileFormat, nlohmann::json ingestedParametersRoot,
-		nlohmann::json encodingParametersRoot
+	static std::string buildChunkIngestionWorkflow(
+		int64_t ingestionJobKey, bool externalEncoder, const std::string &currentRecordedAssetFileName,
+		const std::string &chunksNFSStagingContentsPath, const std::string &addContentTitle, const std::string &uniqueName, const json &userDataRoot,
+		std::string fileFormat, const json &ingestedParametersRoot, const json &encodingParametersRoot
 	);
 
 	bool isLastLiveRecorderFile(

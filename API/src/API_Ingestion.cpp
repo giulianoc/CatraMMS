@@ -1258,22 +1258,16 @@ vector<int64_t> API::ingestionSingleTask(
 			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
 
 			field = "onSuccess";
-			if (JSONUtils::isPresent(taskRoot, field))
-			{
+			if (JSONUtils::isPresent(taskRoot, field, true))
 				newTasksGroupRoot[field] = taskRoot[field];
-			}
 
 			field = "onError";
-			if (JSONUtils::isPresent(taskRoot, field))
-			{
+			if (JSONUtils::isPresent(taskRoot, field, true))
 				newTasksGroupRoot[field] = taskRoot[field];
-			}
 
 			field = "onComplete";
-			if (JSONUtils::isPresent(taskRoot, field))
-			{
+			if (JSONUtils::isPresent(taskRoot, field, true))
 				newTasksGroupRoot[field] = taskRoot[field];
-			}
 
 #ifdef __POSTGRES__
 			return ingestionGroupOfTasks(
@@ -1344,15 +1338,15 @@ vector<int64_t> API::ingestionSingleTask(
 				newTaskRoot[field] = newParametersRoot;
 
 				field = "onSuccess";
-				if (JSONUtils::isPresent(taskRoot, field))
+				if (JSONUtils::isPresent(taskRoot, field, true))
 					newTaskRoot[field] = taskRoot[field];
 
 				field = "onError";
-				if (JSONUtils::isPresent(taskRoot, field))
+				if (JSONUtils::isPresent(taskRoot, field, true))
 					newTaskRoot[field] = taskRoot[field];
 
 				field = "onComplete";
-				if (JSONUtils::isPresent(taskRoot, field))
+				if (JSONUtils::isPresent(taskRoot, field, true))
 					newTaskRoot[field] = taskRoot[field];
 
 				newTasksRoot.push_back(newTaskRoot);
@@ -1427,10 +1421,11 @@ vector<int64_t> API::ingestionSingleTask(
 			string onSuccessField = "onSuccess";
 			string onErrorField = "onError";
 			string onCompleteField = "onComplete";
-			if (JSONUtils::isPresent(taskRoot, onSuccessField) || JSONUtils::isPresent(taskRoot, onErrorField) ||
-				JSONUtils::isPresent(taskRoot, onCompleteField))
+			if (JSONUtils::isPresent(taskRoot, onSuccessField, true)
+				|| JSONUtils::isPresent(taskRoot, onErrorField, true)
+				|| JSONUtils::isPresent(taskRoot, onCompleteField, true))
 			{
-				if (JSONUtils::isPresent(taskRoot, onSuccessField))
+				if (JSONUtils::isPresent(taskRoot, onSuccessField, true))
 				{
 					json onSuccessRoot = taskRoot[onSuccessField];
 
@@ -1438,7 +1433,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 					taskRoot.erase(onSuccessField);
 				}
-				if (JSONUtils::isPresent(taskRoot, onErrorField))
+				if (JSONUtils::isPresent(taskRoot, onErrorField, true))
 				{
 					json onErrorRoot = taskRoot[onErrorField];
 
@@ -1446,7 +1441,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 					taskRoot.erase(onErrorField);
 				}
-				if (JSONUtils::isPresent(taskRoot, onCompleteField))
+				if (JSONUtils::isPresent(taskRoot, onCompleteField, true))
 				{
 					json onCompleteRoot = taskRoot[onCompleteField];
 
@@ -1494,10 +1489,11 @@ json internalMMSRoot;
 			string onSuccessField = "onSuccess";
 			string onErrorField = "onError";
 			string onCompleteField = "onComplete";
-			if (JSONUtils::isPresent(taskRoot, onSuccessField) || JSONUtils::isPresent(taskRoot, onErrorField) ||
-				JSONUtils::isPresent(taskRoot, onCompleteField))
+			if (JSONUtils::isPresent(taskRoot, onSuccessField, true)
+				|| JSONUtils::isPresent(taskRoot, onErrorField, true)
+				|| JSONUtils::isPresent(taskRoot, onCompleteField, true))
 			{
-				if (JSONUtils::isPresent(taskRoot, onSuccessField))
+				if (JSONUtils::isPresent(taskRoot, onSuccessField, true))
 				{
 					json onSuccessRoot = taskRoot[onSuccessField];
 
@@ -1505,7 +1501,7 @@ json internalMMSRoot;
 
 					taskRoot.erase(onSuccessField);
 				}
-				if (JSONUtils::isPresent(taskRoot, onErrorField))
+				if (JSONUtils::isPresent(taskRoot, onErrorField, true))
 				{
 					json onErrorRoot = taskRoot[onErrorField];
 
@@ -1513,7 +1509,7 @@ json internalMMSRoot;
 
 					taskRoot.erase(onErrorField);
 				}
-				if (JSONUtils::isPresent(taskRoot, onCompleteField))
+				if (JSONUtils::isPresent(taskRoot, onCompleteField, true))
 				{
 					json onCompleteRoot = taskRoot[onCompleteField];
 
@@ -1670,22 +1666,16 @@ json internalMMSRoot;
 			newGroupOfTasksRoot[field] = newGroupOfTasksParametersRoot;
 
 			field = "onSuccess";
-			if (JSONUtils::isPresent(taskRoot, field))
-			{
+			if (JSONUtils::isPresent(taskRoot, field, true))
 				newGroupOfTasksRoot[field] = taskRoot[field];
-			}
 
 			field = "onError";
-			if (JSONUtils::isPresent(taskRoot, field))
-			{
+			if (JSONUtils::isPresent(taskRoot, field, true))
 				newGroupOfTasksRoot[field] = taskRoot[field];
-			}
 
 			field = "onComplete";
-			if (JSONUtils::isPresent(taskRoot, field))
-			{
+			if (JSONUtils::isPresent(taskRoot, field, true))
 				newGroupOfTasksRoot[field] = taskRoot[field];
-			}
 		}
 
 #ifdef __POSTGRES__
@@ -2526,7 +2516,7 @@ void API::ingestionEvents(
 {
 
 	string field = "onSuccess";
-	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field, true))
 	{
 		json &onSuccessRoot = taskOrGroupOfTasksRoot[field];
 
@@ -2638,7 +2628,7 @@ void API::ingestionEvents(
 	}
 
 	field = "onError";
-	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field, true))
 	{
 		json &onErrorRoot = taskOrGroupOfTasksRoot[field];
 
@@ -2759,7 +2749,7 @@ void API::ingestionEvents(
 	}
 
 	field = "onComplete";
-	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field))
+	if (JSONUtils::isPresent(taskOrGroupOfTasksRoot, field, true))
 	{
 		json &onCompleteRoot = taskOrGroupOfTasksRoot[field];
 
