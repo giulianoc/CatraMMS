@@ -215,6 +215,13 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							Validator::validateGroupOfTasksMetadata(workspace->_workspaceKey, parametersRoot);
 						else
 							dependencies = validator.validateSingleTaskMetadata(workspace->_workspaceKey, ingestionType, parametersRoot);
+						SPDLOG_INFO("Validator"
+							", _processorIdentifier: {}"
+							", ingestionJobKey: {}"
+							", ingestionType: {}"
+							", dependencies.size: {}",
+							_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionType), dependencies.size()
+						);
 					}
 					catch (exception &e)
 					{
