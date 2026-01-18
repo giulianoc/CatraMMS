@@ -1294,7 +1294,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const MMSEngineDBFac
 	// when the dependencies would be already generated
 	constexpr bool validateDependenciesToo = true;
 
-	constexpr string label;
+	string label;
 
 	switch (ingestionType)
 	{
