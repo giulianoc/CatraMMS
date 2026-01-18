@@ -1663,10 +1663,10 @@ class MMSEngineDBFacade
 	);
 
 	nlohmann::json getIngestionRootsStatus(
-		std::shared_ptr<Workspace> workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
+		const std::shared_ptr<Workspace> &workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
 		// bool startAndEndIngestionDatePresent,
-		std::string startIngestionDate, std::string endIngestionDate, std::string label, std::string status, bool asc, bool dependencyInfo, bool ingestionJobOutputs,
-		bool hiddenToo, bool fromMaster
+		const std::string &startIngestionDate, const std::string &endIngestionDate, const std::string &label, const std::string &status, bool asc,
+		bool dependencyInfo, bool ingestionJobOutputs, bool hiddenToo, bool fromMaster
 	);
 
 	nlohmann::json getIngestionJobsStatus(

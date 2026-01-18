@@ -3,6 +3,7 @@
 #include "Datetime.h"
 #include "Encrypt.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineProcessor.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -860,8 +861,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 }
 
 void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
-	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, string ingestionJobLabel, shared_ptr<Workspace> workspace,
-	json liveCutParametersRoot
+	const shared_ptr<long>& processorsThreadsNumber, int64_t ingestionJobKey, string ingestionJobLabel, const shared_ptr<Workspace>& workspace,
+	const json& liveCutParametersRoot
 )
 {
 	try
@@ -879,7 +880,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		string chunkEncodingProfileLabel;
 		string cutPeriodStartTimeInMilliSeconds;
 		string cutPeriodEndTimeInMilliSeconds;
-		int maxWaitingForLastChunkInSeconds = 90;
+		int16_t maxWaitingForLastChunkInSeconds = 90;
 		bool errorIfAChunkIsMissing = false;
 		{
 			if (!JSONUtils::isPresent(liveCutParametersRoot, "recordingCode"))
@@ -900,7 +901,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, "chunkEncodingProfileKey", -1);
 			chunkEncodingProfileLabel = JSONUtils::asString(liveCutParametersRoot, "chunkEncodingProfileLabel", "");
 
-			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, "maxWaitingForLastChunkInSeconds", 90);
+			maxWaitingForLastChunkInSeconds = JsonPath(&liveCutParametersRoot)["maxWaitingForLastChunkInSeconds"].as<int16_t>(90);
 
 			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, "errorIfAChunkIsMissing", false);
 
@@ -1010,16 +1011,14 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				mediaItemsRoot = responseRoot["mediaItems"];
 
-				for (int mediaItemIndex = 0; mediaItemIndex < mediaItemsRoot.size(); mediaItemIndex++)
+				for (const auto& mediaItemRoot : mediaItemsRoot)
 				{
-					json mediaItemRoot = mediaItemsRoot[mediaItemIndex];
-
 					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemRoot, "mediaItemKey", 0);
 
 					json userDataRoot;
 					{
 						string userData = JSONUtils::asString(mediaItemRoot, "userData", "");
-						if (userData == "")
+						if (userData.empty())
 						{
 							string errorMessage = std::format(
 								"recording media item without userData!!!"
@@ -1187,7 +1186,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 						if (chunkEncodingProfileKey != -1)
 							mediaItemKeyReferenceRoot["encodingProfileKey"] = chunkEncodingProfileKey;
-						else if (chunkEncodingProfileLabel != "")
+						else if (!chunkEncodingProfileLabel.empty())
 							mediaItemKeyReferenceRoot["encodingProfileLabel"] = chunkEncodingProfileLabel;
 
 						mediaItemKeyReferencesRoot.push_back(mediaItemKeyReferenceRoot);
@@ -1406,7 +1405,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						{
 							string sUserData = JSONUtils::asString(liveCutParametersRoot, "userData", "");
 
-							if (sUserData != "")
+							if (!sUserData.empty())
 								userDataRoot = JSONUtils::toJson<json>(sUserData);
 						}
 						else // if (valueType == Json::ValueType::objectValue)
@@ -1544,9 +1543,8 @@ task Live-Recorder.
 					throw runtime_error(errorMessage);
 				}
 				json tasksRoot = workflowResponseRoot["tasks"];
-				for (int taskIndex = 0; taskIndex < tasksRoot.size(); taskIndex++)
+				for (const auto& taskRoot : tasksRoot)
 				{
-					json taskRoot = tasksRoot[taskIndex];
 					string taskIngestionJobLabel = JSONUtils::asString(taskRoot, "label", "");
 					if (taskIngestionJobLabel == cutLabel)
 					{
@@ -1592,59 +1590,15 @@ task Live-Recorder.
 			"" // errorMessage
 		);
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			"manageLiveCutThread failed"
-			", _processorIdentifier: {}"
-			", ingestionJobKey: {}"
-			", e.what(): {}",
-			_processorIdentifier, ingestionJobKey, e.what()
-		);
-
-		SPDLOG_INFO(
-			"Update IngestionJob"
-			", _processorIdentifier: {}"
-			", ingestionJobKey: {}"
-			", IngestionStatus: End_IngestionFailure"
-			", errorMessage: {}",
-			_processorIdentifier, ingestionJobKey, e.what()
-		);
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				"Update IngestionJob failed"
-				", _processorIdentifier: {}"
-				", ingestionJobKey: {}"
-				", errorMessage: {}",
-				_processorIdentifier, ingestionJobKey, re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			SPDLOG_INFO(
-				"Update IngestionJob failed"
-				", _processorIdentifier: {}"
-				", ingestionJobKey: {}"
-				", errorMessage: {}",
-				_processorIdentifier, ingestionJobKey, ex.what()
-			);
-		}
-
-		return;
-		// throw e;
-	}
 	catch (exception &e)
 	{
 		SPDLOG_ERROR(
 			"manageLiveCutThread failed"
 			", _processorIdentifier: {}"
-			", ingestionJobKey: {}",
-			_processorIdentifier, ingestionJobKey
+			", ingestionJobKey: {}"
+			", liveCutParametersRoot: {}"
+			", exception: {}",
+			_processorIdentifier, ingestionJobKey, JSONUtils::toString(liveCutParametersRoot), e.what()
 		);
 
 		SPDLOG_INFO(
@@ -1659,23 +1613,13 @@ task Live-Recorder.
 		{
 			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 		}
-		catch (runtime_error &re)
-		{
-			SPDLOG_INFO(
-				"Update IngestionJob failed"
-				", _processorIdentifier: {}"
-				", ingestionJobKey: {}"
-				", errorMessage: {}",
-				_processorIdentifier, ingestionJobKey, re.what()
-			);
-		}
 		catch (exception &ex)
 		{
 			SPDLOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
-				", errorMessage: {}",
+				", exception: {}",
 				_processorIdentifier, ingestionJobKey, ex.what()
 			);
 		}

@@ -6,6 +6,7 @@
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/spdlog.h"
 #include <ranges>
+#include <spdlog/fmt/bundled/ranges.h>
 
 using namespace std;
 using json = nlohmann::json;
@@ -333,10 +334,9 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 }
 
 json MMSEngineDBFacade::getIngestionRootsStatus(
-	shared_ptr<Workspace> workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
-	// bool startAndEndIngestionDatePresent,
-	string startIngestionDate, string endIngestionDate, string label, string status, bool asc, bool dependencyInfo, bool ingestionJobOutputs,
-	bool hiddenToo, bool fromMaster
+	const shared_ptr<Workspace>& workspace, int64_t ingestionRootKey, int64_t mediaItemKey, int start, int rows,
+	const string& startIngestionDate, const string& endIngestionDate, const string& label, const string& status, bool asc,
+	bool dependencyInfo, bool ingestionJobOutputs, bool hiddenToo, bool fromMaster
 )
 {
 	json statusListRoot;
@@ -344,54 +344,26 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
-		string field;
-
 		{
 			json requestParametersRoot;
 
-			field = "start";
-			requestParametersRoot[field] = start;
-
-			field = "rows";
-			requestParametersRoot[field] = rows;
+			requestParametersRoot["start"] = start;
+			requestParametersRoot["rows"] = rows;
 
 			if (ingestionRootKey != -1)
-			{
-				field = "ingestionRootKey";
-				requestParametersRoot[field] = ingestionRootKey;
-			}
-
+				requestParametersRoot["ingestionRootKey"] = ingestionRootKey;
 			if (mediaItemKey != -1)
-			{
-				field = "mediaItemKey";
-				requestParametersRoot[field] = mediaItemKey;
-			}
+				requestParametersRoot["mediaItemKey"] = mediaItemKey;
+			if (!startIngestionDate.empty())
+				requestParametersRoot["startIngestionDate"] = startIngestionDate;
+			if (!endIngestionDate.empty())
+				requestParametersRoot["endIngestionDate"] = endIngestionDate;
 
-			if (startIngestionDate != "")
-			{
-				field = "startIngestionDate";
-				requestParametersRoot[field] = startIngestionDate;
-			}
-			if (endIngestionDate != "")
-			{
-				field = "endIngestionDate";
-				requestParametersRoot[field] = endIngestionDate;
-			}
-
-			field = "label";
-			requestParametersRoot[field] = label;
-
-			field = "ingestionJobOutputs";
-			requestParametersRoot[field] = ingestionJobOutputs;
-
-			field = "status";
-			requestParametersRoot[field] = status;
-
-			field = "hiddenToo";
-			requestParametersRoot[field] = hiddenToo;
-
-			field = "requestParameters";
-			statusListRoot[field] = requestParametersRoot;
+			requestParametersRoot["label"] = label;
+			requestParametersRoot["ingestionJobOutputs"] = ingestionJobOutputs;
+			requestParametersRoot["status"] = status;
+			requestParametersRoot["hiddenToo"] = hiddenToo;
+			statusListRoot["requestParameters"] = requestParametersRoot;
 		}
 
 		vector<int64_t> ingestionRookKeys;
@@ -425,25 +397,28 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 		}
 
 		string sqlWhere = std::format("where workspaceKey = {} ", workspace->_workspaceKey);
-		if (ingestionRookKeys.size() > 0)
+		if (!ingestionRookKeys.empty())
 		{
+			string ingestionRootKeysWhere = fmt::format("{}", fmt::join(ingestionRookKeys, ", "));
+			/*
 			string ingestionRootKeysWhere = accumulate(
 				begin(ingestionRookKeys), end(ingestionRookKeys), string(), [](const string &s, int64_t localIngestionRootKey)
 				{ return (s == "" ? std::format("{}", localIngestionRootKey) : (s + std::format(", {}", localIngestionRootKey))); }
 			);
+			*/
 
 			if (ingestionRookKeys.size() == 1)
 				sqlWhere += std::format("and ingestionRootKey = {} ", ingestionRootKeysWhere);
 			else
 				sqlWhere += std::format("and ingestionRootKey in ({}) ", ingestionRootKeysWhere);
 		}
-		if (startIngestionDate != "")
+		if (!startIngestionDate.empty())
 			sqlWhere +=
-				std::format("and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate));
-		if (endIngestionDate != "")
+				std::format(R"(and ingestionDate >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(startIngestionDate));
+		if (!endIngestionDate.empty())
 			sqlWhere +=
-				std::format("and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate));
-		if (label != "")
+				std::format(R"(and ingestionDate <= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(endIngestionDate));
+		if (!label.empty())
 			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
 		if (!hiddenToo)
 			sqlWhere += std::format("and hidden = {} ", false);
@@ -458,8 +433,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 		{
 			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -489,13 +463,11 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			{
 				json workflowRoot;
 
-				int64_t currentIngestionRootKey = row["ingestionRootKey"].as<int64_t>();
-				field = "ingestionRootKey";
-				workflowRoot[field] = currentIngestionRootKey;
+				auto currentIngestionRootKey = row["ingestionRootKey"].as<int64_t>();
+				workflowRoot["ingestionRootKey"] = currentIngestionRootKey;
 
-				int64_t userKey = row["userKey"].as<int64_t>();
-				field = "userKey";
-				workflowRoot[field] = userKey;
+				auto userKey = row["userKey"].as<int64_t>();
+				workflowRoot["userKey"] = userKey;
 
 				{
 					chrono::milliseconds sqlDuration(0);
@@ -506,21 +478,13 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 
 					tie(ignore, userName) = userDetails;
 
-					field = "userName";
-					workflowRoot[field] = userName;
+					workflowRoot["userName"] = userName;
 				}
 
-				field = "label";
-				workflowRoot[field] = row["label"].as<string>();
-
-				field = "status";
-				workflowRoot[field] = row["status"].as<string>();
-
-				field = "ingestionDate";
-				workflowRoot[field] = row["formattedIngestionDate"].as<string>();
-
-				field = "lastUpdate";
-				workflowRoot[field] = row["lastUpdate"].as<string>();
+				workflowRoot["label"] = row["label"].as<string>();
+				workflowRoot["status"] = row["status"].as<string>();
+				workflowRoot["ingestionDate"] = row["formattedIngestionDate"].as<string>();
+				workflowRoot["lastUpdate"] = row["lastUpdate"].as<string>();
 
 				json ingestionJobsRoot = json::array();
 				{
@@ -539,25 +503,25 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 					);
 					// "order by newStartProcessing asc, newEndProcessing asc";
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.transaction->exec(sqlStatement);
-					shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+					auto sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+					// shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 					for (auto& sqlRow : *sqlResultSet)
 					{
 						json ingestionJobRoot = getIngestionJobRoot(workspace, sqlRow, dependencyInfo, ingestionJobOutputs, trans);
 
 						ingestionJobsRoot.push_back(ingestionJobRoot);
 					}
-					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+					auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 					internalSqlDuration += sqlDuration;
-					_logger->info(
-						__FILEREF__ + "@SQL statistics@" + ", sqlStatement: " + sqlStatement +
-						", currentIngestionRootKey: " + to_string(currentIngestionRootKey) + ", res.size: " + to_string(res.size()) +
-						", elapsed (millisecs): @" + to_string(sqlDuration.count()) + "@"
+					SPDLOG_INFO("@SQL statistics@"
+						", sqlStatement: {}"
+						", currentIngestionRootKey: {}"
+						", res.size: {}"
+						", elapsed (millisecs): @{}@", sqlStatement, currentIngestionRootKey, res.size(), sqlDuration.count()
 					);
 				}
 
-				field = "ingestionJobs";
-				workflowRoot[field] = ingestionJobsRoot;
+				workflowRoot["ingestionJobs"] = ingestionJobsRoot;
 
 				workflowsRoot.push_back(workflowRoot);
 			}
@@ -572,15 +536,13 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 			);
 		}
 
-		field = "workflows";
-		responseRoot[field] = workflowsRoot;
+		responseRoot["workflows"] = workflowsRoot;
 
-		field = "response";
-		statusListRoot[field] = responseRoot;
+		statusListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"

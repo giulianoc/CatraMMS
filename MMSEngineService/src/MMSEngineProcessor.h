@@ -251,8 +251,8 @@ class MMSEngineProcessor
 		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot
 	);
 	void manageLiveCutThread_hlsSegmenter(
-		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::string ingestionJobLabel, std::shared_ptr<Workspace> workspace,
-		nlohmann::json parametersRoot
+		const std::shared_ptr<long>& processorsThreadsNumber, int64_t ingestionJobKey, std::string ingestionJobLabel,
+		const std::shared_ptr<Workspace>& workspace, const nlohmann::json& liveCutParametersRoot
 	);
 
 	void youTubeLiveBroadcastThread(
