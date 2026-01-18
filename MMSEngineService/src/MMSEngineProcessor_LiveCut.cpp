@@ -896,16 +896,22 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			recordingCode = JSONUtils::asInt64(liveCutParametersRoot, "recordingCode", -1);
+			recordingCode = JsonPath(&liveCutParametersRoot)["recordingCode"].as<int64_t>(-1);
+			SPDLOG_INFO("recordingCode: {}", recordingCode);
 
-			chunkEncodingProfileKey = JSONUtils::asInt64(liveCutParametersRoot, "chunkEncodingProfileKey", -1);
-			chunkEncodingProfileLabel = JSONUtils::asString(liveCutParametersRoot, "chunkEncodingProfileLabel", "");
+			chunkEncodingProfileKey = JsonPath(&liveCutParametersRoot)["chunkEncodingProfileKey"].as<int64_t>(-1);
+			SPDLOG_INFO("chunkEncodingProfileKey: {}", chunkEncodingProfileKey);
+			chunkEncodingProfileLabel = JsonPath(&liveCutParametersRoot)["chunkEncodingProfileLabel"].as<string>();
+			SPDLOG_INFO("chunkEncodingProfileLabel: {}", chunkEncodingProfileLabel);
 
 			maxWaitingForLastChunkInSeconds = JsonPath(&liveCutParametersRoot)["maxWaitingForLastChunkInSeconds"].as<int16_t>(90);
+			SPDLOG_INFO("maxWaitingForLastChunkInSeconds: {}", maxWaitingForLastChunkInSeconds);
 
-			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, "errorIfAChunkIsMissing", false);
+			errorIfAChunkIsMissing = JsonPath(&liveCutParametersRoot)["errorIfAChunkIsMissing"].as<bool>(false);
+			SPDLOG_INFO("errorIfAChunkIsMissing: {}", errorIfAChunkIsMissing);
 
-			json cutPeriodRoot = liveCutParametersRoot["cutPeriod"];
+			auto cutPeriodRoot = JsonPath(&liveCutParametersRoot)["cutPeriod"].as<json>(json::object());
+			SPDLOG_INFO("cutPeriodRoot: {}", JSONUtils::toString(cutPeriodRoot));
 
 			if (!JSONUtils::isPresent(cutPeriodRoot, "start"))
 			{
@@ -920,7 +926,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, "start", "");
+			cutPeriodStartTimeInMilliSeconds = JsonPath(&cutPeriodRoot)["start"].as<string>();
+			SPDLOG_INFO("cutPeriodStartTimeInMilliSeconds: {}", cutPeriodStartTimeInMilliSeconds);
 
 			if (!JSONUtils::isPresent(cutPeriodRoot, "end"))
 			{
@@ -935,15 +942,18 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			cutPeriodEndTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, "end", "");
+			cutPeriodEndTimeInMilliSeconds = JsonPath(&cutPeriodRoot)["end"].as<string>();
+			SPDLOG_INFO("cutPeriodEndTimeInMilliSeconds: {}", cutPeriodEndTimeInMilliSeconds);
 		}
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
 		int64_t utcCutPeriodStartTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
+		SPDLOG_INFO("utcCutPeriodStartTimeInMilliSeconds: {}", utcCutPeriodStartTimeInMilliSeconds);
 
 		// next code is the same in the Validator class
 		int64_t utcCutPeriodEndTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
+		SPDLOG_INFO("utcCutPeriodEndTimeInMilliSeconds: {}", utcCutPeriodEndTimeInMilliSeconds);
 
 		/*
 		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In
