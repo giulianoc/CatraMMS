@@ -621,26 +621,14 @@ void API::manageReferencesInput(
 {
 	string field;
 
-	// just for logging
-	{
-		string sDependOnIngestionJobKeysOverallInput;
-		for (int referenceIndex = 0; referenceIndex < dependOnIngestionJobKeysOverallInput.size(); ++referenceIndex)
-		{
-			if (referenceIndex == 0)
-				sDependOnIngestionJobKeysOverallInput = to_string(dependOnIngestionJobKeysOverallInput.at(referenceIndex));
-			else
-				sDependOnIngestionJobKeysOverallInput += (string(", ") + to_string(dependOnIngestionJobKeysOverallInput.at(referenceIndex)));
-		}
-
-		SPDLOG_INFO(
-			"manageReferencesInput"
-			", taskOrGroupOfTasksLabel: {}"
-			", IngestionType: {}"
-			", parametersSectionPresent: {}"
-			", sDependOnIngestionJobKeysOverallInput: {}",
-			taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, sDependOnIngestionJobKeysOverallInput
-		);
-	}
+	SPDLOG_INFO(
+		"manageReferencesInput (1)"
+		", taskOrGroupOfTasksLabel: {}"
+		", IngestionType: {}"
+		", parametersSectionPresent: {}"
+		", sDependOnIngestionJobKeysOverallInput: {}",
+		taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
+	);
 
 	// initialize referencesRoot
 	bool referencesSectionPresent = false;
@@ -656,14 +644,25 @@ void API::manageReferencesInput(
 		}
 	}
 
-	// Generally if the References tag is present, these will be used as
-	// references for the Task In case the References tag is NOT present,
-	// inherited references are used Sometimes, we want to use both, the
-	// references coming from the tag and the inherid references. For example a
-	// video is ingested and we want to overlay a logo that is already present
-	// into MMS. In this case we add the Reference for the Image and we inherit
-	// the video from the Add-Content Task. In these case we use the
-	// "dependenciesToBeAddedToReferencesAt" parameter.
+	SPDLOG_INFO(
+		"manageReferencesInput (2) referencesSectionPresent"
+		", taskOrGroupOfTasksLabel: {}"
+		", IngestionType: {}"
+		", parametersSectionPresent: {}"
+		", sDependOnIngestionJobKeysOverallInput: {}"
+		", referencesSectionPresent: {}"
+		", referencesRoot: {}",
+		taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent,
+		fmt::join(dependOnIngestionJobKeysOverallInput, ", "),
+		referencesSectionPresent, JSONUtils::toString(referencesRoot)
+	);
+
+	// Generally if the References tag is present, these will be used as references for the Task.
+	// In case the References tag is NOT present, inherited references are used.
+	// Sometimes, we want to use both, the references coming from the tag and the inherit references.
+	// For example a video is ingested and we want to overlay a logo that is already present into MMS.
+	// In this case we add the Reference for the Image and we inherit the video from the Add-Content Task.
+	// In these case we use the "dependenciesToBeAddedToReferencesAt" parameter.
 
 	// 2021-04-25: "dependenciesToBeAddedToReferencesAt" could be:
 	//	- AtTheBeginning
@@ -710,12 +709,9 @@ void API::manageReferencesInput(
 		}
 	}
 
-	// manage ReferenceLabel, inside the References Tag, If ReferenceLabel is
-	// present, replace it with ReferenceIngestionJobKey
+	// manage ReferenceLabel, inside the References Tag, If ReferenceLabel is present, replace it with ReferenceIngestionJobKey
 	if (referencesSectionPresent)
 	{
-		// bool referencesChanged = false;
-
 		for (int referenceIndex = 0; referenceIndex < referencesRoot.size(); ++referenceIndex)
 		{
 			json referenceRoot = referencesRoot[referenceIndex];
@@ -752,7 +748,7 @@ void API::manageReferencesInput(
 
 					throw runtime_error(errorMessage);
 				}
-				else if (ingestionJobKeys.size() > 1)
+				if (ingestionJobKeys.size() > 1)
 				{
 					string errorMessage = std::format(
 						"The 'label' value cannot be used in more than one Task"
@@ -782,8 +778,8 @@ void API::manageReferencesInput(
 				// For this reason we have to make sure this Reference is inside
 				// dependOnIngestionJobKeysForStarting in order to avoid the
 				// Task starts when the input is not yet ready
-				vector<int64_t>::iterator itrIngestionJobKey =
-					find(dependOnIngestionJobKeysForStarting.begin(), dependOnIngestionJobKeysForStarting.end(), ingestionJobKeys.back());
+				auto itrIngestionJobKey = ranges::find(
+					dependOnIngestionJobKeysForStarting, ingestionJobKeys.back());
 				if (itrIngestionJobKey == dependOnIngestionJobKeysForStarting.end())
 					dependOnIngestionJobKeysForStarting.push_back(ingestionJobKeys.back());
 			}
@@ -807,23 +803,35 @@ void API::manageReferencesInput(
 		localDependOnIngestionJobKeyExecution, taskMetadata);
 		}
 		*/
+		SPDLOG_INFO(
+			"manageReferencesInput (3) new references because referencesSectionPresent (parametersRoot)"
+			", taskOrGroupOfTasksLabel: {}"
+			", IngestionType: {}"
+			", parametersSectionPresent: {}"
+			", sDependOnIngestionJobKeysOverallInput: {}"
+			", referencesSectionPresent: {}"
+			", parametersRoot: {}",
+			taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent,
+			fmt::join(dependOnIngestionJobKeysOverallInput, ", "),
+			referencesSectionPresent, JSONUtils::toString(parametersRoot)
+		);
 	}
 
 	SPDLOG_INFO(
-		"add to referencesRoot all the inherited references?"
+		"manageReferencesInput (4) add to referencesRoot all the inherited references?"
 		", ingestionRootKey: {}"
 		", taskOrGroupOfTasksLabel: {}"
 		", IngestionType: {}"
 		", parametersSectionPresent: {}"
 		", referencesSectionPresent: {}"
 		", dependenciesToBeAddedToReferencesAtIndex: {}"
-		", dependOnIngestionJobKeysOverallInput.size(): {}",
+		", dependOnIngestionJobKeysOverallInput: {}",
 		ingestionRootKey, taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, referencesSectionPresent,
-		dependenciesToBeAddedToReferencesAtIndex, dependOnIngestionJobKeysOverallInput.size()
+		dependenciesToBeAddedToReferencesAtIndex, fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
 	);
 
 	// add to referencesRoot all the inherited references
-	if ((!referencesSectionPresent || dependenciesToBeAddedToReferencesAtIndex != -1) && dependOnIngestionJobKeysOverallInput.size() > 0)
+	if ((!referencesSectionPresent || dependenciesToBeAddedToReferencesAtIndex != -1) && !dependOnIngestionJobKeysOverallInput.empty())
 	{
 		// Enter here if No References tag is present (so we have to add the
 		// inherit input) OR we want to add dependOnReferences to the Raferences
@@ -918,37 +926,36 @@ void API::manageReferencesInput(
 		string arrayField = "references";
 		parametersRoot[arrayField] = referencesRoot;
 		if (!parametersSectionPresent)
-		{
 			taskRoot[field] = parametersRoot;
-		}
-
-		//{
-		//    taskMetadata = JSONUtils::toString(parametersRoot);
-		//}
-
-		// commented because already logged in mmsEngineDBFacade
-		// _logger->info(__FILEREF__ + "update IngestionJob"
-		//     + ", localDependOnIngestionJobKey: " +
-		//     to_string(localDependOnIngestionJobKey)
-		//    + ", taskMetadata: " + taskMetadata
-		// );
-
-		//_mmsEngineDBFacade->updateIngestionJobMetadataContent(conn,
-		// localDependOnIngestionJobKeyExecution, taskMetadata);
-	}
-	if (taskOrGroupOfTasksLabel == "Check Streaming OnError")
-	{
-		string taskMetadata = JSONUtils::toString(parametersRoot);
 
 		SPDLOG_INFO(
-			"testttttttt"
-			", taskMetadata: {}"
+			"manageReferencesInput (4) add to referencesRoot all the inherited references"
+			", ingestionRootKey: {}"
+			", taskOrGroupOfTasksLabel: {}"
+			", IngestionType: {}"
+			", parametersSectionPresent: {}"
 			", referencesSectionPresent: {}"
 			", dependenciesToBeAddedToReferencesAtIndex: {}"
-			", dependOnIngestionJobKeysOverallInput.size: {}",
-			taskMetadata, referencesSectionPresent, dependenciesToBeAddedToReferencesAtIndex, dependOnIngestionJobKeysOverallInput.size()
+			", dependOnIngestionJobKeysOverallInput: {}"
+			", parametersRoot: {}",
+			ingestionRootKey, taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, referencesSectionPresent,
+			dependenciesToBeAddedToReferencesAtIndex, fmt::join(dependOnIngestionJobKeysOverallInput, ", "),
+			JSONUtils::toString(parametersRoot)
 		);
 	}
+	else
+		SPDLOG_INFO(
+			"manageReferencesInput (4) NO inherited references"
+			", ingestionRootKey: {}"
+			", taskOrGroupOfTasksLabel: {}"
+			", IngestionType: {}"
+			", parametersSectionPresent: {}"
+			", referencesSectionPresent: {}"
+			", dependenciesToBeAddedToReferencesAtIndex: {}"
+			", dependOnIngestionJobKeysOverallInput: {}",
+			ingestionRootKey, taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, referencesSectionPresent,
+			dependenciesToBeAddedToReferencesAtIndex, fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
+		);
 }
 
 // return: ingestionJobKey associated to this task
@@ -1764,14 +1771,6 @@ json internalMMSRoot;
 		waitForGlobalIngestionJobKeys.size()
 	);
 
-	SPDLOG_INFO("AAAAAAA"
-		", taskLabel: {}"
-		", type: {}"
-		", taskMetadata: {}"
-		", dependOnIngestionJobKeysForStarting: {}",
-		taskLabel, type, taskMetadata,
-		fmt::format("{}", fmt::join(dependOnIngestionJobKeysForStarting, ", "))
-	);
 #ifdef __POSTGRES__
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(
 		trans, workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type),
