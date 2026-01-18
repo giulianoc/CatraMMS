@@ -1890,7 +1890,6 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 		addContentParametersRoot["title"] = addContentTitle;
 		addContentParametersRoot["userData"] = userDataRoot;
 		addContentParametersRoot["uniqueName"] = uniqueName;
-		addContentParametersRoot["retention"] = "1d";
 		addContentRoot["parameters"] = addContentParametersRoot;
 
 		json workflowRoot;
@@ -1907,7 +1906,6 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			}
 
 			// char currentUtcChunkStartTime_HHMISS[64];
-			/*
 			string currentUtcChunkStartTime_HHMISS;
 			{
 				tm tmDateTime;
@@ -1918,12 +1916,15 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				// sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				currentUtcChunkStartTime_HHMISS = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 			}
-			*/
 			{
 				json variableWorkflowRoot;
 				variableWorkflowRoot["type"] = "string";
 				variableWorkflowRoot["value"] = Datetime::dateTimeFormat(utcChunkStartTime * 1000, "%H:%M:%S");
 				variablesWorkflowRoot["currentUtcChunkStartTime_HHMISS"] = variableWorkflowRoot;
+				SPDLOG_INFO("AAAAAAAA"
+					", currentUtcChunkStartTime_HHMISS: {}"
+					", variableWorkflowRoot.value", currentUtcChunkStartTime_HHMISS, JsonPath(&variableWorkflowRoot)["value"].as<string>()
+					);
 			}
 
 			{
