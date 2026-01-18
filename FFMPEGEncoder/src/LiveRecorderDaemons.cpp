@@ -1870,9 +1870,12 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				json eventsRoot = JsonPath(&internalMMSRoot)["events"].as<json>(nullptr);
 				if (eventsRoot != nullptr)
 				{
-					addContentRoot["onSuccess"] = JsonPath(&eventsRoot)["onSuccess"].as<json>(nullptr);
-					addContentRoot["onError"] = JsonPath(&eventsRoot)["onError"].as<json>(nullptr);
-					addContentRoot["onComplete"] = JsonPath(&eventsRoot)["onComplete"].as<json>(nullptr);
+					if (json onEventRoot = JsonPath(&eventsRoot)["onSuccess"].as<json>(nullptr); onEventRoot != nullptr)
+						addContentRoot["onSuccess"] = onEventRoot;
+					if (json onEventRoot = JsonPath(&eventsRoot)["onError"].as<json>(nullptr); onEventRoot != nullptr)
+						addContentRoot["onError"] = onEventRoot;
+					if (json onEventRoot = JsonPath(&eventsRoot)["onComplete"].as<json>(nullptr); onEventRoot != nullptr)
+						addContentRoot["onComplete"] = onEventRoot;
 				}
 			}
 		}
