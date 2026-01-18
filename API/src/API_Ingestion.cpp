@@ -28,6 +28,7 @@
 #include <format>
 #include <fstream>
 #include <regex>
+#include <spdlog/fmt/bundled/ranges.h>
 #include <sstream>
 
 using namespace std;
@@ -1296,7 +1297,12 @@ vector<int64_t> API::ingestionSingleTask(
 		// In case we will have more than one References, we will create a group of tasks and add there the Face-Recognition task
 
 		SPDLOG_INFO("AAAAAAA Face-Recognition"
-			", parametersRoot: {}", JSONUtils::toString(parametersRoot)
+			", parametersRoot: {}"
+			", dependOnIngestionJobKeysForStarting: {}"
+			", dependOnIngestionJobKeysOverallInput: {}",
+			JSONUtils::toString(parametersRoot),
+			fmt::format("{}", fmt::join(dependOnIngestionJobKeysForStarting, ", ")),
+			fmt::format("{}", fmt::join(dependOnIngestionJobKeysOverallInput, ", "))
 		);
 		string referencesField = "references";
 
@@ -1317,11 +1323,8 @@ vector<int64_t> API::ingestionSingleTask(
 				json newTaskRoot;
 				string localLabel = taskLabel + " - referenceIndex: " + to_string(referenceIndex);
 
-				field = "label";
-				newTaskRoot[field] = localLabel;
-
-				field = "type";
-				newTaskRoot[field] = "Face-Recognition";
+				newTaskRoot["label"] = localLabel;
+				newTaskRoot["type"] = "Face-Recognition";
 
 				json newParametersRoot = parametersRoot;
 
@@ -1329,48 +1332,37 @@ vector<int64_t> API::ingestionSingleTask(
 					json newReferencesRoot = json::array();
 					newReferencesRoot.push_back(multiReferencesRoot[referenceIndex]);
 
-					field = "references";
-					newParametersRoot[field] = newReferencesRoot;
+					newParametersRoot["references"] = newReferencesRoot;
 				}
 
-				field = "parameters";
-				newTaskRoot[field] = newParametersRoot;
+				newTaskRoot["parameters"] = newParametersRoot;
 
-				field = "onSuccess";
-				if (JSONUtils::isPresent(taskRoot, field, true))
-					newTaskRoot[field] = taskRoot[field];
+				if (JSONUtils::isPresent(taskRoot, "onSuccess", true))
+					newTaskRoot["onSuccess"] = taskRoot["onSuccess"];
 
-				field = "onError";
-				if (JSONUtils::isPresent(taskRoot, field, true))
-					newTaskRoot[field] = taskRoot[field];
+				if (JSONUtils::isPresent(taskRoot, "onError", true))
+					newTaskRoot["onError"] = taskRoot["onError"];
 
-				field = "onComplete";
-				if (JSONUtils::isPresent(taskRoot, field, true))
-					newTaskRoot[field] = taskRoot[field];
+				if (JSONUtils::isPresent(taskRoot, "onComplete", true))
+					newTaskRoot["onComplete"] = taskRoot["onComplete"];
 
 				newTasksRoot.push_back(newTaskRoot);
 			}
 
 			json newParametersTasksGroupRoot;
 
-			field = "executionType";
-			newParametersTasksGroupRoot[field] = "parallel";
-
-			field = "tasks";
-			newParametersTasksGroupRoot[field] = newTasksRoot;
+			newParametersTasksGroupRoot["executionType"] = "parallel";
+			newParametersTasksGroupRoot["tasks"] = newTasksRoot;
 
 			json newTasksGroupRoot;
 
-			field = "type";
-			newTasksGroupRoot[field] = "GroupOfTasks";
-
-			field = "parameters";
-			newTasksGroupRoot[field] = newParametersTasksGroupRoot;
+			newTasksGroupRoot["type"] = "GroupOfTasks";
+			newTasksGroupRoot["parameters"] = newParametersTasksGroupRoot;
 
 #ifdef __POSTGRES__
 			return ingestionGroupOfTasks(
-				trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting, dependOnSuccess,
-				dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
+				trans, userKey, apiKey, workspace, ingestionRootKey, newTasksGroupRoot, dependOnIngestionJobKeysForStarting,
+				dependOnSuccess, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey,
 				/* responseBody, */ responseBodyTasksRoot
 			);
 #else
