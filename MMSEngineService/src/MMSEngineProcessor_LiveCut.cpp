@@ -897,21 +897,15 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				throw runtime_error(errorMessage);
 			}
 			recordingCode = JsonPath(&liveCutParametersRoot)["recordingCode"].as<int64_t>(-1);
-			SPDLOG_INFO("recordingCode: {}", recordingCode);
 
 			chunkEncodingProfileKey = JsonPath(&liveCutParametersRoot)["chunkEncodingProfileKey"].as<int64_t>(-1);
-			SPDLOG_INFO("chunkEncodingProfileKey: {}", chunkEncodingProfileKey);
 			chunkEncodingProfileLabel = JsonPath(&liveCutParametersRoot)["chunkEncodingProfileLabel"].as<string>();
-			SPDLOG_INFO("chunkEncodingProfileLabel: {}", chunkEncodingProfileLabel);
 
 			maxWaitingForLastChunkInSeconds = JsonPath(&liveCutParametersRoot)["maxWaitingForLastChunkInSeconds"].as<int16_t>(90);
-			SPDLOG_INFO("maxWaitingForLastChunkInSeconds: {}", maxWaitingForLastChunkInSeconds);
 
 			errorIfAChunkIsMissing = JsonPath(&liveCutParametersRoot)["errorIfAChunkIsMissing"].as<bool>(false);
-			SPDLOG_INFO("errorIfAChunkIsMissing: {}", errorIfAChunkIsMissing);
 
 			auto cutPeriodRoot = JsonPath(&liveCutParametersRoot)["cutPeriod"].as<json>(json::object());
-			SPDLOG_INFO("cutPeriodRoot: {}", JSONUtils::toString(cutPeriodRoot));
 
 			if (!JSONUtils::isPresent(cutPeriodRoot, "start"))
 			{
@@ -927,7 +921,6 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				throw runtime_error(errorMessage);
 			}
 			cutPeriodStartTimeInMilliSeconds = JsonPath(&cutPeriodRoot)["start"].as<string>();
-			SPDLOG_INFO("cutPeriodStartTimeInMilliSeconds: {}", cutPeriodStartTimeInMilliSeconds);
 
 			if (!JSONUtils::isPresent(cutPeriodRoot, "end"))
 			{
@@ -943,17 +936,14 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				throw runtime_error(errorMessage);
 			}
 			cutPeriodEndTimeInMilliSeconds = JsonPath(&cutPeriodRoot)["end"].as<string>();
-			SPDLOG_INFO("cutPeriodEndTimeInMilliSeconds: {}", cutPeriodEndTimeInMilliSeconds);
 		}
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
 		int64_t utcCutPeriodStartTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodStartTimeInMilliSeconds);
-		SPDLOG_INFO("utcCutPeriodStartTimeInMilliSeconds: {}", utcCutPeriodStartTimeInMilliSeconds);
 
 		// next code is the same in the Validator class
 		int64_t utcCutPeriodEndTimeInMilliSeconds = Datetime::sDateMilliSecondsToUtc(cutPeriodEndTimeInMilliSeconds);
-		SPDLOG_INFO("utcCutPeriodEndTimeInMilliSeconds: {}", utcCutPeriodEndTimeInMilliSeconds);
 
 		/*
 		 * 2020-03-30: scenario: period end time is 300 seconds (5 minutes). In
@@ -1025,7 +1015,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				{
 					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemRoot, "mediaItemKey", 0);
 
-					json userDataRoot;
+					json userDataRoot = JsonPath(&mediaItemRoot)["userData"].as<json>(json::object());
+					/*
 					{
 						string userData = JSONUtils::asString(mediaItemRoot, "userData", "");
 						if (userData.empty())
@@ -1044,16 +1035,17 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 						userDataRoot = JSONUtils::toJson<json>(userData);
 					}
+					*/
 
-					json mmsDataRoot = userDataRoot["mmsData"];
-					int64_t currentUtcChunkStartTimeInMilliSecs = JSONUtils::asInt64(mmsDataRoot, "utcStartTimeInMilliSecs", 0);
-					int64_t currentUtcChunkEndTimeInMilliSecs = JSONUtils::asInt64(mmsDataRoot, "utcEndTimeInMilliSecs", 0);
+					json mmsDataRoot = JsonPath(&userDataRoot)["mmsData"].as<json>(json::object());
+					auto currentUtcChunkStartTimeInMilliSecs = JsonPath(&mmsDataRoot)["utcStartTimeInMilliSecs"].as<int64_t>(0);
+					auto currentUtcChunkEndTimeInMilliSecs = JsonPath(&mmsDataRoot)["utcEndTimeInMilliSecs"].as<int64_t>(0);
 
 					string currentChunkStartTime;
 					string currentChunkEndTime;
 					{
 						// char strDateTime[64];
-						tm tmDateTime;
+						tm tmDateTime{};
 
 						time_t currentUtcChunkStartTime = currentUtcChunkStartTimeInMilliSecs / 1000;
 						localtime_r(&currentUtcChunkStartTime, &tmDateTime);
@@ -1177,13 +1169,10 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 								throw runtime_error(errorMessage);
 							}
-							else
-								SPDLOG_WARN(errorMessage);
+							SPDLOG_WARN(errorMessage);
 						}
 						else
-						{
 							firstRequestedChunk = true;
-						}
 
 						utcFirstChunkStartTimeInMilliSecs = currentUtcChunkStartTimeInMilliSecs;
 						firstChunkStartTime = currentChunkStartTime;
