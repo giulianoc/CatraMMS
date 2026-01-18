@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include
-#include
 #include "ActiveEncodingsManager.h"
 #include "GetCpuUsage.h"
 #include "LocalAssetIngestionEvent.h"
