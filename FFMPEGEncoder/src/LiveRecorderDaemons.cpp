@@ -1923,7 +1923,10 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				variablesWorkflowRoot["currentUtcChunkStartTime_HHMISS"] = variableWorkflowRoot;
 				SPDLOG_INFO("AAAAAAAA"
 					", currentUtcChunkStartTime_HHMISS: {}"
-					", variableWorkflowRoot.value", currentUtcChunkStartTime_HHMISS, JsonPath(&variableWorkflowRoot)["value"].as<string>()
+					", variableWorkflowRoot: "
+					", utcChunkStartTime: {}"
+					", datetime: {}", currentUtcChunkStartTime_HHMISS, JSONUtils::toString(variableWorkflowRoot), utcChunkStartTime,
+					Datetime::dateTimeFormat(utcChunkStartTime * 1000, "%H:%M:%S")
 					);
 			}
 
