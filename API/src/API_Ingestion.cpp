@@ -1296,14 +1296,6 @@ vector<int64_t> API::ingestionSingleTask(
 	{
 		// In case we will have more than one References, we will create a group of tasks and add there the Face-Recognition task
 
-		SPDLOG_INFO("AAAAAAA Face-Recognition"
-			", parametersRoot: {}"
-			", dependOnIngestionJobKeysForStarting: {}"
-			", dependOnIngestionJobKeysOverallInput: {}",
-			JSONUtils::toString(parametersRoot),
-			fmt::format("{}", fmt::join(dependOnIngestionJobKeysForStarting, ", ")),
-			fmt::format("{}", fmt::join(dependOnIngestionJobKeysOverallInput, ", "))
-		);
 		string referencesField = "references";
 
 		if (parametersSectionPresent
@@ -1681,22 +1673,9 @@ json internalMMSRoot;
 #endif
 	}
 
-	// just log initial parameters
-	/*
-{
-			SPDLOG_INFO(__FILEREF__ + "IngestionJob to be added"
-					+ ", ingestionRootKey: " + to_string(ingestionRootKey)
-					+ ", type: " + type
-					+ ", taskLabel: " + taskLabel
-					+ ", taskMetadata before: " +
-JSONUtils::toString(parametersRoot)
-			);
-}
-	*/
-
 	manageReferencesInput(
-		ingestionRootKey, taskLabel, type, taskRoot, parametersSectionPresent, parametersRoot, dependOnIngestionJobKeysForStarting,
-		dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey
+		ingestionRootKey, taskLabel, type, taskRoot, parametersSectionPresent, parametersRoot,
+		dependOnIngestionJobKeysForStarting, dependOnIngestionJobKeysOverallInput, mapLabelAndIngestionJobKey
 	);
 
 	string taskMetadata;
@@ -1713,10 +1692,8 @@ JSONUtils::toString(parametersRoot)
 		{
 			json waitForRoot = parametersRoot[field];
 
-			for (int waitForIndex = 0; waitForIndex < waitForRoot.size(); ++waitForIndex)
+			for (const auto& waitForLabelRoot : waitForRoot)
 			{
-				json waitForLabelRoot = waitForRoot[waitForIndex];
-
 				field = "globalIngestionLabel";
 				if (JSONUtils::isPresent(waitForLabelRoot, field))
 				{
@@ -1787,10 +1764,19 @@ JSONUtils::toString(parametersRoot)
 		waitForGlobalIngestionJobKeys.size()
 	);
 
+	SPDLOG_INFO("AAAAAAA"
+		", taskLabel: {}"
+		", type: {}"
+		", taskMetadata: {}"
+		", dependOnIngestionJobKeysForStarting: {}",
+		taskLabel, type, taskMetadata,
+		fmt::format("{}", fmt::join(dependOnIngestionJobKeysForStarting, ", "))
+	);
 #ifdef __POSTGRES__
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(
-		trans, workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type), processingStartingFrom,
-		dependOnIngestionJobKeysForStarting, dependOnSuccess, waitForGlobalIngestionJobKeys
+		trans, workspace->_workspaceKey, ingestionRootKey, taskLabel, taskMetadata, MMSEngineDBFacade::toIngestionType(type),
+		processingStartingFrom, dependOnIngestionJobKeysForStarting, dependOnSuccess,
+		waitForGlobalIngestionJobKeys
 	);
 #else
 	int64_t localDependOnIngestionJobKeyExecution = _mmsEngineDBFacade->addIngestionJob(
@@ -1812,16 +1798,6 @@ JSONUtils::toString(parametersRoot)
 		(mapLabelAndIngestionJobKey[taskLabel]).push_back(localDependOnIngestionJobKeyExecution);
 
 	{
-		/*
-		if (responseBody != "")
-				responseBody += ", ";
-		responseBody +=
-				(string("{ ")
-						+ "\"ingestionJobKey\": " +
-		to_string(localDependOnIngestionJobKeyExecution) + ", "
-						+ "\"label\": \"" + taskLabel + "\" "
-						+ "}");
-		*/
 		json localresponseBodyTaskRoot;
 		localresponseBodyTaskRoot["ingestionJobKey"] = localDependOnIngestionJobKeyExecution;
 		localresponseBodyTaskRoot["label"] = taskLabel;
