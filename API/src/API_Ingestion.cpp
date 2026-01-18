@@ -626,8 +626,10 @@ void API::manageReferencesInput(
 		", taskOrGroupOfTasksLabel: {}"
 		", IngestionType: {}"
 		", parametersSectionPresent: {}"
-		", sDependOnIngestionJobKeysOverallInput: {}",
-		taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
+		", taskRoot: {}"
+		", dependOnIngestionJobKeysOverallInput: {}",
+		taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, JSONUtils::toString(taskRoot),
+		fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
 	);
 
 	// initialize referencesRoot
@@ -636,7 +638,7 @@ void API::manageReferencesInput(
 	if (parametersSectionPresent)
 	{
 		field = "references";
-		if (JSONUtils::isPresent(parametersRoot, field))
+		if (JSONUtils::isPresent(parametersRoot, field, true))
 		{
 			referencesRoot = parametersRoot[field];
 
@@ -816,20 +818,7 @@ void API::manageReferencesInput(
 			referencesSectionPresent, JSONUtils::toString(parametersRoot)
 		);
 	}
-
-	SPDLOG_INFO(
-		"manageReferencesInput (4) add to referencesRoot all the inherited references?"
-		", ingestionRootKey: {}"
-		", taskOrGroupOfTasksLabel: {}"
-		", IngestionType: {}"
-		", parametersSectionPresent: {}"
-		", referencesSectionPresent: {}"
-		", dependenciesToBeAddedToReferencesAtIndex: {}"
-		", dependOnIngestionJobKeysOverallInput: {}",
-		ingestionRootKey, taskOrGroupOfTasksLabel, ingestionType, parametersSectionPresent, referencesSectionPresent,
-		dependenciesToBeAddedToReferencesAtIndex, fmt::join(dependOnIngestionJobKeysOverallInput, ", ")
-	);
-
+	
 	// add to referencesRoot all the inherited references
 	if ((!referencesSectionPresent || dependenciesToBeAddedToReferencesAtIndex != -1) && !dependOnIngestionJobKeysOverallInput.empty())
 	{
@@ -1011,7 +1000,7 @@ vector<int64_t> API::ingestionSingleTask(
 	field = "parameters";
 	json parametersRoot;
 	bool parametersSectionPresent = false;
-	if (JSONUtils::isPresent(taskRoot, field))
+	if (JSONUtils::isPresent(taskRoot, field, true))
 	{
 		parametersRoot = taskRoot[field];
 
