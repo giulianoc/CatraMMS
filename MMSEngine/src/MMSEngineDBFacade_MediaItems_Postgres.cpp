@@ -4,7 +4,6 @@
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/spdlog.h"
-#include <cstdint>
 
 using namespace std;
 using json = nlohmann::json;
@@ -321,7 +320,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -516,7 +515,7 @@ json MMSEngineDBFacade::updateMediaItem(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -577,17 +576,6 @@ json MMSEngineDBFacade::updatePhysicalPath(
 )
 {
 	json mediaItemRoot;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -627,7 +615,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			SPDLOG_ERROR(
 				"query failed"
@@ -697,18 +685,6 @@ json MMSEngineDBFacade::getMediaItemsList(
 {
 	json mediaItemsListRoot;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
@@ -755,7 +731,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				requestParametersRoot[field] = mediaItemKey;
 			}
 
-			if (uniqueName != "")
+			if (!uniqueName.empty())
 			{
 				field = "uniqueName";
 				requestParametersRoot[field] = uniqueName;
@@ -870,8 +846,9 @@ json MMSEngineDBFacade::getMediaItemsList(
 				{
 					SPDLOG_WARN(
 						"physicalPathKey does not exist"
-						", physicalPathKey: {}",
-						physicalPathKey
+						", physicalPathKey: {}"
+						", exception: {}",
+						physicalPathKey, e.what()
 					);
 
 					// throw runtime_error(errorMessage);
@@ -889,8 +866,9 @@ json MMSEngineDBFacade::getMediaItemsList(
 					SPDLOG_WARN(
 						"getExternalUniqueName_MediaItemKey: requested workspaceKey/uniqueName does not exist"
 						", workspaceKey: {}"
-						", uniqueName: {}",
-						workspaceKey, uniqueName
+						", uniqueName: {}"
+						", exception: {}",
+						workspaceKey, uniqueName, e.what()
 					);
 
 					// throw runtime_error(errorMessage);
@@ -1055,7 +1033,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				field = "mediaItemKey";
 				mediaItemRoot[field] = localMediaItemKey;
 
-				if (responseFields.empty() || responseFields.find("title") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("title"))
 				{
 					auto localTitle = sqlRow["title"].as<string>();
 
@@ -1070,7 +1048,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					mediaItemRoot[field] = localTitle;
 				}
 
-				if (responseFields.empty() || responseFields.find("deliveryFileName") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("deliveryFileName"))
 				{
 					field = "deliveryFileName";
 					if (sqlRow["deliveryFileName"].isNull())
@@ -1079,7 +1057,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] = sqlRow["deliveryFileName"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.find("ingester") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("ingester"))
 				{
 					field = "ingester";
 					if (sqlRow["ingester"].isNull())
@@ -1088,7 +1066,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] = sqlRow["ingester"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.find("userData") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("userData"))
 				{
 					field = "userData";
 					if (sqlRow["userData"].isNull())
@@ -1097,43 +1075,43 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] = sqlRow["userData"].as<json>();
 				}
 
-				if (responseFields.empty() || responseFields.find("ingestionDate") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("ingestionDate"))
 				{
 					field = "ingestionDate";
 					mediaItemRoot[field] = sqlRow["formattedIngestionDate"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.find("startPublishing") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("startPublishing"))
 				{
 					field = "startPublishing";
 					mediaItemRoot[field] = sqlRow["formattedStartPublishing"].as<string>();
 				}
-				if (responseFields.empty() || responseFields.find("endPublishing") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("endPublishing"))
 				{
 					field = "endPublishing";
 					mediaItemRoot[field] = sqlRow["formattedEndPublishing"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.find("willBeRemovedAt") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("willBeRemovedAt"))
 				{
 					field = "willBeRemovedAt";
 					mediaItemRoot[field] = sqlRow["formattedWillBeRemovedAt"].as<string>();
 				}
 
 				ContentType contentType = toContentType(sqlRow["contentType"].as<string>());
-				if (responseFields.empty() || responseFields.find("contentType") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("contentType"))
 				{
 					field = "contentType";
 					mediaItemRoot[field] = sqlRow["contentType"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.find("retentionInMinutes") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("retentionInMinutes"))
 				{
 					field = "retentionInMinutes";
 					mediaItemRoot[field] = sqlRow["retentionInMinutes"].as<int64_t>();
 				}
 
-				if (responseFields.empty() || responseFields.find("tags") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("tags"))
 				{
 					json mediaItemTagsRoot = json::array();
 
@@ -1158,7 +1136,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					mediaItemRoot[field] = mediaItemTagsRoot;
 				}
 
-				if (responseFields.empty() || responseFields.find("uniqueName") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("uniqueName"))
 				{
 					chrono::milliseconds localSqlDuration(0);
 					field = "uniqueName";
@@ -1167,7 +1145,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						mediaItemRoot[field] =
 							externalUniqueName_columnAsString(workspaceKey, "uniquename", "", localMediaItemKey, &localSqlDuration, fromMaster);
 					}
-					catch (DBRecordNotFound &e)
+					catch (DBRecordNotFound &)
 					{
 						mediaItemRoot[field] = "";
 					}
@@ -1175,7 +1153,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				}
 
 				// CrossReferences
-				if (responseFields.empty() || responseFields.find("crossReferences") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("crossReferences"))
 				{
 					// if (contentType == ContentType::Video)
 					{
@@ -1285,7 +1263,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 					*/
 				}
 
-				if (responseFields.empty() || responseFields.find("physicalPaths") != responseFields.end())
+				if (responseFields.empty() || responseFields.contains("physicalPaths"))
 				{
 					json mediaItemProfilesRoot = json::array();
 
@@ -1728,7 +1706,7 @@ json MMSEngineDBFacade::mediaItem_columnAsJson(string columnName, int64_t mediaI
 
 		return (*sqlResultSet)[0][0].as<json>(json());
 	}
-	catch (DBRecordNotFound &e)
+	catch (DBRecordNotFound &)
 	{
 		/*
 		SPDLOG_ERROR(
@@ -1747,8 +1725,9 @@ json MMSEngineDBFacade::mediaItem_columnAsJson(string columnName, int64_t mediaI
 		SPDLOG_ERROR(
 			"exception"
 			", mediaItemKey: {}"
-			", fromMaster: {}",
-			mediaItemKey, fromMaster
+			", fromMaster: {}"
+			", exception: {}",
+			mediaItemKey, fromMaster, e.what()
 		);
 
 		throw;
@@ -1896,7 +1875,7 @@ int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t
 
 		return (*sqlResultSet)[0][0].as<int64_t>(static_cast<int64_t>(-1));
 	}
-	catch (DBRecordNotFound &e)
+	catch (DBRecordNotFound &)
 	{
 		/*
 		SPDLOG_ERROR(
@@ -1915,8 +1894,9 @@ int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t
 		SPDLOG_ERROR(
 			"exception"
 			", physicalPathKey: {}"
-			", fromMaster: {}",
-			physicalPathKey, fromMaster
+			", fromMaster: {}"
+			", exception: {}",
+			physicalPathKey, fromMaster, e.what()
 		);
 
 		throw;
@@ -1936,7 +1916,7 @@ json MMSEngineDBFacade::physicalPath_columnAsJson(string columnName, int64_t phy
 
 		return (*sqlResultSet)[0][0].as<json>(json());
 	}
-	catch (DBRecordNotFound &e)
+	catch (DBRecordNotFound &)
 	{
 		/*
 		SPDLOG_ERROR(
@@ -1955,8 +1935,9 @@ json MMSEngineDBFacade::physicalPath_columnAsJson(string columnName, int64_t phy
 		SPDLOG_ERROR(
 			"exception"
 			", physicalPathKey: {}"
-			", fromMaster: {}",
-			physicalPathKey, fromMaster
+			", fromMaster: {}"
+			", exception: {}",
+			physicalPathKey, fromMaster, e.what()
 		);
 
 		throw;
@@ -2092,7 +2073,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 }
 
 string MMSEngineDBFacade::externalUniqueName_columnAsString(
-	int64_t workspaceKey, string columnName, string uniqueName, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster
+	int64_t workspaceKey, string columnName, const string &uniqueName, int64_t mediaItemKey, chrono::milliseconds *sqlDuration, bool fromMaster
 )
 {
 	try
@@ -2105,7 +2086,7 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 		if (sqlDuration != nullptr)
 			*sqlDuration = sqlResultSet->getSqlDuration();
 
-		if ((*sqlResultSet).size() == 0)
+		if (sqlResultSet->empty())
 		{
 			string errorMessage = std::format(
 				"workspaceKey/mediaItemKey not found"
@@ -2118,7 +2099,7 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 
 		return (*sqlResultSet)[0][0].as<string>("");
 	}
-	catch (DBRecordNotFound &e)
+	catch (DBRecordNotFound &)
 	{
 		/*
 		SPDLOG_WARN(
@@ -2139,8 +2120,9 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 			"exception"
 			", workspaceKey: {}"
 			", mediaItemKey: {}"
-			", fromMaster: {}",
-			workspaceKey, mediaItemKey, fromMaster
+			", fromMaster: {}"
+			", exception: {}",
+			workspaceKey, mediaItemKey, fromMaster, e.what()
 		);
 
 		throw;
@@ -2161,7 +2143,7 @@ int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
 		if (sqlDuration != nullptr)
 			*sqlDuration = sqlResultSet->getSqlDuration();
 
-		if ((*sqlResultSet).size() == 0)
+		if (sqlResultSet->empty())
 		{
 			string errorMessage = std::format(
 				"workspaceKey/mediaItemKey not found"
@@ -2193,8 +2175,9 @@ int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
 			"exception"
 			", workspaceKey: {}"
 			", uniqueName: {}"
-			", fromMaster: {}",
-			workspaceKey, uniqueName, fromMaster
+			", fromMaster: {}"
+			", exception: {}",
+			workspaceKey, uniqueName, fromMaster, e.what()
 		);
 
 		throw;
@@ -4260,12 +4243,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 					gmtime_r(&utcTime, &tmDateTime);
 
-					/*
-					sprintf(
-						strUtcDateTime, "%04d-%02d-%02dT%02d:%02d:%02dZ", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
-					);
-					*/
 					strUtcDateTime = std::format(
 						"{:0>4}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}Z", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
 						tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec
@@ -4275,21 +4252,9 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				}
 			}
 
-			string tags;
-			{
-				json tagsRoot = JsonPath(&parametersRoot)["tags"].as<json>(json::array());
-				SPDLOG_INFO("AAAAAAAAA"
-					", ingestionJobKey: {}"
-					", tagsRoot: {}",
-					ingestionJobKey, JSONUtils::toString(tagsRoot)
-				);
-				tags = getPostgresArray(tagsRoot, true, trans);
-			}
+			string tags = getPostgresArray(JsonPath(&parametersRoot)["tags"].as<json>(json::array()),
+				true, trans);
 
-			SPDLOG_INFO("AAAAAAAAA"
-				", ingestionJobKey: {}",
-				ingestionJobKey
-			);
 			string sqlStatement = std::format(
 				"insert into MMS_MediaItem (mediaItemKey, workspaceKey, title, ingester, userData, "
 				"deliveryFileName, ingestionJobKey, ingestionDate, contentType, "
@@ -4318,10 +4283,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			);
 		}
 
-		SPDLOG_INFO("AAAAAAAAA"
-			", ingestionJobKey: {}",
-			ingestionJobKey
-		);
 		{
 			string uniqueName;
 			if (JSONUtils::isPresent(parametersRoot, "uniqueName"))
@@ -4336,10 +4297,6 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			}
 		}
 
-		SPDLOG_INFO("AAAAAAAAA"
-			", ingestionJobKey: {}",
-			ingestionJobKey
-		);
 		// cross references
 		{
 			string field = "crossReferences";
@@ -4589,7 +4546,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	return mediaItemKeyAndPhysicalPathKey;
 }
 
-int64_t MMSEngineDBFacade::parseRetention(string retention)
+int64_t MMSEngineDBFacade::parseRetention(const string &retention)
 {
 	int64_t retentionInMinutes = -1;
 
@@ -4624,6 +4581,8 @@ int64_t MMSEngineDBFacade::parseRetention(string retention)
 		case 'y': // year
 			retentionInMinutes = stoll(localRetention.substr(0, localRetention.length() - 1)) * (1440 * 365);
 
+			break;
+		default:
 			break;
 		}
 	}
@@ -5378,7 +5337,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 
 void MMSEngineDBFacade::addCrossReference(
 	int64_t ingestionJobKey, int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
-	json crossReferenceParametersRoot
+	const json &crossReferenceParametersRoot
 )
 {
 	/*
@@ -5701,10 +5660,10 @@ json MMSEngineDBFacade::getTagsList(
 		}
 
 		string tagNameFilterLowerCase;
-		if (tagNameFilter != "")
+		if (!tagNameFilter.empty())
 		{
 			tagNameFilterLowerCase.resize(tagNameFilter.size());
-			transform(tagNameFilter.begin(), tagNameFilter.end(), tagNameFilterLowerCase.begin(), [](unsigned char c) { return tolower(c); });
+			ranges::transform(tagNameFilter, tagNameFilterLowerCase.begin(), [](unsigned char c) { return tolower(c); });
 		}
 
 		string sqlWhere;
@@ -5723,7 +5682,7 @@ json MMSEngineDBFacade::getTagsList(
 				"select unnest(tags) as tagName from MMS_MediaItem {}) t ",
 				sqlWhere
 			);
-			if (tagNameFilter != "")
+			if (!tagNameFilter.empty())
 				sqlStatement += std::format("where lower(tagName) like {} ", trans.transaction->quote("%" + tagNameFilterLowerCase + "%"));
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			field = "numFound";

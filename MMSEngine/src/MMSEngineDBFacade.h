@@ -1650,7 +1650,7 @@ class MMSEngineDBFacade
 	);
 
 	std::string externalUniqueName_columnAsString(
-		int64_t workspaceKey, std::string columnName, std::string uniqueName, int64_t mediaItemKey, std::chrono::milliseconds *sqlDuration, bool fromMaster
+		int64_t workspaceKey, std::string columnName, const std::string &uniqueName, int64_t mediaItemKey, std::chrono::milliseconds *sqlDuration, bool fromMaster
 	);
 	int64_t externalUniqueName_columnAsInt64(
 		int64_t workspaceKey, std::string columnName, std::string uniqueName, int64_t mediaItemKey, std::chrono::milliseconds *sqlDuration, bool fromMaster
@@ -2024,7 +2024,7 @@ class MMSEngineDBFacade
 
 	void addCrossReference(
 		int64_t ingestionJobKey, int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType, int64_t targetMediaItemKey,
-		nlohmann::json crossReferenceParametersRoot
+		const nlohmann::json &crossReferenceParametersRoot
 	);
 
 	void removePhysicalPath(int64_t physicalPathKey);
@@ -2385,7 +2385,7 @@ class MMSEngineDBFacade
 
 	void getPartitionsInfo(std::vector<std::pair<int, uint64_t>> &partitionsInfo);
 
-	static int64_t parseRetention(std::string retention);
+	static int64_t parseRetention(const std::string &retention);
 
 	nlohmann::json getStreamInputRoot(
 		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, const std::string &configurationLabel,

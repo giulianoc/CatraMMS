@@ -72,16 +72,12 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 			try
 			{
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 				int64_t key;
 				MMSEngineDBFacade::ContentType referenceContentType;
 				Validator::DependencyType dependencyType;
 
 				tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
 
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 				if (referenceContentType != MMSEngineDBFacade::ContentType::Video)
 				{
 					string errorMessage = std::format("ContentTpe is not a Video"
@@ -92,8 +88,6 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					throw runtime_error(errorMessage);
 				}
 
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 				int64_t sourceMediaItemKey;
 				int64_t sourcePhysicalPathKey;
 				string sourcePhysicalPath;
@@ -136,8 +130,6 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					tie(sourcePhysicalPath, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 				}
 
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 				int periodInSeconds;
 				double startTimeInSeconds;
 				int maxFramesNumber;
@@ -152,22 +144,16 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					periodInSeconds, startTimeInSeconds, maxFramesNumber, videoFilter, mjpeg, imageWidth, imageHeight, durationInMilliSeconds
 				);
 
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 				string fileFormat = "jpg";
 				string frameFileName = to_string(ingestionJobKey) + "." + fileFormat;
 				string frameAssetPathName = workspaceIngestionRepository + "/" + frameFileName;
 
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 				ProcessUtility::ProcessId childProcessId;
 				FFMpegWrapper ffmpeg(_configurationRoot);
 				ffmpeg.generateFrameToIngest(
 					ingestionJobKey, sourcePhysicalPath, durationInMilliSeconds, startTimeInSeconds, frameAssetPathName, imageWidth, imageHeight,
 					childProcessId, nullptr
 				);
-				SPDLOG_INFO("AAAAAAAA"
-					", ingestionJobKey: {}", ingestionJobKey);
 
 				{
 					SPDLOG_INFO("Generated Frame to ingest"
@@ -190,12 +176,8 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 					try
 					{
-						SPDLOG_INFO("AAAAAAAA"
-							", ingestionJobKey: {}", ingestionJobKey);
 						auto localAssetIngestionEvent = make_shared<LocalAssetIngestionEvent>();
 
-						SPDLOG_INFO("AAAAAAAA"
-							", ingestionJobKey: {}", ingestionJobKey);
 						localAssetIngestionEvent->setSource(MMSENGINEPROCESSORNAME);
 						localAssetIngestionEvent->setDestination(MMSENGINEPROCESSORNAME);
 						localAssetIngestionEvent->setExpirationTimePoint(chrono::system_clock::now());
@@ -211,8 +193,6 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 						localAssetIngestionEvent->setMetadataContent(imageMetaDataContent);
 
-						SPDLOG_INFO("AAAAAAAA"
-							", ingestionJobKey: {}", ingestionJobKey);
 						handleLocalAssetIngestionEvent(processorsThreadsNumber, *localAssetIngestionEvent);
 					}
 					catch (exception &e)
