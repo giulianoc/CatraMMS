@@ -1908,26 +1908,24 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 			// char currentUtcChunkStartTime_HHMISS[64];
 			string currentUtcChunkStartTime_HHMISS;
 			{
-				tm tmDateTime;
+				tm tmDateTime{};
 
 				// from utc to local time
 				localtime_r(&utcChunkStartTime, &tmDateTime);
 
 				// sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
-				currentUtcChunkStartTime_HHMISS = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
+				string currentUtcChunkStartTime_HHMISS2 = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
+				currentUtcChunkStartTime_HHMISS = Datetime::dateTimeFormat(tmDateTime, "%H:%M:%S");
+				SPDLOG_INFO("AAAAAAAA"
+					", currentUtcChunkStartTime_HHMISS2: {}"
+					", currentUtcChunkStartTime_HHMISS: {}", currentUtcChunkStartTime_HHMISS2, currentUtcChunkStartTime_HHMISS
+				);
 			}
 			{
 				json variableWorkflowRoot;
 				variableWorkflowRoot["type"] = "string";
-				variableWorkflowRoot["value"] = Datetime::dateTimeFormat(utcChunkStartTime * 1000, "%H:%M:%S");
+				variableWorkflowRoot["value"] = currentUtcChunkStartTime_HHMISS;
 				variablesWorkflowRoot["currentUtcChunkStartTime_HHMISS"] = variableWorkflowRoot;
-				SPDLOG_INFO("AAAAAAAA"
-					", currentUtcChunkStartTime_HHMISS: {}"
-					", variableWorkflowRoot: "
-					", utcChunkStartTime: {}"
-					", datetime: {}", currentUtcChunkStartTime_HHMISS, JSONUtils::toString(variableWorkflowRoot), utcChunkStartTime,
-					Datetime::dateTimeFormat(utcChunkStartTime * 1000, "%H:%M:%S")
-					);
 			}
 
 			{

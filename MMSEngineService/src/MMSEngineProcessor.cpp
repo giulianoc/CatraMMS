@@ -230,21 +230,19 @@ bool MMSEngineProcessor::isProcessorShutdown()
 
 void MMSEngineProcessor::operator()()
 {
-	bool blocking = true;
-	chrono::milliseconds milliSecondsToBlock(100);
+	constexpr chrono::milliseconds milliSecondsToBlock(100);
 
-	// SPDLOG_DEBUG(_logger , "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}",
-	// 1, 3.23);
-	//  SPDLOG_TRACE(_logger , "Enabled only #ifdef SPDLOG_TRACE_ON..{} ,{}",
-	//  1, 3.23);
-	SPDLOG_INFO(string() + "MMSEngineProcessor thread started" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+	SPDLOG_INFO("MMSEngineProcessor thread started"
+		", _processorIdentifier: {}", _processorIdentifier);
 
 	bool processorShutdown = false;
 	while (!processorShutdown)
 	{
+		bool blocking = true;
 		if (isProcessorShutdown())
 		{
-			SPDLOG_INFO(string() + "Processor was shutdown" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+			SPDLOG_INFO("Processor was shutdown"
+				", _processorIdentifier: {}", _processorIdentifier);
 
 			processorShutdown = true;
 
@@ -265,8 +263,8 @@ void MMSEngineProcessor::operator()()
 		{
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT: // 1
 		{
-			SPDLOG_DEBUG(
-				string() + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION" + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
@@ -275,138 +273,53 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleCheckIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleCheckIngestionEvent failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION" + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT: // 2
 		{
-			SPDLOG_DEBUG(string() + "1. Received LOCALASSETINGESTIONEVENT" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+			SPDLOG_DEBUG("1. Received LOCALASSETINGESTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier);
 
 			shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
 
 			try
 			{
-				/* 2021-02-19: check on threads is already done in
-				handleCheckIngestionEvent if
-				(_processorsThreadsNumber.use_count() > _processorThreads +
-				_maxAdditionalProcessorThreads)
-				{
-					_logger->warn(string()
-						+ "Not enough available threads to manage
-				handleLocalAssetIngestionEvent, activity is postponed"
-						+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " +
-				to_string(localAssetIngestionEvent->getIngestionJobKey())
-						+ ", _processorsThreadsNumber.use_count(): " +
-				to_string(_processorsThreadsNumber.use_count())
-						+ ", _processorThreads + _maxAdditionalProcessorThreads:
-				"
-						+ to_string(_processorThreads +
-				_maxAdditionalProcessorThreads)
-					);
+				// 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 
-					{
-						shared_ptr<LocalAssetIngestionEvent>
-				cloneLocalAssetIngestionEvent =
-				_multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(
-									MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
-
-						cloneLocalAssetIngestionEvent->setSource(
-							localAssetIngestionEvent->getSource());
-						cloneLocalAssetIngestionEvent->setDestination(
-							localAssetIngestionEvent->getDestination());
-						// 2019-11-15: it is important this message will expire
-				later.
-						//	Before this change (+ 5 seconds), the event expires
-				istantly and we have file system full "
-						//	because of the two messages
-						//		- Not enough available threads... and
-						//		- addEvent: EVENT_TYPE...
-						cloneLocalAssetIngestionEvent->setExpirationTimePoint(
-							chrono::system_clock::now() + chrono::seconds(5));
-
-						cloneLocalAssetIngestionEvent->setExternalReadOnlyStorage(
-							localAssetIngestionEvent->getExternalReadOnlyStorage());
-						cloneLocalAssetIngestionEvent->setExternalStorageMediaSourceURL(
-							localAssetIngestionEvent->getExternalStorageMediaSourceURL());
-						cloneLocalAssetIngestionEvent->setIngestionJobKey(
-							localAssetIngestionEvent->getIngestionJobKey());
-						cloneLocalAssetIngestionEvent->setIngestionSourceFileName(
-							localAssetIngestionEvent->getIngestionSourceFileName());
-						cloneLocalAssetIngestionEvent->setMMSSourceFileName(
-							localAssetIngestionEvent->getMMSSourceFileName());
-						cloneLocalAssetIngestionEvent->setForcedAvgFrameRate(
-							localAssetIngestionEvent->getForcedAvgFrameRate());
-						cloneLocalAssetIngestionEvent->setWorkspace(
-							localAssetIngestionEvent->getWorkspace());
-						cloneLocalAssetIngestionEvent->setIngestionType(
-							localAssetIngestionEvent->getIngestionType());
-						cloneLocalAssetIngestionEvent->setIngestionRowToBeUpdatedAsSuccess(
-							localAssetIngestionEvent->getIngestionRowToBeUpdatedAsSuccess());
-
-						cloneLocalAssetIngestionEvent->setMetadataContent(
-							localAssetIngestionEvent->getMetadataContent());
-
-						shared_ptr<Event2>    cloneEvent =
-				dynamic_pointer_cast<Event2>( cloneLocalAssetIngestionEvent);
-						_multiEventsSet->addEvent(cloneEvent);
-
-						SPDLOG_INFO(string() + "addEvent: EVENT_TYPE
-				(INGESTASSETEVENT)"
-							+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-							+ ", getEventKey().first: " +
-				to_string(event->getEventKey().first)
-							+ ", getEventKey().second: " +
-				to_string(event->getEventKey().second));
-					}
-				}
-				else
-				*/
-				{
-					// handleLocalAssetIngestionEvent
-					// (localAssetIngestionEvent);
-					thread handleLocalAssetIngestionEventThread(
-						&MMSEngineProcessor::handleLocalAssetIngestionEventThread, this, _processorsThreadsNumber, *localAssetIngestionEvent
-					);
-					handleLocalAssetIngestionEventThread.detach();
-				}
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				thread handleLocalAssetIngestionEventThread(
+					&MMSEngineProcessor::handleLocalAssetIngestionEventThread, this, _processorsThreadsNumber, *localAssetIngestionEvent
 				);
+				handleLocalAssetIngestionEventThread.detach();
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleLocalAssetIngestionEvent failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(localAssetIngestionEvent);
 
-			SPDLOG_DEBUG(string() + "2. Received LOCALASSETINGESTIONEVENT" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+			SPDLOG_DEBUG("2. Received LOCALASSETINGESTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT: // 3
 		{
-			SPDLOG_DEBUG(
-				string() + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING" + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
@@ -415,26 +328,23 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleCheckEncodingEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleCheckEncodingEvent failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING" + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT: // 4
 		{
-			SPDLOG_DEBUG(
-				string() +
-				"1. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
@@ -459,242 +369,109 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleContentRetentionEventThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleContentRetentionEventThread failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() +
-				"2. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT: // 5
 		{
-			SPDLOG_DEBUG(string() + "1. Received MULTILOCALASSETINGESTIONEVENT" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+			SPDLOG_DEBUG("1. Received MULTILOCALASSETINGESTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier);
 
 			shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent = dynamic_pointer_cast<MultiLocalAssetIngestionEvent>(event);
 
 			try
 			{
-				/* 2021-02-19: check on threads is already done in
-				handleCheckIngestionEvent if
-				(_processorsThreadsNumber.use_count() > _processorThreads +
-				_maxAdditionalProcessorThreads)
-				{
-					_logger->warn(string()
-						+ "Not enough available threads to manage
-				handleLocalAssetIngestionEvent, activity is postponed"
-						+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-						+ ", ingestionJobKey: " +
-				to_string(multiLocalAssetIngestionEvent->getIngestionJobKey())
-						+ ", _processorsThreadsNumber.use_count(): " +
-				to_string(_processorsThreadsNumber.use_count())
-						+ ", _processorThreads + _maxAdditionalProcessorThreads:
-				"
-						+ to_string(_processorThreads +
-				_maxAdditionalProcessorThreads)
-					);
+				// 2021-02-19: check on threads is already done in handleCheckIngestionEvent
 
-					{
-						shared_ptr<MultiLocalAssetIngestionEvent>
-				cloneMultiLocalAssetIngestionEvent =
-				_multiEventsSet->getEventsFactory()->getFreeEvent<MultiLocalAssetIngestionEvent>(
-									MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT);
-
-						cloneMultiLocalAssetIngestionEvent->setSource(
-							multiLocalAssetIngestionEvent->getSource());
-						cloneMultiLocalAssetIngestionEvent->setDestination(
-							multiLocalAssetIngestionEvent->getDestination());
-						// 2019-11-15: it is important this message will expire
-				later.
-						//	Before this change (+ 5 seconds), the event expires
-				istantly and we have file system full "
-						//	because of the two messages
-						//	- Not enough available threads... and
-						//	- addEvent: EVENT_TYPE...
-						cloneMultiLocalAssetIngestionEvent->setExpirationTimePoint(
-							chrono::system_clock::now() + chrono::seconds(5));
-
-						cloneMultiLocalAssetIngestionEvent->setIngestionJobKey(
-							multiLocalAssetIngestionEvent->getIngestionJobKey());
-						cloneMultiLocalAssetIngestionEvent->setEncodingJobKey(
-							multiLocalAssetIngestionEvent->getEncodingJobKey());
-						cloneMultiLocalAssetIngestionEvent->setWorkspace(
-							multiLocalAssetIngestionEvent->getWorkspace());
-						cloneMultiLocalAssetIngestionEvent->setParametersRoot(
-							multiLocalAssetIngestionEvent->getParametersRoot());
-
-						shared_ptr<Event2>    cloneEvent =
-				dynamic_pointer_cast<Event2>(
-								cloneMultiLocalAssetIngestionEvent);
-						_multiEventsSet->addEvent(cloneEvent);
-
-						SPDLOG_INFO(string() + "addEvent: EVENT_TYPE
-				(MULTIINGESTASSETEVENT)"
-							+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-							+ ", getEventKey().first: " +
-				to_string(event->getEventKey().first)
-							+ ", getEventKey().second: " +
-				to_string(event->getEventKey().second));
-					}
-				}
-				else
-				*/
-				{
-					// handleMultiLocalAssetIngestionEvent
-					// (multiLocalAssetIngestionEvent);
-					thread handleMultiLocalAssetIngestionEventThread(
-						&MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread, this, _processorsThreadsNumber, *multiLocalAssetIngestionEvent
-					);
-					handleMultiLocalAssetIngestionEventThread.detach();
-				}
-			}
-			catch (runtime_error &e)
-			{
-				SPDLOG_ERROR(
-					string() + "handleMultiLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				thread handleMultiLocalAssetIngestionEventThread(
+					&MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread, this, _processorsThreadsNumber, *multiLocalAssetIngestionEvent
 				);
+				handleMultiLocalAssetIngestionEventThread.detach();
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleMultiLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleMultiLocalAssetIngestionEvent failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<MultiLocalAssetIngestionEvent>(multiLocalAssetIngestionEvent);
 
-			SPDLOG_DEBUG(string() + "2. Received MULTILOCALASSETINGESTIONEVENT" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+			SPDLOG_DEBUG("2. Received MULTILOCALASSETINGESTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT: // 7
 		{
-			SPDLOG_DEBUG(
-				string() +
-				"1. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
 			{
-				/* 2019-07-10: this check was removed since this event happens
-				once a day if (_processorsThreadsNumber.use_count() >
-				_processorThreads + _maxAdditionalProcessorThreads)
-				{
-					// content retention is a periodical event, we will wait the
-				next one
+				// 2019-07-10: this check was removed since this event happens once a day
 
-					_logger->warn(string() + "Not enough available threads to
-				manage handleContentRetentionEventThread, activity is postponed"
-						+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-						+ ", _processorsThreadsNumber.use_count(): " +
-				to_string(_processorsThreadsNumber.use_count())
-						+ ", _processorThreads + _maxAdditionalProcessorThreads:
-				" + to_string(_processorThreads +
-				_maxAdditionalProcessorThreads)
-					);
-				}
-				else
-				*/
-				{
-					thread dbDataRetention(&MMSEngineProcessor::handleDBDataRetentionEventThread, this);
-					dbDataRetention.detach();
-				}
+				thread dbDataRetention(&MMSEngineProcessor::handleDBDataRetentionEventThread, this);
+				dbDataRetention.detach();
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleDBDataRetentionEventThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleDBDataRetentionEventThread failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() +
-				"2. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT: // 8
 		{
-			SPDLOG_DEBUG(
-				string() +
-				"1. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_"
-				"CHECKREFRESHPARTITIONFREESIZEEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
 			{
-				/* 2019-07-10: this check was removed since this event happens
-				once a day if (_processorsThreadsNumber.use_count() >
-				_processorThreads + _maxAdditionalProcessorThreads)
-				{
-					// content retention is a periodical event, we will wait the
-				next one
+				// 2019-07-10: this check was removed since this event happens once a day
 
-					_logger->warn(string() + "Not enough available threads to
-				manage handleContentRetentionEventThread, activity is postponed"
-						+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-						+ ", _processorsThreadsNumber.use_count(): " +
-				to_string(_processorsThreadsNumber.use_count())
-						+ ", _processorThreads + _maxAdditionalProcessorThreads:
-				" + to_string(_processorThreads +
-				_maxAdditionalProcessorThreads)
-					);
-				}
-				else
-				*/
-				{
-					thread checkRefreshPartitionFreeSize(&MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread, this);
-					checkRefreshPartitionFreeSize.detach();
-				}
+				thread checkRefreshPartitionFreeSize(&MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread, this);
+				checkRefreshPartitionFreeSize.detach();
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleCheckRefreshPartitionFreeSizeEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleCheckRefreshPartitionFreeSizeEvent failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() +
-				"2. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_"
-				"CHECKREFRESHPARTITIONFREESIZEEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT: // 9
 		{
-			SPDLOG_DEBUG(
-				string() +
-				"1. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
@@ -703,85 +480,71 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "_mmsThreadsStatistic->logRunningThreads failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("_mmsThreadsStatistic->logRunningThreads failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() +
-				"2. Received "
-				"MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT:" +
-				", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT: // 10
 		{
-			SPDLOG_DEBUG(
-				string() + "1. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT" + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 
 			try
 			{
-				/* 2019-07-10: this check was removed since this event happens
-				once a day if (_processorsThreadsNumber.use_count() >
-				_processorThreads + _maxAdditionalProcessorThreads)
-				{
-					// GEOInfo is a periodical event, we will wait the next one
+				// 2019-07-10: this check was removed since this event happens once a day
 
-					_logger->warn(string() + "Not enough available threads to
-				manage handleGEOInfoEventThread, activity is postponed"
-						+ ", _processorIdentifier: " +
-				to_string(_processorIdentifier)
-						+ ", _processorsThreadsNumber.use_count(): " +
-				to_string(_processorsThreadsNumber.use_count())
-						+ ", _processorThreads + _maxAdditionalProcessorThreads:
-				" + to_string(_processorThreads +
-				_maxAdditionalProcessorThreads)
-					);
-				}
-				else
-				*/
-				{
-					thread geoInfo(&MMSEngineProcessor::handleGEOInfoEventThread, this);
-					geoInfo.detach();
-				}
+				thread geoInfo(&MMSEngineProcessor::handleGEOInfoEventThread, this);
+				geoInfo.detach();
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
-					string() + "handleGEOInfoEventThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				SPDLOG_ERROR("handleGEOInfoEventThread failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 			}
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG(
-				string() + "2. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT" + ", _processorIdentifier: " + to_string(_processorIdentifier)
+			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
+				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		default:
-			throw runtime_error(string("Event type identifier not managed") + to_string(event->getEventKey().first));
+			string errorMessage = std::format("Event type identifier not managed"
+				", _processorIdentifier: {}"
+				", event id: {}", _processorIdentifier, event->getEventKey().first
+			);
+			SPDLOG_ERROR(errorMessage);
+			throw runtime_error(errorMessage);
 		}
 
 		chrono::system_clock::time_point endEvent = chrono::system_clock::now();
-		long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
-
-		if (elapsedInSeconds > _maxEventManagementTimeInSeconds)
-			_logger->warn(
-				string() + "MMSEngineProcessor. Event management took too time" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", event id: " + to_string(event->getEventKey().first) + ", _maxEventManagementTimeInSeconds: " +
-				to_string(_maxEventManagementTimeInSeconds) + ", @MMS statistics@ - elapsed in seconds: @" + to_string(elapsedInSeconds) + "@"
+		if (long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
+			elapsedInSeconds > _maxEventManagementTimeInSeconds)
+			SPDLOG_WARN(
+				"MMSEngineProcessor. Event management took too time"
+				", _processorIdentifier: {}"
+				", event id: {}"
+				", _maxEventManagementTimeInSeconds: {}"
+				", @MMS statistics@ - elapsed in seconds: @{}@",
+				_processorIdentifier, event->getEventKey().first, _maxEventManagementTimeInSeconds, elapsedInSeconds
 			);
 	}
 
-	SPDLOG_INFO(string() + "MMSEngineProcessor thread terminated" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+	SPDLOG_INFO("MMSEngineProcessor thread terminated"
+		", _processorIdentifier: {}", _processorIdentifier);
 }
 
 bool MMSEngineProcessor::newThreadPermission(shared_ptr<long> processorsThreadsNumber)
@@ -880,7 +643,7 @@ void MMSEngineProcessor::stopCPUUsageThread()
 }
 
 json MMSEngineProcessor::getReviewedOutputsRoot(
-	json outputsRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool encodingProfileMandatory
+	const json& outputsRoot, const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, bool encodingProfileMandatory
 )
 {
 	json localOutputsRoot = json::array();
@@ -888,10 +651,8 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 	if (outputsRoot == nullptr)
 		return localOutputsRoot;
 
-	for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+	for (auto outputRoot : outputsRoot)
 	{
-		json outputRoot = outputsRoot[outputIndex];
-
 		string videoMap;
 		string audioMap;
 		string outputType;
@@ -1100,7 +861,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 }
 
 // LO STESSO METODO E' IN API_Ingestion.cpp
-json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Workspace> workspace, int64_t ingestionJobKey)
+json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey) const
 {
 	if (filtersRoot == nullptr)
 		return filtersRoot;
@@ -1190,7 +951,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, shared_ptr<Wor
 string MMSEngineProcessor::generateMediaMetadataToIngest(
 	int64_t ingestionJobKey, string fileFormat, string title, int64_t imageOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey,
 	int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds, json parametersRoot
-)
+) const
 {
 	string field = "fileFormat";
 	if (JSONUtils::isPresent(parametersRoot, field))

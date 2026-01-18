@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include
+#include
 #include "ActiveEncodingsManager.h"
 #include "GetCpuUsage.h"
 #include "LocalAssetIngestionEvent.h"
@@ -147,9 +149,11 @@ class MMSEngineProcessor
 	std::string _emailPassword;
 	std::string _emailCcsCommaSeparated;
 
-	nlohmann::json getReviewedOutputsRoot(nlohmann::json outputsRoot, std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool encodingProfileMandatory);
+	nlohmann::json getReviewedOutputsRoot(
+		const nlohmann::json &outputsRoot, const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, bool encodingProfileMandatory
+	);
 
-	nlohmann::json getReviewedFiltersRoot(nlohmann::json filtersRoot, std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey);
+	nlohmann::json getReviewedFiltersRoot(nlohmann::json filtersRoot, const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey) const;
 
 	bool newThreadPermission(std::shared_ptr<long> processorsThreadsNumber);
 
@@ -273,10 +277,10 @@ class MMSEngineProcessor
 		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
-	std::string generateMediaMetadataToIngest(
+	[[nodiscard]] std::string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, std::string fileFormat, std::string title, int64_t imageOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey,
 		int64_t cutOfAudioMediaItemKey, double startTimeInSeconds, double endTimeInSeconds, nlohmann::json parametersRoot
-	);
+	) const;
 
 	void manageEncodeTask(
 		int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
