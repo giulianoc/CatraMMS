@@ -602,13 +602,11 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::RemoveContent:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
-								 still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets
 								 20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
@@ -689,17 +687,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::FTPDelivery:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -731,10 +724,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread ftpDeliveryContentThread(
 										&MMSEngineProcessor::ftpDeliveryContentThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									ftpDeliveryContentThread.detach();
 								}
@@ -779,9 +769,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::LocalCopy:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								if (!_localCopyTaskEnabled)
@@ -796,20 +784,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 
 								/*
-								// threads check is done inside
-								localCopyContentTask localCopyContentTask(
-										ingestionJobKey,
-										ingestionStatus,
-										workspace,
-										parametersRoot,
-										dependencies);
+								// threads check is done inside localCopyContentTask localCopyContentTask(
+										ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
 								*/
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -841,10 +821,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread localCopyContentThread(
 										&MMSEngineProcessor::localCopyContentThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									localCopyContentThread.detach();
 								}
@@ -889,26 +866,15 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::HTTPCallback:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/*
-								// threads check is done inside httpCallbackTask
-								httpCallbackTask(
-										ingestionJobKey,
-										ingestionStatus,
-										workspace,
-										parametersRoot,
-										dependencies);
+								/* threads check is done inside httpCallbackTask httpCallbackTask(
+										ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
 								*/
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -940,10 +906,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread httpCallbackThread(
 										&MMSEngineProcessor::httpCallbackThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									httpCallbackThread.detach();
 								}
@@ -1211,9 +1174,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						case MMSEngineDBFacade::IngestionType::MotionJPEGByPeriodicalFrames:
 						case MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames ||
@@ -1226,13 +1187,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								else // Frame
 								{
-									/* 2021-02-19: check on threads is already
-									 *done in handleCheckIngestionEvent
-									 * 2021-06-19: we still have to check the
-									 *thread limit because, in case
-									 *handleCheckIngestionEvent gets 20 events,
-									 *		we have still to postpone all the
-									 *events overcoming the thread limit
+									/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+									 * 2021-06-19: we still have to check the thread limit because, in case handleCheckIngestionEvent gets 20
+									 * events, we have still to postpone all the events overcoming the thread limit
 									 */
 									if (!newThreadPermission(_processorsThreadsNumber))
 									{
@@ -1264,20 +1221,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										thread generateAndIngestFrameThread(
 											&MMSEngineProcessor::generateAndIngestFrameThread, this, _processorsThreadsNumber, ingestionJobKey,
 											workspace, ingestionType, parametersRoot,
-											// it cannot be passed as reference
-											// because it will change soon by
-											// the parent thread
+											// it cannot be passed as reference because it will change soon by the parent thread
 											dependencies
 										);
 										generateAndIngestFrameThread.detach();
-										/*
-										generateAndIngestFramesTask(
-											ingestionJobKey,
-											workspace,
-											ingestionType,
-											parametersRoot,
-											dependencies);
-										*/
 									}
 								}
 							}
@@ -1321,9 +1268,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::Slideshow:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								manageSlideShowTask(ingestionJobKey, workspace, parametersRoot, dependencies);
@@ -1368,17 +1313,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::ConcatDemuxer:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -1411,9 +1351,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										&MMSEngineProcessor::manageConcatThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
 
-										// it cannot be passed as reference
-										// because it will change soon by the
-										// parent thread
+										// it cannot be passed as reference because it will change soon by the parent thread
 										dependencies
 									);
 									manageConcatThread.detach();
@@ -1459,17 +1397,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::Cut:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -1501,10 +1434,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread manageCutMediaThread(
 										&MMSEngineProcessor::manageCutMediaThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									manageCutMediaThread.detach();
 								}
@@ -1551,12 +1481,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -1588,10 +1515,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread extractTracksContentThread(
 										&MMSEngineProcessor::extractTracksContentThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									extractTracksContentThread.detach();
 								}
@@ -1636,9 +1560,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::OverlayImageOnVideo:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								manageOverlayImageOnVideoTask(ingestionJobKey, workspace, parametersRoot, dependencies);
@@ -1683,9 +1605,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::OverlayTextOnVideo:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								manageOverlayTextOnVideoTask(ingestionJobKey, workspace, parametersRoot, dependencies);
@@ -1730,17 +1650,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::EmailNotification:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -1772,20 +1687,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread emailNotificationThread(
 										&MMSEngineProcessor::emailNotificationThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									emailNotificationThread.detach();
 								}
-								/*
-								manageEmailNotificationTask(
-										ingestionJobKey,
-										workspace,
-										parametersRoot,
-										dependencies);
-								*/
 							}
 							catch (exception &e)
 							{
@@ -1829,12 +1734,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -1910,9 +1812,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::MediaCrossReference:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								manageMediaCrossReferenceTask(ingestionJobKey, workspace, parametersRoot, dependencies);
@@ -1957,17 +1857,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::PostOnFacebook:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -1999,21 +1894,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread postOnFacebookThread(
 										&MMSEngineProcessor::postOnFacebookThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									postOnFacebookThread.detach();
 								}
-								/*
-								postOnFacebookTask(
-										ingestionJobKey,
-										ingestionStatus,
-										workspace,
-										parametersRoot,
-										dependencies);
-								*/
 							}
 							catch (exception &e)
 							{
@@ -2055,17 +1939,12 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::PostOnYouTube:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -2097,21 +1976,10 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread postOnYouTubeThread(
 										&MMSEngineProcessor::postOnYouTubeThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									postOnYouTubeThread.detach();
 								}
-								/*
-								postOnYouTubeTask(
-										ingestionJobKey,
-										ingestionStatus,
-										workspace,
-										parametersRoot,
-										dependencies);
-								*/
 							}
 							catch (exception &e)
 							{
@@ -2153,9 +2021,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::FaceRecognition:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								manageFaceRecognitionMediaTask(ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
@@ -2200,9 +2066,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						case MMSEngineDBFacade::IngestionType::FaceIdentification:
 						{
-							// mediaItemKeysDependency is present because
-							// checked by
-							// _mmsEngineDBFacade->getIngestionsToBeManaged
+							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
 							try
 							{
 								manageFaceIdentificationMediaTask(ingestionJobKey, ingestionStatus, workspace, parametersRoot, dependencies);
@@ -2469,12 +2333,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -2565,12 +2426,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 * in handleCheckIngestionEvent
-								 * 2021-06-19: we still have to check the thread
-								 *limit because, in case
-								 *handleCheckIngestionEvent gets 20 events, we
-								 *have still to postpone all the events
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because, in case
+								 *handleCheckIngestionEvent gets 20 events, we have still to postpone all the events
 								 *overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
@@ -2649,12 +2507,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 * in handleCheckIngestionEvent
-								 * 2021-06-19: we still have to check the thread
-								 *limit because, in case
-								 *handleCheckIngestionEvent gets 20 events, we
-								 *have still to postpone all the events
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent
+								 * 2021-06-19: we still have to check the thread limit because, in case
+								 *handleCheckIngestionEvent gets 20 events, we have still to postpone all the events
 								 *overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
@@ -2733,12 +2588,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						{
 							try
 							{
-								/* 2021-02-19: check on threads is already done
-								 *in handleCheckIngestionEvent 2021-06-19: we
-								 *still have to check the thread limit because,
-								 *		in case handleCheckIngestionEvent gets
-								 *20 events, we have still to postpone all the
-								 *events overcoming the thread limit
+								/* 2021-02-19: check on threads is already done in handleCheckIngestionEvent 2021-06-19: we
+								 *still have to check the thread limit because, in case handleCheckIngestionEvent gets
+								 *20 events, we have still to postpone all the events overcoming the thread limit
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
@@ -2770,10 +2622,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									thread changeFileFormatThread(
 										&MMSEngineProcessor::changeFileFormatThread, this, _processorsThreadsNumber, ingestionJobKey, workspace,
 										parametersRoot,
-										dependencies // it cannot be passed as
-													 // reference because it
-													 // will change soon by the
-													 // parent thread
+										dependencies // it cannot be passed as reference because it will change soon by the parent thread
 									);
 									changeFileFormatThread.detach();
 								}

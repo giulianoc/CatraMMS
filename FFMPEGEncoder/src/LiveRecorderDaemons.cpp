@@ -1905,26 +1905,12 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				variablesWorkflowRoot["currentUtcChunkStartTime"] = variableWorkflowRoot;
 			}
 
-			// char currentUtcChunkStartTime_HHMISS[64];
-			string currentUtcChunkStartTime_HHMISS;
-			{
-				tm tmDateTime{};
-
-				// from utc to local time
-				localtime_r(&utcChunkStartTime, &tmDateTime);
-
-				// sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
-				string currentUtcChunkStartTime_HHMISS2 = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
-				currentUtcChunkStartTime_HHMISS = Datetime::dateTimeFormat(Datetime::utcSecondsToLocalTime(utcChunkStartTime), "%H:%M:%S");
-				SPDLOG_INFO("AAAAAAAA"
-					", currentUtcChunkStartTime_HHMISS2: {}"
-					", currentUtcChunkStartTime_HHMISS: {}", currentUtcChunkStartTime_HHMISS2, currentUtcChunkStartTime_HHMISS
-				);
-			}
 			{
 				json variableWorkflowRoot;
 				variableWorkflowRoot["type"] = "string";
-				variableWorkflowRoot["value"] = currentUtcChunkStartTime_HHMISS;
+				// 2026-01-18: non so se è corretto chiamarlo currentUtcChunkStartTime_HHMISS perchè è in orario locale (utcSecondsToLocalTime)
+				// Lascio così perche non so se viene già usato da qualche parte (forse nella gui/player!!!)
+				variableWorkflowRoot["value"] = Datetime::dateTimeFormat(Datetime::utcSecondsToLocalTime(utcChunkStartTime), "%H:%M:%S");
 				variablesWorkflowRoot["currentUtcChunkStartTime_HHMISS"] = variableWorkflowRoot;
 			}
 

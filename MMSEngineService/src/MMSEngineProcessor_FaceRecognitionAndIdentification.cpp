@@ -7,17 +7,19 @@ using json = nlohmann::json;
 
 // this is to generate one Frame
 void MMSEngineProcessor::manageFaceRecognitionMediaTask(
-	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
+	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, const shared_ptr<Workspace>& workspace, const json& parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-)
+) const
 {
 	try
 	{
 		if (dependencies.size() != 1)
 		{
-			string errorMessage = string() + "Wrong medias number to be processed for Face Recognition" +
-								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format("Wrong medias number to be processed for Face Recognition"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}",
+				_processorIdentifier, ingestionJobKey, dependencies.size());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -26,24 +28,21 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
 		if (!JSONUtils::isPresent(parametersRoot, field))
-		{
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
-		}
 		else
-		{
 			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
-		}
 
 		string faceRecognitionCascadeName;
 		string faceRecognitionOutput;
 		long initialFramesNumberToBeSkipped;
 		bool oneFramePerSecond;
 		{
-			string field = "cascadeName";
+			field = "cascadeName";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", Field: {}", _processorIdentifier, field);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -53,8 +52,9 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			field = "output";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", Field: {}", _processorIdentifier, field);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -82,70 +82,48 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			int64_t sourceMediaItemKey;
 			int64_t sourcePhysicalPathKey;
 
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
+			auto [key, referenceContentType, dependencyType, stopIfReferenceProcessingError] = keyAndDependencyType;
 
 			if (dependencyType == Validator::DependencyType::MediaItemKey)
 			{
 				int64_t encodingProfileKey = -1;
 
 				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName =
+				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) =
 					_mmsStorage->getPhysicalPathDetails(
 						key, encodingProfileKey, warningIfMissing,
 						// 2022-12-18: MIK potrebbe essere stato appena
 						// aggiunto
 						true
 					);
-				tie(sourcePhysicalPathKey, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) =
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
 
 				sourceMediaItemKey = key;
 
-				{
-					bool warningIfMissing = false;
-					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey = _mmsEngineDBFacade->getMediaItemKeyDetails(
-							workspace->_workspaceKey, key, warningIfMissing,
-							// 2022-12-18: MIK potrebbe essere stato appena
-							// aggiunto
-							true
-						);
-
-					tie(contentType, ignore, ignore, ignore, ignore, ignore) = contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-				}
+				tie(contentType, ignore, ignore, ignore, ignore, ignore) = _mmsEngineDBFacade->getMediaItemKeyDetails(
+					workspace->_workspaceKey, key, false,
+					// 2022-12-18: MIK potrebbe essere stato appena
+					// aggiunto
+					true
+				);
 			}
 			else
 			{
-				tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(
-						key,
-						// 2022-12-18: MIK potrebbe essere stato appena
-						// aggiunto
-						true
-					);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathFileNameSizeInBytesAndDeliveryFileName;
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) = _mmsStorage->getPhysicalPathDetails(
+					key,
+					// 2022-12-18: MIK potrebbe essere stato appena
+					// aggiunto
+					true
+				);
 
 				sourcePhysicalPathKey = key;
 
-				{
-					bool warningIfMissing = false;
-					tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, key, warningIfMissing,
-								// 2022-12-18: MIK potrebbe essere stato
-								// appena aggiunto
-								true
-							);
-
-					tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-				}
+				tie(sourceMediaItemKey, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, key, false,
+						// 2022-12-18: MIK potrebbe essere stato
+						// appena aggiunto
+						true
+					);
 			}
 
 			_mmsEngineDBFacade->addEncoding_FaceRecognitionJob(
@@ -154,42 +132,34 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 			);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "manageFaceRecognitionMediaTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		// Update IngestionJob done in the calling method
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			string() + "manageFaceRecognitionMediaTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_ERROR("manageFaceRecognitionMediaTask failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		// Update IngestionJob done in the calling method
 
-		throw e;
+		throw;
 	}
 }
 
 void MMSEngineProcessor::manageFaceIdentificationMediaTask(
-	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, shared_ptr<Workspace> workspace, json parametersRoot,
+	int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, const shared_ptr<Workspace>& workspace,
+	const json& parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-)
+) const
 {
 	try
 	{
 		if (dependencies.size() != 1)
 		{
-			string errorMessage = string() + "Wrong medias number to be processed for Face Identification" +
-								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
-								  ", dependencies.size: " + to_string(dependencies.size());
+			string errorMessage = std::format("Wrong medias number to be processed for Face Identification"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", dependencies.size: {}", _processorIdentifier, ingestionJobKey, dependencies.size());
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -198,22 +168,19 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		MMSEngineDBFacade::EncodingPriority encodingPriority;
 		string field = "encodingPriority";
 		if (!JSONUtils::isPresent(parametersRoot, field))
-		{
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
-		}
 		else
-		{
 			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
-		}
 
 		string faceIdentificationCascadeName;
 		string deepLearnedModelTagsCommaSeparated;
 		{
-			string field = "cascadeName";
+			field = "cascadeName";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", Field: {}", _processorIdentifier, field);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -223,8 +190,9 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			field = "deepLearnedModelTags";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-									  ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", _processorIdentifier: {}"
+					", Field: {}", _processorIdentifier, field);
 				SPDLOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -239,65 +207,41 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			MMSEngineDBFacade::ContentType contentType;
 			string title;
 
-			int64_t key;
-			MMSEngineDBFacade::ContentType referenceContentType;
-			Validator::DependencyType dependencyType;
-			bool stopIfReferenceProcessingError;
-
-			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
+			auto [key, referenceContentType, dependencyType, stopIfReferenceProcessingError] = keyAndDependencyType;
 
 			if (dependencyType == Validator::DependencyType::MediaItemKey)
 			{
 				int64_t encodingProfileKey = -1;
 
-				bool warningIfMissing = false;
-				tuple<int64_t, string, int, string, string, int64_t, string> physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(
-						key, encodingProfileKey, warningIfMissing,
-						// 2022-12-18: MIK potrebbe essere stato appena
-						// aggiunto
-						true
-					);
-				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) =
-					physicalPathKeyPhysicalPathFileNameSizeInBytesAndDeliveryFileName;
+				tie(ignore, mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) = _mmsStorage->getPhysicalPathDetails(
+					key, encodingProfileKey, false,
+					// 2022-12-18: MIK potrebbe essere stato appena
+					// aggiunto
+					true
+				);
 
-				{
-					bool warningIfMissing = false;
-					tuple<MMSEngineDBFacade::ContentType, string, string, string, int64_t, int64_t>
-						contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey = _mmsEngineDBFacade->getMediaItemKeyDetails(
-							workspace->_workspaceKey, key, warningIfMissing,
-							// 2022-12-18: MIK potrebbe essere stato appena
-							// aggiunto
-							true
-						);
-
-					tie(contentType, ignore, ignore, ignore, ignore, ignore) = contentTypeTitleUserDataIngestionDateRemovedInAndIngestionJobKey;
-				}
+				tie(contentType, ignore, ignore, ignore, ignore, ignore) = _mmsEngineDBFacade->getMediaItemKeyDetails(
+					workspace->_workspaceKey, key, false,
+					// 2022-12-18: MIK potrebbe essere stato appena
+					// aggiunto
+					true
+				);
 			}
 			else
 			{
-				tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
-					_mmsStorage->getPhysicalPathDetails(
-						key,
-						// 2022-12-18: MIK potrebbe essere stato appena
-						// aggiunto
+				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) = _mmsStorage->getPhysicalPathDetails(
+					key,
+					// 2022-12-18: MIK potrebbe essere stato appena
+					// aggiunto
+					true
+				);
+				tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
+					_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
+						workspace->_workspaceKey, key, false,
+						// 2022-12-18: MIK potrebbe essere stato
+						// appena aggiunto
 						true
 					);
-				tie(mmsAssetPathName, ignore, ignore, ignore, ignore, ignore) = physicalPathFileNameSizeInBytesAndDeliveryFileName;
-				{
-					bool warningIfMissing = false;
-					tuple<int64_t, MMSEngineDBFacade::ContentType, string, string, string, int64_t, string, string, int64_t>
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName =
-							_mmsEngineDBFacade->getMediaItemKeyDetailsByPhysicalPathKey(
-								workspace->_workspaceKey, key, warningIfMissing,
-								// 2022-12-18: MIK potrebbe essere stato
-								// appena aggiunto
-								true
-							);
-
-					tie(ignore, contentType, ignore, ignore, ignore, ignore, ignore, ignore, ignore) =
-						mediaItemKeyContentTypeTitleUserDataIngestionDateIngestionJobKeyAndFileName;
-				}
 			}
 
 			_mmsEngineDBFacade->addEncoding_FaceIdentificationJob(
@@ -305,26 +249,16 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 			);
 		}
 	}
-	catch (runtime_error &e)
-	{
-		SPDLOG_ERROR(
-			string() + "manageFaceIdendificationMediaTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
-		);
-
-		// Update IngestionJob done in the calling method
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
-			string() + "manageFaceIdendificationMediaTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
+		SPDLOG_ERROR("manageFaceIdendificationMediaTask failed"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 
 		// Update IngestionJob done in the calling method
 
-		throw e;
+		throw;
 	}
 }

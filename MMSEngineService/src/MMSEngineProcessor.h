@@ -216,14 +216,14 @@ class MMSEngineProcessor
 	void copyContent(int64_t ingestionJobKey, std::string mmsAssetPathName, std::string localPath, std::string localFileName);
 
 	void manageFaceRecognitionMediaTask(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, const std::shared_ptr<Workspace>& workspace, const nlohmann::json& parametersRoot,
 		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-	);
+	) const;
 
 	void manageFaceIdentificationMediaTask(
-		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot,
+		int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, const std::shared_ptr<Workspace>& workspace, const nlohmann::json& parametersRoot,
 		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
-	);
+	) const;
 
 	void manageLiveRecorder(
 		int64_t ingestionJobKey, const std::string &ingestionJobLabel, MMSEngineDBFacade::IngestionStatus ingestionStatus,
