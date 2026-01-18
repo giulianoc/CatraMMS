@@ -621,7 +621,7 @@ void API::manageReferencesInput(
 {
 	string field;
 
-	SPDLOG_INFO(
+	SPDLOG_TRACE(
 		"manageReferencesInput (1)"
 		", taskOrGroupOfTasksLabel: {}"
 		", IngestionType: {}"
@@ -848,7 +848,7 @@ void API::manageReferencesInput(
 				// );
 				for (int index = previousReferencesRootSize - 1; index >= dependenciesToBeAddedToReferencesAtIndex; index--)
 				{
-					SPDLOG_INFO(
+					SPDLOG_TRACE(
 						"making 'space' in referencesRoot"
 						", ingestionRootKey: {}"
 						", from {} to {}",
@@ -861,7 +861,7 @@ void API::manageReferencesInput(
 				for (int index = dependenciesToBeAddedToReferencesAtIndex;
 					 index < dependenciesToBeAddedToReferencesAtIndex + dependOnIngestionJobKeysSize; index++)
 				{
-					SPDLOG_INFO(
+					SPDLOG_TRACE(
 						"fill in dependOnIngestionJobKey"
 						", ingestionRootKey: {}"
 						", from {} to {}",
@@ -894,7 +894,7 @@ void API::manageReferencesInput(
 		if (!parametersSectionPresent)
 			taskRoot[field] = parametersRoot;
 
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			"manageReferencesInput (4) add to referencesRoot all the inherited references"
 			", ingestionRootKey: {}"
 			", taskOrGroupOfTasksLabel: {}"
@@ -910,7 +910,7 @@ void API::manageReferencesInput(
 		);
 	}
 	else
-		SPDLOG_INFO(
+		SPDLOG_TRACE(
 			"manageReferencesInput (4) NO inherited references"
 			", ingestionRootKey: {}"
 			", taskOrGroupOfTasksLabel: {}"
