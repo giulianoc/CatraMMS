@@ -1915,7 +1915,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 
 				// sprintf(currentUtcChunkStartTime_HHMISS, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				string currentUtcChunkStartTime_HHMISS2 = std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
-				currentUtcChunkStartTime_HHMISS = Datetime::dateTimeFormat(tmDateTime, "%H:%M:%S");
+				currentUtcChunkStartTime_HHMISS = Datetime::dateTimeFormat(Datetime::utcSecondsToLocalTime(utcChunkStartTime), "%H:%M:%S");
 				SPDLOG_INFO("AAAAAAAA"
 					", currentUtcChunkStartTime_HHMISS2: {}"
 					", currentUtcChunkStartTime_HHMISS: {}", currentUtcChunkStartTime_HHMISS2, currentUtcChunkStartTime_HHMISS
