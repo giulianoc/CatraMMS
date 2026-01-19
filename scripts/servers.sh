@@ -403,6 +403,22 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-1
+prodServers[$((serverIndex*6+1))]=ru002773.arubabiz.net
+prodServers[$((serverIndex*6+2))]=cibortv/cibortv-aruba
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=externalEncoder
+prodServers[$((serverIndex*6+5))]=
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-2
+prodServers[$((serverIndex*6+1))]=ru002774.arubabiz.net
+prodServers[$((serverIndex*6+2))]=cibortv/cibortv-aruba
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=externalEncoder
+prodServers[$((serverIndex*6+5))]=
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-3
 prodServers[$((serverIndex*6+1))]=ru002756.arubabiz.net
 prodServers[$((serverIndex*6+2))]=cibortv/cibortv-aruba
