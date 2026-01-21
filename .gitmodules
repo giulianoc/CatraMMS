@@ -67,3 +67,6 @@
 [submodule "CatraLibraries/BandwidthUsageThread"]
 	path = CatraLibraries/BandwidthUsageThread
 	url = https://github.com/giulianoc/BandwidthUsageThread.git
+[submodule "CatraLibraries/ThreadLogger"]
+	path = CatraLibraries/ThreadLogger
+	url = https://github.com/giulianoc/ThreadLogger.git
