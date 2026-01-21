@@ -144,6 +144,12 @@ void registerMonitorLogger(const json& configurationRoot)
 		", log->encoder->monitor->type: {}",
 		logType
 	);
+	auto logLevel = JsonPath(&configurationRoot)["log"]["encoder"]["monitor"]["level"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->encoder->monitor->level: {}",
+		logLevel
+	);
 
 	LOG_INFO("registerMonitorLogger");
 	std::vector<spdlog::sink_ptr> sinks;
@@ -153,9 +159,21 @@ void registerMonitorLogger(const json& configurationRoot)
 			int logRotationHour = JsonPath(&configurationRoot)["log"]["encoder"]["daily"]["rotationHour"].as<int32_t>(1);
 			int logRotationMinute = JsonPath(&configurationRoot)["log"]["encoder"]["daily"]["rotationMinute"].as<int32_t>(1);
 
-			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
+			const auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
 			dailySink->set_level(spdlog::level::warn);
+
+			// livello di log sul sink
+			if (logLevel == "debug")
+				dailySink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				dailySink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				dailySink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				dailySink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				dailySink->set_level(spdlog::level::critical);
 		}
 		else if (logType == "rotating")
 		{
@@ -165,6 +183,18 @@ void registerMonitorLogger(const json& configurationRoot)
 			const auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
 			rotatingSink->set_level(spdlog::level::warn);
+
+			// livello di log sul sink
+			if (logLevel == "debug")
+				rotatingSink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				rotatingSink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				rotatingSink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				rotatingSink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				rotatingSink->set_level(spdlog::level::critical);
 		}
 	}
 
