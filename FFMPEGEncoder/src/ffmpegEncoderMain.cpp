@@ -205,6 +205,7 @@ int main(int argc, char **argv)
 		auto configurationRoot = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
 
 		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
+		registerMonitorLogger(configurationRoot);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);
