@@ -44,33 +44,16 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 	}
 	catch (exception &e)
 	{
-		// error(__FILEREF__ + "threadsStatistic addThread failed"
-		// 	+ ", exception: " + e.what()
-		// );
+		LOG_ERROR("FFMPEGEncoderDaemons builder failed"
+			", exception: {}", e.what());
 	}
 }
 
-FFMPEGEncoderDaemons::~FFMPEGEncoderDaemons()
-{
-	try
-	{
-	}
-	catch (runtime_error &e)
-	{
-		// error(__FILEREF__ + "threadsStatistic removeThread failed"
-		// 	+ ", exception: " + e.what()
-		// );
-	}
-	catch (exception &e)
-	{
-		// error(__FILEREF__ + "threadsStatistic removeThread failed"
-		// 	+ ", exception: " + e.what()
-		// );
-	}
-}
+FFMPEGEncoderDaemons::~FFMPEGEncoderDaemons() = default;
 
 void FFMPEGEncoderDaemons::startMonitorThread()
 {
+	ThreadLogger threadLogger(spdlog::get("monitor"));
 
 	while (!_monitorThreadShutdown)
 	{
@@ -129,12 +112,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 			for (int liveProxyIndex = 0; liveProxyIndex < copiedRunningLiveProxiesCapability.size(); liveProxyIndex++)
 			{
-				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> copiedLiveProxy = copiedRunningLiveProxiesCapability[liveProxyIndex];
-				shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> sourceLiveProxy = sourceLiveProxiesCapability[liveProxyIndex];
+				const shared_ptr<LiveProxyAndGrid>& copiedLiveProxy = copiedRunningLiveProxiesCapability[liveProxyIndex];
+				const shared_ptr<LiveProxyAndGrid>& sourceLiveProxy = sourceLiveProxiesCapability[liveProxyIndex];
 
 				// this is just for logging
 				string configurationLabel;
-				if (copiedLiveProxy->_inputsRoot.size() > 0)
+				if (!copiedLiveProxy->_inputsRoot.empty())
 				{
 					json inputRoot = copiedLiveProxy->_inputsRoot[0];
 					string field = "streamInput";

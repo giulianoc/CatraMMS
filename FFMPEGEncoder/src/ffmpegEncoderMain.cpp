@@ -130,6 +130,64 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 	return logger;
 }
 
+void registerMonitorLogger(const json& configurationRoot)
+{
+	auto logPathName = JsonPath(&configurationRoot)["log"]["encoder"]["monitor"]["pathName"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->encoder->monitor->pathName: {}",
+		logPathName
+	);
+	auto logType = JsonPath(&configurationRoot)["log"]["encoder"]["monitor"]["type"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->encoder->monitor->type: {}",
+		logType
+	);
+
+	LOG_INFO("registerMonitorLogger");
+	std::vector<spdlog::sink_ptr> sinks;
+	{
+		if (logType == "daily")
+		{
+			int logRotationHour = JsonPath(&configurationRoot)["log"]["encoder"]["daily"]["rotationHour"].as<int32_t>(1);
+			int logRotationMinute = JsonPath(&configurationRoot)["log"]["encoder"]["daily"]["rotationMinute"].as<int32_t>(1);
+
+			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(dailySink);
+			dailySink->set_level(spdlog::level::warn);
+		}
+		else if (logType == "rotating")
+		{
+			const auto maxSizeInKBytes = JsonPath(&configurationRoot)["log"]["encoder"]["rotating"]["maxSizeInKBytes"].as<int64_t>(1000);
+			int maxFiles = JsonPath(&configurationRoot)["log"]["encoder"]["rotating"]["maxFiles"].as<int32_t>(10);
+
+			const auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(rotatingSink);
+			rotatingSink->set_level(spdlog::level::warn);
+		}
+	}
+
+	const auto logger = std::make_shared<spdlog::logger>("monitor", begin(sinks), end(sinks));
+	spdlog::register_logger(logger);
+
+	// trigger flush if the log severity is error or higher
+	logger->flush_on(spdlog::level::trace);
+
+	// inizializza il livello del logger a trace in modo che ogni messaggio possa raggiungere i logger nei sinks
+	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
+
+	auto pattern = JsonPath(&configurationRoot)["log"]["encoder"]["pattern"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->encoder->pattern: {}",
+		pattern
+	);
+	logger->set_pattern(pattern);
+
+	// logger->warn("Test...");
+}
+
 int main(int argc, char **argv)
 {
 	try
