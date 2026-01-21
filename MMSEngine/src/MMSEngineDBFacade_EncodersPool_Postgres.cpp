@@ -50,7 +50,7 @@ int64_t MMSEngineDBFacade::addEncoder(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -58,7 +58,7 @@ int64_t MMSEngineDBFacade::addEncoder(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -150,7 +150,7 @@ void MMSEngineDBFacade::modifyEncoder(
 					", oneParameterPresent: {}",
 					encoderKey, oneParameterPresent
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -179,7 +179,7 @@ void MMSEngineDBFacade::modifyEncoder(
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", lastSQLCommand: " + lastSQLCommand
 			;
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -190,7 +190,7 @@ void MMSEngineDBFacade::modifyEncoder(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -198,7 +198,7 @@ void MMSEngineDBFacade::modifyEncoder(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -244,7 +244,7 @@ void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(
 					", rowsUpdated: {}"
 					", sqlStatement: {}",
 					encoderKey, rowsUpdated, sqlStatement);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -254,7 +254,7 @@ void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -262,7 +262,7 @@ void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -308,7 +308,7 @@ void MMSEngineDBFacade::updateEncoderCPUUsage(
 					", rowsUpdated: {}"
 					", sqlStatement: {}",
 					encoderKey, rowsUpdated, sqlStatement);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -318,7 +318,7 @@ void MMSEngineDBFacade::updateEncoderCPUUsage(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -326,7 +326,7 @@ void MMSEngineDBFacade::updateEncoderCPUUsage(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -341,18 +341,6 @@ void MMSEngineDBFacade::updateEncoderCPUUsage(
 
 void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -379,7 +367,7 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 					", sqlStatement: {}",
 					encoderKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -389,7 +377,7 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -397,7 +385,7 @@ void MMSEngineDBFacade::removeEncoder(int64_t encoderKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -427,7 +415,7 @@ MMSEngineDBFacade::encoder_LabelPublicServerNameInternalServerName(int64_t encod
 	catch (exception &e)
 	{
 		if (!dynamic_cast<DBRecordNotFound *>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"runtime_error"
 				", encoderKey: {}"
 				", fromMaster: {}"
@@ -451,7 +439,7 @@ string MMSEngineDBFacade::encoder_columnAsString(string columnName, int64_t enco
 	catch (exception &e)
 	{
 		if (!dynamic_cast<DBRecordNotFound*>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"runtime_error"
 				", encoderKey: {}"
 				", fromMaster: {}"
@@ -479,7 +467,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -498,7 +486,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -550,7 +538,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 					encoderKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -562,7 +550,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -570,7 +558,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -585,18 +573,6 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::encoderQuery(
 
 void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -606,7 +582,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -614,7 +590,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -629,7 +605,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 
 void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey, PostgresConnTrans &trans)
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received addAssociationWorkspaceEncoder"
 		", workspaceKey: {}"
 		", encoderKey: {}",
@@ -661,7 +637,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -669,7 +645,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -682,18 +658,6 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, int
 
 bool MMSEngineDBFacade::encoderWorkspaceMapping_isPresent(int64_t workspaceKey, int64_t encoderKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
@@ -723,7 +687,7 @@ bool MMSEngineDBFacade::encoderWorkspaceMapping_isPresent(int64_t workspaceKey, 
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -731,7 +695,7 @@ bool MMSEngineDBFacade::encoderWorkspaceMapping_isPresent(int64_t workspaceKey, 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -746,18 +710,6 @@ bool MMSEngineDBFacade::encoderWorkspaceMapping_isPresent(int64_t workspaceKey, 
 
 void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, string sharedEncodersPoolLabel, json sharedEncodersLabel)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -791,7 +743,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 					", encoderLabel: {}",
 					encoderLabel
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -806,7 +758,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -814,7 +766,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -829,18 +781,6 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 
 void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, int64_t encoderKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -893,7 +833,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 					", sqlStatement: {}",
 					encoderKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -903,7 +843,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -911,7 +851,7 @@ void MMSEngineDBFacade::removeAssociationWorkspaceEncoder(int64_t workspaceKey, 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -970,7 +910,7 @@ json MMSEngineDBFacade::getEncoderWorkspacesAssociation(int64_t encoderKey, chro
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -978,7 +918,7 @@ json MMSEngineDBFacade::getEncoderWorkspacesAssociation(int64_t encoderKey, chro
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1002,7 +942,7 @@ json MMSEngineDBFacade::getEncoderList(
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncoderList"
 			", start: {}"
 			", rows: {}"
@@ -1180,7 +1120,7 @@ json MMSEngineDBFacade::getEncoderList(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1188,7 +1128,7 @@ json MMSEngineDBFacade::getEncoderList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1291,14 +1231,14 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, PostgresHel
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}",
 				se->query(), se->what()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}",
 				e.what()
@@ -1334,7 +1274,7 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 	catch (exception& e)
 	{
 		if (dynamic_cast<CurlWrapper::ServerNotReachable*>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Encoder is not reachable, is it down?"
 				", ffmpegEncoderURL: {}"
 				", _ffmpegEncoderInfoTimeout: {}"
@@ -1342,14 +1282,14 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 				ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, e.what()
 			);
 		else if (dynamic_cast<runtime_error*>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Status URL failed (exception)"
 				", ffmpegEncoderURL: {}"
 				", exception: {}",
 				ffmpegEncoderURL, e.what()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Status URL failed (exception)"
 				", ffmpegEncoderURL: {}"
 				", exception: {}",
@@ -1392,21 +1332,21 @@ tuple<bool, int32_t, int64_t> MMSEngineDBFacade::getEncoderInfo(bool external, c
 	catch (exception& e)
 	{
 		if (dynamic_cast<CurlWrapper::ServerNotReachable*>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Encoder is not reachable, is it down?"
 				", ffmpegEncoderURL: {}"
 				", exception: {}",
 				ffmpegEncoderURL, e.what()
 			);
 		else if (dynamic_cast<runtime_error*>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Status URL failed (exception)"
 				", ffmpegEncoderURL: {}"
 				", exception: {}",
 				ffmpegEncoderURL, e.what()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Status URL failed (exception)"
 				", ffmpegEncoderURL: {}"
 				", exception: {}",
@@ -1426,7 +1366,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncodersPoolDetails"
 			", encodersPoolKey: {}",
 			encodersPoolKey
@@ -1460,7 +1400,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono
 					", encodersPoolKey: {}",
 					encodersPoolKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1475,7 +1415,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1483,7 +1423,7 @@ string MMSEngineDBFacade::getEncodersPoolDetails(int64_t encodersPoolKey, chrono
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1508,7 +1448,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncodersPoolList"
 			", start: {}"
 			", rows: {}"
@@ -1654,7 +1594,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 									", encoderKey: {}",
 									encoderKey
 								);
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -1688,7 +1628,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1696,7 +1636,7 @@ json MMSEngineDBFacade::getEncodersPoolList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1745,7 +1685,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, const string& l
 					", encoderKey: {}",
 					workspaceKey, encoderKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1796,7 +1736,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, const string& l
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1804,7 +1744,7 @@ int64_t MMSEngineDBFacade::addEncodersPool(int64_t workspaceKey, const string& l
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1824,7 +1764,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received modifyEncodersPool"
 			", encodersPoolKey: {}"
 			", workspaceKey: {}"
@@ -1860,7 +1800,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 					", encoderKey: {}",
 					workspaceKey, encoderKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1916,7 +1856,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 							", sqlStatement: {}",
 							newLabel, encodersPoolKey, rowsUpdated, sqlStatement
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2005,7 +1945,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 								", sqlStatement: {}",
 								encodersPoolKey, savedEncoderKey, rowsUpdated, sqlStatement
 							);
-							SPDLOG_WARN(errorMessage);
+							LOG_WARN(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -2019,7 +1959,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 					", encodersPoolKey: {}",
 					encodersPoolKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2029,7 +1969,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2037,7 +1977,7 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2054,18 +1994,6 @@ int64_t MMSEngineDBFacade::modifyEncodersPool(int64_t encodersPoolKey, int64_t w
 
 void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -2092,7 +2020,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 					", sqlStatement: {}",
 					encodersPoolKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2102,7 +2030,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2110,7 +2038,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2132,7 +2060,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received getEncoderUsingRoundRobin"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
@@ -2181,7 +2109,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", encodersPoolLabel: {}",
 					workspaceKey, encodersPoolLabel
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2277,7 +2205,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", encodersPoolKey: {}",
 					workspaceKey, encodersPoolKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2293,7 +2221,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 
 			if (external && !externalEncoderAllowed)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getEncoderUsingRoundRobin, skipped encoderKey because external encoder are not allowed"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}"
@@ -2305,7 +2233,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			}
 			if (!enabled)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getEncoderUsingRoundRobin, skipped encoderKey because encoder not enabled"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}"
@@ -2317,7 +2245,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			}
 			if (encoderKeyToBeSkipped != -1 && encoderKeyToBeSkipped == encoderKey)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getEncoderUsingRoundRobin, skipped encoderKey"
 					", workspaceKey: {}"
 					", encodersPoolLabel: {}"
@@ -2331,7 +2259,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			{
 				if (!isEncoderRunning(external, protocol, publicServerName, internalServerName, port))
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"getEncoderUsingRoundRobin, discarded encoderKey because not running"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}",
@@ -2354,7 +2282,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				", encoderKeyToBeSkipped: {}",
 				workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw EncoderNotFound(errorMessage);
 		}
@@ -2379,7 +2307,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			/*
 			if (rowsUpdated != 1)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"no update was done"
 					", newLastEncoderIndexUsed: {}"
 					", encodersPoolKey: {}"
@@ -2420,7 +2348,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2428,7 +2356,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2448,7 +2376,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received getEncoderUsingLeastResources"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
@@ -2466,7 +2394,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				", encodersPoolLabel: {}",
 				workspaceKey, encodersPoolLabel
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw EncoderNotFound(errorMessage);
 		}
@@ -2485,7 +2413,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			// lo stesso encoder non puo essere riutilizzato se non sono passati almeno XX seconds
 			// Viene in questo modo anche implementato una sorta di roundrobin nel caso in cui un encoder fallisce
 			// e viene rieseguita la select
-			int16_t encodersUnavailableAfterSelectedInSeconds = 45;
+			int16_t encodersUnavailableAfterSelectedInSeconds = 25; // CPUUsageThread manda updates ogni 10 secs
 			int16_t maxCPUUsage = 70;
 
 			// un encoder non viene considerato se non ha ricevuto aggiornamenti delle statistiche da almeno XX seconds
@@ -2516,7 +2444,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				encodersKeyList, externalEncoderCondition, maxCPUUsage, encodersUnavailableAfterSelectedInSeconds,
 				encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
 			);
-			SPDLOG_INFO("AAAAAAA: sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -2536,7 +2463,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", encodersPoolLabel: {}",
 					workspaceKey, encodersPoolLabel
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw EncoderNotFound(errorMessage);
 			}
@@ -2555,7 +2482,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2563,7 +2490,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2582,7 +2509,7 @@ string MMSEngineDBFacade::getEncodersKeyListByEncodersPool(int64_t workspaceKey,
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received getEncodersKeyListByEncodersPool"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
@@ -2638,7 +2565,7 @@ string MMSEngineDBFacade::getEncodersKeyListByEncodersPool(int64_t workspaceKey,
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2646,7 +2573,7 @@ string MMSEngineDBFacade::getEncodersKeyListByEncodersPool(int64_t workspaceKey,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2666,7 +2593,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncodersNumberByEncodersPool"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}",
@@ -2703,7 +2630,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 						", encodersPoolLabel: {}",
 						workspaceKey, encodersPoolLabel
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2756,7 +2683,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2764,7 +2691,7 @@ int MMSEngineDBFacade::getEncodersNumberByEncodersPool(int64_t workspaceKey, str
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2786,7 +2713,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncoderURL"
 			", encoderKey: {}"
 			", serverName: {}",
@@ -2838,7 +2765,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 					", encoderKey: {}",
 					encoderKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2851,7 +2778,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 			encoderURL = std::format("{}://{}:{}", protocol,
 				external ? publicServerName : internalServerName, port);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncoderURL"
 			", encoderKey: {}"
 			", serverName: {}"
@@ -2865,7 +2792,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2873,7 +2800,7 @@ pair<string, bool> MMSEngineDBFacade::getEncoderURL(int64_t encoderKey, string s
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

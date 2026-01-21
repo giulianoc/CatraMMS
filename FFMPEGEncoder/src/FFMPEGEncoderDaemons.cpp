@@ -33,7 +33,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_monitorThreadShutdown = false;
 
 		_monitorCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->monitorCheckInSeconds: {}",
 			_monitorCheckInSeconds
@@ -108,7 +108,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						liveProxyAndGridNotRunningCounter++;
 					}
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"liveProxyMonitor, numbers"
 					", total LiveProxyAndGrid: {}"
 					", liveProxyAndGridRunningCounter: {}"
@@ -117,7 +117,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					liveProxyAndGridNotRunningCounter
 				);
 			}
-			SPDLOG_INFO(
+			LOG_INFO(
 				"liveProxyMonitor clone"
 				", copiedRunningLiveProxiesCapability.size: {}"
 				", @MMS statistics@ - elapsed (millisecs): {}",
@@ -146,7 +146,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"liveProxyMonitor start"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -165,7 +165,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -208,7 +208,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -226,7 +226,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				 * il file di output non cambia, cioé nel caso di un proxy di un VOD.
 				if (liveProxyWorking)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor outputFFMpegFileSize check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -240,7 +240,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						liveProxyWorking = false;
 
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor. output ffmpeg file size is not changing"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -255,7 +255,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_proxyStart != sourceLiveProxy->_proxyStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -280,7 +280,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				bool rtmpOutputFound = false;
 				if (liveProxyWorking && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor manifest check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -313,7 +313,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											liveProxyWorking = false;
 
-											SPDLOG_ERROR(
+											LOG_ERROR(
 												"liveProxyMonitor. Manifest file does not exist"
 												", ingestionJobKey: {}"
 												", encodingJobKey: {}"
@@ -345,7 +345,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											liveProxyWorking = false;
 
-											SPDLOG_ERROR(
+											LOG_ERROR(
 												"liveProxyMonitor. Manifest file was not updated in the last {} seconds"
 												", ingestionJobKey: {}"
 												", encodingJobKey: {}"
@@ -366,7 +366,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"liveProxyMonitor (HLS) on manifest path name failed"
 									", copiedLiveProxy->_ingestionJobKey: {}"
 									", copiedLiveProxy->_encodingJobKey: {}"
@@ -384,7 +384,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -401,7 +401,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"liveProxyMonitor nonMonotonousDTSInOutputLog check"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -416,7 +416,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							liveProxyWorking = false;
 
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveProxyMonitor (rtmp). Live Proxy is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. "
 								"LiveProxy (ffmpeg) is killed in order to be started again"
 								", ingestionJobKey: {}"
@@ -430,7 +430,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor (rtmp) Non-monotonous DTS failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -442,7 +442,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -466,7 +466,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// in order to be sure the manifest file was already created
 				if (liveProxyWorking && liveProxyLiveTimeInSeconds > 3 * 60)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor segments check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -521,7 +521,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													", manifestFilePathName: {}",
 													copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, manifestFilePathName
 												);
-												SPDLOG_ERROR(errorMessage);
+												LOG_ERROR(errorMessage);
 
 												throw runtime_error(errorMessage);
 											}
@@ -571,7 +571,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 																chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
 															if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 															{
-																SPDLOG_INFO(
+																LOG_INFO(
 																	"liveProxyMonitor. chunk to be removed, too old"
 																	", copiedLiveProxy->_ingestionJobKey: {}"
 																	", copiedLiveProxy->_encodingJobKey: {}"
@@ -603,7 +603,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 															copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
 															manifestDirectoryPathName, e.what()
 														);
-														SPDLOG_ERROR(errorMessage);
+														LOG_ERROR(errorMessage);
 
 														// throw e;
 													}
@@ -618,7 +618,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 															copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
 															manifestDirectoryPathName, e.what()
 														);
-														SPDLOG_ERROR(errorMessage);
+														LOG_ERROR(errorMessage);
 
 														// throw e;
 													}
@@ -627,7 +627,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										}
 										catch (exception &e)
 										{
-											SPDLOG_ERROR(
+											LOG_ERROR(
 												"liveProxyMonitor. scan LiveProxy files failed"
 												", _ingestionJobKey: {}"
 												", _encodingJobKey: {}"
@@ -642,7 +642,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											// if we are here, it means the ffmpeg command is not generating the ts files
 
-											SPDLOG_ERROR(
+											LOG_ERROR(
 												"liveProxyMonitor. Chunks were not generated"
 												", copiedLiveProxy->_ingestionJobKey: {}"
 												", copiedLiveProxy->_encodingJobKey: {}"
@@ -657,7 +657,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
-											SPDLOG_ERROR(
+											LOG_ERROR(
 												"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor. Live Proxy is not "
 												"working (no segments were generated). LiveProxy (ffmpeg) is killed in order to be started again"
 												", ingestionJobKey: {}"
@@ -678,7 +678,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											{
 												try
 												{
-													SPDLOG_INFO(
+													LOG_INFO(
 														"liveProxyMonitor. Remove chunk because too old"
 														", copiedLiveProxy->_ingestionJobKey: {}"
 														", copiedLiveProxy->_encodingJobKey: {}"
@@ -690,7 +690,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												}
 												catch (runtime_error &e)
 												{
-													SPDLOG_ERROR(
+													LOG_ERROR(
 														"liveProxyMonitor. remove failed"
 														", copiedLiveProxy->_ingestionJobKey: {}"
 														", copiedLiveProxy->_encodingJobKey: {}"
@@ -706,7 +706,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"liveProxyMonitor (HLS) on segments (and retention) failed"
 									", copiedLiveProxy->_ingestionJobKey: {}"
 									", copiedLiveProxy->_encodingJobKey: {}"
@@ -720,7 +720,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -743,7 +743,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					if (copiedLiveProxy->_callbackData->getFinished())
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"liveProxyMonitor getRealTimeInfoByOutputLog check"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -778,7 +778,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									// real time info non sono cambiate
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
-										SPDLOG_ERROR(
+										LOG_ERROR(
 											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
 											"info are not changing. LiveProxy (ffmpeg) is killed in order to be "
 											"started again"
@@ -798,7 +798,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 									else
 									{
-										SPDLOG_INFO(
+										LOG_INFO(
 											"liveProxyMonitor. Live Proxy real time info is not changed within the tolerance"
 											", ingestionJobKey: {}"
 											", encodingJobKey: {}"
@@ -820,7 +820,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveProxyMonitor (rtmp) real time info check failed"
 								", copiedLiveProxy->_ingestionJobKey: {}"
 								", copiedLiveProxy->_encodingJobKey: {}"
@@ -831,7 +831,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					else
 					{
-						SPDLOG_WARN(
+						LOG_WARN(
 							"liveProxyMonitor getRealTimeInfoByOutputLog check cannot be done because no callbackdata available"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -845,7 +845,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -895,7 +895,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				 */
 				if (liveProxyWorking)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor too timestamp discontinuities in time window check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -908,7 +908,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCountInTimeWindow() >
 							_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). "
 								"Too timestamp discontinuities in time window failed. LiveProxy (ffmpeg) is killed in order to be started again"
 								", ingestionJobKey: {}"
@@ -926,7 +926,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor (rtmp) too timestamp discontinuities in time window check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -938,7 +938,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -953,7 +953,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (liveProxyWorking)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor forbiddenErrorInOutputLog check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -965,7 +965,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						if (sourceLiveProxy->_callbackData->getUrlForbidden())
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy is returning 'HTTP "
 								"error 403 Forbidden'. LiveProxy (ffmpeg) is killed in order to be started again"
 								", ingestionJobKey: {}"
@@ -980,7 +980,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor (rtmp) HTTP error 403 Forbidden check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -992,7 +992,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1007,7 +1007,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (liveProxyWorking)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor Both TLS and open resource errors check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1019,7 +1019,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						if (sourceLiveProxy->_callbackData->getTlsAndOpenResourceError())
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. Both TLS and open resource errors detected. "
 								"LiveProxy (ffmpeg) is killed in order to be started again"
 								", ingestionJobKey: {}"
@@ -1034,7 +1034,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor (rtmp) Both TLS and open resource errors check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -1046,7 +1046,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1061,7 +1061,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (liveProxyWorking)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor Segment Failed Too Many Times check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1073,7 +1073,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						if (sourceLiveProxy->_callbackData->getSegmentFailedTooManyTimes())
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. Segment Failed Too Many Times. "
 								"LiveProxy (ffmpeg) is killed in order to be started again"
 								", ingestionJobKey: {}"
@@ -1088,7 +1088,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor (rtmp) Segment Failed Too Many Times"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -1100,7 +1100,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveProxyMonitor. LiveProxy changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1115,7 +1115,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!liveProxyWorking)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor. LiveProxy (ffmpeg) is killed/quit in order to "
 						"be started again"
 						", ingestionJobKey: {}"
@@ -1150,7 +1150,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveProxyMonitor. ProcessUtility::kill/quit/term Process failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
@@ -1163,7 +1163,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"liveProxyMonitor {}/{}"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -1173,7 +1173,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					configurationLabel, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - now).count()
 				);
 			}
-			SPDLOG_INFO(
+			LOG_INFO(
 				"liveProxyMonitor"
 				", liveProxyAndGridRunningCounter: {}"
 				", @MMS statistics@ - elapsed (millisecs): {}",
@@ -1182,7 +1182,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"liveProxyMonitor failed"
 				", e.what(): {}",
 				e.what()
@@ -1223,7 +1223,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						liveRecordingNotRunningCounter++;
 					}
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"liveRecordingMonitor, numbers"
 					", total LiveRecording: {}"
 					", liveRecordingRunningCounter: {}"
@@ -1231,7 +1231,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					liveRecordingRunningCounter + liveRecordingNotRunningCounter, liveRecordingRunningCounter, liveRecordingNotRunningCounter
 				);
 			}
-			SPDLOG_INFO(
+			LOG_INFO(
 				"liveRecordingMonitor clone"
 				", copiedRunningLiveRecordingCapability.size: "
 				", @MMS statistics@ - elapsed (millisecs): ",
@@ -1246,7 +1246,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording = copiedRunningLiveRecordingCapability[liveRecordingIndex];
 				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording = sourceLiveRecordingCapability[liveRecordingIndex];
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"liveRecordingMonitor"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -1262,7 +1262,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1309,7 +1309,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1325,7 +1325,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// controlla se il lastModificationTime dell'output file di ffmpeg non è cambiato
 				if (liveRecorderWorking)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor outputFFMpegFileLastModificationTime check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1339,7 +1339,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						liveRecorderWorking = false;
 
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveRecorderMonitor. output ffmpeg file size is not changing"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -1356,7 +1356,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1376,7 +1376,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// in order to be sure the manifest file was already created
 				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. liveRecorder.list check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1394,7 +1394,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							liveRecorderWorking = false;
 
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveRecordingMonitor. Segment list file does not exist"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -1424,7 +1424,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								liveRecorderWorking = false;
 
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"liveRecordingMonitor. Segment list file was not updated in the last {} seconds"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -1443,7 +1443,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveRecordingMonitor on path name failed"
 							", copiedLiveRecording->_ingestionJobKey: {}"
 							", copiedLiveRecording->_encodingJobKey: {}"
@@ -1456,7 +1456,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1478,7 +1478,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				bool rtmpOutputFound = false;
 				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. manifest check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1510,7 +1510,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								{
 									liveRecorderWorking = false;
 
-									SPDLOG_ERROR(
+									LOG_ERROR(
 										"liveRecorderMonitor. Manifest file does not exist"
 										", ingestionJobKey: {}"
 										", encodingJobKey: {}"
@@ -1542,7 +1542,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								{
 									liveRecorderWorking = false;
 
-									SPDLOG_ERROR(
+									LOG_ERROR(
 										"liveRecorderMonitor. Manifest file was not updated in the last {} seconds"
 										", ingestionJobKey: {}"
 										", encodingJobKey: {}"
@@ -1561,7 +1561,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"liveRecorderMonitor (HLS) on manifest path name failed"
 									", copiedLiveRecording->_ingestionJobKey: {}"
 									", copiedLiveRecording->_encodingJobKey: {}"
@@ -1580,7 +1580,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1597,7 +1597,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"liveRecordingMonitor. nonMonotonousDTSInOutputLog check"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -1612,7 +1612,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							liveRecorderWorking = false;
 
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveRecorderMonitor (rtmp). Live Recorder is logging 'Non-monotonous DTS in output stream/incorrect timestamps'. "
 								"LiveRecorder (ffmpeg) is killed in order to be started again"
 								", ingestionJobKey: {}"
@@ -1628,7 +1628,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveRecorderMonitor (rtmp) Non-monotonous DTS failed"
 							", copiedLiveRecording->_ingestionJobKey: {}"
 							", copiedLiveRecording->_encodingJobKey: {}"
@@ -1641,7 +1641,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1666,7 +1666,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				// in order to be sure the manifest file was already created
 				if (liveRecorderWorking && liveRecordingLiveTimeInSeconds > 3 * 60)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. segment check"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1710,7 +1710,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												", manifestFilePathName: {}",
 												copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestFilePathName
 											);
-											SPDLOG_ERROR(errorMessage);
+											LOG_ERROR(errorMessage);
 
 											throw runtime_error(errorMessage);
 										}
@@ -1736,7 +1736,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											// long liveProxyChunkRetentionInSeconds = 10 * 60;	// 10 minutes
 											long liveProxyChunkRetentionInSeconds =
 												(outputSegmentDurationInSeconds * outputPlaylistEntriesNumber) + (10 * 60); // 10 minutes
-											SPDLOG_INFO(
+											LOG_INFO(
 												"liveRecordingMonitor. segment check"
 												", ingestionJobKey: {}"
 												", encodingJobKey: {}"
@@ -1778,7 +1778,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 															chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
 														if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 														{
-															SPDLOG_INFO(
+															LOG_INFO(
 																"liveRecordingMonitor. chunk to be removed, too old"
 																", copiedLiveRecording->_ingestionJobKey: {}"
 																", copiedLiveRecording->_encodingJobKey: {}"
@@ -1800,7 +1800,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												}
 												catch (exception &e)
 												{
-													SPDLOG_ERROR(
+													LOG_ERROR(
 														"liveRecordingMonitor. listing directory failed"
 														", copiedLiveRecording->_ingestionJobKey: {}"
 														", copiedLiveRecording->_encodingJobKey: {}"
@@ -1815,7 +1815,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 									catch (exception &e)
 									{
-										SPDLOG_ERROR(
+										LOG_ERROR(
 											"liveRecordingMonitor. scan LiveRecorder files failed"
 											", _ingestionJobKey: {}"
 											", _encodingJobKey: {}"
@@ -1830,7 +1830,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									{
 										// if we are here, it means the ffmpeg command is not generating the ts files
 
-										SPDLOG_ERROR(
+										LOG_ERROR(
 											"liveRecordingMonitor. Chunks were not generated"
 											", _ingestionJobKey: {}"
 											", _encodingJobKey: {}"
@@ -1845,7 +1845,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										liveRecorderWorking = false;
 										localErrorMessage = " restarted because of 'no segments were generated'";
 
-										SPDLOG_ERROR(
+										LOG_ERROR(
 											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecorderMonitor. Live Recorder is not "
 											"working (no segments were generated). LiveRecorder (ffmpeg) is killed in order to be started again"
 											", _ingestionJobKey: {}"
@@ -1867,7 +1867,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										{
 											try
 											{
-												SPDLOG_INFO(
+												LOG_INFO(
 													"liveRecordingMonitor. Remove chunk because too old"
 													", _ingestionJobKey: {}"
 													", _encodingJobKey: {}"
@@ -1879,7 +1879,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											}
 											catch (exception &e)
 											{
-												SPDLOG_ERROR(
+												LOG_ERROR(
 													"liveRecordingMonitor. remove failed"
 													", _ingestionJobKey: {}"
 													", _encodingJobKey: {}"
@@ -1895,7 +1895,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"liveRecorderMonitor (HLS) on segments (and retention) failed"
 									", copiedLiveRecording->_ingestionJobKey: {}"
 									", copiedLiveRecording->_encodingJobKey: {}"
@@ -1910,7 +1910,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (!sourceLiveRecording->_childProcessId.isInitialized() ||
 					copiedLiveRecording->_encodingStart != sourceLiveRecording->_encodingStart)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"liveRecordingMonitor. LiveRecorder changed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -1933,7 +1933,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					if (copiedLiveRecording->_callbackData->getFinished())
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"liveRecordingMonitor. getRealTimeInfoByOutputLog check"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -1969,7 +1969,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									// real time info not changed
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
 									{
-										SPDLOG_ERROR(
+										LOG_ERROR(
 											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
 											"Recorder real time info are not changing. LiveRecorder (ffmpeg) is killed in order to be started again"
 											", ingestionJobKey: {}"
@@ -1989,7 +1989,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									}
 									else
 									{
-										SPDLOG_INFO(
+										LOG_INFO(
 											"liveRecordingMonitor. Live Recorder real time info is not changed but within the tolerance"
 											", ingestionJobKey: {}"
 											", encodingJobKey: {}"
@@ -2011,7 +2011,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"liveRecorderMonitor (rtmp) real time info check failed"
 								", copiedLiveRecording->_ingestionJobKey: {}"
 								", copiedLiveRecording->_encodingJobKey: {}"
@@ -2022,7 +2022,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					else
 					{
-						SPDLOG_WARN(
+						LOG_WARN(
 							"liveRecordingMonitor, getRealTimeInfoByOutputLog check cannot be done because no callbackdata available"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -2036,7 +2036,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				if (!liveRecorderWorking)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor. Live Recording is not working (segment "
 						"list file is missing or was not updated). LiveRecording (ffmpeg) is killed in order to be started again"
 						", _ingestionJobKey: {}"
@@ -2071,7 +2071,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"liveRecordingMonitor. ProcessUtility::kill/quit Process failed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -2084,7 +2084,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					}
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"liveRecordingMonitor {}/{}"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2094,7 +2094,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					copiedLiveRecording->_channelLabel, chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - now).count()
 				);
 			}
-			SPDLOG_INFO(
+			LOG_INFO(
 				"liveRecordingMonitor"
 				", liveRecordingRunningCounter: {}"
 				", @MMS statistics@ - elapsed (millisecs): {}",
@@ -2103,7 +2103,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"liveRecordingMonitor failed"
 				", e.what(): {}",
 				e.what()
@@ -2158,7 +2158,7 @@ void FFMPEGEncoderDaemons::termProcess(
 				ProcessUtility::killProcess(previousChildProcessId);
 			else
 				ProcessUtility::termProcess(previousChildProcessId);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"ProcessUtility::termProcess"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -2178,7 +2178,7 @@ void FFMPEGEncoderDaemons::termProcess(
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"termProcess failed"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"

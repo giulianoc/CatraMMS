@@ -28,7 +28,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories ("${SPDLOG_INCLUDE_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
+include_directories ("${THREADLOGGER_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
 include_directories("${STRINGUTILS_INCLUDE_DIR}")
@@ -37,6 +37,7 @@ include_directories("${POSTGRESHELPER_INCLUDE_DIR}")
 include_directories("${PROCESSUTILITY_INCLUDE_DIR}")
 include_directories("${DBCONN_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
+include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/lib")
 #link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")

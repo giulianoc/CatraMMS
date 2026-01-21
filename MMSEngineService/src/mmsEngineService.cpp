@@ -52,7 +52,7 @@ void signalHandler(int signal)
 		if (elapsedInSeconds > 60) // è inutile loggare infiniti errori, ne loggo solo uno ogni 60 secondi
 		{
 			lastSIGSEGVSignal = chrono::system_clock::now();
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Received a signal"
 				", signal: {}",
 				signal
@@ -60,7 +60,7 @@ void signalHandler(int signal)
 		}
 	}
 	else
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Received a signal"
 			", signal: {}",
 			signal

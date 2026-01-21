@@ -588,7 +588,7 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 
 	if (basicAuthenticationPresent)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received manageRequestAndResponse"
 			", requestData.requestURI: {}"
 			", requestData.requestMethod: {}"
@@ -604,7 +604,7 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 
 	if (!basicAuthenticationPresent)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received manageRequestAndResponse"
 			", requestData.requestURI: {}"
 			", requestData.requestMethod: {}"
@@ -619,7 +619,7 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manage request failed"
 			", requestData.requestBody: {}"
 			", e.what(): {}",
@@ -636,7 +636,7 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 		else
 			errorMessage = FCGIRequestData::getHtmlStandardMessage(htmlResponseCode);
 
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		sendError(request, htmlResponseCode, errorMessage);
 
@@ -651,7 +651,7 @@ void API::mmsSupport(
 {
 	string api = "mmsSupport";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -675,7 +675,7 @@ void API::mmsSupport(
 					", Json field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw FCGIRequestData::HTTPError(400);
 			}
@@ -713,7 +713,7 @@ void API::mmsSupport(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -732,7 +732,7 @@ void API::status(
 {
 	string api = "status";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -751,7 +751,7 @@ void API::status(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -770,7 +770,7 @@ void API::avgBandwidthUsage(
 {
 	string api = "avgBandwidthUsage";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -789,7 +789,7 @@ void API::avgBandwidthUsage(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -808,7 +808,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 {
 	string api = "manageHTTPStreamingManifest_authorizationThroughParameter";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -823,7 +823,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 				", _noFileSystemAccess: {}",
 				_noFileSystemAccess
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -853,7 +853,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 			secondaryManifest = true;
 			// tokenComingFromURL will be initialized in the next statement
 		}
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageHTTPStreamingManifest"
 			", analizing the token {}"
 			", isNumber: {}"
@@ -872,7 +872,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 					", requestData.requestURI: {}",
 					requestData.requestURI
 				);
-				SPDLOG_INFO(errorMessage);
+				LOG_INFO(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -887,7 +887,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 
 			/*
 			string tokenParameter = std::format("{}---{}", tokenIt->second, cookie);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Calling checkDeliveryAuthorizationThroughParameter"
 				", contentURI: {}"
 				", tokenParameter: {}",
@@ -921,7 +921,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 			{
 				fs::path manifestPathFileName = _mmsStorage->getMMSRootRepository() / contentURI.substr(1);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Reading manifest file"
 					", manifestPathFileName: {}",
 					manifestPathFileName.string()
@@ -934,7 +934,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						", manifestPathFileName: {}",
 						manifestPathFileName.string()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -951,7 +951,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 							", manifestPathFileName: {}",
 							manifestPathFileName.string()
 						);
-						SPDLOG_INFO(errorMessage);
+						LOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -966,7 +966,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						if (manifestLine[0] != '#' && manifestLine.ends_with(tsExtension))
 						{
 							/*
-							SPDLOG_INFO(__FILEREF__ + "Creation token parameter for ts"
+							LOG_INFO(__FILEREF__ + "Creation token parameter for ts"
 								+ ", manifestLine: " + manifestLine
 								+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 							);
@@ -978,7 +978,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						{
 							// scenario where we have several .m3u8 manifest files
 							/*
-							SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
+							LOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
 								+ ", manifestLine: " + manifestLine
 								+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 							);
@@ -1002,7 +1002,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 								{
 									string uri = manifestLine.substr(uriStartIndex, uriEndIndex - uriStartIndex);
 									/*
-									SPDLOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
+									LOG_INFO(__FILEREF__ + "Creation token parameter for m3u8"
 										+ ", uri: " + uri
 										+ ", tokenComingFromURL: " + to_string(tokenComingFromURL)
 									);
@@ -1026,9 +1026,9 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 				else // dash
 				{
 #if defined(LIBXML_TREE_ENABLED) && defined(LIBXML_OUTPUT_ENABLED) && defined(LIBXML_XPATH_ENABLED) && defined(LIBXML_SAX1_ENABLED)
-					SPDLOG_INFO("libxml define OK");
+					LOG_INFO("libxml define OK");
 #else
-					SPDLOG_INFO("libxml define KO");
+					LOG_INFO("libxml define KO");
 #endif
 
 					/*
@@ -1082,7 +1082,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 							", manifestPathFileName: {}",
 							manifestPathFileName.string()
 						);
-						SPDLOG_INFO(errorMessage);
+						LOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1100,7 +1100,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 							", manifestPathFileName: {}",
 							manifestPathFileName.string()
 						);
-						SPDLOG_INFO(errorMessage);
+						LOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1115,7 +1115,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 							", manifestPathFileName: {}",
 							manifestPathFileName.string()
 						);
-						SPDLOG_INFO(errorMessage);
+						LOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1130,7 +1130,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						string errorMessage = string("xmlXPathRegisterNs xmlns:xlink")
 							+ ", manifestPathFileName: " + manifestPathFileName.string()
 							;
-						SPDLOG_INFO(__FILEREF__ + errorMessage);
+						LOG_INFO(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1144,7 +1144,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						string errorMessage = string("xmlXPathRegisterNs xsi:schemaLocation")
 							+ ", manifestPathFileName: " + manifestPathFileName.string()
 							;
-						SPDLOG_INFO(__FILEREF__ + errorMessage);
+						LOG_INFO(__FILEREF__ + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1163,13 +1163,13 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 							", manifestPathFileName: {}",
 							manifestPathFileName.string()
 						);
-						SPDLOG_INFO(errorMessage);
+						LOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 
 					xmlNodeSetPtr nodes = xpathObj->nodesetval;
-					SPDLOG_INFO(
+					LOG_INFO(
 						"processing mpd manifest file"
 						", manifestPathFileName: {}"
 						", nodesNumber: {}",
@@ -1188,7 +1188,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 								", nodeIndex: {}",
 								manifestPathFileName.string(), nodeIndex
 							);
-							SPDLOG_INFO(errorMessage);
+							LOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1207,7 +1207,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 								", manifestPathFileName: {}",
 								manifestPathFileName.string()
 							);
-							SPDLOG_INFO(errorMessage);
+							LOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1254,7 +1254,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						xmlChar *xmlbuff;
 						int buffersize;
 						xmlDocDumpFormatMemoryEnc(doc, &xmlbuff, &buffersize, "UTF-8", 1);
-						SPDLOG_INFO(
+						LOG_INFO(
 							"dumping mpd manifest file"
 							", manifestPathFileName: {}"
 							", buffersize: {}",
@@ -1291,7 +1291,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 						", contentURI: {}",
 						contentURI
 					);
-					SPDLOG_INFO(errorMessage);
+					LOG_INFO(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1314,7 +1314,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -1360,7 +1360,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 	}
 	catch (exception &e)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"_mmsEngineDBFacade->checkAPIKey failed"
 			", threadId: {}"
 			", apiKey: {}"
@@ -1373,7 +1373,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 
 	if (apiAuthorizationDetails->userKey != StringUtils::toInt64(userName))
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
 			", threadId: {}"
 			", username of basic authorization (userKey): {}"
@@ -1393,7 +1393,7 @@ bool API::basicAuthenticationRequired(const FCGIRequestData &requestData)
 	const string method = requestData.getQueryParameter("x-api-method");
 	if (method.empty())
 	{
-		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
+		LOG_ERROR("The 'x-api-method' parameter is not found");
 
 		return basicAuthenticationRequired;
 	}
@@ -1416,7 +1416,7 @@ bool API::basicAuthenticationRequired(const FCGIRequestData &requestData)
 void API::loadConfiguration(const json &configurationRoot, FileUploadProgressData *fileUploadProgressData)
 {
 	auto encodingPriority = JsonPath(&configurationRoot)["api"]["workspaceDefaults"]["encodingPriority"].as<string>("low");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->encodingPriority: {}",
 		encodingPriority
@@ -1439,7 +1439,7 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Configuration item is wrong. 'low' encoding priority is set"
 			", api->encodingPriorityWorkspaceDefaultValue: {}",
 			encodingPriority
@@ -1449,14 +1449,14 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	}
 
 	_maxPageSize = JSONUtils::asInt32(configurationRoot["postgres"], "maxPageSize", 5);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", postgres->maxPageSize: {}",
 		_maxPageSize
 	);
 
 	string encodingPeriod = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPeriod", "daily");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->encodingPeriod: {}",
 		encodingPeriod
@@ -1467,19 +1467,19 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 		_encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
 	_maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->maxIngestionsNumber: {}",
 		_maxIngestionsNumberWorkspaceDefaultValue
 	);
 	_maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "maxStorageInMB", 100);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: {}",
 		_maxStorageInMBWorkspaceDefaultValue
 	);
 	_expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "expirationInDays", 30);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: {}",
 		_expirationInDaysWorkspaceDefaultValue
@@ -1489,14 +1489,14 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 		json sharedEncodersPoolRoot = configurationRoot["api"]["sharedEncodersPool"];
 
 		_sharedEncodersPoolLabel = JSONUtils::asString(sharedEncodersPoolRoot, "label", "");
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			"Configuration item"
 			", api->sharedEncodersPool->label: {}",
 			_sharedEncodersPoolLabel
 		);
 
 		_sharedEncodersLabel = sharedEncodersPoolRoot["encodersLabel"];
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			"Configuration item"
 			", api->sharedEncodersPool->encodersLabel: {}",
 			JSONUtils::toString(_sharedEncodersLabel)
@@ -1506,151 +1506,151 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	json apiRoot = configurationRoot["api"];
 
 	_defaultSharedHLSChannelsNumber = JSONUtils::asInt32(apiRoot, "defaultSharedHLSChannelsNumber", 1);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->defaultSharedHLSChannelsNumber: {}",
 		_defaultSharedHLSChannelsNumber
 	);
 
 	_apiProtocol = JSONUtils::asString(apiRoot, "protocol", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->protocol: {}",
 		_apiProtocol
 	);
 	_apiHostname = JSONUtils::asString(apiRoot, "hostname", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->hostname: {}",
 		_apiHostname
 	);
 	_apiPort = JSONUtils::asInt32(apiRoot, "port", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->port: {}",
 		_apiPort
 	);
 	_apiVersion = JSONUtils::asString(apiRoot, "version", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->version: {}",
 		_apiVersion
 	);
 
 	// _binaryBufferLength             = api["binary"].get("binaryBufferLength", "XXX").asInt();
-	// SPDLOG_INFO(__FILEREF__ + "Configuration item"
+	// LOG_INFO(__FILEREF__ + "Configuration item"
 	//    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
 	// );
 	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(apiRoot["binary"], "progressUpdatePeriodInSeconds", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->binary->progressUpdatePeriodInSeconds: {}",
 		_progressUpdatePeriodInSeconds
 	);
 	_webServerPort = JSONUtils::asInt32(apiRoot["binary"], "webServerPort", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->binary->webServerPort: {}",
 		_webServerPort
 	);
 	_maxProgressCallFailures = JSONUtils::asInt32(apiRoot["binary"], "maxProgressCallFailures", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->binary->maxProgressCallFailures: {}",
 		_maxProgressCallFailures
 	);
 	_progressURI = JSONUtils::asString(apiRoot["binary"], "progressURI", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->binary->progressURI: {}",
 		_progressURI
 	);
 
 	_defaultTTLInSeconds = JSONUtils::asInt32(apiRoot["delivery"], "defaultTTLInSeconds", 60);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->defaultTTLInSeconds: {}",
 		_defaultTTLInSeconds
 	);
 
 	_defaultMaxRetries = JSONUtils::asInt32(apiRoot["delivery"], "defaultMaxRetries", 60);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->defaultMaxRetries: {}",
 		_defaultMaxRetries
 	);
 
 	_defaultRedirect = JSONUtils::asBool(apiRoot["delivery"], "defaultRedirect", true);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->defaultRedirect: {}",
 		_defaultRedirect
 	);
 
 	_deliveryProtocol = JSONUtils::asString(apiRoot["delivery"], "deliveryProtocol", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->deliveryProtocol: {}",
 		_deliveryProtocol
 	);
 	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(apiRoot["delivery"], "deliveryHost_authorizationThroughParameter", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughParameter: {}",
 		_deliveryHost_authorizationThroughParameter
 	);
 	_deliveryHost_authorizationThroughPath = JSONUtils::asString(apiRoot["delivery"], "deliveryHost_authorizationThroughPath", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
 	);
 
 	_ldapEnabled = JSONUtils::asBool(apiRoot["activeDirectory"], "enabled", false);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->enabled: {}",
 		_ldapEnabled
 	);
 	_ldapURL = JSONUtils::asString(apiRoot["activeDirectory"], "ldapURL", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->ldapURL: {}",
 		_ldapURL
 	);
 	_ldapCertificatePathName = JSONUtils::asString(apiRoot["activeDirectory"], "certificatePathName", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->certificatePathName: {}",
 		_ldapCertificatePathName
 	);
 	_ldapManagerUserName = JSONUtils::asString(apiRoot["activeDirectory"], "managerUserName", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->managerUserName: {}",
 		_ldapManagerUserName
 	);
 	_ldapManagerPassword = JSONUtils::asString(apiRoot["activeDirectory"], "managerPassword", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->managerPassword: {}",
 		_ldapManagerPassword
 	);
 	_ldapBaseDn = JSONUtils::asString(apiRoot["activeDirectory"], "baseDn", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->baseDn: {}",
 		_ldapBaseDn
 	);
 	_ldapDefaultWorkspaceKeys = JSONUtils::asString(apiRoot["activeDirectory"], "defaultWorkspaceKeys", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->defaultWorkspaceKeys: {}",
 		_ldapDefaultWorkspaceKeys
 	);
 
 	_registerUserEnabled = JSONUtils::asBool(apiRoot, "registerUserEnabled", false);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->registerUserEnabled: {}",
 		_registerUserEnabled
@@ -1658,80 +1658,80 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 
 	/*
 	_ffmpegEncoderProtocol = _configuration["ffmpeg"].get("encoderProtocol", "").asString();
-	SPDLOG_INFO(__FILEREF__ + "Configuration item"
+	LOG_INFO(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
 	);
 	_ffmpegEncoderPort = JSONUtils::asInt32(_configuration["ffmpeg"], "encoderPort", 0);
-	SPDLOG_INFO(__FILEREF__ + "Configuration item"
+	LOG_INFO(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
 	);
 	*/
 	_ffmpegEncoderUser = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderUser", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_ffmpegEncoderUser
 	);
 	_ffmpegEncoderPassword = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderPassword", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderPassword: {}",
 		"..."
 	);
 	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "encoderTimeoutInSeconds", 120);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderTimeoutInSeconds: {}",
 		_ffmpegEncoderTimeoutInSeconds
 	);
 	_ffmpegEncoderKillEncodingURI = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderKillEncodingURI", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderKillEncodingURI: {}",
 		_ffmpegEncoderKillEncodingURI
 	);
 	_ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderChangeLiveProxyPlaylistURI: {}",
 		_ffmpegEncoderChangeLiveProxyPlaylistURI
 	);
 	_ffmpegEncoderChangeLiveProxyOverlayTextURI = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderChangeLiveProxyOverlayTextURI", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderChangeLiveProxyOverlayTextURI: {}",
 		_ffmpegEncoderChangeLiveProxyOverlayTextURI
 	);
 
 	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt32(configurationRoot["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
 		_intervalInSecondsToCheckEncodingFinished
 	);
 
 	_maxSecondsToWaitAPIIngestionLock = JSONUtils::asInt32(configurationRoot["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", mms->locks->maxSecondsToWaitAPIIngestionLock: {}",
 		_maxSecondsToWaitAPIIngestionLock
 	);
 
 	_keyPairId = JSONUtils::asString(configurationRoot["aws"], "keyPairId", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", aws->keyPairId: {}",
 		_keyPairId
 	);
 	_privateKeyPEMPathName = JSONUtils::asString(configurationRoot["aws"], "privateKeyPEMPathName", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", aws->privateKeyPEMPathName: {}",
 		_privateKeyPEMPathName
 	);
 	/*
 	_vodCloudFrontHostNamesRoot = configurationRoot["aws"]["vodCloudFrontHostNames"];
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", aws->vodCloudFrontHostNames: {}",
 		"..."
@@ -1739,13 +1739,13 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	*/
 
 	_emailProviderURL = JSONUtils::asString(configurationRoot["EmailNotification"], "providerURL", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->providerURL: {}",
 		_emailProviderURL
 	);
 	_emailUserName = JSONUtils::asString(configurationRoot["EmailNotification"], "userName", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->userName: {}",
 		_emailUserName
@@ -1753,7 +1753,7 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	{
 		string encryptedPassword = JSONUtils::asString(configurationRoot["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			"Configuration item"
 			", EmailNotification->password: {}",
 			encryptedPassword
@@ -1761,40 +1761,40 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 		);
 	}
 	_emailCcsCommaSeparated = JSONUtils::asString(configurationRoot["EmailNotification"], "cc", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->cc: {}",
 		_emailCcsCommaSeparated
 	);
 
 	_guiProtocol = JSONUtils::asString(configurationRoot["mms"], "guiProtocol", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", mms->guiProtocol: {}",
 		_guiProtocol
 	);
 	_guiHostname = JSONUtils::asString(configurationRoot["mms"], "guiHostname", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", mms->guiHostname: {}",
 		_guiHostname
 	);
 	_guiPort = JSONUtils::asInt32(_configurationRoot["mms"], "guiPort", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", mms->guiPort: {}",
 		_guiPort
 	);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
 		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
 		_waitingNFSSync_milliSecondsWaitingBetweenChecks

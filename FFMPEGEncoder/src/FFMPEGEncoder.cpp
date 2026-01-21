@@ -278,7 +278,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manage request failed"
 			", requestBody: {}"
 			", e.what(): {}",
@@ -294,7 +294,7 @@ void FFMPEGEncoder::manageRequestAndResponse(
 		}
 		else
 			errorMessage = FCGIRequestData::getHtmlStandardMessage(htmlResponseCode);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		sendError(request, htmlResponseCode, errorMessage);
 
@@ -309,7 +309,7 @@ void FFMPEGEncoder::status(
 {
 	string api = "status";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -327,7 +327,7 @@ void FFMPEGEncoder::status(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -346,7 +346,7 @@ void FFMPEGEncoder::info(
 {
 	string api = "info";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -366,7 +366,7 @@ void FFMPEGEncoder::info(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -385,7 +385,7 @@ void FFMPEGEncoder::avgBandwidthUsage(
 {
 	string api = "avgBandwidthUsage";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -401,7 +401,7 @@ void FFMPEGEncoder::avgBandwidthUsage(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -420,7 +420,7 @@ void FFMPEGEncoder::videoSpeed(
 {
 	string api = "videoSpeed";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -436,7 +436,7 @@ void FFMPEGEncoder::encodeContent(
 {
 	string api = "encodeContent";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -452,7 +452,7 @@ void FFMPEGEncoder::cutFrameAccurate(
 {
 	string api = "cutFrameAccurate";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -468,7 +468,7 @@ void FFMPEGEncoder::overlayImageOnVideo(
 {
 	string api = "overlayImageOnVideo";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -484,7 +484,7 @@ void FFMPEGEncoder::overlayTextOnVideo(
 {
 	string api = "overlayTextOnVideo";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -500,7 +500,7 @@ void FFMPEGEncoder::generateFrames(
 {
 	string api = "generateFrames";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -516,7 +516,7 @@ void FFMPEGEncoder::slideShow(
 {
 	string api = "slideShow";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -532,7 +532,7 @@ void FFMPEGEncoder::addSilentAudio(
 {
 	string api = "addSilentAudio";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -548,7 +548,7 @@ void FFMPEGEncoder::pictureInPicture(
 {
 	string api = "pictureInPicture";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -564,7 +564,7 @@ void FFMPEGEncoder::introOutroOverlay(
 {
 	string api = "introOutroOverlay";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -640,7 +640,7 @@ void FFMPEGEncoder::requestManagement(
 			else
 				errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingAvailable().what());
 
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"{}"
 				", encodingAlreadyRunning: {}"
 				", freeEncodingFound: {}",
@@ -659,7 +659,7 @@ void FFMPEGEncoder::requestManagement(
 					", encodingJobKey: {}"
 					", atLeastThisEncodingJobKeyNotStartedYet: {}"
 					", {}", ingestionJobKey, encodingJobKey, *atLeastThisEncodingJobKeyNotStartedYet, NoEncodingAvailable().what());
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw FCGIRequestData::HTTPError(400, errorMessage);
 			}
@@ -677,7 +677,7 @@ void FFMPEGEncoder::requestManagement(
 						", secondsToWait: {}"
 						", {}", ingestionJobKey, encodingJobKey, elapsedSecondsSinceLastEncodingAccepted,
 							_intervalInSecondsBetweenEncodingAccept, secondsToWait, NoEncodingAvailable().what());
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 
 					throw FCGIRequestData::HTTPError(400, errorMessage);
 				}
@@ -708,13 +708,13 @@ void FFMPEGEncoder::requestManagement(
 					", {}", ingestionJobKey, encodingJobKey, elapsedSecondsSinceLastEncodingAccepted,
 						intervalInSecondsBetweenEncodingAccept, secondsToWait, NoEncodingAvailable().what());
 
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw FCGIRequestData::HTTPError(400, errorMessage);
 			}
 			*/
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Accept a new encoding request"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}",
@@ -729,7 +729,7 @@ void FFMPEGEncoder::requestManagement(
 
 			selectedEncoding->initEncoding(encodingJobKey, method);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Creating {} thread"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -813,7 +813,7 @@ void FFMPEGEncoder::requestManagement(
 					", method: {}",
 					method
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -830,7 +830,7 @@ void FFMPEGEncoder::requestManagement(
 				", e.what(): {}",
 				method, ingestionJobKey, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw;
 		}
@@ -856,7 +856,7 @@ void FFMPEGEncoder::liveRecorder(
 {
 	string api = "liveRecorder";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -899,7 +899,7 @@ void FFMPEGEncoder::liveRecorder(
 					errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, EncodingIsAlreadyRunning().what());
 				else
 					errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingAvailable().what());
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"{}"
 					", encodingAlreadyRunning: {}"
 					", freeEncodingFound: {}",
@@ -942,7 +942,7 @@ void FFMPEGEncoder::liveRecorder(
 				selectedLiveRecording->initEncoding(encodingJobKey, api);
 				selectedLiveRecording->_encodingStart = chrono::system_clock::now() + chrono::seconds(60);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Creating liveRecorder thread"
 					", ingestionJobKey: {}"
 					", selectedLiveRecording->_encodingJobKey: {}"
@@ -970,7 +970,7 @@ void FFMPEGEncoder::liveRecorder(
 					", e.what(): {}",
 					ingestionJobKey, encodingJobKey, requestData.requestBody, e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -990,7 +990,7 @@ void FFMPEGEncoder::liveRecorder(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -1009,7 +1009,7 @@ void FFMPEGEncoder::liveProxy(
 {
 	string api = "liveProxy";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -1025,7 +1025,7 @@ void FFMPEGEncoder::liveGrid(
 {
 	string api = "liveGrid";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -1074,7 +1074,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 				errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, EncodingIsAlreadyRunning().what());
 			else
 				errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingAvailable().what());
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"{}"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -1119,7 +1119,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 
 			if (method == "liveProxy")
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Creating liveProxy thread"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -1132,7 +1132,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 			}
 			else if (method == "liveGrid")
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Creating liveGrid thread"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -1160,7 +1160,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 				", e.what(): {}",
 				method, ingestionJobKey, encodingJobKey, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1186,7 +1186,7 @@ void FFMPEGEncoder::encodingStatus(
 {
 	string api = "encodingStatus";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -1307,7 +1307,7 @@ void FFMPEGEncoder::encodingStatus(
 			sChildProcessId = selectedLiveProxy->_childProcessId.toString();
 		else if (liveRecordingFound)
 			sChildProcessId = selectedLiveRecording->_childProcessId.toString();
-		SPDLOG_INFO(
+		LOG_INFO(
 			"encodingStatus"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1393,7 +1393,7 @@ void FFMPEGEncoder::encodingStatus(
 							encodingProgress = *localEncodingProgress;
 
 						chrono::system_clock::time_point endEncodingProgress = chrono::system_clock::now();
-						SPDLOG_INFO(
+						LOG_INFO(
 							"getEncodingProgress statistics"
 							", @MMS statistics@ - encodingProgress (secs): @{}@",
 							chrono::duration_cast<chrono::seconds>(endEncodingProgress - startEncodingProgress).count()
@@ -1401,7 +1401,7 @@ void FFMPEGEncoder::encodingStatus(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"_ffmpeg->getEncodingProgress failed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -1478,7 +1478,7 @@ void FFMPEGEncoder::encodingStatus(
 
 		chrono::system_clock::time_point endEncodingStatus = chrono::system_clock::now();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"encodingStatus"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1497,7 +1497,7 @@ void FFMPEGEncoder::encodingStatus(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -1516,7 +1516,7 @@ void FFMPEGEncoder::filterNotification(
 {
 	string api = "filterNotification";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -1546,7 +1546,7 @@ void FFMPEGEncoder::filterNotification(
 				", encodingCompleted: {}",
 				ingestionJobKey, ingestionJobKey, encodingCompleted
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1574,7 +1574,7 @@ void FFMPEGEncoder::filterNotification(
 				", liveProxyFound: {}",
 				ingestionJobKey, ingestionJobKey, liveProxyFound
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1623,7 +1623,7 @@ void FFMPEGEncoder::filterNotification(
 							", Field: {}",
 							ingestionJobKey, field
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1651,7 +1651,7 @@ void FFMPEGEncoder::filterNotification(
 				", exception: {}",
 				ingestionJobKey, _mmsWorkflowIngestionURL, workflowMetadata, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1675,7 +1675,7 @@ void FFMPEGEncoder::filterNotification(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -1694,7 +1694,7 @@ void FFMPEGEncoder::killEncodingJob(
 {
 	string api = "killEncodingJob";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -1708,7 +1708,7 @@ void FFMPEGEncoder::killEncodingJob(
 		// killType: "kill", "restartWithinEncoder", "killToRestartByEngine"
 		string killType = requestData.getQueryParameter("killType", string("kill"), false);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received killEncodingJob"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1774,11 +1774,11 @@ void FFMPEGEncoder::killEncodingJob(
 				", {}",
 				ingestionJobKey, encodingJobKey, NoEncodingJobKeyFound().what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw FCGIRequestData::HTTPError(400, errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"ProcessUtility::killProcess. Found Encoding to kill"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1797,7 +1797,7 @@ void FFMPEGEncoder::killEncodingJob(
 				", _childProcessId: {}",
 				ingestionJobKey, encodingJobKey, selectedEncoding->_childProcessId.toString()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1812,7 +1812,7 @@ void FFMPEGEncoder::killEncodingJob(
 			);
 
 			chrono::system_clock::time_point endKillProcess = chrono::system_clock::now();
-			SPDLOG_INFO(
+			LOG_INFO(
 				"killProcess statistics"
 				", @MMS statistics@ - killProcess (secs): @{}@",
 				chrono::duration_cast<chrono::seconds>(endKillProcess - startKillProcess).count()
@@ -1828,7 +1828,7 @@ void FFMPEGEncoder::killEncodingJob(
 				", e.what(): {}",
 				ingestionJobKey, encodingJobKey, selectedEncoding->_childProcessId.toString(), e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw;
 		}
@@ -1854,7 +1854,7 @@ void FFMPEGEncoder::killEncodingJob(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -1873,7 +1873,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 {
 	string api = "changeLiveProxyPlaylist";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -1884,7 +1884,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
 		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received changeLiveProxyPlaylist"
 			", encodingJobKey: {}",
 			encodingJobKey
@@ -1912,13 +1912,13 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 			if (!encodingFound)
 			{
 				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw FCGIRequestData::HTTPError(500, errorMessage);
 			}
 
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Replacing the LiveProxy playlist"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}",
@@ -1951,7 +1951,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 						selectedLiveProxy->_ingestionJobKey, selectedLiveProxy->_encodingJobKey, selectedLiveProxy->_childProcessId.toString(),
 						e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 				}
 			}
 		}
@@ -1971,7 +1971,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -1990,7 +1990,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 {
 	string api = "changeLiveProxyOverlayText";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -2022,12 +2022,12 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 			if (!encodingFound)
 			{
 				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Received changeLiveProxyOverlayText"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -2062,7 +2062,7 @@ void FFMPEGEncoder::changeLiveProxyOverlayText(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -2081,7 +2081,7 @@ void FFMPEGEncoder::encodingProgress(
 {
 	string api = "encodingProgress";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
@@ -2101,7 +2101,7 @@ void FFMPEGEncoder::encodingProgress(
 		the ADMIN permission"
 					", isAdminAPI: " + to_string(isAdminAPI)
 					);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			sendError(request, 403, errorMessage);
 
@@ -2182,7 +2182,7 @@ void FFMPEGEncoder::encodingProgress(
 						+ ", " +
 	NoEncodingJobKeyFound().what();
 
-	SPDLOG_ERROR(errorMessage);
+	LOG_ERROR(errorMessage);
 
 	sendError(request, 400, errorMessage);
 
@@ -2335,7 +2335,7 @@ void FFMPEGEncoder::encodingProgress(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestBody: {}"
@@ -2352,7 +2352,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> FFMPEGEncoder::checkAuthorizat
 {
 	if (userName != _encoderUser || password != _encoderPassword)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Username/password of the basic authorization are wrong"
 			", threadId: {}"
 			", userName: {}"
@@ -2379,7 +2379,7 @@ bool FFMPEGEncoder::basicAuthenticationRequired(const FCGIRequestData& requestDa
 	const string method = requestData.getQueryParameter("x-api-method", string(), false);
 	if (method.empty())
 	{
-		SPDLOG_ERROR("The 'x-api-method' parameter is not found");
+		LOG_ERROR("The 'x-api-method' parameter is not found");
 
 		return basicAuthenticationRequired;
 	}
@@ -2415,7 +2415,7 @@ void FFMPEGEncoder::encodeContentThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2443,7 +2443,7 @@ void FFMPEGEncoder::overlayImageOnVideoThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2471,7 +2471,7 @@ void FFMPEGEncoder::overlayTextOnVideoThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2497,7 +2497,7 @@ void FFMPEGEncoder::generateFramesThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 	}
@@ -2517,7 +2517,7 @@ void FFMPEGEncoder::slideShowThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 	}
@@ -2538,7 +2538,7 @@ void FFMPEGEncoder::videoSpeedThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2564,7 +2564,7 @@ void FFMPEGEncoder::addSilentAudioThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2592,7 +2592,7 @@ void FFMPEGEncoder::pictureInPictureThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2620,7 +2620,7 @@ void FFMPEGEncoder::introOutroOverlayThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 		// this method run on a detached thread, we will not generate
@@ -2647,7 +2647,7 @@ void FFMPEGEncoder::cutFrameAccurateThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		encoding->reset();
 
@@ -2677,7 +2677,7 @@ void FFMPEGEncoder::liveRecorderThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		liveRecording->reset();
 
@@ -2707,7 +2707,7 @@ void FFMPEGEncoder::liveProxyThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		liveProxyData->reset();
 
@@ -2734,7 +2734,7 @@ void FFMPEGEncoder::liveGridThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(e.what());
+		LOG_ERROR(e.what());
 
 		liveProxyData->reset();
 
@@ -2762,7 +2762,7 @@ void FFMPEGEncoder::encodingCompletedRetention() const
 
 	const chrono::system_clock::time_point end = chrono::system_clock::now();
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"encodingCompletedRetention"
 		", encodingCompletedMap size: {}"
 		", @MMS statistics@ - duration encodingCompleted retention processing (secs): @{}@",
@@ -2781,7 +2781,7 @@ int FFMPEGEncoder::getMaxEncodingsCapability() const
 		if (cpuUsage > _cpuUsageThresholdForEncoding)
 			maxCapability = 0; // no to be done
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMaxXXXXCapability"
 			", lastCPUUsage: {}"
 			", maxCapability: {}",
@@ -2803,7 +2803,7 @@ int FFMPEGEncoder::getMaxLiveProxiesCapability(int64_t ingestionJobKey) const
 		if (cpuUsage > _cpuUsageThresholdForProxy)
 			maxCapability = 0; // no to be done
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMaxXXXXCapability"
 			", ingestionJobKey: {}"
 			", cpuUsage: {}"
@@ -2826,7 +2826,7 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability() const
 		if (cpuUsage > _cpuUsageThresholdForRecording)
 			maxCapability = 0; // no to be done
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMaxXXXXCapability"
 			", cpuUsage: {}"
 			", maxCapability: {}",
@@ -2885,7 +2885,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 
 		if (eventTaskRoot == nullptr)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"buildFilterNotificationIngestionWorkflow, no events found in "
 				"Workflow"
 				", ingestionJobKey: {}",
@@ -2908,7 +2908,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 
 		workflowMetadata = JSONUtils::toString(workflowRoot);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"buildFilterNotificationIngestionWorkflow, Workflow generated"
 			", ingestionJobKey: {}"
 			", workflowMetadata: {}",
@@ -2919,7 +2919,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"buildFilterNotificationIngestionWorkflow failed"
 			", ingestionJobKey: {}"
 			", exception: {}",
@@ -2943,68 +2943,68 @@ void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 {
 	_configurationRoot = configurationRoot;
 	_encodingCompletedRetentionInSeconds = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encodingCompletedRetentionInSeconds: {}",
 		_encodingCompletedRetentionInSeconds
 	);
 
 	_cpuUsageThresholdForEncoding = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForEncoding: {}",
 		_cpuUsageThresholdForEncoding
 	);
 	_cpuUsageThresholdForRecording = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForRecording: {}",
 		_cpuUsageThresholdForRecording
 	);
 	_cpuUsageThresholdForProxy = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForProxy: {}",
 		_cpuUsageThresholdForProxy
 	);
 	_intervalInSecondsBetweenEncodingAccept =
 		JSONUtils::asInt32(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->intervalInSecondsBetweenEncodingAccept: {}",
 		_intervalInSecondsBetweenEncodingAccept
 	);
 
 	_encoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_encoderUser
 	);
 	_encoderPassword = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderPassword: {}",
 		_encoderPassword
 	);
 
 	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", api->timeoutInSeconds: {}",
 		_mmsAPITimeoutInSeconds
 	);
 
 	const auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+	LOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 	const auto mmsAPIHostname = JsonPath(&_configurationRoot)["api"]["hostname"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+	LOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
 	const auto mmsAPIPort = JsonPath(&_configurationRoot)["api"]["port"].as<int32_t>(0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+	LOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 	const auto mmsAPIVersion = JsonPath(&_configurationRoot)["api"]["version"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+	LOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
 	auto mmsAPIWorkflowURI = JsonPath(&_configurationRoot)["api"]["workflowURI"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+	LOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
 	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
 		mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
 }

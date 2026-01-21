@@ -2,9 +2,6 @@
 #pragma once
 
 #include <memory>
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "MultiEventsSet.h"
 #include "Times2.h"
 #include "spdlog/spdlog.h"

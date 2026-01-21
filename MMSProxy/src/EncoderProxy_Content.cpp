@@ -24,7 +24,7 @@ using json = nlohmann::json;
 
 void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Creating encoderVideoAudioProxy thread"
 		", _proxyIdentifier: {}"
 		", ffmpegURI: {}"
@@ -43,7 +43,7 @@ void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveE
 				", _encodingJobKey: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw EncodingKilledByUser();
 		}
@@ -69,7 +69,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			);
 			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getEncoderHost"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -84,7 +84,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 							   to_string(_encodingItem->_encodingJobKey);
 			string body;
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"building body for encoder 1"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -135,7 +135,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 					// La gestione di questo scenario consiste nell'ignorare
 					// questa eccezione facendo andare avanti la procedura, come
 					// se non avesse generato alcun errore
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"inconsistency: DB says the encoding has to be executed but the Encoder is already executing it. We will manage it"
 						", _proxyIdentifier: {}"
 						", _ingestionJobKey: {}"
@@ -176,7 +176,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 		}
 		else
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Encode content. The transcoder is already saved, the encoding should be already running"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -207,7 +207,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			*_status = EncodingJobStatus::Running;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update EncodingJob"
 			", encodingJobKey: {}"
 			", transcoder: {}"
@@ -223,7 +223,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 
 		chrono::system_clock::time_point endEncoding = chrono::system_clock::now();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Encoded media file"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -238,7 +238,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 	}
 	catch (EncoderNotFound& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Encoder not found"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -259,7 +259,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 			", e.what(): {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, e.what()
 		);
-		SPDLOG_WARN(errorMessage);
+		LOG_WARN(errorMessage);
 
 		throw;
 	}
@@ -275,11 +275,11 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 				", error: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, error
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw MaxConcurrentJobsReached();
 		}
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Encoding URL failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -293,7 +293,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Encoding URL failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -309,7 +309,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 
 void EncoderProxy::processEncodedContentVideoAudio()
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"processEncodedContentVideoAudio"
 		", _proxyIdentifier: {}"
 		", _ingestionJobKey: {}"
@@ -320,7 +320,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processEncodedContentVideoAudio has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -352,7 +352,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				", _encodingJobKey: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -369,7 +369,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				", encodedNFSStagingAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodedNFSStagingAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -394,7 +394,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (runtime_error e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Initialization encoding variables error"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -407,7 +407,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (exception e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Initialization encoding variables error"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -445,7 +445,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	{
 		int timeoutInSeconds = 20;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Calling getMediaInfo"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -477,7 +477,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"EncoderProxy::getMediaInfo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -499,7 +499,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				{
 					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"removeDirectory"
 						", directoryPathName: {}",
 						directoryPathName
@@ -509,7 +509,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"removeDirectory failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -524,7 +524,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"EncoderProxy::getMediaInfo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -546,7 +546,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				{
 					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"removeDirectory"
 						", directoryPathName: {}",
 						directoryPathName
@@ -556,7 +556,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"removeDirectory failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -587,7 +587,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				", encodedNFSStagingAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodedNFSStagingAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -608,7 +608,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"_mmsStorage->moveAssetInMMSRepository failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -631,7 +631,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				{
 					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"removeDirectory"
 						", directoryPathName: {}",
 						directoryPathName
@@ -641,7 +641,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"removeDirectory failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -656,7 +656,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"_mmsStorage->moveAssetInMMSRepository failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -679,7 +679,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 				{
 					directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"removeDirectory"
 						", directoryPathName: {}",
 						directoryPathName
@@ -689,7 +689,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"removeDirectory failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -713,7 +713,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			{
 				directoryPathName = encodedNFSStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"removeDirectory"
 					", directoryPathName: {}",
 					directoryPathName
@@ -723,7 +723,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		}
 		catch (runtime_error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"removeDirectory failed"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
@@ -778,7 +778,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 					", encodedNFSStagingAssetPathName: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodedNFSStagingAssetPathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -806,7 +806,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			imageWidth, imageHeight, imageFormat, imageQuality
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Saved the Encoded content"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -820,7 +820,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"_mmsEngineDBFacade->saveVariantContentMetadata failed"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -830,7 +830,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 			_proxyIdentifier, _encodingItem->_encodingJobKey, _encodingItem->_ingestionJobKey, encodedNFSStagingAssetPathName, e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"removeDirectory"
 			", mmsAssetPathName: {}",
 			mmsAssetPathName
@@ -841,7 +841,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"_mmsEngineDBFacade->saveVariantContentMetadata failed"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -854,7 +854,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		// file in case of .3gp content OR directory in case of IPhone content
 		if (fs::exists(mmsAssetPathName))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"removeDirectory"
 				", mmsAssetPathName: {}",
 				mmsAssetPathName

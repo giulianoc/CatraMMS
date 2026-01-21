@@ -23,7 +23,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				", dependencies.size: {}",
 				_processorIdentifier, ingestionJobKey, dependencies.size()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -132,7 +132,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 			if (firstContentType == MMSEngineDBFacade::ContentType::Video && secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -145,7 +145,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image && secondContentType == MMSEngineDBFacade::ContentType::Video)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -172,7 +172,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -185,7 +185,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 			if (firstContentType == MMSEngineDBFacade::ContentType::Audio && secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -198,7 +198,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image && secondContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -225,7 +225,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -238,7 +238,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 			if (firstContentType == MMSEngineDBFacade::ContentType::Video && secondContentType == MMSEngineDBFacade::ContentType::Image)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -252,7 +252,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Image && secondContentType == MMSEngineDBFacade::ContentType::Video)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -280,7 +280,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -293,7 +293,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 			if (firstContentType == MMSEngineDBFacade::ContentType::Video && secondContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -307,7 +307,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 			}
 			else if (firstContentType == MMSEngineDBFacade::ContentType::Audio && secondContentType == MMSEngineDBFacade::ContentType::Video)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add Cross Reference"
 					", sourceMediaItemKey: {}"
 					", crossReferenceType: {}"
@@ -335,7 +335,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -360,7 +360,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -382,13 +382,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			json crossReferenceParametersRoot = parametersRoot[field];
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Add Cross Reference"
 				", sourceMediaItemKey: {}"
 				", crossReferenceType: {}"
@@ -420,7 +420,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -442,13 +442,13 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 					MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey,
 					secondMediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			json crossReferenceParametersRoot = parametersRoot[field];
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Add Cross Reference"
 				", sourceMediaItemKey: {}"
 				", crossReferenceType: {}"
@@ -475,12 +475,12 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 				_processorIdentifier, ingestionJobKey, dependencies.size(), MMSEngineDBFacade::toString(crossReferenceType),
 				MMSEngineDBFacade::toString(firstContentType), MMSEngineDBFacade::toString(secondContentType), firstMediaItemKey, secondMediaItemKey
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -495,7 +495,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	}
 	catch (DeadlockFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageMediaCrossReferenceTask failed"
 			", _processorIdentifier: "
 			", ingestionJobKey: "
@@ -509,7 +509,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageMediaCrossReferenceTask failed"
 			", _processorIdentifier: "
 			", ingestionJobKey: "
@@ -523,7 +523,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageMediaCrossReferenceTask failed"
 			", _processorIdentifier: "
 			", ingestionJobKey: "

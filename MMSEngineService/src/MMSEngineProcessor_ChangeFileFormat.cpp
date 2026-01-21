@@ -18,7 +18,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "changeFileFormatThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -40,7 +40,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -137,7 +137,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Calling ffmpeg.changeFileFormat" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
 							", mmsSourceAssetPathName: " + mmsSourceAssetPathName + ", changeFormatFileName: " + changeFormatFileName +
@@ -151,7 +151,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							outputFileFormat
 						);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "ffmpeg.changeFileFormat done" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
 							", mmsSourceAssetPathName: " + mmsSourceAssetPathName + ", changeFormatFileName: " + changeFormatFileName +
@@ -160,7 +160,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"ffmpeg.changeFileFormat failed"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -185,7 +185,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					int imageQuality = -1;
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Calling ffmpeg.getMediaInfo" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", _ingestionJobKey: " + to_string(ingestionJobKey) +
 							", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName
@@ -205,7 +205,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "getMediaInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", _ingestionJobKey: " +
 							to_string(ingestionJobKey) + ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName +
 							", _workspace->_directoryName: " + workspace->_directoryName + ", e.what(): " + e.what()
@@ -220,13 +220,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 								{
 									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
 
-									SPDLOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+									LOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
 									fs::remove_all(directoryPathName);
 								}
 							}
 							catch (runtime_error &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									string() + "removeDirectory failed" + ", _ingestionJobKey: " + to_string(ingestionJobKey) +
 									", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName +
 									", directoryPathName: " + directoryPathName + ", exception: " + e.what()
@@ -238,7 +238,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "getMediaInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", _ingestionJobKey: " +
 							to_string(ingestionJobKey) + ", stagingChangeFileFormatAssetPathName: " + stagingChangeFileFormatAssetPathName +
 							", workspace->_directoryName: " + workspace->_directoryName
@@ -253,13 +253,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 								{
 									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
 
-									SPDLOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+									LOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
 									fs::remove_all(directoryPathName);
 								}
 							}
 							catch (runtime_error &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									string() + "removeDirectory failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									", _ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingChangeFileFormatAssetPathName: " +
 									stagingChangeFileFormatAssetPathName + ", directoryPathName: " + directoryPathName + ", exception: " + e.what()
@@ -287,7 +287,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "_mmsStorage->moveAssetInMMSRepository failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
 							", mmsSourceAssetPathName: " + mmsSourceAssetPathName +
@@ -303,13 +303,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 								{
 									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
 
-									SPDLOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+									LOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
 									fs::remove_all(directoryPathName);
 								}
 							}
 							catch (runtime_error &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									string() + "removeDirectory failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									", _ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingChangeFileFormatAssetPathName: " +
 									stagingChangeFileFormatAssetPathName + ", directoryPathName: " + directoryPathName + ", exception: " + e.what()
@@ -321,7 +321,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "_mmsStorage->moveAssetInMMSRepository failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) +
 							", mmsSourceAssetPathName: " + mmsSourceAssetPathName +
@@ -337,13 +337,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 								{
 									directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
 
-									SPDLOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+									LOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
 									fs::remove_all(directoryPathName);
 								}
 							}
 							catch (runtime_error &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									string() + "removeDirectory failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									", _ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingChangeFileFormatAssetPathName: " +
 									stagingChangeFileFormatAssetPathName + ", directoryPathName: " + directoryPathName + ", exception: " + e.what()
@@ -364,13 +364,13 @@ void MMSEngineProcessor::changeFileFormatThread(
 							{
 								directoryPathName = stagingChangeFileFormatAssetPathName.substr(0, endOfDirectoryIndex);
 
-								SPDLOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
+								LOG_INFO(string() + "removeDirectory" + ", directoryPathName: " + directoryPathName);
 								fs::remove_all(directoryPathName);
 							}
 						}
 						catch (runtime_error &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								string() + "removeDirectory failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", _ingestionJobKey: " + to_string(ingestionJobKey) + ", stagingChangeFileFormatAssetPathName: " +
 								stagingChangeFileFormatAssetPathName + ", directoryPathName: " + directoryPathName + ", exception: " + e.what()
@@ -421,7 +421,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							imageWidth, imageHeight, imageFormat, imageQuality
 						);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Saved the Encoded content" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", _ingestionJobKey: " + to_string(ingestionJobKey) +
 							", changeFormatPhysicalPathKey: " + to_string(changeFormatPhysicalPathKey)
@@ -429,7 +429,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() +
 							"_mmsEngineDBFacade->saveVariantContentMetadata "
 							"failed" +
@@ -438,7 +438,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 						if (fs::exists(mmsChangeFileFormatAssetPathName))
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 								to_string(ingestionJobKey) + ", mmsChangeFileFormatAssetPathName: " + mmsChangeFileFormatAssetPathName
 							);
@@ -455,7 +455,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 				string errorMessage = string() + "change file format failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -475,7 +475,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -489,7 +489,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -500,12 +500,12 @@ void MMSEngineProcessor::changeFileFormatThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "ChangeFileFormat failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -515,14 +515,14 @@ void MMSEngineProcessor::changeFileFormatThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -532,12 +532,12 @@ void MMSEngineProcessor::changeFileFormatThread(
 	}
 	catch (exception e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "ChangeFileFormat failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -547,14 +547,14 @@ void MMSEngineProcessor::changeFileFormatThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);

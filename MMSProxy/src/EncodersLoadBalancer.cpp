@@ -31,7 +31,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 	bool externalEncoderAllowed
 ) const
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received getEncoderURL"
 		", ingestionJobKey: {}"
 		", workspaceKey: {}"
@@ -61,7 +61,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 		string encoderURL = std::format("{}://{}:{}", protocol,
 			externalEncoder ? publicServerName : internalServerName, port);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncoderURL"
 			", ingestionJobKey: {}"
 			", workspaceKey: {}"
@@ -85,7 +85,7 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 			", e.what(): {}",
 			ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw;
 	}

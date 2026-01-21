@@ -33,6 +33,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 
 add_compile_definitions(COMPRESSOR)
+add_compile_definitions(SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
 # this is to generate a compilation database (for the YCM vim plugin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -105,6 +106,8 @@ set(NLOHMANN_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/../deploy/nlohmann/include")
 set(LIBPQXX_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/../deploy/libpqxx/include")
 set(LIBPQXX_LIB_DIR "${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
+set(THREADLOGGER_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/ThreadLogger/src")
+set(THREADLOGGER_LIB_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/ThreadLogger/src")
 set(POSTGRESHELPER_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/PostgresHelper/src")
 set(STATISTICTIMER_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/StatisticTimer/src")
 set(STRINGUTILS_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/CatraLibraries/StringUtils/src")
@@ -164,6 +167,8 @@ add_subdirectory(CatraLibraries/FFMpegEngine)
 add_subdirectory(CatraLibraries/FFMpegWrapper/src)
 add_subdirectory(CatraLibraries/StatisticTimer/src)
 add_subdirectory(CatraLibraries/SafeFileSystem/src)
+option(THREADLOGGER_EXAMPLES "Build ThreadLogger examples" ON)
+add_subdirectory(CatraLibraries/ThreadLogger)
 
 add_subdirectory(API/src)
 add_subdirectory(FFMPEGEncoder/src)

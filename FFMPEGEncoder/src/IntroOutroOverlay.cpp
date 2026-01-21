@@ -14,7 +14,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 {
 	string api = "introOutroOverlay";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
@@ -46,7 +46,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -65,7 +65,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -84,7 +84,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -109,7 +109,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -121,7 +121,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = introSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Creating directory"
 							", _ingestionJobKey: {}"
 							", _encoding->_encodingJobKey: {}"
@@ -148,7 +148,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -171,7 +171,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -183,7 +183,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = mainSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Creating directory"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -210,7 +210,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -233,7 +233,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -245,7 +245,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = outroSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Creating directory"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -272,7 +272,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -294,7 +294,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -306,7 +306,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Creating directory"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -335,7 +335,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -351,7 +351,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -367,7 +367,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -383,7 +383,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -445,7 +445,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 						int64_t currentDistanceFromHalf = abs(mod - ((candidateChunkPeriodInSeconds * 1000) / 2));
 						if (currentDistanceFromHalf < selectedDistanceFromHalf)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"selectedChunkPeriodInSeconds, changing period"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -465,7 +465,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					candidateChunkPeriodInSeconds++;
 				}
 			}
-			SPDLOG_INFO(
+			LOG_INFO(
 				"selectedChunkPeriodInSeconds"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -492,7 +492,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -508,7 +508,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					", encodedTranscoderStagingAssetPathName: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, encodedTranscoderStagingAssetPathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -586,7 +586,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 								", currentFile: {}",
 								_encoding->_ingestionJobKey, _encoding->_encodingJobKey, currentFile
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -632,7 +632,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 								", currentFile: {}",
 								_encoding->_ingestionJobKey, _encoding->_encodingJobKey, currentFile
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -675,7 +675,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 								", currentFile: {}",
 								_encoding->_ingestionJobKey, _encoding->_encodingJobKey, currentFile
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -686,7 +686,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				_encoding->_ffmpeg->concat(_encoding->_ingestionJobKey, true, concatSourcePhysicalPaths, encodedStagingAssetPathName);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"removing temporary directory"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -697,7 +697,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"Intro outro procedure failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -707,7 +707,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				if (fs::exists(stagingBasePath))
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"removing temporary directory"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -733,7 +733,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encoding->_encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -746,7 +746,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					+ ", _ingestionJobKey: " + to_string(_ingestionJobKey)
 					+ ", _encodingJobKey: " + to_string(_encodingJobKey)
 					+ ", encodedTranscoderStagingAssetPathName: " + encodedTranscoderStagingAssetPathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -955,7 +955,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"introOutroOverlay encoding content finished"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
@@ -966,7 +966,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove file"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -978,7 +978,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			}
 
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove file"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -990,7 +990,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			}
 
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove file"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -1027,7 +1027,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 	catch (FFMpegEncodingKilledByUser &e)
 	{
 		string eWhat = e.what();
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{} API failed (EncodingKilledByUser)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1056,7 +1056,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_callbackData->pushErrorMessage(errorMessage);
@@ -1077,7 +1077,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_callbackData->pushErrorMessage(errorMessage);

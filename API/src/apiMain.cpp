@@ -32,7 +32,7 @@ void signalHandler(int signal)
 		if (elapsedInSeconds > 60) // è inutile loggare infiniti errori, ne loggo solo uno ogni 60 secondi
 		{
 			lastSIGSEGVSignal = chrono::system_clock::now();
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Received a signal"
 				", signal: {}",
 				signal
@@ -40,7 +40,7 @@ void signalHandler(int signal)
 		}
 	}
 	else
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Received a signal"
 			", signal: {}",
 			signal
@@ -136,19 +136,19 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 void registerSlowQueryLogger(json configurationRoot)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pathName", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", log->api->slowQuery->pathName: {}",
 		logPathName
 	);
 	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", log->api->type: {}",
 		logType
 	);
 
-	SPDLOG_INFO("registerSlowQueryLogger");
+	LOG_INFO("registerSlowQueryLogger");
 	std::vector<spdlog::sink_ptr> sinks;
 	{
 		if (logType == "daily")
@@ -181,7 +181,7 @@ void registerSlowQueryLogger(json configurationRoot)
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
 	string pattern = JSONUtils::asString(configurationRoot["log"]["api"], "pattern", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", log->api->pattern: {}",
 		pattern
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 			masterDbPoolSize = 0;
 		else
 			masterDbPoolSize = JSONUtils::asInt32(configuration["postgres"]["master"], "apiPoolSize", 5);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", postgres->master->apiPoolSize: {}",
 			masterDbPoolSize
@@ -253,7 +253,7 @@ int main(int argc, char **argv)
 			slaveDbPoolSize = 0;
 		else
 			slaveDbPoolSize = JSONUtils::asInt32(configuration["postgres"]["slave"], "apiPoolSize", 5);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", postgres->slave->apiPoolSize: {}",
 			slaveDbPoolSize
@@ -264,12 +264,12 @@ int main(int argc, char **argv)
 		size_t slaveDbPoolSize = JSONUtils::asInt32(configuration["database"]["slave"], "apiPoolSize", 5);
 		info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
 #endif
-		SPDLOG_INFO("Creating MMSEngineDBFacade");
+		LOG_INFO("Creating MMSEngineDBFacade");
 		auto mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configuration,
 			JsonPath(&configuration)["log"]["api"]["slowQuery"].as<json>(),
 			masterDbPoolSize, slaveDbPoolSize, logger);
 
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			"Creating MMSStorage"
 			", noFileSystemAccess: {}",
 			noFileSystemAccess
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 		FCGX_Init();
 
 		int threadsNumber = JSONUtils::asInt32(configuration["api"], "threadsNumber", 1);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", api->threadsNumber: {}",
 			threadsNumber
@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 		bandwidthUsageThread->stop();
 		mmsDeliveryAuthorization->stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
-		SPDLOG_INFO("API shutdown");
+		LOG_INFO("API shutdown");
 
 		// libxml
 		{

@@ -32,25 +32,25 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	BandwidthUsageThread(interfaceNameToMonitor)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->protocol: {}", _mmsAPIProtocol);
 	_mmsAPIHostname = JsonPath(&configurationRoot)["api"]["hostname"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->hostname: {}", _mmsAPIHostname);
 	_mmsAPIPort = JsonPath(&configurationRoot)["api"]["port"].as<int32_t>(0);
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->port: {}", _mmsAPIPort);
 	_mmsAPIVersion = JsonPath(&configurationRoot)["api"]["version"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->version: {}", _mmsAPIVersion);
 	_mmsAPIUpdateBandwidthStatsURI = JsonPath(&configurationRoot)["api"]["updateBandwidthStatsURI"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->updateBandwidthStatsURI: {}", _mmsAPIUpdateBandwidthStatsURI);
 	_updateStatsUser = JsonPath(&configurationRoot)["api"]["updateStatsUser"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->updateStatsUser: {}", _updateStatsUser);
 	auto updateStatsCryptedPassword = JsonPath(&configurationRoot)["api"]["updateStatsCryptedPassword"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", api->updateStatsCryptedPassword: {}", updateStatsCryptedPassword);
 	try
 	{
@@ -60,13 +60,13 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	{
 		_updateStatsPassword = "";
 
-		SPDLOG_ERROR("Encrypt::opensslDecrypt failed"
+		LOG_ERROR("Encrypt::opensslDecrypt failed"
 			", updateStatsCryptedPassword: {}"
 			", exception: {}", updateStatsCryptedPassword, e.what()
 			);
 	}
 	auto sEncoderKey = JsonPath(&configurationRoot)["ffmpeg"]["encoderKey"].as<std::string>();
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 		", ffmpeg->encoderKey: {}", sEncoderKey);
 	try
 	{
@@ -76,7 +76,7 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	{
 		_encoderKey = -1;
 
-		SPDLOG_ERROR("stoi failed"
+		LOG_ERROR("stoi failed"
 			", sEncoderKey: {}"
 			", exception: {}", sEncoderKey, e.what()
 			);
@@ -87,13 +87,13 @@ void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBand
 {
 	if (_encoderKey < 0)
 	{
-		SPDLOG_ERROR("The 'encoderKey' configuration item is not valid and bandwidth stats is not sent to API MMS Server"
+		LOG_ERROR("The 'encoderKey' configuration item is not valid and bandwidth stats is not sent to API MMS Server"
 			", encoderKey: {}", _encoderKey);
 		return;
 	}
 	if (_updateStatsPassword.empty())
 	{
-		SPDLOG_ERROR("The 'updateBandwidthStatsPassword' configuration item is not valid and bandwidth stats is not sent to API MMS Server"
+		LOG_ERROR("The 'updateBandwidthStatsPassword' configuration item is not valid and bandwidth stats is not sent to API MMS Server"
 			", _updateStatsPassword: {}", _updateStatsPassword);
 		return;
 	}
@@ -103,7 +103,7 @@ void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBand
 		txAvgBandwidthUsage, rxAvgBandwidthUsage);
 
 	constexpr int32_t mmsAPITimeoutInSeconds = 3;
-	SPDLOG_INFO("UpdateBandwidthStats"
+	LOG_INFO("UpdateBandwidthStats"
 		", txAvgBandwidthUsage: {}"
 		", rxAvgBandwidthUsage: {}",
 		txAvgBandwidthUsage, rxAvgBandwidthUsage

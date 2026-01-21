@@ -23,7 +23,7 @@ void MMSEngineProcessor::emailNotificationThread(
 	{
 		string sParameters = JSONUtils::toString(parametersRoot);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "emailNotificationThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count()) +
 			", dependencies.size: " + to_string(dependencies.size()) + ", sParameters: " + sParameters
@@ -103,7 +103,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				{
 					string errorMessage = string("Exception processing dependencies") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 										  ", ingestionJobKey: " + to_string(ingestionJobKey);
-					SPDLOG_ERROR(string() + errorMessage);
+					LOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -194,7 +194,7 @@ void MMSEngineProcessor::emailNotificationThread(
 							", e.what: ",
 							_processorIdentifier, ingestionJobKey, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -206,7 +206,7 @@ void MMSEngineProcessor::emailNotificationThread(
 							", ingestionJobKey: {}",
 							_processorIdentifier, ingestionJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -218,7 +218,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -259,7 +259,7 @@ void MMSEngineProcessor::emailNotificationThread(
 				}
 				string strToReplace = JSONUtils::asString(userSubstitutionRoot, field, "");
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "User substitution" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", strToBeReplaced: " + strToBeReplaced + ", strToReplace: " + strToReplace
 				);
@@ -274,7 +274,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		else
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"NO User substitution"
 				", ingestionJobKey: {}"
 				", _processorIdentifier: {}",
@@ -318,7 +318,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		vector<string> emailBody;
 		emailBody.push_back(message);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Sending email..."
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -341,7 +341,7 @@ void MMSEngineProcessor::emailNotificationThread(
 		// emailSender.sendEmail(emailAddresses, subject, emailBody,
 		// useMMSCCToo);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 		);
@@ -352,12 +352,12 @@ void MMSEngineProcessor::emailNotificationThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "sendEmail failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -367,14 +367,14 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -384,12 +384,12 @@ void MMSEngineProcessor::emailNotificationThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "sendEmail failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -399,14 +399,14 @@ void MMSEngineProcessor::emailNotificationThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);

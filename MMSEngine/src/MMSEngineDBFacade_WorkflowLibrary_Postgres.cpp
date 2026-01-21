@@ -33,7 +33,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -41,7 +41,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -161,7 +161,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -169,7 +169,7 @@ int64_t MMSEngineDBFacade::addUpdateWorkflowAsLibrary(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -253,7 +253,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(int64_t userKey, int64_t workspa
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -261,7 +261,7 @@ void MMSEngineDBFacade::removeWorkflowAsLibrary(int64_t userKey, int64_t workspa
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -403,7 +403,7 @@ json MMSEngineDBFacade::getWorkflowsAsLibraryList(int64_t workspaceKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -411,7 +411,7 @@ json MMSEngineDBFacade::getWorkflowsAsLibraryList(int64_t workspaceKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -486,7 +486,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent(int64_t workspaceKey, int6
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -494,7 +494,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent(int64_t workspaceKey, int6
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -573,7 +573,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent(int64_t workspaceKey, stri
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -581,7 +581,7 @@ string MMSEngineDBFacade::getWorkflowAsLibraryContent(int64_t workspaceKey, stri
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

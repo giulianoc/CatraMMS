@@ -141,7 +141,7 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 		// curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		/* Send the message */
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Sending email"
 			", emailServerURL: {}"
 			", userName: {}"
@@ -156,13 +156,13 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 
 		/* Check for errors */
 		if (res != CURLE_OK)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"curl_easy_perform() failed"
 				", curl_easy_strerror(res): {}",
 				curl_easy_strerror(res)
 			);
 		else
-			SPDLOG_INFO("Email sent successful");
+			LOG_INFO("Email sent successful");
 
 		/* Free the list of recipients */
 		curl_slist_free_all(recipients);

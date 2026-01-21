@@ -17,9 +17,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#ifndef SPDLOG_ACTIVE_LEVEL
-	#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "Workspace.h"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
@@ -51,13 +48,13 @@ using namespace nlohmann::literals;
 #define SQLQUERYLOG(queryLabel, elapsed, ...)                                                                                                        \
 	if (elapsed > maxQueryElapsed(queryLabel))                                                                                                       \
 	{                                                                                                                                                \
-		SPDLOG_INFO(__VA_ARGS__);                                                                                                                    \
+		LOG_INFO(__VA_ARGS__);                                                                                                                    \
 		auto logger = spdlog::get("slow-query");                                                                                                     \
 		if (logger != nullptr)                                                                                                                       \
 			SPDLOG_LOGGER_WARN(logger, __VA_ARGS__);                                                                                                 \
 	}                                                                                                                                                \
 	else                                                                                                                                             \
-		SPDLOG_DEBUG(__VA_ARGS__);
+		LOG_DEBUG(__VA_ARGS__);
 
 struct LoginFailed final : std::exception
 {
@@ -135,7 +132,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong CodeType: {}", static_cast<int>(codeType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -157,7 +154,7 @@ class MMSEngineDBFacade
 				", codeType: {}",
 				codeType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -177,7 +174,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong LockType: {}", static_cast<int>(lockType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -197,7 +194,7 @@ class MMSEngineDBFacade
 				", lockType: {}",
 				lockType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -217,7 +214,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong onceType: {}", static_cast<int>(onceType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -237,7 +234,7 @@ class MMSEngineDBFacade
 				", onceType: {}",
 				onceType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -264,7 +261,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong contentType: {}", static_cast<int>(contentType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -286,7 +283,7 @@ class MMSEngineDBFacade
 				", contentType: {}",
 				contentType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -309,7 +306,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong encodingPriority: {}", static_cast<int>(priority));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -331,7 +328,7 @@ class MMSEngineDBFacade
 				", encodingPriority: {}",
 				priority
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -367,7 +364,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong EncodingStatus: {}", static_cast<int>(encodingStatus));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -397,7 +394,7 @@ class MMSEngineDBFacade
 				", encodingStatus: {}",
 				encodingStatus
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -465,7 +462,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong encodingType: {}", static_cast<int>(encodingType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -518,7 +515,7 @@ class MMSEngineDBFacade
 				", encodingType: {}",
 				encodingType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -553,7 +550,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong encodingError: {}", static_cast<int>(encodingError));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -584,7 +581,7 @@ class MMSEngineDBFacade
 				", encodingError: {}",
 				encodingError
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -610,7 +607,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong deliveryTechnology: {}", static_cast<int>(deliveryTechnology));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -633,7 +630,7 @@ class MMSEngineDBFacade
 				", deliveryTechnology: {}",
 				deliveryTechnology
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -659,7 +656,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong encodingPeriod: {}", static_cast<int>(encodingPeriod));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -684,7 +681,7 @@ class MMSEngineDBFacade
 				", encodingPeriod: {}",
 				encodingPeriod
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -704,7 +701,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong videoSpeedType: {}", static_cast<int>(videoSpeedType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -725,7 +722,7 @@ class MMSEngineDBFacade
 				", videoSpeedType: {}",
 				videoSpeedType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -896,7 +893,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong ingestionType: {}", static_cast<int>(ingestionType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -998,7 +995,7 @@ class MMSEngineDBFacade
 				", ingestionType: {}",
 				ingestionType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -1067,7 +1064,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong IngestionStatus: {}", static_cast<int>(ingestionStatus));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -1114,7 +1111,7 @@ class MMSEngineDBFacade
 				", ingestionStatus: {}",
 				ingestionStatus
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 	static bool isIngestionStatusFinalState(const IngestionStatus &ingestionStatus)
@@ -1155,7 +1152,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = "Wrong IngestionRootStatus";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -1178,7 +1175,7 @@ class MMSEngineDBFacade
 				", ingestionRootStatus: {}",
 				ingestionRootStatus
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 
@@ -1234,7 +1231,7 @@ class MMSEngineDBFacade
 		default:
 		{
 			const std::string errorMessage = "Wrong CrossReferenceType";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}
@@ -1279,7 +1276,7 @@ class MMSEngineDBFacade
 				", crossReferenceType: {}",
 				crossReferenceType
 			);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw std::runtime_error(errorMessage);
 	}
 

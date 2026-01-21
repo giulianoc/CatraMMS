@@ -18,7 +18,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	{
 		// 2021-09-23: I removed TRANSACTION and FOR UPDATE because I saw we may have deadlock when a MediaItem is added
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getExpiredMediaItemKeysCheckingDependencies (MediaItemKeys expired)"
 			", processorMMS: {}"
 			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: {}"
@@ -100,7 +100,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 									+ ", rowsUpdated: " + to_string(rowsUpdated)
 									+ ", sqlStatement: " + sqlStatement
 							;
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 							*/
@@ -115,7 +115,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				}
 				else
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
 						"ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -139,7 +139,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getExpiredMediaItemKeysCheckingDependencies (PhysicalPathKeys expired)"
 			", processorMMS: {}"
 			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: {}"
@@ -222,7 +222,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 									+ ", rowsUpdated: " + to_string(rowsUpdated)
 									+ ", sqlStatement: " + sqlStatement
 							;
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 							*/
@@ -238,7 +238,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				}
 				else
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Content expired but not removed because there are still ingestion jobs depending on him. Content details: "
 						"ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -261,7 +261,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 			);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getExpiredMediaItemKeysCheckingDependencies"
 			", processorMMS: {}"
 			", mediaItemKeyOrPhysicalPathKeyToBeRemoved.size: {}"
@@ -273,7 +273,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -281,7 +281,7 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -322,7 +322,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -330,7 +330,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -378,7 +378,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -386,7 +386,7 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -492,7 +492,7 @@ json MMSEngineDBFacade::updateMediaItem(
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -517,7 +517,7 @@ json MMSEngineDBFacade::updateMediaItem(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -525,7 +525,7 @@ json MMSEngineDBFacade::updateMediaItem(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -606,7 +606,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 						+ ", rowsUpdated: " + to_string(rowsUpdated)
 						+ ", sqlStatement: " + sqlStatement
 				;
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -617,7 +617,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -625,7 +625,7 @@ json MMSEngineDBFacade::updatePhysicalPath(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -690,7 +690,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMediaItemsList"
 			", workspaceKey: {}"
 			", mediaItemKey: {}"
@@ -844,7 +844,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				}
 				catch (DBRecordNotFound &e)
 				{
-					SPDLOG_WARN(
+					LOG_WARN(
 						"physicalPathKey does not exist"
 						", physicalPathKey: {}"
 						", exception: {}",
@@ -863,7 +863,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				}
 				catch (DBRecordNotFound &e)
 				{
-					SPDLOG_WARN(
+					LOG_WARN(
 						"getExternalUniqueName_MediaItemKey: requested workspaceKey/uniqueName does not exist"
 						", workspaceKey: {}"
 						", uniqueName: {}"
@@ -1415,7 +1415,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 							getVideoDetails(localMediaItemKey, physicalPathKey, fromMaster, videoTracks, audioTracks);
 							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
-							SPDLOG_INFO(
+							LOG_INFO(
 								"getVideoDetails"
 								", mediaItemKey: {}"
 								", physicalPathKey: {}"
@@ -1624,7 +1624,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 								", sqlStatement: {}",
 								localMediaItemKey, sqlStatement
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1670,7 +1670,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1678,7 +1678,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1709,7 +1709,7 @@ json MMSEngineDBFacade::mediaItem_columnAsJson(string columnName, int64_t mediaI
 	catch (DBRecordNotFound &)
 	{
 		/*
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"NotFound"
 			", physicalPathKey: {}"
 			", fromMaster: {}"
@@ -1722,7 +1722,7 @@ json MMSEngineDBFacade::mediaItem_columnAsJson(string columnName, int64_t mediaI
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", mediaItemKey: {}"
 			", fromMaster: {}"
@@ -1749,7 +1749,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::mediaItemQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1768,7 +1768,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::mediaItemQuery(
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1821,7 +1821,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::mediaItemQuery(
 					mediaItemKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -1834,7 +1834,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::mediaItemQuery(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1842,14 +1842,14 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::mediaItemQuery(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (de != nullptr) // il chaimante decidera se loggarlo come error
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				de->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1878,7 +1878,7 @@ int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t
 	catch (DBRecordNotFound &)
 	{
 		/*
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"NotFound"
 			", physicalPathKey: {}"
 			", fromMaster: {}"
@@ -1891,7 +1891,7 @@ int64_t MMSEngineDBFacade::physicalPath_columnAsInt64(string columnName, int64_t
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", physicalPathKey: {}"
 			", fromMaster: {}"
@@ -1919,7 +1919,7 @@ json MMSEngineDBFacade::physicalPath_columnAsJson(string columnName, int64_t phy
 	catch (DBRecordNotFound &)
 	{
 		/*
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"NotFound"
 			", physicalPathKey: {}"
 			", fromMaster: {}"
@@ -1932,7 +1932,7 @@ json MMSEngineDBFacade::physicalPath_columnAsJson(string columnName, int64_t phy
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", physicalPathKey: {}"
 			", fromMaster: {}"
@@ -1959,7 +1959,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1978,7 +1978,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2031,7 +2031,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 					physicalPathKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -2044,7 +2044,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2052,14 +2052,14 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::physicalPathQuery(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (de != nullptr) // il chaimante decidera se loggarlo come error
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				de->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2102,7 +2102,7 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 	catch (DBRecordNotFound &)
 	{
 		/*
-		SPDLOG_WARN(
+		LOG_WARN(
 			"NotFound"
 			", workspaceKey: {}"
 			", mediaItemKey: {}"
@@ -2116,7 +2116,7 @@ string MMSEngineDBFacade::externalUniqueName_columnAsString(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", mediaItemKey: {}"
@@ -2158,7 +2158,7 @@ int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"NotFound"
 			", workspaceKey: {}"
 			", uniqueName: {}"
@@ -2171,7 +2171,7 @@ int64_t MMSEngineDBFacade::externalUniqueName_columnAsInt64(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", uniqueName: {}"
@@ -2211,7 +2211,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2230,7 +2230,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2288,7 +2288,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 					workspaceKey, uniqueName
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -2301,7 +2301,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2309,14 +2309,14 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::externalUniqueNameQu
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (de != nullptr)
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				de->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2388,9 +2388,9 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 					referenceMediaItemKey, encodingProfileKey, sqlStatement
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -2407,7 +2407,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2417,14 +2417,14 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -2432,7 +2432,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2503,7 +2503,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 					", sqlStatement: {}",
 					workspaceKey, toString(contentType), encodingProfileLabel, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2538,9 +2538,9 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 					mediaItemKey, encodingProfileKey, sqlStatement
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -2551,7 +2551,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2561,14 +2561,14 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -2576,7 +2576,7 @@ int64_t MMSEngineDBFacade::getPhysicalPathDetails(
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2645,9 +2645,9 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 					physicalPathKey, sqlStatement
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -2660,7 +2660,7 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2670,14 +2670,14 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -2685,7 +2685,7 @@ string MMSEngineDBFacade::getPhysicalPathDetails(int64_t physicalPathKey, bool w
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2875,9 +2875,9 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 				);
 				// 2024-08-17: warn, sara' il chiamante che deciderà se loggare o no l'errore
 				// if (warningIfMissing)
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 				// else
-				// 	SPDLOG_ERROR(errorMessage);
+				// 	LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -2902,7 +2902,7 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2910,14 +2910,14 @@ tuple<int64_t, int, string, string, uint64_t, bool, int64_t> MMSEngineDBFacade::
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (me != nullptr)
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				me->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3005,9 +3005,9 @@ MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaIte
 					mediaItemKey, sqlStatement
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3020,7 +3020,7 @@ MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaIte
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3030,14 +3030,14 @@ MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaIte
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -3045,7 +3045,7 @@ MMSEngineDBFacade::getMediaItemKeyDetails(int64_t workspaceKey, int64_t mediaIte
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3141,9 +3141,9 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey,
 					physicalPathKey, sqlStatement
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3156,7 +3156,7 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey,
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3166,14 +3166,14 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey,
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -3181,7 +3181,7 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByPhysicalPathKey(int64_t workspaceKey,
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3246,7 +3246,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 					", sqlStatement: {}",
 					referenceIngestionJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3331,13 +3331,13 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 						);
 						if (warningIfMissing)
 						{
-							SPDLOG_WARN(errorMessage);
+							LOG_WARN(errorMessage);
 
 							continue;
 						}
 						else
 						{
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw MediaItemKeyNotFound(errorMessage);
 						}
@@ -3366,7 +3366,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3376,14 +3376,14 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -3391,7 +3391,7 @@ void MMSEngineDBFacade::getMediaItemDetailsByIngestionJobKey(
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3461,9 +3461,9 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 					referenceUniqueName, sqlStatement
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3474,7 +3474,7 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3484,14 +3484,14 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 		else if (me != nullptr)
 		{
 			if (warningIfMissing)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
 					me->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exceptionMessage: {}"
 					", conn: {}",
@@ -3499,7 +3499,7 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 				);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3570,7 +3570,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 						", sqlStatement: {}",
 						mediaItemKey, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3585,7 +3585,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 					", sqlStatement: {}",
 					mediaItemKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3619,7 +3619,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 						", sqlStatement: {}",
 						physicalPathKey, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3634,7 +3634,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 					", sqlStatement: {}",
 					physicalPathKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3644,7 +3644,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3652,7 +3652,7 @@ int64_t MMSEngineDBFacade::getMediaDurationInMilliseconds(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3719,7 +3719,7 @@ void MMSEngineDBFacade::getVideoDetails(
 					", sqlStatement: {}",
 					mediaItemKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3836,7 +3836,7 @@ void MMSEngineDBFacade::getVideoDetails(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3844,7 +3844,7 @@ void MMSEngineDBFacade::getVideoDetails(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3907,7 +3907,7 @@ void MMSEngineDBFacade::getAudioDetails(
 					", sqlStatement: {}",
 					mediaItemKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3975,7 +3975,7 @@ void MMSEngineDBFacade::getAudioDetails(
 					", sqlStatement: {}",
 					mediaItemKey, localPhysicalPathKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -3985,7 +3985,7 @@ void MMSEngineDBFacade::getAudioDetails(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3993,7 +3993,7 @@ void MMSEngineDBFacade::getAudioDetails(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4054,7 +4054,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 					", sqlStatement: {}",
 					mediaItemKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4101,7 +4101,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 					", sqlStatement: {}",
 					mediaItemKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -4113,7 +4113,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4121,7 +4121,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4152,7 +4152,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	string title = "";
 	try
 	{
-		SPDLOG_INFO("Insert into MMS_MediaItem"
+		LOG_INFO("Insert into MMS_MediaItem"
 			", ingestionJobKey: {}",
 			ingestionJobKey
 		);
@@ -4419,7 +4419,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 						", sqlStatement: {}",
 						workspace->_workspaceKey, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4483,7 +4483,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 						", sqlStatement: {}",
 						currentDirLevel1, currentDirLevel2, currentDirLevel3, workspace->_workspaceKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4504,7 +4504,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 				string errorMessage;
 				string processorMMS;
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -4523,7 +4523,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4531,7 +4531,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4604,7 +4604,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 			string errorMessage = __FILEREF__ + "uniqueName is empty"
 				+ ", uniqueName: " + uniqueName
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 			*/
@@ -4839,7 +4839,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4847,7 +4847,7 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4905,7 +4905,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4913,7 +4913,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4970,7 +4970,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 					", mediaItemKey: {}",
 					mediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5004,7 +5004,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 		{
 			int drm = 0;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"insert into MMS_PhysicalPath"
 				", mediaItemKey: {}"
 				", relativePath: {}"
@@ -5142,7 +5142,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				", contentType: {}",
 				toString(contentType)
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5153,7 +5153,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5161,7 +5161,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5207,7 +5207,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 					", mediaItemKey: {}",
 					workspaceKey, mediaItemKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5316,7 +5316,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5324,7 +5324,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5361,7 +5361,7 @@ void MMSEngineDBFacade::addCrossReference(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5369,7 +5369,7 @@ void MMSEngineDBFacade::addCrossReference(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5427,7 +5427,7 @@ void MMSEngineDBFacade::addCrossReference(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5435,7 +5435,7 @@ void MMSEngineDBFacade::addCrossReference(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5486,7 +5486,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 				// probable because encodingPercentage was already the same in the table
 				string errorMessage = __FILEREF__ + "no delete was done" + ", physicalPathKey: " + to_string(physicalPathKey) +
 									  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -5497,7 +5497,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5505,7 +5505,7 @@ void MMSEngineDBFacade::removePhysicalPath(int64_t physicalPathKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5562,7 +5562,7 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 					", sqlStatement: {}",
 					mediaItemKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5572,7 +5572,7 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5580,7 +5580,7 @@ void MMSEngineDBFacade::removeMediaItem(int64_t mediaItemKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5620,7 +5620,7 @@ json MMSEngineDBFacade::getTagsList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getTagsList"
 			", workspaceKey: {}"
 			", start: {}"
@@ -5733,7 +5733,7 @@ json MMSEngineDBFacade::getTagsList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5741,7 +5741,7 @@ json MMSEngineDBFacade::getTagsList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5771,7 +5771,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"updateMediaItem"
 		", mediaItemKey: {}"
 		", processorMMSForRetention: {}",
@@ -5807,7 +5807,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 					", sqlStatement: {}",
 					mediaItemKey, processorMMSForRetention, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5817,7 +5817,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5825,7 +5825,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

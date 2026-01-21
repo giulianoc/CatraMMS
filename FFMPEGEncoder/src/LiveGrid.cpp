@@ -22,7 +22,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 {
 	string api = "liveGrid";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
@@ -67,7 +67,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 					{
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"removeDirectory"
 								", manifestDirectoryPath: {}" +
 								manifestDirectoryPath
@@ -84,7 +84,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 								", e.what(): {}",
 								_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -98,7 +98,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 								", e.what(): {}",
 								_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, manifestDirectoryPath, e.what()
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							// throw e;
 						}
@@ -116,7 +116,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"_ffmpeg->liveGridBy... finished"
 			", ingestionJobKey: {}"
 			", _encodingJobKey: {}",
@@ -127,7 +127,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 	catch (FFMpegEncodingKilledByUser &e)
 	{
 		string eWhat = e.what();
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{} API failed (EncodingKilledByUser)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -166,7 +166,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
@@ -188,7 +188,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
@@ -210,7 +210,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);
@@ -231,7 +231,7 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_liveProxyData->_callbackData->pushErrorMessage(errorMessage);

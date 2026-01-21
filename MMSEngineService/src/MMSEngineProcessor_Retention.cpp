@@ -13,7 +13,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 		-1 // ingestionJobKey
 	);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		string() + "handleContentRetentionEventThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 	);
@@ -40,7 +40,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() + "getExpiredMediaItemKeysCheckingDependencies failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", exception: " + e.what()
 				);
@@ -51,7 +51,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() + "getExpiredMediaItemKeysCheckingDependencies failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", exception: " + e.what()
 				);
@@ -69,7 +69,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 
 				tie(workspace, mediaItemKey, physicalPathKey) = workspaceMediaItemKeyOrPhysicalPathKey;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Removing because of ContentRetention" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", workspace->_name: " + workspace->_name +
 					", mediaItemKey: " + to_string(mediaItemKey) + ", physicalPathKey: " + to_string(physicalPathKey)
@@ -84,7 +84,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						string() + "_mmsStorage->removeMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", workspace->_name: " + workspace->_name +
 						", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
@@ -98,7 +98,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 					}
 					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
 							", exception: " + e.what()
@@ -106,7 +106,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
 							", exception: " + e.what()
@@ -122,7 +122,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						string() + "_mmsStorage->removeMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", workspace->_name: " + workspace->_name +
 						", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
@@ -135,7 +135,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 					}
 					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
 							", exception: " + e.what()
@@ -143,7 +143,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
 							", exception: " + e.what()
@@ -161,7 +161,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Content retention finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
@@ -169,7 +169,7 @@ void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> proc
 
 	/* Already done by the crontab script
 	{
-		SPDLOG_INFO(string() + "Staging Retention started"
+		LOG_INFO(string() + "Staging Retention started"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			+ ", _mmsStorage->getStagingRootRepository(): " +
 _mmsStorage->getStagingRootRepository()
@@ -210,7 +210,7 @@ _stagingRetentionInDays)
 						if (detDirectoryEntryType == FileIO::
 TOOLS_FILEIO_DIRECTORY)
 						{
-							SPDLOG_INFO(string() + "Removing staging
+							LOG_INFO(string() + "Removing staging
 directory because of Retention"
 								+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
@@ -258,7 +258,7 @@ to_string(_stagingRetentionInDays)
 						}
 						else
 						{
-							SPDLOG_INFO(string() + "Removing staging file
+							LOG_INFO(string() + "Removing staging file
 because of Retention"
 								+ ", _processorIdentifier: " +
 to_string(_processorIdentifier)
@@ -286,7 +286,7 @@ failed"
 to_string(_processorIdentifier)
 						   + ", e.what(): " + e.what()
 					;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -298,7 +298,7 @@ failed"
 to_string(_processorIdentifier)
 						   + ", e.what(): " + e.what()
 					;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -308,19 +308,19 @@ to_string(_processorIdentifier)
 		}
 		catch(runtime_error& e)
 		{
-			SPDLOG_ERROR(string() + "removeHavingPrefixFileName failed"
+			LOG_ERROR(string() + "removeHavingPrefixFileName failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 				+ ", e.what(): " + e.what()
 			);
 		}
 		catch(exception& e)
 		{
-			SPDLOG_ERROR(string() + "removeHavingPrefixFileName failed"
+			LOG_ERROR(string() + "removeHavingPrefixFileName failed"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 			);
 		}
 
-		SPDLOG_INFO(string() + "Staging Retention finished"
+		LOG_INFO(string() + "Staging Retention finished"
 				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
 		);
 	}
@@ -341,7 +341,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"DBDataRetention: onceExecution"
 			", _processorIdentifier: {}",
 			_processorIdentifier
@@ -351,7 +351,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"DBDataRetention: onceExecution failed"
 			", _processorIdentifier: {}"
 			", exception: {}",
@@ -363,7 +363,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"DBDataRetention: onceExecution failed"
 			", _processorIdentifier: {}"
 			", exception: {}",
@@ -378,7 +378,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 	{
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"DBDataRetention: retentionOfIngestionData"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -389,7 +389,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"DBDataRetention: retentionOfIngestionData failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -404,7 +404,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"DBDataRetention: retentionOfDeliveryAuthorization"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -415,7 +415,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"DBDataRetention: retentionOfDeliveryAuthorization failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -430,7 +430,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"DBDataRetention: retentionOfStatisticData"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -441,7 +441,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"DBDataRetention: retentionOfStatisticData failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -458,7 +458,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		{
 			// Scenarios: IngestionJob in final status but EncodingJob not
 			// in final status
-			SPDLOG_INFO(
+			LOG_INFO(
 				"DBDataRetention: fixEncodingJobsHavingWrongStatus"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -469,7 +469,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"DBDataRetention: fixEncodingJobsHavingWrongStatus failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -484,7 +484,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"DBDataRetention: fixIngestionJobsHavingWrongStatus"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -498,7 +498,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"DBDataRetention: fixIngestionJobsHavingWrongStatus failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -511,7 +511,7 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 			// throw e;
 		}
 	}
-	SPDLOG_INFO(
+	LOG_INFO(
 		"DBDataRetention"
 		", _processorIdentifier: {}"
 		", alreadyExecuted: {}"

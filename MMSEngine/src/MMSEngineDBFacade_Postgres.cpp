@@ -212,7 +212,7 @@ MMSEngineDBFacade::~MMSEngineDBFacade() = default;
 void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigurationRoot)
 {
 	_defaultMaxQueryElapsed = JSONUtils::asInt32(slowQueryConfigurationRoot, "defaultMaxQueryElapsed", 100);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", defaultMaxQueryElapsed: {}",
 		_defaultMaxQueryElapsed
@@ -259,7 +259,7 @@ void MMSEngineDBFacade::loadSqlColumnsSchema()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -267,7 +267,7 @@ void MMSEngineDBFacade::loadSqlColumnsSchema()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -315,7 +315,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		// 2022-09-27: next procedure should be already covered by retentionOfIngestionData,
 		//		anyway, we will leave it here
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"resetProcessingJobsIfNeeded. Downloading of content (pull mode) not completed"
 				", processorMMS: {}",
 				processorMMS
@@ -351,7 +351,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		// 	E' importante che questo reset considera SOLAMENTE i task non gestiti da un EncodingJob, infatti per quelli l'engine
 		// 	si ricollega automaticamente
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"resetProcessingJobsIfNeeded. Tasks managed only by Engine (not by Encoding) not completed"
 				", processorMMS: {}",
 				processorMMS
@@ -450,7 +450,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			/* 2024-12-15:
 			 * commentato perchè non la capisco
 			 *
-			SPDLOG_INFO(
+			LOG_INFO(
 				"resetProcessingJobsIfNeeded. IngestionJobs assigned without final state"
 				", processorMMS: {}",
 				processorMMS
@@ -464,7 +464,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -476,7 +476,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 
 		{
 			/*
-			SPDLOG_INFO(
+			LOG_INFO(
 				"resetProcessingJobsIfNeeded. EncodingJobs assigned with state Processing"
 				", processorMMS: {}",
 				processorMMS
@@ -492,7 +492,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.exec0(sqlStatement);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
@@ -503,7 +503,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 		}
 
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"resetProcessingJobsIfNeeded. MediaItems retention assigned"
 				", processorMMS: {}",
 				processorMMS
@@ -567,7 +567,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -575,7 +575,7 @@ void MMSEngineDBFacade::resetProcessingJobsIfNeeded(string processorMMS)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -645,7 +645,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed(int64_t workspaceKey)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -653,7 +653,7 @@ string MMSEngineDBFacade::nextRelativePathToBeUsed(int64_t workspaceKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -786,7 +786,7 @@ MMSEngineDBFacade::getStorageDetails(int64_t physicalPathKey, bool fromMaster)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -794,7 +794,7 @@ MMSEngineDBFacade::getStorageDetails(int64_t physicalPathKey, bool fromMaster)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -876,7 +876,7 @@ MMSEngineDBFacade::getStorageDetails(
 					", sqlStatement: {}",
 					mediaItemKey, encodingProfileKey, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw MediaItemKeyNotFound(errorMessage);
 			}
@@ -980,7 +980,7 @@ MMSEngineDBFacade::getStorageDetails(
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		auto const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -988,14 +988,14 @@ MMSEngineDBFacade::getStorageDetails(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (me != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				me->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1108,7 +1108,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1116,7 +1116,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1193,7 +1193,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1201,7 +1201,7 @@ int64_t MMSEngineDBFacade::createDeliveryAuthorization(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1230,7 +1230,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1249,7 +1249,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1316,7 +1316,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 					deliveryAuthorizationKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -1329,7 +1329,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		auto const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1337,14 +1337,14 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (de != nullptr)
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				de->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1455,7 +1455,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1463,7 +1463,7 @@ bool MMSEngineDBFacade::checkDeliveryAuthorization(int64_t deliveryAuthorization
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1561,7 +1561,7 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1569,7 +1569,7 @@ bool MMSEngineDBFacade::onceExecution(OnceType onceType)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1630,7 +1630,7 @@ string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emp
 		string errorMessage = std::format("Expected JSON array"
 			", arrayRoot: {}", JSONUtils::toString(arrayRoot)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw std::runtime_error(errorMessage);
 	}

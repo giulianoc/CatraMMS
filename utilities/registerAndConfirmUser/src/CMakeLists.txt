@@ -28,7 +28,7 @@ SET (HEADERS
 )
 
 include_directories ("${SPDLOG_INCLUDE_DIR}")
-include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
+include_directories ("${THREADLOGGER_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
 include_directories("${STRINGUTILS_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
@@ -37,6 +37,7 @@ include_directories("${DBCONN_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
 include_directories("${CURLWRAPPER_INCLUDE_DIR}")
 include_directories("${ENCRYPT_INCLUDE_DIR}")
+include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 
 link_directories("${LIBPQXX_LIB_DIR}")
 link_directories("${LIBPQ_LIB_DIR}")

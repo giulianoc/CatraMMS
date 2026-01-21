@@ -108,7 +108,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"workspaceKey, requestTimestamp, title, userId, upToNextRequestInSeconds)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
@@ -123,7 +123,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"workspaceKey, requestTimestamp, userId, title, upToNextRequestInSeconds)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
@@ -138,7 +138,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"workspaceKey, requestTimestamp, upToNextRequestInSeconds)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
@@ -1033,7 +1033,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"create unique index if not exists MMS_EncodingProfile_idx on MMS_EncodingProfile (workspaceKey, contentType)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
-			SPDLOG_INFO("SQL statement"
+			LOG_INFO("SQL statement"
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
@@ -1071,7 +1071,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						", predefinedProfileDirectoryPath: {}",
 						predefinedProfileDirectoryPath
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					continue;
 				}
@@ -1090,7 +1090,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								", entry.path().filename(): {}",
 								entry.path().filename().string()
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							continue;
 						}
@@ -1103,7 +1103,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonProfile = buffer.str();
 
-							SPDLOG_TRACE(
+							LOG_TRACE(
 								"Reading profile"
 								", profile pathname: {}"
 								", profile: {}",
@@ -1118,7 +1118,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 
-						SPDLOG_TRACE(
+						LOG_TRACE(
 							"Encoding technology"
 							", predefinedProfileDirectoryPath: {}"
 							", label: {}"
@@ -1174,7 +1174,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 										", sqlStatement: {}",
 										rowsUpdated, sqlStatement
 									);
-									SPDLOG_ERROR(errorMessage);
+									LOG_ERROR(errorMessage);
 
 									throw runtime_error(errorMessage);
 								}
@@ -1206,7 +1206,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					{
 						sql_error const *se = dynamic_cast<sql_error const *>(&e);
 						if (se != nullptr)
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"query failed"
 								", query: {}"
 								", exceptionMessage: {}"
@@ -1214,7 +1214,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								se->query(), se->what(), trans.connection->getConnectionId()
 							);
 						else
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"query failed"
 								", exception: {}"
 								", conn: {}",
@@ -1883,7 +1883,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 								", entry.path().filename(): {}",
 								entry.path().filename().string()
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							continue;
 						}
@@ -1896,7 +1896,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 							jsonWorkflow = buffer.str();
 
-							SPDLOG_TRACE(
+							LOG_TRACE(
 								"Reading workflow"
 								", workflow pathname: {}"
 								", workflow: {}",
@@ -1918,7 +1918,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 							", e.what(): {}",
 							e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw;
 					}
@@ -1927,7 +1927,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(", e.what(): {}", e.what());
+			LOG_ERROR(", e.what(): {}", e.what());
 
 			throw;
 		}
@@ -2513,7 +2513,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2521,7 +2521,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

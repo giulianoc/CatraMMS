@@ -13,7 +13,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 {
 	string api = "pictureInPicture";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
@@ -45,7 +45,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -64,7 +64,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -88,7 +88,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -100,7 +100,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = mainSourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Creating directory"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -127,7 +127,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -150,7 +150,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -162,7 +162,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					{
 						string directoryPathName = overlaySourceAssetPathName.substr(0, endOfDirectoryIndex);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Creating directory"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -189,7 +189,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -211,7 +211,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -223,7 +223,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				{
 					string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Creating directory"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -252,7 +252,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -268,7 +268,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -284,7 +284,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -318,7 +318,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 		_encoding->_ffmpegTerminatedSuccessful = true;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"PictureInPicture encoding content finished"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
@@ -329,7 +329,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		if (externalEncoder)
 		{
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove file"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -340,7 +340,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			}
 
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove file"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -365,7 +365,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 	catch (FFMpegEncodingKilledByUser &e)
 	{
 		string eWhat = e.what();
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{} API failed (EncodingKilledByUser)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -394,7 +394,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_callbackData->pushErrorMessage(errorMessage);
@@ -415,7 +415,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_callbackData->pushErrorMessage(errorMessage);

@@ -35,7 +35,7 @@ void API::encodingJobsStatus(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -62,7 +62,7 @@ void API::encodingJobsStatus(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -101,7 +101,7 @@ void API::encodingJobsStatus(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -121,7 +121,7 @@ void API::encodingJobPriority(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -154,7 +154,7 @@ void API::encodingJobPriority(
 
 			if (!newEncodingJobPriorityPresent && !tryEncodingAgain)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"Useless API call, no encoding update was done"
 					", newEncodingJobPriorityPresent: {}"
 					", tryEncodingAgain: {}",
@@ -169,7 +169,7 @@ void API::encodingJobPriority(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -189,7 +189,7 @@ void API::killOrCancelEncodingJob(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -203,7 +203,7 @@ void API::killOrCancelEncodingJob(
 			", canKillEncoding: {}",
 			apiAuthorizationDetails->canKillEncoding
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -225,7 +225,7 @@ void API::killOrCancelEncodingJob(
 			auto [ingestionJobKey, type, encoderKey, status] =
 				_mmsEngineDBFacade->encodingJob_IngestionJobKeyTypeEncoderKeyStatus(encodingJobKey, true);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"encodingJob_IngestionJobKeyTypeEncoderKeyStatus"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -256,7 +256,7 @@ void API::killOrCancelEncodingJob(
 						// In case 3, the EncodingJob is updated to KilledByUser
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"killEncodingJob"
 								", encoderKey: {}"
 								", ingestionJobKey: {}"
@@ -273,7 +273,7 @@ void API::killOrCancelEncodingJob(
 								// this is the case 2
 								bool isKilled = true;
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Setting isKilled flag"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -282,7 +282,7 @@ void API::killOrCancelEncodingJob(
 								);
 								_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"sleeping"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -298,7 +298,7 @@ void API::killOrCancelEncodingJob(
 								tie(ingestionJobKey, type, encoderKey, status) =
 									_mmsEngineDBFacade->encodingJob_IngestionJobKeyTypeEncoderKeyStatus(encodingJobKey, true);
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"encodingJob_IngestionJobKeyTypeEncoderKeyStatus"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -310,7 +310,7 @@ void API::killOrCancelEncodingJob(
 
 								if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 								{
-									SPDLOG_INFO(
+									LOG_INFO(
 										"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
 										", encoderKey: {}"
 										", ingestionJobKey: {}"
@@ -319,7 +319,7 @@ void API::killOrCancelEncodingJob(
 									);
 
 									{
-										SPDLOG_INFO(
+										LOG_INFO(
 											"updateEncodingJob KilledByUser"
 											", ingestionJobKey: {}"
 											", encodingJobKey: {}",
@@ -342,7 +342,7 @@ void API::killOrCancelEncodingJob(
 							{
 								bool isKilled = true;
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Setting isKilled flag"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -351,7 +351,7 @@ void API::killOrCancelEncodingJob(
 								);
 								_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"sleeping"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -367,7 +367,7 @@ void API::killOrCancelEncodingJob(
 								tie(ingestionJobKey, type, encoderKey, status) =
 									_mmsEngineDBFacade->encodingJob_IngestionJobKeyTypeEncoderKeyStatus(encodingJobKey, true);
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"encodingJob_IngestionJobKeyTypeEncoderKeyStatus"
 									", ingestionJobKey: {}"
 									", encodingJobKey: {}"
@@ -379,7 +379,7 @@ void API::killOrCancelEncodingJob(
 
 								if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 								{
-									SPDLOG_INFO(
+									LOG_INFO(
 										"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
 										", encoderKey: {}"
 										", ingestionJobKey: {}"
@@ -388,7 +388,7 @@ void API::killOrCancelEncodingJob(
 									);
 
 									{
-										SPDLOG_INFO(
+										LOG_INFO(
 											"updateEncodingJob KilledByUser"
 											", ingestionJobKey: {}"
 											", encodingJobKey: {}",
@@ -427,7 +427,7 @@ void API::killOrCancelEncodingJob(
 
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"killEncodingJob"
 							", encoderKey: {}"
 							", ingestionJobKey: {}"
@@ -443,7 +443,7 @@ void API::killOrCancelEncodingJob(
 							// this is the case 2
 							bool isKilled = true;
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"Setting isKilled flag"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -452,7 +452,7 @@ void API::killOrCancelEncodingJob(
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"sleeping"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -468,7 +468,7 @@ void API::killOrCancelEncodingJob(
 							tie(ingestionJobKey, type, encoderKey, status) =
 								_mmsEngineDBFacade->encodingJob_IngestionJobKeyTypeEncoderKeyStatus(encodingJobKey, true);
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"encodingJob_IngestionJobKeyTypeEncoderKeyStatus"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -480,7 +480,7 @@ void API::killOrCancelEncodingJob(
 
 							if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 							{
-								SPDLOG_INFO(
+								LOG_INFO(
 									"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
 									", encoderKey: {}"
 									", ingestionJobKey: {}"
@@ -489,7 +489,7 @@ void API::killOrCancelEncodingJob(
 								);
 
 								{
-									SPDLOG_INFO(
+									LOG_INFO(
 										"updateEncodingJob KilledByUser"
 										", ingestionJobKey: {}"
 										", encodingJobKey: {}",
@@ -512,7 +512,7 @@ void API::killOrCancelEncodingJob(
 						{
 							bool isKilled = true;
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"Setting isKilled flag"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -521,7 +521,7 @@ void API::killOrCancelEncodingJob(
 							);
 							_mmsEngineDBFacade->updateEncodingJobIsKilled(encodingJobKey, isKilled);
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"sleeping"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -537,7 +537,7 @@ void API::killOrCancelEncodingJob(
 							tie(ingestionJobKey, type, encoderKey, status) =
 								_mmsEngineDBFacade->encodingJob_IngestionJobKeyTypeEncoderKeyStatus(encodingJobKey, true);
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"encodingJob_IngestionJobKeyTypeEncoderKeyStatus"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -549,7 +549,7 @@ void API::killOrCancelEncodingJob(
 
 							if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 							{
-								SPDLOG_INFO(
+								LOG_INFO(
 									"killEncodingJob and updateEncodingJobIsKilled failed, force update of the status"
 									", encoderKey: {}"
 									", ingestionJobKey: {}"
@@ -558,7 +558,7 @@ void API::killOrCancelEncodingJob(
 								);
 
 								{
-									SPDLOG_INFO(
+									LOG_INFO(
 										"updateEncodingJob KilledByUser"
 										", ingestionJobKey: {}"
 										", encodingJobKey: {}",
@@ -592,7 +592,7 @@ void API::killOrCancelEncodingJob(
 			{
 				if (status == MMSEngineDBFacade::EncodingStatus::Processing)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"killEncodingJob"
 						", encoderKey: {}"
 						", ingestionJobKey: {}"
@@ -621,7 +621,7 @@ void API::killOrCancelEncodingJob(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -641,7 +641,7 @@ void API::encodingProfilesSetsList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -668,7 +668,7 @@ void API::encodingProfilesSetsList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -687,7 +687,7 @@ void API::encodingProfilesList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -715,7 +715,7 @@ void API::encodingProfilesList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -734,7 +734,7 @@ void API::addUpdateEncodingProfilesSet(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -748,7 +748,7 @@ void API::addUpdateEncodingProfilesSet(
 			", canCreateProfiles: {}",
 			apiAuthorizationDetails->canCreateProfiles
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -774,7 +774,7 @@ void API::addUpdateEncodingProfilesSet(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -822,7 +822,7 @@ void API::addUpdateEncodingProfilesSet(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"request body parsing failed"
 				", e.what(): {}",
 				e.what()
@@ -835,7 +835,7 @@ void API::addUpdateEncodingProfilesSet(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -855,7 +855,7 @@ void API::addEncodingProfile(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -869,7 +869,7 @@ void API::addEncodingProfile(
 			", canCreateProfiles: {}",
 			apiAuthorizationDetails->canCreateProfiles
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -895,7 +895,7 @@ void API::addEncodingProfile(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -926,7 +926,7 @@ void API::addEncodingProfile(
 					deliveryTechnology = MMSEngineDBFacade::DeliveryTechnology::Download;
 				*/
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"deliveryTechnology"
 					", fileFormat: {}"
 					// + ", fileFormatLowerCase: " + fileFormatLowerCase
@@ -948,7 +948,7 @@ void API::addEncodingProfile(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addEncodingProfile failed"
 				", e.what(): {}",
 				e.what()
@@ -961,7 +961,7 @@ void API::addEncodingProfile(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -981,7 +981,7 @@ void API::removeEncodingProfile(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -994,7 +994,7 @@ void API::removeEncodingProfile(
 			", canCreateProfiles: {}",
 			apiAuthorizationDetails->canCreateProfiles
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1008,7 +1008,7 @@ void API::removeEncodingProfile(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeEncodingProfile failed"
 				", e.what(): {}",
 				e.what()
@@ -1023,7 +1023,7 @@ void API::removeEncodingProfile(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -1042,7 +1042,7 @@ void API::removeEncodingProfilesSet(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1055,7 +1055,7 @@ void API::removeEncodingProfilesSet(
 			", canCreateProfiles: {}",
 			apiAuthorizationDetails->canCreateProfiles
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1069,7 +1069,7 @@ void API::removeEncodingProfilesSet(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeEncodingProfilesSet failed"
 				", e.what(): {}",
 				e.what()
@@ -1084,7 +1084,7 @@ void API::removeEncodingProfilesSet(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -1124,7 +1124,7 @@ void API::killEncodingJob(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"killEncoding URL failed"
 			", encodingJobKey: {}"
 			", ffmpegEncoderURL: {}"

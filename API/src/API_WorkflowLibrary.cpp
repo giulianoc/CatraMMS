@@ -31,7 +31,7 @@ void API::workflowsAsLibraryList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	try
 	{
@@ -43,7 +43,7 @@ void API::workflowsAsLibraryList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -62,7 +62,7 @@ void API::workflowAsLibraryContent(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	try
 	{
@@ -74,7 +74,7 @@ void API::workflowAsLibraryContent(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -93,7 +93,7 @@ void API::saveWorkflowAsLibrary(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -122,7 +122,7 @@ void API::saveWorkflowAsLibrary(
 						", Field: {}",
 						field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -137,7 +137,7 @@ void API::saveWorkflowAsLibrary(
 						", admin: {}",
 						apiAuthorizationDetails->admin
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -159,7 +159,7 @@ void API::saveWorkflowAsLibrary(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -179,7 +179,7 @@ void API::removeWorkflowAsLibrary(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	try
 	{
@@ -194,7 +194,7 @@ void API::removeWorkflowAsLibrary(
 				", admin: {}",
 				apiAuthorizationDetails->admin
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -208,7 +208,7 @@ void API::removeWorkflowAsLibrary(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeWorkflowAsLibrary failed"
 				", e.what(): {}",
 				e.what()
@@ -223,7 +223,7 @@ void API::removeWorkflowAsLibrary(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",

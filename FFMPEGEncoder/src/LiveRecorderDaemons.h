@@ -4,9 +4,6 @@
 #include "EncoderBandwidthUsageThread.h"
 #include "FFMPEGEncoderBase.h"
 
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "FFMpegWrapper.h"
 #include "spdlog/spdlog.h"
 #include <chrono>

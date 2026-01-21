@@ -17,7 +17,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 		{
 			string errorMessage = string() + "Wrong media number to be encoded" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -139,7 +139,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageAddSilentAudioTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -150,7 +150,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageAddSilentAudioTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -161,7 +161,7 @@ void MMSEngineProcessor::manageAddSilentAudioTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageAddSilentAudioTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);

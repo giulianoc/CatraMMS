@@ -33,7 +33,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -124,7 +124,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 				string errorMessage = string() + "FTP Content failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -144,7 +144,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -158,7 +158,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -169,12 +169,12 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "ftpDeliveryContentTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -184,14 +184,14 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -203,12 +203,12 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "ftpDeliveryContentTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -218,14 +218,14 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);

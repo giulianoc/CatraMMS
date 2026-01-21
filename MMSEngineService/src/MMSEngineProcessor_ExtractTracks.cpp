@@ -17,7 +17,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "extractTracksContentThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -41,7 +41,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 				if (tracksToot.size() == 0)
 				{
 					string errorMessage = string() + "No correct number of Tracks" + ", tracksToot.size: " + to_string(tracksToot.size());
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -55,7 +55,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 						string sTrackRoot = JSONUtils::toString(trackRoot);
 
 						string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field + ", sTrackRoot: " + sTrackRoot;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -74,7 +74,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -134,7 +134,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 					ffmpeg.extractTrackMediaToIngest(ingestionJobKey, mmsAssetPathName, tracksToBeExtracted, extractTrackMediaPathName);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "extractTrackMediaToIngest done" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", extractTrackMediaPathName: " + extractTrackMediaPathName
 					);
@@ -191,7 +191,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 						dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 						_multiEventsSet->addEvent(event);
 
-						SPDLOG_INFO(string() + "addEvent: EVENT_TYPE
+						LOG_INFO(string() + "addEvent: EVENT_TYPE
 						(INGESTASSETEVENT)"
 							+ ", _processorIdentifier: " +
 						to_string(_processorIdentifier)
@@ -209,7 +209,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 				string errorMessage = string() + "extract track failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -229,7 +229,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -243,7 +243,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -254,12 +254,12 @@ void MMSEngineProcessor::extractTracksContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "Extracting tracks failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -269,14 +269,14 @@ void MMSEngineProcessor::extractTracksContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -286,12 +286,12 @@ void MMSEngineProcessor::extractTracksContentThread(
 	}
 	catch (exception e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "Extracting tracks failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -301,14 +301,14 @@ void MMSEngineProcessor::extractTracksContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);

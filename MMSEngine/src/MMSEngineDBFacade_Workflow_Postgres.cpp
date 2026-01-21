@@ -72,7 +72,7 @@ void MMSEngineDBFacade::endWorkflow(PostgresConnTrans &trans, bool commit, int64
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -80,7 +80,7 @@ void MMSEngineDBFacade::endWorkflow(PostgresConnTrans &trans, bool commit, int64
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -128,7 +128,7 @@ int64_t MMSEngineDBFacade::addWorkflow(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -136,7 +136,7 @@ int64_t MMSEngineDBFacade::addWorkflow(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -163,7 +163,7 @@ pair<int64_t, string> MMSEngineDBFacade::workflowQuery_WorkspaceKeyIngestionDate
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", ingestionRootKey: {}"
 			", fromMaster: {}"
@@ -175,7 +175,7 @@ pair<int64_t, string> MMSEngineDBFacade::workflowQuery_WorkspaceKeyIngestionDate
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", ingestionRootKey: {}"
 			", fromMaster: {}",
@@ -217,7 +217,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -236,7 +236,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -292,7 +292,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 					workspaceKey, ingestionRootKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -305,7 +305,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -313,14 +313,14 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::workflowQuery(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (de != nullptr)
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				de->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -513,7 +513,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 					}
 					auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 					internalSqlDuration += sqlDuration;
-					SPDLOG_INFO("@SQL statistics@"
+					LOG_INFO("@SQL statistics@"
 						", sqlStatement: {}"
 						", currentIngestionRootKey: {}"
 						", res.size: {}"
@@ -544,7 +544,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -552,7 +552,7 @@ json MMSEngineDBFacade::getIngestionRootsStatus(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

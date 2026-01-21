@@ -34,7 +34,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -45,7 +45,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 		if (!_registerUserEnabled)
 		{
 			string errorMessage = "registerUser is not enabled";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -70,7 +70,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				", json data: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -85,7 +85,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 					", Json field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 		}
@@ -102,7 +102,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				", email: {}",
 				email
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 
@@ -138,7 +138,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Registering User because of Add Workspace"
 					", workspaceName: {}"
 					", shareWorkspaceCode: {}"
@@ -177,7 +177,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				userKey = get<1>(workspaceKeyUserKeyAndConfirmationCode);
 				confirmationCode = get<2>(workspaceKeyUserKeyAndConfirmationCode);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Registered User and added Workspace"
 					", workspaceName: {}"
 					", email: {}"
@@ -195,7 +195,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 					", e.what(): {}",
 					api, requestData.requestBody, e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 
@@ -203,7 +203,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Associate defaults encoders to the Workspace"
 						", workspaceKey: {}"
 						", _sharedEncodersPoolLabel: {}",
@@ -214,7 +214,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"API failed"
 						", API: {}"
 						", requestData.requestBody: {}"
@@ -223,7 +223,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 					);
 
 					// string errorMessage = string("Internal server error");
-					// SPDLOG_ERROR(errorMessage);
+					// LOG_ERROR(errorMessage);
 
 					// 2021-09-30: we do not raise an exception because this association
 					// is not critical for the account
@@ -234,7 +234,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Add some HLS_Channels to the Workspace"
 						", workspaceKey: {}"
 						", _defaultSharedHLSChannelsNumber: {}",
@@ -246,7 +246,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"API failed"
 						", API: {}"
 						", requestData.requestBody: {}"
@@ -255,7 +255,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 					);
 
 					// string errorMessage = string("Internal server error");
-					// SPDLOG_ERROR(errorMessage);
+					// LOG_ERROR(errorMessage);
 
 					// 2021-09-30: we do not raise an exception because this association
 					// is not critical for the account
@@ -269,7 +269,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Registering User because of Share Workspace"
 					", shareWorkspaceCode: {}"
 					", email: {}",
@@ -285,7 +285,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				userKey = get<1>(registerUserDetails);
 				confirmationCode = get<2>(registerUserDetails);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Registered User and shared Workspace"
 					", email: {}"
 					", userKey: {}"
@@ -302,7 +302,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 					", e.what(): {}",
 					api, requestData.requestBody, e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -326,7 +326,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(userKey) +
 				 "&confirmationCode=" + confirmationCode);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Sending confirmation URL by email..."
 				", confirmationURL: {}",
 				confirmationURL
@@ -366,7 +366,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -380,7 +380,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -394,7 +394,7 @@ void API::createWorkspace(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -407,7 +407,7 @@ void API::createWorkspace(
 			", canCreateRemoveWorkspace: {}",
 			apiAuthorizationDetails->canCreateRemoveWorkspace
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		sendError(request, 403, errorMessage);
 
@@ -434,7 +434,7 @@ void API::createWorkspace(
 		string confirmationCode;
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Creating Workspace"
 				", workspaceName: {}",
 				workspaceName
@@ -459,7 +459,7 @@ void API::createWorkspace(
 			);
 #endif
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Created a new Workspace for the User"
 				", workspaceName: {}"
 				", userKey: {}"
@@ -479,7 +479,7 @@ void API::createWorkspace(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -488,7 +488,7 @@ void API::createWorkspace(
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Associate defaults encoders to the Workspace"
 					", workspaceKey: {}"
 					", _sharedEncodersPoolLabel: {}",
@@ -506,7 +506,7 @@ void API::createWorkspace(
 					", e.what(): {}",
 					api, requestData.requestBody, e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				// 2021-09-30: we do not raise an exception because this association
 				// is not critical for the account
@@ -517,7 +517,7 @@ void API::createWorkspace(
 
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Add some HLS_Channels to the Workspace"
 					", workspaceKey: {}"
 					", _defaultSharedHLSChannelsNumber: {}",
@@ -536,7 +536,7 @@ void API::createWorkspace(
 					", e.what(): {}",
 					api, requestData.requestBody, e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				// 2021-09-30: we do not raise an exception because this association
 				// is not critical for the account
@@ -567,7 +567,7 @@ void API::createWorkspace(
 				("/catramms/conf/yourWorkspaces.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(apiAuthorizationDetails->userKey) +
 				 "&confirmationCode=" + confirmationCode);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Created Workspace code"
 				", workspaceKey: {}"
 				", userKey: {}"
@@ -607,7 +607,7 @@ void API::createWorkspace(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -621,7 +621,7 @@ void API::createWorkspace(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -635,7 +635,7 @@ void API::shareWorkspace_(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -649,7 +649,7 @@ void API::shareWorkspace_(
 			", canShareWorkspace: {}",
 			apiAuthorizationDetails->canShareWorkspace
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -667,7 +667,7 @@ void API::shareWorkspace_(
 				", json data: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -680,7 +680,7 @@ void API::shareWorkspace_(
 			if (!JSONUtils::isPresent(metadataRoot, field))
 			{
 				string errorMessage = std::format("Json field is not present or it is null", ", Json field: {}", field);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -702,7 +702,7 @@ void API::shareWorkspace_(
 				", email: {}",
 				email
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -721,7 +721,7 @@ void API::shareWorkspace_(
 			}
 			catch (exception &e)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"API failed"
 					", API: {}"
 					", requestData.requestBody: {}"
@@ -736,7 +736,7 @@ void API::shareWorkspace_(
 		if (!userAlreadyPresent && !_registerUserEnabled)
 		{
 			string errorMessage = "registerUser is not enabled";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -757,7 +757,7 @@ void API::shareWorkspace_(
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Sharing workspace"
 				", userAlreadyPresent: {}"
 				", email: {}",
@@ -768,7 +768,7 @@ void API::shareWorkspace_(
 			{
 				bool admin = false;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"createdCode"
 					", workspace->_workspaceKey: {}"
 					", userKey: {}"
@@ -792,7 +792,7 @@ void API::shareWorkspace_(
 					("/catramms/login.xhtml?confirmationRequested=true&confirmationUserKey=" + to_string(userKey) +
 					 "&confirmationCode=" + shareWorkspaceCode);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Created Shared Workspace code"
 					", workspace->_workspaceKey: {}"
 					", email: {}"
@@ -840,7 +840,7 @@ void API::shareWorkspace_(
 			{
 				bool admin = false;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"createdCode"
 					", workspace->_workspaceKey: "
 					", userKey: -1"
@@ -862,7 +862,7 @@ void API::shareWorkspace_(
 				shareWorkspaceURL += ("/catramms/login.xhtml?shareWorkspaceRequested=true&shareWorkspaceCode=" + shareWorkspaceCode);
 				shareWorkspaceURL += ("&registrationEMail=" + email);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Created Shared Workspace code"
 					", workspace->_workspaceKey: {}"
 					", email: {}"
@@ -911,7 +911,7 @@ void API::shareWorkspace_(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -925,7 +925,7 @@ void API::shareWorkspace_(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -939,7 +939,7 @@ void API::workspaceList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -965,7 +965,7 @@ void API::workspaceList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -979,7 +979,7 @@ void API::confirmRegistration(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	try
 	{
@@ -1038,7 +1038,7 @@ void API::confirmRegistration(
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1051,7 +1051,7 @@ void API::confirmRegistration(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1063,7 +1063,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}",
 		// commented because of the password
 		// ", requestData.requestBody: {}",
@@ -1084,7 +1084,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				", json data: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1106,7 +1106,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							", Json field: {}",
 							field
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1123,7 +1123,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Login User"
 						", email: {}",
 						email
@@ -1140,7 +1140,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 					field = "userKey";
 					userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Login User"
 						", userKey: {}"
 						", email: {}",
@@ -1156,7 +1156,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						", e.what(): {}",
 						api, requestData.requestBody, e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1169,7 +1169,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 					if (!JSONUtils::isPresent(metadataRoot, field))
 					{
 						string errorMessage = std::format("Json field is not present or it is null", ", Json field: {}", field);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1186,7 +1186,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Login User"
 						", userName: {}",
 						userName
@@ -1204,7 +1204,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						{
 							try
 							{
-								SPDLOG_INFO(
+								LOG_INFO(
 									"ldap URL"
 									", ldapURL: {}"
 									", userName: {}",
@@ -1223,7 +1223,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							}
 							catch (runtime_error &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"ldap URL failed"
 									", ldapURL: {}"
 									", e.what: {}",
@@ -1235,7 +1235,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 
 					if (!testCredentialsSuccessful)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"ldap Login failed"
 							", userName: {}",
 							userName
@@ -1247,7 +1247,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 					bool userAlreadyRegistered;
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Login User"
 							", email: {}",
 							email
@@ -1264,7 +1264,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						field = "userKey";
 						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Login User"
 							", userKey: {}"
 							", email: {}",
@@ -1286,14 +1286,14 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							", e.what(): {}",
 							api, requestData.requestBody, e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 
 					if (!userAlreadyRegistered)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Register ActiveDirectory User"
 							", email: {}",
 							email
@@ -1328,7 +1328,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						string apiKey;
 						tie(userKey, apiKey) = userKeyAndEmail;
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Login User"
 							", userKey: {}"
 							", apiKey: {}"
@@ -1344,7 +1344,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						loginDetailsRoot["ldapEnabled"] = _ldapEnabled;
 						userKey = JSONUtils::asInt64(loginDetailsRoot, "userKey", 0);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Login User"
 							", userKey: {}"
 							", email: {}",
@@ -1361,7 +1361,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						", e.what(): {}",
 						api, requestData.requestBody, e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1372,7 +1372,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"_mmsEngineDBFacade->saveLoginStatistics"
 					", userKey: {}"
 					", remoteClientIPAddress: {}",
@@ -1382,7 +1382,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"Saving Login Statistics failed"
 					", userKey: {}"
 					", remoteClientIPAddress: {}"
@@ -1391,7 +1391,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				);
 
 				// string errorMessage = string("Internal server error");
-				// SPDLOG_ERROR(errorMessage);
+				// LOG_ERROR(errorMessage);
 
 				// sendError(request, 500, errorMessage);
 
@@ -1401,7 +1401,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Login User"
 				", userKey: {}",
 				userKey
@@ -1429,7 +1429,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1443,7 +1443,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1457,7 +1457,7 @@ void API::updateUser(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -1493,7 +1493,7 @@ void API::updateUser(
 				", json data: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1530,7 +1530,7 @@ void API::updateUser(
 						", exception: {}",
 						email, e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1598,7 +1598,7 @@ void API::updateUser(
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Updating User"
 				", userKey: {}"
 				", name: {}"
@@ -1612,7 +1612,7 @@ void API::updateUser(
 				expirationUtcDate, passwordChanged, newPassword, oldPassword
 			);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"User updated"
 				", userKey: {}"
 				", name: {}"
@@ -1633,7 +1633,7 @@ void API::updateUser(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1647,7 +1647,7 @@ void API::updateUser(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1659,7 +1659,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	try
 	{
@@ -1669,7 +1669,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 		string name;
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getUserDetailsByEmail"
 				", email: {}",
 				email
@@ -1690,7 +1690,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage	);
 		}
 
@@ -1734,7 +1734,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1747,7 +1747,7 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1759,7 +1759,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -1782,7 +1782,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 				", json data: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1791,7 +1791,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 		if (resetPasswordToken.empty())
 		{
 			string errorMessage = "The 'resetPasswordToken' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1800,7 +1800,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 		if (newPassword.empty())
 		{
 			string errorMessage = "The 'newPassword' parameter is not found";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1809,7 +1809,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 		string email;
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Reset Password"
 				", resetPasswordToken: {}",
 				resetPasswordToken
@@ -1828,7 +1828,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1865,7 +1865,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1879,7 +1879,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1893,7 +1893,7 @@ void API::updateWorkspace(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -1976,7 +1976,7 @@ void API::updateWorkspace(
 				", json data: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2152,7 +2152,7 @@ void API::updateWorkspace(
 							", Json field: {}",
 							field
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2205,7 +2205,7 @@ void API::updateWorkspace(
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Updating WorkspaceDetails"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2243,7 +2243,7 @@ void API::updateWorkspace(
 			);
 #endif
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"WorkspaceDetails updated"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2263,7 +2263,7 @@ void API::updateWorkspace(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2277,7 +2277,7 @@ void API::updateWorkspace(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -2291,7 +2291,7 @@ void API::setWorkspaceAsDefault(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -2305,7 +2305,7 @@ void API::setWorkspaceAsDefault(
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"setWorkspaceAsDefault"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2327,7 +2327,7 @@ void API::setWorkspaceAsDefault(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 	}
@@ -2340,7 +2340,7 @@ void API::setWorkspaceAsDefault(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -2353,7 +2353,7 @@ void API::deleteWorkspace(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", userKey: {}",
@@ -2367,7 +2367,7 @@ void API::deleteWorkspace(
 			", canCreateRemoveWorkspace: {}",
 			apiAuthorizationDetails->canCreateRemoveWorkspace
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2380,14 +2380,14 @@ void API::deleteWorkspace(
 				", _noFileSystemAccess: {}",
 				api, _noFileSystemAccess
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Delete Workspace from DB"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2397,7 +2397,7 @@ void API::deleteWorkspace(
 			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato rimosso
 			vector<tuple<int64_t, string, string>> usersRemoved = _mmsEngineDBFacade->deleteWorkspace(apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Workspace from DB deleted"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2444,14 +2444,14 @@ void API::deleteWorkspace(
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Delete Workspace from Storage"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2460,7 +2460,7 @@ void API::deleteWorkspace(
 
 			_mmsStorage->deleteWorkspace(apiAuthorizationDetails->workspace);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Workspace from Storage deleted"
 				", workspaceKey: {}",
 				apiAuthorizationDetails->workspace->_workspaceKey
@@ -2477,7 +2477,7 @@ void API::deleteWorkspace(
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2492,7 +2492,7 @@ void API::deleteWorkspace(
 			", e.what(): {}",
 			api, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -2505,7 +2505,7 @@ void API::unshareWorkspace(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", userKey: {}",
@@ -2519,7 +2519,7 @@ void API::unshareWorkspace(
 			", canShareWorkspace: {}",
 			apiAuthorizationDetails->canShareWorkspace
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2527,7 +2527,7 @@ void API::unshareWorkspace(
 	{
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Unshare Workspace"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2537,7 +2537,7 @@ void API::unshareWorkspace(
 			// ritorna gli utenti eliminati perchè avevano solamente il workspace che è stato unshared
 			auto [userToBeRemoved, name, eMailAddress] = _mmsEngineDBFacade->unshareWorkspace(apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Workspace from DB unshared"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -2578,7 +2578,7 @@ void API::unshareWorkspace(
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2593,7 +2593,7 @@ void API::unshareWorkspace(
 			", e.what(): {}",
 			api, apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -2641,7 +2641,7 @@ void API::workspaceUsage(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getWorkspaceUsage exception"
 			", e.what(): {}",
 			e.what()
@@ -2665,7 +2665,7 @@ void API::emailFormatCheck(string email)
 			", email: {}",
 			email
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		sendError(request, 500, errorMessage);
 
@@ -2687,7 +2687,7 @@ void API::emailFormatCheck(string email)
 			", email: {}",
 			email
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		{
 			vector<string> emailbody;
@@ -2712,7 +2712,7 @@ void API::emailFormatCheck(string email)
 			", email: {}",
 			email
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		{
 			vector<string> emailbody;

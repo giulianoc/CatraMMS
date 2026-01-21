@@ -63,145 +63,145 @@ void EncoderProxy::init(
 	_hostName = System::hostName();
 
 	_mp4Encoder = JSONUtils::asString(_configuration["encoding"], "mp4Encoder", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", encoding->mp4Encoder: {}",
 		_mp4Encoder
 	);
 	_mpeg2TSEncoder = JSONUtils::asString(_configuration["encoding"], "mpeg2TSEncoder", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", encoding->mpeg2TSEncoder: {}",
 		_mpeg2TSEncoder
 	);
 
 	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt32(_configuration["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
 		_intervalInSecondsToCheckEncodingFinished
 	);
 	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 30);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", encoding->maxSecondsToWaitUpdateEncodingJobLock: {}",
 		_maxSecondsToWaitUpdateEncodingJobLock
 	);
 
 	_ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_ffmpegEncoderUser
 	);
 	_ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
-	SPDLOG_INFO("Configuration item"
+	LOG_INFO("Configuration item"
 				", ffmpeg->encoderPassword: ...");
 	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt32(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderTimeoutInSeconds: {}",
 		_ffmpegEncoderTimeoutInSeconds
 	);
 	_ffmpegEncoderProgressURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderProgressURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderProgressURI: {}",
 		_ffmpegEncoderProgressURI
 	);
 	_ffmpegEncoderStatusURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderStatusURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderStatusURI: {}",
 		_ffmpegEncoderStatusURI
 	);
 	_ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderKillEncodingURI: {}",
 		_ffmpegEncoderKillEncodingURI
 	);
 	_ffmpegEncodeURI = JSONUtils::asString(_configuration["ffmpeg"], "encodeURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encodeURI: {}",
 		_ffmpegEncodeURI
 	);
 	_ffmpegOverlayImageOnVideoURI = JSONUtils::asString(_configuration["ffmpeg"], "overlayImageOnVideoURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->overlayImageOnVideoURI: {}",
 		_ffmpegOverlayImageOnVideoURI
 	);
 	_ffmpegOverlayTextOnVideoURI = JSONUtils::asString(_configuration["ffmpeg"], "overlayTextOnVideoURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->overlayTextOnVideoURI: {}",
 		_ffmpegOverlayTextOnVideoURI
 	);
 	_ffmpegGenerateFramesURI = JSONUtils::asString(_configuration["ffmpeg"], "generateFramesURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->generateFramesURI: {}",
 		_ffmpegGenerateFramesURI
 	);
 	_ffmpegSlideShowURI = JSONUtils::asString(_configuration["ffmpeg"], "slideShowURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->slideShowURI: {}",
 		_ffmpegSlideShowURI
 	);
 	_ffmpegLiveRecorderURI = JSONUtils::asString(_configuration["ffmpeg"], "liveRecorderURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveRecorderURI: {}",
 		_ffmpegLiveRecorderURI
 	);
 	_ffmpegLiveProxyURI = JSONUtils::asString(_configuration["ffmpeg"], "liveProxyURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveProxyURI: {}",
 		_ffmpegLiveProxyURI
 	);
 	_ffmpegLiveGridURI = JSONUtils::asString(_configuration["ffmpeg"], "liveGridURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveGridURI: {}",
 		_ffmpegLiveGridURI
 	);
 	_ffmpegVideoSpeedURI = JSONUtils::asString(_configuration["ffmpeg"], "videoSpeedURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->videoSpeedURI: {}",
 		_ffmpegVideoSpeedURI
 	);
 	_ffmpegAddSilentAudioURI = JSONUtils::asString(_configuration["ffmpeg"], "addSilentAudioURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->addSilentAudioURI: {}",
 		_ffmpegAddSilentAudioURI
 	);
 	_ffmpegPictureInPictureURI = JSONUtils::asString(_configuration["ffmpeg"], "pictureInPictureURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->pictureInPictureURI: {}",
 		_ffmpegPictureInPictureURI
 	);
 	_ffmpegIntroOutroOverlayURI = JSONUtils::asString(_configuration["ffmpeg"], "introOutroOverlayURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->ffmpegIntroOutroOverlayURI: {}",
 		_ffmpegIntroOutroOverlayURI
 	);
 	_ffmpegCutFrameAccurateURI = JSONUtils::asString(_configuration["ffmpeg"], "cutFrameAccurateURI", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->ffmpegCutFrameAccurateURI: {}",
 		_ffmpegCutFrameAccurateURI
 	);
 
 	_computerVisionCascadePath = JSONUtils::asString(_configuration["computerVision"], "cascadePath", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", computerVision->cascadePath: {}",
 		_computerVisionCascadePath
@@ -209,53 +209,53 @@ void EncoderProxy::init(
 	if (_computerVisionCascadePath.size() > 0 && _computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
 	_computerVisionDefaultScale = JSONUtils::asDouble(_configuration["computerVision"], "defaultScale", 1.1);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", computerVision->defaultScale: {}",
 		_computerVisionDefaultScale
 	);
 	_computerVisionDefaultMinNeighbors = JSONUtils::asInt32(_configuration["computerVision"], "defaultMinNeighbors", 2);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", computerVision->defaultMinNeighbors: {}",
 		_computerVisionDefaultMinNeighbors
 	);
 	_computerVisionDefaultTryFlip = JSONUtils::asBool(_configuration["computerVision"], "defaultTryFlip", false);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", computerVision->defaultTryFlip: {}",
 		_computerVisionDefaultTryFlip
 	);
 
 	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(_configuration["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: {}",
 		_timeBeforeToPrepareResourcesInMinutes
 	);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(_configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
 		JSONUtils::asInt32(_configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
 		_waitingNFSSync_milliSecondsWaitingBetweenChecks
 	);
 
 	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->keyPairId: {}",
 		_keyPairId
 	);
 	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->privateKeyPEMPathName: {}",
 		_privateKeyPEMPathName
@@ -284,7 +284,7 @@ void EncoderProxy::setEncodingData(EncodingJobStatus *status, shared_ptr<MMSEngi
 void EncoderProxy::operator()()
 {
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Running EncoderProxy..."
 		", _proxyIdentifier: {}"
 		", _ingestionJobKey: {}"
@@ -397,14 +397,14 @@ void EncoderProxy::operator()()
 				", EncodingType: {}",
 				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (MaxConcurrentJobsReached &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"{}: {}"
 			", _proxyIdentifier: {}",
 			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier
@@ -412,7 +412,7 @@ void EncoderProxy::operator()()
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"updateEncodingJob MaxCapacityReached"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -436,7 +436,7 @@ void EncoderProxy::operator()()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"updateEncodingJob MaxCapacityReached FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -454,7 +454,7 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncoderProxy finished"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -469,7 +469,7 @@ void EncoderProxy::operator()()
 	}
 	catch (YouTubeURLNotRetrieved &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{}: {}"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -484,7 +484,7 @@ void EncoderProxy::operator()()
 			//	just a failure of the ingestion job
 			bool forceEncodingToBeFailed = true;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"updateEncodingJob PunctualError"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -506,7 +506,7 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"updateEncodingJob PunctualError FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -523,7 +523,7 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncoderProxy finished"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -538,7 +538,7 @@ void EncoderProxy::operator()()
 	}
 	catch (EncodingKilledByUser &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{}: {}"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -549,7 +549,7 @@ void EncoderProxy::operator()()
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"updateEncodingJob KilledByUser"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -573,7 +573,7 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"updateEncodingJob KilledByUser FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -590,7 +590,7 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncoderProxy finished"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -605,7 +605,7 @@ void EncoderProxy::operator()()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{}: {}"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -629,7 +629,7 @@ void EncoderProxy::operator()()
 				forceEncodingToBeFailed = false;
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"updateEncodingJob PunctualError"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -655,7 +655,7 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"updateEncodingJob PunctualError FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -672,7 +672,7 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncoderProxy finished"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -838,14 +838,14 @@ void EncoderProxy::operator()()
 				", EncodingType: {}",
 				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{}: {}"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -856,7 +856,7 @@ void EncoderProxy::operator()()
 
 		if (!stagingEncodedAssetPathName.empty() && fs::exists(stagingEncodedAssetPathName))
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Remove"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -865,7 +865,7 @@ void EncoderProxy::operator()()
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"remove"
 				", stagingEncodedAssetPathName: {}",
 				stagingEncodedAssetPathName
@@ -887,7 +887,7 @@ void EncoderProxy::operator()()
 				forceEncodingToBeFailed = false;
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"updateEncodingJob PunctualError"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -915,7 +915,7 @@ void EncoderProxy::operator()()
 		}
 		catch (...)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"updateEncodingJob PunctualError FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -932,7 +932,7 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncoderProxy finished"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -948,7 +948,7 @@ void EncoderProxy::operator()()
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"updateEncodingJob NoError"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -965,7 +965,7 @@ void EncoderProxy::operator()()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"updateEncodingJob failed: {}"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -979,7 +979,7 @@ void EncoderProxy::operator()()
 			*_status = EncodingJobStatus::Free;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncoderProxy finished"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -999,7 +999,7 @@ void EncoderProxy::operator()()
 		*_status = EncodingJobStatus::Free;
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"EncoderProxy finished"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -1038,7 +1038,7 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 			otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncodingStatus"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1092,7 +1092,7 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 				", exception: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1100,7 +1100,7 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 	catch (exception& e)
 	{
 		if (dynamic_cast<CurlWrapper::ServerNotReachable*>(&e))
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Encoder is not reachable, is it down?"
 				", _proxyIdentifier: {}"
 				", encodingJobKey: {}"
@@ -1109,7 +1109,7 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 				_proxyIdentifier, _encodingItem->_encodingJobKey, ffmpegEncoderURL, e.what()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Status URL failed"
 				", _proxyIdentifier: {}"
 				", encodingJobKey: {}"
@@ -1146,7 +1146,7 @@ string EncoderProxy::generateMediaMetadataToIngest(
 				", fileFormat: {}",
 				_proxyIdentifier, ingestionJobKey, fileFormatSpecifiedByUser, fileFormat
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1247,7 +1247,7 @@ string EncoderProxy::generateMediaMetadataToIngest(
 
 	string mediaMetadata = JSONUtils::toString(parametersRoot);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Media metadata generated"
 		", ingestionJobKey: {}"
 		", mediaMetadata: {}",
@@ -1263,7 +1263,7 @@ void EncoderProxy::encodingImageFormatValidation(string newFormat)
 	{
 		string errorMessage = __FILEREF__ + "newFormat is wrong" + ", newFormat: " + newFormat;
 
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1285,7 +1285,7 @@ Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(string 
 	{
 		string errorMessage = __FILEREF__ + "sNewInterlaceType is wrong" + ", sNewInterlaceType: " + sNewInterlaceType;
 
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1341,7 +1341,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"updateIngestionJobErrorMessages failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}",
@@ -1361,7 +1361,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost,
 					JSONUtils::toString(newErrorMessagesRoot)
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1370,7 +1370,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"updateEncodingJobProgress"
 						", encodingJobKey: {}"
 						", encodingProgress: {}",
@@ -1380,7 +1380,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"updateEncodingJobProgressAndRealTimeInfo failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -1394,7 +1394,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 				{
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"updateEncodingRealTimeInfo"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -1412,7 +1412,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"updateEncodingRealTimeInfo failed"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -1445,7 +1445,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 		{
 			encodingStatusFailures++;
 
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"getEncodingStatus failed"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
@@ -1467,7 +1467,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingFinished, encodingStatusFailures,
 					maxConsecutiveEncodingStatusFailures
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1487,7 +1487,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	bool urlForbidden = false;
 	bool urlNotFound = false;
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"check maxAttemptsNumberInCaseOfErrors"
 		", ingestionJobKey: {}"
 		", encodingJobKey: {}"
@@ -1501,7 +1501,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"updateEncodingJobFailuresNumber"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
@@ -1514,7 +1514,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	}
 	catch (...)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"updateEncodingJobFailuresNumber FAILED"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
@@ -1549,7 +1549,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	{
 		if (timePeriod)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"check to exit"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
@@ -1594,7 +1594,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						string sIngestionJobStatus = MMSEngineDBFacade::toString(ingestionJobStatus);
 						if (sIngestionJobStatus.starts_with("End_"))
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"IngestionJob is terminated"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -1607,7 +1607,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"encodingJob_Parameters failed"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -1665,7 +1665,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 									", encodersDetailsRoot: {}",
 									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, JSONUtils::toString(encodersDetailsRoot)
 								);
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -1715,7 +1715,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) =
 						_mmsEngineDBFacade->getEncoderURL(updatedPushEncoderKey); // , pushEncoderName);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"LiveProxy/Recording. Retrieved updated Stream info"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -1749,7 +1749,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Configuration item"
 					", _proxyIdentifier: {}"
 					", _currentUsedFFMpegEncoderHost: {}"
@@ -1776,7 +1776,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					body = JSONUtils::toString(bodyRoot);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"LiveProxy/Recording. Selection of the transcoder. The transcoder is selected by load balancer"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -1813,7 +1813,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 						// La gestione di questo scenario consiste nell'ignorare questa eccezione facendo andare avanti la procedura,
 						// come se non avesse generato alcun errore
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"inconsistency: DB says the encoding has to be executed but the Encoder is already executing it. We will manage it"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -1830,7 +1830,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			}
 			else
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"LiveProxy/Recording. Selection of the transcoder. The transcoder is already saved (DB), the encoding is already running"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -1857,7 +1857,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				*_status = EncodingJobStatus::Running;
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update EncodingJob"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -1873,7 +1873,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				{
 					optional<double> encodingProgress; // it is a live
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"updateEncodingJobProgress"
 						", ingestionJobKey: {}"
 						", encodingJobKey: {}"
@@ -1886,7 +1886,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"updateEncodingJobProgress failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -1908,7 +1908,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			long lastNumberOfRestartBecauseOfFailure = 0;
 			long numberOfRestartBecauseOfFailure;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"starting loop"
 				", ingestionJobKey: {}"
 				", encodingJobKey: {}"
@@ -1934,7 +1934,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				encodingFinished || encoderNotReachableFailures >= _maxEncoderNotReachableFailures
 			))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"sleep_for"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -1947,7 +1947,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				{
 					tie(encodingFinished, killed, killTypeReceived, completedWithError, newErrorMessagesRoot, urlForbidden, urlNotFound, ignore, encodingPid,
 						realTimeInfoRoot, numberOfRestartBecauseOfFailure) = getEncodingStatus();
-					SPDLOG_INFO(
+					LOG_INFO(
 						"getEncodingStatus"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -1976,7 +1976,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					// to select a new encoder. 	For this reason we added this EncoderNotReachable catch 	and the
 					// encoderNotReachableFailures variable
 
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"Transcoder is not reachable at all, if continuing we will select another encoder"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -2020,7 +2020,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 									encodingProgress = 100.0;
 							}
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateEncodingJobProgress"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -2040,7 +2040,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						if (lastEncodingPid != encodingPid ||
 							lastNumberOfRestartBecauseOfFailure != numberOfRestartBecauseOfFailure)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateEncodingRealTimeInfo"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -2058,7 +2058,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						}
 						else
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"encoderPid/bitrate/framerate check, not changed"
 								", ingestionJobKey: {}"
 								", encodingJobKey: {}"
@@ -2072,7 +2072,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 					if (!newErrorMessagesRoot.empty())
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"Encoding failed (look the Transcoder logs)"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -2109,7 +2109,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 						// update EncodingJob failures number to notify the GUI encodingJob is successful
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"updateEncodingJobFailuresNumber"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -2131,7 +2131,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						);
 						if (ingestionStatus.starts_with("End_"))
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"getEncodingStatus killedByUser is false but the ingestionJob is terminated"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -2145,7 +2145,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						}
 					}
 					if (!encodingFinished && (killed || urlForbidden || urlNotFound))
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"Encoding was killedByUser or urlForbidden or urlNotFound but encodingFinished is false!!!"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -2162,7 +2162,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"management of the getEncodingJob result failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -2177,7 +2177,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 			if (!timePeriod || (timePeriod && utcNowCheckToExit < utcPeriodEnd))
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"LiveProxy/Recording media file completed unexpected"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -2214,7 +2214,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"appendIngestionJobErrorMessage failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}"
@@ -2226,7 +2226,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			}
 			else
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"LiveProxy/Recording media file completed"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -2247,7 +2247,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					bool autoRenew = JSONUtils::asBool(recordingPeriodRoot, "autoRenew", false);
 					if (autoRenew)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Renew Live Recording"
 							", ingestionJobKey: {}",
 							_encodingItem->_ingestionJobKey
@@ -2258,7 +2258,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						utcPeriodStart = utcPeriodEnd;
 						utcPeriodEnd += recordingPeriodInSeconds;
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Update Encoding LiveRecording Period"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -2286,7 +2286,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		}
 		catch (YouTubeURLNotRetrieved &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"YouTubeURLNotRetrieved"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -2302,7 +2302,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		}
 		catch (EncoderNotFound& e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Encoder not found"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -2323,7 +2323,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				// the main loop look currentAttemptsNumberInCaseOfErrors. So added currentAttemptsNumberInCaseOfErrors++
 				currentAttemptsNumberInCaseOfErrors++;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"updateEncodingJobFailuresNumber"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2337,7 +2337,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			}
 			catch (...)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"updateEncodingJobFailuresNumber failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}",
@@ -2355,7 +2355,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		}
 		catch (MaxConcurrentJobsReached &e)
 		{
-			SPDLOG_WARN(
+			LOG_WARN(
 				"MaxConcurrentJobsReached"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -2375,7 +2375,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			string error = e.what();
 			if (error.find(NoEncodingAvailable().what()) != string::npos)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"No Encodings available / MaxConcurrentJobsReached"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -2386,7 +2386,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 				throw MaxConcurrentJobsReached();
 			}
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Encoding URL failed/runtime_error"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -2406,7 +2406,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				// and the main loop look currentAttemptsNumberInCaseOfErrors. So added currentAttemptsNumberInCaseOfErrors++
 				currentAttemptsNumberInCaseOfErrors++;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"updateEncodingJobFailuresNumber"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2420,7 +2420,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			}
 			catch (...)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"updateEncodingJobFailuresNumber failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}",
@@ -2438,7 +2438,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		}
 		catch (exception& e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Encoding URL failed (exception)"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -2455,7 +2455,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			{
 				currentAttemptsNumberInCaseOfErrors++;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"updateEncodingJobFailuresNumber"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}"
@@ -2469,7 +2469,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			}
 			catch (...)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"updateEncodingJobFailuresNumber failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}",
@@ -2489,7 +2489,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 	if (urlForbidden)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"LiveProxy/Recording: URL forbidden"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -2501,7 +2501,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	}
 	else if (urlNotFound)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"LiveProxy/Recording: URL Not Found"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -2513,7 +2513,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	}
 	else if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Reached the max number of attempts to the URL"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -2546,7 +2546,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_workspace->_directoryName,
 				ingestionJobOutputsCount
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}

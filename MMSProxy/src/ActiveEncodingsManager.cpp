@@ -30,7 +30,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 	_hostName = System::hostName();
 
 	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 0);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: {}",
 		_maxSecondsToWaitUpdateEncodingJobLock
@@ -39,7 +39,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 	{
 		shared_ptr<long> faceRecognitionNumber = make_shared<long>(0);
 		int maxFaceRecognitionNumber = JSONUtils::asInt32(_configuration["mms"], "maxFaceRecognitionNumber", 0);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", mms->maxFaceRecognitionNumber: {}",
 			maxFaceRecognitionNumber
@@ -79,7 +79,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 		_mmsEngineDBFacade->recoverEncodingsNotCompleted(processorMMS, encodingItems);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"recoverEncodingsNotCompleted result"
 			", _processorMMS: {}"
 			", encodingItems.size: {}",
@@ -88,7 +88,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 		addEncodingItems(encodingItems);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEncodingItems successful"
 			", _processorMMS: {}"
 			", encodingItems.size: {}",
@@ -97,7 +97,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"recoverEncodingsNotCompleted failed"
 			", _processorMMS: {}"
 			", e.what: {}",
@@ -140,7 +140,7 @@ void ActiveEncodingsManager::operator()()
 		{
 			if (isProcessorShutdown())
 			{
-				SPDLOG_INFO("ActiveEncodingsManager was shutdown");
+				LOG_INFO("ActiveEncodingsManager was shutdown");
 
 				shutdown = true;
 
@@ -164,7 +164,7 @@ void ActiveEncodingsManager::operator()()
 
 			chrono::system_clock::time_point startEvent = chrono::system_clock::now();
 
-			SPDLOG_INFO("Begin checking encodingJobs");
+			LOG_INFO("Begin checking encodingJobs");
 
 			for (MMSEngineDBFacade::EncodingPriority encodingPriority : sortedEncodingPriorities)
 			{
@@ -222,7 +222,7 @@ void ActiveEncodingsManager::operator()()
 							encodingJob->_encodingItem->_encodingType != MMSEngineDBFacade::EncodingType::VODProxy &&
 							chrono::duration_cast<chrono::hours>(chrono::system_clock::now() - encodingJob->_encodingJobStart) > chrono::hours(24))
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"EncodingJob is not finishing"
 								", @MMS statistics@ - elapsed (hours): @{}@"
 								", workspace: {}"
@@ -239,7 +239,7 @@ void ActiveEncodingsManager::operator()()
 						}
 						else
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"EncodingJob still running"
 								", @MMS statistics@ - elapsed (hours): @{}@"
 								", workspace: {}"
@@ -261,7 +261,7 @@ void ActiveEncodingsManager::operator()()
 
 						chrono::system_clock::time_point processingItemStart = chrono::system_clock::now();
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"processEncodingJob begin"
 							", workspace: {}"
 							", _ingestionJobKey: {}"
@@ -277,7 +277,7 @@ void ActiveEncodingsManager::operator()()
 						{
 							processEncodingJob(encodingJob);
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"processEncodingJob done"
 								", @MMS statistics@ - elapsed (seconds): @{}@"
 								", workspace: {}"
@@ -293,7 +293,7 @@ void ActiveEncodingsManager::operator()()
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"processEncodingJob failed"
 								", @MMS statistics@ - elapsed (seconds): @{}@"
 								", workspace: {}"
@@ -310,7 +310,7 @@ void ActiveEncodingsManager::operator()()
 					}
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Processing encoding jobs statistics"
 					", encodingPriority: {}"
 					", maxEncodingsToBeManaged: {}"
@@ -323,7 +323,7 @@ void ActiveEncodingsManager::operator()()
 				);
 
 				if (freeEncodingJobsNumber == 0)
-					SPDLOG_WARN(
+					LOG_WARN(
 						"maxEncodingsToBeManaged should to be increased"
 						", encodingPriority: {}"
 						", maxEncodingsToBeManaged: {}"
@@ -338,7 +338,7 @@ void ActiveEncodingsManager::operator()()
 
 			chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 			long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
-			SPDLOG_INFO(
+			LOG_INFO(
 				"End checking encodingJobs"
 				", @MMS statistics@ - elapsed in seconds: @{}@",
 				elapsedInSeconds
@@ -346,7 +346,7 @@ void ActiveEncodingsManager::operator()()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_INFO("ActiveEncodingsManager loop failed"
+			LOG_INFO("ActiveEncodingsManager loop failed"
 				", exception: {}", e.what()
 				);
 		}
@@ -380,7 +380,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 	{
 		encodingJob->_encoderProxy.setEncodingData(&(encodingJob->_status), encodingJob->_encodingItem);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Creating encoderVideoAudioProxy thread"
 			", encodingJob->_encodingItem->_encodingJobKey: {}"
 			", encodingType: {}",
@@ -403,7 +403,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 			", encodingJob->_encodingItem->_encodingType: {}",
 			MMSEngineDBFacade::toString(encodingJob->_encodingItem->_encodingType)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -411,7 +411,7 @@ void ActiveEncodingsManager::processEncodingJob(EncodingJob *encodingJob)
 
 	chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 	long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
-	SPDLOG_WARN(
+	LOG_WARN(
 		"processEncodingJob"
 		", encodingJob->_encodingItem->_encodingType: {}"
 		", @MMS statistics@ - elapsed in seconds: @{}@",
@@ -457,7 +457,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 
 	if (encodingJobIndex == maxEncodingsToBeManaged)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"Max Encodings Manager capacity reached"
 			", workspace->_name: {}"
 			", ingestionJobKey: {}"
@@ -471,7 +471,7 @@ void ActiveEncodingsManager::addEncodingItem(shared_ptr<MMSEngineDBFacade::Encod
 		throw MaxEncodingsManagerCapacityReached();
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Encoding Job Key added"
 		", encodingItem->_workspace->_name: {}"
 		", encodingItem->_ingestionJobKey: {}"
@@ -489,7 +489,7 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 	int encodingItemsNumber = vEncodingItems.size();
 	for (const shared_ptr<MMSEngineDBFacade::EncodingItem>& encodingItem : vEncodingItems)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Adding Encoding Item {}/{}"
 			", encodingItem->_workspace->_name: {}"
 			", encodingItem->_ingestionJobKey: {}"
@@ -507,7 +507,7 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 		}
 		catch (MaxEncodingsManagerCapacityReached &e)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Max Encodings Manager Capacity reached {}/{}"
 				", encodingItem->_workspace->_name: {}"
 				", encodingItem->_ingestionJobKey: {}"
@@ -528,7 +528,7 @@ unsigned long ActiveEncodingsManager::addEncodingItems(std::vector<shared_ptr<MM
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"addEncodingItem failed {}/{}"
 				", encodingItem->_workspace->_name: {}"
 				", encodingItem->_ingestionJobKey: {}"

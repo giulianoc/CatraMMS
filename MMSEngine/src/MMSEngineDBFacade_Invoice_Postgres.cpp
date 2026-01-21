@@ -49,7 +49,7 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -57,7 +57,7 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -72,7 +72,7 @@ int64_t MMSEngineDBFacade::addInvoice(int64_t userKey, string description, int a
 
 json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, int rows)
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getInvoicesList"
 		", userKey: {}"
 		", admin: {}"
@@ -222,7 +222,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -230,7 +230,7 @@ json MMSEngineDBFacade::getInvoicesList(int64_t userKey, bool admin, int start, 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

@@ -43,7 +43,7 @@ bool EncoderProxy::liveRecorder()
 				", Field: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -61,7 +61,7 @@ bool EncoderProxy::liveRecorder()
 				", Field: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -92,7 +92,7 @@ bool EncoderProxy::liveRecorder()
 	{
 		if (utcRecordingPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Too early to allocate a thread for recording"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -122,7 +122,7 @@ bool EncoderProxy::liveRecorder()
 				", utcNow: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcRecordingPeriodEnd, utcNow
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -195,7 +195,7 @@ bool EncoderProxy::liveRecorder()
 
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateOutputRtmpAndPlaURL"
 								", _proxyIdentifier: {}"
 								", workspaceKey: {}"
@@ -215,7 +215,7 @@ bool EncoderProxy::liveRecorder()
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -307,7 +307,7 @@ bool EncoderProxy::liveRecorder()
 
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateOutputSrtAndPlaURL"
 								", _proxyIdentifier: {}"
 								", workspaceKey: {}"
@@ -328,7 +328,7 @@ bool EncoderProxy::liveRecorder()
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -477,7 +477,7 @@ bool EncoderProxy::liveRecorder()
 
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateOutputHLSDetails"
 								", _proxyIdentifier: {}"
 								", workspaceKey: {}"
@@ -507,7 +507,7 @@ bool EncoderProxy::liveRecorder()
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -525,7 +525,7 @@ bool EncoderProxy::liveRecorder()
 
 			if (killed)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"Encoding killed by the User"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -569,7 +569,7 @@ bool EncoderProxy::liveRecorder()
 							", _encodingJobKey: {}",
 							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "SRT_Channel")
@@ -588,7 +588,7 @@ bool EncoderProxy::liveRecorder()
 							", _encodingJobKey: {}",
 							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "HLS_Channel")
@@ -607,7 +607,7 @@ bool EncoderProxy::liveRecorder()
 							", _encodingJobKey: {}",
 							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 					}
 				}
 			}
@@ -646,7 +646,7 @@ bool EncoderProxy::liveRecorder()
 							", _encodingJobKey: {}",
 							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "SRT_Channel")
@@ -665,7 +665,7 @@ bool EncoderProxy::liveRecorder()
 							", _encodingJobKey: {}",
 							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 					}
 				}
 				else if (outputType == "HLS_Channel")
@@ -684,7 +684,7 @@ bool EncoderProxy::liveRecorder()
 							", _encodingJobKey: {}",
 							_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 					}
 				}
 			}
@@ -729,7 +729,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 				", Field: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -747,7 +747,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 				", Field: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -777,7 +777,7 @@ void EncoderProxy::processLiveRecorder(bool killed)
 			string processorMMS;
 			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -790,7 +790,7 @@ void EncoderProxy::processLiveRecorder(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processLiveRecorder failed"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -804,7 +804,7 @@ void EncoderProxy::processLiveRecorder(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processLiveRecorder failed"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"

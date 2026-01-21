@@ -112,7 +112,7 @@ void MMSEngineProcessor::manageLiveProxy(
 							", field: {}",
 							_processorIdentifier, "schedule"
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -146,7 +146,7 @@ void MMSEngineProcessor::manageLiveProxy(
 					", field: {}",
 					_processorIdentifier, "outputs"
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -159,7 +159,7 @@ void MMSEngineProcessor::manageLiveProxy(
 		{
 			int64_t sourcePhysicalPathKey;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"useVideoTrackFromMediaItemKey"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -274,7 +274,7 @@ void MMSEngineProcessor::manageLiveProxy(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveProxy failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"

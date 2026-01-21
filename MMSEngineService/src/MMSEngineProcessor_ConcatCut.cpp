@@ -20,7 +20,7 @@ void MMSEngineProcessor::manageConcatThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageConcatThread"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -37,7 +37,7 @@ void MMSEngineProcessor::manageConcatThread(
 				", dependencies.size: {}",
 				_processorIdentifier, ingestionJobKey, dependencies.size()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -63,7 +63,7 @@ void MMSEngineProcessor::manageConcatThread(
 
 			tie(key, referenceContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "manageConcatThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", key: " + to_string(key)
 			);
@@ -177,7 +177,7 @@ void MMSEngineProcessor::manageConcatThread(
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 										  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", concatContentType: " + MMSEngineDBFacade::toString(concatContentType);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -190,7 +190,7 @@ void MMSEngineProcessor::manageConcatThread(
 						string() + "Not all the References have the same ContentType" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", contentType: " + MMSEngineDBFacade::toString(contentType) +
 						", concatContentType: " + MMSEngineDBFacade::toString(concatContentType);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -225,7 +225,7 @@ void MMSEngineProcessor::manageConcatThread(
 					string errorMessage = string() + "No video track are present" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 										  ", ingestionJobKey: " + to_string(ingestionJobKey);
 
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -236,7 +236,7 @@ void MMSEngineProcessor::manageConcatThread(
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "manageConcatThread, retrying time code" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", utcStartTimeInMilliSecs: " + to_string(utcStartTimeInMilliSecs) +
 			", lastUserData: " + lastUserData
@@ -280,7 +280,7 @@ void MMSEngineProcessor::manageConcatThread(
 				{
 					string json = JSONUtils::toString(parametersRoot);
 
-					SPDLOG_INFO(string() + "manageConcatThread"
+					LOG_INFO(string() + "manageConcatThread"
 						+ ", _processorIdentifier: " +
 				to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -336,7 +336,7 @@ void MMSEngineProcessor::manageConcatThread(
 								  "sourcePhysicalPath" +
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", sourcePhysicalPaths.front(): " + sourcePhysicalPaths.front();
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -351,7 +351,7 @@ void MMSEngineProcessor::manageConcatThread(
 		if (sourcePhysicalPaths.size() == 1)
 		{
 			string sourcePhysicalPath = sourcePhysicalPaths.at(0);
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Coping" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourcePhysicalPath: " + sourcePhysicalPath +
 				", concatenatedMediaPathName: " + concatenatedMediaPathName
@@ -373,7 +373,7 @@ void MMSEngineProcessor::manageConcatThread(
 			);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "generateConcatMediaToIngest done" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", concatenatedMediaPathName: " + concatenatedMediaPathName
 		);
@@ -394,7 +394,7 @@ void MMSEngineProcessor::manageConcatThread(
 					extraSecondsToCutWhenMaxDurationIsReached = 0.0;
 			}
 		}
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "duration check" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _ingestionJobKey: " + to_string(ingestionJobKey) + ", maxDurationInSeconds: " + to_string(maxDurationInSeconds) +
 			", extraSecondsToCutWhenMaxDurationIsReached: " + to_string(extraSecondsToCutWhenMaxDurationIsReached)
@@ -406,7 +406,7 @@ void MMSEngineProcessor::manageConcatThread(
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			int64_t durationInMilliSeconds;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Calling ffmpeg.getMediaInfo" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", _ingestionJobKey: " + to_string(ingestionJobKey) + ", concatenatedMediaPathName: " + concatenatedMediaPathName
 			);
@@ -421,7 +421,7 @@ void MMSEngineProcessor::manageConcatThread(
 			//	ignore, ignore, ignore, ignore) = mediaInfo;
 			tie(durationInMilliSeconds, ignore, ignore) = mediaInfoDetails;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "duration check" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", _ingestionJobKey: " + to_string(ingestionJobKey) + ", durationInMilliSeconds: " + to_string(durationInMilliSeconds) +
 				", maxDurationInSeconds: " + to_string(maxDurationInSeconds) +
@@ -450,7 +450,7 @@ void MMSEngineProcessor::manageConcatThread(
 				}
 				int framesNumber = -1;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Calling ffmpeg.cut" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", _ingestionJobKey: " + to_string(ingestionJobKey) + ", concatenatedMediaPathName: " + concatenatedMediaPathName +
 					", cutType: " + cutType + ", startTimeInSeconds: " + to_string(startTimeInSeconds) +
@@ -464,14 +464,14 @@ void MMSEngineProcessor::manageConcatThread(
 					to_string(startTimeInSeconds), to_string(endTimeInSeconds), framesNumber, cutMediaPathName
 				);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "cut done" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", cutMediaPathName: " + cutMediaPathName
 				);
 
 				localSourceFileName = localCutSourceFileName;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", concatenatedMediaPathName: " + concatenatedMediaPathName
 				);
@@ -523,7 +523,7 @@ void MMSEngineProcessor::manageConcatThread(
 				shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 				_multiEventsSet->addEvent(event);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "addEvent: EVENT_TYPE (INGESTASSETEVENT)" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", getEventKey().first: " + to_string(event->getEventKey().first) +
 					", getEventKey().second: " + to_string(event->getEventKey().second)
@@ -533,12 +533,12 @@ void MMSEngineProcessor::manageConcatThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageConcatThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -548,14 +548,14 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -567,12 +567,12 @@ void MMSEngineProcessor::manageConcatThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageConcatThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -582,14 +582,14 @@ void MMSEngineProcessor::manageConcatThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -612,7 +612,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageCutMediaThread"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -629,7 +629,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				", dependencies.size: {}",
 				_processorIdentifier, ingestionJobKey, dependencies.size()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -650,7 +650,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				", contentType: {}",
 				_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(referenceContentType)
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -678,7 +678,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 						", ingestionJobKey: {}",
 						_processorIdentifier, ingestionJobKey
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -699,7 +699,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 						int seconds = stoi(forcedAvgFrameRate.substr(index + 1));
 						if (seconds != 0) // I saw: 0/0
 							framesPerSecond = frames / seconds;
-						SPDLOG_INFO(
+						LOG_INFO(
 							"forcedAvgFrameRate: {}"
 							", frames: {}"
 							", seconds: {}"
@@ -718,13 +718,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 					", e.what(): {}",
 					_processorIdentifier, ingestionJobKey, e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageCutMediaThread frame rate"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -751,7 +751,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					", ingestionJobKey: {}",
 					_processorIdentifier, ingestionJobKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -781,7 +781,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
 					string newStartTime = std::format("{}.{}", startTime.substr(0, framesIndex), decimals);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"conversion from HH:MM:SS:FF to ffmeg format"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -801,7 +801,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
 					string newEndTime = std::format("{}.{}", endTime.substr(0, framesIndex), decimals);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"conversion from HH:MM:SS:FF to ffmeg format"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -832,7 +832,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 						", timesRelativeToMetaDataField: {}",
 						ingestionJobKey, sourcePhysicalPathKey, JSONUtils::toString(metaDataRoot), timesRelativeToMetaDataField
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -846,7 +846,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					int decimals = (frames / ((double)framesPerSecond)) * 100;
 					string newTimeCode = std::format("{}.{}", timeCode.substr(0, framesIndex), decimals);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"conversion from HH:MM:SS:FF to ffmeg format"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -867,7 +867,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				long newEndTimeInCentsOfSeconds = endTimeInCentsOfSeconds - relativeTimeInCentsOfSeconds;
 				string newEndTime = FFMpegWrapper::centsOfSecondsToTime(ingestionJobKey, newEndTimeInCentsOfSeconds);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"correction because of timesRelativeToMetaDataField"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -900,7 +900,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					endTime = to_string(newEndTimeInSeconds);
 
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"endTime was changed"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -918,7 +918,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			{
 				startTime = "0.0";
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"startTime was changed to 0.0 because it is negative"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -946,7 +946,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 						endTimeChangedToDurationBecauseTooBig = true;
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"endTimeInSeconds was changed to durationInMilliSeconds"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -971,7 +971,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 							", sourceDurationInMilliSecs (input media): {}",
 							_processorIdentifier, ingestionJobKey, sourceMediaItemKey, startTimeInSeconds, endTimeInSeconds, sourceDurationInMilliSecs
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -999,7 +999,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					sourceDurationInMilliSecs, FFMpegWrapper::secondsToTime(ingestionJobKey, sourceDurationInMilliSecs),
 					endTimeChangedToDurationBecauseTooBig
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1033,7 +1033,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string field = "cutType";
 		string cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageCutMediaThread new start/end"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1056,7 +1056,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			field = "outputFileFormat";
 			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"1 manageCutMediaThread new start/end"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}",
@@ -1080,7 +1080,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				fileFormat = outputFileFormat;
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"manageCutMediaThread file format"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -1137,7 +1137,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				parametersRoot[field] = destUserDataRoot;
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"manageCutMediaThread user data management"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}",
@@ -1157,7 +1157,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				startTime, endTime, framesNumber, cutMediaPathName
 			);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"cut done"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -1206,7 +1206,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 				_multiEventsSet->addEvent(event);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"addEvent: EVENT_TYPE (LOCALASSETINGESTIONEVENT)"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -1253,7 +1253,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 						", Field: {}",
 						_processorIdentifier, keyField, labelField
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1324,7 +1324,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageCutMediaThread failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1332,7 +1332,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1347,7 +1347,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"

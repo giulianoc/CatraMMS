@@ -19,9 +19,6 @@
 #include <chrono>
 #include <condition_variable>
 #include <vector>
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "Magick++.h"
 #include "spdlog/spdlog.h"
 

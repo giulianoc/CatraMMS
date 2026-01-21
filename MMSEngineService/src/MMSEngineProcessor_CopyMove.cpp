@@ -34,7 +34,7 @@ void MMSEngineProcessor::localCopyContentThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -96,7 +96,7 @@ void MMSEngineProcessor::localCopyContentThread(
 				string errorMessage = string() + "local copy Content failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -116,7 +116,7 @@ void MMSEngineProcessor::localCopyContentThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -130,7 +130,7 @@ void MMSEngineProcessor::localCopyContentThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -141,12 +141,12 @@ void MMSEngineProcessor::localCopyContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "localCopyContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -156,14 +156,14 @@ void MMSEngineProcessor::localCopyContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -175,12 +175,12 @@ void MMSEngineProcessor::localCopyContentThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "localCopyContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -190,14 +190,14 @@ void MMSEngineProcessor::localCopyContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -214,7 +214,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "copyContent" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -246,7 +246,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 											  "mmsAssetPathName" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 											  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -270,7 +270,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 			localPathName += cleanedFileName;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Coping" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", mmsAssetPathName: " + mmsAssetPathName + ", localPath: " + localPath + ", localFileName: " + localFileName +
 			", localPathName: " + localPathName
@@ -283,7 +283,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 		string errorMessage = string() + "Coping failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName +
 							  ", localPath: " + localPath + ", localFileName: " + localFileName + ", exception: " + e.what();
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -292,7 +292,7 @@ void MMSEngineProcessor::copyContent(int64_t ingestionJobKey, string mmsAssetPat
 		string errorMessage = string() + "Coping failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName +
 							  ", localPath: " + localPath + ", localFileName: " + localFileName + ", exception: " + e.what();
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -310,7 +310,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "moveMediaSourceFileThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -333,7 +333,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", sourceReferenceURL: " + sourceReferenceURL;
 
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -344,7 +344,7 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		else
 			sourcePathName = sourceReferenceURL.substr(mvPrefix.length());
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Moving" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourcePathName: " + sourcePathName + ", destBinaryPathName: " + destBinaryPathName
 		);
@@ -368,13 +368,13 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL;
 
-				SPDLOG_ERROR(string() + errorMessage);
+				LOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey)
 			// + ", movingCompleted: " + to_string(true)
@@ -385,12 +385,12 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "Moving failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -400,14 +400,14 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + ex.what()
 			);
@@ -417,12 +417,12 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 	}
 	catch (exception e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "Moving failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -432,14 +432,14 @@ void MMSEngineProcessor::moveMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + ex.what()
 			);
@@ -460,7 +460,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "copyMediaSourceFileThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -482,7 +482,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", sourceReferenceURL: " + sourceReferenceURL;
 
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -492,7 +492,7 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		else
 			sourcePathName = sourceReferenceURL.substr(cpPrefix.length());
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Coping" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", sourcePathName: " + sourcePathName + ", destBinaryPathName: " + destBinaryPathName
 		);
@@ -515,13 +515,13 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL;
 
-				SPDLOG_ERROR(string() + errorMessage);
+				LOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey)
 			// + ", movingCompleted: " + to_string(true)
@@ -534,12 +534,12 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "Coping failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -549,14 +549,14 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + ex.what()
 			);
@@ -566,12 +566,12 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 	}
 	catch (exception e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "Coping failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL + ", exception: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -581,14 +581,14 @@ void MMSEngineProcessor::copyMediaSourceFileThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + ex.what()
 			);

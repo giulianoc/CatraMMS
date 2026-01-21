@@ -45,7 +45,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -56,7 +56,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -67,7 +67,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -160,7 +160,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 				string errorMessage = string() + "post on facebook failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -180,7 +180,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -194,7 +194,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -205,12 +205,12 @@ void MMSEngineProcessor::postOnFacebookThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "postOnFacebookTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -220,14 +220,14 @@ void MMSEngineProcessor::postOnFacebookThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -239,12 +239,12 @@ void MMSEngineProcessor::postOnFacebookThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "postOnFacebookTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -254,14 +254,14 @@ void MMSEngineProcessor::postOnFacebookThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -307,7 +307,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -417,7 +417,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 				string errorMessage = string() + "post on youtube failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -437,7 +437,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -451,7 +451,7 @@ void MMSEngineProcessor::postOnYouTubeThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -462,12 +462,12 @@ void MMSEngineProcessor::postOnYouTubeThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "postOnYouTubeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -477,14 +477,14 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -496,12 +496,12 @@ void MMSEngineProcessor::postOnYouTubeThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "postOnYouTubeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -511,14 +511,14 @@ void MMSEngineProcessor::postOnYouTubeThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -536,7 +536,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "youTubeLiveBroadcastThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -561,7 +561,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -572,7 +572,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -595,7 +595,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -606,7 +606,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -617,7 +617,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -628,7 +628,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -641,7 +641,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -654,7 +654,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -907,7 +907,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -920,7 +920,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			string errorMessage = string("YouTube live broadcast management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 								  ", e.what(): " + e.what();
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -928,7 +928,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		{
 			string errorMessage = string("YouTube live broadcast management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1094,7 +1094,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1106,7 +1106,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1118,7 +1118,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1130,7 +1130,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1142,7 +1142,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 				string errorMessage =
 					string() + "YouTube response, Field is not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1157,7 +1157,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			string errorMessage = string("YouTube live stream management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 								  ", e.what(): " + e.what();
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1165,7 +1165,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		{
 			string errorMessage = string("YouTube live stream management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1268,7 +1268,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			string errorMessage = string("YouTube live stream management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse +
 								  ", e.what(): " + e.what();
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1276,12 +1276,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		{
 			string errorMessage = string("YouTube live stream management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Preparing workflow to ingest..." + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -1536,7 +1536,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -1547,12 +1547,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "youTubeLiveBroadcastThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -1562,14 +1562,14 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -1580,12 +1580,12 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "youTubeLiveBroadcastThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -1595,14 +1595,14 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -1619,7 +1619,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "facebookLiveBroadcastThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -1643,7 +1643,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1654,7 +1654,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1665,7 +1665,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1676,7 +1676,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1687,7 +1687,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1701,7 +1701,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1712,7 +1712,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1724,7 +1724,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1737,7 +1737,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1750,7 +1750,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1804,7 +1804,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				facebookURL += (string("&status=SCHEDULED_UNPUBLISHED") + "&planned_start_time=" + to_string(utcScheduleStartTimeInSeconds));
 			}
 
-			SPDLOG_INFO(string() + "create a Live Video object" + ", facebookURL: " + facebookURL);
+			LOG_INFO(string() + "create a Live Video object" + ", facebookURL: " + facebookURL);
 
 			vector<string> otherHeaders;
 			json responseRoot = CurlWrapper::httpPostStringAndGetJson(
@@ -1824,7 +1824,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field + ", response: " + JSONUtils::toString(responseRoot);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1835,7 +1835,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			string errorMessage = string("Facebook live broadcast management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", facebookURL: " + facebookURL +
 								  ", response: " + JSONUtils::toString(responseRoot) + ", e.what(): " + e.what();
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1844,12 +1844,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			string errorMessage = string("Facebook live broadcast management failed") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", facebookURL: " + facebookURL +
 								  ", response: " + JSONUtils::toString(responseRoot);
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Preparing workflow to ingest..." + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", rtmpURL: " + rtmpURL
 		);
@@ -2138,7 +2138,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -2149,12 +2149,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "facebookLiveBroadcastThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -2164,14 +2164,14 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -2182,12 +2182,12 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "facebookLiveBroadcastThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -2197,14 +2197,14 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -2226,7 +2226,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "postVideoOnFacebook" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName + ", sizeInBytes: " + to_string(sizeInBytes) +
 			", facebookDestination: " + facebookDestination + ", facebookConfigurationLabel: " + facebookConfigurationLabel
@@ -2256,7 +2256,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 									  "mmsAssetPathName" +
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2300,7 +2300,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2311,7 +2311,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2322,7 +2322,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2334,7 +2334,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			{
 				string errorMessage =
 					string() + "Field into the response is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2382,7 +2382,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				{
 					string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field +
 										  ", facebookResponseRoot: " + JSONUtils::toString(facebookResponseRoot);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2393,7 +2393,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 				if (!JSONUtils::isPresent(facebookResponseRoot, field))
 				{
 					string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2432,7 +2432,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			if (!JSONUtils::isPresent(facebookResponseRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field + ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2442,7 +2442,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 			{
 				string errorMessage = string() + "Post Video on Facebook failed" + ", Field: " + field + ", success: " + to_string(success) +
 									  ", sResponse: " + sResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2452,7 +2452,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 	{
 		string errorMessage = string() + "Post video on Facebook failed (runtime_error)" + ", facebookURL: " + facebookURL +
 							  ", exception: " + e.what() + ", sResponse: " + sResponse;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2460,7 +2460,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 	{
 		string errorMessage = string() + "Post video on Facebook failed (exception)" + ", facebookURL: " + facebookURL + ", exception: " + e.what() +
 							  ", sResponse: " + sResponse;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2506,7 +2506,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "postVideoOnYouTubeThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count()) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName + ", sizeInBytes: " + to_string(sizeInBytes) +
@@ -2530,7 +2530,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 									  "mmsAssetPathName" +
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2649,7 +2649,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 			{
 				string errorMessage = string() + "'Location' response header is not present" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", youTubeURL: " + youTubeURL + ", sHeaderResponse: " + sHeaderResponse;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2735,7 +2735,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"youTube upload failed, trying to resume finding the new Range to ask"
 						", ingestionJobKey: {}"
 						", youTubeUploadURL: {}",
@@ -2745,7 +2745,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 					tie(contentRangeStart, contentRangeEnd_Excluded) =
 						youTubeDetailsToResumePostVideo(ingestionJobKey, youTubeUploadURL, youTubeAccessToken, sizeInBytes);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Resuming"
 						", ingestionJobKey: {}"
 						", youTubeUploadURL: {}"
@@ -2756,7 +2756,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"youTube upload failed, trying to resume finding the new Range to ask"
 						", ingestionJobKey: {}"
 						", youTubeUploadURL: {}",
@@ -2766,7 +2766,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 					tie(contentRangeStart, contentRangeEnd_Excluded) =
 						youTubeDetailsToResumePostVideo(ingestionJobKey, youTubeUploadURL, youTubeAccessToken, sizeInBytes);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Resuming"
 						", ingestionJobKey: {}"
 						", youTubeUploadURL: {}"
@@ -2845,12 +2845,12 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				for (string headerMessage : headerList)
 				{
-					SPDLOG_INFO(string() + "Adding header message: " + headerMessage);
+					LOG_INFO(string() + "Adding header message: " + headerMessage);
 					headersList = curl_slist_append(headersList, headerMessage.c_str());
 				}
 				// request.setOpt(new curlpp::options::HttpHeader(headerList));
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Calling youTube (upload)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", youTubeUploadURL: " + youTubeUploadURL
 				);
@@ -2859,14 +2859,14 @@ void MMSEngineProcessor::postVideoOnYouTube(
 
 				long responseCode = curlpp::infos::ResponseCode::get(request);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Called youTube (upload)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", youTubeUploadURL: " + youTubeUploadURL + ", responseCode: " + to_string(responseCode)
 				);
 
 				if (responseCode == 200 || responseCode == 201)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "youTube upload successful" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", youTubeUploadURL: " + youTubeUploadURL + ", responseCode: " + to_string(responseCode)
 					);
@@ -2980,7 +2980,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						}
 
 						for (string headerMessage : headerList)
-							SPDLOG_INFO(string() + "Adding header message: " + headerMessage);
+							LOG_INFO(string() + "Adding header message: " + headerMessage);
 						request.setOpt(new curlpp::options::HttpHeader(headerList));
 
 						ostringstream response;
@@ -2991,7 +2991,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						// header to the normal body output.
 						request.setOpt(new curlpp::options::Header(true));
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Calling youTube check status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", youTubeUploadURL: " + youTubeUploadURL + ", _youTubeDataAPIProtocol: " + _youTubeDataAPIProtocol +
 							", _youTubeDataAPIHostName: " + _youTubeDataAPIHostName + ", _youTubeDataAPIPort: " + to_string(_youTubeDataAPIPort)
@@ -3001,7 +3001,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						sResponse = response.str();
 						long responseCode = curlpp::infos::ResponseCode::get(request);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Called youTube check status" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", youTubeUploadURL: " + youTubeUploadURL + ", responseCode: " + to_string(responseCode) + ", sResponse: " + sResponse
 						);
@@ -3013,7 +3013,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 								string() + "youTube check status failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								", youTubeUploadURL: " + youTubeUploadURL + ", responseCode: " + to_string(responseCode)
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -3049,12 +3049,12 @@ void MMSEngineProcessor::postVideoOnYouTube(
 								string() + "youTube check status failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								", youTubeUploadURL: " + youTubeUploadURL + ", rangeHeader: " + rangeHeader
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Resuming" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", youTubeUploadURL: " + youTubeUploadURL +
 							", rangeHeader: " + rangeHeader +
 							", rangeHeader.substr(rangeStartOffsetIndex + "
@@ -3072,7 +3072,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 						string() + "youTube upload failed" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 						", youTubeUploadURL: " + youTubeUploadURL + ", responseCode: " + to_string(responseCode)
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3085,7 +3085,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 		string errorMessage = string() + "Post video on YouTube failed (runtime_error)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", youTubeURL: " + youTubeURL + ", youTubeUploadURL: " + youTubeUploadURL + ", exception: " + e.what() +
 							  ", sResponse: " + sResponse;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3094,7 +3094,7 @@ void MMSEngineProcessor::postVideoOnYouTube(
 		string errorMessage = string() + "Post video on YouTube failed (exception)" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", youTubeURL: " + youTubeURL + ", youTubeUploadURL: " + youTubeUploadURL + ", exception: " + e.what() +
 							  ", sResponse: " + sResponse;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3154,7 +3154,7 @@ MMSEngineProcessor::youTubeDetailsToResumePostVideo(int64_t ingestionJobKey, str
 				", responseHeader: {}",
 				ingestionJobKey, youTubeUploadURL, responseHeader
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3182,7 +3182,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 
 		if (youTubeTokenType == "AccessToken")
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Using the youTube access token" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 				", youTubeAccessToken: " + youTubeAccessToken
 			);
@@ -3229,7 +3229,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 		if (!JSONUtils::isPresent(youTubeResponseRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3240,7 +3240,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 	{
 		string errorMessage = string("youTube refresh token failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse + ", e.what(): " + e.what();
-		SPDLOG_ERROR(string() + errorMessage);
+		LOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3248,7 +3248,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 	{
 		string errorMessage = string("youTube refresh token failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", youTubeURL: " + youTubeURL + ", sResponse: " + sResponse;
-		SPDLOG_ERROR(string() + errorMessage);
+		LOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3274,7 +3274,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 					  _facebookGraphAPIVersion + "/" + facebookPageId + "?fields=access_token" +
 					  "&access_token=" + CurlWrapper::escape(userAccessToken);
 
-		SPDLOG_INFO(string() + "Retrieve page token" + ", facebookURL: " + facebookURL);
+		LOG_INFO(string() + "Retrieve page token" + ", facebookURL: " + facebookURL);
 
 		vector<string> otherHeaders;
 		json responseRoot =
@@ -3291,7 +3291,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 		if (!JSONUtils::isPresent(responseRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3302,7 +3302,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 	{
 		string errorMessage = string("facebook access token failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", facebookURL: " + facebookURL + ", response: " + JSONUtils::toString(responseRoot) + ", e.what(): " + e.what();
-		SPDLOG_ERROR(string() + errorMessage);
+		LOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3310,7 +3310,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 	{
 		string errorMessage = string("facebook access token failed") + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 							  ", facebookURL: " + facebookURL + ", response: " + JSONUtils::toString(responseRoot);
-		SPDLOG_ERROR(string() + errorMessage);
+		LOG_ERROR(string() + errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

@@ -21,9 +21,6 @@
 #include "EncodersLoadBalancer.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "Magick++.h"
 #include "MultiEventsSet.h"
 #include "spdlog/spdlog.h"

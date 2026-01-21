@@ -35,7 +35,7 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		// _urlNotFound = false;
 
 		_tvChannelConfigurationDirectory = JSONUtils::asString(configurationRoot["ffmpeg"], "tvChannelConfigurationDirectory", "");
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->tvChannelConfigurationDirectory: {}",
 			_tvChannelConfigurationDirectory
@@ -114,7 +114,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				", Field: {}",
 				ingestionJobKey, encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -144,7 +144,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			", Field: {}",
 			ingestionJobKey, encodingJobKey, field
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -160,7 +160,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			", Field: {}",
 			ingestionJobKey, encodingJobKey, field
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -245,7 +245,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		{
 			string directoryPathName = encodedStagingAssetPathName.substr(0, endOfDirectoryIndex);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"removeDirectory"
 				", directoryPathName: {}",
 				directoryPathName
@@ -268,7 +268,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				", Field: {}",
 				ingestionJobKey, encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -301,7 +301,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 					", Field: {}",
 					ingestionJobKey, encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -317,7 +317,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 					", Field: {}",
 					ingestionJobKey, encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -331,7 +331,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 					", encodingJobKey: {}",
 					ingestionJobKey, encodingJobKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -348,7 +348,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 					", Field: {}",
 					ingestionJobKey, encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -357,7 +357,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			string prefix = "End_";
 			if (ingestionJobStatus.size() >= prefix.size() && 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"addContentIngestionJobKey finished"
 					", ingestionJobKey: {}"
 					", addContentIngestionJobKey: {}"
@@ -371,7 +371,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			{
 				int secondsToSleep = 5;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"addContentIngestionJobKey not finished, sleeping..."
 					", ingestionJobKey: {}"
 					", addContentIngestionJobKey: {}"
@@ -384,7 +384,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Waiting result..."
 			", ingestionJobKey: {}"
 			", addContentFinished: {}"
@@ -402,7 +402,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			", encodingJobKey: {}",
 			ingestionJobKey, encodingJobKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -413,7 +413,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	const string& apiKey, string mmsWorkflowIngestionURL, string mmsBinaryIngestionURL
 ) const
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received ingestContentByPushingBinary"
 		", ingestionJobKey: {}"
 		", fileFormat: {}"
@@ -442,7 +442,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Ingestion workflow failed (runtime_error)"
 			", ingestionJobKey: {}"
 			", mmsWorkflowIngestionURL: {}"
@@ -461,7 +461,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 			", ingestionJobKey: {}",
 			ingestionJobKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -493,14 +493,14 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 							", localBinaryPathFileName: {}",
 							ingestionJobKey, localBinaryPathFileName
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 					string localVariantPathDirectory = localBinaryPathFileName.substr(0, endOfPathIndex);
 
 					executeCommand = std::format("tar cfz {} -C {} content", localBinaryPathFileName, localVariantPathDirectory);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Start tar command "
 						", executeCommand: {}",
 						executeCommand
@@ -508,7 +508,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 					chrono::system_clock::time_point startTar = chrono::system_clock::now();
 					int executeCommandStatus = ProcessUtility::execute(executeCommand);
 					chrono::system_clock::time_point endTar = chrono::system_clock::now();
-					SPDLOG_INFO(
+					LOG_INFO(
 						"End tar command "
 						", executeCommand: {}"
 						", @MMS statistics@ - tarDuration (millisecs): @{}@",
@@ -523,7 +523,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 							", executeCommand: {}",
 							ingestionJobKey, executeCommandStatus, executeCommand
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -547,7 +547,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 						", exception: {}",
 						ingestionJobKey, executeCommand, e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -564,7 +564,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 
 		if (fileFormat == "hls")
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"remove"
 				", localBinaryPathFileName: {}",
 				localBinaryPathFileName
@@ -574,7 +574,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Ingestion binary failed"
 			", ingestionJobKey: {}"
 			", mmsBinaryURL: {}"
@@ -712,7 +712,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 			workflowMetadata = JSONUtils::toString(workflowRoot);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"buildAddContentIngestionWorkflow"
 			", ingestionJobKey: {}"
 			", workflowMetadata: {}",
@@ -723,7 +723,7 @@ string FFMPEGEncoderTask::buildAddContentIngestionWorkflow(
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"buildAddContentIngestionWorkflow failed"
 			", ingestionJobKey: {}"
 			", workflowMetadata: {}"
@@ -757,7 +757,7 @@ static int progressDownloadCallback2(void *clientp, curl_off_t dltotal, curl_off
 		// this is to have one decimal in the percentage
 		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"progressDownloadCallback. Download still running"
 			", ingestionJobKey: {}"
 			", downloadingPercentage: {}"
@@ -773,7 +773,7 @@ static int progressDownloadCallback2(void *clientp, curl_off_t dltotal, curl_off
 		if (progressData->_lastPercentageUpdated != downloadingPercentage)
 		{
 			/*
-			SPDLOG_INFO(
+			LOG_INFO(
 				"progressDownloadCallback. Update IngestionJob"
 				", ingestionJobKey: {}"
 				", downloadingPercentage: {}",
@@ -804,7 +804,7 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 	if (sourceFileExtension == ".m3u8")
 		isSourceStreaming = true;
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"downloading source content"
 		", ingestionJobKey: {}"
 		", sourcePhysicalDeliveryURL: {}"
@@ -836,7 +836,7 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 		);
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"downloaded source content"
 		", ingestionJobKey: {}"
 		", sourcePhysicalDeliveryURL: {}"
@@ -876,7 +876,7 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, 
 				{
 					auto fileName = directoryEntry.path().filename();
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"read directory"
 						", fileName: {}",
 						fileName.string()
@@ -897,7 +897,7 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, 
 					string portToLookFor = ":" + to_string(freeTvChannelPort);
 					if (sFile.find(portToLookFor) != string::npos)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"getFreeTvChannelPortOffset. Port is already used"
 							", portToLookFor: {}",
 							portToLookFor
@@ -916,13 +916,13 @@ long FFMPEGEncoderTask::getFreeTvChannelPortOffset(mutex *tvChannelsPortsMutex, 
 				", e.what(): {}",
 				e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	} while (portAlreadyUsed && attemptNumber < _tvChannelPort_MaxNumberOfOffsets);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getFreeTvChannelPortOffset"
 		", portAlreadyUsed: {}"
 		", tvChannelPort_CurrentOffset: {}"
@@ -940,7 +940,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received createOrUpdateTVDvbLastConfigurationFile"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -979,7 +979,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 					", tvModulation: {}",
 					ingestionJobKey, encodingJobKey, tvModulation
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -987,7 +987,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 
 		if (!fs::exists(_tvChannelConfigurationDirectory))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"createOrUpdateTVDvbLastConfigurationFile. Create directory"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
@@ -1039,7 +1039,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 			ifConfigurationFile.close();
 			if (!changedFileFound) // .txt found
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"createOrUpdateTVDvbLastConfigurationFile. Remove dvblast configuration file to create the new one"
 					", ingestionJobKey: {}"
 					", encodingJobKey: {}"
@@ -1053,7 +1053,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 
 		string newConfiguration = std::format("{}:{} 1 {} {},{}", multicastIP, multicastPort, tvServiceId, tvVideoPid, tvVideoPid, tvAudioItalianPid);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"createOrUpdateTVDvbLastConfigurationFile. Creation dvblast configuration file"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1072,7 +1072,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 				", dvblastConfigurationPathName: {}.changed",
 				ingestionJobKey, encodingJobKey, dvblastConfigurationPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1127,7 +1127,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 			", encodingJobKey: {}",
 			ingestionJobKey, encodingJobKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 	}
 }
 
@@ -1141,7 +1141,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received getTVMulticastFromDvblastConfigurationFile"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1174,7 +1174,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 					", tvModulation: {}",
 					ingestionJobKey, encodingJobKey, tvModulation
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1226,7 +1226,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 			configurationFile.close();
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received getTVMulticastFromDvblastConfigurationFile"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -1252,7 +1252,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 			", encodingJobKey: {}",
 			ingestionJobKey, encodingJobKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 	}
 
 	return make_pair(multicastIP, multicastPort);
@@ -1286,7 +1286,7 @@ void FFMPEGEncoderTask::addEncodingCompleted() const
 
 	_encodingCompletedMap->insert(make_pair(encodingCompleted->_encodingJobKey, encodingCompleted));
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"addEncodingCompleted"
 		", ingestionJobKey: {}"
 		", encodingJobKey: {}"
@@ -1305,7 +1305,7 @@ void FFMPEGEncoderTask::removeEncodingCompletedIfPresent() const
 	{
 		_encodingCompletedMap->erase(it);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"removeEncodingCompletedIfPresent"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"

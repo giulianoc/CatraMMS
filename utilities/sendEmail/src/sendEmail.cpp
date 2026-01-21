@@ -44,7 +44,7 @@ int main(int iArgc, char *pArgv[])
 	string emailPassword;
 	try
 	{
-		SPDLOG_INFO("Sending email to {}", tosCommaSeparated);
+		LOG_INFO("Sending email to {}", tosCommaSeparated);
 
 		emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
 		emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
@@ -82,10 +82,10 @@ int main(int iArgc, char *pArgv[])
 			", emailPassword: {}",
 			emailProviderURL, emailUserName, emailPassword
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 	}
 
-	SPDLOG_INFO("Shutdown done");
+	LOG_INFO("Shutdown done");
 
 	return 0;
 }

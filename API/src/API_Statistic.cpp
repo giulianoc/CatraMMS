@@ -29,7 +29,7 @@ void API::addRequestStatistic(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -43,7 +43,7 @@ void API::addRequestStatistic(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -67,7 +67,7 @@ void API::addRequestStatistic(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -90,7 +90,7 @@ void API::addRequestStatistic(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -103,7 +103,7 @@ void API::addRequestStatistic(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -117,7 +117,7 @@ void API::addRequestStatistic(
 				", e.what(): {}",
 				requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -132,7 +132,7 @@ void API::addRequestStatistic(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addRequestStatistic failed"
 				", e.what(): {}",
 				e.what()
@@ -152,7 +152,7 @@ void API::addRequestStatistic(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -166,7 +166,7 @@ void API::requestStatisticList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -189,7 +189,7 @@ void API::requestStatisticList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -219,7 +219,7 @@ void API::requestStatisticList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -233,7 +233,7 @@ void API::requestStatisticPerContentList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -256,7 +256,7 @@ void API::requestStatisticPerContentList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -292,7 +292,7 @@ void API::requestStatisticPerContentList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -306,7 +306,7 @@ void API::requestStatisticPerUserList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -329,7 +329,7 @@ void API::requestStatisticPerUserList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -365,7 +365,7 @@ void API::requestStatisticPerUserList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -379,7 +379,7 @@ void API::requestStatisticPerMonthList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -402,7 +402,7 @@ void API::requestStatisticPerMonthList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -438,7 +438,7 @@ void API::requestStatisticPerMonthList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -452,7 +452,7 @@ void API::requestStatisticPerDayList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -475,7 +475,7 @@ void API::requestStatisticPerDayList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -511,7 +511,7 @@ void API::requestStatisticPerDayList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -525,7 +525,7 @@ void API::requestStatisticPerHourList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -548,7 +548,7 @@ void API::requestStatisticPerHourList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -584,7 +584,7 @@ void API::requestStatisticPerHourList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -598,7 +598,7 @@ void API::requestStatisticPerCountryList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -621,7 +621,7 @@ void API::requestStatisticPerCountryList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -657,7 +657,7 @@ void API::requestStatisticPerCountryList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -671,7 +671,7 @@ void API::loginStatisticList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -684,7 +684,7 @@ void API::loginStatisticList(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -705,7 +705,7 @@ void API::loginStatisticList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -729,7 +729,7 @@ void API::loginStatisticList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }

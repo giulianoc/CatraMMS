@@ -28,7 +28,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			DBConnectionPoolStats dbConnectionPoolStats = _masterPostgresConnectionPool->get_stats();
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"DB connection pool stats"
 				", _poolSize: {}"
 				", _borrowedSize: {}",
@@ -49,7 +49,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			int initialGetIngestionJobsCurrentIndex = _getIngestionJobsCurrentIndex;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getIngestionsToBeManaged"
 				", initialGetIngestionJobsCurrentIndex: {}",
 				initialGetIngestionJobsCurrentIndex
@@ -186,7 +186,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					IngestionStatus ingestionStatus = MMSEngineDBFacade::toIngestionStatus(row["status"].as<string>());
 					IngestionType ingestionType = MMSEngineDBFacade::toIngestionType(row["ingestionType"].as<string>());
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"getIngestionsToBeManaged (result set loop)"
 						", ingestionJobKey: {}"
 						", ingestionJobLabel: {}"
@@ -210,7 +210,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 					if (ingestionJobToBeManaged)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Adding jobs to be processed"
 							", ingestionJobKey: {}"
 							", ingestionStatus: {}",
@@ -230,7 +230,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					}
 					else
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Ingestion job cannot be processed"
 							", ingestionJobKey: {}"
 							", ingestionStatus: {}"
@@ -252,7 +252,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
 				);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getIngestionsToBeManaged"
 					", _getIngestionJobsCurrentIndex: {}"
 					", res.size: {}"
@@ -269,7 +269,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 
 			pointAfterNotLive = chrono::system_clock::now();
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getIngestionsToBeManaged (exit)"
 				", _getIngestionJobsCurrentIndex: {}"
 				", ingestionsToBeManaged.size(): {}"
@@ -340,14 +340,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					", sqlStatement: {}",
 					processorMMS, ingestionJobKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getIngestionsToBeManaged statistics"
 			", total elapsed (millisecs): {}"
 			", select live elapsed (millisecs): {}"
@@ -369,7 +369,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -377,7 +377,7 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -492,7 +492,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				}
 				else
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Dependency for the IngestionJob"
 						", ingestionJobKey: {}"
 						", dependOnIngestionJobKey: {}"
@@ -502,7 +502,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 					);
 				}
 				/*
-				SPDLOG_INFO(
+				LOG_INFO(
 					"@SQL statistics@"
 					", sqlStatement: {}"
 					", dependOnIngestionJobKey: {}"
@@ -515,7 +515,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 			}
 			else
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Dependency for the IngestionJob"
 					", ingestionJobKey: {}"
 					", dependOnIngestionJobKey: null",
@@ -540,7 +540,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 			// this is not possible, even an ingestionJob without dependency has a row
 			// (with dependOnIngestionJobKey NULL)
 
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"No dependency Row for the IngestionJob"
 				", ingestionJobKey: {}"
 				", workspaceKey: {}"
@@ -557,7 +557,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -565,7 +565,7 @@ tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> MMSEngineDBFacade:
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -612,7 +612,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 						", sqlStatement: {}",
 						workspaceKey, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -626,7 +626,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 						", sqlStatement: {}",
 						workspaceKey, static_cast<int>(workspaceType), sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -639,7 +639,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 					", sqlStatement: {}",
 					workspaceKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -717,7 +717,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -725,7 +725,7 @@ int64_t MMSEngineDBFacade::addIngestionJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -825,7 +825,7 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -833,7 +833,7 @@ void MMSEngineDBFacade::addIngestionJobDependency(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -879,7 +879,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 			*/
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"MMS_IngestionJobDependency updated successful"
 			", newDependOnIngestionJobKey: {}"
 			", previousDependOnIngestionJobKey: {}",
@@ -890,7 +890,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -898,7 +898,7 @@ void MMSEngineDBFacade::changeIngestionJobDependency(int64_t previousDependOnIng
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -922,7 +922,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(const int64_t ingestio
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -930,7 +930,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(const int64_t ingestio
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -977,7 +977,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(PostgresConnTrans &tra
 			*/
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"IngestionJob updated successful"
 			", metadataContent: {}"
 			", ingestionJobKey: {}",
@@ -988,7 +988,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(PostgresConnTrans &tra
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -996,7 +996,7 @@ void MMSEngineDBFacade::updateIngestionJobMetadataContent(PostgresConnTrans &tra
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1041,13 +1041,13 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 					", sqlStatement: {}",
 					parentGroupOfTasksIngestionJobKey, ingestionJobKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"IngestionJob updated successful"
 			", parentGroupOfTasksIngestionJobKey: {}"
 			", ingestionJobKey: {}",
@@ -1058,7 +1058,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1066,7 +1066,7 @@ void MMSEngineDBFacade::updateIngestionJobParentGroupOfTasks(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1090,7 +1090,7 @@ void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionSta
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1098,7 +1098,7 @@ void MMSEngineDBFacade::updateIngestionJob(int64_t ingestionJobKey, IngestionSta
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1194,7 +1194,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
 										  ", errorMessageForSQL: " + errorMessageForSQL + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					// it is not so important to block the continuation of this method
 					// Also the exception caused a crash of the process
@@ -1248,7 +1248,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 					string errorMessage = __FILEREF__ + "no update was done" + ", processorMMS: " + processorMMS +
 										  ", errorMessageForSQL: " + errorMessageForSQL + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement: " + sqlStatement;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					// it is not so important to block the continuation of this method
 					// Also the exception caused a crash of the process
@@ -1260,7 +1260,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 			bool updateIngestionRootStatus = true;
 			manageIngestionJobStatusUpdate(ingestionJobKey, newIngestionStatus, updateIngestionRootStatus, trans);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"IngestionJob updated successful"
 				", newIngestionStatus: {}"
 				", ingestionJobKey: {}"
@@ -1279,7 +1279,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 				// per cui forzo un retry in attesa di avere l'errore e gestire meglio
 				// if (exceptionMessage.find("Deadlock") != string::npos
 				// 	&& retriesNumber < maxRetriesNumber)
-				SPDLOG_WARN(
+				LOG_WARN(
 					"SQL exception (Deadlock), waiting before to try again"
 					", ingestionJobKey: {}"
 					", sqlStatement: {}"
@@ -1294,7 +1294,7 @@ void MMSEngineDBFacade::updateIngestionJob(
 			}
 			else
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exception: {}"
 					", conn: {}",
@@ -1365,7 +1365,7 @@ void MMSEngineDBFacade::addIngestionJobErrorMessages(int64_t ingestionJobKey, js
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1373,7 +1373,7 @@ void MMSEngineDBFacade::addIngestionJobErrorMessages(int64_t ingestionJobKey, js
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1445,7 +1445,7 @@ void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey,
 	{
 		auto se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1453,7 +1453,7 @@ void MMSEngineDBFacade::updateIngestionJobErrorMessages(int64_t ingestionJobKey,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1473,7 +1473,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageIngestionJobStatusUpdate"
 			", ingestionJobKey: {}"
 			", newIngestionStatus: {}"
@@ -1585,7 +1585,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 
 					if (!dependenciesFound)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Finished to find dependencies"
 							", hierarchicalLevelIndex: {}"
 							", maxHierarchicalLevelsManaged: {}"
@@ -1597,7 +1597,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 					}
 					else if (dependenciesFound && hierarchicalLevelIndex + 1 >= maxHierarchicalLevelsManaged)
 					{
-						SPDLOG_WARN(
+						LOG_WARN(
 							"after maxHierarchicalLevelsManaged we still found dependencies, so maxHierarchicalLevelsManaged has to be increased"
 							", maxHierarchicalLevelsManaged: {}"
 							", ingestionJobKey: {}"
@@ -1610,7 +1610,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 
 			if (hierarchicalIngestionJobKeysDependencies != "")
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"manageIngestionJobStatusUpdate. update"
 					", status: End_NotToBeExecuted"
 					", ingestionJobKey: {}"
@@ -1677,11 +1677,11 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 						", sqlStatement: {}",
 						ingestionJobKey, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"@SQL statistics@"
 					", sqlStatement: {}"
 					", ingestionJobKey: {}"
@@ -1725,7 +1725,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				);
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Job status"
 				", ingestionRootKey: {}"
 				", intermediateStatesCount: {}"
@@ -1774,7 +1774,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 						", sqlStatement: {}",
 						ingestionRootKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1785,7 +1785,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1793,7 +1793,7 @@ void MMSEngineDBFacade::manageIngestionJobStatusUpdate(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1823,7 +1823,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected(in
 	{
 		chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", ingestionJobKey: {}"
 			", IngestionStatus: {}"
@@ -1845,7 +1845,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected(in
 		manageIngestionJobStatusUpdate(ingestionJobKey, IngestionStatus::End_IngestionFailure, updateIngestionRootStatus, trans);
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			"setNotToBeExecutedStartingFrom statistics"
 			", elapsed (millisecs): {}",
 			chrono::duration_cast<chrono::milliseconds>(endPoint - startPoint).count()
@@ -1855,7 +1855,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected(in
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1863,7 +1863,7 @@ void MMSEngineDBFacade::setNotToBeExecutedStartingFromBecauseChunkNotSelected(in
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1955,7 +1955,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 					", sqlStatement: {}",
 					ingestionJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1965,7 +1965,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1973,7 +1973,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceDownloadingInProgress(int64_t in
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2067,7 +2067,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 					", sqlStatement: {}",
 					ingestionJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2077,7 +2077,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2085,7 +2085,7 @@ bool MMSEngineDBFacade::updateIngestionJobSourceUploadingInProgress(int64_t inge
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2162,7 +2162,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2170,7 +2170,7 @@ void MMSEngineDBFacade::updateIngestionJobSourceBinaryTransferred(int64_t ingest
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2195,7 +2195,7 @@ string MMSEngineDBFacade::ingestionRoot_columnAsString(int64_t workspaceKey, str
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2208,7 +2208,7 @@ string MMSEngineDBFacade::ingestionRoot_columnAsString(int64_t workspaceKey, str
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2221,7 +2221,7 @@ string MMSEngineDBFacade::ingestionRoot_columnAsString(int64_t workspaceKey, str
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2245,7 +2245,7 @@ string MMSEngineDBFacade::ingestionRoot_MetadataContent(int64_t workspaceKey, in
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2258,7 +2258,7 @@ string MMSEngineDBFacade::ingestionRoot_MetadataContent(int64_t workspaceKey, in
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2271,7 +2271,7 @@ string MMSEngineDBFacade::ingestionRoot_MetadataContent(int64_t workspaceKey, in
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2294,7 +2294,7 @@ string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspa
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2307,7 +2307,7 @@ string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspa
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2320,7 +2320,7 @@ string MMSEngineDBFacade::ingestionRoot_ProcessedMetadataContent(int64_t workspa
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionRootKey: {}"
@@ -2352,7 +2352,7 @@ MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(in
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2365,7 +2365,7 @@ MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(in
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2378,7 +2378,7 @@ MMSEngineDBFacade::ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(in
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2402,7 +2402,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKe
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2415,7 +2415,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKe
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2428,7 +2428,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeMetadataContent(int64_t workspaceKe
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2455,7 +2455,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatusMetadataContent(int64_t works
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2468,7 +2468,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatusMetadataContent(int64_t works
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2481,7 +2481,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatusMetadataContent(int64_t works
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2505,7 +2505,7 @@ MMSEngineDBFacade::ingestionJob_StatusMetadataContent(int64_t workspaceKey, int6
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2518,7 +2518,7 @@ MMSEngineDBFacade::ingestionJob_StatusMetadataContent(int64_t workspaceKey, int6
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2531,7 +2531,7 @@ MMSEngineDBFacade::ingestionJob_StatusMetadataContent(int64_t workspaceKey, int6
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2555,7 +2555,7 @@ json MMSEngineDBFacade::ingestionJob_columnAsJson(int64_t workspaceKey, string c
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2568,7 +2568,7 @@ json MMSEngineDBFacade::ingestionJob_columnAsJson(int64_t workspaceKey, string c
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2581,7 +2581,7 @@ json MMSEngineDBFacade::ingestionJob_columnAsJson(int64_t workspaceKey, string c
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2605,7 +2605,7 @@ json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2618,7 +2618,7 @@ json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2631,7 +2631,7 @@ json MMSEngineDBFacade::ingestionJob_MetadataContent(int64_t workspaceKey, int64
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2655,7 +2655,7 @@ MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(i
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2668,7 +2668,7 @@ MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(i
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2681,7 +2681,7 @@ MMSEngineDBFacade::IngestionType MMSEngineDBFacade::ingestionJob_IngestionType(i
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2705,7 +2705,7 @@ string MMSEngineDBFacade::ingestionJob_columnAsString(int64_t workspaceKey, stri
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2718,7 +2718,7 @@ string MMSEngineDBFacade::ingestionJob_columnAsString(int64_t workspaceKey, stri
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2731,7 +2731,7 @@ string MMSEngineDBFacade::ingestionJob_columnAsString(int64_t workspaceKey, stri
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2755,7 +2755,7 @@ string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t inges
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2768,7 +2768,7 @@ string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t inges
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2781,7 +2781,7 @@ string MMSEngineDBFacade::ingestionJob_Label(int64_t workspaceKey, int64_t inges
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2810,7 +2810,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2823,7 +2823,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2836,7 +2836,7 @@ MMSEngineDBFacade::ingestionJob_IngestionTypeStatus(int64_t workspaceKey, int64_
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2859,7 +2859,7 @@ MMSEngineDBFacade::IngestionStatus MMSEngineDBFacade::ingestionJob_Status(int64_
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2872,7 +2872,7 @@ MMSEngineDBFacade::IngestionStatus MMSEngineDBFacade::ingestionJob_Status(int64_
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2885,7 +2885,7 @@ MMSEngineDBFacade::IngestionStatus MMSEngineDBFacade::ingestionJob_Status(int64_
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", ingestionJobKey: {}"
@@ -2909,7 +2909,7 @@ void MMSEngineDBFacade::ingestionJob_IngestionJobKeys(int64_t workspaceKey, stri
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"DBRecordNotFound"
 			", workspaceKey: {}"
 			", label: {}"
@@ -2922,7 +2922,7 @@ void MMSEngineDBFacade::ingestionJob_IngestionJobKeys(int64_t workspaceKey, stri
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -2935,7 +2935,7 @@ void MMSEngineDBFacade::ingestionJob_IngestionJobKeys(int64_t workspaceKey, stri
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}"
@@ -2978,7 +2978,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2997,7 +2997,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3051,7 +3051,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 					workspaceKey, ingestionJobKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -3064,7 +3064,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3074,7 +3074,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 		else if (de != nullptr)
 		{
 			// il chiamante decidera se loggarlo come error
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
@@ -3082,7 +3082,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::ingestionJobQuery(
 			);
 		}
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3118,7 +3118,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(int64_t ingestionJobKey, int64_t m
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3126,7 +3126,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(int64_t ingestionJobKey, int64_t m
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3242,7 +3242,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3250,7 +3250,7 @@ void MMSEngineDBFacade::addIngestionJobOutput(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3303,7 +3303,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(int64_t ingestionJobKey, boo
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3311,7 +3311,7 @@ long MMSEngineDBFacade::getIngestionJobOutputsCount(int64_t ingestionJobKey, boo
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3485,7 +3485,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3493,7 +3493,7 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3797,7 +3797,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3805,7 +3805,7 @@ json MMSEngineDBFacade::getIngestionJobRoot(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3877,7 +3877,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 					", sqlStatement: {}",
 					workspaceKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3901,7 +3901,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 					". It is needed to increase Workspace capacity.",
 					maxStorageInMB, totalSizeInMB
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4183,7 +4183,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 					", sqlStatement: {}",
 					newPeriodUtcStartDateTime, newPeriodUtcEndDateTime, workspaceKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4198,7 +4198,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 				". It is needed to increase Workspace capacity.",
 				maxIngestionsNumber, toString(encodingPeriod)
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4207,7 +4207,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4215,7 +4215,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4230,7 +4230,7 @@ void MMSEngineDBFacade::checkWorkspaceStorageAndMaxIngestionNumber(int64_t works
 
 void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 {
-	SPDLOG_INFO("fixIngestionJobsHavingWrongStatus");
+	LOG_INFO("fixIngestionJobsHavingWrongStatus");
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -4278,7 +4278,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 							", encodingJobStatus: {}",
 							ingestionJobKey, encodingJobKey, ingestionJobStatus, encodingJobStatus
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						updateIngestionJob(trans, ingestionJobKey, IngestionStatus::End_CanceledByMMS, errorMessage);
 
@@ -4300,7 +4300,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 			catch (sql_error const &e)
 			{
 				// Deadlock!!!
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"SQL exception"
 					", query: {}"
 					", exceptionMessage: {}"
@@ -4314,7 +4314,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 
 				{
 					int secondsBetweenRetries = 15;
-					SPDLOG_INFO(
+					LOG_INFO(
 						"fixIngestionJobsHavingWrongStatus failed, waiting before to try again"
 						", currentRetriesOnError: {}"
 						", maxRetriesOnError: {}"
@@ -4326,7 +4326,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"fixIngestionJobsHavingWrongStatus "
 			", totalRowsUpdated: {}",
 			totalRowsUpdated
@@ -4336,7 +4336,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4344,7 +4344,7 @@ void MMSEngineDBFacade::fixIngestionJobsHavingWrongStatus()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4529,7 +4529,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4537,7 +4537,7 @@ void MMSEngineDBFacade::updateIngestionJob_LiveRecorder(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

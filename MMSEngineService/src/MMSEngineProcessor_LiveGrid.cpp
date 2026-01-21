@@ -38,7 +38,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -87,7 +87,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -104,7 +104,7 @@ void MMSEngineProcessor::manageLiveGrid(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveGrid failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -118,7 +118,7 @@ void MMSEngineProcessor::manageLiveGrid(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveGrid failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -132,7 +132,7 @@ void MMSEngineProcessor::manageLiveGrid(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveGrid failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}",

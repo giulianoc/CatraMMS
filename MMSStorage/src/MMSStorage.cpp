@@ -29,21 +29,21 @@ MMSStorage::MMSStorage(
 		_hostName = System::hostName();
 
 		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 			_waitingNFSSync_maxMillisecondsToWait
 		);
 
 		_storage = JSONUtils::asString(configuration["storage"], "path", "");
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", storage->path: {}",
 			_storage.string()
 		);
 
 		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt32(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Configuration item"
 			", storage->freeSpaceToLeaveInEachPartitionInMB: {}",
 			_freeSpaceToLeaveInEachPartitionInMB
@@ -54,7 +54,7 @@ MMSStorage::MMSStorage(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"MMSStorage::MMSStorage failed"
 			", e.what(): {}",
 			e.what()
@@ -317,7 +317,7 @@ MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfile
 		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
 			externalReadOnlyStorage) = storageDetails;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMMSAssetPathName ..."
 			", mmsPartitionNumber: {}"
 			", workspaceDirectoryName: {}"
@@ -339,15 +339,15 @@ MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfile
 			mediaItemKey, encodingProfileKey, e.what()
 		);
 		if (warningIfMissing)
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 		else
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getPhysicalPathDetails failed"
 			", mediaItemKey: {}"
 			", encodingProfileKey: {}"
@@ -378,7 +378,7 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
 		tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
 			externalReadOnlyStorage) = storageDetails;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMMSAssetPathName ..."
 			", externalReadOnlyStorage: {}"
 			", mmsPartitionNumber: {}"
@@ -393,7 +393,7 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getPhysicalPathDetails failed"
 			", physicalPathKey: {}"
 			", e.what(): {}",
@@ -444,7 +444,7 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 				", requestWorkspace->_workspaceKey: {}",
 				contentWorkspace->_workspaceKey, requestWorkspace->_workspaceKey
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -470,7 +470,7 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getDeliveryURI failed"
 			", physicalPathKey: {}"
 			", e.what(): {}",
@@ -524,7 +524,7 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 				", requestWorkspace->_workspaceKey: {}",
 				contentWorkspace->_workspaceKey, requestWorkspace->_workspaceKey
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -546,7 +546,7 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 	catch (MediaItemKeyNotFound &e)
 	{
 		// warn perchè già loggato come error in MMSEngineDBFacade_Postgres.cpp
-		SPDLOG_WARN(
+		LOG_WARN(
 			"getDeliveryURI failed"
 			", mediaItemKey: {}"
 			", encodingProfileKey: {}"
@@ -558,7 +558,7 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getDeliveryURI failed"
 			", mediaItemKey: {}"
 			", encodingProfileKey: {}"
@@ -630,7 +630,7 @@ MMSStorage::getLiveDeliveryDetails(string directoryId, string liveFileExtension,
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getLiveDeliveryDetails failed"
 			", directoryId: {}"
 			", e.what(): {}",
@@ -656,7 +656,7 @@ fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> works
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -666,7 +666,7 @@ fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> works
 
 	if (!fs::exists(workspaceIngestionDirectory))
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Create directory"
 			", workspaceIngestionDirectory: {}",
 			workspaceIngestionDirectory.string()
@@ -787,7 +787,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -837,7 +837,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 		//	nel caso di directory 'locale' per il transcoder, non bisogna creare qui la directory
 		if (!neededForTranscoder && !fs::exists(assetPathName))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Create directory"
 				", assetPathName: {}",
 				assetPathName.string()
@@ -863,7 +863,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 			{
 				if (fs::is_directory(assetPathName))
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Remove directory"
 						", assetPathName: {}",
 						assetPathName.string()
@@ -872,7 +872,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 				}
 				else if (fs::is_regular_file(assetPathName))
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Remove file"
 						", assetPathName: {}",
 						assetPathName.string()
@@ -886,7 +886,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 						", assetPathName: {}",
 						assetPathName.string()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -927,7 +927,7 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -940,7 +940,7 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 
 	if (!fs::exists(mmsAssetPathName))
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Create directory"
 			", mmsAssetPathName: {}",
 			mmsAssetPathName.string()
@@ -968,12 +968,12 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 				", _noFileSystemAccess: {}",
 				_noFileSystemAccess
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getStorageDetailsByPhysicalPathKey ..."
 			", physicalPathKey: {}",
 			physicalPathKey
@@ -1003,7 +1003,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 			);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"removePhysicalPathKey ..."
 			", physicalPathKey: {}",
 			physicalPathKey
@@ -1018,7 +1018,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 			", e.what(): {}",
 			physicalPathKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1035,12 +1035,12 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 				", _noFileSystemAccess: {}",
 				_noFileSystemAccess
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getAllStorageDetails ..."
 			", mediaItemKey: {}",
 			mediaItemKey
@@ -1071,7 +1071,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"removeMediaItem ..."
 			", mediaItemKey: {}",
 			mediaItemKey
@@ -1086,7 +1086,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 			", exception: {}",
 			mediaItemKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1106,12 +1106,12 @@ void MMSStorage::removePhysicalPathFile(
 				", _noFileSystemAccess: {}",
 				_noFileSystemAccess
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"removePhysicalPathFile"
 			", mediaItemKey: {}"
 			", physicalPathKey: {}",
@@ -1131,7 +1131,7 @@ void MMSStorage::removePhysicalPathFile(
 				fileName = "";
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getMMSAssetPathName ..."
 				", externalReadOnlyStorage: {}"
 				", partitionKey: {}"
@@ -1148,7 +1148,7 @@ void MMSStorage::removePhysicalPathFile(
 				{
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Remove directory"
 							", mmsAssetPathName: {}",
 							mmsAssetPathName.string()
@@ -1157,7 +1157,7 @@ void MMSStorage::removePhysicalPathFile(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"removeDirectory failed"
 							", mediaItemKey: {}"
 							", physicalPathKey: {}"
@@ -1170,7 +1170,7 @@ void MMSStorage::removePhysicalPathFile(
 					}
 
 					uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, sizeInBytes);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"updatePartitionBecauseOfDeletion"
 						", partitionKey: {}"
 						", newCurrentFreeSizeInBytes: {}",
@@ -1181,7 +1181,7 @@ void MMSStorage::removePhysicalPathFile(
 				{
 					try
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Remove file"
 							", mmsAssetPathName: {}",
 							mmsAssetPathName.string()
@@ -1190,7 +1190,7 @@ void MMSStorage::removePhysicalPathFile(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"remove failed"
 							", mediaItemKey: {}"
 							", physicalPathKey: {}"
@@ -1203,7 +1203,7 @@ void MMSStorage::removePhysicalPathFile(
 					}
 
 					uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, sizeInBytes);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"updatePartitionBecauseOfDeletion"
 						", partitionKey: {}"
 						", newCurrentFreeSizeInBytes: {}",
@@ -1213,7 +1213,7 @@ void MMSStorage::removePhysicalPathFile(
 				else
 				{
 					string errorMessage = "Unexpected directory entry";
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1229,7 +1229,7 @@ void MMSStorage::removePhysicalPathFile(
 			", exception: {}",
 			mediaItemKey, physicalPathKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1251,7 +1251,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1264,7 +1264,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			", relativePath: {}",
 			ingestionJobKey, relativePath
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1313,7 +1313,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				", ullFSEntrySizeInBytes: {}",
 				ingestionJobKey, ullFSEntrySizeInBytes
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			// 2024-01-21: A volte il campo del DB currentFreeSizeInBytes si "corrompe" ed assume un valore
 			// non corretto (molto piu basso). Per essere sicuri che non sia un falso errore di 'no more space',
@@ -1329,7 +1329,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			tie(partitionKey, newCurrentFreeSizeInBytes) = partitionDetails;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getPartitionToBeUsedAndUpdateFreeSpace"
 			", ingestionJobKey: {}"
 			", ullFSEntrySizeInBytes: {}"
@@ -1352,7 +1352,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		mmsAssetPathName /= destinationAssetFileName;
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Selected MMS Partition for the content"
 		", ingestionJobKey: {}"
 		", workspaceDirectoryName: {}"
@@ -1390,7 +1390,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				+ to_string(chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count()) + "@"
 			);
 			*/
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Copy directory"
 				", ingestionJobKey: {}"
 				", from: {}"
@@ -1400,7 +1400,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 			fs::copy(sourceAssetPathName, mmsAssetPathName, fs::copy_options::recursive);
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Copy directory statistics"
 				", ingestionJobKey: {}"
 				", from: {}"
@@ -1412,7 +1412,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove directory"
 					", ingestionJobKey: {}"
 					", sourceAssetPathName: {}",
@@ -1424,7 +1424,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			{
 				// we will not raise an exception, it is a staging directory,
 				// it will be removed by cronjob (see the comment above)
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"fs::remove_all failed"
 					", ingestionJobKey: {}"
 					", sourceAssetPathName: {}"
@@ -1435,7 +1435,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		}
 		else // fs::is_regilar_file(sourceAssetPathName))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Move file"
 				", ingestionJobKey: {}"
 				", from: {}"
@@ -1460,7 +1460,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"Move file failed, wait a bit, retrieve again the size and try again"
 					", ingestionJobKey: {}"
 					", from: {}"
@@ -1485,7 +1485,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				ullFSEntrySizeInBytes = fs::file_size(sourceAssetPathName);
 #endif
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Move file again"
 					", ingestionJobKey: {}"
 					", from: {}"
@@ -1497,7 +1497,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Move file completed, start sleeping"
 				", ingestionJobKey: {}"
 				", from: {}"
@@ -1511,7 +1511,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			//	Per questo motivo metto un piccolo sleep prima di inizializzare ulDestFileSizeInBytes
 			this_thread::sleep_for(chrono::milliseconds(5000));
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Move file completed, file_size"
 				", ingestionJobKey: {}"
 				", from: {}"
@@ -1530,7 +1530,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			uintmax_t destFileSizeInBytes = fs::file_size(mmsAssetPathName);
 #endif
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Move file statistics"
 				", ingestionJobKey: {}"
 				", from: {}"
@@ -1553,7 +1553,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 					", destFileSizeInBytes: {}",
 					ingestionJobKey, sourceAssetPathName.string(), mmsAssetPathName.string(), ullFSEntrySizeInBytes, destFileSizeInBytes
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1569,7 +1569,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 	chrono::system_clock::time_point endPoint;
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"fs::rename"
 			", ingestionJobKey: {}"
 			", source: {}"
@@ -1587,7 +1587,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"fs::copy"
 					", ingestionJobKey: {}"
 					", source: {}"
@@ -1597,7 +1597,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 				// copy and delete
 				startPoint = chrono::system_clock::now();
 				fs::copy(source, dest, fs::copy_options::recursive);
-				SPDLOG_INFO(
+				LOG_INFO(
 					"fs::remove_all"
 					", ingestionJobKey: {}"
 					", source: {}"
@@ -1609,7 +1609,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 			}
 			catch (fs::filesystem_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"move (copy and remove) failed"
 					", ingestionJobKey: {}"
 					", source: {}"
@@ -1625,7 +1625,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"move (copy and remove) failed"
 					", ingestionJobKey: {}"
 					", source: {}"
@@ -1639,7 +1639,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 		}
 		else if (e.code().value() == 17) // filesystem error: cannot copy: File exists
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"No move to be done, file already exists"
 				", ingestionJobKey: {}"
 				", source: {}"
@@ -1654,7 +1654,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 		}
 		else
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"Move failed"
 				", ingestionJobKey: {}"
 				", source: {}"
@@ -1671,7 +1671,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Move failed"
 			", ingestionJobKey: {}"
 			", source: {}"
@@ -1695,7 +1695,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1706,7 +1706,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 
 		if (fs::exists(workspaceIngestionDirectory))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Remove directory"
 				", workspaceIngestionDirectory: {}",
 				workspaceIngestionDirectory.string()
@@ -1721,7 +1721,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 
 		if (fs::is_directory(liveRootDirectory))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Remove directory"
 				", liveRootDirectory: {}",
 				liveRootDirectory.string()
@@ -1760,7 +1760,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 						directorySizeInBytes += entry.file_size();
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove directory"
 					", workspacePathName: {}",
 					workspacePathName.string()
@@ -1768,7 +1768,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 				fs::remove_all(workspacePathName);
 
 				uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, directorySizeInBytes);
-				SPDLOG_INFO(
+				LOG_INFO(
 					"updatePartitionBecauseOfDeletion"
 					", partitionKey: {}"
 					", newCurrentFreeSizeInBytes: {}",
@@ -1795,7 +1795,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(string workspaceDirectoryName
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1836,7 +1836,7 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(string workspaceDirectoryName
 			{
 				ullDirectoryUsageInBytes = 0;
 
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"getDirectorySizeInBytes failed"
 					", e.what(): {}",
 					e.what()
@@ -1864,7 +1864,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			", _noFileSystemAccess: {}",
 			_noFileSystemAccess
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1903,7 +1903,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			currentFreeSizeInBytes = si.available;
 
 			chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-			SPDLOG_INFO(
+			LOG_INFO(
 				"refreshPartitionFreeSizes"
 				", partitionKey: {}"
 				", partitionPathName: {}"
@@ -1925,7 +1925,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			localFreeSpaceToLeaveInMB = JSONUtils::asInt32(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addUpdatePartitionInfo"
 			", partitionKey: {}"
 			", partitionPathName: {}"
@@ -1980,7 +1980,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				", _noFileSystemAccess: {}",
 				_noFileSystemAccess
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1994,7 +1994,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 #else
 		uintmax_t tarBinaryPathNameSize = fs::file_size(tarBinaryPathName);
 #endif
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Received manageTarFileInCaseOfIngestionOfSegments"
 			", ingestionJobKey: {}"
 			", tarBinaryPathName: {}"
@@ -2010,7 +2010,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		// Aggiungiamo quindi l'ingestionJobKey
 		string workIngestionDirectory = std::format("{}/{}", workspaceIngestionRepository, ingestionJobKey);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Creating directory (if needed)"
 			", workIngestionDirectory: {}",
 			workIngestionDirectory
@@ -2031,7 +2031,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		//	source will be something like <ingestion key>_source
 		//	destination will be the original directory (that has to be the same name of the tar file name)
 		executeCommand = std::format("tar xfz {} --directory {}", tarBinaryPathName, workIngestionDirectory);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Start tar command "
 			", executeCommand: {}",
 			executeCommand
@@ -2039,7 +2039,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		chrono::system_clock::time_point startTar = chrono::system_clock::now();
 		int executeCommandStatus = ProcessUtility::execute(executeCommand);
 		chrono::system_clock::time_point endTar = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			"End tar command "
 			", executeCommand: {}"
 			", @MMS statistics@ - tarDuration (secs): @{}@",
@@ -2054,7 +2054,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				", executeCommand: {}",
 				ingestionJobKey, executeCommandStatus, executeCommand
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2075,7 +2075,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 					", sourcePathName: '{}'",
 					suffix, ingestionJobKey, sourcePathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2090,7 +2090,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 					", startFileNameIndex: {}",
 					ingestionJobKey, sourcePathName, startFileNameIndex
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2103,7 +2103,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			fs::path sourceTarFile = workspaceIngestionRepository;
 			sourceTarFile /= (to_string(ingestionJobKey) + "_source" + ".tar.gz");
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Remove file"
 				", ingestionJobKey: {}"
 				", sourceTarFile: {}",
@@ -2123,7 +2123,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			fs::path destDirectory = workspaceIngestionRepository;
 			destDirectory /= (to_string(ingestionJobKey) + "_source");
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Start copyDirectory..."
 				", ingestionJobKey: {}"
 				", sourceDirectory: {}"
@@ -2155,7 +2155,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 					}
 				}
 				*/
-				SPDLOG_INFO(
+				LOG_INFO(
 					"End copyDirectory"
 					", ingestionJobKey: {}"
 					", sourceDirectory: {}"
@@ -2173,7 +2173,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 				chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 				fs::remove_all(workIngestionDirectory);
 				chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-				SPDLOG_INFO(
+				LOG_INFO(
 					"End removeDirectory"
 					", ingestionJobKey: {}"
 					", workIngestionDirectory: {}"
@@ -2183,7 +2183,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"removeDirectory failed"
 					", ingestionJobKey: {}"
 					", e.what: {}",
@@ -2202,7 +2202,7 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 			", e.what: {}",
 			ingestionJobKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

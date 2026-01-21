@@ -13,9 +13,6 @@
 
 #pragma once
 
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "../../CatraLibraries/BandwidthUsageThread/src/HostsBandwidthTracker.h"
 #include "MMSStorage.h"
 #include "spdlog/spdlog.h"

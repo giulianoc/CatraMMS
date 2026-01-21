@@ -16,7 +16,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canDeliveryAuthorization)
 	{
@@ -25,7 +25,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 			", deliveryAuthorization: {}",
 			apiAuthorizationDetails->canDeliveryAuthorization
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -69,7 +69,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 		{
 			string errorMessage = "The 'physicalPathKey' or the (mediaItemKey-uniqueName)/(encodingProfileKey-encodingProfileLabel) or "
 								  "ingestionJobKey parameters have to be present";
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -149,14 +149,14 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -175,7 +175,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canDeliveryAuthorization)
 	{
@@ -184,7 +184,7 @@ void API::createBulkOfDeliveryAuthorization(
 			", deliveryAuthorization: {}",
 			apiAuthorizationDetails->canDeliveryAuthorization
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -216,7 +216,7 @@ void API::createBulkOfDeliveryAuthorization(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(e.what());
+			LOG_ERROR(e.what());
 
 			throw runtime_error(e.what());
 		}
@@ -298,7 +298,7 @@ void API::createBulkOfDeliveryAuthorization(
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"createDeliveryAuthorization failed"
 								", mediaItemKey: {}"
 								", encodingProfileKey: {}"
@@ -389,7 +389,7 @@ void API::createBulkOfDeliveryAuthorization(
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"createDeliveryAuthorization failed"
 								", uniqueName: {}"
 								", encodingProfileKey: {}"
@@ -470,7 +470,7 @@ void API::createBulkOfDeliveryAuthorization(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"createDeliveryAuthorization failed"
 							", ingestionJobKey: {}"
 							", deliveryCode: {}"
@@ -499,7 +499,7 @@ void API::createBulkOfDeliveryAuthorization(
 			{
 				string responseBody = JSONUtils::toString(deliveryAutorizationDetailsRoot);
 
-				// SPDLOG_INFO("createDeliveryAuthorization"
+				// LOG_INFO("createDeliveryAuthorization"
 				// 	", responseBody: {}",
 				// 	responseBody
 				// );
@@ -515,14 +515,14 @@ void API::createBulkOfDeliveryAuthorization(
 				", e.what(): {}",
 				api, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -539,7 +539,7 @@ void API::binaryAuthorization(
 {
 	string api = "binaryAuthorization";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -602,12 +602,12 @@ void API::binaryAuthorization(
 								", contentRange: {}",
 								contentRange
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 							throw runtime_error(errorMessage);
 						}
 					}
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Content-Range details"
 						", contentRangePresent: {}"
 						", contentRangeStart: {}"
@@ -620,7 +620,7 @@ void API::binaryAuthorization(
 					lock_guard<mutex> locker(_fileUploadProgressData->_mutex);
 
 					_fileUploadProgressData->_filesUploadProgressToBeMonitored.push_back(progressRequestData);
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Added upload file progress to be monitored"
 						", _progressId: {}"
 						", _binaryVirtualHostName: {}"
@@ -630,7 +630,7 @@ void API::binaryAuthorization(
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"ProgressId not found"
 						", progressId: {}",
 						progressId
@@ -643,7 +643,7 @@ void API::binaryAuthorization(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -662,7 +662,7 @@ void API::deliveryAuthorizationThroughParameter(
 {
 	string api = "deliveryAuthorizationThroughParameter";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -687,7 +687,7 @@ void API::deliveryAuthorizationThroughParameter(
 				(bToken ? token : "null"),
 				(bOriginalURI ? originalURI : "null")
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -701,7 +701,7 @@ void API::deliveryAuthorizationThroughParameter(
 				", contentURI: {}",
 				contentURI
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -709,7 +709,7 @@ void API::deliveryAuthorizationThroughParameter(
 
 		string tokenParameter = token;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Calling checkDeliveryAuthorizationThroughParameter"
 			", contentURI: {}"
 			", tokenParameter: {}",
@@ -722,7 +722,7 @@ void API::deliveryAuthorizationThroughParameter(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -741,7 +741,7 @@ void API::deliveryAuthorizationThroughPath(
 {
 	string api = "deliveryAuthorizationThroughPath";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -754,7 +754,7 @@ void API::deliveryAuthorizationThroughPath(
 		const string contentURI = requestData.getHeaderParameter("x-original-uri", "", true);
 
 		/* log incluso in checkDeliveryAuthorizationThroughPath
-		SPDLOG_INFO(
+		LOG_INFO(
 			"deliveryAuthorizationThroughPath. Calling checkDeliveryAuthorizationThroughPath"
 			", contentURI: {}",
 			contentURI
@@ -767,7 +767,7 @@ void API::deliveryAuthorizationThroughPath(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"

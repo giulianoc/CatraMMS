@@ -28,7 +28,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 
 	shared_ptr<LiveProxyAndGrid> liveProxyData = dynamic_pointer_cast<LiveProxyAndGrid>(_encoding);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
@@ -74,7 +74,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					{
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"removeDirectory"
 								", manifestDirectoryPath: {}",
 								manifestDirectoryPath
@@ -83,7 +83,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"remove directory failed"
 								", ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -289,7 +289,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"_ffmpeg->liveProxy finished"
 			", ingestionJobKey: {}"
 			", _encodingJobKey: {}",
@@ -347,7 +347,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			Datetime::nowLocalTime(), liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		if (dynamic_cast<FFMpegEncodingKilledByUser*>(&e))
 		{

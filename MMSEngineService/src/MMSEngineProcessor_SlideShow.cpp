@@ -17,7 +17,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 		{
 			string errorMessage = string() + "No images found" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -126,7 +126,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -174,7 +174,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageSlideShowTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -185,7 +185,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageSlideShowTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -196,7 +196,7 @@ void MMSEngineProcessor::manageSlideShowTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageSlideShowTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);

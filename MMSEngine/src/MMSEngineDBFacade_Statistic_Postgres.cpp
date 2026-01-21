@@ -147,7 +147,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -155,7 +155,7 @@ json MMSEngineDBFacade::addRequestStatistic(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -212,7 +212,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -220,7 +220,7 @@ int64_t MMSEngineDBFacade::saveLoginStatistics(int userKey, string ip)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -396,7 +396,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 			{
 				sql_error const *se = dynamic_cast<sql_error const *>(&e);
 				if (se != nullptr)
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"query failed"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -404,7 +404,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 						se->query(), se->what(), trans.connection->getConnectionId()
 					);
 				else
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"query failed"
 						", exception: {}"
 						", conn: {}",
@@ -419,7 +419,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -427,7 +427,7 @@ void MMSEngineDBFacade::updateRequestStatisticGEOInfo()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -601,7 +601,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 			{
 				sql_error const *se = dynamic_cast<sql_error const *>(&e);
 				if (se != nullptr)
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"query failed"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -609,7 +609,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 						se->query(), se->what(), trans.connection->getConnectionId()
 					);
 				else
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"query failed"
 						", exception: {}"
 						", conn: {}",
@@ -624,7 +624,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -632,7 +632,7 @@ void MMSEngineDBFacade::updateLoginStatisticGEOInfo()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -681,7 +681,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 				string status = JSONUtils::asString(geoServiceResponseIpRoot, "status", "");
 				if (status != "success")
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"geoService failed"
 						", message: {}",
 						JSONUtils::asString(geoServiceResponseIpRoot, "message", "")
@@ -714,7 +714,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			string status = JSONUtils::asString(geoServiceResponseIp, "status", "");
 			if (status != "success")
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"geoService failed"
 					", message: {}",
 					JSONUtils::asString(geoServiceResponseIp, "message", "")
@@ -819,7 +819,7 @@ json MMSEngineDBFacade::getRequestStatisticList(
 	int64_t workspaceKey, string userId, string title, string startStatisticDate, string endStatisticDate, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticList"
 		", workspaceKey: {}"
 		", userId: {}"
@@ -998,7 +998,7 @@ json MMSEngineDBFacade::getRequestStatisticList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1006,7 +1006,7 @@ json MMSEngineDBFacade::getRequestStatisticList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1026,7 +1026,7 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticPerContentList"
 		", workspaceKey: {}"
 		", title: {}"
@@ -1199,7 +1199,7 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1207,7 +1207,7 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1227,7 +1227,7 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticPerUserList"
 		", workspaceKey: {}"
 		", title: {}"
@@ -1398,7 +1398,7 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1406,7 +1406,7 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1426,7 +1426,7 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticPerMonthList"
 		", workspaceKey: {}"
 		", title: {}"
@@ -1599,7 +1599,7 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1607,7 +1607,7 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1627,7 +1627,7 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticPerDayList"
 		", workspaceKey: {}"
 		", title: {}"
@@ -1800,7 +1800,7 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1808,7 +1808,7 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1828,7 +1828,7 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticPerHourList"
 		", workspaceKey: {}"
 		", title: {}"
@@ -2001,7 +2001,7 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2009,7 +2009,7 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2029,7 +2029,7 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 	int64_t minimalNextRequestDistanceInSeconds, bool totalNumFoundToBeCalculated, int start, int rows
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getRequestStatisticPerCountryList"
 		", workspaceKey: {}"
 		", title: {}"
@@ -2202,7 +2202,7 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2210,7 +2210,7 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2227,7 +2227,7 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 
 json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string endStatisticDate, int start, int rows)
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getLoginStatisticList"
 		", startStatisticDate: {}"
 		", endStatisticDate: {}"
@@ -2390,7 +2390,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2398,7 +2398,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2415,7 +2415,7 @@ json MMSEngineDBFacade::getLoginStatisticList(string startStatisticDate, string 
 
 json MMSEngineDBFacade::getGEOInfo(int64_t geoInfoKey)
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getGEOInfo"
 		", geoInfoKey: {}",
 		geoInfoKey
@@ -2458,7 +2458,7 @@ json MMSEngineDBFacade::getGEOInfo(int64_t geoInfoKey)
 
 			if (empty(res))
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"geoInfoKey was not found"
 					", geoInfoKey: {}",
 					geoInfoKey
@@ -2522,7 +2522,7 @@ json MMSEngineDBFacade::getGEOInfo(int64_t geoInfoKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2530,7 +2530,7 @@ json MMSEngineDBFacade::getGEOInfo(int64_t geoInfoKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

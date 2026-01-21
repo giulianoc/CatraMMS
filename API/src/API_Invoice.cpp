@@ -27,7 +27,7 @@ void API::addInvoice(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody
@@ -40,7 +40,7 @@ void API::addInvoice(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -63,7 +63,7 @@ void API::addInvoice(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -77,7 +77,7 @@ void API::addInvoice(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -91,7 +91,7 @@ void API::addInvoice(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -109,7 +109,7 @@ void API::addInvoice(
 				", e.what(): {}",
 				requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -132,7 +132,7 @@ void API::addInvoice(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addInvoice failed"
 				", e.what(): {}",
 				e.what()
@@ -152,7 +152,7 @@ void API::addInvoice(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -166,7 +166,7 @@ void API::invoiceList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO("Received {}", api);
+	LOG_INFO("Received {}", api);
 
 	try
 	{
@@ -185,7 +185,7 @@ void API::invoiceList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -210,7 +210,7 @@ void API::invoiceList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }

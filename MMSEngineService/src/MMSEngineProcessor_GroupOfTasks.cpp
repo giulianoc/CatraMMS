@@ -45,7 +45,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 			 */
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "References.Output" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 					", mediaItemKey: " + to_string(referenceOutput.first) + ", physicalPathKey: " + to_string(referenceOutput.second)
 				);
@@ -56,7 +56,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() + "_mmsEngineDBFacade->addIngestionJobOutput failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(referenceOutput.first) +
 					", physicalPathKey: " + to_string(referenceOutput.second) + ", e.what(): " + e.what()
@@ -64,7 +64,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() + "_mmsEngineDBFacade->addIngestionJobOutput failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(referenceOutput.first) +
 					", physicalPathKey: " + to_string(referenceOutput.second)
@@ -101,7 +101,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 				MMSEngineDBFacade::IngestionStatus childStatus =
 		groupOfTasksChildStatus.second;
 
-				SPDLOG_INFO(string() + "manageGroupOfTasks, child status"
+				LOG_INFO(string() + "manageGroupOfTasks, child status"
 						+ ", group of tasks ingestionJobKey: " +
 		to_string(ingestionJobKey)
 						+ ", childIngestionJobKey: " +
@@ -113,7 +113,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 				if
 		(!MMSEngineDBFacade::isIngestionStatusFinalState(childStatus))
 				{
-					SPDLOG_ERROR(string() + "manageGroupOfTasks, child
+					LOG_ERROR(string() + "manageGroupOfTasks, child
 		status is not a final status. It should never happens because when this
 		GroupOfTasks is executed, all the children should be finished"
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
@@ -141,7 +141,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 		if (groupOfTasksIngestionStatus != MMSEngineDBFacade::IngestionStatus::End_TaskSuccess)
 			errorMessage = "Failed because there is no one child with Status Success";
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", IngestionStatus: " + MMSEngineDBFacade::toString(groupOfTasksIngestionStatus) + ", errorMessage: " + errorMessage
 		);
@@ -149,7 +149,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageGroupOfTasks failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -160,7 +160,7 @@ void MMSEngineProcessor::manageGroupOfTasks(int64_t ingestionJobKey, shared_ptr<
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageGroupOfTasks failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);

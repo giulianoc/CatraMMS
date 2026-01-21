@@ -54,7 +54,7 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -62,7 +62,7 @@ MMSEngineDBFacade::addFTPConf(int64_t workspaceKey, string label, string server,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -134,7 +134,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -142,7 +142,7 @@ void MMSEngineDBFacade::modifyFTPConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -195,7 +195,7 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -205,7 +205,7 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -213,7 +213,7 @@ void MMSEngineDBFacade::removeFTPConf(int64_t workspaceKey, int64_t confKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -247,7 +247,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getFTPConfList"
 			", workspaceKey: {}",
 			workspaceKey
@@ -338,7 +338,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -346,7 +346,7 @@ json MMSEngineDBFacade::getFTPConfList(int64_t workspaceKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -380,7 +380,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getFTPByConfigurationLabel"
 			", workspaceKey: {}"
 			", label: {}",
@@ -412,7 +412,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 					", label: {}",
 					workspaceKey, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -430,7 +430,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -438,7 +438,7 @@ tuple<string, int, string, string, string> MMSEngineDBFacade::getFTPByConfigurat
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -496,7 +496,7 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -504,7 +504,7 @@ int64_t MMSEngineDBFacade::addEMailConf(int64_t workspaceKey, string label, stri
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -574,7 +574,7 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -582,7 +582,7 @@ void MMSEngineDBFacade::modifyEMailConf(int64_t confKey, int64_t workspaceKey, s
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -635,7 +635,7 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -645,7 +645,7 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -653,7 +653,7 @@ void MMSEngineDBFacade::removeEMailConf(int64_t workspaceKey, int64_t confKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -687,7 +687,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEMailConfList"
 			", workspaceKey: {}",
 			workspaceKey
@@ -771,7 +771,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -779,7 +779,7 @@ json MMSEngineDBFacade::getEMailConfList(int64_t workspaceKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -813,7 +813,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEMailByConfigurationLabel"
 			", workspaceKey: {}"
 			", label: {}",
@@ -845,7 +845,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 					", label: {}",
 					workspaceKey, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -861,7 +861,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -869,7 +869,7 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1003,7 +1003,7 @@ json MMSEngineDBFacade::getStreamInputRoot(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getStreamInputRoot failed"
 			", e.what(): {}",
 			e.what()
@@ -1042,7 +1042,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 					configurationLabel, pushEncoderKey
 				);
 
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1054,7 +1054,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getStreamInputPushDetails failed"
 			", ingestionJobKey: {}"
 			", configurationLabel: {}"
@@ -1066,7 +1066,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getStreamInputPushDetails failed"
 			", ingestionJobKey: {}"
 			", configurationLabel: {}"
@@ -1078,7 +1078,7 @@ pair<int64_t, string> MMSEngineDBFacade::getStreamInputPushDetails(int64_t works
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getStreamInputPushDetails failed"
 			", ingestionJobKey: {}"
 			", configurationLabel: {}",
@@ -1119,7 +1119,7 @@ string MMSEngineDBFacade::getStreamPushServerUrl(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getPushServerUrl failed"
 			", ingestionJobKey: {}"
 			", e.what(): {}",
@@ -1130,7 +1130,7 @@ string MMSEngineDBFacade::getStreamPushServerUrl(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getPushServerUrl failed"
 			", ingestionJobKey: {}"
 			", e.what(): {}",
@@ -1141,7 +1141,7 @@ string MMSEngineDBFacade::getStreamPushServerUrl(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getPushServerUrl failed"
 			", ingestionJobKey: {}",
 			ingestionJobKey
@@ -1193,7 +1193,7 @@ json MMSEngineDBFacade::getVodInputRoot(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getVodInputRoot failed"
 			", e.what(): {}",
 			e.what()
@@ -1203,7 +1203,7 @@ json MMSEngineDBFacade::getVodInputRoot(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getVodInputRoot failed"
 			", e.what(): {}",
 			e.what()
@@ -1242,7 +1242,7 @@ json MMSEngineDBFacade::getCountdownInputRoot(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getCountdownInputRoot failed"
 			", e.what(): {}",
 			e.what()
@@ -1252,7 +1252,7 @@ json MMSEngineDBFacade::getCountdownInputRoot(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getCountdownInputRoot failed"
 			", e.what(): {}",
 			e.what()
@@ -1279,7 +1279,7 @@ json MMSEngineDBFacade::getDirectURLInputRoot(string url, json filtersRoot)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getDirectURLInputRoot failed"
 			", e.what(): {}",
 			e.what()
@@ -1289,7 +1289,7 @@ json MMSEngineDBFacade::getDirectURLInputRoot(string url, json filtersRoot)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"getDirectURLInputRoot failed"
 			", e.what(): {}",
 			e.what()

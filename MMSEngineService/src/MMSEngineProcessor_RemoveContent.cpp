@@ -15,7 +15,7 @@ void MMSEngineProcessor::removeContentThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "removeContentThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -77,7 +77,7 @@ void MMSEngineProcessor::removeContentThread(
 												  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 												  ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber) +
 												  ", ingestionJobKeyOfItemToBeRemoved: " + to_string(ingestionJobKeyOfItemToBeRemoved);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -116,7 +116,7 @@ void MMSEngineProcessor::removeContentThread(
 												  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 												  ", ingestionDependenciesNumber not finished: " + to_string(ingestionDependenciesNumber) +
 												  ", ingestionJobKeyOfItemToBeRemoved: " + to_string(ingestionJobKeyOfItemToBeRemoved);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -125,7 +125,7 @@ void MMSEngineProcessor::removeContentThread(
 
 				if (dependencyType == Validator::DependencyType::MediaItemKey)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "removeMediaItem" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", mediaItemKey: " + to_string(key)
 					);
@@ -133,7 +133,7 @@ void MMSEngineProcessor::removeContentThread(
 				}
 				else
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "removePhysicalPath" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", physicalPathKey: " + to_string(key)
 					);
@@ -145,7 +145,7 @@ void MMSEngineProcessor::removeContentThread(
 				string errorMessage = string() + "Remove Content failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencyIndex: " + to_string(dependencyIndex) +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -165,7 +165,7 @@ void MMSEngineProcessor::removeContentThread(
 					", dependencies.size(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -179,7 +179,7 @@ void MMSEngineProcessor::removeContentThread(
 			dependencyIndex++;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -190,12 +190,12 @@ void MMSEngineProcessor::removeContentThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "removeContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -205,14 +205,14 @@ void MMSEngineProcessor::removeContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -224,12 +224,12 @@ void MMSEngineProcessor::removeContentThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "removeContentThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -239,14 +239,14 @@ void MMSEngineProcessor::removeContentThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);

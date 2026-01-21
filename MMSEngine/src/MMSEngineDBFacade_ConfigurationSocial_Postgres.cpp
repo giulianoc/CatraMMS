@@ -80,7 +80,7 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -88,7 +88,7 @@ json MMSEngineDBFacade::addYouTubeConf(int64_t workspaceKey, string label, strin
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -216,7 +216,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 					", sqlStatement: {}",
 					confKey, workspaceKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -251,7 +251,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -259,7 +259,7 @@ json MMSEngineDBFacade::modifyYouTubeConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -312,7 +312,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -322,7 +322,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -330,7 +330,7 @@ void MMSEngineDBFacade::removeYouTubeConf(int64_t workspaceKey, int64_t confKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -364,7 +364,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getYouTubeConfList"
 			", workspaceKey: {}"
 			", label: {}",
@@ -467,7 +467,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -475,7 +475,7 @@ json MMSEngineDBFacade::getYouTubeConfList(int64_t workspaceKey, string label)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -511,7 +511,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 		string youTubeRefreshToken;
 		string youTubeAccessToken;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getYouTubeDetailsByConfigurationLabel"
 			", workspaceKey: {}"
 			", youTubeConfigurationLabel: {}",
@@ -544,7 +544,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 					", youTubeConfigurationLabel: {}",
 					workspaceKey, youTubeConfigurationLabel
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -562,7 +562,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -570,7 +570,7 @@ tuple<string, string, string> MMSEngineDBFacade::getYouTubeDetailsByConfiguratio
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -625,7 +625,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -633,7 +633,7 @@ int64_t MMSEngineDBFacade::addFacebookConf(int64_t workspaceKey, string label, s
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -691,7 +691,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -702,7 +702,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -710,7 +710,7 @@ void MMSEngineDBFacade::modifyFacebookConf(int64_t confKey, int64_t workspaceKey
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -763,7 +763,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -773,7 +773,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -781,7 +781,7 @@ void MMSEngineDBFacade::removeFacebookConf(int64_t workspaceKey, int64_t confKey
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -815,7 +815,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getFacebookConfList"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -917,7 +917,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -925,7 +925,7 @@ json MMSEngineDBFacade::getFacebookConfList(int64_t workspaceKey, int64_t confKe
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -959,7 +959,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getFacebookUserAccessTokenByConfigurationLabel"
 			", workspaceKey: {}"
 			", facebookConfigurationLabel: {}",
@@ -991,7 +991,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 					workspaceKey, facebookConfigurationLabel
 				);
 
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1002,7 +1002,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1010,7 +1010,7 @@ string MMSEngineDBFacade::getFacebookUserAccessTokenByConfigurationLabel(int64_t
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1067,7 +1067,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1075,7 +1075,7 @@ int64_t MMSEngineDBFacade::addTwitchConf(int64_t workspaceKey, string label, str
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1133,7 +1133,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1144,7 +1144,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1152,7 +1152,7 @@ void MMSEngineDBFacade::modifyTwitchConf(int64_t confKey, int64_t workspaceKey, 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1205,7 +1205,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1215,7 +1215,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1223,7 +1223,7 @@ void MMSEngineDBFacade::removeTwitchConf(int64_t workspaceKey, int64_t confKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1257,7 +1257,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getTwitchConfList"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1359,7 +1359,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1367,7 +1367,7 @@ json MMSEngineDBFacade::getTwitchConfList(int64_t workspaceKey, int64_t confKey,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1401,7 +1401,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getTwitchUserAccessTokenByConfigurationLabel"
 			", workspaceKey: {}"
 			", twitchConfigurationLabel: {}",
@@ -1433,7 +1433,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 					workspaceKey, twitchConfigurationLabel
 				);
 
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1444,7 +1444,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1452,7 +1452,7 @@ string MMSEngineDBFacade::getTwitchUserAccessTokenByConfigurationLabel(int64_t w
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1509,7 +1509,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1517,7 +1517,7 @@ int64_t MMSEngineDBFacade::addTiktokConf(int64_t workspaceKey, string label, str
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1575,7 +1575,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 					+ ", rowsUpdated: " + to_string(rowsUpdated)
 					+ ", sqlStatement: " + sqlStatement
 			;
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1586,7 +1586,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1594,7 +1594,7 @@ void MMSEngineDBFacade::modifyTiktokConf(int64_t confKey, int64_t workspaceKey, 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1647,7 +1647,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1657,7 +1657,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1665,7 +1665,7 @@ void MMSEngineDBFacade::removeTiktokConf(int64_t workspaceKey, int64_t confKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1699,7 +1699,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getTiktokConfList"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1801,7 +1801,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1809,7 +1809,7 @@ json MMSEngineDBFacade::getTiktokConfList(int64_t workspaceKey, int64_t confKey,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1843,7 +1843,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getTiktokTokenByConfigurationLabel"
 			", workspaceKey: {}"
 			", tiktokConfigurationLabel: {}",
@@ -1875,7 +1875,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 					workspaceKey, tiktokConfigurationLabel
 				);
 
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1886,7 +1886,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1894,7 +1894,7 @@ string MMSEngineDBFacade::getTiktokTokenByConfigurationLabel(int64_t workspaceKe
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

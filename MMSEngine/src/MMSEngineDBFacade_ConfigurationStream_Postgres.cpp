@@ -105,7 +105,7 @@ json MMSEngineDBFacade::addStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -119,7 +119,7 @@ json MMSEngineDBFacade::addStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -128,7 +128,7 @@ json MMSEngineDBFacade::addStream(
 			if (streamsRoot.size() != 1)
 			{
 				string errorMessage = "Wrong streams";
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -140,7 +140,7 @@ json MMSEngineDBFacade::addStream(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -148,7 +148,7 @@ json MMSEngineDBFacade::addStream(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -422,7 +422,7 @@ json MMSEngineDBFacade::modifyStream(
 					", oneParameterPresent: {}",
 					confKey, oneParameterPresent
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -484,7 +484,7 @@ json MMSEngineDBFacade::modifyStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -498,7 +498,7 @@ json MMSEngineDBFacade::modifyStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -507,7 +507,7 @@ json MMSEngineDBFacade::modifyStream(
 			if (streamsRoot.size() != 1)
 			{
 				string errorMessage = "Wrong streams";
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -519,7 +519,7 @@ json MMSEngineDBFacade::modifyStream(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -527,7 +527,7 @@ json MMSEngineDBFacade::modifyStream(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -565,7 +565,7 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 				", label: {}",
 				confKey, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -599,7 +599,7 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 					", sqlStatement: {}",
 					confKey, label, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -609,7 +609,7 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -617,7 +617,7 @@ void MMSEngineDBFacade::removeStream(int64_t workspaceKey, int64_t confKey, stri
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -662,7 +662,7 @@ json MMSEngineDBFacade::getStreamList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -670,7 +670,7 @@ json MMSEngineDBFacade::getStreamList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -699,7 +699,7 @@ json MMSEngineDBFacade::getStreamList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getStreamList"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -897,7 +897,7 @@ json MMSEngineDBFacade::getStreamList(
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"getStreamList. getEncodersPoolDetails failed"
 								", confKey: {}"
 								", encodersPoolKey: {}",
@@ -969,7 +969,7 @@ json MMSEngineDBFacade::getStreamList(
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"getStreamList. getEncoderDetails failed"
 									", pushEncoderKey: {}"
 									", exception: {}",
@@ -1128,7 +1128,7 @@ json MMSEngineDBFacade::getStreamList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1136,7 +1136,7 @@ json MMSEngineDBFacade::getStreamList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1207,7 +1207,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1215,7 +1215,7 @@ json MMSEngineDBFacade::getStreamFreePushEncoderPort(int64_t encoderKey, bool fr
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1263,7 +1263,7 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"getEncodersPoolDetails failed"
 						", encodersPoolKey: {}",
 						encodersPoolKey
@@ -1282,7 +1282,7 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1294,7 +1294,7 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1306,7 +1306,7 @@ MMSEngineDBFacade::stream_aLot(int64_t workspaceKey, string label)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1338,7 +1338,7 @@ tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_push
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1350,7 +1350,7 @@ tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_push
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1362,7 +1362,7 @@ tuple<string, string, int64_t, bool, int, string> MMSEngineDBFacade::stream_push
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1385,7 +1385,7 @@ string MMSEngineDBFacade::stream_columnAsString(int64_t workspaceKey, string col
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1397,7 +1397,7 @@ string MMSEngineDBFacade::stream_columnAsString(int64_t workspaceKey, string col
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1409,7 +1409,7 @@ string MMSEngineDBFacade::stream_columnAsString(int64_t workspaceKey, string col
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", confKey: {}",
@@ -1434,7 +1434,7 @@ string MMSEngineDBFacade::stream_pushProtocol(int64_t workspaceKey, int64_t conf
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1446,7 +1446,7 @@ string MMSEngineDBFacade::stream_pushProtocol(int64_t workspaceKey, int64_t conf
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1458,7 +1458,7 @@ string MMSEngineDBFacade::stream_pushProtocol(int64_t workspaceKey, int64_t conf
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", confKey: {}",
@@ -1482,7 +1482,7 @@ int64_t MMSEngineDBFacade::stream_columnAsInt64(int64_t workspaceKey, string col
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1494,7 +1494,7 @@ int64_t MMSEngineDBFacade::stream_columnAsInt64(int64_t workspaceKey, string col
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1506,7 +1506,7 @@ int64_t MMSEngineDBFacade::stream_columnAsInt64(int64_t workspaceKey, string col
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", confKey: {}",
@@ -1529,7 +1529,7 @@ int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1541,7 +1541,7 @@ int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1553,7 +1553,7 @@ int64_t MMSEngineDBFacade::stream_confKey(int64_t workspaceKey, string label)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1577,7 +1577,7 @@ string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1589,7 +1589,7 @@ string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1601,7 +1601,7 @@ string MMSEngineDBFacade::stream_sourceType(int64_t workspaceKey, string label)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1637,7 +1637,7 @@ MMSEngineDBFacade::stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderN
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"getEncodersPoolDetails failed"
 						", encodersPoolKey: {}",
 						encodersPoolKey
@@ -1652,7 +1652,7 @@ MMSEngineDBFacade::stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderN
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1664,7 +1664,7 @@ MMSEngineDBFacade::stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderN
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1676,7 +1676,7 @@ MMSEngineDBFacade::stream_sourceTypeEncodersPoolPushEncoderKeyPushPublicEncoderN
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1698,7 +1698,7 @@ pair<string, string> MMSEngineDBFacade::stream_sourceTypeUrl(int64_t workspaceKe
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1710,7 +1710,7 @@ pair<string, string> MMSEngineDBFacade::stream_sourceTypeUrl(int64_t workspaceKe
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1722,7 +1722,7 @@ pair<string, string> MMSEngineDBFacade::stream_sourceTypeUrl(int64_t workspaceKe
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1747,7 +1747,7 @@ tuple<int64_t, string, string> MMSEngineDBFacade::stream_confKeySourceTypeUrl(in
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1759,7 +1759,7 @@ tuple<int64_t, string, string> MMSEngineDBFacade::stream_confKeySourceTypeUrl(in
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1771,7 +1771,7 @@ tuple<int64_t, string, string> MMSEngineDBFacade::stream_confKeySourceTypeUrl(in
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", label: {}",
@@ -1794,7 +1794,7 @@ json MMSEngineDBFacade::stream_columnAsJson(int64_t workspaceKey, string columnN
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1806,7 +1806,7 @@ json MMSEngineDBFacade::stream_columnAsJson(int64_t workspaceKey, string columnN
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1818,7 +1818,7 @@ json MMSEngineDBFacade::stream_columnAsJson(int64_t workspaceKey, string columnN
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", confKey: {}",
@@ -1841,7 +1841,7 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1853,7 +1853,7 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", workspaceKey: {}"
 			", confKey: {}"
@@ -1865,7 +1865,7 @@ json MMSEngineDBFacade::stream_userData(int64_t workspaceKey, int64_t confKey)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", workspaceKey: {}"
 			", confKey: {}",
@@ -1904,7 +1904,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1923,7 +1923,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1981,7 +1981,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 					workspaceKey, label
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -1993,7 +1993,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2001,7 +2001,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::streamQuery(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2093,7 +2093,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2107,7 +2107,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2121,7 +2121,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 					", sourceTVStreamsRoot.size: {}",
 					confKey, sourceTVStreamsRoot.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2133,7 +2133,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2141,7 +2141,7 @@ json MMSEngineDBFacade::addSourceTVStream(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2345,7 +2345,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 					", oneParameterPresent: {}",
 					confKey, oneParameterPresent
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2404,7 +2404,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2418,7 +2418,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2427,7 +2427,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 			if (sourceTVStreamsRoot.size() != 1)
 			{
 				string errorMessage = "Wrong streams";
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2439,7 +2439,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2447,7 +2447,7 @@ json MMSEngineDBFacade::modifySourceTVStream(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2500,7 +2500,7 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2510,7 +2510,7 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2518,7 +2518,7 @@ void MMSEngineDBFacade::removeSourceTVStream(int64_t confKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2559,7 +2559,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getSourceTVStreamList"
 			", confKey: {}"
 			", start: {}"
@@ -2876,7 +2876,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2884,7 +2884,7 @@ json MMSEngineDBFacade::getSourceTVStreamList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2917,7 +2917,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getTVStreamDetails"
 			", confKey: {}",
 			confKey
@@ -2958,9 +2958,9 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 					confKey
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -2988,7 +2988,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2996,7 +2996,7 @@ MMSEngineDBFacade::getSourceTVStreamDetails(int64_t confKey, bool warningIfMissi
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3026,7 +3026,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 		long retrieveStreamingYouTubeURLPeriodInHours = 5; // 5 hours
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"check youTubeURLCalculate"
 			", ingestionJobKey: {}"
 			", confKey: {}"
@@ -3046,7 +3046,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 			", YouTube URL: {}",
 			ingestionJobKey, confKey, streamingYouTubeLiveURL
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 	}
 
 	if (streamingYouTubeLiveURL == "")
@@ -3058,7 +3058,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 
 			tie(streamingYouTubeLiveURL, ignore) = streamingLiveURLDetails;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"youTubeURLCalculate. Retrieve streaming YouTube URL"
 				", ingestionJobKey: {}"
 				", confKey: {}"
@@ -3081,7 +3081,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 				", YouTube URL: {}",
 				ingestionJobKey, confKey, streamingYouTubeLiveURL
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			try
 			{
@@ -3104,7 +3104,7 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"youTubeURLCalculate. appendIngestionJobErrorMessage failed"
 					", ingestionJobKey: {}"
 					", e.what(): {}",
@@ -3137,13 +3137,13 @@ string MMSEngineDBFacade::getStreamingYouTubeLiveURL(shared_ptr<Workspace> works
 					", YouTube URL: {}",
 					ingestionJobKey, confKey, streamingYouTubeLiveURL
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 			}
 		}
 	}
 	else
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"youTubeURLCalculate. Reuse a previous streaming YouTube URL"
 			", ingestionJobKey: {}"
 			", confKey: {}"
@@ -3182,7 +3182,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 			field = "mmsData";
 			if (!JSONUtils::isPresent(channelDataRoot, field))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"no mmsData present"
 					", ingestionKey: {}"
 					", workspaceKey: {}"
@@ -3201,7 +3201,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 			field = "youTubeURLs";
 			if (!JSONUtils::isPresent(mmsDataRoot, field))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"no youTubeURLs present"
 					", ingestionKey: {}"
 					", workspaceKey: {}"
@@ -3217,7 +3217,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 
 		if (youTubeURLsRoot.size() == 0)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"no youTubeURL present"
 				", ingestionKey: {}"
 				", workspaceKey: {}"
@@ -3264,7 +3264,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 						", sscanfReturn: {}",
 						ingestionKey, workspace->_workspaceKey, confKey, sscanfReturn
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3301,7 +3301,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 			", confKey: {}",
 			ingestionKey, workspace->_workspaceKey, confKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3314,7 +3314,7 @@ pair<long, string> MMSEngineDBFacade::getLastYouTubeURLDetails(shared_ptr<Worksp
 			", confKey: {}",
 			ingestionKey, workspace->_workspaceKey, confKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3477,7 +3477,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 			", streamingYouTubeLiveURL: {}",
 			ingestionJobKey, workspace->_workspaceKey, confKey, streamingYouTubeLiveURL
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3491,7 +3491,7 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 			", streamingYouTubeLiveURL: {}",
 			ingestionJobKey, workspace->_workspaceKey, confKey, streamingYouTubeLiveURL
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

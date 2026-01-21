@@ -33,17 +33,14 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/CurlWrapper/src")
-include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/JSONUtils/src")
-include_directories ("${PROJECT_SOURCE_DIR}/CatraLibraries/Encrypt/src")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/spdlog/include")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
-include_directories ("${PROJECT_SOURCE_DIR}/../deploy/nlohmann/include")
-if (APPLE)
-	include_directories("${NLOHMANN_INCLUDE_DIR}")
-	include_directories("${SPDLOG_INCLUDE_DIR}")
-else()
-endif()
+
+include_directories("${NLOHMANN_INCLUDE_DIR}")
+include_directories("${SPDLOG_INCLUDE_DIR}")
+include_directories("${THREADLOGGER_INCLUDE_DIR}")
+include_directories("${ENCRYPT_INCLUDE_DIR}")
+include_directories("${JSONUTILS_INCLUDE_DIR}")
+include_directories("${CURLWRAPPER_INCLUDE_DIR}")
 
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/lib")
 link_directories ("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")

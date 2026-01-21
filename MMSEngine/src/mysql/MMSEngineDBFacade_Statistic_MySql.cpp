@@ -2177,7 +2177,7 @@ Json::Value MMSEngineDBFacade::getLoginStatisticList (
 	int start, int rows
 )
 {
-	SPDLOG_INFO("getLoginStatisticList"
+	LOG_INFO("getLoginStatisticList"
 		", startStatisticDate: {}"
 		", endStatisticDate: {}"
 		", start: {}"

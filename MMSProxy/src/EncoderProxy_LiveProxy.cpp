@@ -44,7 +44,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 				", inputsRoot.size: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, inputsRoot.size()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -75,7 +75,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 			// MMS allocates a thread just 5 minutes before the beginning of the recording
 			if (utcProxyPeriodStart - utcNow >= _timeBeforeToPrepareResourcesInMinutes * 60)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Too early to allocate a thread for proxing"
 					", _proxyIdentifier: {}"
 					", _ingestionJobKey: {}"
@@ -102,7 +102,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 				", utcNow: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, utcProxyPeriodEnd, utcNow
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -157,7 +157,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateOutputRtmpAndPlaURL"
 								", _proxyIdentifier: {}"
 								", workspaceKey: {}"
@@ -177,7 +177,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -253,7 +253,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateOutputSrtAndPlaURL"
 								", _proxyIdentifier: {}"
 								", workspaceKey: {}"
@@ -274,7 +274,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -325,7 +325,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"updateOutputHLSDetails"
 								", _proxyIdentifier: {}"
 								", workspaceKey: {}"
@@ -351,7 +351,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"updateEncodingJobParameters failed"
 								", _ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -376,7 +376,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					", _encodingJobKey: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				// the catch releaseXXXChannel
 				throw EncodingKilledByUser();
@@ -407,7 +407,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					catch (...)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"releaseRTMPChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -425,7 +425,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					catch (...)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"releaseSRTChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -443,7 +443,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					catch (...)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"releaseHLSChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -481,7 +481,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					catch (...)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"releaseRTMPChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -499,7 +499,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					catch (...)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"releaseSRTChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -517,7 +517,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					}
 					catch (...)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"releaseHLSChannel failed"
 							", _proxyIdentifier: {}"
 							", _ingestionJobKey: {}"
@@ -614,7 +614,7 @@ void EncoderProxy::processLiveProxy(bool killed)
 			string processorMMS;
 			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -627,7 +627,7 @@ void EncoderProxy::processLiveProxy(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processLiveProxy failed"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -641,7 +641,7 @@ void EncoderProxy::processLiveProxy(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processLiveProxy failed"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"

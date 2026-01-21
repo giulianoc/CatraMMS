@@ -62,7 +62,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					", Field: {}",
 					_processorIdentifier, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -90,7 +90,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					", Field: {}",
 					_processorIdentifier, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -124,7 +124,7 @@ void MMSEngineProcessor::httpCallbackThread(
 		{
 			if (httpBody != "")
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"POST/PUT with httpBody"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -183,7 +183,7 @@ void MMSEngineProcessor::httpCallbackThread(
 						httpBody = regex_replace(httpBody, regex("\\$\\{mediaItemKey\\}"), to_string(mediaItemKey));
 						httpBody = regex_replace(httpBody, regex("\\$\\{physicalPathKey\\}"), to_string(physicalPathKey));
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"userHttpCallback"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -214,7 +214,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							", e.what(): {}",
 							_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size(), e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						if (dependencies.size() > 1)
 						{
@@ -384,7 +384,7 @@ void MMSEngineProcessor::httpCallbackThread(
 								}
 								catch (exception &e)
 								{
-									SPDLOG_ERROR(
+									LOG_ERROR(
 										"getMediaDurationInMilliseconds failed"
 										", ingestionJobKey: {}"
 										", mediaItemKey: {}"
@@ -414,7 +414,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							", e.what: {}",
 							_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size(), e.what()
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						if (dependencies.size() > 1)
 						{
@@ -448,7 +448,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					", e.what: {}",
 					_processorIdentifier, ingestionJobKey, dependencies.size(), e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -456,7 +456,7 @@ void MMSEngineProcessor::httpCallbackThread(
 
 		if (forwardInputMedia)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"userHttpCallback"
 				", processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -509,7 +509,7 @@ void MMSEngineProcessor::httpCallbackThread(
 						}
 					}
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"userHttpCallback, addIngestionJobOutput"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -529,12 +529,12 @@ void MMSEngineProcessor::httpCallbackThread(
 						", exception(): {}",
 						_processorIdentifier, ingestionJobKey, dependencies.size(), e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 				}
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", ingestionJobKey: {}"
 			", IngestionStatus: End_TaskSuccess"
@@ -548,14 +548,14 @@ void MMSEngineProcessor::httpCallbackThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"httpCallbackTask failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}",
 			_processorIdentifier, ingestionJobKey
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -569,7 +569,7 @@ void MMSEngineProcessor::httpCallbackThread(
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -593,7 +593,7 @@ void MMSEngineProcessor::userHttpCallback(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"userHttpCallback"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -716,7 +716,7 @@ void MMSEngineProcessor::userHttpCallback(
 			", exception: {}",
 			userURL, maxRetries, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

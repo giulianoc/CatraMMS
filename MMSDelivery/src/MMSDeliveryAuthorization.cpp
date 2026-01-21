@@ -48,31 +48,31 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_apiVersion = JsonPath(&_configuration)["api"]["version"].as<string>();
 
 	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->keyPairId: {}",
 		_keyPairId
 	);
 	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->privateKeyPEMPathName: {}",
 		_privateKeyPEMPathName
 	);
 	_vodCloudFrontHostName = _configuration["aws"]["vodCloudFrontHostName"];
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->vodCloudFrontHostName: {}",
 		_vodCloudFrontHostName
 	);
 	_vodDeliveryCloudFrontHostName = _configuration["aws"]["vodDeliveryCloudFrontHostName"];
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->vodDeliveryCloudFrontHostName: {}",
 		_vodDeliveryCloudFrontHostName
 	);
 	_vodDeliveryPathCloudFrontHostName = _configuration["aws"]["vodDeliveryPathCloudFrontHostName"];
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", aws->vodDeliveryPathCloudFrontHostName: {}",
 		_vodDeliveryPathCloudFrontHostName
@@ -81,19 +81,19 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	json api = _configuration["api"];
 
 	_deliveryProtocol = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryProtocol: {}",
 		_deliveryProtocol
 	);
 	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughParameter: {}",
 		_deliveryHost_authorizationThroughParameter
 	);
 	_deliveryHost_authorizationThroughPath = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
@@ -310,11 +310,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					", e.what: {}",
 					e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"createDeliveryAuthorization info"
 			", title: {}"
 			", deliveryURI: {}"
@@ -350,7 +350,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				", ingestionType: {}",
 				MMSEngineDBFacade::toString(ingestionType)
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -366,7 +366,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					", ingestionJobKey: {}",
 					ingestionJobKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -441,7 +441,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 							else if (cdnName == "cdn77")
 								playURL = getSignedCDN77URL(playURLHostName, uri, secureToken, ttlInSeconds, playerIPToBeAuthorized ? playerIP : "");
 							else
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									"cdnName unknown"
 									", ingestionJobKey: {}"
 									", outputIndex: {}"
@@ -454,7 +454,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"rtmp_reservationDetails failed"
 							", ingestionJobKey: {}"
 							", outputIndex: {}"
@@ -475,7 +475,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					catch (DBRecordNotFound &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"ingestionJobKey/outputIndex not found failed"
 							", ingestionJobKey: {}"
 							", outputIndex: {}"
@@ -486,7 +486,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"srt_reservationDetails failed"
 							", ingestionJobKey: {}"
 							", outputIndex: {}"
@@ -504,7 +504,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					localDeliveryCode = JSONUtils::asInt64(outputRoot, "deliveryCode", -1);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"createDeliveryAuthorization"
 					", ingestionJobKey: {}"
 					", outputIndex: {}"
@@ -528,7 +528,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						", ingestionJobKey: {}",
 						ingestionJobKey
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -539,7 +539,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						", ingestionJobKey: {}",
 						ingestionJobKey
 					);
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 
 					tie(outputType, deliveryCode, playURL) = outputDeliveryOptions[0];
 				}
@@ -573,7 +573,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						", ingestionJobKey: {}",
 						ingestionJobKey
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -679,7 +679,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string errorMessage = string("wrong deliveryType")
 						+ ", deliveryType: " + deliveryType
 					;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -776,7 +776,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string errorMessage = string("wrong deliveryType")
 						+ ", deliveryType: " + deliveryType
 					;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -811,7 +811,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"mmsEngineDBFacade->addRequestStatistic failed"
 					", ingestionJobRoot: {}"
 					", e.what: {}",
@@ -829,7 +829,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					", ingestionJobKey: {}",
 					ingestionJobKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -887,13 +887,13 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				string errorMessage = string("wrong deliveryType")
 					+ ", deliveryType: " + deliveryType
 				;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			*/
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"createDeliveryAuthorization for LiveGrid"
 				", ingestionJobKey: {}"
 				", deliveryCode: {}"
@@ -970,7 +970,7 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getDeliveryHost"
 		", playerCountry: {}"
 		", playerRegion: {}"
@@ -1067,7 +1067,7 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 
 			unordered_map<string, uint64_t> runningHostsBandwidth = getExternalDeliveriesRunningHosts();
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"bandwidthUsageThread, avgBandwidthInMbps"
 				", runningHostsBandwidth.size: {}",
 				runningHostsBandwidth.size()
@@ -1091,7 +1091,7 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 					catch (exception &e)
 					{
 						// se una culr fallisce comunque andiamo avanti
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"bandwidthUsage failed"
 							", bandwidthUsageURL: {}"
 							", bandwidthUsageRoot: {}"
@@ -1106,7 +1106,7 @@ void MMSDeliveryAuthorization::updateExternalDeliveriesGroupsBandwidthUsageThrea
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"System::getBandwidthInMbps failed"
 				", exception: {}",
 				e.what()
@@ -1120,7 +1120,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 	string tokenComingFromURL;
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"checkDeliveryAuthorizationThroughParameter, received"
 			", contentURI: {}"
 			", tokenParameter: {}",
@@ -1151,7 +1151,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 					", tokenParameter: {}",
 					contentURI, tokenParameter
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1184,7 +1184,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 			// 2024-06-09: sto notando che, nel caso del sito mms, il cookie non viene mandato (probabilmente per problemi di CORS con videop-js) e
 			// 	quindi non entra in questo if e l'autorizzazione fallisce!!!
 			// 	Con altri player, ad esempio VLC, il cookie viene mandato e lo streaming funziona bene
-			SPDLOG_INFO(
+			LOG_INFO(
 				"HLS/DASH file to be checked for authorization"
 				", tokenParameter: {}"
 				", firstPartOfToken: {}"
@@ -1206,7 +1206,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 					", secondPartOfToken: {}",
 					contentURI, cookie, firstPartOfToken, secondPartOfToken
 				);
-				SPDLOG_INFO(errorMessage);
+				LOG_INFO(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1225,7 +1225,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 						", manifestLineAndToken: {}",
 						contentURI, manifestLineAndToken
 					);
-					SPDLOG_INFO(errorMessage);
+					LOG_INFO(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1239,7 +1239,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 			// string sTokenComingFromCookie = Encrypt::opensslDecrypt(cookie);
 			// int64_t tokenComingFromCookie = stoll(sTokenComingFromCookie);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"check token info"
 				", encryptedToken: {}"
 				", manifestLineAndToken: {}"
@@ -1268,12 +1268,12 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 					", tokenComingFromURL: {}",
 					contentURI, manifestLine, tokenComingFromCookie, tokenComingFromURL
 				);
-				SPDLOG_INFO(errorMessage);
+				LOG_INFO(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"token authorized"
 				", contentURI: {}"
 				", manifestLine: {}"
@@ -1291,7 +1291,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 			// 2024-06-09: se contentURI è un manifest secondario e siamo entrati in questo else
 			// 	vuol dire che il player non sta mandando i cookie, vedi commento associato all'if
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"file to be checked for authorization"
 				", tokenParameter: {}"
 				", firstPartOfToken: {}"
@@ -1306,7 +1306,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 				tokenComingFromURL = firstPartOfToken;
 				if (_mmsEngineDBFacade->checkDeliveryAuthorization(stoll(tokenComingFromURL), contentURI))
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"token authorized"
 						", tokenComingFromURL: {}",
 						tokenComingFromURL
@@ -1324,7 +1324,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 						", tokenComingFromURL: {}",
 						tokenComingFromURL
 					);
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1339,7 +1339,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughParameter(cons
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
-		SPDLOG_WARN(errorMessage);
+		LOG_WARN(errorMessage);
 
 		throw;
 	}
@@ -1352,7 +1352,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const st
 	int64_t tokenComingFromURL = -1;
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"checkDeliveryAuthorizationThroughPath, received"
 			", contentURI: {}",
 			contentURI
@@ -1368,7 +1368,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const st
 				", contentURI: {}",
 				contentURI
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1383,7 +1383,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const st
 				", contentURI: {}",
 				contentURI
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1396,7 +1396,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const st
 				", contentURI: {}",
 				contentURI
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1416,7 +1416,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const st
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
-		SPDLOG_WARN(errorMessage);
+		LOG_WARN(errorMessage);
 
 		throw;
 	}
@@ -1429,7 +1429,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"checkDeliveryAuthorizationOfAManifest, received"
 			", contentURI: {}",
 			contentURI
@@ -1462,7 +1462,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 			tokenParameter = std::format("{}---{}", tokenParameter, cookie);
 			*/
 			string tokenParameter = std::format("{}---{}", token, cookie);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Calling checkDeliveryAuthorizationThroughParameter"
 				", contentURI: {}"
 				", tokenParameter: {}",
@@ -1472,7 +1472,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 		}
 		else
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"manageHTTPStreamingManifest"
 				", token: {}"
 				", mmsInfoCookie: {}",
@@ -1493,7 +1493,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 							", token: {}",
 							contentURI, token
 						);
-						SPDLOG_INFO(errorMessage);
+						LOG_INFO(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1513,7 +1513,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 					checkSignedMMSPath(tokenComingFromURL, contentURI);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"token authorized"
 					", tokenComingFromURL: {}",
 					tokenComingFromURL
@@ -1532,7 +1532,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 						", tokenComingFromURL: {}",
 						sTokenComingFromCookie, tokenComingFromURL
 					);
-					SPDLOG_INFO(errorMessage);
+					LOG_INFO(errorMessage);
 
 					if (StringUtils::isNumber(tokenComingFromURL)) // MMS_URLWithTokenAsParam_DB || AWSMMS_URLWithTokenAsParam_DB
 					{
@@ -1544,7 +1544,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 								", tokenComingFromURL: {}",
 								contentURI, tokenComingFromURL
 							);
-							SPDLOG_INFO(errorMessage);
+							LOG_INFO(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1554,7 +1554,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 						checkSignedMMSPath(tokenComingFromURL, contentURI);
 					}
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"token authorized"
 						", tokenComingFromURL: {}",
 						tokenComingFromURL
@@ -1562,7 +1562,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 				}
 				else
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"cookie authorized"
 						", cookie: {}",
 						cookie
@@ -1576,7 +1576,7 @@ string MMSDeliveryAuthorization::checkDeliveryAuthorizationOfAManifest(bool seco
 	catch (exception &e)
 	{
 		string errorMessage = "Not authorized: exception managing token";
-		SPDLOG_WARN(errorMessage);
+		LOG_WARN(errorMessage);
 
 		throw;
 	}
@@ -1587,7 +1587,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 	int64_t tokenComingFromURL = -1;
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"checkSignedMMSPath, received"
 			", tokenSigned: {}"
 			", contentURIToBeVerified: {}",
@@ -1602,7 +1602,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 				", tokenSigned: {}",
 				tokenSigned
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1624,7 +1624,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 			string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Authorization through path (m3u8)"
 				", contentURIToBeVerified: {}"
 				", expirationTime: {}"
@@ -1645,7 +1645,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 				string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Authorization through path (m3u8 2)"
 					", contentURIToBeVerified: {}"
 					", expirationTime: {}"
@@ -1662,7 +1662,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 						", tokenSigned: {}",
 						md5Base64, tokenSigned
 					);
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1679,7 +1679,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 				// check caso 1.
 				string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Authorization through path"
 					", contentURIToBeVerified: {}"
 					", expirationTime: {}"
@@ -1701,7 +1701,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 					// check caso 2.
 					md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Authorization through path (ts 1)"
 						", contentURIToBeVerified: {}"
 						", expirationTime: {}"
@@ -1725,7 +1725,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 						// check caso 3.
 						string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Authorization through path (ts 2)"
 							", contentURIToBeVerified: {}"
 							", expirationTime: {}"
@@ -1744,7 +1744,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 								", tokenSigned: {}",
 								md5Base64, tokenSigned
 							);
-							SPDLOG_WARN(errorMessage);
+							LOG_WARN(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1756,7 +1756,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 		{
 			string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Authorization through path"
 				", contentURIToBeVerified: {}"
 				", expirationTime: {}"
@@ -1773,7 +1773,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 					", tokenSigned: {}",
 					md5Base64, tokenSigned
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1789,11 +1789,11 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 				", expired since {} seconds",
 				expirationTime, utcNow, (utcNow - expirationTime)
 			);
-			SPDLOG_WARN(errorMessage);
+			LOG_WARN(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		SPDLOG_INFO("Token not expired"
+		LOG_INFO("Token not expired"
 			", expirationTime: {}"
 			", utcNow: {}"
 			", to expire misses {} seconds",
@@ -1804,7 +1804,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 	{
 		string errorMessage = std::format("Not authorized: exception managing token"
 			", exception: {}", e.what());
-		SPDLOG_WARN(errorMessage);
+		LOG_WARN(errorMessage);
 
 		throw;
 	}
@@ -1855,7 +1855,7 @@ string MMSDeliveryAuthorization::getSignedMMSPath(const string& contentURI, time
 		);
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Authorization through path"
 		", contentURI: {}"
 		", expirationTime: {}"
@@ -1873,7 +1873,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 	const string& secureToken, long expirationInSeconds, string playerIP
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getSignedCDN77URL"
 		", resourceURL: {}"
 		", filePath: {}"
@@ -1898,7 +1898,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			string toSign = playerIP.empty() ? std::format("{}{}{}", expiryTimestamp, strippedPath, secureToken)
 				: std::format("{}{}{} {}", expiryTimestamp, strippedPath, playerIP, secureToken);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getSignedCDN77URL"
 				", strippedPath: {}"
 				", toSign: {}",
@@ -1911,13 +1911,13 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			// 	$expiryTimestamp . $filePath;
 			unsigned int len;
 			const auto md5Digest = Encrypt::md5(toSign, len);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"v digest"
 				"len: {}", len
 			);
 
 			string md5Base64 = Encrypt::binaryToBase64(md5Digest.data(), len);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getMedianovaSignedTokenURL"
 				", md5Base64: {}",
 				md5Base64
@@ -1940,7 +1940,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			signedURL = std::format("https://{}/{},{}{}", resourceURL, md5Base64, expiryTimestamp, filePath);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"end getSignedCDN77URL"
 			", resourceURL: {}"
 			", filePath: {}"
@@ -1960,7 +1960,7 @@ string MMSDeliveryAuthorization::getSignedCDN77URL(
 			", e.what(): {}",
 			e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw;
 	}
@@ -1977,7 +1977,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 	const bool playerIPEnabled
 )
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		"https://test-cibortv-live.lg.mncdn.com/mn-m1/cnl52/index.m3u8?st=UKs6348dQptKUc8ShW-qdA&e=1829660036"
 		", playURLProtocol: {}"
 		", playURLHostname: {}"
@@ -2006,7 +2006,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 		string toSign = std::format("{} {}{}{}", expiryTimestamp, secureToken,
 			playerIPEnabled ? std::format(" {}", playerIP) : "",
 			newUri ? std::format(" {}", *newUri) : "");
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMedianovaSignedTokenURL"
 			", toSign: {}",
 			toSign
@@ -2014,13 +2014,13 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		unsigned int len;
 		const auto md5Digest = Encrypt::md5(toSign, len);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMedianovaSignedTokenURL digest"
 			"len: {}", len
 		);
 
 		string md5Base64 = Encrypt::binaryToBase64(md5Digest.data(), len);
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getMedianovaSignedTokenURL"
 			", md5Base64: {}",
 			md5Base64
@@ -2041,7 +2041,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 
 		string signedURL = std::format("{}://{}{}?st={}&e={}", playURLProtocol, playURLHostname, uri, md5Base64, expiryTimestamp);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"end getMedianovaSignedTokenURL"
 			", playURLProtocol: {}"
 			", playURLHostname: {}"
@@ -2064,7 +2064,7 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 			", e.what(): {}",
 			e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw;
 	}
@@ -2090,7 +2090,7 @@ string MMSDeliveryAuthorization::getAWSSignedURL(const string& playURL, int expi
 				", playURL: {}",
 				playURL
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2108,14 +2108,14 @@ string MMSDeliveryAuthorization::getAWSSignedURL(const string& playURL, int expi
 				", signedPlayURL: {}",
 				signedPlayURL
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"awsSigner failed"
 			", exception: {}",
 			e.what()

@@ -82,7 +82,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -90,7 +90,7 @@ int64_t MMSEngineDBFacade::addEncodingProfilesSetIfNotAlreadyPresent(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -134,7 +134,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -142,7 +142,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -213,7 +213,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 						", sqlStatement: {}",
 						rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -292,7 +292,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 									", sqlStatement: {}",
 									encodingProfilesSetKey, workspaceKey, localWorkspaceKey, sqlStatement
 								);
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -325,7 +325,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -333,7 +333,7 @@ int64_t MMSEngineDBFacade::addEncodingProfile(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -391,7 +391,7 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 					", sqlStatement: {}",
 					encodingProfileKey, workspaceKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -401,7 +401,7 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -409,7 +409,7 @@ void MMSEngineDBFacade::removeEncodingProfile(int64_t workspaceKey, int64_t enco
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -461,7 +461,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 					", label: {}",
 					workspaceKey, toString(contentType), label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -517,7 +517,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 									", sqlStatement: {}",
 									encodingProfilesSetKey, workspaceKey, localWorkspaceKey, sqlStatement
 								);
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -550,7 +550,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -558,7 +558,7 @@ int64_t MMSEngineDBFacade::addEncodingProfileIntoSetIfNotAlreadyPresent(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -618,7 +618,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 					", sqlStatement: {}",
 					encodingProfilesSetKey, workspaceKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -628,7 +628,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -636,7 +636,7 @@ void MMSEngineDBFacade::removeEncodingProfilesSet(int64_t workspaceKey, int64_t 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -671,7 +671,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncodingProfilesSetList"
 			", workspaceKey: {}"
 			", encodingProfilesSetKey: {}"
@@ -787,7 +787,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 									", json data: {}",
 									jsonProfile
 								);
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								continue;
 							}
@@ -826,7 +826,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -834,7 +834,7 @@ json MMSEngineDBFacade::getEncodingProfilesSetList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -871,7 +871,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getEncodingProfileList"
 			", workspaceKey: {}"
 			", encodingProfileKey: {}"
@@ -976,7 +976,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 							", json data: {}",
 							jsonProfile
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						continue;
 					}
@@ -1008,7 +1008,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1016,7 +1016,7 @@ json MMSEngineDBFacade::getEncodingProfileList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1076,7 +1076,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 						", sqlStatement: {}",
 						encodingProfilesSetKey, workspaceKey, localWorkspaceKey, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1089,7 +1089,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 					", sqlStatement: {}",
 					workspaceKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1118,7 +1118,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1126,7 +1126,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetKey(int64_t worksp
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1188,7 +1188,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 					", label: {}",
 					workspaceKey, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1217,7 +1217,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1225,7 +1225,7 @@ vector<int64_t> MMSEngineDBFacade::getEncodingProfileKeysBySetLabel(int64_t work
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1300,7 +1300,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 						", sqlStatement: {}",
 						workspaceKey, toString(contentType), contentTypeToBeUsed, encodingProfileLabel, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1316,7 +1316,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 					", sqlStatement: {}",
 					workspaceKey, toString(contentType), contentTypeToBeUsed, encodingProfileLabel, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1326,7 +1326,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1334,7 +1334,7 @@ int64_t MMSEngineDBFacade::getEncodingProfileKeyByLabel(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1404,7 +1404,7 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 					", sqlStatement: {}",
 					workspaceKey, encodingProfileKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1416,7 +1416,7 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1424,7 +1424,7 @@ MMSEngineDBFacade::getEncodingProfileDetailsByKey(int64_t workspaceKey, int64_t 
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

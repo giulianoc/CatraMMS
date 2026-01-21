@@ -13,7 +13,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 	{
 		if (isMaintenanceMode())
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Received handleCheckIngestionEvent, not managed it because of MaintenanceMode"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -38,7 +38,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 			if (!newThreadPermission(_processorsThreadsNumber))
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"Not enough available threads to manage Tasks involving more threads"
 					", _processorIdentifier: {}"
 					", _processorsThreadsNumber.use_count(): {}",
@@ -53,14 +53,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				onlyTasksNotInvolvingMMSEngineThreads
 			);
 
-			SPDLOG_INFO("getIngestionsToBeManaged result"
+			LOG_INFO("getIngestionsToBeManaged result"
 				", _processorIdentifier: {}"
 				", ingestionsToBeManaged.size: {}", _processorIdentifier, ingestionsToBeManaged.size()
 			);
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR("getIngestionsToBeManaged failed"
+			LOG_ERROR("getIngestionsToBeManaged failed"
 				", _processorIdentifier: {}"
 				", exception: {}", _processorIdentifier, e.what()
 			);
@@ -75,7 +75,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			{
 				string sourceReference;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"json to be processed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -96,14 +96,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR("checkWorkspaceStorageAndMaxIngestionNumber failed"
+					LOG_ERROR("checkWorkspaceStorageAndMaxIngestionNumber failed"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
 						", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
 					);
 					string errorMessage = e.what();
 
-					SPDLOG_INFO("Update IngestionJob"
+					LOG_INFO("Update IngestionJob"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
 						", IngestionStatus: End_WorkspaceReachedMaxStorageOrIngestionNumber"
@@ -117,7 +117,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (exception &ex)
 					{
-						SPDLOG_INFO("Update IngestionJob failed"
+						LOG_INFO("Update IngestionJob failed"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
 							", IngestionStatus: End_WorkspaceReachedMaxStorageOrIngestionNumber"
@@ -158,7 +158,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 					_multiEventsSet->addEvent(event);
 
-					SPDLOG_INFO("addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+					LOG_INFO("addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
 						", getEventKey().first: {}"
@@ -179,9 +179,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
 							", metaDataContent: {}", _processorIdentifier, ingestionJobKey, metaDataContent);
-						SPDLOG_ERROR(string() + errorMessage);
+						LOG_ERROR(string() + errorMessage);
 
-						SPDLOG_INFO("Update IngestionJob"
+						LOG_INFO("Update IngestionJob"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
 							", IngestionStatus: End_ValidationMetadataFailed"
@@ -195,7 +195,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (exception &ex)
 						{
-							SPDLOG_INFO("Update IngestionJob failed"
+							LOG_INFO("Update IngestionJob failed"
 								", _processorIdentifier: {}"
 								", ingestionJobKey: {}"
 								", IngestionStatus: End_ValidationMetadataFailed"
@@ -215,7 +215,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							Validator::validateGroupOfTasksMetadata(workspace->_workspaceKey, parametersRoot);
 						else
 							dependencies = validator.validateSingleTaskMetadata(workspace->_workspaceKey, ingestionType, parametersRoot);
-						SPDLOG_INFO("Validator"
+						LOG_INFO("Validator"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
 							", ingestionType: {}"
@@ -225,7 +225,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"validateMetadata failed"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -234,7 +234,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 						string errorMessage = e.what();
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Update IngestionJob"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -249,7 +249,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 						}
 						catch (exception &ex)
 						{
-							SPDLOG_INFO("Update IngestionJob failed"
+							LOG_INFO("Update IngestionJob failed"
 								", _processorIdentifier: {}"
 								", ingestionJobKey: {}"
 								", IngestionStatus: End_ValidationMetadataFailed"
@@ -271,7 +271,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageGroupOfTasks failed"
+								LOG_ERROR("manageGroupOfTasks failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -279,7 +279,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO("Update IngestionJob"
+								LOG_INFO("Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", IngestionStatus: End_IngestionFailure"
@@ -293,7 +293,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &e)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -321,7 +321,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("getMediaSourceDetails failed"
+								LOG_ERROR("getMediaSourceDetails failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -329,7 +329,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO("Update IngestionJob"
+								LOG_INFO("Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", IngestionStatus: End_ValidationMediaSourceFailed"
@@ -343,7 +343,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_ValidationMetadataFailed"
@@ -381,7 +381,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 									_multiEventsSet->addEvent(event);
 
-									SPDLOG_INFO("addEvent: EVENT_TYPE (INGESTASSETEVENT)"
+									LOG_INFO("addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", getEventKey().first: {}"
@@ -408,7 +408,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										 */
 										if (!newThreadPermission(_processorsThreadsNumber))
 										{
-											SPDLOG_WARN(
+											LOG_WARN(
 												"Not enough available threads to manage downloadMediaSourceFileThread, activity is postponed"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -419,7 +419,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage;
 											string processorMMS;
 
-											SPDLOG_INFO(
+											LOG_INFO(
 												"Update IngestionJob"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -436,7 +436,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage;
 											string processorMMS;
 
-											SPDLOG_INFO(
+											LOG_INFO(
 												"Update IngestionJob"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -472,7 +472,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										 */
 										if (!newThreadPermission(_processorsThreadsNumber))
 										{
-											SPDLOG_WARN(
+											LOG_WARN(
 												"Not enough available threads to manage moveMediaSourceFileThread, activity is postponed"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -483,7 +483,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage;
 											string processorMMS;
 
-											SPDLOG_INFO(
+											LOG_INFO(
 												"Update IngestionJob"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -500,7 +500,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage;
 											string processorMMS;
 
-											SPDLOG_INFO(
+											LOG_INFO(
 												"Update IngestionJob"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -527,7 +527,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										 */
 										if (!newThreadPermission(_processorsThreadsNumber))
 										{
-											SPDLOG_WARN(
+											LOG_WARN(
 												"Not enough available threads to manage copyMediaSourceFileThread, activity is postponed"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -538,7 +538,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage;
 											string processorMMS;
 
-											SPDLOG_INFO(
+											LOG_INFO(
 												"Update IngestionJob"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -555,7 +555,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											string errorMessage;
 											string processorMMS;
 
-											SPDLOG_INFO(
+											LOG_INFO(
 												"Update IngestionJob"
 												", _processorIdentifier: {}"
 												", ingestionJobKey: {}"
@@ -580,7 +580,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string errorMessage;
 										string processorMMS;
 
-										SPDLOG_INFO(
+										LOG_INFO(
 											"Update IngestionJob"
 											", _processorIdentifier: {}"
 											", ingestionJobKey: {}"
@@ -601,7 +601,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what());
-								SPDLOG_ERROR(string() + errorMessage);
+								LOG_ERROR(string() + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -618,7 +618,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage removeContentThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -629,7 +629,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -656,7 +656,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("removeContentThread failed"
+								LOG_ERROR("removeContentThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -664,7 +664,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -680,7 +680,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -703,7 +703,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage ftpDeliveryContentThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -714,7 +714,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -738,7 +738,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("ftpDeliveryContentThread failed"
+								LOG_ERROR("ftpDeliveryContentThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -746,7 +746,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -762,7 +762,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -785,7 +785,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										"in this MMS deploy"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
-									SPDLOG_ERROR(string() + errorMessage);
+									LOG_ERROR(string() + errorMessage);
 
 									throw runtime_error(errorMessage);
 								}
@@ -800,7 +800,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage localCopyContent, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -811,7 +811,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -835,7 +835,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("localCopyContentThread failed"
+								LOG_ERROR("localCopyContentThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -843,7 +843,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -859,7 +859,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -885,7 +885,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage http callback, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -896,7 +896,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -920,7 +920,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("httpCallbackThread failed"
+								LOG_ERROR("httpCallbackThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -928,7 +928,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -944,7 +944,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -964,7 +964,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageEncodeTask failed"
+								LOG_ERROR("manageEncodeTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -972,7 +972,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -988,7 +988,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1008,14 +1008,14 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR(
+								LOG_ERROR(
 									string() + "manageVideoSpeedTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									", ingestionJobKey: " + to_string(ingestionJobKey) + ", exception: " + e.what()
 								);
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1031,7 +1031,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1051,7 +1051,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("managePictureInPictureTask failed"
+								LOG_ERROR("managePictureInPictureTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1059,7 +1059,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1075,7 +1075,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1095,7 +1095,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageIntroOutroOverlayTask failed"
+								LOG_ERROR("manageIntroOutroOverlayTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1103,7 +1103,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1119,7 +1119,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1139,7 +1139,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageAddSilentAudioTask failed"
+								LOG_ERROR("manageAddSilentAudioTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, + e.what()
@@ -1147,7 +1147,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1163,7 +1163,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1200,7 +1200,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									 */
 									if (!newThreadPermission(_processorsThreadsNumber))
 									{
-										SPDLOG_WARN(
+										LOG_WARN(
 											"Not enough available threads to manage changeFileFormatThread, activity is postponed"
 											", _processorIdentifier: {}"
 											", ingestionJobKey: {}"
@@ -1211,7 +1211,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 										string errorMessage;
 										string processorMMS;
 
-										SPDLOG_INFO(
+										LOG_INFO(
 											"Update IngestionJob"
 											", _processorIdentifier: {}"
 											", ingestionJobKey: {}"
@@ -1237,7 +1237,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("generateAndIngestFramesTask failed"
+								LOG_ERROR("generateAndIngestFramesTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1245,7 +1245,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1261,7 +1261,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1282,7 +1282,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageSlideShowTask failed"
+								LOG_ERROR("manageSlideShowTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1290,7 +1290,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1306,7 +1306,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1329,7 +1329,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage manageConcatThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1340,7 +1340,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1366,7 +1366,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageConcatThread failed"
+								LOG_ERROR("manageConcatThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1374,7 +1374,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1390,7 +1390,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1413,7 +1413,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage manageCutMediaThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1424,7 +1424,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1448,7 +1448,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageCutMediaThread failed"
+								LOG_ERROR("manageCutMediaThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1456,7 +1456,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1472,7 +1472,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1494,7 +1494,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage extractTracksContentThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1505,7 +1505,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1529,7 +1529,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("extractTracksContentThread failed"
+								LOG_ERROR("extractTracksContentThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1537,7 +1537,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1553,7 +1553,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1574,7 +1574,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageOverlayImageOnVideoTask failed"
+								LOG_ERROR("manageOverlayImageOnVideoTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1582,7 +1582,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1598,7 +1598,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1619,7 +1619,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageOverlayTextOnVideoTask failed"
+								LOG_ERROR("manageOverlayTextOnVideoTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1627,7 +1627,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1643,7 +1643,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1666,7 +1666,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage email notification, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1677,7 +1677,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1701,7 +1701,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("emailNotificationThread failed"
+								LOG_ERROR("emailNotificationThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1709,7 +1709,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1725,7 +1725,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1747,7 +1747,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage check streaming, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1758,7 +1758,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1781,7 +1781,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("checkStreamingThread failed"
+								LOG_ERROR("checkStreamingThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1789,7 +1789,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1805,7 +1805,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1826,7 +1826,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageMediaCrossReferenceTask failed"
+								LOG_ERROR("manageMediaCrossReferenceTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1834,7 +1834,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1850,7 +1850,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1873,7 +1873,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage post on facebook, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1884,7 +1884,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1908,7 +1908,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("postOnFacebookThread failed"
+								LOG_ERROR("postOnFacebookThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1916,7 +1916,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -1932,7 +1932,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -1955,7 +1955,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage post on youtube, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1966,7 +1966,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -1990,7 +1990,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("postOnYouTubeTask failed"
+								LOG_ERROR("postOnYouTubeTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -1998,7 +1998,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2014,7 +2014,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2035,7 +2035,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageFaceRecognitionMediaTask failed"
+								LOG_ERROR("manageFaceRecognitionMediaTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2043,7 +2043,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2059,7 +2059,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2080,7 +2080,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageFaceIdentificationMediaTask failed"
+								LOG_ERROR("manageFaceIdentificationMediaTask failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2088,7 +2088,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2104,7 +2104,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2124,7 +2124,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageLiveRecorder failed"
+								LOG_ERROR("manageLiveRecorder failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2132,7 +2132,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2148,7 +2148,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2168,7 +2168,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageLiveProxy failed"
+								LOG_ERROR("manageLiveProxy failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2176,7 +2176,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2192,7 +2192,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2212,7 +2212,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageVODProxy failed"
+								LOG_ERROR("manageVODProxy failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2220,7 +2220,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2236,7 +2236,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2256,7 +2256,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageCountdown failed"
+								LOG_ERROR("manageCountdown failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2264,7 +2264,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2280,7 +2280,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2300,7 +2300,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageLiveGrid failed"
+								LOG_ERROR("manageLiveGrid failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2308,7 +2308,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2324,7 +2324,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2346,7 +2346,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage manageLiveCutThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2357,7 +2357,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2393,7 +2393,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("manageLiveCutThread failed"
+								LOG_ERROR("manageLiveCutThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2401,7 +2401,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2417,7 +2417,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2440,7 +2440,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage YouTubeLiveBroadcast, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2451,7 +2451,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2474,7 +2474,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("youTubeLiveBroadcastThread failed"
+								LOG_ERROR("youTubeLiveBroadcastThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2482,7 +2482,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2498,7 +2498,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2521,7 +2521,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage facebookLiveBroadcastThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2532,7 +2532,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2555,7 +2555,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("facebookLiveBroadcastThread failed"
+								LOG_ERROR("facebookLiveBroadcastThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2563,7 +2563,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2579,7 +2579,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2601,7 +2601,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								 */
 								if (!newThreadPermission(_processorsThreadsNumber))
 								{
-									SPDLOG_WARN(
+									LOG_WARN(
 										"Not enough available threads to manage changeFileFormatThread, activity is postponed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2612,7 +2612,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 									string errorMessage;
 									string processorMMS;
 
-									SPDLOG_INFO(
+									LOG_INFO(
 										"Update IngestionJob"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
@@ -2636,7 +2636,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &e)
 							{
-								SPDLOG_ERROR("changeFileFormatThread failed"
+								LOG_ERROR("changeFileFormatThread failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -2644,7 +2644,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 								string errorMessage = e.what();
 
-								SPDLOG_INFO(
+								LOG_INFO(
 									"Update IngestionJob"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
@@ -2660,7 +2660,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								}
 								catch (exception &ex)
 								{
-									SPDLOG_INFO("Update IngestionJob failed"
+									LOG_INFO("Update IngestionJob failed"
 										", _processorIdentifier: {}"
 										", ingestionJobKey: {}"
 										", IngestionStatus: End_IngestionFailure"
@@ -2679,9 +2679,9 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 								", ingestionJobKey: {}"
 								", ingestionType: {}",
 								_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionType));
-							SPDLOG_ERROR(string() + errorMessage);
+							LOG_ERROR(string() + errorMessage);
 
-							SPDLOG_INFO(
+							LOG_INFO(
 								"Update IngestionJob"
 								", _processorIdentifier: {}"
 								", ingestionJobKey: {}"
@@ -2697,7 +2697,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							catch (exception &ex)
 							{
-								SPDLOG_INFO("Update IngestionJob failed"
+								LOG_INFO("Update IngestionJob failed"
 									", _processorIdentifier: {}"
 									", ingestionJobKey: {}"
 									", IngestionStatus: End_ValidationMediaSourceFailed"
@@ -2713,7 +2713,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"Exception managing the Ingestion entry"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -2732,7 +2732,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 
 			_multiEventsSet->addEvent(event);
 
-			SPDLOG_DEBUG("addEvent: EVENT_TYPE (MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION)"
+			LOG_DEBUG("addEvent: EVENT_TYPE (MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION)"
 				", _processorIdentifier: {}"
 				", getEventKey().first: {}"
 				", getEventKey().second: {}", _processorIdentifier,
@@ -2742,7 +2742,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR("handleCheckIngestionEvent failed"
+		LOG_ERROR("handleCheckIngestionEvent failed"
 			", _processorIdentifier: {}"
 			", exception: {}", _processorIdentifier, e.what()
 		);

@@ -25,7 +25,7 @@ Validator::Validator(const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, con
 	_mmsEngineDBFacade = mmsEngineDBFacade;
 
 	_storagePath = JSONUtils::asString(configuration["storage"], "path", "");
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", storage->path: {}",
 		_storagePath
@@ -49,7 +49,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 			", sRoot: {}",
 			field, sRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -57,7 +57,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 	if (type != "Workflow")
 	{
 		string errorMessage = __FILEREF__ + "Type field is wrong" + ", Type: " + type;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -73,7 +73,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 			", sRoot: {}",
 			field, sRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -90,7 +90,7 @@ void Validator::validateIngestedRootMetadata(int64_t workspaceKey, const json& r
 			", sRoot: {}",
 			field, sRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -123,7 +123,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 			", sGroupOfTasksRoot: {}",
 			field, sGroupOfTasksRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -142,7 +142,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 			", sParametersRoot: {}",
 			field, sParametersRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -153,7 +153,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 	if (tasksRoot.size() == 0)
 	{
 		string errorMessage = __FILEREF__ + "No Tasks are present inside the GroupOfTasks item";
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -174,7 +174,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 				", sParametersRoot: {}",
 				field, sParametersRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -206,7 +206,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& p
 			", sParametersRoot: {}",
 			field, sParametersRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -215,7 +215,7 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& p
 	if (executionType != "parallel" && executionType != "sequential")
 	{
 		string errorMessage = __FILEREF__ + "executionType field is wrong" + ", executionType: " + executionType;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -239,7 +239,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 				", sTaskOrGroupOfTasksRoot: {}",
 				field, sTaskOrGroupOfTasksRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -256,7 +256,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 				", sTaskOrGroupOfTasksRoot: {}",
 				field, sTaskOrGroupOfTasksRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -288,7 +288,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 				", sTaskOrGroupOfTasksRoot: {}",
 				field, sTaskOrGroupOfTasksRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -305,7 +305,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 				", sTaskOrGroupOfTasksRoot: {}",
 				field, sTaskOrGroupOfTasksRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -337,7 +337,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 				", sTaskOrGroupOfTasksRoot: {}",
 				field, sTaskOrGroupOfTasksRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -354,7 +354,7 @@ void Validator::validateEvents(int64_t workspaceKey, const json& taskOrGroupOfTa
 				", sTaskOrGroupOfTasksRoot: {}",
 				field, sTaskOrGroupOfTasksRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -388,7 +388,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 			", sTaskRoot: {}",
 			field, sTaskRoot
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -413,7 +413,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -436,7 +436,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -459,7 +459,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -482,7 +482,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -505,7 +505,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -528,7 +528,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -551,7 +551,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -574,7 +574,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -597,7 +597,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -620,7 +620,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -643,7 +643,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -666,7 +666,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -689,7 +689,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -712,7 +712,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -735,7 +735,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -758,7 +758,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -781,7 +781,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -804,7 +804,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -827,7 +827,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -850,7 +850,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -873,7 +873,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -896,7 +896,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -919,7 +919,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -942,7 +942,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -965,7 +965,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -988,7 +988,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1011,7 +1011,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1034,7 +1034,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1057,7 +1057,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1080,7 +1080,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1103,7 +1103,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1126,7 +1126,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1149,7 +1149,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1172,7 +1172,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1195,7 +1195,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1218,7 +1218,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1241,7 +1241,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1264,7 +1264,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 				", sTaskRoot: {}",
 				field, sTaskRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1275,7 +1275,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 	else
 	{
 		string errorMessage = __FILEREF__ + "Field 'Type' is wrong" + ", Type: " + type;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1483,7 +1483,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const MMSEngineDBFac
 	default:
 	{
 		string errorMessage = __FILEREF__ + "Unknown IngestionType" + ", ingestionType: " + MMSEngineDBFacade::toString(ingestionType);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1510,7 +1510,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1521,7 +1521,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 	if (!isVideoAudioFileFormat(fileFormat) && !isImageFileFormat(fileFormat))
 	{
 		string errorMessage = string("Unknown fileFormat") + ", fileFormat: " + fileFormat + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1542,7 +1542,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 				{
 					string errorMessage = __FILEREF__ + "'SourceURL' cannot be within the dedicated storage managed by MMS" + ", Field: " + field +
 										  ", sourceURL: " + sourceURL + ", label: " + label;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1604,7 +1604,7 @@ void Validator::validateAddSilentAudioMetadata(
 	if (!isAddSilentTypeValid(addType))
 	{
 		string errorMessage = string("Unknown addType") + ", addType: " + addType + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1623,7 +1623,7 @@ void Validator::validateAddSilentAudioMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1648,7 +1648,7 @@ void Validator::validateAddSilentAudioMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1702,7 +1702,7 @@ void Validator::validateRemoveContentMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1749,7 +1749,7 @@ void Validator::validateEncodeMetadata(
 		catch (exception &e)
 		{
 			string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong" + ", EncodingPriority: " + encodingPriority + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1767,7 +1767,7 @@ void Validator::validateEncodeMetadata(
 		string errorMessage = __FILEREF__ + "Neither of the following fields are present" + ", Field: " + encodingProfilesSetKeyField +
 							  ", Field: " + encodingProfilesSetLabelField + ", Field: " + encodingProfileLabelField +
 							  ", Field: " + encodingProfileKeyField + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1793,7 +1793,7 @@ void Validator::validateEncodeMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1853,7 +1853,7 @@ void Validator::validateFrameMetadata(
 					+ ", dependencies.size: " + to_string(dependencies.size())
 					+ ", parametersRoot: " + JSONUtils::toString(parametersRoot)
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1884,7 +1884,7 @@ void Validator::validateFrameMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1929,7 +1929,7 @@ void Validator::validatePeriodicalFramesMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1954,7 +1954,7 @@ void Validator::validatePeriodicalFramesMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1985,7 +1985,7 @@ void Validator::validatePeriodicalFramesMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2035,7 +2035,7 @@ void Validator::validateIFramesMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2066,7 +2066,7 @@ void Validator::validateIFramesMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2114,7 +2114,7 @@ void Validator::validateSlideshowMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2152,7 +2152,7 @@ void Validator::validateSlideshowMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2162,7 +2162,7 @@ void Validator::validateSlideshowMetadata(
 			{
 				string errorMessage = __FILEREF__ + "Reference does not refer an image content" + ", picturesNumber: " + to_string(picturesNumber) +
 									  ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2211,7 +2211,7 @@ void Validator::validateConcatDemuxerMetadata(
 					+ ", Field: " + field
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2232,7 +2232,7 @@ void Validator::validateConcatDemuxerMetadata(
 			{
 				string errorMessage = __FILEREF__ + "Field is present but it does not refer enough elements (1)" + ", Field: " + field +
 									  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2258,7 +2258,7 @@ void Validator::validateConcatDemuxerMetadata(
 							", referenceContentType: {}"
 							", label: {}",
 							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2274,7 +2274,7 @@ void Validator::validateConcatDemuxerMetadata(
 							", referenceContentType: {}"
 							", label: {}",
 							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2316,7 +2316,7 @@ void Validator::validateCutMetadata(
 
 		string errorMessage =
 			__FILEREF__ + "field is not present or it is null" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2327,7 +2327,7 @@ void Validator::validateCutMetadata(
 	{
 		string errorMessage = __FILEREF__ + "Both fields are not present or it is null" + ", Field: " + endTimeField +
 							  ", Field: " + framesNumberField + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2340,7 +2340,7 @@ void Validator::validateCutMetadata(
 		if (!isCutTypeValid(cutType))
 		{
 			string errorMessage = string("Unknown cutType") + ", cutType: " + cutType + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2354,7 +2354,7 @@ void Validator::validateCutMetadata(
 
 				string errorMessage = __FILEREF__ + "field is not present or it is null" + ", Field: " + field +
 									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2366,7 +2366,7 @@ void Validator::validateCutMetadata(
 
 				string errorMessage = __FILEREF__ + "field is not present or it is null" + ", Field: " + field +
 									  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2390,7 +2390,7 @@ void Validator::validateCutMetadata(
 		{
 			string errorMessage = __FILEREF__ + "No correct number of References"
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2408,7 +2408,7 @@ void Validator::validateCutMetadata(
 			{
 				string errorMessage = __FILEREF__ + "No correct number of Media to be cut" +
 									  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2429,7 +2429,7 @@ void Validator::validateCutMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2482,7 +2482,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2532,7 +2532,7 @@ void Validator::validateOverlayImageOnVideoMetadata(
 						", label: {}",
 						toString(dependencyType_1), key_1, MMSEngineDBFacade::toString(referenceContentType_1),
 						toString(dependencyType_2), key_2, MMSEngineDBFacade::toString(referenceContentType_2), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2577,7 +2577,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2600,7 +2600,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 					", label: {}",
 					mandatoryField, sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2614,7 +2614,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			if (!isTimecodeValid(timecode))
 			{
 				string errorMessage = string("Unknown timecode") + ", timecode: " + timecode + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2628,7 +2628,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			if (!isFontTypeValid(fontType))
 			{
 				string errorMessage = string("Unknown fontType") + ", fontType: " + fontType + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2642,7 +2642,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			if (!isColorValid(fontColor))
 			{
 				string errorMessage = string("Unknown fontColor") + ", fontColor: " + fontColor + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2657,7 +2657,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			{
 				string errorMessage =
 					string("Wrong textPercentageOpacity") + ", textPercentageOpacity: " + to_string(textPercentageOpacity) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2678,7 +2678,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 			{
 				string errorMessage =
 					string("Wrong boxPercentageOpacity") + ", boxPercentageOpacity: " + to_string(boxPercentageOpacity) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2696,7 +2696,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		catch (exception &e)
 		{
 			string errorMessage = __FILEREF__ + "Field 'EncodingPriority' is wrong" + ", EncodingPriority: " + encodingPriority + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2710,7 +2710,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		if (!isColorValid(boxColor))
 		{
 			string errorMessage = string("Unknown boxColor") + ", boxColor: " + boxColor + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2735,7 +2735,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2766,7 +2766,7 @@ void Validator::validateOverlayTextOnVideoMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2811,7 +2811,7 @@ void Validator::validateEmailNotificationMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2837,7 +2837,7 @@ void Validator::validateEmailNotificationMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2871,7 +2871,7 @@ void Validator::validateEmailNotificationMetadata(
 								+ ", sParametersRoot: " + sParametersRoot
 								+ ", label: " + label
 								;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -2930,7 +2930,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2954,7 +2954,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 					", label: {}",
 					mandatoryField, sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2976,7 +2976,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 					", label: {}",
 					mandatoryField, sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2988,7 +2988,7 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 
 		string errorMessage = __FILEREF__ + "inputType Field is wrong, it is neither Stream nor URL" + ", inputType: " + inputType +
 							  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3045,7 +3045,7 @@ void Validator::validateMediaCrossReferenceMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3063,7 +3063,7 @@ void Validator::validateMediaCrossReferenceMetadata(
 			{
 				string errorMessage = __FILEREF__ + "Field is present but it has a wrong number of elements" + ", Field: " + field +
 									  ", dependencies.size(): " + to_string(dependencies.size()) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3107,7 +3107,7 @@ void Validator::validateFTPDeliveryMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3133,7 +3133,7 @@ void Validator::validateFTPDeliveryMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3187,7 +3187,7 @@ void Validator::validateHTTPCallbackMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3201,7 +3201,7 @@ void Validator::validateHTTPCallbackMetadata(
 		if (method != "GET" && method != "POST" && method != "PUT" && method != "DELETE")
 		{
 			string errorMessage = string("Unknown Method") + ", method: " + method + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3220,7 +3220,7 @@ void Validator::validateHTTPCallbackMetadata(
 					+ ", Field: " + field
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3233,7 +3233,7 @@ void Validator::validateHTTPCallbackMetadata(
 						+ ", Field: " + field
 					+ ", label: " + label
 						;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3261,7 +3261,7 @@ void Validator::validateHTTPCallbackMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3315,7 +3315,7 @@ void Validator::validateLocalCopyMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3327,7 +3327,7 @@ void Validator::validateLocalCopyMetadata(
 	{
 		string errorMessage = __FILEREF__ + "'LocalPath' cannot be within the dedicated storage managed by MMS" + ", Field: " + field +
 							  ", localPath: " + localPath + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3352,7 +3352,7 @@ void Validator::validateLocalCopyMetadata(
 				+ ", referencesRoot.size(): " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3404,7 +3404,7 @@ void Validator::validateExtractTracksMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3416,7 +3416,7 @@ void Validator::validateExtractTracksMetadata(
 	{
 		string errorMessage =
 			__FILEREF__ + "No correct number of Tracks" + ", tracksRoot.size: " + to_string(tracksRoot.size()) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3434,7 +3434,7 @@ void Validator::validateExtractTracksMetadata(
 				", label: {}",
 				field, sTrackRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3446,7 +3446,7 @@ void Validator::validateExtractTracksMetadata(
 				"), Field: {}"
 				", trackType: {}"
 				", label: {}", field, field, trackType, label);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3461,7 +3461,7 @@ void Validator::validateExtractTracksMetadata(
 			"), Field: {}"
 			", outputFileFormat: {}"
 			", label: {}", field, field, outputFileFormat, label);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3485,7 +3485,7 @@ void Validator::validateExtractTracksMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3517,7 +3517,7 @@ void Validator::validateExtractTracksMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3563,7 +3563,7 @@ void Validator::validatePostOnFacebookMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3577,7 +3577,7 @@ void Validator::validatePostOnFacebookMetadata(
 			", label: {}",
 			JSONUtils::toString(parametersRoot), label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3601,7 +3601,7 @@ void Validator::validatePostOnFacebookMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3633,7 +3633,7 @@ void Validator::validatePostOnFacebookMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3676,7 +3676,7 @@ void Validator::validatePostOnYouTubeMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3694,7 +3694,7 @@ void Validator::validatePostOnYouTubeMetadata(
 				"), Field: {}"
 				", youTubePrivacyStatus: {}"
 				", label: {}", field, field, youTubePrivacyStatus, label);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3719,7 +3719,7 @@ void Validator::validatePostOnYouTubeMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3751,7 +3751,7 @@ void Validator::validatePostOnYouTubeMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3794,7 +3794,7 @@ void Validator::validateFaceRecognitionMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3809,7 +3809,7 @@ void Validator::validateFaceRecognitionMetadata(
 			"), Field: {}"
 			", cascadeName: {}"
 			", label: {}", field, field, faceRecognitionCascadeName, label);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3823,7 +3823,7 @@ void Validator::validateFaceRecognitionMetadata(
 			"), Field: {}"
 			", Output: {}"
 			", label: {}", field, field, faceRecognitionOutput, label);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3847,7 +3847,7 @@ void Validator::validateFaceRecognitionMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3867,7 +3867,7 @@ void Validator::validateFaceRecognitionMetadata(
 				string errorMessage = std::format("No dependencies found"
 					", dependencies.size: {}"
 					", label: {}", dependencies.size(), label);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3882,7 +3882,7 @@ void Validator::validateFaceRecognitionMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3926,7 +3926,7 @@ void Validator::validateFaceIdentificationMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3941,7 +3941,7 @@ void Validator::validateFaceIdentificationMetadata(
 			"), Field: {}"
 			", cascadeName: {}"
 			", label: {}", field, field, faceIdentificationCascadeName, label);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3950,7 +3950,7 @@ void Validator::validateFaceIdentificationMetadata(
 	if (parametersRoot[field].type() != json::value_t::array || parametersRoot[field].size() == 0)
 	{
 		string errorMessage = __FILEREF__ + field + " is not an array or the array is empty" + ", Field: " + field + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -3974,7 +3974,7 @@ void Validator::validateFaceIdentificationMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3994,7 +3994,7 @@ void Validator::validateFaceIdentificationMetadata(
 				string errorMessage = std::format("No dependencies found"
 					", dependencies.size: {}"
 					", label: {}", dependencies.size(), label);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4017,7 +4017,7 @@ void Validator::validateFaceIdentificationMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4062,7 +4062,7 @@ void Validator::validateLiveRecorderMetadata(
 					", label: {}",
 					mandatoryField, sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4077,7 +4077,7 @@ void Validator::validateLiveRecorderMetadata(
 
 		string errorMessage = __FILEREF__ + "Field has a wrong value (it is not even or slower than 10)" + ", Field: " + field +
 							  ", value: " + to_string(segmentDuration) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4089,7 +4089,7 @@ void Validator::validateLiveRecorderMetadata(
 
 		string errorMessage = __FILEREF__ + "Field cannot be present in this Task" + ", Field: " + field + ", sParametersRoot: " + sParametersRoot +
 							  ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4108,7 +4108,7 @@ void Validator::validateLiveRecorderMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4128,7 +4128,7 @@ void Validator::validateLiveRecorderMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4144,7 +4144,7 @@ void Validator::validateLiveRecorderMetadata(
 							  ", utcRecordingPeriodStart: " + to_string(utcRecordingPeriodStart) +
 							  ", utcRecordingPeriodEnd: " + to_string(utcRecordingPeriodEnd) + ", sParametersRoot: " + sParametersRoot +
 							  ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4160,7 +4160,7 @@ void Validator::validateLiveRecorderMetadata(
 				"), Field: {}"
 				", liveRecorderOutputFormat: {}"
 				", label: {}", field, field, liveRecorderOutputFormat, label);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4217,7 +4217,7 @@ void Validator::validateLiveProxyMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4241,7 +4241,7 @@ void Validator::validateLiveProxyMetadata(
 				", label: {}",
 				field, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4274,7 +4274,7 @@ void Validator::validateLiveProxyMetadata(
 			string errorMessage =
 				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
 				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4292,7 +4292,7 @@ void Validator::validateLiveProxyMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4313,7 +4313,7 @@ void Validator::validateLiveProxyMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4352,7 +4352,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		if (!isYouTubeLiveBroadcastSourceTypeValid(sourceType))
 		{
 			string errorMessage = string("Unknown sourceType") + ", sourceType: " + sourceType + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4370,7 +4370,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 				"), Field: {}"
 				", youTubePrivacyStatus: {}"
 				", label: {}", field, field, youTubePrivacyStatus, label);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4390,7 +4390,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 				", label: {}",
 				field, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4414,7 +4414,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 			{
 				string errorMessage = __FILEREF__ + "No correct number of References"
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size());
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4432,7 +4432,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 				{
 					string errorMessage = __FILEREF__ + "No correct number of Media to be broadcast" +
 										  ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4456,7 +4456,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 								", referenceContentType: {}"
 								", label: {}",
 								toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -4478,7 +4478,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4510,7 +4510,7 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 			string errorMessage =
 				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
 				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4556,7 +4556,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4569,7 +4569,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			", label: {}",
 			JSONUtils::toString(parametersRoot), label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4581,7 +4581,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			", label: {}",
 			JSONUtils::toString(parametersRoot), label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4595,7 +4595,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		if (!isFacebookLiveBroadcastSourceTypeValid(sourceType))
 		{
 			string errorMessage = string("Unknown sourceType") + ", sourceType: " + sourceType + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4615,7 +4615,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 				", label: {}",
 				field, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4639,7 +4639,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			{
 				string errorMessage = __FILEREF__ + "No correct number of References"
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size());
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4661,7 +4661,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 						", label: {}",
 						dependencies.size(), label
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -4685,7 +4685,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 								", referenceContentType: {}"
 								", label: {}",
 								toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -4707,7 +4707,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4744,7 +4744,7 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 				", label: {}",
 				utcProxyPeriodStart, utcProxyPeriodEnd, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4799,7 +4799,7 @@ void Validator::validateVODProxyMetadata(
 					", label: {}",
 					field, dependencies.size(), label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4833,7 +4833,7 @@ void Validator::validateVODProxyMetadata(
 				", label: {}",
 				field, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4871,7 +4871,7 @@ void Validator::validateVODProxyMetadata(
 				", label: {}",
 				utcProxyPeriodStart, utcProxyPeriodEnd, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4889,7 +4889,7 @@ void Validator::validateVODProxyMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4910,7 +4910,7 @@ void Validator::validateVODProxyMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -4932,7 +4932,7 @@ void Validator::validateVODProxyMetadata(
 					", label: {}",
 					sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4982,7 +4982,7 @@ void Validator::validateCountdownMetadata(
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5016,7 +5016,7 @@ void Validator::validateCountdownMetadata(
 						", label: {}",
 						static_cast<int>(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -5036,7 +5036,7 @@ void Validator::validateCountdownMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5067,7 +5067,7 @@ void Validator::validateCountdownMetadata(
 			string errorMessage =
 				__FILEREF__ + "ProxyPeriodStart cannot be bigger than ProxyPeriodEnd" + ", utcProxyPeriodStart: " + to_string(utcProxyPeriodStart) +
 				", utcProxyPeriodEnd: " + to_string(utcProxyPeriodEnd) + ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5085,7 +5085,7 @@ void Validator::validateCountdownMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5106,7 +5106,7 @@ void Validator::validateCountdownMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5149,7 +5149,7 @@ void Validator::validateWorkflowAsLibraryMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5161,7 +5161,7 @@ void Validator::validateWorkflowAsLibraryMetadata(
 	if (!isWorkflowAsLibraryTypeValid(workflowAsLibraryType))
 	{
 		string errorMessage = string("Unknown workflowAsLibraryType") + ", workflowAsLibraryType: " + workflowAsLibraryType + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5201,7 +5201,7 @@ void Validator::validateChangeFileFormatMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5220,7 +5220,7 @@ void Validator::validateChangeFileFormatMetadata(
 	{
 		string errorMessage =
 			__FILEREF__ + field + " is wrong" + ", Field: " + field + ", outputFileFormat: " + outputFileFormat + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5244,7 +5244,7 @@ void Validator::validateChangeFileFormatMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5278,7 +5278,7 @@ void Validator::validateChangeFileFormatMetadata(
 							", referenceContentType: {}"
 							", label: {}",
 							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -5294,7 +5294,7 @@ void Validator::validateChangeFileFormatMetadata(
 							", referenceContentType: {}"
 							", label: {}",
 							toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -5340,7 +5340,7 @@ void Validator::validateVideoSpeedMetadata(
 					+ ", sParametersRoot: " + sParametersRoot
 					+ ", label: " + label
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5358,7 +5358,7 @@ void Validator::validateVideoSpeedMetadata(
 				"), Field: {}"
 				", speedType: {}"
 				", label: {}", field, field, speedType, label);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5372,7 +5372,7 @@ void Validator::validateVideoSpeedMetadata(
 		{
 			string errorMessage = __FILEREF__ + field + " is wrong (it could be between 1 and 10)" + ", Field: " + field +
 								  ", speedSize: " + to_string(speedSize) + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5397,7 +5397,7 @@ void Validator::validateVideoSpeedMetadata(
 				+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 				+ ", label: " + label
 			;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5416,7 +5416,7 @@ void Validator::validateVideoSpeedMetadata(
 			{
 				string errorMessage =
 					__FILEREF__ + "Dependencies were not found" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5439,7 +5439,7 @@ void Validator::validateVideoSpeedMetadata(
 						", referenceContentType: {}"
 						", label: {}",
 						toString(dependencyType), key, MMSEngineDBFacade::toString(referenceContentType), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -5495,7 +5495,7 @@ void Validator::validatePictureInPictureMetadata(
 					+ ", label: " + label
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5538,7 +5538,7 @@ void Validator::validatePictureInPictureMetadata(
 						", label: {}",
 						toString(dependencyType_1), key_1, MMSEngineDBFacade::toString(referenceContentType_1),
 						toString(dependencyType_2), key_2, MMSEngineDBFacade::toString(referenceContentType_2), label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -5595,7 +5595,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 					+ ", label: " + label
 					+ ", referencesRoot.size: " + to_string(referencesRoot.size())
 					;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5613,7 +5613,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 			{
 				string errorMessage =
 					__FILEREF__ + "Wrong dependencies number" + ", dependencies.size: " + to_string(dependencies.size()) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -5660,7 +5660,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 						toString(dependencyType_2), key_2, MMSEngineDBFacade::toString(referenceContentType_2),
 						toString(dependencyType_3), key_3, MMSEngineDBFacade::toString(referenceContentType_3),
 						label);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -5673,7 +5673,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	if (!JSONUtils::isPresent(parametersRoot, keyField) && !JSONUtils::isPresent(parametersRoot, labelField))
 	{
 		string errorMessage = __FILEREF__ + "Both fields are not present or it is null" + ", Field: " + keyField + ", Field: " + labelField;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5692,7 +5692,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5704,7 +5704,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", introOverlayDurationInSeconds: " + to_string(introOverlayDurationInSeconds) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5715,7 +5715,7 @@ void Validator::validateIntroOutroOverlayMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", outroOverlayDurationInSeconds: " + to_string(outroOverlayDurationInSeconds) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5741,7 +5741,7 @@ void Validator::validateLiveGridMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5753,7 +5753,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong, it should contains at least 2 configuration labels" + ", Field: " + field +
 							  ", inputConfigurationLabelsRoot.size: " + to_string(inputConfigurationLabelsRoot.size()) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5764,7 +5764,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", columns: " + to_string(columns) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5775,7 +5775,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", gridWidth: " + to_string(gridWidth) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5786,7 +5786,7 @@ void Validator::validateLiveGridMetadata(
 	{
 		string errorMessage = __FILEREF__ + field + " is wrong (it has to be major than 0)" + ", Field: " + field +
 							  ", gridHeight: " + to_string(gridHeight) + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5803,7 +5803,7 @@ void Validator::validateLiveGridMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5822,7 +5822,7 @@ void Validator::validateLiveGridMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5867,7 +5867,7 @@ void Validator::validateLiveCutMetadata(
 				", label: {}",
 				mandatoryField, sParametersRoot, label
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -5885,7 +5885,7 @@ void Validator::validateLiveCutMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5902,7 +5902,7 @@ void Validator::validateLiveCutMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5919,7 +5919,7 @@ void Validator::validateLiveCutMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5939,7 +5939,7 @@ void Validator::validateLiveCutMetadata(
 			", label: {}",
 			field, sParametersRoot, label
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -5954,7 +5954,7 @@ void Validator::validateLiveCutMetadata(
 		string errorMessage = __FILEREF__ + "CutPeriodStart cannot be bigger than CutPeriodEnd" +
 							  ", utcCutPeriodStart: " + to_string(utcCutPeriodStart) + ", utcCutPeriodEnd: " + to_string(utcCutPeriodEnd) +
 							  ", sParametersRoot: " + sParametersRoot + ", label: " + label;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -6019,7 +6019,7 @@ void Validator::fillDependencies(
 								", sParametersRoot: {}",
 								sParametersRoot
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -6051,7 +6051,7 @@ void Validator::fillDependencies(
 		MMSEngineDBFacade::ContentType referenceContentType;
 		try
 		{
-			SPDLOG_DEBUG(
+			LOG_DEBUG(
 				"fillDependencies"
 				", label: {}"
 				", referenceMediaItemKey: {}"
@@ -6126,7 +6126,7 @@ void Validator::fillDependencies(
 					string errorMessage = __FILEREF__ + "No media items found" +
 										  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
 										  ", sParametersRoot: " + sParametersRoot;
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				}
 				else
 				{
@@ -6159,7 +6159,7 @@ void Validator::fillDependencies(
 
 							if (referencePhysicalPathKey != -1)
 							{
-								SPDLOG_DEBUG(
+								LOG_DEBUG(
 									"fillDependencies"
 									", label: {}"
 									", referencePhysicalPathKey: {}"
@@ -6174,7 +6174,7 @@ void Validator::fillDependencies(
 							}
 							else if (referenceMediaItemKey != -1)
 							{
-								SPDLOG_DEBUG(
+								LOG_DEBUG(
 									"fillDependencies"
 									", label: {}"
 									", referenceMediaItemKey: {}"
@@ -6204,7 +6204,7 @@ void Validator::fillDependencies(
 							*/
 							if (referenceMediaItemKey != -1)
 							{
-								SPDLOG_DEBUG(
+								LOG_DEBUG(
 									"fillDependencies"
 									", label: {}"
 									", referenceMediaItemKey: {}"
@@ -6271,13 +6271,13 @@ void Validator::fillDependencies(
 								  ", e.what: " + e.what();
 			if (stopIfReferenceProcessingError)
 			{
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			else
 			{
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				continue;
 			}
@@ -6290,7 +6290,7 @@ void Validator::fillDependencies(
 								  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
 								  ", referenceUniqueName: " + referenceUniqueName + ", referenceLabel: " + to_string(referenceLabel) +
 								  ", e.what: " + e.what();
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6301,7 +6301,7 @@ void Validator::fillDependencies(
 								  ", referencePhysicalPathKey: " + to_string(referencePhysicalPathKey) +
 								  ", referenceIngestionJobKey: " + to_string(referenceIngestionJobKey) +
 								  ", referenceUniqueName: " + referenceUniqueName + ", referenceLabel: " + to_string(referenceLabel);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6348,7 +6348,7 @@ void Validator::fillDependencies(
 
 			if (referencePhysicalPathKey != -1)
 			{
-				SPDLOG_DEBUG(
+				LOG_DEBUG(
 					"fillDependencies"
 					", label: {}"
 					", referencePhysicalPathKey: {}"
@@ -6362,7 +6362,7 @@ void Validator::fillDependencies(
 			}
 			else if (referenceMediaItemKey != -1)
 			{
-				SPDLOG_DEBUG(
+				LOG_DEBUG(
 					"fillDependencies"
 					", label: {}"
 					", referenceMediaItemKey: {}"
@@ -6378,7 +6378,7 @@ void Validator::fillDependencies(
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"fillDependencies"
 		", label: {}"
 		", references: {}"
@@ -6401,7 +6401,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 			", sParametersRoot: {}",
 			field, sParametersRoot
 		);
-		SPDLOG_WARN(errorMessage);
+		LOG_WARN(errorMessage);
 
 		return;
 	}
@@ -6435,7 +6435,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 							", sParametersRoot: {}",
 							sParametersRoot
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -6477,7 +6477,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					SPDLOG_WARN(
+					LOG_WARN(
 						"fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
 						", workspaceKey: {}"
 						", referenceMediaItemKey: {}",
@@ -6506,7 +6506,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					SPDLOG_WARN(
+					LOG_WARN(
 						"fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
 						", workspaceKey: {}"
 						", referencePhysicalPathKey: {}",
@@ -6528,7 +6528,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 
 				if (mediaItemsDetails.empty())
 				{
-					SPDLOG_WARN(
+					LOG_WARN(
 						"No media items found"
 						", referenceIngestionJobKey: {}"
 						", sParametersRoot: {}",
@@ -6573,7 +6573,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					SPDLOG_WARN(
+					LOG_WARN(
 						"fillReferencesOutput. getMediaItemKeyDetailsByPhysicalPathKey failed"
 						", workspaceKey: {}"
 						", referenceUniqueName: {}",
@@ -6587,7 +6587,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__ + "fillReferencesOutput failed" + ", sParametersRoot: " + sParametersRoot + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw e;
 		}
@@ -6596,7 +6596,7 @@ void Validator::fillReferencesOutput(int64_t workspaceKey, const json& parameter
 			string sParametersRoot = JSONUtils::toString(parametersRoot);
 
 			string errorMessage = __FILEREF__ + "fillReferencesOutput failed" + ", sParametersRoot: " + sParametersRoot + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -6922,7 +6922,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 					", label: {}",
 					mandatoryField, sCrossReferenceRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6946,7 +6946,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 					", label: {}",
 					mandatoryField, sCrossReferenceRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -6966,7 +6966,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 
 		string errorMessage = __FILEREF__ + "Field 'CrossReferenceType' is wrong" + ", CrossReferenceType: " + sCrossReferenceType +
 							  ", label: " + label + ", sCrossReferenceRoot: " + sCrossReferenceRoot;
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -6981,7 +6981,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 
 			string errorMessage =
 				__FILEREF__ + "Field 'CrossReference->Parameters' is missing" + ", label: " + label + ", sCrossReferenceRoot: " + sCrossReferenceRoot;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7001,7 +7001,7 @@ void Validator::validateCrossReference(const string& label, const json& crossRef
 					", label: {}",
 					mandatoryField, sCrossReferenceRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7024,7 +7024,7 @@ void Validator::validateEncodingProfilesSetRootMetadata(MMSEngineDBFacade::Conte
 				", sEncodingProfilesSetRoot: {}",
 				mandatoryField, sEncodingProfilesSetRoot
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7072,7 +7072,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7086,7 +7086,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 		if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)
 		{
 			string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved" + ", Label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7110,7 +7110,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7126,7 +7126,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No video bit rates are present" + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7146,7 +7146,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 						", sEncodingProfileRoot: {}",
 						mandatoryField, sEncodingProfileRoot
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -7172,7 +7172,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7188,7 +7188,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No audio bit rates are present" + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7208,7 +7208,7 @@ void Validator::validateEncodingProfileRootVideoMetadata(const json& encodingPro
 						", sEncodingProfileRoot: {}",
 						mandatoryField, sEncodingProfileRoot
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -7233,7 +7233,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7247,7 +7247,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 		if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)
 		{
 			string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved" + ", Label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7271,7 +7271,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7287,7 +7287,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 			string sEncodingProfileRoot = JSONUtils::toString(encodingProfileRoot);
 
 			string errorMessage = __FILEREF__ + "No audio bit rates are present" + ", sEncodingProfileRoot: " + sEncodingProfileRoot;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7307,7 +7307,7 @@ void Validator::validateEncodingProfileRootAudioMetadata(const json& encodingPro
 						", sEncodingProfileRoot: {}",
 						mandatoryField, sEncodingProfileRoot
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -7332,7 +7332,7 @@ void Validator::validateEncodingProfileRootImageMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7346,7 +7346,7 @@ void Validator::validateEncodingProfileRootImageMetadata(const json& encodingPro
 		if (label.compare(0, mmsPredefinedProfilePrefix.size(), mmsPredefinedProfilePrefix) == 0)
 		{
 			string errorMessage = __FILEREF__ + "Profiles starting with " + mmsPredefinedProfilePrefix + " are reserved" + ", Label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7369,7 +7369,7 @@ void Validator::validateEncodingProfileRootImageMetadata(const json& encodingPro
 					", sEncodingProfileRoot: {}",
 					mandatoryField, sEncodingProfileRoot
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7390,7 +7390,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 			string errorMessage = __FILEREF__ + field +
 								  " is wrong (it could be RTMP_Channel, SRT_Channel, UDP_Stream or HLS_Channel)" +
 								  ", Field: " + field + ", liveProxyOutputType: " + liveProxyOutputType + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -7421,7 +7421,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 					", label: {}",
 					mandatoryField, sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7446,7 +7446,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 					", label: {}",
 					mandatoryField, sParametersRoot, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7465,7 +7465,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 					", label: {}",
 					fontType, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7484,7 +7484,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 					", label: {}",
 					fontColor, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7499,7 +7499,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 			{
 				string errorMessage =
 					string("Wrong textPercentageOpacity") + ", textPercentageOpacity: " + to_string(textPercentageOpacity) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7520,7 +7520,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 			{
 				string errorMessage =
 					string("Wrong boxPercentageOpacity") + ", boxPercentageOpacity: " + to_string(boxPercentageOpacity) + ", label: " + label;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -7532,7 +7532,7 @@ void Validator::validateOutputRootMetadata(int64_t workspaceKey, const string& l
 		if (!JSONUtils::isPresent(outputRoot, "encodingProfileKey") && !JSONUtils::isPresent(outputRoot, "encodingProfileLabel"))
 		{
 			string errorMessage = string("encodingProfile is missing") + ", label: " + label;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}

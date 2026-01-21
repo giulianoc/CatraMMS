@@ -66,7 +66,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				catch (sql_error const &e)
 				{
 					// Deadlock!!!
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"SQL exception"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -95,7 +95,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 		// AddContent IngestionJobs taking too time to download/move/copy/upload the content are set to failed
 		/* 2025-04-18: commentata perchè inclusa nella select successiva
 		{
-			SPDLOG_INFO("retentionOfIngestionData. AddContent IngestionJobs taking too time to be completed");
+			LOG_INFO("retentionOfIngestionData. AddContent IngestionJobs taking too time to be completed");
 			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			int sqlLimit = 1000;
@@ -132,7 +132,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					{
 						int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"Update IngestionJob"
 								", ingestionJobKey: {}"
 								", IngestionStatus: {}"
@@ -163,7 +163,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				catch (sql_error const &e)
 				{
 					// Deadlock!!!
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"SQL exception"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -199,7 +199,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 		// Comprende anche gli AddContent rimasti incompleti, indipendentemente se sia stati trasferiti o meno (sourceBinaryTransferred).
 		// Nota che i casi in cui IngestionJob sia in stato finale ed encoding no o viceversa sono già gestiti dai metodi fix*JobsHavingWrongStatus
 		{
-			SPDLOG_INFO("retentionOfIngestionData. IngestionJobs without EncodingJob taking too time to be completed");
+			LOG_INFO("retentionOfIngestionData. IngestionJobs without EncodingJob taking too time to be completed");
 			chrono::system_clock::time_point startRetention = chrono::system_clock::now();
 
 			int sqlLimit = 1000;
@@ -230,7 +230,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 					{
 						int64_t ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"Update IngestionJob"
 								", ingestionJobKey: {}"
 								", IngestionStatus: {}"
@@ -261,7 +261,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				catch (sql_error const &e)
 				{
 					// Deadlock!!!
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"SQL exception"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -349,7 +349,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				catch (sql_error const &e)
 				{
 					// Deadlock!!!
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"SQL exception"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -382,7 +382,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -390,7 +390,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -405,7 +405,7 @@ void MMSEngineDBFacade::retentionOfIngestionData()
 
 void MMSEngineDBFacade::retentionOfStatisticData()
 {
-	SPDLOG_INFO("retentionOfStatisticData");
+	LOG_INFO("retentionOfStatisticData");
 
 	/*
 	shared_ptr<PostgresConnection> conn = nullptr;
@@ -576,7 +576,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -584,7 +584,7 @@ void MMSEngineDBFacade::retentionOfStatisticData()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -659,7 +659,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 					if (currentRetriesOnError >= maxRetriesOnError)
 						throw e;
 
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"SQL exception, Deadlock!!!"
 						", query: {}"
 						", exceptionMessage: {}"
@@ -684,7 +684,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -692,7 +692,7 @@ void MMSEngineDBFacade::retentionOfDeliveryAuthorization()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

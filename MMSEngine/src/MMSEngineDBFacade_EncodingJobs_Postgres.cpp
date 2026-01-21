@@ -41,7 +41,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 
 		int initialGetEncodingJobsCurrentIndex = _getEncodingJobsCurrentIndex;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getToBeProcessedEncodingJobs"
 			", initialGetEncodingJobsCurrentIndex: {}",
 			initialGetEncodingJobsCurrentIndex
@@ -50,7 +50,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 		bool stillRows = true;
 		while (encodingItems.size() < maxEncodingsNumber && stillRows)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getToBeProcessedEncodingJobs (before select)"
 				", _getEncodingJobsCurrentIndex: {}",
 				_getEncodingJobsCurrentIndex
@@ -90,7 +90,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 			if (res.size() != maxEncodingsNumber)
 				stillRows = false;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"getToBeProcessedEncodingJobs (after select)"
 				", _getEncodingJobsCurrentIndex: {}"
 				", encodingResultSet->rowsCount: {}",
@@ -119,7 +119,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 
 				string encodingParameters = row["parameters"].as<string>();
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getToBeProcessedEncodingJobs (resultSet loop)"
 					", encodingJobKey: {}"
 					", encodingType: {}"
@@ -152,7 +152,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						encodingItem->_workspace = getWorkspace(res[0]["workspaceKey"].as<int64_t>());
 					else
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"select failed, no row returned"
 							", ingestionJobKey: {}"
 							", sqlStatement: {}",
@@ -162,7 +162,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// in case an encoding job row generate an error, we have to make it to Failed
 						// otherwise we will indefinitely get this error
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"EncodingJob update"
 								", encodingJobKey: {}"
 								", status: {}",
@@ -191,7 +191,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getToBeProcessedEncodingJobs (after workspaceKey)"
 					", encodingJobKey: {}"
 					", encodingType: {}",
@@ -208,7 +208,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					string prefix = "End_";
 					if (sIngestionJobStatus.starts_with(prefix))
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"Found EncodingJob with wrong status"
 							", ingestionJobKey: {}"
 							", encodingJobKey: {}"
@@ -225,7 +225,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// 	errorMessage
 						// );
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"EncodingJob update"
 								", encodingJobKey: {}"
 								", status: {}",
@@ -253,7 +253,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						continue;
 					}
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getToBeProcessedEncodingJobs (after check ingestionStatus)"
 					", encodingJobKey: {}"
 					", encodingType: {}",
@@ -266,12 +266,12 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				}
 				catch (runtime_error e)
 				{
-					SPDLOG_ERROR(e.what());
+					LOG_ERROR(e.what());
 
 					// in case an encoding job row generate an error, we have to make it to Failed
 					// otherwise we will indefinitely get this error
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"EncodingJob update"
 							", encodingJobKey: {}"
 							", status: {}",
@@ -299,7 +299,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					// throw runtime_error(errorMessage);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getToBeProcessedEncodingJobs (after encodingParameters)"
 					", encodingJobKey: {}"
 					", encodingType: {}",
@@ -331,12 +331,12 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						}
 						catch (runtime_error &e)
 						{
-							SPDLOG_ERROR(e.what());
+							LOG_ERROR(e.what());
 
 							// in case an encoding job row generate an error, we have to make it to Failed
 							// otherwise we will indefinitely get this error
 							{
-								SPDLOG_INFO(
+								LOG_INFO(
 									"EncodingJob update"
 									", encodingJobKey: {}"
 									", status: {}",
@@ -366,7 +366,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 					}
 					else
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"select failed, no row returned"
 							", ingestionJobKey: {}"
 							", sqlStatement: {}",
@@ -376,7 +376,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// in case an encoding job row generate an error, we have to make it to Failed
 						// otherwise we will indefinitely get this error
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"EncodingJob update"
 								", encodingJobKey: {}"
 								", status: {}",
@@ -404,7 +404,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 						// throw runtime_error(errorMessage);
 					}
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getToBeProcessedEncodingJobs"
 					", encodingJobKey: {}"
 					", encodingType: {}",
@@ -415,7 +415,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				othersToBeEncoded++;
 
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"EncodingJob update"
 						", encodingJobKey: {}"
 						", status: {}"
@@ -477,12 +477,12 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 							", sqlStatement: {}",
 							processorMMS, encodingItem->_encodingJobKey, rowsUpdated, sqlStatement
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"getToBeProcessedEncodingJobs (after encodingJob update)"
 					", encodingJobKey: {}"
 					", encodingType: {}",
@@ -504,7 +504,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 			_getEncodingJobsCurrentIndex = 0;
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getToBeProcessedEncodingJobs statistics"
 			", encodingItems.size: {}"
 			", maxEncodingsNumber: {}"
@@ -520,7 +520,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -528,7 +528,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -562,7 +562,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 
 		encodingItems.clear();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getProcessingEncodingJobsOfProcessorMMS"
 			", processorMMS: {}",
 			processorMMS
@@ -629,7 +629,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 					);
 					if (empty(res))
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"select failed, no row returned"
 							", ingestionJobKey: {}"
 							", sqlStatement: {}",
@@ -653,7 +653,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 				}
 				catch (runtime_error e)
 				{
-					SPDLOG_ERROR(e.what());
+					LOG_ERROR(e.what());
 
 					continue;
 				}
@@ -672,7 +672,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 		}
 
 		chrono::system_clock::time_point endPoint = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			"recoverProcessingEncodingJobs statistics"
 			", encodingItems.size: {}"
 			", elapsed (secs): {}",
@@ -683,7 +683,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -691,7 +691,7 @@ void MMSEngineDBFacade::recoverEncodingsNotCompleted(string processorMMS, vector
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -771,7 +771,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 							", sqlStatement: {}",
 							encodingJobKey, sqlStatement
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -785,7 +785,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					{
 						newEncodingStatus = EncodingStatus::End_Failed;
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"update EncodingJob"
 							", newEncodingStatus: {}"
 							", encodingFailureNumber: {}"
@@ -834,13 +834,13 @@ int MMSEngineDBFacade::updateEncodingJob(
 							", sqlStatement: {}",
 							toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob updated successful"
 					", newEncodingStatus: {}"
 					", encodingFailureNumber: {}"
@@ -852,7 +852,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 			{
 				newEncodingStatus = EncodingStatus::ToBeProcessed;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob update"
 					", encodingJobKey: {}"
 					", status: {}"
@@ -890,11 +890,11 @@ int MMSEngineDBFacade::updateEncodingJob(
 						", sqlStatement: {}",
 						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob updated successful"
 					", newEncodingStatus: {}"
 					", encodingJobKey: {}",
@@ -905,7 +905,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 			{
 				newEncodingStatus = EncodingStatus::End_KilledByUser;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob update"
 					", encodingJobKey: {}"
 					", status: {}"
@@ -942,11 +942,11 @@ int MMSEngineDBFacade::updateEncodingJob(
 						", sqlStatement: {}",
 						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob updated successful"
 					", newEncodingStatus: {}"
 					", encodingJobKey: {}",
@@ -957,7 +957,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 			{
 				newEncodingStatus = EncodingStatus::End_CanceledByUser;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob update"
 					", encodingJobKey: {}"
 					", status: {}"
@@ -994,11 +994,11 @@ int MMSEngineDBFacade::updateEncodingJob(
 						", sqlStatement: {}",
 						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob updated successful"
 					", newEncodingStatus: {}"
 					", encodingJobKey: {}",
@@ -1009,7 +1009,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 			{
 				newEncodingStatus = EncodingStatus::End_CanceledByMMS;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob update"
 					", encodingJobKey: {}"
 					", status: {}"
@@ -1045,11 +1045,11 @@ int MMSEngineDBFacade::updateEncodingJob(
 						", sqlStatement: {}",
 						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob updated successful"
 					", newEncodingStatus: {}"
 					", encodingJobKey: {}",
@@ -1060,7 +1060,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 			{
 				newEncodingStatus = EncodingStatus::End_Success;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob update"
 					", encodingJobKey: {}"
 					", status: {}"
@@ -1098,11 +1098,11 @@ int MMSEngineDBFacade::updateEncodingJob(
 						", sqlStatement: {}",
 						toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-				SPDLOG_INFO(
+				LOG_INFO(
 					"EncodingJob updated successful"
 					", newEncodingStatus: {}"
 					", encodingJobKey: {}",
@@ -1126,7 +1126,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 
 					string errorMessage;
 					string processorMMS;
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Update IngestionJob"
 						", ingestionJobKey: {}"
 						", IngestionStatus: {}"
@@ -1144,7 +1144,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -1162,7 +1162,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -1180,7 +1180,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -1198,7 +1198,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 				string processorMMS;
 				int64_t physicalPathKey = -1;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -1216,7 +1216,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 		{
 			sql_error const *se = dynamic_cast<sql_error const *>(&e);
 			if (se != nullptr)
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", query: {}"
 					", exceptionMessage: {}"
@@ -1224,7 +1224,7 @@ int MMSEngineDBFacade::updateEncodingJob(
 					se->query(), se->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exception: {}"
 					", conn: {}",
@@ -1260,7 +1260,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	try
 	{
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"IngestionJob update"
 				", ingestionJobKey: {}"
 				", JSON_SET...utcScheduleStart: {}"
@@ -1296,7 +1296,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			{
 				// 2020-05-10: in case of 'high availability', this update will be done two times
 				//	For this reason it is a warn below and no exception is raised
-				SPDLOG_WARN(
+				LOG_WARN(
 					"no ingestion update was done"
 					", utcRecordingPeriodStart: {}"
 					", utcRecordingPeriodEnd: {}"
@@ -1312,7 +1312,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 		}
 
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"EncodingJob update"
 				", encodingJobKey: {}"
 				", JSON_SET...utcScheduleStart: {}"
@@ -1350,7 +1350,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					utcRecordingPeriodStart, utcRecordingPeriodEnd, encodingJobKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1360,7 +1360,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1368,7 +1368,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1431,7 +1431,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					encodingJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1445,7 +1445,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					toString(currentEncodingStatus), encodingJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1459,7 +1459,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					toString(currentEncodingStatus), encodingJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1475,14 +1475,14 @@ nontransaction trans{*(conn->_sqlConnection)};
 					toString(currentEncodingPriority), toString(static_cast<EncodingPriority>(workspace->_maxEncodingPriority)), encodingJobKey,
 					sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"EncodingJob update"
 				", encodingJobKey: {}"
 				", encodingPriority: {}",
@@ -1515,13 +1515,13 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					toString(newEncodingPriority), encodingJobKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncodingJob updated successful"
 			", newEncodingPriority: {}"
 			", encodingJobKey: {}",
@@ -1532,7 +1532,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1540,7 +1540,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1603,7 +1603,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					encodingJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1617,7 +1617,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					toString(currentEncodingStatus), encodingJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1625,7 +1625,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 
 		EncodingStatus newEncodingStatus = EncodingStatus::ToBeProcessed;
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"EncodingJob update"
 				", encodingJobKey: {}"
 				", status: {}",
@@ -1658,12 +1658,12 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncodingJob updated successful"
 			", newEncodingStatus: {}"
 			", encodingJobKey: {}",
@@ -1699,12 +1699,12 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					toString(newEncodingStatus), encodingJobKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
-		SPDLOG_INFO(
+		LOG_INFO(
 			"IngestionJob updated successful"
 			", newIngestionStatus: {}"
 			", ingestionJobKey: {}",
@@ -1715,7 +1715,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1723,7 +1723,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1792,7 +1792,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1800,7 +1800,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1875,7 +1875,7 @@ void MMSEngineDBFacade::updateEncodingJobProgressAndRealTimeInfo(int64_t encodin
 	{
 		auto se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1883,7 +1883,7 @@ void MMSEngineDBFacade::updateEncodingJobProgressAndRealTimeInfo(int64_t encodin
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1950,7 +1950,7 @@ void MMSEngineDBFacade::updateEncodingPid(
 	{
 		auto se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1958,7 +1958,7 @@ void MMSEngineDBFacade::updateEncodingPid(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2020,14 +2020,14 @@ nontransaction trans{*(conn->_sqlConnection)};
 					", sqlStatement: {}",
 					encodingJobKey, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"EncodingJob update"
 				", encodingJobKey: {}"
 				", failuresNumber: {}",
@@ -2070,7 +2070,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2078,7 +2078,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2111,7 +2111,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	try
 	{
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"EncodingJob update"
 				", encodingJobKey: {}"
 				", isKilled: {}",
@@ -2154,7 +2154,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2162,7 +2162,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2193,7 +2193,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	try
 	{
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"EncodingJob update"
 				", encodingJobKey: {}"
 				", encoderKey: {}",
@@ -2233,7 +2233,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2241,7 +2241,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2301,7 +2301,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			*/
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncodingJob updated successful"
 			", parameters: {}"
 			", encodingJobKey: {}",
@@ -2312,7 +2312,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2320,7 +2320,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2375,7 +2375,7 @@ void MMSEngineDBFacade::updateOutputURL(int64_t ingestionJobKey, int64_t encodin
 			*/
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncodingJob updated successful"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -2388,7 +2388,7 @@ void MMSEngineDBFacade::updateOutputURL(int64_t ingestionJobKey, int64_t encodin
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2396,7 +2396,7 @@ void MMSEngineDBFacade::updateOutputURL(int64_t ingestionJobKey, int64_t encodin
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2535,7 +2535,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 			*/
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"EncodingJob updated successful"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -2553,7 +2553,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2561,7 +2561,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2588,7 +2588,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(i
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", ingestionJobKey: {}"
 			", fromMaster: {}"
@@ -2600,7 +2600,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncoderKey(i
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", ingestionJobKey: {}"
 			", fromMaster: {}",
@@ -2632,7 +2632,7 @@ MMSEngineDBFacade::encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encod
 	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
+		LOG_WARN(
 			"NotFound exception"
 			", encodingJobKey: {}"
 			", exceptionMessage: {}",
@@ -2643,7 +2643,7 @@ MMSEngineDBFacade::encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encod
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", encodingJobKey: {}"
 			", fromMaster: {}"
@@ -2655,7 +2655,7 @@ MMSEngineDBFacade::encodingJob_IngestionJobKeyTypeEncoderKeyStatus(int64_t encod
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", encodingJobKey: {}"
 			", fromMaster: {}",
@@ -2681,7 +2681,7 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 				ingestionJobKey
 			);
 			// abbiamo il log nel catch
-			// SPDLOG_WARN(errorMessage);
+			// LOG_WARN(errorMessage);
 
 			throw DBRecordNotFound(errorMessage);
 		}
@@ -2695,7 +2695,7 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
+		LOG_WARN(
 			"NotFound exception"
 			", ingestionJobKey: {}"
 			", exceptionMessage: {}",
@@ -2706,7 +2706,7 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", ingestionJobKey: {}"
 			", fromMaster: {}"
@@ -2718,7 +2718,7 @@ tuple<int64_t, int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyEncod
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", ingestionJobKey: {}"
 			", fromMaster: {}",
@@ -2744,7 +2744,7 @@ pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int6
 				ingestionJobKey
 			);
 			// abbiamo il log nel catch
-			// SPDLOG_WARN(errorMessage);
+			// LOG_WARN(errorMessage);
 
 			throw DBRecordNotFound(errorMessage);
 		}
@@ -2757,7 +2757,7 @@ pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int6
 	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
+		LOG_WARN(
 			"NotFound exception"
 			", ingestionJobKey: {}"
 			", exceptionMessage: {}",
@@ -2768,7 +2768,7 @@ pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int6
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", ingestionJobKey: {}"
 			", fromMaster: {}"
@@ -2780,7 +2780,7 @@ pair<int64_t, json> MMSEngineDBFacade::encodingJob_EncodingJobKeyParameters(int6
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", ingestionJobKey: {}"
 			", fromMaster: {}",
@@ -2804,7 +2804,7 @@ json MMSEngineDBFacade::encodingJob_columnAsJson(string columnName, int64_t enco
 	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
+		LOG_WARN(
 			"NotFound exception"
 			", exceptionMessage: {}",
 			e.what()
@@ -2814,7 +2814,7 @@ json MMSEngineDBFacade::encodingJob_columnAsJson(string columnName, int64_t enco
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", encodingJobKey: {}"
 			", fromMaster: {}"
@@ -2826,7 +2826,7 @@ json MMSEngineDBFacade::encodingJob_columnAsJson(string columnName, int64_t enco
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", encodingJobKey: {}"
 			", fromMaster: {}",
@@ -2852,7 +2852,7 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 	catch (DBRecordNotFound &e)
 	{
 		// il chiamante decidera se loggarlo come error
-		SPDLOG_WARN(
+		LOG_WARN(
 			"NotFound exception"
 			", exceptionMessage: {}",
 			e.what()
@@ -2862,7 +2862,7 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"runtime_error"
 			", encodingJobKey: {}"
 			", fromMaster: {}"
@@ -2874,7 +2874,7 @@ json MMSEngineDBFacade::encodingJob_Parameters(int64_t encodingJobKey, bool from
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"exception"
 			", encodingJobKey: {}"
 			", fromMaster: {}",
@@ -2913,7 +2913,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				", maxRows: {}",
 				rows, _maxRows
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2932,7 +2932,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				", orderBy: {}",
 				startIndex, rows, orderBy
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2987,7 +2987,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 					encodingJobKey
 				);
 				// abbiamo il log nel catch
-				// SPDLOG_WARN(errorMessage);
+				// LOG_WARN(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -3000,7 +3000,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		DBRecordNotFound const *de = dynamic_cast<DBRecordNotFound const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3008,14 +3008,14 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else if (de != nullptr)
-			SPDLOG_WARN(
+			LOG_WARN(
 				"query failed"
 				", exceptionMessage: {}"
 				", conn: {}",
 				de->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3386,7 +3386,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3394,7 +3394,7 @@ nontransaction trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3453,7 +3453,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 							", encodingJobStatus: {}",
 							ingestionJobKey, encodingJobKey, ingestionJobStatus, encodingJobStatus
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						updateEncodingJob(
 							encodingJobKey, EncodingError::CanceledByMMS,
@@ -3483,7 +3483,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 					throw e;
 
 				// Deadlock!!!
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"SQL exception"
 					", query: {}"
 					", exceptionMessage: {}"
@@ -3493,7 +3493,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 
 				{
 					int secondsBetweenRetries = 15;
-					SPDLOG_INFO(
+					LOG_INFO(
 						"fixEncodingJobsHavingWrongStatus failed, waiting before to try again"
 						", currentRetriesOnError: {}"
 						", maxRetriesOnError: {}"
@@ -3505,7 +3505,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"fixEncodingJobsHavingWrongStatus "
 			", totalRowsUpdated: {}",
 			totalRowsUpdated
@@ -3515,7 +3515,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3523,7 +3523,7 @@ void MMSEngineDBFacade::fixEncodingJobsHavingWrongStatus()
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3584,7 +3584,7 @@ void MMSEngineDBFacade::addEncodingJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -3624,7 +3624,7 @@ void MMSEngineDBFacade::addEncodingJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -3639,7 +3639,7 @@ void MMSEngineDBFacade::addEncodingJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3647,7 +3647,7 @@ void MMSEngineDBFacade::addEncodingJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3739,7 +3739,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -3778,7 +3778,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -3793,7 +3793,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3801,7 +3801,7 @@ void MMSEngineDBFacade::addEncoding_OverlayImageOnVideoJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3875,7 +3875,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -3914,7 +3914,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -3929,7 +3929,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3937,7 +3937,7 @@ void MMSEngineDBFacade::addEncoding_OverlayTextOnVideoJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4036,7 +4036,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -4075,7 +4075,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -4090,7 +4090,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4098,7 +4098,7 @@ void MMSEngineDBFacade::addEncoding_GenerateFramesJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4167,7 +4167,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding priority: {}",
@@ -4207,7 +4207,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -4222,7 +4222,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4230,7 +4230,7 @@ void MMSEngineDBFacade::addEncoding_SlideShowJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4277,7 +4277,7 @@ work trans{*(conn->_sqlConnection)};
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding priority: {}",
@@ -4316,7 +4316,7 @@ work trans{*(conn->_sqlConnection)};
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -4331,7 +4331,7 @@ work trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4339,7 +4339,7 @@ work trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4382,7 +4382,7 @@ work trans{*(conn->_sqlConnection)};
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding priority: {}",
@@ -4421,7 +4421,7 @@ work trans{*(conn->_sqlConnection)};
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -4436,7 +4436,7 @@ work trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4444,7 +4444,7 @@ work trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4476,7 +4476,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEncoding_LiveRecorderJob"
 			", ingestionJobKey: {}"
 			", ingestionJobLabel: {}"
@@ -4625,7 +4625,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 
 				string errorMessage;
 				string processorMMS;
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -4643,7 +4643,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4651,7 +4651,7 @@ void MMSEngineDBFacade::addEncoding_LiveRecorderJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4672,7 +4672,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEncoding_LiveProxyJob"
 			", ingestionJobKey: {}"
 			", streamSourceType: {}"
@@ -4751,7 +4751,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 
 				string errorMessage;
 				string processorMMS;
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -4767,7 +4767,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4775,7 +4775,7 @@ void MMSEngineDBFacade::addEncoding_LiveProxyJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4796,7 +4796,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEncoding_VODProxyJob"
 			", ingestionJobKey: {}"
 			", outputsRoot.size: {}",
@@ -4870,7 +4870,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 
 				string errorMessage;
 				string processorMMS;
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -4886,7 +4886,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -4894,7 +4894,7 @@ void MMSEngineDBFacade::addEncoding_VODProxyJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -4982,7 +4982,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 
 				string errorMessage;
 				string processorMMS;
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -4998,7 +4998,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5006,7 +5006,7 @@ void MMSEngineDBFacade::addEncoding_CountdownJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5036,7 +5036,7 @@ work trans{*(conn->_sqlConnection)};
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEncoding_LiveGridJob"
 			", ingestionJobKey: {}",
 			ingestionJobKey
@@ -5097,7 +5097,7 @@ work trans{*(conn->_sqlConnection)};
 
 				string errorMessage;
 				string processorMMS;
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", ingestionJobKey: {}"
 					", IngestionStatus: {}"
@@ -5113,7 +5113,7 @@ work trans{*(conn->_sqlConnection)};
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5121,7 +5121,7 @@ work trans{*(conn->_sqlConnection)};
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5203,7 +5203,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -5242,7 +5242,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -5257,7 +5257,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5265,7 +5265,7 @@ void MMSEngineDBFacade::addEncoding_VideoSpeed(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5319,7 +5319,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -5358,7 +5358,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -5373,7 +5373,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5381,7 +5381,7 @@ void MMSEngineDBFacade::addEncoding_AddSilentAudio(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5490,7 +5490,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -5529,7 +5529,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -5544,7 +5544,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5552,7 +5552,7 @@ void MMSEngineDBFacade::addEncoding_PictureInPictureJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5677,7 +5677,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -5717,7 +5717,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -5732,7 +5732,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5740,7 +5740,7 @@ void MMSEngineDBFacade::addEncoding_IntroOutroOverlayJob(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -5833,7 +5833,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 			int savedEncodingPriority = static_cast<int>(encodingPriority);
 			if (savedEncodingPriority > workspace->_maxEncodingPriority)
 			{
-				SPDLOG_WARN(
+				LOG_WARN(
 					"EncodingPriority was decreased because overcome the max allowed by this customer"
 					", workspace->_maxEncodingPriority: {}"
 					", requested encoding profile key: {}",
@@ -5873,7 +5873,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 
 			string errorMessage;
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -5888,7 +5888,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -5896,7 +5896,7 @@ void MMSEngineDBFacade::addEncoding_CutFrameAccurate(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

@@ -28,7 +28,7 @@ void API::updateMediaItem(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -42,7 +42,7 @@ void API::updateMediaItem(
 			", canEditMedia: {}",
 			apiAuthorizationDetails->canEditMedia
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -107,7 +107,7 @@ void API::updateMediaItem(
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Updating MediaItem"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -119,7 +119,7 @@ void API::updateMediaItem(
 				newRetentionInMinutes, tagsModified, newTagsRoot, uniqueNameModified, newUniqueName, crossReferencesRoot, apiAuthorizationDetails->admin
 			);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"MediaItem updated"
 				", workspaceKey: {}"
 				", mediaItemKey: {}",
@@ -139,7 +139,7 @@ void API::updateMediaItem(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -153,7 +153,7 @@ void API::updateMediaItem(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -167,7 +167,7 @@ void API::updatePhysicalPath(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -181,7 +181,7 @@ void API::updatePhysicalPath(
 			", canEditMedia: {}",
 			apiAuthorizationDetails->canEditMedia
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -205,7 +205,7 @@ void API::updatePhysicalPath(
 						", Json field: {}",
 						field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -216,7 +216,7 @@ void API::updatePhysicalPath(
 
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Updating MediaItem"
 				", userKey: {}"
 				", workspaceKey: {}",
@@ -226,7 +226,7 @@ void API::updatePhysicalPath(
 			json mediaItemRoot =
 				_mmsEngineDBFacade->updatePhysicalPath(apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey, physicalPathKey, newRetentionInMinutes, apiAuthorizationDetails->admin);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"PhysicalPath updated"
 				", workspaceKey: {}"
 				", mediaItemKey: {}"
@@ -247,7 +247,7 @@ void API::updatePhysicalPath(
 				", e.what(): {}",
 				api, requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -261,7 +261,7 @@ void API::updatePhysicalPath(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -275,7 +275,7 @@ void API::mediaItemsList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -314,7 +314,7 @@ void API::mediaItemsList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -373,7 +373,7 @@ void API::mediaItemsList(
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"{}, @API statistics@ - elapsed (seconds): @{}@", api,
 			chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startAPI).count()
 		);
@@ -387,7 +387,7 @@ void API::mediaItemsList(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -401,7 +401,7 @@ void API::tagsList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -425,7 +425,7 @@ void API::tagsList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -466,7 +466,7 @@ void API::tagsList(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }

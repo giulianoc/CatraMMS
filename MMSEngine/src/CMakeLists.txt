@@ -19,7 +19,6 @@
 
   set(SOURCES
       AWSSigner.cpp
-      #MMSDeliveryAuthorization.cpp
       MMSEngineDBFacade_Postgres.cpp
       MMSEngineDBFacade_Configuration_Postgres.cpp
       MMSEngineDBFacade_ConfigurationOutputType_Postgres.cpp
@@ -38,33 +37,16 @@
       MMSEngineDBFacade_UserWorkspace_Postgres.cpp
       MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp
       MMSEngineDBFacade_Workflow_Postgres.cpp
-      #MMSStorage.cpp
       Workspace.cpp
       Validator.cpp
-      #ActiveEncodingsManager.cpp
-      #EncoderProxy.cpp
-      #EncoderProxy_Content.cpp
-      #EncoderProxy_FaceIdentification.cpp
-      #EncoderProxy_FaceRecognition.cpp
-      #EncoderProxy_Image.cpp
-      #EncoderProxy_LiveProxy.cpp
-      #EncoderProxy_LiveRecorder.cpp
-      #EncoderProxy_Process.cpp
-      #EncoderProxy_AWS.cpp
-      #EncodersLoadBalancer.cpp
       EMailSender.cpp
       ThreadsStatistic.cpp)
 set(HEADERS
     AWSSigner.h
-    #MMSDeliveryAuthorization.h
     MMSEngineDBFacade.h
-    #MMSStorage.h
     PersistenceLock.h
     Workspace.h
     Validator.h
-    #ActiveEncodingsManager.h
-    #EncoderProxy.h
-    #EncodersLoadBalancer.h
     EMailSender.h
     LocalAssetIngestionEvent.h
     MultiLocalAssetIngestionEvent.h
@@ -79,48 +61,25 @@ execute_process(
   OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+include_directories("${THREADLOGGER_INCLUDE_DIR}")
 include_directories("${STRINGUTILS_INCLUDE_DIR}")
 include_directories("${CONVERT_INCLUDE_DIR}")
 include_directories("${DATETIME_INCLUDE_DIR}")
 include_directories("${ENCRYPT_INCLUDE_DIR}")
-#include_directories("${SYSTEM_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
-#include_directories("${MULTIEVENTSSET_INCLUDE_DIR}")
 include_directories("${POSTGRESHELPER_INCLUDE_DIR}")
 include_directories("${DBCONN_INCLUDE_DIR}")
 include_directories("${CURLWRAPPER_INCLUDE_DIR}")
 include_directories("${FFMPEGENGINE_INCLUDE_DIR}")
 include_directories("${FFMPEGWRAPPER_INCLUDE_DIR}")
 include_directories("${PROCESSUTILITY_INCLUDE_DIR}")
-#include_directories("${SAFEFILESYSTEM_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
 include_directories("${SPDLOG_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
-#include_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
 message("-- LSB_RELEASE_ID_SHORT: ${LSB_RELEASE_ID_SHORT}")
 if(LSB_RELEASE_ID_SHORT STREQUAL "CentOS")
   include_directories("/usr/include/mysql-cppconn/jdbc")
 endif()
-#if(APPLE)
-#include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")
-#include_directories(
-#"${PROJECT_SOURCE_DIR}/../mysql-connector-c++-1.1.9-macos10.12-x86-64bit/include"
-#)
-#include_directories(
-#"/usr/local/Cellar/imagemagick/7.0.7-22/include/mageMagick-7")
-#else()
-## ImageMagick, inside the deploy dir, is a link to the real version:
-## ImageMagick -> ImageMagick-7.0.10
-#include_directories(
-#"${PROJECT_SOURCE_DIR}/../deploy/ImageMagick/include/ImageMagick-7")
-#include_directories("${PROJECT_SOURCE_DIR}/../deploy/opencv/include/opencv4")
-#endif()
-
-#if(APPLE)
-#link_directories("${PROJECT_SOURCE_DIR}/../usr_local/lib")
-#endif()
-#link_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/lib")
-#link_directories("${PROJECT_SOURCE_DIR}/../deploy/libpqxx/lib")
 
 if(APPLE)
   include_directories("${OPENSSL_INCLUDE_DIR}")

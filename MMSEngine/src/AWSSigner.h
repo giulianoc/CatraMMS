@@ -2,9 +2,6 @@
 
 #include <string>
 
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 

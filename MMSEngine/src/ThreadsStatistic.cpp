@@ -1,6 +1,7 @@
 
 #include "ThreadsStatistic.h"
 #include <sstream>
+#include "ThreadLogger.h"
 
 using namespace std;
 
@@ -71,7 +72,7 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it != _runningThreads.end())
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"threadsStatistic: thread already added"
 				", input threadId: {}"
 				", input threadName: {}"
@@ -86,7 +87,7 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"threadsStatistic addThread failed"
 			", exception: {}",
 			e.what()
@@ -94,7 +95,7 @@ void ThreadsStatistic::addThread(thread::id threadId, ThreadData threadData)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"threadsStatistic addThread failed"
 			", exception: {}",
 			e.what()
@@ -115,7 +116,7 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		map<string, ThreadData>::iterator it = _runningThreads.find(sThreadId);
 		if (it == _runningThreads.end())
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"threadsStatistic: thread not found"
 				", threadId: {}",
 				sThreadId
@@ -127,7 +128,7 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 		ThreadData threadData = it->second;
 		_runningThreads.erase(it);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"threadsStatistic"
 			", threadName: {}"
 			", processorIdentifier: {}"
@@ -140,7 +141,7 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"threadsStatistic removeThread failed"
 			", exception: {}",
 			e.what()
@@ -148,7 +149,7 @@ void ThreadsStatistic::removeThread(thread::id threadId)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"threadsStatistic removeThread failed"
 			", exception: ",
 			e.what()
@@ -188,13 +189,13 @@ void ThreadsStatistic::logRunningThreads(bool asError)
 			);
 		}
 		if (asError)
-			SPDLOG_ERROR("threadsStatistic, running threads: {}", message);
+			LOG_ERROR("threadsStatistic, running threads: {}", message);
 		else
-			SPDLOG_INFO("threadsStatistic, running threads: {}", message);
+			LOG_INFO("threadsStatistic, running threads: {}", message);
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("threadsStatistic logRunningThreads failed"
+		LOG_ERROR("threadsStatistic logRunningThreads failed"
 			", exception: {}", e.what());
 	}
 }

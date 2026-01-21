@@ -33,7 +33,7 @@ void EncoderProxy::processLiveGrid(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processLiveGrid failed"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -47,7 +47,7 @@ void EncoderProxy::processLiveGrid(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processLiveGrid failed"
 			", _proxyIdentifier: {}"
 			", _encodingJobKey: {}"
@@ -65,7 +65,7 @@ void EncoderProxy::processSlideShow()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processSlideShow has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -91,7 +91,7 @@ void EncoderProxy::processSlideShow()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -107,7 +107,7 @@ void EncoderProxy::processSlideShow()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -124,7 +124,7 @@ void EncoderProxy::processSlideShow()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -169,7 +169,7 @@ void EncoderProxy::processSlideShow()
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -181,7 +181,7 @@ void EncoderProxy::processSlideShow()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processOverlayedImageOnVideo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -197,7 +197,7 @@ void EncoderProxy::processSlideShow()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processOverlayedImageOnVideo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -217,7 +217,7 @@ void EncoderProxy::processIntroOutroOverlay()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processIntroOutroOverlay has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -243,7 +243,7 @@ void EncoderProxy::processIntroOutroOverlay()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -259,7 +259,7 @@ void EncoderProxy::processIntroOutroOverlay()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -276,7 +276,7 @@ void EncoderProxy::processIntroOutroOverlay()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -308,7 +308,7 @@ void EncoderProxy::processIntroOutroOverlay()
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -320,7 +320,7 @@ void EncoderProxy::processIntroOutroOverlay()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processIntroOutroOverlay failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -336,7 +336,7 @@ void EncoderProxy::processIntroOutroOverlay()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processIntroOutroOverlay failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -356,7 +356,7 @@ void EncoderProxy::processCutFrameAccurate()
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processCutFrameAccurate has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -382,7 +382,7 @@ void EncoderProxy::processCutFrameAccurate()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -398,7 +398,7 @@ void EncoderProxy::processCutFrameAccurate()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -415,7 +415,7 @@ void EncoderProxy::processCutFrameAccurate()
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -486,7 +486,7 @@ void EncoderProxy::processCutFrameAccurate()
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -498,7 +498,7 @@ void EncoderProxy::processCutFrameAccurate()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processIntroOutroOverlay failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -514,7 +514,7 @@ void EncoderProxy::processCutFrameAccurate()
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processIntroOutroOverlay failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -541,7 +541,7 @@ void EncoderProxy::processGeneratedFrames(bool killed)
 			string processorMMS;
 			MMSEngineDBFacade::IngestionStatus newIngestionStatus = MMSEngineDBFacade::IngestionStatus::End_TaskSuccess;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -576,7 +576,7 @@ void EncoderProxy::processGeneratedFrames(bool killed)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(multiLocalAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (MULTIINGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -591,7 +591,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processVideoSpeed has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -623,7 +623,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 					", stagingEncodedAssetPathName: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -639,7 +639,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 					", stagingEncodedAssetPathName: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -656,7 +656,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 					", stagingEncodedAssetPathName: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -672,7 +672,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 					", stagingEncodedAssetPathName: {}",
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				continue;
 			}
@@ -703,7 +703,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 			shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 			_multiEventsSet->addEvent(event);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 				", _proxyIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -716,7 +716,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processVideoSpeed failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -732,7 +732,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processVideoSpeed failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -752,7 +752,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processPictureInPicture has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -778,7 +778,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -794,7 +794,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -811,7 +811,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -843,7 +843,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -855,7 +855,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processPictureInPicture failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -871,7 +871,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processPictureInPicture failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -891,7 +891,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processOverlayedTextOnVideo has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -917,7 +917,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -933,7 +933,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -950,7 +950,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -982,7 +982,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -994,7 +994,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processOverlayedImageOnVideo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1010,7 +1010,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processOverlayedImageOnVideo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1030,7 +1030,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processVideoSpeed has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1056,7 +1056,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1072,7 +1072,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1089,7 +1089,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1121,7 +1121,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1133,7 +1133,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processVideoSpeed failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1149,7 +1149,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processVideoSpeed failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1169,7 +1169,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 {
 	if (_currentUsedFFMpegExternalEncoder)
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"The encoder selected is external, processOverlayedImageOnVideo has nothing to do"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1195,7 +1195,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1211,7 +1211,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1228,7 +1228,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1260,7 +1260,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1272,7 +1272,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processOverlayedImageOnVideo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -1288,7 +1288,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processOverlayedImageOnVideo failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"

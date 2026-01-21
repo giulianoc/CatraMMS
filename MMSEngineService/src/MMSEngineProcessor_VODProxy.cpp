@@ -14,7 +14,7 @@ void MMSEngineProcessor::manageVODProxy(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "manageVODProxy" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -23,7 +23,7 @@ void MMSEngineProcessor::manageVODProxy(
 		{
 			string errorMessage = string() + "Wrong source number to be proxied" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -67,7 +67,7 @@ void MMSEngineProcessor::manageVODProxy(
 					{
 						string errorMessage = string() + "Field is not present or it is null" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -82,7 +82,7 @@ void MMSEngineProcessor::manageVODProxy(
 					{
 						string errorMessage = string() + "Field is not present or it is null" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -95,7 +95,7 @@ void MMSEngineProcessor::manageVODProxy(
 					{
 						string errorMessage = string() + "Field is not present or it is null" +
 											  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -113,7 +113,7 @@ void MMSEngineProcessor::manageVODProxy(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -152,7 +152,7 @@ void MMSEngineProcessor::manageVODProxy(
 
 				tie(key, vodContentType, dependencyType, stopIfReferenceProcessingError) = keyAndDependencyType;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "manageVODProxy" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", key: " + to_string(key)
 				);
@@ -320,7 +320,7 @@ void MMSEngineProcessor::manageVODProxy(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageVODProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -331,7 +331,7 @@ void MMSEngineProcessor::manageVODProxy(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageVODProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -342,7 +342,7 @@ void MMSEngineProcessor::manageVODProxy(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageVODProxy failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);

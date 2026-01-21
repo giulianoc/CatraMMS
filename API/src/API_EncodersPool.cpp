@@ -30,7 +30,7 @@ void API::addEncoder(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -44,7 +44,7 @@ void API::addEncoder(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -70,7 +70,7 @@ void API::addEncoder(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -90,7 +90,7 @@ void API::addEncoder(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -104,7 +104,7 @@ void API::addEncoder(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -118,7 +118,7 @@ void API::addEncoder(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -145,7 +145,7 @@ void API::addEncoder(
 				", e.what(): {}",
 				requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -159,7 +159,7 @@ void API::addEncoder(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addEncoder failed"
 				", e.what(): {}",
 				e.what()
@@ -179,7 +179,7 @@ void API::addEncoder(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -193,7 +193,7 @@ void API::modifyEncoder(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -207,7 +207,7 @@ void API::modifyEncoder(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -309,7 +309,7 @@ void API::modifyEncoder(
 				", e.what(): {}",
 				requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -328,7 +328,7 @@ void API::modifyEncoder(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->modifyEncoder failed"
 				", e.what(): {}",
 				e.what()
@@ -348,7 +348,7 @@ void API::modifyEncoder(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -362,7 +362,7 @@ void API::updateEncoderBandwidthStats(
 
 	const shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -376,7 +376,7 @@ void API::updateEncoderBandwidthStats(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -396,7 +396,7 @@ void API::updateEncoderBandwidthStats(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->updateEncoderBandwidthStats failed"
 				", e.what(): {}",
 				e.what()
@@ -417,7 +417,7 @@ void API::updateEncoderBandwidthStats(
 			", e.what(): {}",
 			api, encoderKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -432,7 +432,7 @@ void API::updateEncoderCPUUsageStats(
 	const shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails =
 		static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -446,7 +446,7 @@ void API::updateEncoderCPUUsageStats(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -465,7 +465,7 @@ void API::updateEncoderCPUUsageStats(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->updateEncoderCPUUsageStats failed"
 				", e.what(): {}",
 				e.what()
@@ -486,7 +486,7 @@ void API::updateEncoderCPUUsageStats(
 			", e.what(): {}",
 			api, encoderKey, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -500,7 +500,7 @@ void API::removeEncoder(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -513,7 +513,7 @@ void API::removeEncoder(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -530,7 +530,7 @@ void API::removeEncoder(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeEncoder failed"
 				", e.what(): {}",
 				e.what()
@@ -549,7 +549,7 @@ void API::removeEncoder(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -563,7 +563,7 @@ void API::encoderList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -598,7 +598,7 @@ void API::encoderList(
 		string labelOrder = requestData.getQueryParameter("labelOrder", "");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
-			SPDLOG_WARN(
+			LOG_WARN(
 				"encoderList: 'labelOrder' parameter is unknown"
 				", labelOrder: {}",
 				labelOrder
@@ -638,7 +638,7 @@ void API::encoderList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -652,7 +652,7 @@ void API::encodersPoolList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -677,7 +677,7 @@ void API::encodersPoolList(
 				", _maxPageSize: {}",
 				rows, _maxPageSize
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -686,7 +686,7 @@ void API::encodersPoolList(
 		string labelOrder = requestData.getQueryParameter("labelOrder", "");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
-			SPDLOG_WARN(
+			LOG_WARN(
 				"encodersPoolList: 'labelOrder' parameter is unknown"
 				", labelOrder: {}",
 				labelOrder
@@ -695,13 +695,13 @@ void API::encodersPoolList(
 		}
 
 		{
-			SPDLOG_ERROR("allora 1ui 1");
+			LOG_ERROR("allora 1ui 1");
 			json encodersPoolListRoot =
 				_mmsEngineDBFacade->getEncodersPoolList(start, rows, apiAuthorizationDetails->workspace->_workspaceKey, encodersPoolKey, label, labelOrder);
-			SPDLOG_ERROR("allora 1ui 2");
+			LOG_ERROR("allora 1ui 2");
 
 			string responseBody = JSONUtils::toString(encodersPoolListRoot);
-			SPDLOG_ERROR("allora 1ui 3");
+			LOG_ERROR("allora 1ui 3");
 
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}
@@ -714,7 +714,7 @@ void API::encodersPoolList(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -728,7 +728,7 @@ void API::addEncodersPool(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -742,7 +742,7 @@ void API::addEncodersPool(
 			", canEditEncodersPool: {}",
 			apiAuthorizationDetails->canEditEncodersPool
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -763,7 +763,7 @@ void API::addEncodersPool(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -787,7 +787,7 @@ void API::addEncodersPool(
 				", requestData.requestBody: {}",
 				requestData.requestBody
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -801,7 +801,7 @@ void API::addEncodersPool(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addEncodersPool failed"
 				", e.what(): {}",
 				e.what()
@@ -821,7 +821,7 @@ void API::addEncodersPool(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -835,7 +835,7 @@ void API::modifyEncodersPool(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -849,7 +849,7 @@ void API::modifyEncodersPool(
 			", canEditEncodersPool: {}",
 			apiAuthorizationDetails->canEditEncodersPool
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -872,7 +872,7 @@ void API::modifyEncodersPool(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -897,7 +897,7 @@ void API::modifyEncodersPool(
 				", e.what(): {}",
 				requestData.requestBody, e.what()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -911,7 +911,7 @@ void API::modifyEncodersPool(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->modifyEncodersPool failed"
 				", e.what(): {}",
 				e.what()
@@ -931,7 +931,7 @@ void API::modifyEncodersPool(
 			", e.what(): {}",
 			api, requestData.requestBody, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -945,7 +945,7 @@ void API::removeEncodersPool(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -958,7 +958,7 @@ void API::removeEncodersPool(
 			", canEditEncodersPool: {}",
 			apiAuthorizationDetails->canEditEncodersPool
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -975,7 +975,7 @@ void API::removeEncodersPool(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeEncodersPool failed"
 				", e.what(): {}",
 				e.what()
@@ -994,7 +994,7 @@ void API::removeEncodersPool(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1008,7 +1008,7 @@ void API::addAssociationWorkspaceEncoder(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1021,7 +1021,7 @@ void API::addAssociationWorkspaceEncoder(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1040,7 +1040,7 @@ void API::addAssociationWorkspaceEncoder(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addAssociationWorkspaceEncoder failed"
 				", e.what(): {}",
 				e.what()
@@ -1059,7 +1059,7 @@ void API::addAssociationWorkspaceEncoder(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }
@@ -1073,7 +1073,7 @@ void API::removeAssociationWorkspaceEncoder(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1086,7 +1086,7 @@ void API::removeAssociationWorkspaceEncoder(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1105,7 +1105,7 @@ void API::removeAssociationWorkspaceEncoder(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeAssociationWorkspaceEncoder failed"
 				", e.what(): {}",
 				e.what()
@@ -1124,7 +1124,7 @@ void API::removeAssociationWorkspaceEncoder(
 			", e.what(): {}",
 			api, e.what()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw;
 	}
 }

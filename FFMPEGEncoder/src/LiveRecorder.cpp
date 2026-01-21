@@ -22,7 +22,7 @@ LiveRecorder::LiveRecorder(
 	_tvChannelPort_CurrentOffset = tvChannelPort_CurrentOffset;
 
 	_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
 		_liveRecorderChunksIngestionCheckInSeconds
@@ -35,7 +35,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 	shared_ptr<LiveRecording> liveRecording = dynamic_pointer_cast<LiveRecording>(_encoding);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
@@ -130,7 +130,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 					", Field: {}",
 					liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -147,7 +147,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 					", Field: {}",
 					liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -167,7 +167,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 					", Field: {}",
 					liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -301,7 +301,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"remove"
 				", ingestionJobKey: {}"
 				", _encodingJobKey: {}"
@@ -353,7 +353,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 					{
 						try
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								"removeDirectory"
 								", ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -364,7 +364,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 						}
 						catch (exception &e)
 						{
-							SPDLOG_ERROR(
+							LOG_ERROR(
 								"remove directory failed"
 								", ingestionJobKey: {}"
 								", _encodingJobKey: {}"
@@ -389,7 +389,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"liveRecorder. _ffmpeg->liveRecorder"
 			", ingestionJobKey: {}"
 			", _encodingJobKey: {}"
@@ -459,7 +459,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		liveRecording->_encodingParametersRoot = nullptr;
 		liveRecording->_killedBecauseOfNotWorking = false;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"liveRecorded finished"
 			", liveRecording->_ingestionJobKey: {}"
 			", _encodingJobKey: {}",
@@ -474,7 +474,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"remove"
 				", segmentListPathName: {}",
 				liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName
@@ -498,7 +498,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		// The monitor directory was removed inside the ffmpeg method
 		if (fs::exists(liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName))
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"remove"
 				", segmentListPathName: {}",
 				liveRecording->_chunksTranscoderStagingContentsPath + liveRecording->_segmentListFileName
@@ -517,7 +517,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			Datetime::nowLocalTime(), liveRecording->_ingestionJobKey, liveRecording->_encodingJobKey, api,
 			requestBody, (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		if (dynamic_cast<FFMpegEncodingKilledByUser*>(&e))
 		{

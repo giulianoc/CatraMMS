@@ -17,7 +17,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "manageLiveCutThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -41,7 +41,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			to_string(_processorIdentifier)
 					+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 					+ ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -58,7 +58,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -76,7 +76,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " + to_string(ingestionJobKey)
 						+ ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -91,7 +91,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -111,7 +111,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -122,7 +122,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -289,7 +289,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							string errorMessage = string() + "recording media item without userData!!!" +
 												  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 												  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -339,7 +339,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 						);
 					}
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Retrieved chunk" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaITemKey: " + to_string(mediaItemKey) +
 						", currentUtcChunkStartTime: " + to_string(currentUtcChunkStartTime) + " (" + currentChunkStartTime + ")" +
@@ -382,7 +382,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 							cutPeriodEndTimeInMilliSeconds + ")";
 						if (errorIfAChunkIsMissing)
 						{
-							SPDLOG_ERROR(string() + errorMessage);
+							LOG_ERROR(string() + errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -416,7 +416,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 								cutPeriodEndTimeInMilliSeconds + ")";
 							if (errorIfAChunkIsMissing)
 							{
-								SPDLOG_ERROR(string() + errorMessage);
+								LOG_ERROR(string() + errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
@@ -462,7 +462,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				start += rows;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Retrieving chunk" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", start: " + to_string(start) + ", rows: " + to_string(rows) +
 					", mediaItemsRoot.size: " + to_string(mediaItemsRoot.size()) + ", lastRequestedChunk: " + to_string(lastRequestedChunk)
@@ -497,7 +497,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 								  ", maxWaitingForLastChunkInSeconds: " + to_string(maxWaitingForLastChunkInSeconds);
 			if (errorIfAChunkIsMissing)
 			{
-				SPDLOG_ERROR(string() + errorMessage);
+				LOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -507,7 +507,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Preparing workflow to ingest..." + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -655,7 +655,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 						json::value_t valueType = liveCutParametersRoot[field].type();
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Preparing workflow to ingest... (2)" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) + ", type: " + to_string(static_cast<int>(valueType))
 						);
@@ -783,7 +783,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 		// mancherebbe la parte aggiunta a LiveCut hls segmenter
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_TaskSuccess" +
 			", errorMessage: " + ""
 		);
@@ -794,12 +794,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageLiveCutThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -809,14 +809,14 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -827,12 +827,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageLiveCutThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -842,14 +842,14 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
@@ -867,7 +867,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 {
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"manageLiveCutThread"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -892,7 +892,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					", Field: {}",
 					_processorIdentifier, ingestionJobKey, "recordingCode"
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -916,7 +916,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					", Field: {}",
 					_processorIdentifier, ingestionJobKey, "start"
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -931,7 +931,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 					", Field: {}",
 					_processorIdentifier, ingestionJobKey, "end"
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1028,7 +1028,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 								", mediaItemKey: {}",
 								_processorIdentifier, ingestionJobKey, mediaItemKey
 							);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -1076,7 +1076,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						);
 					}
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Retrieved chunk"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -1130,12 +1130,12 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 						);
 						if (errorIfAChunkIsMissing)
 						{
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
 						else
-							SPDLOG_WARN(errorMessage);
+							LOG_WARN(errorMessage);
 					}
 
 					// check if it is the first chunk
@@ -1165,11 +1165,11 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 							);
 							if (errorIfAChunkIsMissing)
 							{
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
-							SPDLOG_WARN(errorMessage);
+							LOG_WARN(errorMessage);
 						}
 						else
 							firstRequestedChunk = true;
@@ -1210,7 +1210,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				start += rows;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Retrieving chunk"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -1230,7 +1230,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				{
 					int secondsToWaitLastChunk = 15;
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Sleeping to wait the last chunk..."
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -1263,15 +1263,15 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			);
 			if (errorIfAChunkIsMissing)
 			{
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 			else
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Preparing workflow to ingest..."
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}",
@@ -1392,7 +1392,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 						json::value_t valueType = liveCutParametersRoot["userData"].type();
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"Preparing workflow to ingest... (2)"
 							", _processorIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -1537,7 +1537,7 @@ task Live-Recorder.
 						", workflowResponseRoot: {}",
 						_processorIdentifier, ingestionJobKey, JSONUtils::toString(workflowResponseRoot)
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1562,13 +1562,13 @@ task Live-Recorder.
 						", workflowResponseRoot: {}",
 						_processorIdentifier, ingestionJobKey, cutLabel, JSONUtils::toString(workflowResponseRoot)
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"changeIngestionJobDependency"
 				", ingestionJobKey: {}"
 				", cutIngestionJobKey: {}",
@@ -1577,7 +1577,7 @@ task Live-Recorder.
 			_mmsEngineDBFacade->changeIngestionJobDependency(ingestionJobKey, cutIngestionJobKey);
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", ingestionJobKey: {}"
 			", IngestionStatus: End_TaskSuccess"
@@ -1591,7 +1591,7 @@ task Live-Recorder.
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveCutThread failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1600,7 +1600,7 @@ task Live-Recorder.
 			_processorIdentifier, ingestionJobKey, JSONUtils::toString(liveCutParametersRoot), e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -1614,7 +1614,7 @@ task Live-Recorder.
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"

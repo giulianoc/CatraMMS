@@ -47,145 +47,145 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_cpuUsageThreshold = JSONUtils::asInt32(configurationRoot["mms"], "cpuUsageThreshold", 10);
 
 	_maxDownloadAttemptNumber = JSONUtils::asInt32(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		"Configuration item"
 		", download->maxDownloadAttemptNumber: {}",
 		_maxDownloadAttemptNumber
 	);
 	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(configurationRoot["download"], "progressUpdatePeriodInSeconds", 5);
-	SPDLOG_TRACE(string() + "Configuration item" + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds));
+	LOG_TRACE(string() + "Configuration item" + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds));
 	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt32(configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		string() + "Configuration item" + ", download->secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
 	);
 
 	_maxIngestionJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
-	SPDLOG_TRACE(string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent));
+	LOG_TRACE(string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent));
 	_maxEncodingJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
-	SPDLOG_TRACE(string() + "Configuration item" + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent));
+	LOG_TRACE(string() + "Configuration item" + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent));
 
 	_maxEventManagementTimeInSeconds = JSONUtils::asInt32(configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5);
-	SPDLOG_TRACE(string() + "Configuration item" + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds));
+	LOG_TRACE(string() + "Configuration item" + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds));
 
 	_dependencyExpirationInHours = JSONUtils::asInt32(configurationRoot["mms"], "dependencyExpirationInHours", 5);
-	SPDLOG_TRACE(string() + "Configuration item" + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours));
+	LOG_TRACE(string() + "Configuration item" + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours));
 
 	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(configurationRoot["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 
 	_downloadChunkSizeInMegaBytes = JSONUtils::asInt32(configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5);
-	SPDLOG_TRACE(string() + "Configuration item" + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes));
+	LOG_TRACE(string() + "Configuration item" + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes));
 
 	_emailProviderURL = JSONUtils::asString(_configurationRoot["EmailNotification"], "providerURL", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", EmailNotification->providerURL: " + _emailProviderURL);
+	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->providerURL: " + _emailProviderURL);
 	_emailUserName = JSONUtils::asString(_configurationRoot["EmailNotification"], "userName", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", EmailNotification->userName: " + _emailUserName);
+	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->userName: " + _emailUserName);
 	{
 		string encryptedPassword = JSONUtils::asString(_configurationRoot["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			string() + "Configuration item" + ", EmailNotification->password: " + encryptedPassword
 			// + ", EmailNotification->password: " + _emailPassword
 		);
 	}
 	_emailCcsCommaSeparated = JSONUtils::asString(_configurationRoot["EmailNotification"], "cc", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", EmailNotification->cc: " + _emailCcsCommaSeparated);
+	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->cc: " + _emailCcsCommaSeparated);
 
 	_facebookGraphAPIProtocol = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "protocol", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol);
 	_facebookGraphAPIHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "hostName", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName);
 	_facebookGraphAPIVideoHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "videoHostName", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName);
 	_facebookGraphAPIPort = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "port", 0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort));
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort));
 	_facebookGraphAPIVersion = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "version", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion);
 	_facebookGraphAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds));
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds));
 	_facebookGraphAPIClientId = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientId", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId);
 	_facebookGraphAPIClientSecret = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientSecret", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret);
 	_facebookGraphAPIRedirectURL = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "redirectURL", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL);
 	_facebookGraphAPIAccessTokenURI = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "accessTokenURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI);
 	_facebookGraphAPILiveVideosURI = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "liveVideosURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI);
+	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI);
 
 	_youTubeDataAPIProtocol = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "protocol", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol);
 	_youTubeDataAPIHostName = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "hostName", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName);
 	_youTubeDataAPIPort = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "port", 0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort));
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort));
 	_youTubeDataAPIRefreshTokenURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "refreshTokenURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI);
 	_youTubeDataAPIUploadVideoURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "uploadVideoURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI);
 	_youTubeDataAPILiveBroadcastURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI);
 	_youTubeDataAPILiveStreamURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveStreamURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI);
 	_youTubeDataAPILiveBroadcastBindURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastBindURI", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI);
 	_youTubeDataAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds));
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds));
 	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		string() + "Configuration item" + ", YouTubeDataAPI->timeoutForUploadVideo: " + to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
 	);
 	_youTubeDataAPIClientId = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientId", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId);
 	_youTubeDataAPIClientSecret = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientSecret", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret);
+	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret);
 
 	_localCopyTaskEnabled = JSONUtils::asBool(_configurationRoot["mms"], "localCopyTaskEnabled", false);
-	SPDLOG_TRACE(string() + "Configuration item" + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled));
+	LOG_TRACE(string() + "Configuration item" + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled));
 
 	auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+	LOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 	auto mmsAPIHostname = JsonPath(&_configurationRoot)["api"]["hostname"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+	LOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
 	auto mmsAPIPort = JsonPath(&_configurationRoot)["api"]["port"].as<int32_t>(0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+	LOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 	auto mmsAPIVersion = JsonPath(&_configurationRoot)["api"]["version"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+	LOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
 	auto mmsAPIWorkflowURI = JsonPath(&_configurationRoot)["api"]["workflowURI"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+	LOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
 	auto mmsAPIIngestionURI = JsonPath(&_configurationRoot)["api"]["ingestionURI"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
+	LOG_TRACE(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
 	auto mmsBinaryProtocol = JsonPath(&_configurationRoot)["api"]["binary"]["protocol"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
+	LOG_TRACE(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
 	auto mmsBinaryHostname = JsonPath(&_configurationRoot)["api"]["binary"]["hostname"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
+	LOG_TRACE(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
 	auto mmsBinaryPort = JsonPath(&_configurationRoot)["api"]["binary"]["port"].as<int32_t>(0);
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
+	LOG_TRACE(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
 	auto mmsBinaryVersion = JsonPath(&_configurationRoot)["api"]["binary"]["version"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
+	LOG_TRACE(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
 	auto mmsBinaryIngestionURI = JsonPath(&_configurationRoot)["api"]["binary"]["ingestionURI"].as<string>();
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
+	LOG_TRACE(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
 	_mmsAPITimeoutInSeconds = JsonPath(&_configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
+	LOG_TRACE(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
 
 	_deliveryProtocol = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryProtocol", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
+	LOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
 	_deliveryHost = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryHost", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryHost: " + _deliveryHost);
+	LOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryHost: " + _deliveryHost);
 
 	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		string() + "Configuration item" + ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
 		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
-	SPDLOG_TRACE(
+	LOG_TRACE(
 		string() + "Configuration item" +
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: " + to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
 	_liveRecorderVirtualVODImageLabel = JSONUtils::asString(_configurationRoot["ffmpeg"], "liveRecorderVirtualVODImageLabel", "");
-	SPDLOG_TRACE(string() + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel);
+	LOG_TRACE(string() + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel);
 
 	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
 		mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
@@ -198,7 +198,7 @@ MMSEngineProcessor::MMSEngineProcessor(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "_mmsEngineDBFacade->resetProcessingJobsIfNeeded failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -232,7 +232,7 @@ void MMSEngineProcessor::operator()()
 {
 	constexpr chrono::milliseconds milliSecondsToBlock(100);
 
-	SPDLOG_INFO("MMSEngineProcessor thread started"
+	LOG_INFO("MMSEngineProcessor thread started"
 		", _processorIdentifier: {}", _processorIdentifier);
 
 	bool processorShutdown = false;
@@ -241,7 +241,7 @@ void MMSEngineProcessor::operator()()
 		bool blocking = true;
 		if (isProcessorShutdown())
 		{
-			SPDLOG_INFO("Processor was shutdown"
+			LOG_INFO("Processor was shutdown"
 				", _processorIdentifier: {}", _processorIdentifier);
 
 			processorShutdown = true;
@@ -263,7 +263,7 @@ void MMSEngineProcessor::operator()()
 		{
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTIONEVENT: // 1
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -273,7 +273,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleCheckIngestionEvent failed"
+				LOG_ERROR("handleCheckIngestionEvent failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -281,14 +281,14 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKINGESTION"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT: // 2
 		{
-			SPDLOG_DEBUG("1. Received LOCALASSETINGESTIONEVENT"
+			LOG_DEBUG("1. Received LOCALASSETINGESTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier);
 
 			shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent = dynamic_pointer_cast<LocalAssetIngestionEvent>(event);
@@ -304,7 +304,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleLocalAssetIngestionEvent failed"
+				LOG_ERROR("handleLocalAssetIngestionEvent failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -312,13 +312,13 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<LocalAssetIngestionEvent>(localAssetIngestionEvent);
 
-			SPDLOG_DEBUG("2. Received LOCALASSETINGESTIONEVENT"
+			LOG_DEBUG("2. Received LOCALASSETINGESTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODINGEVENT: // 3
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -328,7 +328,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleCheckEncodingEvent failed"
+				LOG_ERROR("handleCheckEncodingEvent failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -336,14 +336,14 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKENCODING"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT: // 4
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -354,7 +354,7 @@ void MMSEngineProcessor::operator()()
 					// content retention is a periodical event, we will wait the
 					// next one
 
-					SPDLOG_WARN(
+					LOG_WARN(
 						"Not enough available threads to manage handleContentRetentionEventThread, activity is postponed"
 						", _processorIdentifier: {}"
 						", _processorsThreadsNumber.use_count(): {}",
@@ -369,7 +369,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleContentRetentionEventThread failed"
+				LOG_ERROR("handleContentRetentionEventThread failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -377,14 +377,14 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CONTENTRETENTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_MULTILOCALASSETINGESTIONEVENT: // 5
 		{
-			SPDLOG_DEBUG("1. Received MULTILOCALASSETINGESTIONEVENT"
+			LOG_DEBUG("1. Received MULTILOCALASSETINGESTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier);
 
 			shared_ptr<MultiLocalAssetIngestionEvent> multiLocalAssetIngestionEvent = dynamic_pointer_cast<MultiLocalAssetIngestionEvent>(event);
@@ -400,7 +400,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleMultiLocalAssetIngestionEvent failed"
+				LOG_ERROR("handleMultiLocalAssetIngestionEvent failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -408,13 +408,13 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<MultiLocalAssetIngestionEvent>(multiLocalAssetIngestionEvent);
 
-			SPDLOG_DEBUG("2. Received MULTILOCALASSETINGESTIONEVENT"
+			LOG_DEBUG("2. Received MULTILOCALASSETINGESTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT: // 7
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -427,7 +427,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleDBDataRetentionEventThread failed"
+				LOG_ERROR("handleDBDataRetentionEventThread failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -435,14 +435,14 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_DBDATARETENTIONEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT: // 8
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -455,7 +455,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleCheckRefreshPartitionFreeSizeEvent failed"
+				LOG_ERROR("handleCheckRefreshPartitionFreeSizeEvent failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -463,14 +463,14 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_CHECKREFRESHPARTITIONFREESIZEEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT: // 9
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -480,7 +480,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("_mmsThreadsStatistic->logRunningThreads failed"
+				LOG_ERROR("_mmsThreadsStatistic->logRunningThreads failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -488,14 +488,14 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_THREADSSTATISTICEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
 		break;
 		case MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT: // 10
 		{
-			SPDLOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
+			LOG_DEBUG("1. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 
@@ -508,7 +508,7 @@ void MMSEngineProcessor::operator()()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("handleGEOInfoEventThread failed"
+				LOG_ERROR("handleGEOInfoEventThread failed"
 					", _processorIdentifier: {}"
 					", exception: {}", _processorIdentifier, e.what()
 				);
@@ -516,7 +516,7 @@ void MMSEngineProcessor::operator()()
 
 			_multiEventsSet->getEventsFactory()->releaseEvent<Event2>(event);
 
-			SPDLOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
+			LOG_DEBUG("2. Received MMSENGINE_EVENTTYPEIDENTIFIER_GEOINFOEVENT"
 				", _processorIdentifier: {}", _processorIdentifier
 			);
 		}
@@ -526,14 +526,14 @@ void MMSEngineProcessor::operator()()
 				", _processorIdentifier: {}"
 				", event id: {}", _processorIdentifier, event->getEventKey().first
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 
 		chrono::system_clock::time_point endEvent = chrono::system_clock::now();
 		if (long elapsedInSeconds = chrono::duration_cast<chrono::seconds>(endEvent - startEvent).count();
 			elapsedInSeconds > _maxEventManagementTimeInSeconds)
-			SPDLOG_WARN(
+			LOG_WARN(
 				"MMSEngineProcessor. Event management took too time"
 				", _processorIdentifier: {}"
 				", event id: {}"
@@ -543,7 +543,7 @@ void MMSEngineProcessor::operator()()
 			);
 	}
 
-	SPDLOG_INFO("MMSEngineProcessor thread terminated"
+	LOG_INFO("MMSEngineProcessor thread terminated"
 		", _processorIdentifier: {}", _processorIdentifier);
 }
 
@@ -576,7 +576,7 @@ bool MMSEngineProcessor::newThreadPermission(shared_ptr<long> processorsThreadsN
 	string lastCPUUsage;
 	for (int cpuUsage : *_cpuUsage)
 		lastCPUUsage += std::format("{} ", cpuUsage);
-	SPDLOG_INFO(
+	LOG_INFO(
 		"getMaxAdditionalProcessorThreads"
 		", _processorIdentifier: {}"
 		", lastCPUUsage: {}"
@@ -616,20 +616,20 @@ void MMSEngineProcessor::cpuUsageThread()
 				for (int cpuUsage : *_cpuUsage)
 					lastCPUUsage += (to_string(cpuUsage) + " ");
 
-				SPDLOG_INFO(string() + "cpuUsageThread" + ", lastCPUUsage: " + lastCPUUsage);
+				LOG_INFO(string() + "cpuUsageThread" + ", lastCPUUsage: " + lastCPUUsage);
 			}
 		}
 		catch (runtime_error &e)
 		{
 			string errorMessage = string("cpuUsage thread failed") + ", e.what(): " + e.what();
 
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 		}
 		catch (exception &e)
 		{
 			string errorMessage = string("cpuUsage thread failed") + ", e.what(): " + e.what();
 
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 		}
 	}
 }
@@ -728,7 +728,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		{
 			encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "outputRoot encodingProfileKey" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingProfileKey: " + to_string(encodingProfileKey)
 			);
@@ -754,7 +754,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 					);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "outputRoot encodingProfileLabel" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingProfileLabel: " + encodingProfileLabel +
 					", encodingProfileKey: " + to_string(encodingProfileKey)
@@ -777,7 +777,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 			if (encodingProfileMandatory)
 			{
 				string errorMessage = string() + "EncodingProfile is mandatory in case of Image" + ", ingestionJobKey: " + to_string(ingestionJobKey);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -883,7 +883,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, const shared_p
 						", imageoverlay filter: {}",
 						ingestionJobKey, JSONUtils::toString(complexFilterRoot)
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -962,7 +962,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 			string errorMessage = string("Wrong fileFormat") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", fileFormatSpecifiedByUser: " + fileFormatSpecifiedByUser +
 								  ", fileFormat: " + fileFormat;
-			SPDLOG_ERROR(string() + errorMessage);
+			LOG_ERROR(string() + errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1071,7 +1071,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 
 	string mediaMetadata = JSONUtils::toString(parametersRoot);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		string() + "Media metadata generated" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaMetadata: " + mediaMetadata
 	);
@@ -1093,20 +1093,20 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 
 	try
 	{
-		SPDLOG_INFO(string() + "GEOInfo: oncePerDayExecution" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+		LOG_INFO(string() + "GEOInfo: oncePerDayExecution" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 
 		alreadyExecuted = _mmsEngineDBFacade->onceExecution(MMSEngineDBFacade::OnceType::GEOInfo);
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(string() + "GEOInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
+		LOG_ERROR(string() + "GEOInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
 
 		// no throw since it is running in a detached thread
 		// throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(string() + "GEOInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
+		LOG_ERROR(string() + "GEOInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
 
 		// no throw since it is running in a detached thread
 		// throw e;
@@ -1122,7 +1122,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 		catch (runtime_error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"GEOInfo: updateRequestStatisticGEOInfo failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -1136,7 +1136,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"GEOInfo: updateRequestStatisticGEOInfo failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -1157,7 +1157,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 		catch (runtime_error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"GEOInfo: updateLoginStatisticGEOInfo failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -1171,7 +1171,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"GEOInfo: updateLoginStatisticGEOInfo failed"
 				", _processorIdentifier: {}"
 				", exception: {}",
@@ -1184,7 +1184,7 @@ void MMSEngineProcessor::handleGEOInfoEventThread()
 			// throw e;
 		}
 	}
-	SPDLOG_INFO(
+	LOG_INFO(
 		"GEOInfo: updateGEOInfo finished"
 		", _processorIdentifier: {}"
 		", alreadyExecuted: {}"
@@ -1203,7 +1203,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 	chrono::system_clock::time_point start = chrono::system_clock::now();
 
 	{
-		SPDLOG_INFO(string() + "Check Refresh Partition Free Size started" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+		LOG_INFO(string() + "Check Refresh Partition Free Size started" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 
 		try
 		{
@@ -1211,7 +1211,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 		}
 		catch (runtime_error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "refreshPartitionsFreeSizes failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -1221,7 +1221,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "refreshPartitionsFreeSizes failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", exception: " + e.what()
 			);
@@ -1231,7 +1231,7 @@ void MMSEngineProcessor::handleCheckRefreshPartitionFreeSizeEventThread()
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Check Refresh Partition Free Size finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
 		);
@@ -1261,7 +1261,7 @@ static int progressUploadCallback(void *clientp, curl_off_t dltotal, curl_off_t 
 		// this is to have one decimal in the percentage
 		double uploadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"progressUploadCallback. Upload still running"
 			", ingestionJobKey: {}"
 			", uploadingPercentage: {}"
@@ -1276,7 +1276,7 @@ static int progressUploadCallback(void *clientp, curl_off_t dltotal, curl_off_t 
 
 		if (progressData->_lastPercentageUpdated != uploadingPercentage)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"progressUploadCallback. Update IngestionJob"
 				", ingestionJobKey: {}"
 				", uploadingPercentage: {}",
@@ -1307,7 +1307,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			"ftpUploadMediaSource"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}",
@@ -1327,7 +1327,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 		);
 
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "addIngestionJobOutput" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(ingestionJobKey) + ", mediaItemKey: " + to_string(mediaItemKey) + ", physicalPathKey: " + to_string(physicalPathKey)
 			);
@@ -1340,7 +1340,7 @@ void MMSEngineProcessor::ftpUploadMediaSource(
 		string errorMessage = string() + "Download failed (exception)" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mmsAssetPathName: " + mmsAssetPathName +
 							  ", exception: " + e.what();
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -1362,7 +1362,7 @@ int MMSEngineProcessor::progressUploadCallback(
 		// this is to have one decimal in the percentage
 		double uploadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Upload still running" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", uploadingPercentage: " + to_string(uploadingPercentage) +
 			", dltotal: " + to_string(dltotal) + ", dlnow: " + to_string(dlnow) + ", ultotal: " + to_string(ultotal) + ", ulnow: " + to_string(ulnow)
@@ -1372,7 +1372,7 @@ int MMSEngineProcessor::progressUploadCallback(
 
 		if (lastPercentageUpdated != uploadingPercentage)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", uploadingPercentage: " + to_string(uploadingPercentage)
 			);
@@ -1450,7 +1450,7 @@ MMSEngineProcessor::processDependencyInfo(
 		if (extensionIndex == string::npos)
 		{
 			string errorMessage = string() + "No extension find in the asset file name" + ", fileName: " + fileName;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}

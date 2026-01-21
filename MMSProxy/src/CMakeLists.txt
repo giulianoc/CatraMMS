@@ -45,9 +45,7 @@ execute_process(
   OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-#include_directories("${STRINGUTILS_INCLUDE_DIR}")
 include_directories("${DATETIME_INCLUDE_DIR}")
-#include_directories("${ENCRYPT_INCLUDE_DIR}")
 include_directories("${SYSTEM_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")
 include_directories("${MULTIEVENTSSET_INCLUDE_DIR}")
@@ -61,6 +59,7 @@ include_directories("${PROCESSUTILITY_INCLUDE_DIR}")
 include_directories("${SAFEFILESYSTEM_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
 include_directories("${SPDLOG_INCLUDE_DIR}")
+include_directories("${THREADLOGGER_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
 include_directories("${PROJECT_SOURCE_DIR}/../deploy/aws-sdk-cpp/include")
 include_directories("${PROJECT_SOURCE_DIR}/MMSEngine/src")

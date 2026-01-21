@@ -17,7 +17,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		{
 			string errorMessage = string() + "Wrong number of dependencies" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -106,7 +106,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 				string errorMessage = string() + "Both fields are not present or it is null" +
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + keyField +
 									  ", Field: " + labelField;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -169,7 +169,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageIntroOutroOverlayTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -180,7 +180,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageIntroOutroOverlayTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -191,7 +191,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageIntroOutroOverlayTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -213,7 +213,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 		{
 			string errorMessage = string() + "Wrong number of dependencies" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -314,7 +314,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 				", sourceMediaItemKey_1: " + to_string(sourceMediaItemKey_1) + ", sourcePhysicalPathKey_1: " + to_string(sourcePhysicalPathKey_1) +
 				", contentType_2: " + MMSEngineDBFacade::toString(referenceContentType_2) +
 				", sourceMediaItemKey_2: " + to_string(sourceMediaItemKey_2) + ", sourcePhysicalPathKey_2: " + to_string(sourcePhysicalPathKey_2);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -395,7 +395,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageOverlayImageOnVideoTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -406,7 +406,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageOverlayImageOnVideoTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -428,7 +428,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 		{
 			string errorMessage = string() + "Wrong number of dependencies" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -524,7 +524,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			encodedNFSStagingAssetPathName = _mmsStorage->getWorkspaceIngestionRepository(workspace) / encodedFileName;
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "addEncoding_OverlayTextOnVideoJob" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 			", encodingPriority: " + MMSEngineDBFacade::toString(encodingPriority)
 		);
@@ -540,7 +540,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageOverlayTextOnVideoTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -551,7 +551,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageOverlayTextOnVideoTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);

@@ -36,7 +36,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", localAssetIngestionEvent.getMetadataContent(): " + localAssetIngestionEvent.getMetadataContent() + ", exception: " + e.what()
@@ -47,7 +47,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
@@ -59,7 +59,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEventThread(
 
 void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> processorsThreadsNumber, LocalAssetIngestionEvent localAssetIngestionEvent)
 {
-	SPDLOG_INFO(
+	LOG_INFO(
 		string() + "handleLocalAssetIngestionEvent" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", ingestionSourceFileName: " +
 		localAssetIngestionEvent.getIngestionSourceFileName() + ", metadataContent: " + localAssetIngestionEvent.getMetadataContent() +
@@ -79,7 +79,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "parsing parameters failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", localAssetIngestionEvent.getMetadataContent(): " + localAssetIngestionEvent.getMetadataContent() + ", exception: " + e.what()
@@ -87,7 +87,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + e.what()
@@ -100,7 +100,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + re.what()
@@ -108,7 +108,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + ex.what()
@@ -119,14 +119,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "validateMetadata failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + e.what()
@@ -139,7 +139,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + re.what()
@@ -147,7 +147,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + ex.what()
@@ -266,7 +266,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 													 "failed") +
 											  ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 											  ", localWorkspaceIngestionBinaryPathName: " + localWorkspaceIngestionBinaryPathName;
-						SPDLOG_ERROR(string() + errorMessage);
+						LOG_ERROR(string() + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -291,7 +291,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 					string("mediaSourceURL is not an externalStorage reference") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mediaSourceURL: " + mediaSourceURL;
 
-				SPDLOG_ERROR(string() + errorMessage);
+				LOG_ERROR(string() + errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -302,14 +302,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "binaryPathName initialization failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + e.what()
@@ -322,7 +322,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + re.what()
@@ -330,7 +330,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + ex.what()
@@ -341,14 +341,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "binaryPathName initialization failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + e.what()
@@ -361,7 +361,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + re.what()
@@ -369,7 +369,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + ex.what()
@@ -379,7 +379,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		throw e;
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		string() + "binaryPathName" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 		", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 	);
@@ -396,7 +396,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "validateMetadata failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", localAssetIngestionEvent.getMetadataContent(): " + localAssetIngestionEvent.getMetadataContent() + ", exception: " + e.what()
@@ -404,7 +404,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + e.what()
@@ -417,7 +417,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + re.what()
@@ -425,7 +425,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + ex.what()
@@ -436,7 +436,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -445,14 +445,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -463,14 +463,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "validateMetadata failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + e.what()
@@ -483,7 +483,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + re.what()
@@ -491,7 +491,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMetadataFailed" + ", errorMessage: " + ex.what()
@@ -502,7 +502,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -511,14 +511,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -558,7 +558,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 				tie(ignore, mediaFileFormat) = streamingURLDetails;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Retrieve streaming YouTube URL" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", initial YouTube URL: " + mediaSourceURL
 				);
@@ -567,14 +567,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "getMediaSourceDetails failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + e.what()
@@ -587,7 +587,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + re.what()
@@ -595,7 +595,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + ex.what()
@@ -606,7 +606,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -615,14 +615,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -633,14 +633,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "getMediaSourceDetails failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + e.what()
@@ -653,7 +653,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + re.what()
@@ -661,7 +661,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + ex.what()
@@ -672,7 +672,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -681,14 +681,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -706,14 +706,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "validateMediaSourceFile failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + e.what()
@@ -726,7 +726,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + re.what()
@@ -734,7 +734,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + ex.what()
@@ -745,7 +745,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -754,14 +754,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -772,14 +772,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "validateMediaSourceFile failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", exception: " + e.what()
 		);
 
 		string errorMessage = e.what();
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 			", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + e.what()
@@ -792,7 +792,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + re.what()
@@ -800,7 +800,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", IngestionStatus: " + "End_ValidationMediaSourceFailed" + ", errorMessage: " + ex.what()
@@ -811,7 +811,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -820,14 +820,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -895,7 +895,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 									  ", externalStorageRelativePathName: " + externalStorageRelativePathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -905,12 +905,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "_mmsStorage->moveAssetInMMSRepository failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -922,14 +922,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -939,7 +939,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -948,14 +948,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -966,12 +966,12 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "_mmsStorage->moveAssetInMMSRepository failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -983,14 +983,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -1000,7 +1000,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", binaryPathName: " + binaryPathName.string()
 				);
@@ -1009,14 +1009,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
@@ -1056,14 +1056,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				catch (runtime_error &e)
 				{
 					string errorMessage = string() + "listing directory failed" + ", e.what(): " + e.what();
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw e;
 				}
 				catch (exception &e)
 				{
 					string errorMessage = string() + "listing directory failed" + ", e.what(): " + e.what();
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -1074,7 +1074,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				string errorMessage = string() + "m3u8 file not found" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 									  ", mmsAssetPathName: " + mmsAssetPathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1083,7 +1083,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "retrieving m3u8 file failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 			);
@@ -1092,7 +1092,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove directory" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1101,21 +1101,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1128,14 +1128,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1145,7 +1145,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "retrieving m3u8 file failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 			);
@@ -1154,7 +1154,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1163,21 +1163,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1190,14 +1190,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1241,7 +1241,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			long bitRate = -1;
 			tie(durationInMilliSeconds, bitRate, ignore) = mediaInfoDetails;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "ffmpeg.getMediaInfo" + ", mmsAssetPathName: " + mmsAssetPathName +
 				", durationInMilliSeconds: " + to_string(durationInMilliSeconds) + ", bitRate: " + to_string(bitRate) +
 				", videoTracks.size: " + to_string(videoTracks.size()) + ", audioTracks.size: " + to_string(audioTracks.size())
@@ -1260,7 +1260,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			 * avg frame rate format is: total duration / total # of frames
 			if (localAssetIngestionEvent.getForcedAvgFrameRate() != "")
 			{
-				SPDLOG_INFO(string() + "handleLocalAssetIngestionEvent.
+				LOG_INFO(string() + "handleLocalAssetIngestionEvent.
 			Forced Avg Frame Rate"
 					+ ", current avgFrameRate: " + videoAvgFrameRate
 					+ ", forced avgFrameRate: " +
@@ -1279,7 +1279,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "EncoderVideoAudioProxy::getMediaInfo failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			);
@@ -1288,7 +1288,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1305,7 +1305,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 					to_string(localAssetIngestionEvent.getIngestionJobKey())
 							+ ", mmsAssetPathName: " + mmsAssetPathName
 						;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -1313,7 +1313,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 					string destBinaryPathName =
 					"/var/catramms/storage/MMSWorkingAreaRepository/Staging" +
 					mmsAssetPathName.substr(fileNameIndex);
-					SPDLOG_INFO(string() + "Moving"
+					LOG_INFO(string() + "Moving"
 						+ ", _processorIdentifier: " +
 					to_string(_processorIdentifier)
 						+ ", ingestionJobKey: " +
@@ -1328,21 +1328,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1355,14 +1355,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1372,7 +1372,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() +
 				"EncoderVideoAudioProxy::getVideoOrAudioDurationInMilliSeconds "
 				"failed" +
@@ -1384,7 +1384,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1393,21 +1393,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1420,14 +1420,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1440,7 +1440,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	{
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Processing through Magick" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 			);
@@ -1462,7 +1462,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			// If a warning is produced while loading an image, the image
 			// can normally still be used (but not if the warning was about
 			// something important!)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "ImageMagick failed to retrieve width and height failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what(): " + e.what()
 			);
@@ -1471,7 +1471,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1480,21 +1480,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1507,14 +1507,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1525,7 +1525,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (Magick::Warning &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "ImageMagick failed to retrieve width and height failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what(): " + e.what()
 			);
@@ -1534,7 +1534,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1543,21 +1543,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1570,14 +1570,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1588,7 +1588,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (Magick::ErrorFileOpen &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "ImageMagick failed to retrieve width and height failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what(): " + e.what()
 			);
@@ -1597,7 +1597,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1606,21 +1606,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1633,14 +1633,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1651,7 +1651,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (Magick::Error &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "ImageMagick failed to retrieve width and height failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what(): " + e.what()
 			);
@@ -1660,7 +1660,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1669,21 +1669,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1696,14 +1696,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1714,7 +1714,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				string() + "ImageMagick failed to retrieve width and height failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 			);
@@ -1723,7 +1723,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			{
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 					);
@@ -1732,21 +1732,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 				catch (exception &e)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 					);
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 				", errorMessage: " + e.what()
@@ -1759,14 +1759,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 				);
@@ -1781,13 +1781,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 							  ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 							  ", mmsAssetPathName: " + mmsAssetPathName;
 
-		SPDLOG_ERROR(string() + errorMessage);
+		LOG_ERROR(string() + errorMessage);
 
 		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 				);
@@ -1796,21 +1796,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 			", errorMessage: " + errorMessage
@@ -1823,14 +1823,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -1910,7 +1910,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 										  ", variantOfIngestionJobKey: " + to_string(variantOfIngestionJobKey) +
 										  ", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey) +
 										  ", mediaItemsDetails.size(): " + to_string(mediaItemsDetails.size());
-					SPDLOG_ERROR(string() + errorMessage);
+					LOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -1934,7 +1934,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 		if (variantOfMediaItemKey == -1)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "_mmsEngineDBFacade->saveSourceContentMetadata..." + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", encodingProfileKey: " + to_string(encodingProfileKey) + ", contentType: " + MMSEngineDBFacade::toString(contentType) +
@@ -1962,7 +1962,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 			int64_t mediaItemKey = mediaItemKeyAndPhysicalPathKey.first;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Added a new ingested content" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mediaItemKey: " + to_string(mediaItemKeyAndPhysicalPathKey.first) +
 				", physicalPathKey: " + to_string(mediaItemKeyAndPhysicalPathKey.second)
@@ -2014,7 +2014,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "_mmsEngineDBFacade->saveVariantContentMetadata.." + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -2044,13 +2044,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				// image
 				imageWidth, imageHeight, imageFormat, imageQuality
 			);
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Added a new variant content" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
 				", variantOfMediaItemKey,: " + to_string(variantOfMediaItemKey) + ", physicalPathKey: " + to_string(physicalPathKey)
 			);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_TaskSuccess" + ", errorMessage: " + ""
 			);
@@ -2062,7 +2062,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (DeadlockFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what: " + e.what()
@@ -2072,7 +2072,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 				);
@@ -2081,21 +2081,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -2107,14 +2107,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -2124,7 +2124,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (MediaItemKeyNotFound &e) // getMediaItemDetailsByIngestionJobKey failure
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "_mmsEngineDBFacade->getMediaItemDetailsByIngestionJobKey failed" + ", _processorIdentifier: " +
 			to_string(_processorIdentifier) + ", workspaceKey: " + to_string(localAssetIngestionEvent.getWorkspace()->_workspaceKey) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what: " + e.what()
@@ -2134,7 +2134,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 				);
@@ -2143,21 +2143,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -2169,14 +2169,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -2186,7 +2186,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "_mmsEngineDBFacade->saveSourceContentMetadata failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", e.what: " + e.what()
 		);
@@ -2195,7 +2195,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 				);
@@ -2204,21 +2204,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -2230,14 +2230,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -2247,7 +2247,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "_mmsEngineDBFacade->saveSourceContentMetadata failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey())
 		);
@@ -2256,7 +2256,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", mmsAssetPathName: " + mmsAssetPathName
 				);
@@ -2265,21 +2265,21 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			catch (runtime_error &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 			catch (exception &e)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "remove failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + e.what()
 				);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -2291,14 +2291,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -2322,7 +2322,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "handleMultiLocalAssetIngestionEventThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 			", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
@@ -2346,14 +2346,14 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				catch (runtime_error &e)
 				{
 					string errorMessage = string() + "listing directory failed" + ", e.what(): " + e.what();
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw e;
 				}
 				catch (exception &e)
 				{
 					string errorMessage = string() + "listing directory failed" + ", e.what(): " + e.what();
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw e;
 				}
@@ -2381,7 +2381,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 			{
 				string workspaceIngestionBinaryPathName = workspaceIngestionRepository + "/" + generatedFrameFileName;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 					", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
@@ -2390,7 +2390,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 			}
 			else
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Generated Frame to ingest" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", generatedFrameFileName: " + generatedFrameFileName
 					// + ", textToBeReplaced: " + textToBeReplaced
@@ -2407,7 +2407,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 										  ", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 										  ", generatedFrameFileName: " + generatedFrameFileName;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -2418,7 +2418,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				//                mmsSourceFileName.replace(mmsSourceFileName.find(textToBeReplaced),
 				//                textToBeReplaced.length(), textToReplace);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Generated Frame to ingest" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 					", new generatedFrameFileName: " + generatedFrameFileName + ", fileFormat: " + fileFormat
@@ -2472,7 +2472,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 					{
 						generatedFrameIngestionFailed = true;
 
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", exception: " + e.what()
 						);
@@ -2481,7 +2481,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 					{
 						generatedFrameIngestionFailed = true;
 
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "handleLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", exception: " + e.what()
 						);
@@ -2491,7 +2491,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 					//                    dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 					//                    _multiEventsSet->addEvent(event);
 					//
-					//                    SPDLOG_INFO(string() + "addEvent:
+					//                    LOG_INFO(string() + "addEvent:
 					//                    EVENT_TYPE (INGESTASSETEVENT)"
 					//                        + ", _processorIdentifier: " +
 					//                        to_string(_processorIdentifier)
@@ -2508,7 +2508,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		/*
 		if (generatedFrameIngestionFailed)
 		{
-			SPDLOG_INFO(string() + "updater->updateEncodingJob
+			LOG_INFO(string() + "updater->updateEncodingJob
 		PunctualError"
 				+ ", _encodingItem->_encodingJobKey: " +
 		to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
@@ -2526,7 +2526,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		ErrorBeforeEncoding, mediaItemKey, encodedPhysicalPathKey,
 					multiLocalAssetIngestionEvent->getIngestionJobKey());
 
-			SPDLOG_INFO(string() + "updater->updateEncodingJob
+			LOG_INFO(string() + "updater->updateEncodingJob
 		PunctualError"
 				+ ", _encodingItem->_encodingJobKey: " +
 		to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
@@ -2537,7 +2537,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		else
 		{
-			SPDLOG_INFO(string() + "updater->updateEncodingJob NoError"
+			LOG_INFO(string() + "updater->updateEncodingJob NoError"
 				+ ", _encodingItem->_encodingJobKey: " +
 		to_string(multiLocalAssetIngestionEvent->getEncodingJobKey())
 				+ ", _encodingItem->_ingestionJobKey: " +
@@ -2556,12 +2556,12 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "handleMultiLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", e.what(): " + e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 			", errorMessage: " + e.what()
@@ -2574,14 +2574,14 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -2591,7 +2591,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		{
 			string workspaceIngestionBinaryPathName = workspaceIngestionRepository + "/" + *it;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 				", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
@@ -2603,12 +2603,12 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "handleMultiLocalAssetIngestionEvent failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey())
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", IngestionStatus: " + "End_IngestionFailure" +
 			", errorMessage: " + e.what()
@@ -2621,14 +2621,14 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) + ", errorMessage: " + ex.what()
 			);
@@ -2638,7 +2638,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 		{
 			string workspaceIngestionBinaryPathName = workspaceIngestionRepository + "/" + *it;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Remove file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(multiLocalAssetIngestionEvent.getIngestionJobKey()) +
 				", workspaceIngestionBinaryPathName: " + workspaceIngestionBinaryPathName
@@ -2670,7 +2670,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, 
 			", ingestionType: {}",
 			_processorIdentifier, ingestionJobKey, MMSEngineDBFacade::toString(ingestionType)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -2700,7 +2700,7 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, 
 	int fileSizeInBytes = JSONUtils::asInt32(parametersRoot, "fileSizeInBytes", -1);
 	int64_t encodingProfileKey = JSONUtils::asInt32(parametersRoot, "encodingProfileKey", -1);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"media source details"
 		", _processorIdentifier: {}"
 		", ingestionJobKey: {}"
@@ -2749,7 +2749,7 @@ void MMSEngineProcessor::validateMediaSourceFile(
 								  "yet)" +
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", mediaSourcePathName: " + mediaSourcePathName;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2781,7 +2781,7 @@ void MMSEngineProcessor::validateMediaSourceFile(
 			string errorMessage = string() + "Media Source file does not exist (it was not uploaded yet)" +
 								  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 								  ", mediaSourcePathName: " + mediaSourcePathName;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2801,7 +2801,7 @@ void MMSEngineProcessor::validateMediaSourceFile(
 		{
 			string errorMessage = string() + "Media files to be opened" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSourcePathName: " + mediaSourcePathName;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2850,7 +2850,7 @@ void MMSEngineProcessor::validateMediaSourceFile(
 			string errorMessage = string() + "MD5 check failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSourcePathName: " + mediaSourcePathName +
 								  ", md5FileCheckSum: " + md5FileCheckSum + ", md5RealDigest: " + md5RealDigest;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2875,7 +2875,7 @@ void MMSEngineProcessor::validateMediaSourceFile(
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", mediaSourcePathName: " + mediaSourcePathName +
 								  ", metadataFileSizeInBytes: " + to_string(fileSizeInBytes) +
 								  ", downloadedFileSizeInBytes: " + to_string(downloadedFileSizeInBytes);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 	}
@@ -2897,7 +2897,7 @@ int MMSEngineProcessor::progressDownloadCallback(
 		// this is to have one decimal in the percentage
 		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Download still running"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -2916,7 +2916,7 @@ int MMSEngineProcessor::progressDownloadCallback(
 
 		if (lastPercentageUpdated != downloadingPercentage)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -2930,7 +2930,7 @@ int MMSEngineProcessor::progressDownloadCallback(
 
 		if (downloadingStoppedByUser)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Download canceled by user"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -2961,7 +2961,7 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		(curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::trunc);
 		curlDownloadData->currentChunkNumber += 1;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Opening binary file"
 			", curlDownloadData -> ingestionJobKey: {}"
 			", curlDownloadData -> destBinaryPathName: {}"
@@ -2979,7 +2979,7 @@ size_t curlDownloadCallback(char *ptr, size_t size, size_t nmemb, void *f)
 		(curlDownloadData->mediaSourceFileStream).open(curlDownloadData->destBinaryPathName, ofstream::binary | ofstream::app);
 		curlDownloadData->currentChunkNumber += 1;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Opening binary file"
 			", curlDownloadData -> ingestionJobKey: {}"
 			", curlDownloadData -> destBinaryPathName: {}"
@@ -2997,7 +2997,7 @@ static_cast<long>((curlDownloadData->mediaSourceFileStream).tellp())
 	curlDownloadData->currentTotalSize += (size * nmemb);
 
 	// debug perchè avremmo tantissimi log con elapsed 0
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"curlDownloadCallback"
 		", ingestionJobKey: {}"
 		", bytes written: {}"
@@ -3032,7 +3032,7 @@ int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow
 		// this is to have one decimal in the percentage
 		double downloadingPercentage = ((double)((int)(progress * 10))) / 10;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Download still running"
 			", ingestionJobKey: {}"
 			", downloadingPercentage: {}"
@@ -3050,7 +3050,7 @@ int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow
 
 		if (progressData->_lastPercentageUpdated != downloadingPercentage)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", downloadingPercentage: {}",
@@ -3065,7 +3065,7 @@ int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow
 
 		if (progressData->_stoppedByUser)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Download canceled by user"
 				", ingestionJobKey: {}"
 				", downloadingPercentage: {}"
@@ -3089,7 +3089,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		_mmsThreadsStatistic, "downloadMediaSourceFileThread", _processorIdentifier, _processorsThreadsNumber.use_count(), ingestionJobKey
 	);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"downloadMediaSourceFileThread"
 		", _processorIdentifier: {}"
 		", ingestionJobKey: {}"
@@ -3116,7 +3116,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				string streamingYouTubeURL;
 				tie(streamingYouTubeURL, ignore) = streamingURLDetails;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "downloadMediaSourceFileThread. YouTube URL calculation" +
 					", _processorIdentifier: " + to_string(_processorIdentifier) + ", _ingestionJobKey: " + to_string(ingestionJobKey) +
 					", initial YouTube URL: " + sourceReferenceURL + ", streaming YouTube URL: " + streamingYouTubeURL
@@ -3133,9 +3133,9 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", YouTube URL: " + sourceReferenceURL +
 									  ", e.what(): " + e.what();
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage
 				);
@@ -3149,14 +3149,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				}
 				catch (runtime_error &re)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 					);
 				}
 				catch (exception &ex)
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 					);
@@ -3188,7 +3188,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 	{
 		try
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "ffmpeg.streamingToFile" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL + ", destBinaryPathName: " + destBinaryPathName
 			);
@@ -3199,7 +3199,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 			bool downloadingCompleted = true;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", destBinaryPathName: " + destBinaryPathName +
 				", downloadingCompleted: " + to_string(downloadingCompleted)
@@ -3211,9 +3211,9 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			string errorMessage = string() + "ffmpeg.streamingToFile failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceReferenceURL: " + sourceReferenceURL +
 								  ", destBinaryPathName: " + destBinaryPathName + ", e.what(): " + e.what();
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 				to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + errorMessage
 			);
@@ -3227,14 +3227,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 				);
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 				);
@@ -3290,7 +3290,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 										  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 										  ", localSourceReferenceURL: " + localSourceReferenceURL;
 
-					SPDLOG_ERROR(string() + errorMessage);
+					LOG_ERROR(string() + errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -3299,7 +3299,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			{
 				bool downloadingCompleted = true;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", destBinaryPathName: " + destBinaryPathName +
 					", downloadingCompleted: " + to_string(downloadingCompleted)
@@ -3311,7 +3311,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3324,7 +3324,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3334,7 +3334,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3349,7 +3349,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3362,7 +3362,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (runtime_error &re)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3372,7 +3372,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (exception &ex)
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Update IngestionJob failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3391,7 +3391,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Downloading"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3463,7 +3463,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					request.setOpt(new curlpp::options::ProgressFunction(curlpp::types::ProgressFunctionFunctor(functor)));
 					request.setOpt(new curlpp::options::NoProgress(0L));
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Downloading media file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", localSourceReferenceURL: " + localSourceReferenceURL
 					);
@@ -3497,7 +3497,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					// curlDownloadData.maxChunkFileSize;
 					curlDownloadData.currentTotalSize = fileSize;
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Coming from a download failure, trying to Resume"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
@@ -3531,7 +3531,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					// 	0 == localSourceReferenceURL.compare(0, httpsPrefix.size(), httpsPrefix))
 					if (localSourceReferenceURL.starts_with("https"))
 					{
-						SPDLOG_INFO(string() + "Setting SslEngineDefault" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+						LOG_INFO(string() + "Setting SslEngineDefault" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 						request.setOpt(new curlpp::options::SslEngineDefault());
 					}
 
@@ -3549,7 +3549,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					else
 						request.setOpt(new curlpp::options::ResumeFrom(fileSize));
 
-					SPDLOG_INFO(
+					LOG_INFO(
 						string() + "Resume Download media file" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", localSourceReferenceURL: " + localSourceReferenceURL +
 						", resuming from fileSize: " + to_string(fileSize)
@@ -3579,7 +3579,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 											  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 											  ", localSourceReferenceURL: " + localSourceReferenceURL;
 
-						SPDLOG_ERROR(string() + errorMessage);
+						LOG_ERROR(string() + errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -3587,7 +3587,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 
 				downloadingCompleted = true;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", destBinaryPathName: " + destBinaryPathName +
 					", downloadingCompleted: " + to_string(downloadingCompleted)
@@ -3596,7 +3596,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (curlpp::LogicError &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"Download failed (LogicError)"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3614,13 +3614,13 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							string() + "Reached the max number of download attempts" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
 						);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 							to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 						);
@@ -3632,14 +3632,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 							);
 						}
 						catch (exception &ex)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 							);
@@ -3649,7 +3649,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
@@ -3663,7 +3663,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (curlpp::RuntimeError &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"Download failed (RuntimeError)"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -3681,13 +3681,13 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Reached the max number of download attempts" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
 						);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 							to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 						);
@@ -3699,14 +3699,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 							);
 						}
 						catch (exception &ex)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 							);
@@ -3716,7 +3716,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
@@ -3730,7 +3730,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (runtime_error e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() + "Download failed (runtime_error)" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 					", ingestionJobKey: " + to_string(ingestionJobKey) + ", localSourceReferenceURL: " + localSourceReferenceURL +
 					", exception: " + e.what()
@@ -3744,13 +3744,13 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Reached the max number of download attempts" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
 						);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 							to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 						);
@@ -3762,14 +3762,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 							);
 						}
 						catch (exception &ex)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 							);
@@ -3779,7 +3779,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +
@@ -3793,7 +3793,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 			}
 			catch (exception e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() + "Download failed (exception)" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 					to_string(ingestionJobKey) + ", localSourceReferenceURL: " + localSourceReferenceURL + ", exception: " + e.what()
 				);
@@ -3806,13 +3806,13 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 				{
 					if (attemptIndex + 1 == _maxDownloadAttemptNumber)
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Reached the max number of download attempts" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 							", ingestionJobKey: " + to_string(ingestionJobKey) +
 							", _maxDownloadAttemptNumber: " + to_string(_maxDownloadAttemptNumber)
 						);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 							to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 						);
@@ -3824,14 +3824,14 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 						}
 						catch (runtime_error &re)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 							);
 						}
 						catch (exception &ex)
 						{
-							SPDLOG_INFO(
+							LOG_INFO(
 								string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 							);
@@ -3841,7 +3841,7 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 					}
 					else
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							string() +
 							"Download failed. sleeping before to attempt "
 							"again" +

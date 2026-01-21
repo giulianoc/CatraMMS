@@ -13,33 +13,33 @@ FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot)
 	{
 		/*
 		_mmsAPIVODDeliveryURI = JsonPath(&_configurationRoot)["api"]["vodDeliveryURI"].as<string>();
-		SPDLOG_INFO(string() + "Configuration item" + ", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI);
+		LOG_INFO(string() + "Configuration item" + ", api->vodDeliveryURI: " + _mmsAPIVODDeliveryURI);
 		_mmsAPITimeoutInSeconds = JsonPath(&_configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
-		SPDLOG_INFO(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
+		LOG_INFO(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
 		*/
 
 		const auto mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
+		LOG_TRACE(string() + "Configuration item" + ", api->protocol: " + mmsAPIProtocol);
 		const auto mmsAPIHostname = JsonPath(&configurationRoot)["api"]["hostname"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
+		LOG_TRACE(string() + "Configuration item" + ", api->hostname: " + mmsAPIHostname);
 		const auto mmsAPIPort = JsonPath(&configurationRoot)["api"]["port"].as<int32_t>(0);
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
+		LOG_TRACE(string() + "Configuration item" + ", api->port: " + to_string(mmsAPIPort));
 		const auto mmsAPIVersion = JsonPath(&configurationRoot)["api"]["version"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
+		LOG_TRACE(string() + "Configuration item" + ", api->version: " + mmsAPIVersion);
 		const auto mmsAPIIngestionURI = JsonPath(&configurationRoot)["api"]["ingestionURI"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
+		LOG_TRACE(string() + "Configuration item" + ", api->ingestionURI: " + mmsAPIIngestionURI);
 		auto mmsAPIWorkflowURI = JsonPath(&configurationRoot)["api"]["workflowURI"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
+		LOG_TRACE(string() + "Configuration item" + ", api->workflowURI: " + mmsAPIWorkflowURI);
 		auto mmsBinaryProtocol = JsonPath(&configurationRoot)["api"]["binary"]["protocol"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
+		LOG_TRACE(string() + "Configuration item" + ", api->binary->protocol: " + mmsBinaryProtocol);
 		auto mmsBinaryHostname = JsonPath(&configurationRoot)["api"]["binary"]["hostname"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
+		LOG_TRACE(string() + "Configuration item" + ", api->binary->hostname: " + mmsBinaryHostname);
 		auto mmsBinaryPort = JsonPath(&configurationRoot)["api"]["binary"]["port"].as<int32_t>(0);
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
+		LOG_TRACE(string() + "Configuration item" + ", api->binary->port: " + to_string(mmsBinaryPort));
 		auto mmsBinaryVersion = JsonPath(&configurationRoot)["api"]["binary"]["version"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
+		LOG_TRACE(string() + "Configuration item" + ", api->binary->version: " + mmsBinaryVersion);
 		auto mmsBinaryIngestionURI = JsonPath(&configurationRoot)["api"]["binary"]["ingestionURI"].as<string>();
-		SPDLOG_TRACE(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
+		LOG_TRACE(string() + "Configuration item" + ", api->binary->ingestionURI: " + mmsBinaryIngestionURI);
 
 		_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
 			mmsAPIProtocol, mmsAPIHostname, mmsAPIPort, mmsAPIVersion, mmsAPIWorkflowURI);
@@ -51,13 +51,13 @@ FFMPEGEncoderBase::FFMPEGEncoderBase(json configurationRoot)
 			mmsBinaryProtocol, mmsBinaryHostname, mmsBinaryPort, mmsBinaryVersion, mmsBinaryIngestionURI);
 
 		_mmsAPITimeoutInSeconds = JsonPath(&configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			"Configuration item"
 			", api->timeoutInSeconds: {}",
 			_mmsAPITimeoutInSeconds
 		);
 		_mmsBinaryTimeoutInSeconds = JsonPath(&configurationRoot)["api"]["binary"]["timeoutInSeconds"].as<int32_t>(120);
-		SPDLOG_TRACE(
+		LOG_TRACE(
 			"Configuration item"
 			", api->binary->timeoutInSeconds: {}",
 			_mmsBinaryTimeoutInSeconds
@@ -130,7 +130,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 				", ingestionResponse: {}",
 				ingestionJobKey, ingestionResponse
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -149,7 +149,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 					", ingestionResponse: {}",
 					ingestionJobKey, ingestionResponse
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -166,7 +166,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 						", ingestionResponse: {}",
 						ingestionJobKey, ingestionResponse
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -186,7 +186,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 			", ingestionResponse: {}",
 			ingestionJobKey, ingestionResponse
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}

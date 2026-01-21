@@ -54,7 +54,7 @@ B. Write a method to create the signature for the signed URL that uses
 
 	if (!fs::exists(privateKeyPEMPathName))
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"PEM path name not existing"
 			", privateKeyPEMPathName: {}",
 			privateKeyPEMPathName
@@ -108,7 +108,7 @@ B. Write a method to create the signature for the signed URL that uses
 
 		cannedPolicy = JSONUtils::toString(cannedPolicyRoot);
 
-		SPDLOG_INFO("cannedPolicy without space: {}", cannedPolicy);
+		LOG_INFO("cannedPolicy without space: {}", cannedPolicy);
 	}
 
 	string signature = sign(privateKeyPEMPathName, cannedPolicy);
@@ -123,7 +123,7 @@ B. Write a method to create the signature for the signed URL that uses
 		resourceUrlOrPath, utcExpirationTime, signature, keyPairId
 	);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"calculateSignedURL"
 		", hostName: {}"
 		", uriPath: {}"
@@ -141,14 +141,14 @@ string AWSSigner::sign(string pemPathName, string message)
 {
 	// initialize OpenSSL
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"sign"
 		", pemPathName: {}"
 		", message: {}",
 		pemPathName, message
 	);
 
-	SPDLOG_DEBUG("OpenSSL initialization");
+	LOG_DEBUG("OpenSSL initialization");
 
 	{
 		OpenSSL_add_all_algorithms();
@@ -160,23 +160,23 @@ string AWSSigner::sign(string pemPathName, string message)
 		ERR_load_crypto_strings();
 	}
 
-	SPDLOG_DEBUG("createPrivateRSA...");
+	LOG_DEBUG("createPrivateRSA...");
 	RSA *rsa = NULL;
 	BIO *certbio = NULL;
 	{
-		SPDLOG_DEBUG("Creating BIO");
+		LOG_DEBUG("Creating BIO");
 		//  Create the Input/Output BIO's
 		certbio = BIO_new(BIO_s_file());
 
-		SPDLOG_DEBUG("Loading certificate");
+		LOG_DEBUG("Loading certificate");
 		// Loading the certificate from file (PEM)
 		int ret = BIO_read_filename(certbio, pemPathName.c_str());
 
-		SPDLOG_DEBUG("PEM_read_bio_RSAPrivateKey...");
+		LOG_DEBUG("PEM_read_bio_RSAPrivateKey...");
 		rsa = PEM_read_bio_RSAPrivateKey(certbio, &rsa, NULL, NULL);
 	}
 
-	SPDLOG_DEBUG("RSASign...");
+	LOG_DEBUG("RSASign...");
 	size_t signedMessageLength;
 	vector<unsigned char> signedMessage;
 	{
@@ -184,10 +184,10 @@ string AWSSigner::sign(string pemPathName, string message)
 		EVP_PKEY *priKey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(priKey, rsa);
 
-		SPDLOG_DEBUG("EVP_DigestSignInit...");
+		LOG_DEBUG("EVP_DigestSignInit...");
 		if (EVP_DigestSignInit(m_RSASignCtx, NULL, EVP_sha1(), NULL, priKey) <= 0)
 		{
-			SPDLOG_ERROR("EVP_DigestSignInit failed");
+			LOG_ERROR("EVP_DigestSignInit failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -196,10 +196,10 @@ string AWSSigner::sign(string pemPathName, string message)
 
 			return "";
 		}
-		SPDLOG_DEBUG("EVP_DigestSignUpdate...");
+		LOG_DEBUG("EVP_DigestSignUpdate...");
 		if (EVP_DigestSignUpdate(m_RSASignCtx, message.c_str(), message.size()) <= 0)
 		{
-			SPDLOG_ERROR("EVP_DigestSignUpdate failed");
+			LOG_ERROR("EVP_DigestSignUpdate failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -209,10 +209,10 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		SPDLOG_DEBUG("EVP_DigestSignFinal...");
+		LOG_DEBUG("EVP_DigestSignFinal...");
 		if (EVP_DigestSignFinal(m_RSASignCtx, NULL, &signedMessageLength) <= 0)
 		{
-			SPDLOG_ERROR("EVP_DigestSignFinal failed");
+			LOG_ERROR("EVP_DigestSignFinal failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -222,11 +222,11 @@ string AWSSigner::sign(string pemPathName, string message)
 			return "";
 		}
 
-		SPDLOG_DEBUG("EVP_DigestSignFinal...");
+		LOG_DEBUG("EVP_DigestSignFinal...");
 		signedMessage.resize(signedMessageLength);
 		if (EVP_DigestSignFinal(m_RSASignCtx, signedMessage.data(), &signedMessageLength) <= 0)
 		{
-			SPDLOG_ERROR("EVP_DigestSignFinal failed");
+			LOG_ERROR("EVP_DigestSignFinal failed");
 
 			EVP_PKEY_free(priKey);
 			EVP_MD_CTX_destroy(m_RSASignCtx);
@@ -237,9 +237,9 @@ string AWSSigner::sign(string pemPathName, string message)
 		}
 		signedMessage.resize(signedMessageLength);
 
-		SPDLOG_DEBUG("EVP_PKEY_free...");
+		LOG_DEBUG("EVP_PKEY_free...");
 		EVP_PKEY_free(priKey);
-		SPDLOG_DEBUG("EVP_MD_CTX_destroy...");
+		LOG_DEBUG("EVP_MD_CTX_destroy...");
 		EVP_MD_CTX_destroy(m_RSASignCtx);
 		// EVP_MD_CTX_cleanup(m_RSASignCtx);
 	}
@@ -250,10 +250,10 @@ string AWSSigner::sign(string pemPathName, string message)
 	// you must not call RSA_free() on the underlying key or a double-free may result
 	// info(__FILEREF__ + "RSA_free...");
 	// RSA_free(rsa);
-	SPDLOG_DEBUG("BIO_free...");
+	LOG_DEBUG("BIO_free...");
 	BIO_free(certbio);
 
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"base64Text..."
 		", signedMessageLength: {}",
 		signedMessageLength
@@ -264,37 +264,37 @@ string AWSSigner::sign(string pemPathName, string message)
 		BIO *bio, *b64;
 		BUF_MEM *bufferPtr;
 
-		SPDLOG_DEBUG("BIO_new...");
+		LOG_DEBUG("BIO_new...");
 		b64 = BIO_new(BIO_f_base64());
 		bio = BIO_new(BIO_s_mem());
 
-		SPDLOG_DEBUG("BIO_push...");
+		LOG_DEBUG("BIO_push...");
 		bio = BIO_push(b64, bio);
 
-		SPDLOG_DEBUG("BIO_write...");
+		LOG_DEBUG("BIO_write...");
 		BIO_write(bio, signedMessage, signedMessageLength);
 		BIO_flush(bio);
 		BIO_get_mem_ptr(bio, &bufferPtr);
 
-		SPDLOG_DEBUG("BIO_set_close...");
+		LOG_DEBUG("BIO_set_close...");
 		BIO_set_close(bio, BIO_NOCLOSE);
-		SPDLOG_DEBUG("BIO_free_all...");
+		LOG_DEBUG("BIO_free_all...");
 		BIO_free_all(bio);
 		// info(__FILEREF__ + "BIO_free...");
 		// BIO_free(b64);	// useless because of BIO_free_all
 
-		SPDLOG_DEBUG("base64Text set...");
+		LOG_DEBUG("base64Text set...");
 		char *base64Text = (*bufferPtr).data;
 
 		signature = base64Text;
 
 		BUF_MEM_free(bufferPtr);
 
-		SPDLOG_DEBUG("signature: {}", signature);
+		LOG_DEBUG("signature: {}", signature);
 	}
 	*/
 
-	SPDLOG_DEBUG("signature before replace: {}", signature);
+	LOG_DEBUG("signature before replace: {}", signature);
 
 	::replace(signature.begin(), signature.end(), '+', '-');
 	::replace(signature.begin(), signature.end(), '=', '_');
@@ -302,7 +302,7 @@ string AWSSigner::sign(string pemPathName, string message)
 
 	signature.erase(remove_if(signature.begin(), signature.end(), ::isspace), signature.end());
 
-	SPDLOG_DEBUG("signature after replace: {}", signature);
+	LOG_DEBUG("signature after replace: {}", signature);
 
 	return signature;
 	/*

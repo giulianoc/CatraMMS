@@ -21,7 +21,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 
 	try
 	{
-		SPDLOG_INFO("generateAndIngestFrameThread"
+		LOG_INFO("generateAndIngestFrameThread"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", _processorsThreadsNumber.use_count(): {}", _processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
@@ -37,7 +37,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				", dependencies.size: {}", _processorIdentifier, ingestionJobKey, dependencies.size());
 			_logger->warn(errorMessage);
 
-			SPDLOG_INFO("Update IngestionJob"
+			LOG_INFO("Update IngestionJob"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
 				", IngestionStatus: End_TaskSuccess"
@@ -52,7 +52,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("Update IngestionJob failed"
+				LOG_ERROR("Update IngestionJob failed"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
 					", errorMessage: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -83,7 +83,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					string errorMessage = std::format("ContentTpe is not a Video"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -156,7 +156,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 				);
 
 				{
-					SPDLOG_INFO("Generated Frame to ingest"
+					LOG_INFO("Generated Frame to ingest"
 						", _processorIdentifier: {}"
 						", ingestionJobKey: {}"
 						", frameAssetPathName: {}"
@@ -197,13 +197,13 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR("handleLocalAssetIngestionEvent failed"
+						LOG_ERROR("handleLocalAssetIngestionEvent failed"
 							", _processorIdentifier: {}"
 							", exception: {}", _processorIdentifier, e.what()
 						);
 
 						{
-							SPDLOG_INFO("Remove file"
+							LOG_INFO("Remove file"
 								", _processorIdentifier: {}"
 								", ingestionJobKey: {}"
 								", frameAssetPathName: {}", _processorIdentifier, ingestionJobKey, frameAssetPathName
@@ -226,7 +226,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 					", e.what(): {}",
 					_processorIdentifier, ingestionJobKey, dependencyIndex, dependencies.size(), e.what()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				if (dependencies.size() > 1)
 				{
@@ -242,13 +242,13 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("generateAndIngestFrame failed"
+		LOG_ERROR("generateAndIngestFrame failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what()
 		);
 
-		SPDLOG_INFO("Update IngestionJob"
+		LOG_INFO("Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", IngestionStatus: End_IngestionFailure"
@@ -261,7 +261,7 @@ void MMSEngineProcessor::generateAndIngestFrameThread(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_INFO("Update IngestionJob failed"
+			LOG_INFO("Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
 				", errorMessage: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -287,7 +287,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
 				", dependencies.size: {}", _processorIdentifier, ingestionJobKey, dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -325,7 +325,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 			string errorMessage = std::format("ContentTpe is not a Video"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -383,7 +383,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("manageGenerateFramesTask failed"
+		LOG_ERROR("manageGenerateFramesTask failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -421,7 +421,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					string errorMessage = std::format("Field is not present or it is null"
 						", _processorIdentifier: {}"
 						", Field: {}", _processorIdentifier, field);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -532,7 +532,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}", _processorIdentifier, ingestionJobKey);
 
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -556,7 +556,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
 				", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -571,7 +571,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 				double previousStartTimeInSeconds = startTimeInSeconds;
 				startTimeInSeconds = durationInMilliSeconds / 1000;
 
-				SPDLOG_INFO("startTimeInSeconds was changed to durationInMilliSeconds"
+				LOG_INFO("startTimeInSeconds was changed to durationInMilliSeconds"
 					", _processorIdentifier: {}"
 					", ingestionJobKey: {}"
 					", fixStartTimeIfOvercomeDuration: {}"
@@ -590,7 +590,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					", startTimeInSeconds: {}"
 					", durationInMilliSeconds: {}", _processorIdentifier, ingestionJobKey, sourceMediaItemKey,
 					startTimeInSeconds, durationInMilliSeconds);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -598,7 +598,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("fillGenerateFramesParameters failed"
+		LOG_ERROR("fillGenerateFramesParameters failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", e.what(): {}", _processorIdentifier, ingestionJobKey, e.what()

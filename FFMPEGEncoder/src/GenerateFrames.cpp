@@ -18,7 +18,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 {
 	string api = "generateFrames";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", _ingestionJobKey: {}"
 		", _encodingJobKey: {}"
@@ -57,7 +57,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				", Field: {}",
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -77,7 +77,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -97,7 +97,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", sourceTranscoderStagingAssetPathName: {}",
 							sourceTranscoderStagingAssetPathName
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -108,7 +108,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 				{
 					bool noErrorIfExists = true;
 					bool recursive = true;
-					SPDLOG_INFO(
+					LOG_INFO(
 						"Creating directory"
 						", sourceTranscoderStagingAssetDirectory: {}",
 						sourceTranscoderStagingAssetDirectory
@@ -139,7 +139,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -155,7 +155,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -225,14 +225,14 @@ void GenerateFrames::encodeContent(json metadataRoot)
 									", entry.path().filename().string(): {}",
 									entry.path().filename().string()
 								);
-								SPDLOG_ERROR(errorMessage);
+								LOG_ERROR(errorMessage);
 
 								throw runtime_error(errorMessage);
 							}
 							outputFileFormat = entry.path().filename().string().substr(extensionIndex + 1);
 						}
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"ingest Frame"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
@@ -252,7 +252,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					}
 					catch (runtime_error &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"generateFrames_ingestFrame failed"
 							", _encodingJobKey: {}"
 							", _ingestionJobKey: {}"
@@ -270,7 +270,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					}
 					catch (exception &e)
 					{
-						SPDLOG_ERROR(
+						LOG_ERROR(
 							"generateFrames_ingestFrame failed"
 							", _encodingJobKey: {}"
 							", _ingestionJobKey: {}"
@@ -288,7 +288,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					}
 
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"remove"
 							", framePathName: {}",
 							entry.path().string()
@@ -307,7 +307,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						", e.what(): {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					_completedWithError = true;
 					_encoding->_callbackData->pushErrorMessage(errorMessage);
@@ -323,7 +323,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						", e.what(): {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, e.what()
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					_completedWithError = true;
 					_encoding->_callbackData->pushErrorMessage(errorMessage);
@@ -334,7 +334,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 			if (fs::exists(imagesDirectory))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove"
 					", _ingestionJobKey: {}"
 					", imagesDirectory: {}",
@@ -357,7 +357,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						", Field: {}",
 						_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -415,7 +415,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", Field: {}",
 							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -431,7 +431,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", Field: {}",
 							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -444,7 +444,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", _ingestionJobKey: {}",
 							_encoding->_ingestionJobKey
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -461,7 +461,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							", Field: {}",
 							_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 						);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -470,7 +470,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					string prefix = "End_";
 					if (ingestionJobStatus.size() >= prefix.size() && 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
 					{
-						SPDLOG_INFO(
+						LOG_INFO(
 							"addContentIngestionJobKey finished"
 							", _ingestionJobKey: {}"
 							", addContentIngestionJobKey: {}"
@@ -485,7 +485,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					{
 						int secondsToSleep = 5;
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"addContentIngestionJobKey not finished, sleeping..."
 							", _ingestionJobKey: {}"
 							", addContentIngestionJobKey: {}"
@@ -498,7 +498,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					}
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Waiting result..."
 					", _ingestionJobKey: {}"
 					", addContentToBeWaited: {}"
@@ -516,11 +516,11 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					", _ingestionJobKey: {}",
 					_encoding->_ingestionJobKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"generateFrames finished"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
@@ -534,7 +534,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		{
 			if (!imagesDirectory.empty() && fs::exists(imagesDirectory))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove"
 					", imagesDirectory: {}",
 					imagesDirectory
@@ -544,7 +544,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		}
 
 		string eWhat = e.what();
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"{} API failed (EncodingKilledByUser)"
 			", ingestionJobKey: {}"
 			", encodingJobKey: {}"
@@ -566,7 +566,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		{
 			if (!imagesDirectory.empty() && fs::exists(imagesDirectory))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove"
 					", imagesDirectory: {}",
 					imagesDirectory
@@ -586,7 +586,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_callbackData->pushErrorMessage(errorMessage);
@@ -600,7 +600,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		{
 			if (!imagesDirectory.empty() && fs::exists(imagesDirectory))
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"Remove"
 					", imagesDirectory: {}",
 					imagesDirectory
@@ -620,7 +620,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 			Datetime::nowLocalTime(), _encoding->_ingestionJobKey, _encoding->_encodingJobKey, api,
 			JSONUtils::toString(metadataRoot), (eWhat.size() > 130 ? eWhat.substr(0, 130) : eWhat)
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// used by FFMPEGEncoderTask
 		_encoding->_callbackData->pushErrorMessage(errorMessage);
@@ -684,7 +684,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -706,7 +706,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Ingestion workflow failed"
 			", ingestionJobKey: {}"
 			", mmsWorkflowIngestionURL: {}"
@@ -725,7 +725,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 			", ingestionJobKey: {}",
 			ingestionJobKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -758,7 +758,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 					", Field: {}",
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -776,7 +776,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 	}
 	catch (exception& e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"Ingestion binary failed"
 			", ingestionJobKey: {}"
 			", mmsBinaryURL: {}"

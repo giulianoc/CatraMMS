@@ -19,7 +19,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 	try
 	{
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "checkStreamingThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
 			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
 		);
@@ -28,7 +28,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
 			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -41,7 +41,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -67,7 +67,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -77,7 +77,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -86,7 +86,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 		bool isVideo = JSONUtils::asBool(parametersRoot, "isVideo", true);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "checkStreamingThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", _ingestionJobKey: " + to_string(ingestionJobKey) + ", inputType: " + inputType + ", streamingUrl: " + streamingUrl
 		);
@@ -94,13 +94,13 @@ void MMSEngineProcessor::checkStreamingThread(
 		if (streamingUrl == "")
 		{
 			string errorMessage = string() + "streamingUrl is wrong" + ", streamingUrl: " + streamingUrl;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Calling ffmpeg.getMediaInfo"
 				", processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -114,7 +114,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			vector<tuple<int, int64_t, string, long, int, long, string>> audioTracks;
 			FFMpegWrapper ffmpeg(_configurationRoot);
 			mediaInfoDetails = ffmpeg.getMediaInfo(ingestionJobKey, isMMSAssetPathName, timeoutInSeconds, streamingUrl, videoTracks, audioTracks);
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Called ffmpeg.getMediaInfo"
 				", _processorIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -134,7 +134,7 @@ void MMSEngineProcessor::checkStreamingThread(
 					", audioTracks.size: {}",
 					_processorIdentifier, ingestionJobKey, videoTracks.size(), audioTracks.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 			else if (!isVideo && (videoTracks.size() > 0 || audioTracks.size() == 0))
@@ -147,12 +147,12 @@ void MMSEngineProcessor::checkStreamingThread(
 					", audioTracks.size: {}",
 					_processorIdentifier, ingestionJobKey, videoTracks.size(), audioTracks.size()
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -167,7 +167,7 @@ void MMSEngineProcessor::checkStreamingThread(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"checkStreamingThread failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -175,7 +175,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -189,7 +189,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -199,7 +199,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -212,7 +212,7 @@ void MMSEngineProcessor::checkStreamingThread(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"checkStreamingThread failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -220,7 +220,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			_processorIdentifier, ingestionJobKey, e.what()
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Update IngestionJob"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -234,7 +234,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -244,7 +244,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -257,12 +257,12 @@ void MMSEngineProcessor::checkStreamingThread(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "checkStreamingThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
 		);
@@ -272,14 +272,14 @@ void MMSEngineProcessor::checkStreamingThread(
 		}
 		catch (runtime_error &re)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
 			);
 		}
 		catch (exception &ex)
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);

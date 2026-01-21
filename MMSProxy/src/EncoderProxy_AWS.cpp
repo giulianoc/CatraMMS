@@ -32,7 +32,7 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 	Aws::MediaLive::Model::StartChannelRequest startChannelRequest;
 	startChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"mediaLive.StartChannel"
 		", ingestionJobKey: {}"
 		", awsChannelIdToBeStarted: {}",
@@ -53,7 +53,7 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 			ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(startChannelOutcome.GetError().GetErrorType()),
 			startChannelOutcome.GetError().GetMessage()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// liveproxy is not stopped in case of error
 		// throw runtime_error(errorMessage);
@@ -68,7 +68,7 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
 		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"mediaLive.DescribeChannel"
 			", ingestionJobKey: {}"
 			", awsChannelIdToBeStarted: {}",
@@ -87,7 +87,7 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 				ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(describeChannelOutcome.GetError().GetErrorType()),
 				describeChannelOutcome.GetError().GetMessage()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
 		}
@@ -102,7 +102,7 @@ void EncoderProxy::awsStartChannel(int64_t ingestionJobKey, string awsChannelIdT
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"mediaLive.StartChannel finished"
 		", ingestionJobKey: {}"
 		", awsChannelIdToBeStarted: {}"
@@ -123,7 +123,7 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 	Aws::MediaLive::Model::StopChannelRequest stopChannelRequest;
 	stopChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"mediaLive.StopChannel"
 		", ingestionJobKey: {}"
 		", awsChannelIdToBeStarted: {}",
@@ -144,7 +144,7 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 			ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(stopChannelOutcome.GetError().GetErrorType()),
 			stopChannelOutcome.GetError().GetMessage()
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		// liveproxy is not stopped in case of error
 		// throw runtime_error(errorMessage);
@@ -159,7 +159,7 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 		Aws::MediaLive::Model::DescribeChannelRequest describeChannelRequest;
 		describeChannelRequest.SetChannelId(awsChannelIdToBeStarted);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"mediaLive.DescribeChannel"
 			", ingestionJobKey: {}"
 			", awsChannelIdToBeStarted: {}",
@@ -178,7 +178,7 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 				ingestionJobKey, awsChannelIdToBeStarted, static_cast<long>(describeChannelOutcome.GetError().GetErrorType()),
 				describeChannelOutcome.GetError().GetMessage()
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			this_thread::sleep_for(chrono::seconds(sleepInSecondsBetweenChecks));
 		}
@@ -193,7 +193,7 @@ void EncoderProxy::awsStopChannel(int64_t ingestionJobKey, string awsChannelIdTo
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"mediaLive.StopChannel finished"
 		", ingestionJobKey: {}"
 		", awsChannelIdToBeStarted: {}"

@@ -31,7 +31,7 @@ void API::addYouTubeConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -45,7 +45,7 @@ void API::addYouTubeConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw FCGIRequestData::HTTPError(403);
 	}
@@ -69,7 +69,7 @@ void API::addYouTubeConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -83,7 +83,7 @@ void API::addYouTubeConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -99,7 +99,7 @@ void API::addYouTubeConf(
 						", Field: {}",
 						field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -115,7 +115,7 @@ void API::addYouTubeConf(
 						", Field: {}",
 						field
 					);
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -128,7 +128,7 @@ void API::addYouTubeConf(
 				", requestData.requestBody: {}"
 				", e.what(): {}",
 				requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -140,7 +140,7 @@ void API::addYouTubeConf(
 			if (!validator.isYouTubeTokenTypeValid(tokenType))
 			{
 				string errorMessage = string("The 'tokenType' is not valid") + ", tokenType: " + tokenType;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -150,7 +150,7 @@ void API::addYouTubeConf(
 				if (refreshToken.empty())
 				{
 					string errorMessage = "The 'refreshToken' is not valid (empty)";
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -160,7 +160,7 @@ void API::addYouTubeConf(
 				if (accessToken.empty())
 				{
 					string errorMessage = "The 'accessToken' is not valid (empty)";
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -172,7 +172,7 @@ void API::addYouTubeConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addYouTubeConf failed"
 				", e.what(): {}",
 				e.what()
@@ -185,7 +185,7 @@ void API::addYouTubeConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -206,7 +206,7 @@ void API::modifyYouTubeConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -220,7 +220,7 @@ void API::modifyYouTubeConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw FCGIRequestData::HTTPError(403);
 	}
@@ -273,7 +273,7 @@ void API::modifyYouTubeConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -289,7 +289,7 @@ void API::modifyYouTubeConf(
 				if (!validator.isYouTubeTokenTypeValid(tokenType))
 				{
 					string errorMessage = string("The 'tokenType' is not valid");
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -299,7 +299,7 @@ void API::modifyYouTubeConf(
 					if (!refreshTokenModified || refreshToken.empty())
 					{
 						string errorMessage = string("The 'refreshToken' is not valid");
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -309,7 +309,7 @@ void API::modifyYouTubeConf(
 					if (!accessTokenModified || accessToken == "")
 					{
 						string errorMessage = string("The 'accessToken' is not valid");
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -325,7 +325,7 @@ void API::modifyYouTubeConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->modifyYouTubeConf failed"
 				", e.what(): {}",
 				e.what()
@@ -338,7 +338,7 @@ void API::modifyYouTubeConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -359,7 +359,7 @@ void API::removeYouTubeConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -372,7 +372,7 @@ void API::removeYouTubeConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw FCGIRequestData::HTTPError(403);
 	}
@@ -389,7 +389,7 @@ void API::removeYouTubeConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -409,7 +409,7 @@ void API::youTubeConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -429,7 +429,7 @@ void API::youTubeConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -448,7 +448,7 @@ void API::addFacebookConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -462,7 +462,7 @@ void API::addFacebookConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -483,7 +483,7 @@ void API::addFacebookConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -497,7 +497,7 @@ void API::addFacebookConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -508,7 +508,7 @@ void API::addFacebookConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -522,7 +522,7 @@ void API::addFacebookConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addFacebookConf failed"
 				", e.what(): {}",
 				e.what()
@@ -535,7 +535,7 @@ void API::addFacebookConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -555,7 +555,7 @@ void API::modifyFacebookConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -569,7 +569,7 @@ void API::modifyFacebookConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -590,7 +590,7 @@ void API::modifyFacebookConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -604,7 +604,7 @@ void API::modifyFacebookConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -615,7 +615,7 @@ void API::modifyFacebookConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -630,7 +630,7 @@ void API::modifyFacebookConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -650,7 +650,7 @@ void API::removeFacebookConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -663,7 +663,7 @@ void API::removeFacebookConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -679,7 +679,7 @@ void API::removeFacebookConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -698,7 +698,7 @@ void API::facebookConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -724,7 +724,7 @@ void API::facebookConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -743,7 +743,7 @@ void API::addTwitchConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -757,7 +757,7 @@ void API::addTwitchConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -778,7 +778,7 @@ void API::addTwitchConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -792,7 +792,7 @@ void API::addTwitchConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -803,7 +803,7 @@ void API::addTwitchConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -817,7 +817,7 @@ void API::addTwitchConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addTwitchConf failed"
 				", e.what(): {}",
 				e.what()
@@ -830,7 +830,7 @@ void API::addTwitchConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -850,7 +850,7 @@ void API::modifyTwitchConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -864,7 +864,7 @@ void API::modifyTwitchConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -885,7 +885,7 @@ void API::modifyTwitchConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -899,7 +899,7 @@ void API::modifyTwitchConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -910,7 +910,7 @@ void API::modifyTwitchConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -925,7 +925,7 @@ void API::modifyTwitchConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -945,7 +945,7 @@ void API::removeTwitchConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -958,7 +958,7 @@ void API::removeTwitchConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -974,7 +974,7 @@ void API::removeTwitchConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -993,7 +993,7 @@ void API::twitchConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1019,7 +1019,7 @@ void API::twitchConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -1038,7 +1038,7 @@ void API::addTiktokConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -1062,7 +1062,7 @@ void API::addTiktokConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1076,7 +1076,7 @@ void API::addTiktokConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1088,7 +1088,7 @@ void API::addTiktokConf(
 				", requestData.requestBody: {}"
 				", e.what(): {}",
 				requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1102,7 +1102,7 @@ void API::addTiktokConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addTiktokConf failed"
 				", e.what(): {}",
 				e.what()
@@ -1115,7 +1115,7 @@ void API::addTiktokConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -1135,7 +1135,7 @@ void API::modifyTiktokConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -1159,7 +1159,7 @@ void API::modifyTiktokConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1173,7 +1173,7 @@ void API::modifyTiktokConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1186,7 +1186,7 @@ void API::modifyTiktokConf(
 				", requestData.requestBody: {}"
 				", e.what(): {}",
 				requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1201,7 +1201,7 @@ void API::modifyTiktokConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -1221,7 +1221,7 @@ void API::removeTiktokConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1239,7 +1239,7 @@ void API::removeTiktokConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -1258,7 +1258,7 @@ void API::tiktokConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1284,7 +1284,7 @@ void API::tiktokConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -1303,7 +1303,7 @@ void API::addStream(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -1317,7 +1317,7 @@ void API::addStream(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1365,7 +1365,7 @@ void API::addStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1379,7 +1379,7 @@ void API::addStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1466,7 +1466,7 @@ void API::addStream(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1485,7 +1485,7 @@ void API::addStream(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addStream failed"
 				", e.what(): {}",
 				e.what()
@@ -1498,7 +1498,7 @@ void API::addStream(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -1518,7 +1518,7 @@ void API::modifyStream(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -1532,7 +1532,7 @@ void API::modifyStream(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1825,7 +1825,7 @@ void API::modifyStream(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1839,7 +1839,7 @@ void API::modifyStream(
 			if (confKey == -1 && labelKey.empty())
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1861,7 +1861,7 @@ void API::modifyStream(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->modifyStream failed"
 				", e.what(): {}",
 				e.what()
@@ -1874,7 +1874,7 @@ void API::modifyStream(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -1894,7 +1894,7 @@ void API::removeStream(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1907,7 +1907,7 @@ void API::removeStream(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -1921,7 +1921,7 @@ void API::removeStream(
 			if (confKey == -1 && label.empty())
 			{
 				string errorMessage = string("The 'confKey/label' parameter is not found");
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1932,7 +1932,7 @@ void API::removeStream(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->removeStream failed"
 				", e.what(): {}",
 				e.what()
@@ -1945,7 +1945,7 @@ void API::removeStream(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -1964,7 +1964,7 @@ void API::streamList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -1984,7 +1984,7 @@ void API::streamList(
 
 			string errorMessage =
 				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -1996,7 +1996,7 @@ void API::streamList(
 		if (sourceType != "" && sourceType != "IP_PULL" && sourceType != "IP_PUSH"
 			&& sourceType != "CaptureLive" && sourceType != "TV")
 		{
-			SPDLOG_WARN(
+			LOG_WARN(
 				"streamList: 'sourceType' parameter is unknown"
 				", sourceType: {}",
 				sourceType
@@ -2010,7 +2010,7 @@ void API::streamList(
 		string labelOrder = requestData.getQueryParameter("labelOrder", string(""), false);
 		if (labelOrder != "asc" && labelOrder != "desc")
 		{
-			SPDLOG_WARN(
+			LOG_WARN(
 				"liveURLList: 'labelOrder' parameter is unknown"
 				", labelOrder: {}",
 				labelOrder
@@ -2029,7 +2029,7 @@ void API::streamList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -2048,7 +2048,7 @@ void API::streamFreePushEncoderPort(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -2066,7 +2066,7 @@ void API::streamFreePushEncoderPort(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -2085,7 +2085,7 @@ void API::addSourceTVStream(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -2099,7 +2099,7 @@ void API::addSourceTVStream(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2137,7 +2137,7 @@ void API::addSourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2160,7 +2160,7 @@ void API::addSourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2177,7 +2177,7 @@ void API::addSourceTVStream(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2224,7 +2224,7 @@ void API::addSourceTVStream(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2241,7 +2241,7 @@ void API::addSourceTVStream(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addSourceTVStream failed"
 				", e.what(): {}",
 				e.what()
@@ -2254,7 +2254,7 @@ void API::addSourceTVStream(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -2274,7 +2274,7 @@ void API::modifySourceTVStream(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -2288,7 +2288,7 @@ void API::modifySourceTVStream(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2475,7 +2475,7 @@ void API::modifySourceTVStream(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2497,7 +2497,7 @@ void API::modifySourceTVStream(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -2517,7 +2517,7 @@ void API::removeSourceTVStream(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -2530,7 +2530,7 @@ void API::removeSourceTVStream(
 			", admin: {}",
 			apiAuthorizationDetails->admin
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2546,7 +2546,7 @@ void API::removeSourceTVStream(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -2564,7 +2564,7 @@ void API::sourceTVStreamList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -2584,7 +2584,7 @@ void API::sourceTVStreamList(
 
 			string errorMessage =
 				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2598,7 +2598,7 @@ void API::sourceTVStreamList(
 		string nameOrder = requestData.getQueryParameter("nameOrder", string(""), false);
 		if (nameOrder != "asc" && nameOrder != "desc")
 		{
-			SPDLOG_WARN(
+			LOG_WARN(
 				"tvChannelList: 'nameOrder' parameter is unknown"
 				", nameOrder: {}",
 				nameOrder
@@ -2618,7 +2618,7 @@ void API::sourceTVStreamList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -2637,7 +2637,7 @@ void API::addRTMPChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -2651,7 +2651,7 @@ void API::addRTMPChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2677,7 +2677,7 @@ void API::addRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2691,7 +2691,7 @@ void API::addRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2717,7 +2717,7 @@ void API::addRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2728,7 +2728,7 @@ void API::addRTMPChannelConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2746,7 +2746,7 @@ void API::addRTMPChannelConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addRTMPChannelConf failed"
 				", e.what(): {}",
 				e.what()
@@ -2759,7 +2759,7 @@ void API::addRTMPChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -2779,7 +2779,7 @@ void API::modifyRTMPChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -2793,7 +2793,7 @@ void API::modifyRTMPChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2819,7 +2819,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2833,7 +2833,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2847,7 +2847,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2861,7 +2861,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2875,7 +2875,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2889,7 +2889,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2903,7 +2903,7 @@ void API::modifyRTMPChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2914,7 +2914,7 @@ void API::modifyRTMPChannelConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -2932,7 +2932,7 @@ void API::modifyRTMPChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -2952,7 +2952,7 @@ void API::removeRTMPChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -2965,7 +2965,7 @@ void API::removeRTMPChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -2981,7 +2981,7 @@ void API::removeRTMPChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -3000,7 +3000,7 @@ void API::rtmpChannelConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -3031,7 +3031,7 @@ void API::rtmpChannelConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -3050,7 +3050,7 @@ void API::addSRTChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -3064,7 +3064,7 @@ void API::addSRTChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3090,7 +3090,7 @@ void API::addSRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3104,7 +3104,7 @@ void API::addSRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3127,7 +3127,7 @@ void API::addSRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3138,7 +3138,7 @@ void API::addSRTChannelConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3153,7 +3153,7 @@ void API::addSRTChannelConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addSRTChannelConf failed"
 				", e.what(): {}",
 				e.what()
@@ -3166,7 +3166,7 @@ void API::addSRTChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -3186,7 +3186,7 @@ void API::modifySRTChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -3200,7 +3200,7 @@ void API::modifySRTChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3226,7 +3226,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3240,7 +3240,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3254,7 +3254,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3268,7 +3268,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3282,7 +3282,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3296,7 +3296,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3310,7 +3310,7 @@ void API::modifySRTChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3321,7 +3321,7 @@ void API::modifySRTChannelConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3336,7 +3336,7 @@ void API::modifySRTChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -3356,7 +3356,7 @@ void API::removeSRTChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -3369,7 +3369,7 @@ void API::removeSRTChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3385,7 +3385,7 @@ void API::removeSRTChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -3404,7 +3404,7 @@ void API::srtChannelConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -3435,7 +3435,7 @@ void API::srtChannelConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -3454,7 +3454,7 @@ void API::addHLSChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -3468,7 +3468,7 @@ void API::addHLSChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3492,7 +3492,7 @@ void API::addHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3506,7 +3506,7 @@ void API::addHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3526,7 +3526,7 @@ void API::addHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3537,7 +3537,7 @@ void API::addHLSChannelConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3552,7 +3552,7 @@ void API::addHLSChannelConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addHLSChannelConf failed"
 				", e.what(): {}",
 				e.what()
@@ -3565,7 +3565,7 @@ void API::addHLSChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -3585,7 +3585,7 @@ void API::modifyHLSChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -3599,7 +3599,7 @@ void API::modifyHLSChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3623,7 +3623,7 @@ void API::modifyHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3637,7 +3637,7 @@ void API::modifyHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3651,7 +3651,7 @@ void API::modifyHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3665,7 +3665,7 @@ void API::modifyHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3679,7 +3679,7 @@ void API::modifyHLSChannelConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3690,7 +3690,7 @@ void API::modifyHLSChannelConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3707,7 +3707,7 @@ void API::modifyHLSChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -3727,7 +3727,7 @@ void API::removeHLSChannelConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -3740,7 +3740,7 @@ void API::removeHLSChannelConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3756,7 +3756,7 @@ void API::removeHLSChannelConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -3775,7 +3775,7 @@ void API::hlsChannelConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -3806,7 +3806,7 @@ void API::hlsChannelConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -3825,7 +3825,7 @@ void API::addFTPConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -3839,7 +3839,7 @@ void API::addFTPConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -3864,7 +3864,7 @@ void API::addFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3878,7 +3878,7 @@ void API::addFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3892,7 +3892,7 @@ void API::addFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3906,7 +3906,7 @@ void API::addFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3920,7 +3920,7 @@ void API::addFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3934,7 +3934,7 @@ void API::addFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3945,7 +3945,7 @@ void API::addFTPConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -3959,7 +3959,7 @@ void API::addFTPConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addFTPConf failed"
 				", e.what(): {}",
 				e.what()
@@ -3972,7 +3972,7 @@ void API::addFTPConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -3992,7 +3992,7 @@ void API::modifyFTPConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -4006,7 +4006,7 @@ void API::modifyFTPConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -4031,7 +4031,7 @@ void API::modifyFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4045,7 +4045,7 @@ void API::modifyFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4059,7 +4059,7 @@ void API::modifyFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4073,7 +4073,7 @@ void API::modifyFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4087,7 +4087,7 @@ void API::modifyFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4101,7 +4101,7 @@ void API::modifyFTPConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4112,7 +4112,7 @@ void API::modifyFTPConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4127,7 +4127,7 @@ void API::modifyFTPConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -4147,7 +4147,7 @@ void API::removeFTPConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -4160,7 +4160,7 @@ void API::removeFTPConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -4176,7 +4176,7 @@ void API::removeFTPConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -4194,7 +4194,7 @@ void API::ftpConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -4213,7 +4213,7 @@ void API::ftpConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -4232,7 +4232,7 @@ void API::addEMailConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -4246,7 +4246,7 @@ void API::addEMailConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -4269,7 +4269,7 @@ void API::addEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4283,7 +4283,7 @@ void API::addEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4297,7 +4297,7 @@ void API::addEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4311,7 +4311,7 @@ void API::addEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4322,7 +4322,7 @@ void API::addEMailConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4336,7 +4336,7 @@ void API::addEMailConf(
 		}
 		catch (exception &e)
 		{
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"_mmsEngineDBFacade->addEMailConf failed"
 				", e.what(): {}",
 				e.what()
@@ -4349,7 +4349,7 @@ void API::addEMailConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -4369,7 +4369,7 @@ void API::modifyEMailConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
@@ -4383,7 +4383,7 @@ void API::modifyEMailConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -4406,7 +4406,7 @@ void API::modifyEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4420,7 +4420,7 @@ void API::modifyEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4434,7 +4434,7 @@ void API::modifyEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4448,7 +4448,7 @@ void API::modifyEMailConf(
 					", Field: {}",
 					field
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -4459,7 +4459,7 @@ void API::modifyEMailConf(
 			string errorMessage = std::format("requestBody json is not well format"
 				", requestData.requestBody: {}"
 				", e.what(): {}", requestData.requestBody, e.what());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -4474,7 +4474,7 @@ void API::modifyEMailConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", requestData.requestBody: {}"
@@ -4494,7 +4494,7 @@ void API::removeEMailConf(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -4507,7 +4507,7 @@ void API::removeEMailConf(
 			", canEditConfiguration: {}",
 			apiAuthorizationDetails->canEditConfiguration
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 		throw FCGIRequestData::HTTPError(403);
 	}
 
@@ -4523,7 +4523,7 @@ void API::removeEMailConf(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",
@@ -4541,7 +4541,7 @@ void API::emailConfList(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey
@@ -4560,7 +4560,7 @@ void API::emailConfList(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"API failed"
 			", API: {}"
 			", e.what(): {}",

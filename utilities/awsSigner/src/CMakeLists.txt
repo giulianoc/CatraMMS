@@ -28,6 +28,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories ("${SPDLOG_INCLUDE_DIR}")
+include_directories ("${THREADLOGGER_INCLUDE_DIR}")
 include_directories ("${PROJECT_SOURCE_DIR}/MMSEngine/src")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
 include_directories("${JSONUTILS_INCLUDE_DIR}")

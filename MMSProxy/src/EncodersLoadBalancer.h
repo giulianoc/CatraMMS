@@ -17,9 +17,6 @@
 #include <map>
 #include <string>
 #include <vector>
-#ifndef SPDLOG_ACTIVE_LEVEL
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
-#endif
 #include "MMSEngineDBFacade.h"
 #include "Workspace.h"
 #include "nlohmann/json.hpp"

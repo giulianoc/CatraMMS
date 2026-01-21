@@ -76,7 +76,7 @@ int main(const int iArgc, char *pArgv[])
 		int maxIngestionsNumber = 1;
 		int64_t workspaceKey;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"Registering User and Workspace..."
 			", name: {}"
 			", email: {}"
@@ -91,7 +91,7 @@ int main(const int iArgc, char *pArgv[])
 			chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // userExpirationDate
 		);
 
-		SPDLOG_INFO("Registered User and added Workspace"
+		LOG_INFO("Registered User and added Workspace"
 			", workspaceName: {}"
 			", email: {}"
 			", userKey: {}"
@@ -111,7 +111,7 @@ int main(const int iArgc, char *pArgv[])
 		auto[apiKey, name, emailAddress] = mmsEngineDBFacade->confirmRegistration(
 			confirmationCode, 30);
 
-		SPDLOG_INFO("User confirmed"
+		LOG_INFO("User confirmed"
 			", workspaceName: {}"
 			", email: {}"
 			", userKey: {}"
@@ -155,14 +155,14 @@ int main(const int iArgc, char *pArgv[])
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("mmsEngineDBFacade->confirmRegistration failed"
+		LOG_ERROR("mmsEngineDBFacade->confirmRegistration failed"
 			", exception: {}", e.what()
 			);
 
 		return 1;
 	}
 
-	SPDLOG_INFO("Shutdown done");
+	LOG_INFO("Shutdown done");
 
 	return 0;
 }

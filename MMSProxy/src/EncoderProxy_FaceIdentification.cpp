@@ -110,7 +110,7 @@ string EncoderProxy::faceIdentification()
 			else
 				start += rows;
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Called getMediaItemsList"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -176,7 +176,7 @@ string EncoderProxy::faceIdentification()
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"Deep learned model built"
 		", images.size: {}"
 		", idImages.size: {}"
@@ -193,7 +193,7 @@ string EncoderProxy::faceIdentification()
 			", _encodingJobKey: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -221,7 +221,7 @@ string EncoderProxy::faceIdentification()
 			", cascadePathName: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, cascadePathName
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -279,7 +279,7 @@ string EncoderProxy::faceIdentification()
 			", sourcePhysicalPath: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -296,7 +296,7 @@ string EncoderProxy::faceIdentification()
 			", sourcePhysicalPath: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -315,7 +315,7 @@ string EncoderProxy::faceIdentification()
 		}
 	}
 
-	SPDLOG_ERROR(
+	LOG_ERROR(
 		"faceIdentification started"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -339,7 +339,7 @@ string EncoderProxy::faceIdentification()
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"generating Face Identification"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -377,7 +377,7 @@ string EncoderProxy::faceIdentification()
 
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"updateEncodingJobProgress"
 					", encodingJobKey: {}"
 					", encodingProgress: {}",
@@ -388,7 +388,7 @@ string EncoderProxy::faceIdentification()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"updateEncodingJobProgress failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}",
@@ -396,7 +396,7 @@ string EncoderProxy::faceIdentification()
 				);
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"generating Face Recognition"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -468,7 +468,7 @@ string EncoderProxy::faceIdentification()
 						predictedTags = (*idTagIterator).second;
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"recognizerModel->predict"
 					", _proxyIdentifier: {}"
 					", _encodingJobKey: {}"
@@ -523,7 +523,7 @@ string EncoderProxy::faceIdentification()
 
 	capture.release();
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"faceIdentification media done"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -553,7 +553,7 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -570,7 +570,7 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -604,7 +604,7 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -616,7 +616,7 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processFaceIdentification failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -632,7 +632,7 @@ void EncoderProxy::processFaceIdentification(string stagingEncodedAssetPathName)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processFaceIdentification failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"

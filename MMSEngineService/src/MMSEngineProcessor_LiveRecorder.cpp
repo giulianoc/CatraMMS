@@ -63,7 +63,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				{
 					string errorMessage = string() + "Field is not present or it is null" +
 										  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + field;
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
@@ -120,7 +120,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -131,7 +131,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			{
 				string errorMessage = string() + "Field is not present or it is null" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", Field: " + field;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -283,7 +283,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
 
 		time_t utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
-		// SPDLOG_ERROR(string() + "ctime recordingPeriodStart: "
+		// LOG_ERROR(string() + "ctime recordingPeriodStart: "
 		//		+ ctime(utcRecordingPeriodStart));
 
 		// next code is the same in the Validator class
@@ -332,7 +332,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			if (encodersNumber == 0)
 			{
 				string errorMessage = string() + "No encoders available" + ", ingestionJobKey: " + to_string(ingestionJobKey);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -443,7 +443,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string errorMessage = string() + "No directory found in the staging asset path name" +
 									  ", _ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -478,7 +478,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				string errorMessage = string() + "No directory found in the staging asset path name" +
 									  ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", stagingLiveRecordingAssetPathName: " + stagingLiveRecordingAssetPathName;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				// throw runtime_error(errorMessage);
 			}
@@ -574,7 +574,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 			}
 			catch (exception& e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					string() +
 					"_mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName "
 					"failed" +
@@ -629,7 +629,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveRecorder failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -643,7 +643,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveRecorder failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -657,7 +657,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"manageLiveRecorder failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}",

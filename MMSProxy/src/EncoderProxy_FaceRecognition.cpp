@@ -39,7 +39,7 @@ string EncoderProxy::faceRecognition()
 
 	if (_faceRecognitionNumber.use_count() > _maxFaceRecognitionNumber)
 	{
-		SPDLOG_WARN(
+		LOG_WARN(
 			"MaxConcurrentJobsReached"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -83,7 +83,7 @@ string EncoderProxy::faceRecognition()
 
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"faceRecognition"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -104,7 +104,7 @@ string EncoderProxy::faceRecognition()
 			", cascadePathName: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, cascadePathName
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -137,7 +137,7 @@ string EncoderProxy::faceRecognition()
 			", sourcePhysicalPath: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -154,7 +154,7 @@ string EncoderProxy::faceRecognition()
 			", sourcePhysicalPath: {}",
 			_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sourcePhysicalPath
 		);
-		SPDLOG_ERROR(errorMessage);
+		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
@@ -179,7 +179,7 @@ string EncoderProxy::faceRecognition()
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"faceRecognition started"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -205,7 +205,7 @@ string EncoderProxy::faceRecognition()
 		}
 	}
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"generating Face Recognition start"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -252,7 +252,7 @@ string EncoderProxy::faceRecognition()
 
 				try
 				{
-					SPDLOG_INFO(
+					LOG_INFO(
 						"updateEncodingJobProgress"
 						", encodingJobKey: {}"
 						", encodingProgress: {}",
@@ -263,7 +263,7 @@ string EncoderProxy::faceRecognition()
 				}
 				catch (exception &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						"updateEncodingJobProgress failed"
 						", _ingestionJobKey: {}"
 						", _encodingJobKey: {}",
@@ -271,7 +271,7 @@ string EncoderProxy::faceRecognition()
 					);
 				}
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"generating Face Recognition progress"
 					", _proxyIdentifier: {}"
 					", _encodingJobKey: {}"
@@ -316,7 +316,7 @@ string EncoderProxy::faceRecognition()
 
 			try
 			{
-				SPDLOG_INFO(
+				LOG_INFO(
 					"updateEncodingJobProgress"
 					", encodingJobKey: {}"
 					", encodingProgress: {}",
@@ -327,7 +327,7 @@ string EncoderProxy::faceRecognition()
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"updateEncodingJobProgress failed"
 					", _ingestionJobKey: {}"
 					", _encodingJobKey: {}",
@@ -335,7 +335,7 @@ string EncoderProxy::faceRecognition()
 				);
 			}
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"generating Face Recognition progress"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
@@ -501,7 +501,7 @@ string EncoderProxy::faceRecognition()
 						shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 						_multiEventsSet->addEvent(event);
 
-						SPDLOG_INFO(
+						LOG_INFO(
 							"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 							", _proxyIdentifier: {}"
 							", ingestionJobKey: {}"
@@ -568,7 +568,7 @@ string EncoderProxy::faceRecognition()
 
 				frameContainingFaceFound = true;
 
-				SPDLOG_INFO(
+				LOG_INFO(
 					"addEvent: EVENT_TYPE (INGESTASSETEVENT) - FrameContainingFace"
 					", _proxyIdentifier: {}"
 					", ingestionJobKey: {}"
@@ -616,7 +616,7 @@ string EncoderProxy::faceRecognition()
 			shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 			_multiEventsSet->addEvent(event);
 
-			SPDLOG_INFO(
+			LOG_INFO(
 				"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 				", _proxyIdentifier: {}"
 				", ingestionJobKey: {}"
@@ -633,7 +633,7 @@ string EncoderProxy::faceRecognition()
 
 			string errorMessage = "No faces recognized";
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -653,7 +653,7 @@ string EncoderProxy::faceRecognition()
 
 			string errorMessage = "No face recognized";
 			string processorMMS;
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Update IngestionJob"
 				", ingestionJobKey: {}"
 				", IngestionStatus: {}"
@@ -665,7 +665,7 @@ string EncoderProxy::faceRecognition()
 		}
 		else
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"faceRecognition media done"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
@@ -684,7 +684,7 @@ string EncoderProxy::faceRecognition()
 
 	capture.release();
 
-	SPDLOG_INFO(
+	LOG_INFO(
 		"faceRecognition media done"
 		", _proxyIdentifier: {}"
 		", _encodingJobKey: {}"
@@ -732,7 +732,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -749,7 +749,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 				", stagingEncodedAssetPathName: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, stagingEncodedAssetPathName
 			);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -783,7 +783,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 		shared_ptr<Event2> event = dynamic_pointer_cast<Event2>(localAssetIngestionEvent);
 		_multiEventsSet->addEvent(event);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"addEvent: EVENT_TYPE (INGESTASSETEVENT)"
 			", _proxyIdentifier: {}"
 			", ingestionJobKey: {}"
@@ -795,7 +795,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processFaceRecognition failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"
@@ -811,7 +811,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			"processFaceRecognition failed"
 			", _proxyIdentifier: {}"
 			", _ingestionJobKey: {}"

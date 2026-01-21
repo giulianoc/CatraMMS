@@ -37,7 +37,7 @@ class Validator final
 		default:
 		{
 			const std::string errorMessage = fmt::format("toString with a wrong DependencyType: {}", static_cast<int>(dependencyType));
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw std::runtime_error(errorMessage);
 		}
 		}

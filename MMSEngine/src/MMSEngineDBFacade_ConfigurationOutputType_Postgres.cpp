@@ -46,7 +46,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -54,7 +54,7 @@ int64_t MMSEngineDBFacade::addRTMPChannelConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -119,7 +119,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -127,7 +127,7 @@ void MMSEngineDBFacade::modifyRTMPChannelConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -168,7 +168,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -178,7 +178,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -186,7 +186,7 @@ void MMSEngineDBFacade::removeRTMPChannelConf(int64_t workspaceKey, int64_t conf
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -211,7 +211,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getRTMPChannelConfList"
 			", workspaceKey: {}",
 			workspaceKey
@@ -365,7 +365,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -373,7 +373,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -395,7 +395,7 @@ int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string la
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getRTMPChannelDetails"
 			", workspaceKey: {}",
 			workspaceKey
@@ -430,9 +430,9 @@ int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string la
 					workspaceKey, label
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -446,7 +446,7 @@ int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string la
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -454,7 +454,7 @@ int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string la
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -474,7 +474,7 @@ json MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey,
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"rtmp_reservedDetails"
 			", reservedIngestionJobKey: {}"
 			", outputIndex: {}",
@@ -509,7 +509,7 @@ json MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey,
 					", outputIndex: {}",
 					reservedIngestionJobKey, outputIndex
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -523,7 +523,7 @@ json MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey,
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -531,7 +531,7 @@ json MMSEngineDBFacade::rtmp_reservationDetails(int64_t reservedIngestionJobKey,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -552,7 +552,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"reserveRTMPChannel"
 			", workspaceKey: {}"
 			", label: {}"
@@ -600,7 +600,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 
 			if (!ingestionJobKeyList.empty())
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"reserveRTMPChannel. "
 					"The following RTMP channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
 					", ingestionJobKeyList: {}",
@@ -629,7 +629,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 					{
 						string errorMessage =
 							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -706,7 +706,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 					", label: {}",
 					ingestionJobKey, workspaceKey, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -755,7 +755,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 					", sqlStatement: {}",
 					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -775,7 +775,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -783,7 +783,7 @@ MMSEngineDBFacade::reserveRTMPChannel(int64_t workspaceKey, string label, int ou
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -803,7 +803,7 @@ json MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"releaseRTMPChannel"
 			", workspaceKey: {}"
 			", outputIndex: {}"
@@ -840,7 +840,7 @@ json MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 					", workspaceKey: {}",
 					ingestionJobKey, workspaceKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -877,7 +877,7 @@ json MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 					", sqlStatement: {}",
 					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -889,7 +889,7 @@ json MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -897,7 +897,7 @@ json MMSEngineDBFacade::releaseRTMPChannel(int64_t workspaceKey, int outputIndex
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -945,7 +945,7 @@ int64_t MMSEngineDBFacade::addSRTChannelConf(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -953,7 +953,7 @@ int64_t MMSEngineDBFacade::addSRTChannelConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1014,7 +1014,7 @@ void MMSEngineDBFacade::modifySRTChannelConf(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1022,7 +1022,7 @@ void MMSEngineDBFacade::modifySRTChannelConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1063,7 +1063,7 @@ void MMSEngineDBFacade::removeSRTChannelConf(int64_t workspaceKey, int64_t confK
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1073,7 +1073,7 @@ void MMSEngineDBFacade::removeSRTChannelConf(int64_t workspaceKey, int64_t confK
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1081,7 +1081,7 @@ void MMSEngineDBFacade::removeSRTChannelConf(int64_t workspaceKey, int64_t confK
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1106,7 +1106,7 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getSRTChannelConfList"
 			", workspaceKey: {}",
 			workspaceKey
@@ -1259,7 +1259,7 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1267,7 +1267,7 @@ json MMSEngineDBFacade::getSRTChannelConfList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1290,7 +1290,7 @@ MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getSRTChannelDetails"
 			", workspaceKey: {}",
 			workspaceKey
@@ -1329,9 +1329,9 @@ MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool
 					workspaceKey, label
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -1354,7 +1354,7 @@ MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1362,7 +1362,7 @@ MMSEngineDBFacade::getSRTChannelDetails(int64_t workspaceKey, string label, bool
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1382,7 +1382,7 @@ string MMSEngineDBFacade::srt_reservationDetails(int64_t reservedIngestionJobKey
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"srt_reservedDetails"
 			", reservedIngestionJobKey: {}"
 			", outputIndex: {}",
@@ -1416,7 +1416,7 @@ string MMSEngineDBFacade::srt_reservationDetails(int64_t reservedIngestionJobKey
 					", outputIndex: {}",
 					reservedIngestionJobKey, outputIndex
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -1431,7 +1431,7 @@ string MMSEngineDBFacade::srt_reservationDetails(int64_t reservedIngestionJobKey
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1439,7 +1439,7 @@ string MMSEngineDBFacade::srt_reservationDetails(int64_t reservedIngestionJobKey
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1460,7 +1460,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"reserveSRTChannel"
 			", workspaceKey: {}"
 			", label: {}"
@@ -1508,7 +1508,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 
 			if (ingestionJobKeyList != "")
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"reserveSRTChannel. "
 					"The following SRT channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
 					", ingestionJobKeyList: {}",
@@ -1537,7 +1537,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 					{
 						string errorMessage =
 							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -1613,7 +1613,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 					", label: {}",
 					ingestionJobKey, workspaceKey, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1662,7 +1662,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 					", sqlStatement: {}",
 					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1680,7 +1680,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1688,7 +1688,7 @@ MMSEngineDBFacade::reserveSRTChannel(int64_t workspaceKey, string label, int out
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1708,7 +1708,7 @@ void MMSEngineDBFacade::releaseSRTChannel(int64_t workspaceKey, int outputIndex,
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"releaseSRTChannel"
 			", workspaceKey: {}"
 			", outputIndex: {}"
@@ -1744,7 +1744,7 @@ void MMSEngineDBFacade::releaseSRTChannel(int64_t workspaceKey, int outputIndex,
 					", workspaceKey: {}",
 					ingestionJobKey, workspaceKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1780,7 +1780,7 @@ void MMSEngineDBFacade::releaseSRTChannel(int64_t workspaceKey, int outputIndex,
 					", sqlStatement: {}",
 					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -1790,7 +1790,7 @@ void MMSEngineDBFacade::releaseSRTChannel(int64_t workspaceKey, int outputIndex,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1798,7 +1798,7 @@ void MMSEngineDBFacade::releaseSRTChannel(int64_t workspaceKey, int outputIndex,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1858,7 +1858,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1866,7 +1866,7 @@ int64_t MMSEngineDBFacade::addHLSChannelConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1938,7 +1938,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1946,7 +1946,7 @@ void MMSEngineDBFacade::modifyHLSChannelConf(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1999,7 +1999,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 					", sqlStatement: {}",
 					confKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_WARN(errorMessage);
+				LOG_WARN(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2009,7 +2009,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2017,7 +2017,7 @@ void MMSEngineDBFacade::removeHLSChannelConf(int64_t workspaceKey, int64_t confK
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2042,7 +2042,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getHLSChannelConfList"
 			", workspaceKey: {}",
 			workspaceKey
@@ -2183,7 +2183,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2191,7 +2191,7 @@ json MMSEngineDBFacade::getHLSChannelConfList(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2225,7 +2225,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"getHLSChannelDetails"
 			", workspaceKey: {}",
 			workspaceKey
@@ -2262,9 +2262,9 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 					workspaceKey, label
 				);
 				if (warningIfMissing)
-					SPDLOG_WARN(errorMessage);
+					LOG_WARN(errorMessage);
 				else
-					SPDLOG_ERROR(errorMessage);
+					LOG_ERROR(errorMessage);
 
 				throw DBRecordNotFound(errorMessage);
 			}
@@ -2283,7 +2283,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2291,7 +2291,7 @@ tuple<int64_t, int64_t, int, int> MMSEngineDBFacade::getHLSChannelDetails(int64_
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2324,7 +2324,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"reserveHLSChannel"
 			", workspaceKey: {}"
 			", label: {}"
@@ -2372,7 +2372,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 
 			if (ingestionJobKeyList != "")
 			{
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"reserveHLSChannel. "
 					"The following HLS channels are reserved but the relative ingestionJobKey is finished, so they will be reset"
 					", ingestionJobKeyList: {}",
@@ -2401,7 +2401,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 					{
 						string errorMessage =
 							__FILEREF__ + "no update was done" + ", rowsUpdated: " + to_string(rowsUpdated) + ", sqlStatement " + sqlStatement;
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						// throw runtime_error(errorMessage);
 					}
@@ -2475,7 +2475,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 					", label: {}",
 					ingestionJobKey, workspaceKey, label
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2520,7 +2520,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 					", sqlStatement: {}",
 					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2538,7 +2538,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2546,7 +2546,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2578,7 +2578,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 	{
 		string field;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"releaseHLSChannel"
 			", workspaceKey: {}"
 			", outputIndex: {}"
@@ -2614,7 +2614,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 					", workspaceKey: {}",
 					ingestionJobKey, workspaceKey
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2650,7 +2650,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 					", sqlStatement: {}",
 					ingestionJobKey, reservedConfKey, rowsUpdated, sqlStatement
 				);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -2660,7 +2660,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2668,7 +2668,7 @@ void MMSEngineDBFacade::releaseHLSChannel(int64_t workspaceKey, int outputIndex,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",

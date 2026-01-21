@@ -17,7 +17,7 @@ void MMSEngineProcessor::manageEncodeTask(
 		{
 			string errorMessage = string() + "No media received to be encoded" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey) + ", dependencies.size: " + to_string(dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -67,7 +67,7 @@ void MMSEngineProcessor::manageEncodeTask(
 				string errorMessage = string() + "Both fields are not present or it is null" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 									  ", _processorIdentifier: " + to_string(_processorIdentifier) + ", Field: " + keyField +
 									  ", Field: " + labelField;
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -164,7 +164,7 @@ void MMSEngineProcessor::manageEncodeTask(
 						string errorMessage = string() + "Wrong content type" + ", ingestionJobKey: " + to_string(ingestionJobKey) +
 											  ", contentType: " + MMSEngineDBFacade::toString(contentType) +
 											  ", referenceContentType: " + MMSEngineDBFacade::toString(referenceContentType);
-						SPDLOG_ERROR(errorMessage);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
@@ -186,7 +186,7 @@ void MMSEngineProcessor::manageEncodeTask(
 								string() + "Content profile is already present" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey) +
 								", encodingProfileKey: " + to_string(encodingProfileKey);
-							SPDLOG_ERROR(errorMessage);
+							LOG_ERROR(errorMessage);
 
 							throw runtime_error(errorMessage);
 						}
@@ -383,7 +383,7 @@ void MMSEngineProcessor::manageEncodeTask(
 				}
 				catch (runtime_error &e)
 				{
-					SPDLOG_ERROR(
+					LOG_ERROR(
 						string() + "processing media input failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 						", ingestionJobKey: " + to_string(ingestionJobKey) + ", referenceContentType: " +
 						MMSEngineDBFacade::toString(referenceContentType) + ", sourceMediaItemKey: " + to_string(sourceMediaItemKey)
@@ -404,7 +404,7 @@ void MMSEngineProcessor::manageEncodeTask(
 
 			string errorMessage = string() + "Content profile is already present" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 								  ", ingestionJobKey: " + to_string(ingestionJobKey);
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -417,7 +417,7 @@ void MMSEngineProcessor::manageEncodeTask(
 	}
 	catch (DBRecordNotFound &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageEncodeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -428,7 +428,7 @@ void MMSEngineProcessor::manageEncodeTask(
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageEncodeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey) + ", e.what(): " + e.what()
 		);
@@ -439,7 +439,7 @@ void MMSEngineProcessor::manageEncodeTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(
+		LOG_ERROR(
 			string() + "manageEncodeTask failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", ingestionJobKey: " + to_string(ingestionJobKey)
 		);
@@ -456,7 +456,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	{
 		if (isMaintenanceMode())
 		{
-			SPDLOG_INFO(
+			LOG_INFO(
 				"Received handleCheckEncodingEvent, not managed it because of MaintenanceMode"
 				", _processorIdentifier: {}",
 				_processorIdentifier
@@ -465,7 +465,7 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 			return;
 		}
 
-		SPDLOG_INFO(string() + "Received handleCheckEncodingEvent" + ", _processorIdentifier: " + to_string(_processorIdentifier));
+		LOG_INFO(string() + "Received handleCheckEncodingEvent" + ", _processorIdentifier: " + to_string(_processorIdentifier));
 
 		vector<shared_ptr<MMSEngineDBFacade::EncodingItem>> encodingItems;
 
@@ -473,14 +473,14 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 			_processorMMS, encodingItems, _timeBeforeToPrepareResourcesInMinutes, _maxEncodingJobsPerEvent
 		);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "_pActiveEncodingsManager->addEncodingItems" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", encodingItems.size: " + to_string(encodingItems.size())
 		);
 
 		_pActiveEncodingsManager->addEncodingItems(encodingItems);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			string() + "getEncodingJobs result" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 			", encodingItems.size: " + to_string(encodingItems.size())
 		);
@@ -496,13 +496,13 @@ void MMSEngineProcessor::handleCheckEncodingEvent()
 	}
 	catch (runtime_error &e)
 	{
-		SPDLOG_ERROR(string() + "getEncodingJobs failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
+		LOG_ERROR(string() + "getEncodingJobs failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
 
 		throw e;
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR(string() + "getEncodingJobs failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
+		LOG_ERROR(string() + "getEncodingJobs failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", exception: " + e.what());
 
 		throw e;
 	}

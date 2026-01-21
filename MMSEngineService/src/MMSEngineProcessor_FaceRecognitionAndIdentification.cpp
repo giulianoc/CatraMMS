@@ -20,7 +20,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				", ingestionJobKey: {}"
 				", dependencies.size: {}",
 				_processorIdentifier, ingestionJobKey, dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -43,7 +43,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				string errorMessage = std::format("Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", Field: {}", _processorIdentifier, field);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -55,7 +55,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 				string errorMessage = std::format("Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", Field: {}", _processorIdentifier, field);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -134,7 +134,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("manageFaceRecognitionMediaTask failed"
+		LOG_ERROR("manageFaceRecognitionMediaTask failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
@@ -160,7 +160,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
 				", dependencies.size: {}", _processorIdentifier, ingestionJobKey, dependencies.size());
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
@@ -181,7 +181,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 				string errorMessage = std::format("Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", Field: {}", _processorIdentifier, field);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -193,7 +193,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 				string errorMessage = std::format("Field is not present or it is null"
 					", _processorIdentifier: {}"
 					", Field: {}", _processorIdentifier, field);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -251,7 +251,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 	}
 	catch (exception &e)
 	{
-		SPDLOG_ERROR("manageFaceIdendificationMediaTask failed"
+		LOG_ERROR("manageFaceIdendificationMediaTask failed"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
 			", exception: {}", _processorIdentifier, ingestionJobKey, e.what()

@@ -69,7 +69,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		{
 			workspace->_preferences = nullptr;
 
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"JSONUtils::toJson preferences failed"
 				", json: {}"
 				", exception: {}",
@@ -86,7 +86,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 		{
 			workspace->_externalDeliveriesRoot = nullptr;
 
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"JSONUtils::toJson externalDeliveriesRoot failed"
 				", json: {}"
 				", exception: {}",
@@ -115,7 +115,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -123,7 +123,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -154,7 +154,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 		if (trimUserName.empty())
 		{
 			string errorMessage = string("userName is not well formed.") + ", userName: " + userName;
-			SPDLOG_ERROR(errorMessage);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 
@@ -192,7 +192,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			{
 				string errorMessage = std::format("WorkspaceName is not well formed"
 					", workspaceName: {}", workspaceName);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 
@@ -228,7 +228,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -236,7 +236,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -399,7 +399,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -407,7 +407,7 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndShareWorkspace
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -478,7 +478,7 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -486,7 +486,7 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -525,7 +525,7 @@ string MMSEngineDBFacade::createCode(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -533,7 +533,7 @@ string MMSEngineDBFacade::createCode(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -610,7 +610,7 @@ string MMSEngineDBFacade::createCode(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -618,7 +618,7 @@ string MMSEngineDBFacade::createCode(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -716,7 +716,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -724,7 +724,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -764,7 +764,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -772,7 +772,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -875,7 +875,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -883,7 +883,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1066,7 +1066,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1074,7 +1074,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1296,7 +1296,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1304,7 +1304,7 @@ tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string conf
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1441,7 +1441,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(PostgresConnTrans &trans, int6
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1449,7 +1449,7 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(PostgresConnTrans &trans, int6
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1619,7 +1619,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1627,7 +1627,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1798,7 +1798,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1806,7 +1806,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -1854,7 +1854,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 				userKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("userKey")].as<int64_t>();
 				workspaceKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("workspaceKey")].as<int64_t>();
 				permissionsRoot = (*sqlResultSet)[0][sqlResultSet->columnIndex("permissions")].as<json>();
-				SPDLOG_INFO("checkAPIKey"
+				LOG_INFO("checkAPIKey"
 					", userKey: {}"
 					", workspaceKey: {}"
 					", permissionsRoot: {}", userKey, workspaceKey, JSONUtils::toString(permissionsRoot)
@@ -1862,7 +1862,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 			}
 			else
 			{
-				SPDLOG_ERROR("apiKey is not present or it is expired"
+				LOG_ERROR("apiKey is not present or it is expired"
 					", apiKey: {}"
 					", sqlStatement: {}", apiKey, sqlStatement);
 
@@ -1876,7 +1876,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -1884,7 +1884,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2038,7 +2038,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 		{
 			sql_error const *se = dynamic_cast<sql_error const *>(&e);
 			if (se != nullptr)
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", query: {}"
 					", exceptionMessage: {}"
@@ -2046,7 +2046,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 					se->query(), se->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exception: {}"
 					", conn: {}",
@@ -2108,7 +2108,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 		{
 			sql_error const *se = dynamic_cast<sql_error const *>(&e);
 			if (se != nullptr)
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", query: {}"
 					", exceptionMessage: {}"
@@ -2116,7 +2116,7 @@ json MMSEngineDBFacade::login(string eMailAddress, string password)
 					se->query(), se->what(), trans.connection->getConnectionId()
 				);
 			else
-				SPDLOG_ERROR(
+				LOG_ERROR(
 					"query failed"
 					", exception: {}"
 					", conn: {}",
@@ -2252,7 +2252,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2260,7 +2260,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2371,7 +2371,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2379,7 +2379,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2534,7 +2534,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -2542,7 +2542,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -2615,7 +2615,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 					", workspaceKey: {}"
 					", userKey: {}"
 					", sqlStatement: {}", workspaceKey, userKey, sqlStatement);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
 		}
@@ -3038,7 +3038,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3046,7 +3046,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3148,7 +3148,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3156,7 +3156,7 @@ json MMSEngineDBFacade::setWorkspaceAsDefault(int64_t userKey, int64_t workspace
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3184,7 +3184,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const int64_t worksp
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3192,7 +3192,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(const int64_t worksp
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3266,7 +3266,7 @@ json MMSEngineDBFacade::getWorkspaceCost(PostgresConnTrans &trans, int64_t works
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3274,7 +3274,7 @@ json MMSEngineDBFacade::getWorkspaceCost(PostgresConnTrans &trans, int64_t works
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3340,7 +3340,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 				const string errorMessage = std::format("Workspace is not present/configured"
 					", workspaceKey: {}"
 					", sqlStatement: {}", workspaceKey, sqlStatement);
-				SPDLOG_ERROR(errorMessage);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
@@ -3352,7 +3352,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 	{
 		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3360,7 +3360,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::getWorkspaceUsage(PostgresConnTrans &t
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3423,7 +3423,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails(int64_t userKey, chrono::
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3431,7 +3431,7 @@ pair<string, string> MMSEngineDBFacade::getUserDetails(int64_t userKey, chrono::
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3501,7 +3501,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail(string email, boo
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3509,7 +3509,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail(string email, boo
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3738,7 +3738,7 @@ json MMSEngineDBFacade::updateUser(
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3746,7 +3746,7 @@ json MMSEngineDBFacade::updateUser(
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3806,7 +3806,7 @@ string MMSEngineDBFacade::createResetPasswordToken(int64_t userKey)
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3814,7 +3814,7 @@ string MMSEngineDBFacade::createResetPasswordToken(int64_t userKey)
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
@@ -3922,7 +3922,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 	{
 		sql_error const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", query: {}"
 				", exceptionMessage: {}"
@@ -3930,7 +3930,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 				se->query(), se->what(), trans.connection->getConnectionId()
 			);
 		else
-			SPDLOG_ERROR(
+			LOG_ERROR(
 				"query failed"
 				", exception: {}"
 				", conn: {}",
