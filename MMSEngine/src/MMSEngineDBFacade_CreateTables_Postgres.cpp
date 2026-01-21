@@ -1287,7 +1287,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"bandwidthUsageUpdateTime	timestamp without time zone,"
 				"cpuUsage				integer,"
 				"cpuUsageUpdateTime		timestamp without time zone,"
-				"selectedLastTime		timestamp without time zone not null default NOW() at time zone 'utc',"
+				"selectedLastTime		timestamp without time zone not null default (NOW() at time zone 'utc'),"
 				"constraint MMS_Encoder_PK PRIMARY KEY (encoderKey), "
 				"UNIQUE (label)) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
