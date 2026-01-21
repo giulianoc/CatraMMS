@@ -766,14 +766,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							sourceLiveProxy->_lastRealTimeInfo = newRealTimeInfo;
 
-							if (copiedLiveProxy->_lastRealTimeInfo != tuple<int32_t, chrono::milliseconds, size_t, double, double>{})
+							if (copiedLiveProxy->_lastRealTimeInfo)
 							{
 								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 								// recupero dei dati
-								int elapsedInSecondsSinceLastChange =
+								int64_t elapsedInSecondsSinceLastChange =
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
-								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
+								if (copiedLiveProxy->_lastRealTimeInfo && *(copiedLiveProxy->_lastRealTimeInfo) == newRealTimeInfo)
 								{
 									// real time info non sono cambiate
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -1954,7 +1954,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							sourceLiveRecording->_lastRealTimeInfo = newRealTimeInfo;
 
-							if (copiedLiveRecording->_lastRealTimeInfo != tuple<int32_t, chrono::milliseconds, size_t, double, double>{})
+							if (copiedLiveRecording->_lastRealTimeInfo)
 							{
 								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
 								// recupero dei dati
@@ -1964,7 +1964,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										.count();
 
 								// getTimestampDiscontinuityCount: vedi commento scritto per il Live proxy
-								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
+								if (copiedLiveRecording->_lastRealTimeInfo && *(copiedLiveRecording->_lastRealTimeInfo) == newRealTimeInfo)
 								{
 									// real time info not changed
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
