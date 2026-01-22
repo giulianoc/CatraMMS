@@ -3,16 +3,12 @@
 
 #include "CurlWrapper.h"
 #include "Datetime.h"
-#include "Encrypt.h"
 #include "JSONUtils.h"
 #include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "ProcessUtility.h"
-#include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
-#include <cstdint>
-#include <sstream>
 
 using namespace std;
 using json = nlohmann::json;
@@ -61,23 +57,23 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 		try
 		{
 			// this is to have a copy of LiveProxyAndGrid
-			vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
+			vector<shared_ptr<LiveProxyAndGrid>> copiedRunningLiveProxiesCapability;
 
 			// this is to have access to running and _proxyStart
 			//	to check if it is changed. In case the process is killed, it will access
 			//	also to _killedBecauseOfNotWorking and _errorMessage
-			vector<shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>> sourceLiveProxiesCapability;
+			vector<shared_ptr<LiveProxyAndGrid>> sourceLiveProxiesCapability;
 
 			chrono::system_clock::time_point startClone = chrono::system_clock::now();
 			// to avoid to maintain the lock too much time
 			// we will clone the proxies for monitoring check
 			int liveProxyAndGridRunningCounter = 0;
 			{
-				lock_guard<mutex> locker(*_liveProxyMutex);
+				lock_guard locker(*_liveProxyMutex);
 
 				int liveProxyAndGridNotRunningCounter = 0;
 
-				for (shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> liveProxy : *_liveProxiesCapability)
+				for (const shared_ptr<LiveProxyAndGrid>& liveProxy : *_liveProxiesCapability)
 				{
 					if (liveProxy->_childProcessId.isInitialized()) // running
 					{
@@ -290,8 +286,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								// First health check (HLS/DASH) looking the manifests path name timestamp
 								{
-									string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 									{
+										string manifestFilePathName = std::format("{}/{}", manifestDirectoryPath, manifestFileName);
 										if (!exists(manifestFilePathName))
 										{
 											liveProxyWorking = false;
@@ -316,10 +312,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 													fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
 													chrono::system_clock::now()
 												);
-											chrono::system_clock::time_point now = chrono::system_clock::now();
 
 											lastManifestFileUpdateInSeconds =
-												chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+												chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - fileLastModification).count();
 										}
 
 										long maxLastManifestFileUpdateInSeconds = 30;
@@ -487,14 +482,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								if (liveProxyLiveTimeInMinutes > 3)
 								*/
 								{
-									string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
 									{
+										string manifestFilePathName = std::format("{}/{}", manifestDirectoryPath, manifestFileName);
 										vector<string> chunksTooOldToBeRemoved;
-										bool chunksWereNotGenerated = false;
 
 										string manifestDirectoryPathName;
 										{
-											size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+											size_t manifestFilePathIndex = manifestFilePathName.find_last_of('/');
 											if (manifestFilePathIndex == string::npos)
 											{
 												string errorMessage = std::format(
@@ -548,10 +542,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 																	fs::last_write_time(entry) - fs::file_time_type::clock::now() +
 																	chrono::system_clock::now()
 																);
-															chrono::system_clock::time_point now = chrono::system_clock::now();
 
 															int64_t lastFileUpdateInSeconds =
-																chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+																chrono::duration_cast<chrono::seconds>(
+																								  chrono::system_clock::now() - fileLastModification).count();
 															if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 															{
 																LOG_INFO(
@@ -635,8 +629,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 												firstChunkRead
 											);
 
-											chunksWereNotGenerated = true;
-
 											liveProxyWorking = false;
 											localErrorMessage = " restarted because of 'no segments were generated'";
 
@@ -677,9 +669,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 														"liveProxyMonitor. remove failed"
 														", copiedLiveProxy->_ingestionJobKey: {}"
 														", copiedLiveProxy->_encodingJobKey: {}"
-														", segmentPathNameToBeRemoved: {}",
+														", segmentPathNameToBeRemoved: {}"
+														", exception: {}",
 														copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey,
-														segmentPathNameToBeRemoved
+														segmentPathNameToBeRemoved, e.what()
 													);
 												}
 											}
@@ -749,14 +742,18 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							sourceLiveProxy->_lastRealTimeInfo = newRealTimeInfo;
 
-							if (copiedLiveProxy->_lastRealTimeInfo)
+							// 2026-01-22: _lastRealTimeInfo è inizialmente inizializzato a 0 per tutti i campi.
+							// Poichè questo controllo inizia dopo 1 minuto dall'inizio del live proxy, è ragionevole pensare
+							// che dovremmo già avere dati realtime. Per cui iniziamo subito a fare il confronto anche considerando
+							// la struttura inizializzata a 0.
+							// Questo ci permette di gestire anche lo scenario in cui il processo è partito ma rimane "bloccato"
+							// senza produrre dati real time. Questo scenario era invece non gestito in precedenza.
+							// if (copiedLiveProxy->_lastRealTimeInfo)
 							{
-								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
-								// recupero dei dati
 								int64_t elapsedInSecondsSinceLastChange =
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
 
-								if (copiedLiveProxy->_lastRealTimeInfo && *(copiedLiveProxy->_lastRealTimeInfo) == newRealTimeInfo)
+								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
 								{
 									// real time info non sono cambiate
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -798,8 +795,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								else
 									sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 							}
-							else
-								sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
+							// else
+							//	sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 						}
 						catch (exception &e)
 						{
@@ -1192,7 +1189,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 				int liveRecordingNotRunningCounter = 0;
 
-				for (shared_ptr<FFMPEGEncoderBase::LiveRecording> liveRecording : *_liveRecordingsCapability)
+				for (const shared_ptr<LiveRecording>& liveRecording : *_liveRecordingsCapability)
 				{
 					if (liveRecording->_childProcessId.isInitialized() && liveRecording->_monitoringEnabled)
 					{
@@ -1226,8 +1223,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 			for (int liveRecordingIndex = 0; liveRecordingIndex < copiedRunningLiveRecordingCapability.size(); liveRecordingIndex++)
 			{
-				shared_ptr<FFMPEGEncoderBase::LiveRecording> copiedLiveRecording = copiedRunningLiveRecordingCapability[liveRecordingIndex];
-				shared_ptr<FFMPEGEncoderBase::LiveRecording> sourceLiveRecording = sourceLiveRecordingCapability[liveRecordingIndex];
+				const shared_ptr<LiveRecording>& copiedLiveRecording = copiedRunningLiveRecordingCapability[liveRecordingIndex];
+				const shared_ptr<LiveRecording>& sourceLiveRecording = sourceLiveRecordingCapability[liveRecordingIndex];
 
 				LOG_INFO(
 					"liveRecordingMonitor"
@@ -1396,9 +1393,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								chrono::system_clock::time_point fileLastModification = chrono::time_point_cast<chrono::system_clock::duration>(
 									fs::last_write_time(segmentListPathName) - fs::file_time_type::clock::now() + chrono::system_clock::now()
 								);
-								chrono::system_clock::time_point now = chrono::system_clock::now();
 
-								lastSegmentListFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+								lastSegmentListFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - fileLastModification).count();
 							}
 
 							long maxLastSegmentListFileUpdateInSeconds = segmentDurationInSeconds * 2;
@@ -1470,10 +1466,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					);
 
 					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
-					for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+					for (const auto& outputRoot : outputsRoot)
 					{
-						json outputRoot = outputsRoot[outputIndex];
-
 						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
@@ -1488,7 +1482,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							{
 								// First health check (HLS/DASH) looking the manifests path name timestamp
 
-								string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+								string manifestFilePathName = std::format("{}/{}", manifestDirectoryPath, manifestFileName);
 								if (!exists(manifestFilePathName))
 								{
 									liveRecorderWorking = false;
@@ -1513,10 +1507,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
 											chrono::system_clock::now()
 										);
-									chrono::system_clock::time_point now = chrono::system_clock::now();
 
 									lastManifestFileUpdateInSeconds =
-										chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+										chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - fileLastModification).count();
 								}
 
 								long maxLastManifestFileUpdateInSeconds = 45;
@@ -1658,10 +1651,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					);
 
 					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
-					for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
+					for (const auto& outputRoot : outputsRoot)
 					{
-						json outputRoot = outputsRoot[outputIndex];
-
 						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
 						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
 						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
@@ -1676,14 +1667,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						{
 							try
 							{
-								string manifestFilePathName = manifestDirectoryPath + "/" + manifestFileName;
+								string manifestFilePathName = std::format("{}/{}", manifestDirectoryPath, manifestFileName);
 								{
 									vector<string> chunksTooOldToBeRemoved;
-									bool chunksWereNotGenerated = false;
 
 									string manifestDirectoryPathName;
 									{
-										size_t manifestFilePathIndex = manifestFilePathName.find_last_of("/");
+										size_t manifestFilePathIndex = manifestFilePathName.find_last_of('/');
 										if (manifestFilePathIndex == string::npos)
 										{
 											string errorMessage = std::format(
@@ -1755,10 +1745,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 																fs::last_write_time(entry) - fs::file_time_type::clock::now() +
 																chrono::system_clock::now()
 															);
-														chrono::system_clock::time_point now = chrono::system_clock::now();
 
 														int64_t lastFileUpdateInSeconds =
-															chrono::duration_cast<chrono::seconds>(now - fileLastModification).count();
+															chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - fileLastModification).count();
 														if (lastFileUpdateInSeconds > liveProxyChunkRetentionInSeconds)
 														{
 															LOG_INFO(
@@ -1822,8 +1811,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey, manifestDirectoryPathName,
 											firstChunkRead
 										);
-
-										chunksWereNotGenerated = true;
 
 										liveRecorderWorking = false;
 										localErrorMessage = " restarted because of 'no segments were generated'";
@@ -1937,17 +1924,15 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 							sourceLiveRecording->_lastRealTimeInfo = newRealTimeInfo;
 
-							if (copiedLiveRecording->_lastRealTimeInfo)
+							// 2026-01-22: _lastRealTimeInfo: vedi commento scritto per il Live proxy
+							// if (copiedLiveRecording->_lastRealTimeInfo)
 							{
-								// i campi sono stati precedentemente inizializzati per cui possiamo fare il controllo confrontandoli con l'ultimo
-								// recupero dei dati
-
-								int elapsedInSecondsSinceLastChange =
+								int64_t elapsedInSecondsSinceLastChange =
 									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
 										.count();
 
 								// getTimestampDiscontinuityCount: vedi commento scritto per il Live proxy
-								if (copiedLiveRecording->_lastRealTimeInfo && *(copiedLiveRecording->_lastRealTimeInfo) == newRealTimeInfo)
+								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
 								{
 									// real time info not changed
 									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
@@ -1989,8 +1974,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								else
 									sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 							}
-							else
-								sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
+							// else
+							//	sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 						}
 						catch (exception &e)
 						{

@@ -70,7 +70,7 @@ class FFMPEGEncoderBase
 
 		bool _monitoringRealTimeInfoEnabled{};
 		// frames, time, size, bitrate, framerate
-		std::optional<std::tuple<int32_t, std::chrono::milliseconds, size_t, double, double>> _lastRealTimeInfo{};
+		std::tuple<int32_t, std::chrono::milliseconds, size_t, double, double> _lastRealTimeInfo{};
 		// int32_t _lastRealTimeFrame{};
 		// chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
 		// size_t _lastRealTimeSize{};
@@ -145,7 +145,7 @@ class FFMPEGEncoderBase
 
 		bool _monitoringRealTimeInfoEnabled{};
 		// frames, time, size, bitrate, framerate
-		std::optional<std::tuple<int32_t, std::chrono::milliseconds, size_t, double, double>> _lastRealTimeInfo{};
+		std::tuple<int32_t, std::chrono::milliseconds, size_t, double, double> _lastRealTimeInfo{};
 		// int32_t _lastRealTimeFrame{};
 		// chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
 		// size_t _lastRealTimeSize{};

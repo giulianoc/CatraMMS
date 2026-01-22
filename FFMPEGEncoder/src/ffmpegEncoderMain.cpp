@@ -161,7 +161,6 @@ void registerMonitorLogger(const json& configurationRoot)
 
 			const auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
-			dailySink->set_level(spdlog::level::warn);
 
 			// livello di log sul sink
 			if (logLevel == "debug")
@@ -182,7 +181,6 @@ void registerMonitorLogger(const json& configurationRoot)
 
 			const auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
-			rotatingSink->set_level(spdlog::level::warn);
 
 			// livello di log sul sink
 			if (logLevel == "debug")
