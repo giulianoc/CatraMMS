@@ -104,6 +104,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				copiedRunningLiveProxiesCapability.size()
 			);
 
+				LOG_ERROR("Test");
+
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
 
 			for (int liveProxyIndex = 0; liveProxyIndex < copiedRunningLiveProxiesCapability.size(); liveProxyIndex++)
@@ -709,7 +711,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					continue;
 				}
 
-				LOG_ERROR("Test");
 				// 2025-11-26: Diamo il tempo all'encoder di partire prima di eseguire il controllo (liveProxyLiveTimeInSeconds > 1 * 60).
 				//	Questo perchè ho avuto uno scenario in cui l'encoder riprovava tante volte a partire fallendo ogni volta.
 				//	ProxyStart viene aggiornata ad ogni tentativo di partenza.
