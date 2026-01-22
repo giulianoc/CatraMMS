@@ -49,7 +49,7 @@ using namespace nlohmann::literals;
 	if (elapsed > maxQueryElapsed(queryLabel))                                                                                                       \
 	{                                                                                                                                                \
 		LOG_INFO(__VA_ARGS__);                                                                                                                    \
-		auto logger = spdlog::get("slow-query");                                                                                                     \
+		auto logger = spdlog::get("slow-query-log");                                                                                                     \
 		if (logger != nullptr)                                                                                                                       \
 			SPDLOG_LOGGER_WARN(logger, __VA_ARGS__);                                                                                                 \
 	}                                                                                                                                                \

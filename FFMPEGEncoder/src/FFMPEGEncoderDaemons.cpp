@@ -49,7 +49,7 @@ FFMPEGEncoderDaemons::~FFMPEGEncoderDaemons() = default;
 
 void FFMPEGEncoderDaemons::startMonitorThread()
 {
-	ThreadLogger threadLogger(spdlog::get("monitor"));
+	ThreadLogger threadLogger(spdlog::get("monitor-log"));
 
 	while (!_monitorThreadShutdown)
 	{
@@ -103,8 +103,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startClone).count(),
 				copiedRunningLiveProxiesCapability.size()
 			);
-
-				LOG_ERROR("Test");
 
 			chrono::system_clock::time_point monitorStart = chrono::system_clock::now();
 

@@ -47,10 +47,34 @@ void signalHandler(int signal)
 		);
 }
 
-shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
+std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
+{
+	const string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["api"], "errorPathName", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
+
+	std::shared_ptr<spdlog::sinks::sink> errorSink;
+	if (logType == "daily")
+	{
+		int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
+		int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
+
+		errorSink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
+	}
+	else if (logType == "rotating")
+	{
+		int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
+		int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
+
+		errorSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+	}
+	errorSink->set_level(spdlog::level::err);
+
+	return errorSink;
+}
+
+shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"], "pathName", "");
-	string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["api"], "errorPathName", "");
 	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
 	bool stdout = JSONUtils::asBool(configurationRoot["log"]["api"], "stdout", false);
 
@@ -74,10 +98,6 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 				dailySink->set_level(spdlog::level::err);
 			else if (logLevel == "critical")
 				dailySink->set_level(spdlog::level::critical);
-
-			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
-			sinks.push_back(errorDailySink);
-			errorDailySink->set_level(spdlog::level::err);
 		}
 		else if (logType == "rotating")
 		{
@@ -97,11 +117,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 				rotatingSink->set_level(spdlog::level::err);
 			else if (logLevel == "critical")
 				rotatingSink->set_level(spdlog::level::critical);
-
-			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-			sinks.push_back(errorRotatingSink);
-			errorRotatingSink->set_level(spdlog::level::err);
 		}
+		sinks.push_back(errorSink);
 
 		if (stdout)
 		{
@@ -111,7 +128,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 		}
 	}
 
-	auto logger = std::make_shared<spdlog::logger>("API", begin(sinks), end(sinks));
+	auto logger = std::make_shared<spdlog::logger>("api-log", begin(sinks), end(sinks));
 	spdlog::register_logger(logger);
 
 	// trigger flush if the log severity is error or higher
@@ -171,7 +188,7 @@ void registerSlowQueryLogger(json configurationRoot)
 		}
 	}
 
-	auto logger = std::make_shared<spdlog::logger>("slow-query", begin(sinks), end(sinks));
+	auto logger = std::make_shared<spdlog::logger>("slow-query-log", begin(sinks), end(sinks));
 	spdlog::register_logger(logger);
 
 	// trigger flush if the log severity is error or higher
@@ -226,10 +243,11 @@ int main(int argc, char **argv)
 			return 1;
 		}
 
-		auto configuration = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
+		auto configurationRoot = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
 
-		shared_ptr<spdlog::logger> logger = setMainLogger(configuration);
-		registerSlowQueryLogger(configuration);
+		std::shared_ptr<spdlog::sinks::sink> errorSink = buildErrorSink(configurationRoot);
+		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot, errorSink);
+		registerSlowQueryLogger(configurationRoot);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);
@@ -242,7 +260,7 @@ int main(int argc, char **argv)
 		if (noDatabaseAccess)
 			masterDbPoolSize = 0;
 		else
-			masterDbPoolSize = JSONUtils::asInt32(configuration["postgres"]["master"], "apiPoolSize", 5);
+			masterDbPoolSize = JSONUtils::asInt32(configurationRoot["postgres"]["master"], "apiPoolSize", 5);
 		LOG_INFO(
 			"Configuration item"
 			", postgres->master->apiPoolSize: {}",
@@ -252,7 +270,7 @@ int main(int argc, char **argv)
 		if (noDatabaseAccess)
 			slaveDbPoolSize = 0;
 		else
-			slaveDbPoolSize = JSONUtils::asInt32(configuration["postgres"]["slave"], "apiPoolSize", 5);
+			slaveDbPoolSize = JSONUtils::asInt32(configurationRoot["postgres"]["slave"], "apiPoolSize", 5);
 		LOG_INFO(
 			"Configuration item"
 			", postgres->slave->apiPoolSize: {}",
@@ -265,8 +283,8 @@ int main(int argc, char **argv)
 		info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
 #endif
 		LOG_INFO("Creating MMSEngineDBFacade");
-		auto mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configuration,
-			JsonPath(&configuration)["log"]["api"]["slowQuery"].as<json>(),
+		auto mmsEngineDBFacade = make_shared<MMSEngineDBFacade>(configurationRoot,
+			JsonPath(&configurationRoot)["log"]["api"]["slowQuery"].as<json>(),
 			masterDbPoolSize, slaveDbPoolSize, logger);
 
 		LOG_TRACE(
@@ -274,15 +292,15 @@ int main(int argc, char **argv)
 			", noFileSystemAccess: {}",
 			noFileSystemAccess
 		);
-		auto mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configuration, logger);
+		auto mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configurationRoot, logger);
 
 		auto mmsDeliveryAuthorization =
-			make_shared<MMSDeliveryAuthorization>(configuration, mmsStorage, mmsEngineDBFacade);
+			make_shared<MMSDeliveryAuthorization>(configurationRoot, mmsStorage, mmsEngineDBFacade);
 		mmsDeliveryAuthorization->startUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
 		FCGX_Init();
 
-		int threadsNumber = JSONUtils::asInt32(configuration["api"], "threadsNumber", 1);
+		int threadsNumber = JSONUtils::asInt32(configurationRoot["api"], "threadsNumber", 1);
 		LOG_INFO(
 			"Configuration item"
 			", api->threadsNumber: {}",
@@ -292,7 +310,7 @@ int main(int argc, char **argv)
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
 
-		auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configuration)["api"]["bandwithUsageInterfaceName"].as<string>();
+		auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["api"]["bandwithUsageInterfaceName"].as<string>();
 		std::optional<std::string> optInterfaceNameToMonitor = nullopt;
 		if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
 			optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
@@ -307,7 +325,7 @@ int main(int argc, char **argv)
 
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
-			auto api = make_shared<API>(noFileSystemAccess, configuration, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization,
+			auto api = make_shared<API>(noFileSystemAccess, configurationRoot, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization,
 				&fcgiAcceptMutex, &fileUploadProgressData, bandwidthUsageThread);
 
 			apis.push_back(api);
@@ -343,16 +361,10 @@ int main(int argc, char **argv)
 
 		CurlWrapper::globalTerminate();
 	}
-	catch (runtime_error &e)
-	{
-		cerr << __FILEREF__ + "main failed" + ", e.what(): " + e.what();
-
-		// throw e;
-		return 1;
-	}
 	catch (exception &e)
 	{
-		cerr << __FILEREF__ + "main failed" + ", e.what(): " + e.what();
+		cerr << std::format("main failed"
+			", exception: {}", e.what()) << endl;
 
 		// throw runtime_error(errorMessage);
 		return 1;

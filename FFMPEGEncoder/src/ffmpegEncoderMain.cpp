@@ -41,7 +41,7 @@ void signalHandler(int signal)
 		);
 }
 
-std::shared_ptr<spdlog::sinks::sink> buildErrorLogger(json configurationRoot)
+std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
 {
 	const string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
 	string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
@@ -123,7 +123,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shar
 		}
 	}
 
-	auto logger = std::make_shared<spdlog::logger>("Encoder", begin(sinks), end(sinks));
+	auto logger = std::make_shared<spdlog::logger>("encoder-log", begin(sinks), end(sinks));
 	spdlog::register_logger(logger);
 
 	// shared_ptr<spdlog::logger> logger = spdlog::stdout_logger_mt("API");
@@ -214,7 +214,7 @@ void registerMonitorLogger(const json& configurationRoot, const std::shared_ptr<
 	}
 	sinks.push_back(errorSink);
 
-	const auto logger = std::make_shared<spdlog::logger>("monitor", begin(sinks), end(sinks));
+	const auto logger = std::make_shared<spdlog::logger>("monitor-log", begin(sinks), end(sinks));
 	spdlog::register_logger(logger);
 
 	// trigger flush if the log severity is error or higher
@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 
 		auto configurationRoot = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
 
-		std::shared_ptr<spdlog::sinks::sink> errorSink = buildErrorLogger(configurationRoot);
+		std::shared_ptr<spdlog::sinks::sink> errorSink = buildErrorSink(configurationRoot);
 		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot, errorSink);
 		registerMonitorLogger(configurationRoot, errorSink);
 

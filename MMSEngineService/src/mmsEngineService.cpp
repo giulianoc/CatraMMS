@@ -67,10 +67,34 @@ void signalHandler(int signal)
 		);
 }
 
-shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
+std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
+{
+	const string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["mms"], "errorPathName", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["mms"], "type", "");
+
+	std::shared_ptr<spdlog::sinks::sink> errorSink;
+	if (logType == "daily")
+	{
+		int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["mms"]["daily"], "rotationHour", 1);
+		int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["mms"]["daily"], "rotationMinute", 1);
+
+		errorSink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
+	}
+	else if (logType == "rotating")
+	{
+		int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["mms"]["rotating"], "maxSizeInKBytes", 1000);
+		int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["mms"]["rotating"], "maxFiles", 10);
+
+		errorSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+	}
+	errorSink->set_level(spdlog::level::err);
+
+	return errorSink;
+}
+
+shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["mms"], "pathName", "");
-	string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["mms"], "errorPathName", "");
 	string logType = JSONUtils::asString(configurationRoot["log"]["mms"], "type", "");
 	bool stdout = JSONUtils::asBool(configurationRoot["log"]["mms"], "stdout", false);
 
@@ -95,10 +119,6 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 				dailySink->set_level(spdlog::level::err);
 			else if (logLevel == "critical")
 				dailySink->set_level(spdlog::level::critical);
-
-			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
-			sinks.push_back(errorDailySink);
-			errorDailySink->set_level(spdlog::level::err);
 		}
 		else if (logType == "rotating")
 		{
@@ -118,11 +138,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 				rotatingSink->set_level(spdlog::level::err);
 			else if (logLevel == "critical")
 				rotatingSink->set_level(spdlog::level::critical);
-
-			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-			sinks.push_back(errorRotatingSink);
-			errorRotatingSink->set_level(spdlog::level::err);
 		}
+		sinks.push_back(errorSink);
 
 		if (stdout)
 		{
@@ -132,7 +149,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 		}
 	}
 
-	auto logger = std::make_shared<spdlog::logger>("mmsEngineService", begin(sinks), end(sinks));
+	auto logger = std::make_shared<spdlog::logger>("mmsEngineService-log", begin(sinks), end(sinks));
 	// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
 	spdlog::register_logger(logger);
 
@@ -182,7 +199,7 @@ void registerSlowQueryLogger(json configurationRoot)
 		}
 	}
 
-	auto logger = std::make_shared<spdlog::logger>("slow-query", begin(sinks), end(sinks));
+	auto logger = std::make_shared<spdlog::logger>("slow-query-log", begin(sinks), end(sinks));
 	spdlog::register_logger(logger);
 
 	// trigger flush if the log severity is error or higher
@@ -252,7 +269,8 @@ int main(int iArgc, char *pArgv[])
 
 	json configurationRoot = loadConfigurationFile(configPathName, "MMS_");
 
-	shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
+	std::shared_ptr<spdlog::sinks::sink> errorLog = buildErrorSink(configurationRoot);
+	shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot, errorLog);
 	registerSlowQueryLogger(configurationRoot);
 
 	// install a signal handler
@@ -283,16 +301,10 @@ int main(int iArgc, char *pArgv[])
 		{
 			mmsEngineDBFacade->resetProcessingJobsIfNeeded(processorMMS);
 		}
-		catch (runtime_error &e)
-		{
-			logger->error(__FILEREF__ + "mmsEngineDBFacade->resetProcessingJobsIfNeeded failed" + ", exception: " + e.what());
-
-			// throw e;
-			return 1;
-		}
 		catch (exception &e)
 		{
-			logger->error(__FILEREF__ + "mmsEngineDBFacade->resetProcessingJobsIfNeeded failed");
+			LOG_ERROR("mmsEngineDBFacade->resetProcessingJobsIfNeeded failed"
+				", exception: {}", e.what());
 
 			// throw e;
 			return 1;
