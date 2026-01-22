@@ -251,7 +251,7 @@ int main(int iArgc, char *pArgv[])
 
 		configPathName = pArgv[2];
 	}
-	else if (iArgc == 4)
+	else // if (iArgc == 4)
 	{
 		// pidfile (2 params) and cfg file
 		if (!strcmp(pArgv[1], "--pidfile"))
