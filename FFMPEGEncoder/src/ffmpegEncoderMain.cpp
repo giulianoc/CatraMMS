@@ -41,10 +41,34 @@ void signalHandler(int signal)
 		);
 }
 
-shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
+std::shared_ptr<spdlog::sinks::sink> buildErrorLogger(json configurationRoot)
+{
+	const string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
+	string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
+
+	std::shared_ptr<spdlog::sinks::sink> errorSink;
+	if (logType == "daily")
+	{
+		int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
+		int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
+
+		errorSink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
+	}
+	else if (logType == "rotating")
+	{
+		int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
+		int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
+
+		errorSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+	}
+	errorSink->set_level(spdlog::level::err);
+
+	return errorSink;
+}
+
+shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
 {
 	string logPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "pathName", "");
-	string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
 	string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
 	bool stdout = JSONUtils::asBool(configurationRoot["log"]["encoder"], "stdout", false);
 
@@ -69,10 +93,6 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 				dailySink->set_level(spdlog::level::err);
 			else if (logLevel == "critical")
 				dailySink->set_level(spdlog::level::critical);
-
-			auto errorDailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
-			sinks.push_back(errorDailySink);
-			errorDailySink->set_level(spdlog::level::err);
 		}
 		else if (logType == "rotating")
 		{
@@ -92,11 +112,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 				rotatingSink->set_level(spdlog::level::err);
 			else if (logLevel == "critical")
 				rotatingSink->set_level(spdlog::level::critical);
-
-			auto errorRotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
-			sinks.push_back(errorRotatingSink);
-			errorRotatingSink->set_level(spdlog::level::err);
 		}
+		sinks.push_back(errorSink);
 
 		if (stdout)
 		{
@@ -130,7 +147,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot)
 	return logger;
 }
 
-void registerMonitorLogger(const json& configurationRoot)
+void registerMonitorLogger(const json& configurationRoot, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
 {
 	auto logPathName = JsonPath(&configurationRoot)["log"]["encoder"]["monitor"]["pathName"].as<string>();
 	LOG_INFO(
@@ -195,6 +212,7 @@ void registerMonitorLogger(const json& configurationRoot)
 				rotatingSink->set_level(spdlog::level::critical);
 		}
 	}
+	sinks.push_back(errorSink);
 
 	const auto logger = std::make_shared<spdlog::logger>("monitor", begin(sinks), end(sinks));
 	spdlog::register_logger(logger);
@@ -232,8 +250,9 @@ int main(int argc, char **argv)
 
 		auto configurationRoot = JSONUtils::loadConfigurationFile<json>(configurationPathName, "MMS_");
 
-		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot);
-		registerMonitorLogger(configurationRoot);
+		std::shared_ptr<spdlog::sinks::sink> errorSink = buildErrorLogger(configurationRoot);
+		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot, errorSink);
+		registerMonitorLogger(configurationRoot, errorSink);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);
