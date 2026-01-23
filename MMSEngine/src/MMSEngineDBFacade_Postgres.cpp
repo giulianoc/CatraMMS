@@ -125,6 +125,11 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_getIngestionJobsCurrentIndex = 0;
 	_getEncodingJobsCurrentIndex = 0;
 
+	_cpuStatsUpdateIntervalInSeconds = JsonPath(&configurationRoot)["scheduler"]["cpuStatsUpdateIntervalInSeconds"].as<int16_t>(10);
+	LOG_TRACE("Configuration item"
+		", scheduler->cpuStatsUpdateIntervalInSeconds: {}", _cpuStatsUpdateIntervalInSeconds
+	);
+
 	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
 	for (auto& adminEmailAddressesRoot : JsonPath(&configurationRoot)["api"]["adminEmailAddresses"].as<json>(json::array()))
 	{

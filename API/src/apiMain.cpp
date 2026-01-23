@@ -317,7 +317,9 @@ int main(int argc, char **argv)
 		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>(optInterfaceNameToMonitor);
 		bandwidthUsageThread->start();
 
-		const auto cpuUsageThread = make_shared<CPUUsageThread>();
+		auto cpuStatsUpdateIntervalInSeconds = JsonPath(&configurationRoot)["scheduler"]["cpuStatsUpdateIntervalInSeconds"].
+			as<int16_t>(10);
+		const auto cpuUsageThread = make_shared<CPUUsageThread>(cpuStatsUpdateIntervalInSeconds);
 		cpuUsageThread->start();
 
 		vector<shared_ptr<API>> apis;

@@ -33,7 +33,7 @@ using json = nlohmann::json;
 class EncoderCPUUsageThread final : public CPUUsageThread
 {
 public:
-	explicit EncoderCPUUsageThread(const json & configurationRoot);
+	explicit EncoderCPUUsageThread(const json & configurationRoot, int16_t cpuStatsUpdateIntervalInSeconds);
 
 	void newCPUUsageAvailable(uint16_t& cpuUsage) const override;
 

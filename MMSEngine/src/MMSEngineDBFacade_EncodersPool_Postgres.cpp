@@ -2413,7 +2413,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			// lo stesso encoder non puo essere riutilizzato se non sono passati almeno XX seconds
 			// Viene in questo modo anche implementato una sorta di roundrobin nel caso in cui un encoder fallisce
 			// e viene rieseguita la select
-			int16_t encodersUnavailableAfterSelectedInSeconds = 25; // CPUUsageThread manda updates ogni 10 secs
+			int32_t encodersUnavailableAfterSelectedInSeconds = _cpuStatsUpdateIntervalInSeconds * 2 + 5;
 			int16_t maxCPUUsage = 70;
 
 			// un encoder non viene considerato se non ha ricevuto aggiornamenti delle statistiche da almeno XX seconds

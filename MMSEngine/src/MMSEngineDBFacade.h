@@ -2521,6 +2521,8 @@ class MMSEngineDBFacade
 	void loadMaxQueryElapsedConfiguration(nlohmann::json slowQueryConfigurationRoot);
 	long maxQueryElapsed(const std::string queryLabel);
 
+	int16_t _cpuStatsUpdateIntervalInSeconds;
+
 #ifdef __POSTGRES__
 #else
 	std::shared_ptr<MySQLConnectionFactory> _mySQLMasterConnectionFactory;

@@ -27,7 +27,8 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 #include "CurlWrapper.h"
 #include "Encrypt.h"
 
-EncoderCPUUsageThread::EncoderCPUUsageThread(const json & configurationRoot)
+EncoderCPUUsageThread::EncoderCPUUsageThread(const json & configurationRoot, int16_t cpuStatsUpdateIntervalInSeconds):
+	CPUUsageThread(cpuStatsUpdateIntervalInSeconds)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
 	LOG_INFO("Configuration item"

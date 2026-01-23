@@ -357,7 +357,9 @@ int main(int argc, char **argv)
 		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor);
 		bandwidthUsageThread->start();
 
-		auto cpuUsageThread = make_shared<EncoderCPUUsageThread>(configurationRoot);
+		auto cpuStatsUpdateIntervalInSeconds = JsonPath(&configurationRoot)["scheduler"]["cpuStatsUpdateIntervalInSeconds"].
+			as<int16_t>(10);
+		auto cpuUsageThread = make_shared<EncoderCPUUsageThread>(configurationRoot, cpuStatsUpdateIntervalInSeconds);
 		cpuUsageThread->start();
 
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;
