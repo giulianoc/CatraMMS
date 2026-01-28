@@ -1499,6 +1499,65 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			string sqlStatement = "create table if not exists MMS_DeliveryServersPool ("
+								  "deliveryServersPoolKey	bigint GENERATED ALWAYS AS IDENTITY,"
+								  "workspaceKey				bigint NOT NULL,"
+								  "label					text NULL,"
+								  "constraint MMS_DeliveryServersPool_PK PRIMARY KEY (deliveryServersPoolKey),"
+								  "constraint MMS_DeliveryServersPool_FK foreign key (workspaceKey) "
+								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "create unique index if not exists MMS_DeliveryServersPool_idx "
+								  "on MMS_DeliveryServersPool (workspaceKey, label) NULLS NOT DISTINCT";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "create table if not exists MMS_DeliveryServerDeliveryServersPoolMapping ("
+								  "deliveryServersPoolKey		bigint NOT NULL,"
+								  "deliveryServerKey			bigint NOT NULL,"
+								  "constraint MMS_DeliveryServerDeliveryServersPoolMapping_PK PRIMARY KEY (deliveryServersPoolKey, deliveryServerKey), "
+								  "constraint MMS_DeliveryServerDeliveryServersPoolMapping_FK1 foreign key (deliveryServersPoolKey) "
+								  "references MMS_DeliveryServersPool (deliveryServersPoolKey) on delete cascade, "
+								  "constraint MMS_DeliveryServerDeliveryServersPoolMapping_FK2 foreign key (deliveryServerKey) "
+								  "references MMS_DeliveryServer (deliveryServerKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
 			string sqlStatement = "create table if not exists MMS_IngestionRoot ("
 								  "ingestionRootKey           bigint GENERATED ALWAYS AS IDENTITY,"
 								  "workspaceKey               bigint NOT NULL,"

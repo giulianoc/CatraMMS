@@ -751,6 +751,7 @@ void API::shareWorkspace_(
 		bool killEncoding = JsonPath(&metadataRoot)["killEncoding"].as<bool>(false);
 		bool cancelIngestionJob = JsonPath(&metadataRoot)["cancelIngestionJob"].as<bool>(false);
 		bool editEncodersPool = JsonPath(&metadataRoot)["editEncodersPool"].as<bool>(false);
+		bool editDeliveryServersPool = JsonPath(&metadataRoot)["editDeliveryServersPool"].as<bool>(false);
 		bool applicationRecorder = JsonPath(&metadataRoot)["applicationRecorder"].as<bool>(false);
 		bool createRemoveLiveChannel = JsonPath(&metadataRoot)["createRemoveLiveChannel"].as<bool>(false);
 		bool updateEncoderAndDeliveryStats = JsonPath(&metadataRoot)["updateEncoderAndDeliveryStats"].as<bool>(false);
@@ -782,7 +783,8 @@ void API::shareWorkspace_(
 					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email,
 					MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
+					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
+					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
@@ -853,7 +855,8 @@ void API::shareWorkspace_(
 					apiAuthorizationDetails->workspace->_workspaceKey, -1, email,
 					MMSEngineDBFacade::CodeType::ShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
+					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
+					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
@@ -1310,6 +1313,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						bool killEncoding = true;
 						bool cancelIngestionJob = true;
 						bool editEncodersPool = true;
+						bool editDeliveryServersPool = true;
 						bool applicationRecorder = true;
 						bool createRemoveLiveChannel = true;
 						bool updateEncoderAndDeliveryStats = false;
@@ -1318,7 +1322,8 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							"", // userCountry,
 							"CET", createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 							shareWorkspace, editMedia,
-							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
+							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
+							applicationRecorder, createRemoveLiveChannel,
 							updateEncoderAndDeliveryStats,
 							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
@@ -1960,6 +1965,7 @@ void API::updateWorkspace(
 		bool newKillEncoding;
 		bool newCancelIngestionJob;
 		bool newEditEncodersPool;
+		bool newEditDeliveryServersPool;
 		bool newApplicationRecorder;
 		bool newCreateRemoveLiveChannel;
 		bool newUpdateEncoderAndDeliveryStats;
@@ -2139,10 +2145,12 @@ void API::updateWorkspace(
 			json userAPIKeyRoot = metadataRoot[field];
 
 			{
-				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",	  "deliveryAuthorization",
-												  "shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
-												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder", "createRemoveLiveChannel",
-					                              "updateEncoderAndDeliveryStats"};
+				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",
+					"deliveryAuthorization",
+					"shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
+					"cancelIngestionJob",	   "editEncodersPool", "editDeliveryServersPool", "applicationRecorder",
+					"createRemoveLiveChannel",
+					"updateEncoderAndDeliveryStats"};
 				for (const string& field : mandatoryFields)
 				{
 					if (!JSONUtils::isPresent(userAPIKeyRoot, field))
@@ -2196,6 +2204,8 @@ void API::updateWorkspace(
 			field = "editEncodersPool";
 			newEditEncodersPool = JSONUtils::asBool(userAPIKeyRoot, field, false);
 
+			newEditDeliveryServersPool = JSONUtils::asBool(userAPIKeyRoot, "editDeliveryServersPool", false);
+
 			field = "applicationRecorder";
 			newApplicationRecorder = JSONUtils::asBool(userAPIKeyRoot, field, false);
 
@@ -2228,7 +2238,8 @@ void API::updateWorkspace(
 				currentCostForSupport_type_1,
 
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
-				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder,
+				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newEditDeliveryServersPool,
+				newApplicationRecorder,
 				newCreateRemoveLiveChannel, newUpdateEncoderAndDeliveryStats
 			);
 #else

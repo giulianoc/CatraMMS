@@ -40,6 +40,7 @@ class API final : public FastCGIAPI
 		bool canKillEncoding{};
 		bool canCancelIngestionJob{};
 		bool canEditEncodersPool{};
+		bool canEditDeliveryServersPool{};
 		bool canApplicationRecorder{};
 		bool canCreateRemoveLiveChannel{};
 		bool canUpdateEncoderAndDeliveryStats{};
@@ -58,11 +59,13 @@ class API final : public FastCGIAPI
 				", canKillEncoding: {}"
 				", canCancelIngestionJob: {}"
 				", canEditEncodersPool: {}"
+				", canEditDeliveryServersPool: {}"
 				", canApplicationRecorder: {}"
 				", canCreateRemoveLiveChannel: {}"
 				", canUpdateEncoderAndDeliveryStats: {}",
 				userKey, admin, canCreateRemoveWorkspace, canIngestWorkflow, canCreateProfiles, canDeliveryAuthorization,
-				canShareWorkspace, canEditMedia, canEditConfiguration, canKillEncoding, canCancelIngestionJob, canEditEncodersPool,
+				canShareWorkspace, canEditMedia, canEditConfiguration, canKillEncoding, canCancelIngestionJob,
+				canEditEncodersPool, canEditDeliveryServersPool,
 				canApplicationRecorder, canCreateRemoveLiveChannel, canUpdateEncoderAndDeliveryStats
 				);
 		}
@@ -841,6 +844,12 @@ class API final : public FastCGIAPI
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);
+	void deliveryServersPoolList(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
+	void addDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
+	void modifyDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
+	void removeDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
+	void addAssociationWorkspaceDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
+	void removeAssociationWorkspaceDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 
 	void addDeliveryServer(
 		const std::string_view& sThreadId, FCGX_Request &request,

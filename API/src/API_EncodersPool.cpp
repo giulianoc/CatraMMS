@@ -648,7 +648,7 @@ void API::encodersPoolList(
 	const FCGIRequestData& requestData
 )
 {
-	string api = "encoderList";
+	string api = "encodersPoolList";
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
@@ -695,13 +695,10 @@ void API::encodersPoolList(
 		}
 
 		{
-			LOG_ERROR("allora 1ui 1");
 			json encodersPoolListRoot =
 				_mmsEngineDBFacade->getEncodersPoolList(start, rows, apiAuthorizationDetails->workspace->_workspaceKey, encodersPoolKey, label, labelOrder);
-			LOG_ERROR("allora 1ui 2");
 
 			string responseBody = JSONUtils::toString(encodersPoolListRoot);
-			LOG_ERROR("allora 1ui 3");
 
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, responseBody);
 		}

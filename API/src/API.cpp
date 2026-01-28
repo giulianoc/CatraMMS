@@ -227,6 +227,34 @@ API::API(
 		{ deliveryServerList(sThreadId, request, requestData); }
 	);
 	registerHandler(
+		"deliveryServersPoolList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ deliveryServersPoolList(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"addDeliveryServersPool", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ addDeliveryServersPool(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"modifyDeliveryServersPool",
+		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ modifyDeliveryServersPool(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"removeDeliveryServersPool",
+		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ removeDeliveryServersPool(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"addAssociationWorkspaceDeliveryServer",
+		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ addAssociationWorkspaceDeliveryServer(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"removeAssociationWorkspaceDeliveryServer",
+		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ removeAssociationWorkspaceDeliveryServer(sThreadId, request, requestData); }
+	);
+	registerHandler(
 		"createDeliveryAuthorization",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ createDeliveryAuthorization(sThreadId, request, requestData); }
@@ -1372,7 +1400,8 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 			apiAuthorizationDetails->canCreateProfiles, apiAuthorizationDetails->canDeliveryAuthorization,
 			apiAuthorizationDetails->canShareWorkspace, apiAuthorizationDetails->canEditMedia,
 			apiAuthorizationDetails->canEditConfiguration, apiAuthorizationDetails->canKillEncoding,
-			apiAuthorizationDetails->canCancelIngestionJob, apiAuthorizationDetails->canEditEncodersPool,
+			apiAuthorizationDetails->canCancelIngestionJob,
+			apiAuthorizationDetails->canEditEncodersPool, apiAuthorizationDetails->canEditDeliveryServersPool,
 			apiAuthorizationDetails->canApplicationRecorder, apiAuthorizationDetails->canCreateRemoveLiveChannel,
 			apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats) = _mmsEngineDBFacade->checkAPIKey(password,
 				// 2022-12-18: controllo della apikey, non vedo motivi per mettere true

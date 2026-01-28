@@ -546,3 +546,492 @@ void API::deliveryServerList(
 		throw;
 	}
 }
+
+void API::deliveryServersPoolList(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "deliveryServersPoolList";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey
+	);
+
+	try
+	{
+		int64_t deliveryServersPoolKey = requestData.getQueryParameter("deliveryServersPoolKey", static_cast<int64_t>(-1));
+
+		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
+		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30));
+		if (rows > _maxPageSize)
+		{
+			// 2022-02-13: changed to return an error otherwise the user
+			//	think to ask for a huge number of items while the return is much less
+
+			// rows = _maxPageSize;
+
+			string errorMessage = std::format(
+				"rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}",
+				rows, _maxPageSize
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string label = requestData.getQueryParameter("label", "");
+		string labelOrder = requestData.getQueryParameter("labelOrder", "");
+		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
+		{
+			LOG_WARN(
+				"encodersPoolList: 'labelOrder' parameter is unknown"
+				", labelOrder: {}",
+				labelOrder
+			);
+			labelOrder = "";
+		}
+
+		{
+			json deliveryServersPoolListRoot =
+				_mmsEngineDBFacade->getDeliveryServersPoolList(start, rows, apiAuthorizationDetails->workspace->_workspaceKey,
+					deliveryServersPoolKey, label, labelOrder);
+
+			string responseBody = JSONUtils::toString(deliveryServersPoolListRoot);
+
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
+				responseBody);
+		}
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+		LOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
+void API::addDeliveryServersPool(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "addDeliveryServersPool";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
+	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditDeliveryServersPool: {}",
+			apiAuthorizationDetails->canEditDeliveryServersPool
+		);
+		LOG_ERROR(errorMessage);
+		throw FastCGIError::HTTPError(403);
+	}
+
+	try
+	{
+		string label;
+		vector<int64_t> deliveryServerKeys;
+
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
+
+			string field = "label";
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				LOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "deliveryServerKeys";
+			if (JSONUtils::isPresent(requestBodyRoot, field))
+			{
+				json deliveryServerKeysRoot = requestBodyRoot[field];
+
+				for (int deliveryServerIndex = 0; deliveryServerIndex < deliveryServerKeysRoot.size(); ++deliveryServerIndex)
+					deliveryServerKeys.push_back(JSONUtils::asInt64(deliveryServerKeysRoot[deliveryServerIndex]));
+			}
+		}
+		catch (exception &e)
+		{
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestData.requestBody: {}",
+				requestData.requestBody
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string sResponse;
+		try
+		{
+			int64_t deliveryServersPoolKey = _mmsEngineDBFacade->addDeliveryServersPool(apiAuthorizationDetails->workspace->_workspaceKey,
+				label, deliveryServerKeys);
+
+			sResponse = (string("{ ") + "\"DeliveryServersPoolKey\": " + to_string(deliveryServersPoolKey) + "}");
+		}
+		catch (exception &e)
+		{
+			LOG_ERROR(
+				"_mmsEngineDBFacade->addDeliveryServersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201,
+			sResponse);
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", requestData.requestBody: {}"
+			", e.what(): {}",
+			api, requestData.requestBody, e.what()
+		);
+		LOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
+void API::modifyDeliveryServersPool(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "modifyDeliveryServersPool";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}"
+		", requestData.requestBody: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
+	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditEncodersPool)
+	{
+		string errorMessage = string(
+			"APIKey does not have the permission"
+			", canEditDeliveryServersPool: {}",
+			apiAuthorizationDetails->canEditDeliveryServersPool
+		);
+		LOG_ERROR(errorMessage);
+		throw FastCGIError::HTTPError(403);
+	}
+
+	try
+	{
+		string label;
+		vector<int64_t> deliveryServerKeys;
+
+		int64_t deliveryServersPoolKey = requestData.getQueryParameter("deliveryServersPoolKey", static_cast<int64_t>(-1),
+			true);
+
+		try
+		{
+			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
+
+			string field = "label";
+			if (!JSONUtils::isPresent(requestBodyRoot, field))
+			{
+				string errorMessage = std::format(
+					"Field is not present or it is null"
+					", Field: {}",
+					field
+				);
+				LOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			label = JSONUtils::asString(requestBodyRoot, field, "");
+
+			field = "deliveryServerKeys";
+			if (JSONUtils::isPresent(requestBodyRoot, field))
+			{
+				json deliveryServerKeysRoot = requestBodyRoot[field];
+
+				for (int deliveryServerIndex = 0; deliveryServerIndex < deliveryServerKeysRoot.size(); ++deliveryServerIndex)
+					deliveryServerKeys.push_back(JSONUtils::asInt64(deliveryServerKeysRoot[deliveryServerIndex]));
+			}
+		}
+		catch (exception &e)
+		{
+			string errorMessage = std::format(
+				"requestBody json is not well format"
+				", requestData.requestBody: {}"
+				", e.what(): {}",
+				requestData.requestBody, e.what()
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		string sResponse;
+		try
+		{
+			_mmsEngineDBFacade->modifyDeliveryServersPool(deliveryServersPoolKey, apiAuthorizationDetails->workspace->_workspaceKey,
+				label, deliveryServerKeys);
+
+			sResponse = (string("{ ") + "\"DeliveryServersPoolKey\": " + to_string(deliveryServersPoolKey) + "}");
+		}
+		catch (exception &e)
+		{
+			LOG_ERROR(
+				"_mmsEngineDBFacade->modifyDeliveryServersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201,
+			sResponse);
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", requestData.requestBody: {}"
+			", e.what(): {}",
+			api, requestData.requestBody, e.what()
+		);
+		LOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
+void API::removeDeliveryServersPool(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "removeDeliveryServersPool";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey
+	);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEditDeliveryServersPool)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", canEditEncodersPool: {}",
+			apiAuthorizationDetails->canEditEncodersPool
+		);
+		LOG_ERROR(errorMessage);
+		throw FastCGIError::HTTPError(403);
+	}
+
+	try
+	{
+		string sResponse;
+		try
+		{
+			int64_t deliveryServersPoolKey = requestData.getQueryParameter("deliveryServersPoolKey", static_cast<int64_t>(-1), true);
+
+			_mmsEngineDBFacade->removeDeliveryServersPool(deliveryServersPoolKey);
+
+			sResponse = (string("{ ") + "\"deliveryServersPoolKey\": " + to_string(deliveryServersPoolKey) + "}");
+		}
+		catch (exception &e)
+		{
+			LOG_ERROR(
+				"_mmsEngineDBFacade->removeDeliveryServersPool failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
+			sResponse);
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+		LOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
+void API::addAssociationWorkspaceDeliveryServer(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "addAssociationWorkspaceDeliveryServer";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey
+	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		LOG_ERROR(errorMessage);
+		throw FastCGIError::HTTPError(403);
+	}
+
+	try
+	{
+		string sResponse;
+		try
+		{
+			int64_t workspaceKey = requestData.getQueryParameter("workspaceKey", static_cast<int64_t>(-1), true);
+
+			int64_t deliveryServerKey = requestData.getQueryParameter("deliveryServerKey", static_cast<int64_t>(-1), true);
+
+			_mmsEngineDBFacade->addAssociationWorkspaceDeliveryServer(workspaceKey, deliveryServerKey);
+
+			sResponse = (string("{ ") + "\"workspaceKey\": " + to_string(workspaceKey) + ", \"deliveryServerKey\": " + to_string(deliveryServerKey) + "}");
+		}
+		catch (exception &e)
+		{
+			LOG_ERROR(
+				"_mmsEngineDBFacade->addAssociationWorkspaceDeliveryServer failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
+			sResponse);
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+		LOG_ERROR(errorMessage);
+		throw;
+	}
+}
+
+void API::removeAssociationWorkspaceDeliveryServer(
+	const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "removeAssociationWorkspaceDeliveryServer";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO(
+		"Received {}"
+		", workspace->_workspaceKey: {}",
+		api, apiAuthorizationDetails->workspace->_workspaceKey
+	);
+
+	if (!apiAuthorizationDetails->admin)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", admin: {}",
+			apiAuthorizationDetails->admin
+		);
+		LOG_ERROR(errorMessage);
+		throw FastCGIError::HTTPError(403);
+	}
+
+	try
+	{
+		string sResponse;
+		try
+		{
+			int64_t workspaceKey = requestData.getQueryParameter("workspaceKey", static_cast<int64_t>(-1), true);
+
+			int64_t deliveryServerKey = requestData.getQueryParameter("deliveryServerKey", static_cast<int64_t>(-1), true);
+
+			_mmsEngineDBFacade->removeAssociationWorkspaceDeliveryServer(workspaceKey, deliveryServerKey);
+
+			sResponse = (string("{ ") + "\"workspaceKey\": " + to_string(workspaceKey) + ", \"deliveryServerKey\": " + to_string(deliveryServerKey) + "}");
+		}
+		catch (exception &e)
+		{
+			LOG_ERROR(
+				"_mmsEngineDBFacade->removeAssociationWorkspaceDeliveryServer failed"
+				", e.what(): {}",
+				e.what()
+			);
+
+			throw;
+		}
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
+			sResponse);
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+		LOG_ERROR(errorMessage);
+		throw;
+	}
+}
