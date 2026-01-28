@@ -2490,9 +2490,9 @@ class MMSEngineDBFacade
 	);
 	nlohmann::json getDeliveryServersPoolList(int start, int rows, int64_t workspaceKey, int64_t deliveryServersPoolKey,
 		std::string label, std::string labelOrder);
-	int64_t addDeliveryServersPool(int64_t workspaceKey, const std::string &label, std::vector<long long> &deliveryServerKeys);
+	int64_t addDeliveryServersPool(int64_t workspaceKey, const std::string &label, std::vector<int64_t> &deliveryServerKeys);
 	int64_t modifyDeliveryServersPool(
-		int64_t deliveryServersPoolKey, int64_t workspaceKey, std::string newLabel, std::vector<long long> &newDeliveryServerKeys
+		int64_t deliveryServersPoolKey, int64_t workspaceKey, std::string newLabel, std::vector<int64_t> &newDeliveryServerKeys
 	);
 	void removeDeliveryServersPool(int64_t deliveryServersPoolKey);
 	void addAssociationWorkspaceDeliveryServer(int64_t workspaceKey, int64_t deliveryServerKey);
