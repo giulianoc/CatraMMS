@@ -771,10 +771,8 @@ void API::addEncodersPool(
 			{
 				json encoderKeysRoot = requestBodyRoot[field];
 
-				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size(); ++encoderIndex)
-				{
-					encoderKeys.push_back(JSONUtils::asInt64(encoderKeysRoot[encoderIndex]));
-				}
+				for (const auto & encoderIndex : encoderKeysRoot)
+					encoderKeys.push_back(JSONUtils::asInt64(encoderIndex));
 			}
 		}
 		catch (exception &e)

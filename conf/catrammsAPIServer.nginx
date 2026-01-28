@@ -66,8 +66,8 @@
 #Workspace
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=createWorkspace last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=addAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-deliveryServer/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=addAssociationWorkspaceDeliveryServer&workspaceKey=$2&deliveryServerKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspaceEncoder/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=addAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspaceDeliveryServer/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=addAssociationWorkspaceDeliveryServer&workspaceKey=$2&deliveryServerKey=$3 last;
 		}
 		if ($request_method = PUT) {
 			#Source User Key is retrieved from the request authorization
@@ -80,8 +80,8 @@
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/share/?$ /api?x-api-version=$1&x-api-method=unshareWorkspace last;
 			#moved to binary API
 			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/?$ /api?x-api-version=$1&x-api-method=deleteWorkspace last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-encoder/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace-deliveryServer/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAssociationWorkspaceDeliveryServer&workspaceKey=$2&deliveryServerKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspaceEncoder/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAssociationWorkspaceEncoder&workspaceKey=$2&encoderKey=$3 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspaceDeliveryServer/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeAssociationWorkspaceDeliveryServer&workspaceKey=$2&deliveryServerKey=$3 last;
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/workspace/usage/?$ /api?x-api-version=$1&x-api-method=workspaceUsage last;
