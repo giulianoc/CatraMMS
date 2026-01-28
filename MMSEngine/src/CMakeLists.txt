@@ -18,29 +18,30 @@
 # allowed only after express negotiation of conditions with the authors.
 
   set(SOURCES
-      AWSSigner.cpp
-      MMSEngineDBFacade_Postgres.cpp
-      MMSEngineDBFacade_Configuration_Postgres.cpp
-      MMSEngineDBFacade_ConfigurationOutputType_Postgres.cpp
-      MMSEngineDBFacade_ConfigurationSocial_Postgres.cpp
-      MMSEngineDBFacade_ConfigurationStream_Postgres.cpp
-      MMSEngineDBFacade_CreateTables_Postgres.cpp
-      MMSEngineDBFacade_EncodersPool_Postgres.cpp
-      MMSEngineDBFacade_EncodingJobs_Postgres.cpp
-      MMSEngineDBFacade_EncodingProfiles_Postgres.cpp
-      MMSEngineDBFacade_IngestionJobs_Postgres.cpp
-      MMSEngineDBFacade_Invoice_Postgres.cpp
-      MMSEngineDBFacade_MediaItems_Postgres.cpp
-      MMSEngineDBFacade_PartitionInfo_Postgres.cpp
-      MMSEngineDBFacade_Retention_Postgres.cpp
-      MMSEngineDBFacade_Statistic_Postgres.cpp
-      MMSEngineDBFacade_UserWorkspace_Postgres.cpp
-      MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp
-      MMSEngineDBFacade_Workflow_Postgres.cpp
-      Workspace.cpp
-      Validator.cpp
-      EMailSender.cpp
-      ThreadsStatistic.cpp)
+          AWSSigner.cpp
+          MMSEngineDBFacade_Postgres.cpp
+          MMSEngineDBFacade_Configuration_Postgres.cpp
+          MMSEngineDBFacade_ConfigurationOutputType_Postgres.cpp
+          MMSEngineDBFacade_ConfigurationSocial_Postgres.cpp
+          MMSEngineDBFacade_ConfigurationStream_Postgres.cpp
+          MMSEngineDBFacade_CreateTables_Postgres.cpp
+          MMSEngineDBFacade_DeliveryServer_Postgres.cpp
+          MMSEngineDBFacade_EncodersPool_Postgres.cpp
+          MMSEngineDBFacade_EncodingJobs_Postgres.cpp
+          MMSEngineDBFacade_EncodingProfiles_Postgres.cpp
+          MMSEngineDBFacade_IngestionJobs_Postgres.cpp
+          MMSEngineDBFacade_Invoice_Postgres.cpp
+          MMSEngineDBFacade_MediaItems_Postgres.cpp
+          MMSEngineDBFacade_PartitionInfo_Postgres.cpp
+          MMSEngineDBFacade_Retention_Postgres.cpp
+          MMSEngineDBFacade_Statistic_Postgres.cpp
+          MMSEngineDBFacade_UserWorkspace_Postgres.cpp
+          MMSEngineDBFacade_WorkflowLibrary_Postgres.cpp
+          MMSEngineDBFacade_Workflow_Postgres.cpp
+          Workspace.cpp
+          Validator.cpp
+          EMailSender.cpp
+          ThreadsStatistic.cpp)
 set(HEADERS
     AWSSigner.h
     MMSEngineDBFacade.h

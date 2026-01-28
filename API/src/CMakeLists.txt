@@ -23,6 +23,7 @@ set(SOURCES
         apiMain.cpp
         API.cpp
         API_DeliveryAuthorization.cpp
+        API_DeliveryServer.cpp
         API_Encoding.cpp
         API_Ingestion.cpp
         API_MediaItem.cpp

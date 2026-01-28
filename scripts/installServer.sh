@@ -514,6 +514,7 @@ create-directory()
 			;;
 		"api-and-delivery")
 			create-directory-api $moduleType
+			create-directory-delivery
 
 			;;
 		"delivery")
@@ -522,10 +523,6 @@ create-directory()
 			;;
 		"externalDelivery")
 			create-directory-externalDelivery
-
-			;;
-		"api-and-delivery")
-			create-directory-delivery
 
 			;;
 		"engine")
@@ -636,9 +633,7 @@ create-directory-delivery()
 
 	mkdir -p /mnt/local-data/logs/mmsAPI
 	mkdir -p /mnt/local-data/logs/nginx
-	#mkdir -p /mnt/local-data/logs/tomcat-gui
-	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/work
-	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
+	mkdir -p /mnt/local-data/logs/rsyncd
 	mkdir -p /mnt/local-data/logs/tomee-gui
 	mkdir -p /mnt/local-data/logs/tomeeWorkDir/work
 	mkdir -p /mnt/local-data/logs/tomeeWorkDir/temp
@@ -701,6 +696,7 @@ create-directory-externalDelivery()
 
 	mkdir -p /mnt/local-data/logs/mmsAPI
 	mkdir -p /mnt/local-data/logs/nginx
+	mkdir -p /mnt/local-data/logs/rsyncd
 	mkdir -p /mnt/local-data/cache/nginx
 	if [ ! -e /var/catramms/logs ]; then
 		ln -s /mnt/local-data/logs /var/catramms
@@ -832,6 +828,7 @@ create-directory-encoder()
 
 	mkdir -p /mnt/local-data/logs/mmsEncoder
 	mkdir -p /mnt/local-data/logs/nginx
+	mkdir -p /mnt/local-data/logs/rsyncd
 	if [ ! -e /var/catramms/logs ]; then
 		ln -s /mnt/local-data/logs /var/catramms
 	fi
@@ -995,6 +992,7 @@ install-mms-packages()
 		"storage")
 			install-mms-CatraMMS-package $architecture
 			install-mms-storage-conf $architecture
+			configure-mms-sysctl $moduleType
 			return
 			;;
 		"engine")
@@ -1042,6 +1040,8 @@ install-mms-packages()
 			install-mms-CatraMMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-delivery-conf $architecture
+			configure-mms-rsync-daemon-package
+			configure-mms-sysctl $moduleType
 			;;
 		"externalDelivery")
 			install-mms-ImageMagick-package $architecture
@@ -1053,6 +1053,8 @@ install-mms-packages()
 			install-mms-CatraMMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-externalDelivery-conf $architecture
+			configure-mms-rsync-daemon-package
+			configure-mms-sysctl $moduleType
 			;;
 		"api-and-delivery")
 			install-mms-ImageMagick-package $architecture
@@ -1066,6 +1068,8 @@ install-mms-packages()
 			install-mms-CatraMMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-api-and-delivery-conf $architecture
+			configure-mms-rsync-daemon-package
+			configure-mms-sysctl $moduleType
 			;;
 		"encoder")
 			install-mms-ImageMagick-package $architecture
@@ -1077,6 +1081,8 @@ install-mms-packages()
 			install-mms-CatraMMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-encoder-conf $architecture
+			configure-mms-rsync-daemon-package
+			configure-mms-sysctl $moduleType
 			;;
 		"externalEncoder")
 			install-mms-ImageMagick-package $architecture
@@ -1088,6 +1094,8 @@ install-mms-packages()
 			install-mms-CatraMMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-externalEncoder-conf $architecture
+			configure-mms-rsync-daemon-package
+			configure-mms-sysctl $moduleType
 			;;
 		"integration")
 			install-mms-FFMpeg-package $architecture
@@ -1604,6 +1612,97 @@ install-mms-nginx-package()
 	fi
 }
 
+configure-mms-rsync-daemon-package()
+{
+	#rsync è già nel sistema operativo
+
+	#/etc/rsyncd.conf
+	echo "# Global" > /etc/rsyncd.conf
+	echo "uid = mms" >> /etc/rsyncd.conf
+	echo "gid = mms" >> /etc/rsyncd.conf
+	echo "use chroot = false" >> /etc/rsyncd.conf
+	echo "max connections = 50" >> /etc/rsyncd.conf
+	echo "log file = /var/catramms/logs/rsyncd/rsyncd.log" >> /etc/rsyncd.conf
+	echo "pid file = /run/rsyncd.pid" >> /etc/rsyncd.conf
+	echo "timeout = 600" >> /etc/rsyncd.conf
+	echo "" >> /etc/rsyncd.conf
+	echo "# Modulo" >> /etc/rsyncd.conf
+	echo "[mmsdata]" >> /etc/rsyncd.conf
+  	echo "path = /mnt/mmsStorage-1/MMSLive" >> /etc/rsyncd.conf
+  	echo "read only = no" >> /etc/rsyncd.conf
+  	echo "list = yes" >> /etc/rsyncd.conf
+  	echo "hosts allow = 10.0.0.0/8 192.168.0.0/16" >> /etc/rsyncd.conf
+  	echo "hosts deny = *" >> /etc/rsyncd.conf
+  	echo "transfer logging = no" >> /etc/rsyncd.conf
+
+	#logrotate funziona con il sistema operativo, non bisogna istallare nulla
+	#/etc/logrotate.d/rsyncd
+	echo "/var/catramms/logs/rsyncd/rsyncd.log {" > /etc/logrotate.d/rsyncd
+    	echo "daily" >> /etc/logrotate.d/rsyncd
+    	echo "rotate 7" >> /etc/logrotate.d/rsyncd
+    	echo "compress" >> /etc/logrotate.d/rsyncd
+    	echo "missingok" >> /etc/logrotate.d/rsyncd
+    	echo "notifempty" >> /etc/logrotate.d/rsyncd
+    	echo "su mms mms" >> /etc/logrotate.d/rsyncd
+    	echo "create 640 mms mms" >> /etc/logrotate.d/rsyncd
+    	echo "postrotate" >> /etc/logrotate.d/rsyncd
+       	echo "	systemctl reload rsync >/dev/null 2>&1 || true" >> /etc/logrotate.d/rsyncd
+    	echo "endscript" >> /etc/logrotate.d/rsyncd
+	echo "}" >> /etc/logrotate.d/rsyncd
+
+	echo "Assicurati che nel servizio /usr/lib/systemd/system/rsync.service ci siano"
+	echo "Restart=always"
+	echo "RestartSec=3"
+	echo "User=root"
+	echo "NoNewPrivileges=off"
+	echo ""
+	read -n 1 -s -r -p "premi un tasto per continuare"
+
+	systemctl daemon-reload
+	systemctl enable --now rsync
+}
+
+configure-mms-sysctl()
+{
+	moduleType=$1
+
+	if [ "$moduleType" == "storage" ]; then
+		echo "" >> /etc/sysctl.conf
+		echo "because of storage" >> /etc/sysctl.conf
+		echo "net.core.rmem_max = 134217728" >> /etc/sysctl.conf
+		echo "net.core.wmem_max = 134217728" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_rmem = 4096 87380 134217728" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_wmem = 4096 65536 134217728" >> /etc/sysctl.conf
+		echo "net.core.netdev_max_backlog = 30000" >> /etc/sysctl.conf
+		echo ""
+		echo "sysctl configured, sysctl -p #per attivare i nuovi parametri, non serve alcun restart dei servizi/processi"
+		echo ""
+		echo ""
+		read -n 1 -s -r -p "premi un tasto per continuare"
+	elif [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "delivery" ]; then
+		echo "" >> /etc/sysctl.conf
+		echo "because of $moduleType (rsyncd)" >> /etc/sysctl.conf
+		echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_mtu_probing = 1" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_slow_start_after_idle = 0" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_window_scaling = 1" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_timestamps = 1" >> /etc/sysctl.conf
+		echo "net.core.netdev_max_backlog = 16384" >> /etc/sysctl.conf
+		echo "net.core.rmem_max = 268435456" >> /etc/sysctl.conf
+		echo "net.core.wmem_max = 268435456" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_rmem = 4096 87380 268435456" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_wmem = 4096 65536 268435456" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_max_syn_backlog = 8192" >> /etc/sysctl.conf
+		echo "net.ipv4.tcp_fin_timeout = 15" >> /etc/sysctl.conf
+		echo ""
+		echo "sysctl configured, sysctl -p #per attivare i nuovi parametri, non serve alcun restart dei servizi/processi"
+		echo ""
+		echo ""
+		read -n 1 -s -r -p "premi un tasto per continuare"
+	fi
+}
+
 install-mms-libpqxx-package()
 {
 	architecture=$1
@@ -1707,6 +1806,11 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 		#connection srt from public
 		ufw allow 30000:31000/udp
+
+		#rsyncd
+		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
+		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+
 	elif [ "$moduleType" == "externalEncoder" ]; then
 		#external encoder (api ..., engine ...
 		ufw allow from 195.201.58.41 to any port 8088 #api-2
@@ -1729,6 +1833,11 @@ firewall-rules()
 		ufw allow 30000:31000/tcp
 		#connection srt from public
 		ufw allow 30000:31000/udp
+
+		#rsyncd
+		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
+		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+
 	elif [ "$moduleType" == "api" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
@@ -1753,12 +1862,22 @@ firewall-rules()
 		ufw allow from $internalNetwork to any port 8091		#mms-delivery
 		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
 		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
+
+		#rsyncd
+		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
+		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+
 	elif [ "$moduleType" == "externalDelivery" ]; then
 		#HTTP Per ora commentato perchè le richieste saranno su https. Se si abilitasse HTTP
 		#dovremmo aggiungere la relativa sezione su catramms.nginx che dovrebbe redirigere o autorizzare la richiesta
 		#ufw allow 80 		#HTTP Per ora commentato perchè le richieste saranno su https
 		ufw allow 443 	#HTTPS/SSL
 		ufw allow 80 	#HTTP per permettere a certbot di aggiornare il certificato
+
+		#rsyncd
+		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
+		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+
 	elif [ "$moduleType" == "api-and-delivery" ]; then
 		# -> http(nginx) and https(nginx)
 		#echo ""
@@ -1776,6 +1895,11 @@ firewall-rules()
 		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
 		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
+
+		#rsyncd
+		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
+		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+
 	elif [ "$moduleType" == "engine" ]; then
 		# -> mysql/postgres
 		#ufw allow 3306
@@ -1962,22 +2086,13 @@ if [ "$moduleType" == "storage" ]; then
 	echo "sudo systemctl restart nfs-kernel-server"
 	echo ""
 	echo ""
-	echo "Ottimizzazione di uno storage lato client, in /etc/fstab usare the following flags: ro,noatime,nodiratime,vers=3,async"
-	echo "esempio: 192.168.100.1:/mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSLive nfs ro,noatime,nodiratime,vers=3,async 0 0"
+	echo "Ottimizzazione di uno storage lato client, in /etc/fstab usare the following flags: ro,noatime,nodiratime,vers=4.1,soft,timeo=600,retrans=5,_netdev,x-systemd.automount (queste opzioni consentono: Unmount sempre possibile, Niente kernel lock,Timeout gestibile,Ottima per HLS, playlist,segmenti)
+"
+	echo "esempio: 192.168.100.1:/mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSLive nfs ro,noatime,nodiratime,vers=4.1,soft,timeo=600,retrans=5,_netdev,x-systemd.automount 0 0"
 	echo "ro: se è sufficiente la sola lettura"
 	echo "noatime,nodiratime: non aggiorna il timestamp di accesso, meno scritture"
 	echo "vers=3: NFSv3 è spesso più veloce di v4 per HLS (meno overhead di locking), ma puoi testare anche vers=4.1"
 	echo "async: conferma scritture più velocemente (rischio di perdita dati in caso di crash, ma OK per streaming)"
-	echo ""
-	echo ""
-	echo "Ottimizzazione di uno storage lato server, in /etc/sysctl.conf"
-	echo "net.core.rmem_max = 134217728"
-	echo "net.core.wmem_max = 134217728"
-	echo "net.ipv4.tcp_rmem = 4096 87380 134217728"
-	echo "net.ipv4.tcp_wmem = 4096 65536 134217728"
-	echo "net.core.netdev_max_backlog = 30000"
-	echo ""
-	echo "sysctl -p #per attivare i nuovi parametri, non serve alcun restart dei servizi/processi"
 	echo ""
 	echo ""
 	read -n 1 -s -r -p "premi un tasto per continuare"
@@ -2001,7 +2116,7 @@ read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (s
 echo ""
 echo ""
 
-read -n 1 -s -r -p "Aggiornare foglio su google Server List's"
+read -n 1 -s -r -p "Aggiornare foglio su google Server List's e diagrammi MMS CDN"
 echo ""
 echo ""
 

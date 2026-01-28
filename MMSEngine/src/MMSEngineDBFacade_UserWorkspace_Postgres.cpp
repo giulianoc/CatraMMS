@@ -210,12 +210,12 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			bool editEncodersPool = true;
 			bool applicationRecorder = true;
 			bool createRemoveLiveChannel = true;
-			bool updateEncoderStats = false;
+			bool updateEncoderAndDeliveryStats = false;
 
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
-				updateEncoderStats,
+				updateEncoderAndDeliveryStats,
 				trimWorkspaceName, notes, workspaceType, deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				languageCode, workspaceTimezone, userExpirationLocalDate
 			);
@@ -460,12 +460,12 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 			bool editEncodersPool = true;
 			bool applicationRecorder = true;
 			bool createRemoveLiveChannel = true;
-			bool updateEncoderStats = false;
+			bool updateEncoderAndDeliveryStats = false;
 
 			pair<int64_t, string> workspaceKeyAndConfirmationCode = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
-				updateEncoderStats,
+				updateEncoderAndDeliveryStats,
 				trimWorkspaceName, notes, workspaceType, deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				languageCode, workspaceTimezone, userExpirationLocalDate
 			);
@@ -507,7 +507,7 @@ string MMSEngineDBFacade::createCode(
 	const int64_t workspaceKey, int64_t userKey, const string& userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
 	bool ingestWorkflow,
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats
+	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats
 )
 {
 	string code;
@@ -518,7 +518,7 @@ string MMSEngineDBFacade::createCode(
 		code = createCode(
 			trans, workspaceKey, userKey, userEmail, codeType, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder,
-			createRemoveLiveChannel, updateEncoderStats
+			createRemoveLiveChannel, updateEncoderAndDeliveryStats
 		);
 	}
 	catch (exception const &e)
@@ -553,7 +553,7 @@ string MMSEngineDBFacade::createCode(
 	bool createRemoveWorkspace,
 	bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
 	bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-	bool updateEncoderStats
+	bool updateEncoderAndDeliveryStats
 )
 {
 	string code;
@@ -581,7 +581,7 @@ string MMSEngineDBFacade::createCode(
 				permissionsRoot["editEncodersPool"] = editEncodersPool;
 				permissionsRoot["applicationRecorder"] = applicationRecorder;
 				permissionsRoot["createRemoveLiveChannel"] = createRemoveLiveChannel;
-				permissionsRoot["updateEncoderStats"] = updateEncoderStats;
+				permissionsRoot["updateEncoderAndDeliveryStats"] = updateEncoderAndDeliveryStats;
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
 
@@ -635,7 +635,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 	const string& userName, const string& userEmailAddress, const string& userCountry, string userTimezone, bool createRemoveWorkspace,
 	bool ingestWorkflow,
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
-	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats,
+	bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
 	const string& defaultWorkspaceKeys,
 	int expirationInDaysWorkspaceDefaultValue, chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -704,7 +704,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 					string localApiKey = createAPIKeyForActiveDirectoryUser(
 						trans, userKey, userEmailAddress, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 						shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder,
-						createRemoveLiveChannel, updateEncoderStats, llDefaultWorkspaceKey, expirationInDaysWorkspaceDefaultValue
+						createRemoveLiveChannel, updateEncoderAndDeliveryStats, llDefaultWorkspaceKey, expirationInDaysWorkspaceDefaultValue
 					);
 					if (apiKey.empty())
 						apiKey = localApiKey;
@@ -743,7 +743,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	int64_t userKey, const string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 	bool deliveryAuthorization,
 	bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
-	bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+	bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats, int64_t workspaceKey,
 	int expirationInDaysWorkspaceDefaultValue
 )
 {
@@ -756,7 +756,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			trans, userKey, userEmailAddress, createRemoveWorkspace, ingestWorkflow,
 			createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool,
-			applicationRecorder, createRemoveLiveChannel, updateEncoderStats, workspaceKey,
+			applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats, workspaceKey,
 			expirationInDaysWorkspaceDefaultValue
 		);
 	}
@@ -791,7 +791,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	PostgresConnTrans &trans, int64_t userKey, const string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow,
 	bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats, int64_t workspaceKey,
 	int expirationInDaysWorkspaceDefaultValue
 )
 {
@@ -819,7 +819,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				permissionsRoot["editEncodersPool"] = editEncodersPool;
 				permissionsRoot["applicationRecorder"] = applicationRecorder;
 				permissionsRoot["createRemoveLiveChannel"] = createRemoveLiveChannel;
-				permissionsRoot["updateEncoderStats"] = updateEncoderStats;
+				permissionsRoot["updateEncoderAndDeliveryStats"] = updateEncoderAndDeliveryStats;
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
 
@@ -899,7 +899,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, const string& workspaceName, const string& notes,
+	bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats, const string& workspaceName, const string& notes,
 	WorkspaceType workspaceType, const string& deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber, long maxStorageInMB,
 	const string& languageCode, string workspaceTimezone, chrono::system_clock::time_point userExpirationLocalDate
@@ -1007,7 +1007,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 		confirmationCode = createCode(trans,
 			workspaceKey, userKey, "", CodeType::UserRegistration, // userEmail,
 			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-			killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
+			killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
 		);
 
 		{
@@ -1851,9 +1851,9 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 			);
 			if (!sqlResultSet->empty())
 			{
-				userKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("userKey")].as<int64_t>();
-				workspaceKey = (*sqlResultSet)[0][sqlResultSet->columnIndex("workspaceKey")].as<int64_t>();
-				permissionsRoot = (*sqlResultSet)[0][sqlResultSet->columnIndex("permissions")].as<json>();
+				userKey = (*sqlResultSet)[0]["userKey"].as<int64_t>();
+				workspaceKey = (*sqlResultSet)[0]["workspaceKey"].as<int64_t>();
+				permissionsRoot = (*sqlResultSet)[0]["permissions"].as<json>();
 				LOG_INFO("checkAPIKey"
 					", userKey: {}"
 					", workspaceKey: {}"
@@ -1911,11 +1911,11 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 		JsonPath(&permissionsRoot)["editEncodersPool"].as<bool>(false),
 		JsonPath(&permissionsRoot)["applicationRecorder"].as<bool>(false),
 		JsonPath(&permissionsRoot)["createRemoveLiveChannel"].as<bool>(false),
-		JsonPath(&permissionsRoot)["updateEncoderStats"].as<bool>(false)
+		JsonPath(&permissionsRoot)["updateEncoderAndDeliveryStats"].as<bool>(false)
 	);
 }
 
-json MMSEngineDBFacade::login(string eMailAddress, string password)
+json MMSEngineDBFacade::login(const string& eMailAddress, const string& password)
 {
 	json loginDetailsRoot;
 
@@ -2493,7 +2493,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 			userAPIKeyRoot["editEncodersPool"] = admin ? true : JSONUtils::asBool(permissionsRoot, "editEncodersPool", false);
 			userAPIKeyRoot["applicationRecorder"] = admin ? true : JSONUtils::asBool(permissionsRoot, "applicationRecorder", false);
 			userAPIKeyRoot["createRemoveLiveChannel"] = admin ? true : JSONUtils::asBool(permissionsRoot, "createRemoveLiveChannel", false);
-			userAPIKeyRoot["updateEncoderStats"] = admin ? true : JSONUtils::asBool(permissionsRoot, "updateEncoderStats", false);
+			userAPIKeyRoot["updateEncoderAndDeliveryStats"] = admin ? true : JSONUtils::asBool(permissionsRoot, "updateEncoderAndDeliveryStats", false);
 
 			workspaceDetailRoot["userAPIKey"] = userAPIKeyRoot;
 
@@ -2573,7 +2573,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 
 	bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles, bool newDeliveryAuthorization, bool newShareWorkspace,
 	bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob, bool newEditEncodersPool,
-	bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderStats
+	bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderAndDeliveryStats
 )
 {
 	json workspaceDetailRoot;
@@ -2967,7 +2967,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			permissionsRoot["editEncodersPool"] = newEditEncodersPool;
 			permissionsRoot["applicationRecorder"] = newApplicationRecorder;
 			permissionsRoot["createRemoveLiveChannel"] = newCreateRemoveLiveChannel;
-			permissionsRoot["updateEncoderStats"] = newUpdateEncoderStats;
+			permissionsRoot["updateEncoderAndDeliveryStats"] = newUpdateEncoderAndDeliveryStats;
 
 			string permissions = JSONUtils::toString(permissionsRoot);
 

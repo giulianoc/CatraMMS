@@ -44,7 +44,7 @@ void API::addRequestStatistic(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -685,7 +685,7 @@ void API::loginStatisticList(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

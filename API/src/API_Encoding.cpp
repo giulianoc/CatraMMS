@@ -204,7 +204,7 @@ void API::killOrCancelEncodingJob(
 			apiAuthorizationDetails->canKillEncoding
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -749,7 +749,7 @@ void API::addUpdateEncodingProfilesSet(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -870,7 +870,7 @@ void API::addEncodingProfile(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -995,7 +995,7 @@ void API::removeEncodingProfile(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -1056,7 +1056,7 @@ void API::removeEncodingProfilesSet(
 			apiAuthorizationDetails->canCreateProfiles
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

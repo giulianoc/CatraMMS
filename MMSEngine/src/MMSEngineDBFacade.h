@@ -13,13 +13,13 @@
 
 #pragma once
 
+#include "Workspace.h"
+#include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
-#include "Workspace.h"
-#include "nlohmann/json.hpp"
-#include "spdlog/spdlog.h"
 #define DBCONNECTIONPOOL_LOG
 #ifdef DBCONNECTION_MYSQL
 	#include "MySQLConnection.h"
@@ -1305,7 +1305,7 @@ class MMSEngineDBFacade
 		int64_t workspaceKey, int64_t userKey, const std::string &userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
 		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
 		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-		bool updateEncoderStats
+		bool updateEncoderAndDeliveryStats
 	);
 
 #ifdef __POSTGRES__
@@ -1354,7 +1354,7 @@ class MMSEngineDBFacade
 		const std::string &userName, const std::string &userEmailAddress, const std::string &userCountry, std::string userTimezone,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder,
-		bool createRemoveLiveChannel, bool updateEncoderStats, const std::string &defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
+		bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats, const std::string &defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
 		std::chrono::system_clock::time_point userExpirationLocalDate
 	);
 #else
@@ -1370,7 +1370,7 @@ class MMSEngineDBFacade
 		int64_t userKey, const std::string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool,
-		bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+		bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats, int64_t workspaceKey,
 		int expirationInDaysWorkspaceDefaultValue
 	);
 
@@ -1384,7 +1384,7 @@ class MMSEngineDBFacade
 	std::tuple<int64_t, std::shared_ptr<Workspace>, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool, bool>
 		checkAPIKey(const std::string_view &apiKey, bool fromMaster);
 
-	nlohmann::json login(std::string eMailAddress, std::string password);
+	nlohmann::json login(const std::string &eMailAddress, const std::string &password);
 
 	int64_t saveLoginStatistics(int userKey, std::string ip);
 
@@ -1426,7 +1426,7 @@ class MMSEngineDBFacade
 
 		bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles, bool newDeliveryAuthorization, bool newShareWorkspace,
 		bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob, bool newEditEncodersPool,
-		bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderStats
+		bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderAndDeliveryStats
 	);
 #else
 	nlohmann::json updateWorkspaceDetails(
@@ -2405,8 +2405,8 @@ class MMSEngineDBFacade
 	void removeEncoder(int64_t encoderKey);
 
 	// std::tuple<std::string, std::string, std::string> getEncoderDetails(int64_t encoderKey);
-	std::tuple<std::string, std::string, std::string>
-	encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey, bool fromMaster = false, std::chrono::milliseconds *sqlDuration = nullptr);
+	std::tuple<std::string, std::string, std::string> encoder_LabelPublicServerNameInternalServerName(int64_t encoderKey,
+		bool fromMaster = false, std::chrono::milliseconds *sqlDuration = nullptr);
 	std::string encoder_columnAsString(std::string columnName, int64_t encoderKey, bool fromMaster = false);
 	std::shared_ptr<PostgresHelper::SqlResultSet> encoderQuery(
 		std::vector<std::string> &requestedColumns, int64_t encoderKey, bool fromMaster, int startIndex = -1, int rows = -1, std::string orderBy = "",
@@ -2464,6 +2464,26 @@ class MMSEngineDBFacade
 	void removeEncodersPool(int64_t encodersPoolKey);
 
 	void addUpdatePartitionInfo(int partitionKey, std::string partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB);
+
+	int64_t addDeliveryServer(
+		const std::string &label, bool external, bool enabled, const std::string &publicServerName, const std::string &internalServerName
+	);
+	void modifyDeliveryServer(
+		int64_t deliveryServerKey, bool labelToBeModified, const std::string &label, bool externalToBeModified, bool external, bool enabledToBeModified,
+		bool enabled, bool publicServerNameToBeModified, const std::string &publicServerName,
+		bool internalServerNameToBeModified, const std::string &internalServerName
+	);
+	void updateDeliveryServerAvgBandwidthUsage(
+		int64_t deliveryServerKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
+	);
+	void updateDeliveryServerCPUUsage(
+		int64_t deliveryServerKey, uint32_t& cpuUsage
+	);
+	void removeDeliveryServer(int64_t deliveryServerKey);
+	nlohmann::json getDeliveryServerList(
+		bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, int64_t deliveryServerKey, std::string label,
+		std::string serverName, std::string labelOrder
+	);
 
 #ifdef __POSTGRES__
 	std::pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(int64_t ingestionJobKey, uint64_t ullFSEntrySizeInBytes);
@@ -2610,7 +2630,7 @@ class MMSEngineDBFacade
 		PostgresConnTrans &trans, int64_t userKey, const std::string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow,
 		bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats, int64_t workspaceKey,
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats, int64_t workspaceKey,
 		int expirationInDaysWorkspaceDefaultValue
 	);
 #else
@@ -2632,7 +2652,7 @@ class MMSEngineDBFacade
 		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, const std::string &userEmail, CodeType codeType, bool admin,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool applicationRecorder,
-		bool createRemoveLiveChannel, bool updateEncoderStats
+		bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats
 	);
 #else
 	std::string createCode(
@@ -2704,7 +2724,7 @@ class MMSEngineDBFacade
 	std::pair<int64_t, std::string> addWorkspace(
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderStats,
+		bool editEncodersPool, bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
 		const std::string &workspaceName, const std::string &notes,
 		WorkspaceType workspaceType, const std::string &deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 		long maxIngestionsNumber, long maxStorageInMB, const std::string &languageCode, std::string workspaceTimezone,
@@ -2834,10 +2854,17 @@ class MMSEngineDBFacade
 #endif
 
 #ifdef __POSTGRES__
-	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, PostgresHelper::SqlResultSet::SqlRow &row, std::chrono::milliseconds *extraDuration = nullptr);
+	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, PostgresHelper::SqlResultSet::SqlRow &row,
+		std::chrono::milliseconds *extraDuration = nullptr);
 #else
 	nlohmann::json getEncoderRoot(bool admin, bool runningInfo, std::shared_ptr<sql::ResultSet> resultSet);
 #endif
+	nlohmann::json getDeliveryServerRoot(bool admin, PostgresHelper::SqlResultSet::SqlRow &row,
+		std::chrono::milliseconds *extraDuration = nullptr);
+	void addAssociationWorkspaceDeliveryServer(int64_t workspaceKey, int64_t deliveryServerKey);
+	void addAssociationWorkspaceDeliveryServer(int64_t workspaceKey, int64_t deliveryServerKey, PostgresConnTrans &trans);
+	void removeAssociationWorkspaceDeliveryServer(int64_t workspaceKey, int64_t deliveryServerKey);
+	nlohmann::json getDeliveryServerWorkspacesAssociation(int64_t deliveryServerKey, std::chrono::milliseconds *sqlDuration = nullptr);
 
 	void createTablesIfNeeded();
 

@@ -650,7 +650,7 @@ void API::shareWorkspace_(
 			apiAuthorizationDetails->canShareWorkspace
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -753,7 +753,7 @@ void API::shareWorkspace_(
 		bool editEncodersPool = JsonPath(&metadataRoot)["editEncodersPool"].as<bool>(false);
 		bool applicationRecorder = JsonPath(&metadataRoot)["applicationRecorder"].as<bool>(false);
 		bool createRemoveLiveChannel = JsonPath(&metadataRoot)["createRemoveLiveChannel"].as<bool>(false);
-		bool updateEncoderStats = JsonPath(&metadataRoot)["updateEncoderStats"].as<bool>(false);
+		bool updateEncoderAndDeliveryStats = JsonPath(&metadataRoot)["updateEncoderAndDeliveryStats"].as<bool>(false);
 
 		try
 		{
@@ -782,7 +782,7 @@ void API::shareWorkspace_(
 					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email,
 					MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
+					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
@@ -853,7 +853,7 @@ void API::shareWorkspace_(
 					apiAuthorizationDetails->workspace->_workspaceKey, -1, email,
 					MMSEngineDBFacade::CodeType::ShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderStats
+					killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
@@ -1312,14 +1312,14 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						bool editEncodersPool = true;
 						bool applicationRecorder = true;
 						bool createRemoveLiveChannel = true;
-						bool updateEncoderStats = false;
+						bool updateEncoderAndDeliveryStats = false;
 						pair<int64_t, string> userKeyAndEmail = _mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName, email,
 							"", // userCountry,
 							"CET", createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 							shareWorkspace, editMedia,
 							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, applicationRecorder, createRemoveLiveChannel,
-							updateEncoderStats,
+							updateEncoderAndDeliveryStats,
 							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 							// chrono::system_clock::time_point userExpirationDate
@@ -1962,7 +1962,7 @@ void API::updateWorkspace(
 		bool newEditEncodersPool;
 		bool newApplicationRecorder;
 		bool newCreateRemoveLiveChannel;
-		bool newUpdateEncoderStats;
+		bool newUpdateEncoderAndDeliveryStats;
 
 		json metadataRoot;
 		try
@@ -2142,7 +2142,7 @@ void API::updateWorkspace(
 				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",	  "deliveryAuthorization",
 												  "shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
 												  "cancelIngestionJob",	   "editEncodersPool", "applicationRecorder", "createRemoveLiveChannel",
-					                              "updateEncoderStats"};
+					                              "updateEncoderAndDeliveryStats"};
 				for (const string& field : mandatoryFields)
 				{
 					if (!JSONUtils::isPresent(userAPIKeyRoot, field))
@@ -2200,7 +2200,7 @@ void API::updateWorkspace(
 			newApplicationRecorder = JSONUtils::asBool(userAPIKeyRoot, field, false);
 
 			newCreateRemoveLiveChannel = JSONUtils::asBool(userAPIKeyRoot, "createRemoveLiveChannel", false);
-			newUpdateEncoderStats = JSONUtils::asBool(userAPIKeyRoot, "updateEncoderStats", false);
+			newUpdateEncoderAndDeliveryStats = JSONUtils::asBool(userAPIKeyRoot, "updateEncoderAndDeliveryStats", false);
 		}
 
 		try
@@ -2229,7 +2229,7 @@ void API::updateWorkspace(
 
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
 				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newApplicationRecorder,
-				newCreateRemoveLiveChannel, newUpdateEncoderStats
+				newCreateRemoveLiveChannel, newUpdateEncoderAndDeliveryStats
 			);
 #else
 			bool maxStorageInMBChanged = false;
@@ -2368,7 +2368,7 @@ void API::deleteWorkspace(
 			apiAuthorizationDetails->canCreateRemoveWorkspace
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2520,7 +2520,7 @@ void API::unshareWorkspace(
 			apiAuthorizationDetails->canShareWorkspace
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

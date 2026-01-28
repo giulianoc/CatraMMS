@@ -45,7 +45,7 @@ void API::addEncoder(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -208,7 +208,7 @@ void API::modifyEncoder(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -369,7 +369,7 @@ void API::updateEncoderBandwidthStats(
 		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
-	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canUpdateEncoderStats)
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats)
 	{
 		string errorMessage = std::format(
 			"APIKey does not have the permission"
@@ -377,7 +377,7 @@ void API::updateEncoderBandwidthStats(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	int64_t encoderKey;
@@ -439,7 +439,7 @@ void API::updateEncoderCPUUsageStats(
 		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
 
-	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canUpdateEncoderStats)
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats)
 	{
 		const string errorMessage = std::format(
 			"APIKey does not have the permission"
@@ -447,7 +447,7 @@ void API::updateEncoderCPUUsageStats(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	int64_t encoderKey;
@@ -514,7 +514,7 @@ void API::removeEncoder(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -743,7 +743,7 @@ void API::addEncodersPool(
 			apiAuthorizationDetails->canEditEncodersPool
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -850,7 +850,7 @@ void API::modifyEncodersPool(
 			apiAuthorizationDetails->canEditEncodersPool
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -959,7 +959,7 @@ void API::removeEncodersPool(
 			apiAuthorizationDetails->canEditEncodersPool
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -1022,7 +1022,7 @@ void API::addAssociationWorkspaceEncoder(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -1087,7 +1087,7 @@ void API::removeAssociationWorkspaceEncoder(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

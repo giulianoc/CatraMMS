@@ -26,7 +26,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 			apiAuthorizationDetails->canDeliveryAuthorization
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -185,7 +185,7 @@ void API::createBulkOfDeliveryAuthorization(
 			apiAuthorizationDetails->canDeliveryAuthorization
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -730,7 +730,7 @@ void API::deliveryAuthorizationThroughParameter(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 }
 
@@ -775,7 +775,7 @@ void API::deliveryAuthorizationThroughPath(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 }
 

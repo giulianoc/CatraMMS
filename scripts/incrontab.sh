@@ -46,6 +46,191 @@ if ! command -v parallel >/dev/null 2>&1; then
 	exit 1
 fi
 
+rsyncBySSH()
+{
+	local rsyncSource=$1
+	local rsyncDest=$2
+	local serversToBeSynched=$3
+
+	MAX_PARALLEL=5				# Max sincronizzazioni in parallelo
+	BW_LIMIT=50000  			# Banda limite per ogni rsync (KB/s), opzionale
+
+	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
+	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
+	#che impiega piu tempo
+
+	#se non esiste il file ~/.ssh/known_hosts, lo creo e lo pre-popolo per evitare messaggi tipo
+	#Warning: Permanently added '[91.222.174.119]:9255' (ED25519) to the list of known hosts.
+	KNOWN="$HOME/.ssh/known_hosts"
+	if [[ ! -f "$KNOWN" ]]; then
+		mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"
+		: > "KNOWN"; chmod 600 "$KNOWN"
+
+		for H in $serversToBeSynched; do
+  		k=$(ssh-keyscan -p 9255 -T 5 "$H" 2>/dev/null) || continue
+  		# riscrive l’host iniziale in formato "[host]:9255 ..."
+  		printf '[%s]:9255 %s\n' "$H" "${k#* }" >> "$KNOWN"
+		done
+		# verifica:
+		# ssh-keygen -F "[91.222.174.119]:9255"
+	fi
+
+	identityFile=~/ssh-keys/hetzner-mms-key.pem
+	if [[ ! -f "$identityFile" ]]; then
+		end=$(date +%s%3N)
+		totalElapsed=$((end-start))
+		echo "@$(date +'%Y-%m-%d %H:%M:%S')-$pid@ @ERROR@ @$eventName@ @$channelDirectory@ @$fileName@ @$elapsedCopyInMilliSecs@ @$totalElapsed@ identity files does not exist ($identityFile)" >> $debugFileName
+
+		exit 1
+	fi
+
+	#e' impoetante questo formato perchè viene usato da servicesStatusLibrary.sh (mms_incrontab_check_rsync)
+	sDate=$(date +'%Y-%m-%d %H:%M:%S')
+	if [ $debug_rsync -eq 1 ]
+	then
+		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
+		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
+		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
+		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		'{
+			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+			echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
+			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
+			# 1. Sincronizza solo i file .ts
+			timeout 15s rsync -e "ssh $SSH_OPTS" \
+				--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+    				--include "*/" --include "*.ts" --exclude "*" \
+    				"$rsyncSource" mms@{}:$rsyncDest
+			status_ts=$?
+			if [[ $status_ts -eq 0 ]]; then
+				# 2. Sincronizza solo il file .m3u8
+				timeout 15s rsync -e "ssh $SSH_OPTS" \
+					--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+			  		--include "*/" --include "*.m3u8" --exclude "*" \
+    					"$rsyncSource" mms@{}:$rsyncDest
+				status_m3u8=$?
+				if [[ $status_m3u8 -ne 0 ]]; then
+					#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
+					echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
+				fi
+			else
+				echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
+			fi
+		} >> $debugFileName 2>&1' \
+		::: $serversToBeSynched
+	else
+		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
+		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		'{
+			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
+			# 1. Sincronizza solo i file .ts
+			timeout 15s rsync -e "ssh $SSH_OPTS" \
+				--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+    				--include "*/" --include "*.ts" --exclude "*" \
+				$rsyncSource mms@{}:$rsyncDest
+			status_ts=$?
+			if [[ $status_ts -eq 0 ]]; then
+				# 2. Sincronizza solo il file .m3u8
+				timeout 15s rsync -e "ssh $SSH_OPTS" \
+					--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+				  	--include "*/" --include "*.m3u8" --exclude "*" \
+					$rsyncSource mms@{}:$rsyncDest
+				status_m3u8=$?
+				if [[ $status_m3u8 -ne 0 ]]; then
+					#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
+					echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
+				fi
+			else
+				echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
+			fi
+		} >> $debugFileName 2>&1' \
+		::: $serversToBeSynched
+	fi
+}
+
+rsyncByRSYNCD()
+{
+	local rsyncSource=$1
+	local rsyncDest=$2
+	local serversToBeSynched=$3
+
+	MAX_PARALLEL=5				# Max sincronizzazioni in parallelo
+
+	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
+	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
+	#che impiega piu tempo
+
+	#e' impoetante questo formato perchè viene usato da servicesStatusLibrary.sh (mms_incrontab_check_rsync)
+	sDate=$(date +'%Y-%m-%d %H:%M:%S')
+	if [ $debug_rsync -eq 1 ]
+	then
+		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
+		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate
+		parallel --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		'{
+			echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
+			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
+			# 1. Sincronizza solo i file .ts
+			timeout 15s rsync \
+				--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace \
+    				--include "*/" --include "*.ts" --exclude "*" \
+    				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
+			status_ts=$?
+			if [[ $status_ts -eq 0 ]]; then
+				# 2. Sincronizza solo il file .m3u8
+				timeout 15s rsync \
+					--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace \
+			  		--include "*/" --include "*.m3u8" --exclude "*" \
+    					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
+				status_m3u8=$?
+				if [[ $status_m3u8 -ne 0 ]]; then
+					#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
+					echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
+				fi
+			else
+				echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
+			fi
+		} >> $debugFileName 2>&1' \
+		::: $serversToBeSynched
+	else
+		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
+		export rsyncSource rsyncDest debugFileName pid fileName sDate
+		parallel --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		'{
+			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
+			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
+			# 1. Sincronizza solo i file .ts
+			timeout 15s rsync \
+				--partial --archive --omit-dir-times --timeout=15 --inplace \
+    				--include "*/" --include "*.ts" --exclude "*" \
+				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
+			status_ts=$?
+			if [[ $status_ts -eq 0 ]]; then
+				# 2. Sincronizza solo il file .m3u8
+				timeout 15s rsync \
+					--partial --archive --omit-dir-times --timeout=15 --inplace \
+				  	--include "*/" --include "*.m3u8" --exclude "*" \
+					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
+				status_m3u8=$?
+				if [[ $status_m3u8 -ne 0 ]]; then
+					#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
+					echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
+				fi
+			else
+				echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
+			fi
+		} >> $debugFileName 2>&1' \
+		::: $serversToBeSynched
+	fi
+}
+
+
 #Caso (1). Nel caso di un encoder che genera HLS, abbiamo:
 #IN_MOVED_TO per i file .m3u8
 #IN_MODIFY per i files .ts e .m3u8.tmp
@@ -78,41 +263,6 @@ then
 		exit 1
 	}
 
-	MAX_PARALLEL=5				# Max sincronizzazioni in parallelo
-	BW_LIMIT=50000  			# Banda limite per ogni rsync (KB/s), opzionale
-	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
-	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
-	#che impiega piu tempo, cioé quello in USA
-	#Inoltre, per evitare di stressare gli stessi server, eseguiamo il sync ogni volta su server diversi
-	#serversToBeSynched="$(get_next_ip "mmsStorageIPList") $(get_next_ip "euExternalDeliveriesIPList") $(get_next_ip "usaExternalDeliveriesIPList") $(get_next_ip "usa2ExternalDeliveriesIPList")"
-	serversToBeSynched="$MMS_RSYNC_EXTERNAL_DELIVERY_SERVERS" # defined in mms-env.sh
-	#echo "serversToBeSynched: $serversToBeSynched" >> $debugFileName
-
-	#se non esiste il file ~/.ssh/known_hosts, lo creo e lo pre-popolo per evitare messaggi tipo
-	#Warning: Permanently added '[91.222.174.119]:9255' (ED25519) to the list of known hosts.
-	KNOWN="$HOME/.ssh/known_hosts"
-	if [[ ! -f "$KNOWN" ]]; then
-		mkdir -p "$HOME/.ssh"; chmod 700 "$HOME/.ssh"
-		: > "KNOWN"; chmod 600 "$KNOWN"
-
-		for H in $serversToBeSynched; do
-  		k=$(ssh-keyscan -p 9255 -T 5 "$H" 2>/dev/null) || continue
-  		# riscrive l’host iniziale in formato "[host]:9255 ..."
-  		printf '[%s]:9255 %s\n' "$H" "${k#* }" >> "$KNOWN"
-		done
-		# verifica:
-		# ssh-keygen -F "[91.222.174.119]:9255"
-	fi
-
-	identityFile=~/ssh-keys/hetzner-mms-key.pem
-	if [[ ! -f "$identityFile" ]]; then
-		end=$(date +%s%3N)
-		totalElapsed=$((end-start))
-		echo "@$(date +'%Y-%m-%d %H:%M:%S')-$pid@ @ERROR@ @$eventName@ @$channelDirectory@ @$fileName@ @$elapsedCopyInMilliSecs@ @$totalElapsed@ identity files does not exist ($identityFile)" >> $debugFileName
-
-		exit 1
-	fi
-
 	#Example of events using debug:
 	#IN_CREATE --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
 	#IN_MODIFY --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
@@ -123,9 +273,6 @@ then
 	#temporary file: IN_MOVED_FROM --> 1258.m3u8.tmp
 	#IN_MOVED_TO --> 1258.m3u8 (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
 
-
-	#rsyncSource=$channelDirectory
-	#rsyncDest=$(dirname $channelDirectory)
 
 	#invece di sincronizzare una directory che cambia in continuazione, congeliamo la directory prima di sincronizzarla
 	startCopy=$(date +%s%3N)
@@ -143,77 +290,35 @@ then
 
 		exit 1
 	fi
-  elapsedCopyInMilliSecs=$((endCopy-startCopy))
-	#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
-	rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
-	rsyncDest=$channelDirectory/
+	elapsedCopyInMilliSecs=$((endCopy-startCopy))
 
-	#e' impoetante questo formato perchè viene usato da servicesStatusLibrary.sh (mms_incrontab_check_rsync)
-	sDate=$(date +'%Y-%m-%d %H:%M:%S')
-	if [ $debug_rsync -eq 1 ]
-	then
-		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
-		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
-		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
-		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
-			'{
-					SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
-					echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
-					#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
-					#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
-					# 1. Sincronizza solo i file .ts
-					timeout 15s rsync -e "ssh $SSH_OPTS" \
-						--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
-    				--include "*/" --include "*.ts" --exclude "*" \
-    				"$rsyncSource" mms@{}:$rsyncDest
-					status_ts=$?
-					if [[ $status_ts -eq 0 ]]; then
-						# 2. Sincronizza solo il file .m3u8
-						timeout 15s rsync -e "ssh $SSH_OPTS" \
-							--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
-					  	--include "*/" --include "*.m3u8" --exclude "*" \
-    					"$rsyncSource" mms@{}:$rsyncDest
-						status_m3u8=$?
-						if [[ $status_m3u8 -ne 0 ]]; then
-							#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
-							echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
-						fi
-					else
-						echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
-					fi
-				} >> $debugFileName 2>&1' \
-				::: $serversToBeSynched
-	else
-		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
-		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
-			'{
-					SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
-					#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
-					#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
-					# 1. Sincronizza solo i file .ts
-					timeout 15s rsync -e "ssh $SSH_OPTS" \
-						--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
-    				--include "*/" --include "*.ts" --exclude "*" \
-						$rsyncSource mms@{}:$rsyncDest
-					status_ts=$?
-					if [[ $status_ts -eq 0 ]]; then
-						# 2. Sincronizza solo il file .m3u8
-						timeout 15s rsync -e "ssh $SSH_OPTS" \
-							--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
-					  	--include "*/" --include "*.m3u8" --exclude "*" \
-							$rsyncSource mms@{}:$rsyncDest
-						status_m3u8=$?
-						if [[ $status_m3u8 -ne 0 ]]; then
-							#La string "RSYNC ERROR ($fileName)" viene usato in servicesStatusLibrary.sh per il suo monitoring
-							echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (m3u8) exited with status_m3u8: @$status_m3u8@ (124: timeout)" >> $debugFileName
-						fi
-					else
-						echo "@$sDate-$pid ({})@: @ERROR@ @$fileName@ rsync failed (ts) exited with status_ts: @$status_ts@ (124: timeout)" >> $debugFileName
-					fi
-				} >> $debugFileName 2>&1' \
-				::: $serversToBeSynched
+	#indica che la variabile esiste e non è empty
+	if [ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH:-}" ]; then
+		#sincronizziamo i server MMS_RSYNC_EXTERNAL_DELIVERY_SERVERS tramite rsync su ssh
+
+		serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH"
+
+		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
+		rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
+		rsyncDest=$channelDirectory/
+
+		rsyncBySSH "$rsyncSource" "$rsyncDest" "$serversToBeSynched"
+	fi
+
+	#indica che la variabile esiste e non è empty
+	if [ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD:-}" ]; then
+		#sincronizziamo i server tramite rsyncd senza alcuna crittografia (servers su rete interna/protetta)
+
+		serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD"
+
+		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
+                rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
+		#channelDirectory è qualcosa tipo /var/catramms/storage/MMSRepository/MMSLive/6/5297
+		#Poiche in /etc/rsyncd.conf, path è /mnt/mmsStorage-1/MMSLive, rsyncDest deve essere del tipo /6/5297
+		#Il comando sotto dice: Rimuove dall’inizio della stringa channelDirectory tutto ciò che viene prima (e incluso) */MMSLive
+                rsyncDest="${channelDirectory#*/MMSLive}"
+
+                rsyncByRSYNCD "$rsyncSource" "$rsyncDest" "$serversToBeSynched"
 	fi
 	rm -rf $channelDirectory.$channelDirectoryMd5sum
 

@@ -58,7 +58,7 @@ void API::ingestion(
 			apiAuthorizationDetails->canIngestWorkflow
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	json responseBodyRoot;
@@ -3801,7 +3801,7 @@ void API::cancelIngestionJob(
 			apiAuthorizationDetails->canCancelIngestionJob
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3917,7 +3917,7 @@ void API::updateIngestionJob(
 			apiAuthorizationDetails->canEditMedia
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -4125,7 +4125,7 @@ void API::ingestionJobSwitchToEncoder(
 			apiAuthorizationDetails->canEditMedia
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

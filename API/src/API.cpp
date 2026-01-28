@@ -203,6 +203,30 @@ API::API(
 		{ removeAssociationWorkspaceEncoder(sThreadId, request, requestData); }
 	);
 	registerHandler(
+		"addDeliveryServer", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ addDeliveryServer(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"removeDeliveryServer", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ removeDeliveryServer(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"modifyDeliveryServer", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ modifyDeliveryServer(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"updateDeliveryServerBandwidthStats", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ updateDeliveryServerBandwidthStats(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"updateDeliveryServerCPUUsageStats", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ updateDeliveryServerCPUUsageStats(sThreadId, request, requestData); }
+	);
+	registerHandler(
+		"deliveryServerList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ deliveryServerList(sThreadId, request, requestData); }
+	);
+	registerHandler(
 		"createDeliveryAuthorization",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ createDeliveryAuthorization(sThreadId, request, requestData); }
@@ -628,13 +652,13 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 
 		int htmlResponseCode = 500;
 		string errorMessage;
-		if (dynamic_cast<FCGIRequestData::HTTPError *>(&e))
+		if (dynamic_cast<FastCGIError::HTTPError *>(&e))
 		{
-			htmlResponseCode = dynamic_cast<FCGIRequestData::HTTPError *>(&e)->httpErrorCode;
+			htmlResponseCode = dynamic_cast<FastCGIError::HTTPError *>(&e)->httpErrorCode;
 			errorMessage = e.what();
 		}
 		else
-			errorMessage = FCGIRequestData::getHtmlStandardMessage(htmlResponseCode);
+			errorMessage = FastCGIError::HTTPError::getHtmlStandardMessage(htmlResponseCode);
 
 		LOG_ERROR(errorMessage);
 
@@ -677,7 +701,7 @@ void API::mmsSupport(
 				);
 				LOG_ERROR(errorMessage);
 
-				throw FCGIRequestData::HTTPError(400);
+				throw FastCGIError::HTTPError(400);
 			}
 		}
 
@@ -1322,7 +1346,7 @@ void API::manageHTTPStreamingManifest_authorizationThroughParameter(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 }
 
@@ -1350,8 +1374,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 			apiAuthorizationDetails->canEditConfiguration, apiAuthorizationDetails->canKillEncoding,
 			apiAuthorizationDetails->canCancelIngestionJob, apiAuthorizationDetails->canEditEncodersPool,
 			apiAuthorizationDetails->canApplicationRecorder, apiAuthorizationDetails->canCreateRemoveLiveChannel,
-			apiAuthorizationDetails->canUpdateEncoderStats) =
-				_mmsEngineDBFacade->checkAPIKey(password,
+			apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats) = _mmsEngineDBFacade->checkAPIKey(password,
 				// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
 				false
 			);
@@ -1368,7 +1391,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 			sThreadId, password, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(401);
+		throw FastCGIError::HTTPError(401);
 	}
 
 	if (apiAuthorizationDetails->userKey != StringUtils::toInt64(userName))
@@ -1382,7 +1405,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 			sThreadId, userName, apiAuthorizationDetails->userKey, password
 		);
 
-		throw FCGIRequestData::HTTPError(401);
+		throw FastCGIError::HTTPError(401);
 	}
 }
 

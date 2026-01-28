@@ -287,13 +287,13 @@ void FFMPEGEncoder::manageRequestAndResponse(
 
 		int htmlResponseCode = 500;
 		string errorMessage;
-		if (dynamic_cast<FCGIRequestData::HTTPError*>(&e))
+		if (dynamic_cast<FastCGIError::HTTPError*>(&e))
 		{
-			htmlResponseCode = dynamic_cast<FCGIRequestData::HTTPError*>(&e)->httpErrorCode;
+			htmlResponseCode = dynamic_cast<FastCGIError::HTTPError*>(&e)->httpErrorCode;
 			errorMessage = e.what();
 		}
 		else
-			errorMessage = FCGIRequestData::getHtmlStandardMessage(htmlResponseCode);
+			errorMessage = FastCGIError::HTTPError::getHtmlStandardMessage(htmlResponseCode);
 		LOG_ERROR(errorMessage);
 
 		sendError(request, htmlResponseCode, errorMessage);
@@ -335,7 +335,7 @@ void FFMPEGEncoder::status(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(500);
+		throw FastCGIError::HTTPError(500);
 	}
 }
 
@@ -374,7 +374,7 @@ void FFMPEGEncoder::info(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(500);
+		throw FastCGIError::HTTPError(500);
 	}
 }
 
@@ -647,7 +647,7 @@ void FFMPEGEncoder::requestManagement(
 				errorMessage, encodingAlreadyRunning, freeEncodingFound
 			);
 
-			throw FCGIRequestData::HTTPError(400, errorMessage);
+			throw FastCGIError::HTTPError(400, errorMessage);
 		}
 
 		try
@@ -661,7 +661,7 @@ void FFMPEGEncoder::requestManagement(
 					", {}", ingestionJobKey, encodingJobKey, *atLeastThisEncodingJobKeyNotStartedYet, NoEncodingAvailable().what());
 				LOG_WARN(errorMessage);
 
-				throw FCGIRequestData::HTTPError(400, errorMessage);
+				throw FastCGIError::HTTPError(400, errorMessage);
 			}
 			if (lastEncodingStart)
 			{
@@ -679,7 +679,7 @@ void FFMPEGEncoder::requestManagement(
 							_intervalInSecondsBetweenEncodingAccept, secondsToWait, NoEncodingAvailable().what());
 					LOG_WARN(errorMessage);
 
-					throw FCGIRequestData::HTTPError(400, errorMessage);
+					throw FastCGIError::HTTPError(400, errorMessage);
 				}
 			}
 
@@ -710,7 +710,7 @@ void FFMPEGEncoder::requestManagement(
 
 				LOG_WARN(errorMessage);
 
-				throw FCGIRequestData::HTTPError(400, errorMessage);
+				throw FastCGIError::HTTPError(400, errorMessage);
 			}
 			*/
 
@@ -906,7 +906,7 @@ void FFMPEGEncoder::liveRecorder(
 					errorMessage, encodingAlreadyRunning, freeEncodingFound
 				);
 
-				throw FCGIRequestData::HTTPError(400, errorMessage);
+				throw FastCGIError::HTTPError(400, errorMessage);
 			}
 
 			try
@@ -1083,7 +1083,7 @@ void FFMPEGEncoder::liveProxy_liveGrid(
 				errorMessage, ingestionJobKey, encodingJobKey, encodingAlreadyRunning, freeEncodingFound
 			);
 
-			throw FCGIRequestData::HTTPError(400, errorMessage);
+			throw FastCGIError::HTTPError(400, errorMessage);
 		}
 
 		try
@@ -1505,7 +1505,7 @@ void FFMPEGEncoder::encodingStatus(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(500);
+		throw FastCGIError::HTTPError(500);
 	}
 }
 
@@ -1683,7 +1683,7 @@ void FFMPEGEncoder::filterNotification(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(500);
+		throw FastCGIError::HTTPError(500);
 	}
 }
 
@@ -1775,7 +1775,7 @@ void FFMPEGEncoder::killEncodingJob(
 				ingestionJobKey, encodingJobKey, NoEncodingJobKeyFound().what()
 			);
 			LOG_ERROR(errorMessage);
-			throw FCGIRequestData::HTTPError(400, errorMessage);
+			throw FastCGIError::HTTPError(400, errorMessage);
 		}
 
 		LOG_INFO(
@@ -1914,7 +1914,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
 				LOG_ERROR(errorMessage);
 
-				throw FCGIRequestData::HTTPError(500, errorMessage);
+				throw FastCGIError::HTTPError(500, errorMessage);
 			}
 
 			{
@@ -2343,7 +2343,7 @@ void FFMPEGEncoder::encodingProgress(
 			api, requestData.requestBody, e.what()
 		);
 
-		throw FCGIRequestData::HTTPError(500);
+		throw FastCGIError::HTTPError(500);
 	}
 }
 
@@ -2362,7 +2362,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> FFMPEGEncoder::checkAuthorizat
 			sThreadId, userName, _encoderUser, password, _encoderPassword
 		);
 
-		throw FCGIRequestData::HTTPError(401);
+		throw FastCGIError::HTTPError(401);
 	}
 
 	auto authorizationDetails = make_shared<FCGIRequestData::AuthorizationDetails>();

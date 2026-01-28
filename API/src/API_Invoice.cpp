@@ -41,7 +41,7 @@ void API::addInvoice(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

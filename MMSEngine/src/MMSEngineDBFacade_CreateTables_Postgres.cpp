@@ -1417,6 +1417,88 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			string sqlStatement = "create table if not exists MMS_DeliveryServer ("
+				"deliveryServerKey		bigint GENERATED ALWAYS AS IDENTITY,"
+				"label					text NOT NULL,"
+				"external				boolean NOT NULL,"
+				"enabled				boolean NOT NULL,"
+				"publicServerName		text NOT NULL,"
+				"internalServerName		text NOT NULL,"
+				"txAvgBandwidthUsage	bigint,"
+				"rxAvgBandwidthUsage	bigint,"
+				"bandwidthUsageUpdateTime	timestamp without time zone,"
+				"cpuUsage				integer,"
+				"cpuUsageUpdateTime		timestamp without time zone,"
+				"selectedLastTime		timestamp without time zone not null default (NOW() at time zone 'utc'),"
+				"constraint MMS_DeliveryServer_PK PRIMARY KEY (deliveryServerKey), "
+				"UNIQUE (label)) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "create UNIQUE index if not exists MMS_DeliveryServer_idx on MMS_DeliveryServer (publicServerName)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServer_idx2 ON MMS_DeliveryServer ("
+				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "create table if not exists MMS_DeliveryServerWorkspaceMapping ("
+								  "deliveryServerKey		bigint NOT NULL,"
+								  "workspaceKey				bigint NOT NULL,"
+								  "constraint MMS_DeliveryServerWorkspaceMapping_PK PRIMARY KEY (deliveryServerKey, workspaceKey), "
+								  "constraint MMS_DeliveryServerWorkspaceMapping_FK1 foreign key (deliveryServerKey) "
+								  "references MMS_DeliveryServer (deliveryServerKey) on delete cascade, "
+								  "constraint MMS_DeliveryServerWorkspaceMapping_FK2 foreign key (workspaceKey) "
+								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
 			string sqlStatement = "create table if not exists MMS_IngestionRoot ("
 								  "ingestionRootKey           bigint GENERATED ALWAYS AS IDENTITY,"
 								  "workspaceKey               bigint NOT NULL,"

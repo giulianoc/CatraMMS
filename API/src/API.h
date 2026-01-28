@@ -42,7 +42,7 @@ class API final : public FastCGIAPI
 		bool canEditEncodersPool{};
 		bool canApplicationRecorder{};
 		bool canCreateRemoveLiveChannel{};
-		bool canUpdateEncoderStats{};
+		bool canUpdateEncoderAndDeliveryStats{};
 
 		std::string toString()
 		{
@@ -60,10 +60,10 @@ class API final : public FastCGIAPI
 				", canEditEncodersPool: {}"
 				", canApplicationRecorder: {}"
 				", canCreateRemoveLiveChannel: {}"
-				", canUpdateEncoderStats: {}",
+				", canUpdateEncoderAndDeliveryStats: {}",
 				userKey, admin, canCreateRemoveWorkspace, canIngestWorkflow, canCreateProfiles, canDeliveryAuthorization,
 				canShareWorkspace, canEditMedia, canEditConfiguration, canKillEncoding, canCancelIngestionJob, canEditEncodersPool,
-				canApplicationRecorder, canCreateRemoveLiveChannel, canUpdateEncoderStats
+				canApplicationRecorder, canCreateRemoveLiveChannel, canUpdateEncoderAndDeliveryStats
 				);
 		}
 	};
@@ -833,6 +833,36 @@ class API final : public FastCGIAPI
 	);
 
 	void removeAssociationWorkspaceEncoder(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void deliveryServerList(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void addDeliveryServer(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void modifyDeliveryServer(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void updateDeliveryServerBandwidthStats(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void updateDeliveryServerCPUUsageStats(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
+	void removeDeliveryServer(
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);

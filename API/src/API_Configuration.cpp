@@ -47,7 +47,7 @@ void API::addYouTubeConf(
 		);
 		LOG_ERROR(errorMessage);
 
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -222,7 +222,7 @@ void API::modifyYouTubeConf(
 		);
 		LOG_ERROR(errorMessage);
 
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -374,7 +374,7 @@ void API::removeYouTubeConf(
 		);
 		LOG_ERROR(errorMessage);
 
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -463,7 +463,7 @@ void API::addFacebookConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -570,7 +570,7 @@ void API::modifyFacebookConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -664,7 +664,7 @@ void API::removeFacebookConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -758,7 +758,7 @@ void API::addTwitchConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -865,7 +865,7 @@ void API::modifyTwitchConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -959,7 +959,7 @@ void API::removeTwitchConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -1318,7 +1318,7 @@ void API::addStream(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -1533,7 +1533,7 @@ void API::modifyStream(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -1908,7 +1908,7 @@ void API::removeStream(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2100,7 +2100,7 @@ void API::addSourceTVStream(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2289,7 +2289,7 @@ void API::modifySourceTVStream(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2531,7 +2531,7 @@ void API::removeSourceTVStream(
 			apiAuthorizationDetails->admin
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2652,7 +2652,7 @@ void API::addRTMPChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2794,7 +2794,7 @@ void API::modifyRTMPChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -2966,7 +2966,7 @@ void API::removeRTMPChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3065,7 +3065,7 @@ void API::addSRTChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3201,7 +3201,7 @@ void API::modifySRTChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3370,7 +3370,7 @@ void API::removeSRTChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3469,7 +3469,7 @@ void API::addHLSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3600,7 +3600,7 @@ void API::modifyHLSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3741,7 +3741,7 @@ void API::removeHLSChannelConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -3840,7 +3840,7 @@ void API::addFTPConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -4007,7 +4007,7 @@ void API::modifyFTPConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -4161,7 +4161,7 @@ void API::removeFTPConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -4247,7 +4247,7 @@ void API::addEMailConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -4384,7 +4384,7 @@ void API::modifyEMailConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -4508,7 +4508,7 @@ void API::removeEMailConf(
 			apiAuthorizationDetails->canEditConfiguration
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try

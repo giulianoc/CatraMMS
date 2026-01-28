@@ -43,7 +43,7 @@ void API::updateMediaItem(
 			apiAuthorizationDetails->canEditMedia
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
@@ -182,7 +182,7 @@ void API::updatePhysicalPath(
 			apiAuthorizationDetails->canEditMedia
 		);
 		LOG_ERROR(errorMessage);
-		throw FCGIRequestData::HTTPError(403);
+		throw FastCGIError::HTTPError(403);
 	}
 
 	try
