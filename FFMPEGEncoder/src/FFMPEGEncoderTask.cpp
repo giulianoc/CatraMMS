@@ -34,7 +34,7 @@ FFMPEGEncoderTask::FFMPEGEncoderTask(
 		// _urlForbidden = false;
 		// _urlNotFound = false;
 
-		_tvChannelConfigurationDirectory = JSONUtils::asString(configurationRoot["ffmpeg"], "tvChannelConfigurationDirectory", "");
+		_tvChannelConfigurationDirectory = JSONUtils::as<string>(configurationRoot["ffmpeg"], "tvChannelConfigurationDirectory", "");
 		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->tvChannelConfigurationDirectory: {}",
@@ -92,10 +92,10 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 				json credentialsRoot = internalMMSRoot[field];
 
 				field = "userKey";
-				userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+				userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 				field = "apiKey";
-				string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+				string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
 		}
@@ -118,7 +118,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 			throw runtime_error(errorMessage);
 		}
-		fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, field, "");
+		fileFormat = JSONUtils::as<string>(encodingProfileDetailsRoot, field, "");
 	}
 	else
 	{
@@ -148,7 +148,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 		throw runtime_error(errorMessage);
 	}
-	string mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+	string mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 	field = "mmsBinaryIngestionURL";
 	if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -164,7 +164,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 		throw runtime_error(errorMessage);
 	}
-	string mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+	string mmsBinaryIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 	*/
 
 	int64_t fileSizeInBytes = 0;
@@ -272,7 +272,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 			throw runtime_error(errorMessage);
 		}
-		string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+		string mmsIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		*/
 
 		chrono::system_clock::time_point startWaiting = chrono::system_clock::now();
@@ -352,7 +352,7 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 
 				throw runtime_error(errorMessage);
 			}
-			string ingestionJobStatus = JSONUtils::asString(ingestionJobRoot, field, "");
+			string ingestionJobStatus = JSONUtils::as<string>(ingestionJobRoot, field, "");
 
 			string prefix = "End_";
 			if (ingestionJobStatus.size() >= prefix.size() && 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))

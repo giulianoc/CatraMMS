@@ -30,7 +30,7 @@ void MMSEngineProcessor::managePictureInPictureTask(
 		}
 		else
 		{
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 		}
 
 		int64_t sourceMediaItemKey_1;
@@ -68,10 +68,10 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			stopIfReferenceProcessingError_2) = dependencyInfo_2;
 
 		field = "SecondVideoOverlayedOnFirst";
-		bool secondVideoOverlayedOnFirst = JSONUtils::asBool(parametersRoot, field, true);
+		bool secondVideoOverlayedOnFirst = JSONUtils::as<bool>(parametersRoot, field, true);
 
 		field = "SoundOfFirstVideo";
-		bool soundOfFirstVideo = JSONUtils::asBool(parametersRoot, field, true);
+		bool soundOfFirstVideo = JSONUtils::as<bool>(parametersRoot, field, true);
 
 		int64_t mainSourceMediaItemKey;
 		int64_t mainSourcePhysicalPathKey;
@@ -148,11 +148,11 @@ void MMSEngineProcessor::managePictureInPictureTask(
 			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+				string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(
 					workspace->_workspaceKey, MMSEngineDBFacade::ContentType::Video, encodingProfileLabel

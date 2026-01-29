@@ -1510,7 +1510,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 				string permissions = res[0]["permissions"].as<string>();
 				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
-				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+				admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 				isOwner = res[0]["isOwner"].as<bool>();
 			}
 		}
@@ -1690,7 +1690,7 @@ tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey,
 				string permissions = res[0]["permissions"].as<string>();
 				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
-				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+				admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 				isOwner = res[0]["isOwner"].as<bool>();
 			}
 		}
@@ -2487,23 +2487,23 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 			string permissions = row["permissions"].as<string>();
 			json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
-			bool admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+			bool admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 			userAPIKeyRoot["admin"] = admin;
 
-			userAPIKeyRoot["createRemoveWorkspace"] = admin ? true : JSONUtils::asBool(permissionsRoot, "createRemoveWorkspace", false);
-			userAPIKeyRoot["ingestWorkflow"] = admin ? true : JSONUtils::asBool(permissionsRoot, "ingestWorkflow", false);
-			userAPIKeyRoot["createProfiles"] = admin ? true : JSONUtils::asBool(permissionsRoot, "createProfiles", false);
-			userAPIKeyRoot["deliveryAuthorization"] = admin ? true : JSONUtils::asBool(permissionsRoot, "deliveryAuthorization", false);
-			userAPIKeyRoot["shareWorkspace"] = admin ? true : JSONUtils::asBool(permissionsRoot, "shareWorkspace", false);
-			userAPIKeyRoot["editMedia"] = admin ? true : JSONUtils::asBool(permissionsRoot, "editMedia", false);
-			userAPIKeyRoot["editConfiguration"] = admin ? true : JSONUtils::asBool(permissionsRoot, "editConfiguration", false);
-			userAPIKeyRoot["killEncoding"] = admin ? true : JSONUtils::asBool(permissionsRoot, "killEncoding", false);
-			userAPIKeyRoot["cancelIngestionJob"] = admin ? true : JSONUtils::asBool(permissionsRoot, "cancelIngestionJob", false);
-			userAPIKeyRoot["editEncodersPool"] = admin ? true : JSONUtils::asBool(permissionsRoot, "editEncodersPool", false);
-			userAPIKeyRoot["editDeliveryServersPool"] = admin ? true : JSONUtils::asBool(permissionsRoot, "editDeliveryServersPool", false);
-			userAPIKeyRoot["applicationRecorder"] = admin ? true : JSONUtils::asBool(permissionsRoot, "applicationRecorder", false);
-			userAPIKeyRoot["createRemoveLiveChannel"] = admin ? true : JSONUtils::asBool(permissionsRoot, "createRemoveLiveChannel", false);
-			userAPIKeyRoot["updateEncoderAndDeliveryStats"] = admin ? true : JSONUtils::asBool(permissionsRoot, "updateEncoderAndDeliveryStats", false);
+			userAPIKeyRoot["createRemoveWorkspace"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "createRemoveWorkspace", false);
+			userAPIKeyRoot["ingestWorkflow"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "ingestWorkflow", false);
+			userAPIKeyRoot["createProfiles"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "createProfiles", false);
+			userAPIKeyRoot["deliveryAuthorization"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "deliveryAuthorization", false);
+			userAPIKeyRoot["shareWorkspace"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "shareWorkspace", false);
+			userAPIKeyRoot["editMedia"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "editMedia", false);
+			userAPIKeyRoot["editConfiguration"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "editConfiguration", false);
+			userAPIKeyRoot["killEncoding"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "killEncoding", false);
+			userAPIKeyRoot["cancelIngestionJob"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "cancelIngestionJob", false);
+			userAPIKeyRoot["editEncodersPool"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "editEncodersPool", false);
+			userAPIKeyRoot["editDeliveryServersPool"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "editDeliveryServersPool", false);
+			userAPIKeyRoot["applicationRecorder"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "applicationRecorder", false);
+			userAPIKeyRoot["createRemoveLiveChannel"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "createRemoveLiveChannel", false);
+			userAPIKeyRoot["updateEncoderAndDeliveryStats"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "updateEncoderAndDeliveryStats", false);
 
 			workspaceDetailRoot["userAPIKey"] = userAPIKeyRoot;
 
@@ -2617,7 +2617,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				auto permissions = res[0]["permissions"].as<string>();
 				json permissionsRoot = JSONUtils::toJson<json>(permissions);
 
-				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+				admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 				isOwner = res[0]["isOwner"].as<bool>();
 			}
 			else

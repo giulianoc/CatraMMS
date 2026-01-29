@@ -51,6 +51,8 @@ void API::addDeliveryServer(
 	try
 	{
 		string label;
+		string type;
+		optional<int64_t> originDeliveryServerKey;
 		bool external;
 		bool enabled;
 		string publicServerName;
@@ -60,11 +62,12 @@ void API::addDeliveryServer(
 		{
 			auto requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
-			label = JSONUtils::asString(requestBodyRoot, "label", "", true);
-			external = JSONUtils::asBool(requestBodyRoot, "External", false);
-			enabled = JSONUtils::asBool(requestBodyRoot, "Enabled", true);
-			publicServerName = JSONUtils::asString(requestBodyRoot, "PublicServerName", "", true);
-			internalServerName = JSONUtils::asString(requestBodyRoot, "InternalServerName", "", true);
+			label = JSONUtils::as<string>(requestBodyRoot, "label", "", {}, true);
+			type = JSONUtils::as<string>(requestBodyRoot, "type", "", {}, true);
+			external = JSONUtils::as<bool>(requestBodyRoot, "External", false);
+			enabled = JSONUtils::as<bool>(requestBodyRoot, "Enabled", true);
+			publicServerName = JSONUtils::as<string>(requestBodyRoot, "PublicServerName", "", {}, true);
+			internalServerName = JSONUtils::as<string>(requestBodyRoot, "InternalServerName", "", {}, true);
 		}
 		catch (exception &e)
 		{
@@ -165,7 +168,7 @@ void API::modifyDeliveryServer(
 			string field = "label";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				label = JSONUtils::asString(requestBodyRoot, field, "");
+				label = JSONUtils::as<string>(requestBodyRoot, field, "");
 				labelToBeModified = true;
 			}
 			else
@@ -174,7 +177,7 @@ void API::modifyDeliveryServer(
 			field = "External";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				external = JSONUtils::asBool(requestBodyRoot, field, false);
+				external = JSONUtils::as<bool>(requestBodyRoot, field, false);
 				externalToBeModified = true;
 			}
 			else
@@ -183,7 +186,7 @@ void API::modifyDeliveryServer(
 			field = "Enabled";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				enabled = JSONUtils::asBool(requestBodyRoot, field, true);
+				enabled = JSONUtils::as<bool>(requestBodyRoot, field, true);
 				enabledToBeModified = true;
 			}
 			else
@@ -192,7 +195,7 @@ void API::modifyDeliveryServer(
 			field = "PublicServerName";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
+				publicServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
 				publicServerNameToBeModified = true;
 			}
 			else
@@ -201,7 +204,7 @@ void API::modifyDeliveryServer(
 			field = "InternalServerName";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
+				internalServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
 				internalServerNameToBeModified = true;
 			}
 			else
@@ -670,7 +673,7 @@ void API::addDeliveryServersPool(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "deliveryServerKeys";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -678,7 +681,7 @@ void API::addDeliveryServersPool(
 				json deliveryServerKeysRoot = requestBodyRoot[field];
 
 				for (int deliveryServerIndex = 0; deliveryServerIndex < deliveryServerKeysRoot.size(); ++deliveryServerIndex)
-					deliveryServerKeys.push_back(JSONUtils::asInt64(deliveryServerKeysRoot[deliveryServerIndex]));
+					deliveryServerKeys.push_back(JSONUtils::as<int64_t>(deliveryServerKeysRoot[deliveryServerIndex]));
 			}
 		}
 		catch (exception &e)
@@ -780,7 +783,7 @@ void API::modifyDeliveryServersPool(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "deliveryServerKeys";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -788,7 +791,7 @@ void API::modifyDeliveryServersPool(
 				json deliveryServerKeysRoot = requestBodyRoot[field];
 
 				for (int deliveryServerIndex = 0; deliveryServerIndex < deliveryServerKeysRoot.size(); ++deliveryServerIndex)
-					deliveryServerKeys.push_back(JSONUtils::asInt64(deliveryServerKeysRoot[deliveryServerIndex]));
+					deliveryServerKeys.push_back(JSONUtils::as<int64_t>(deliveryServerKeysRoot[deliveryServerIndex]));
 			}
 		}
 		catch (exception &e)

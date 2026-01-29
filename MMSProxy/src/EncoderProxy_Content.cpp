@@ -52,7 +52,7 @@ void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveE
 
 bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
-	string encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
+	string encodersPool = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
 
 	string ffmpegEncoderURL;
 	// string ffmpegURI = _ffmpegEncodeURI;
@@ -156,7 +156,7 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 				string field = "error";
 				if (JSONUtils::isPresent(encodeContentResponse, field))
 				{
-					string error = JSONUtils::asString(encodeContentResponse,
+					string error = JSONUtils::as<string>(encodeContentResponse,
 			field, "");
 
 					string errorMessage = string("FFMPEGEncoder error")
@@ -358,7 +358,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		}
 		sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
 
-		encodedNFSStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, "encodedNFSStagingAssetPathName", "");
+		encodedNFSStagingAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, "encodedNFSStagingAssetPathName", "");
 		if (encodedNFSStagingAssetPathName == "")
 		{
 			string errorMessage = std::format(
@@ -377,18 +377,18 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		encodingProfileDetailsRoot = _encodingItem->_encodingParametersRoot["encodingProfileDetails"];
 
 		string field = "sourceRelativePath";
-		sourceRelativePath = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+		sourceRelativePath = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 		field = "sourceMediaItemKey";
-		sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, 0);
+		sourceMediaItemKey = JSONUtils::as<int64_t>(sourceToBeEncodedRoot, field, 0);
 
 		field = "encodingProfileKey";
-		encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		encodingProfileKey = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, field, -1);
 
 		field = "physicalItemRetention";
 		if (JSONUtils::isPresent(_encodingItem->_ingestedParametersRoot, field))
 		{
-			string retention = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "1d");
+			string retention = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, field, "1d");
 			physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 		}
 	}
@@ -419,7 +419,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		throw e;
 	}
 
-	string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+	string fileFormat = JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat", "");
 	string fileFormatLowerCase;
 	fileFormatLowerCase.resize(fileFormat.size());
 	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(), [](unsigned char c) { return tolower(c); });

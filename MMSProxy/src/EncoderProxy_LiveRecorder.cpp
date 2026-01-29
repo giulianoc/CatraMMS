@@ -47,7 +47,7 @@ bool EncoderProxy::liveRecorder()
 
 			throw runtime_error(errorMessage);
 		}
-		string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
+		string recordingPeriodStart = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 		utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 		field = "end";
@@ -65,11 +65,11 @@ bool EncoderProxy::liveRecorder()
 
 			throw runtime_error(errorMessage);
 		}
-		string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
+		string recordingPeriodEnd = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 		utcRecordingPeriodEnd = Datetime::parseUtcStringToUtcInSecs(recordingPeriodEnd);
 
 		field = "autoRenew";
-		autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
+		autoRenew = JSONUtils::as<bool>(recordingPeriodRoot, field, false);
 
 		string segmenterType = "hlsSegmenter";
 		// string segmenterType = "streamSegmenter";
@@ -136,19 +136,19 @@ bool EncoderProxy::liveRecorder()
 		try
 		{
 			field = "monitorVirtualVODOutputRootIndex";
-			int monitorVirtualVODOutputRootIndex = JSONUtils::asInt32(_encodingItem->_encodingParametersRoot, field, -1);
+			int monitorVirtualVODOutputRootIndex = JSONUtils::as<int32_t>(_encodingItem->_encodingParametersRoot, field, -1);
 
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
 				json outputRoot = outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				if (outputType == "RTMP_Channel")
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
-					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, "rtmpChannelConfigurationLabel", "");
+					string rtmpChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "rtmpChannelConfigurationLabel", "");
 
 					/*
 					string rtmpChannelType;
@@ -231,11 +231,11 @@ bool EncoderProxy::liveRecorder()
 					// is already started Maybe just start again is not an issue!!! Let's see
 					if (!channelAlreadyReserved)
 					{
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
 						if (cdnName == "aws")
 						{
-							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
-							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							json awsRoot = JSONUtils::as<json>(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::as<string>(awsRoot, "channelId", "");
 							if (!awsChannelId.empty())
 								awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
@@ -245,7 +245,7 @@ bool EncoderProxy::liveRecorder()
 				{
 					// SrtUrl and PlayUrl fields have to be initialized
 
-					string srtChannelConfigurationLabel = JSONUtils::asString(outputRoot, "srtChannelConfigurationLabel", "");
+					string srtChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "srtChannelConfigurationLabel", "");
 
 					/*
 					string srtChannelType;
@@ -344,7 +344,7 @@ bool EncoderProxy::liveRecorder()
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
-					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot, "hlsChannelConfigurationLabel", "");
+					string hlsChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "hlsChannelConfigurationLabel", "");
 
 					/*
 					string hlsChannelType;
@@ -398,14 +398,14 @@ bool EncoderProxy::liveRecorder()
 							// PlaylistEntriesNumber considerando il parametro
 							// VirtualVODMaxDurationInMinutes
 
-							bool liveRecorderVirtualVOD = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, "liveRecorderVirtualVOD", false);
+							bool liveRecorderVirtualVOD = JSONUtils::as<bool>(_encodingItem->_encodingParametersRoot, "liveRecorderVirtualVOD", false);
 
 							if (liveRecorderVirtualVOD)
 							{
 								// 10 is the same default used in FFMpeg.cpp
 								int localSegmentDurationInSeconds = segmentDurationInSeconds > 0 ? segmentDurationInSeconds : 10;
 								int maxDurationInMinutes =
-									JSONUtils::asInt32(_encodingItem->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
+									JSONUtils::as<int32_t>(_encodingItem->_ingestedParametersRoot["liveRecorderVirtualVOD"], "maxDuration", 30);
 
 								playlistEntriesNumber = (maxDurationInMinutes * 60) / localSegmentDurationInSeconds;
 								outputRoot["playlistEntriesNumber"] = playlistEntriesNumber;
@@ -422,7 +422,7 @@ bool EncoderProxy::liveRecorder()
 						outputRoot[field] = manifestFileName;
 
 						field = "otherOutputOptions";
-						string otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
+						string otherOutputOptions = JSONUtils::as<string>(outputRoot, field, "");
 						if (outputIndex == monitorVirtualVODOutputRootIndex)
 						{
 							// this is the OutputRoot of the monitor or
@@ -541,7 +541,7 @@ bool EncoderProxy::liveRecorder()
 			{
 				json outputRoot = outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				if (outputType == "RTMP_Channel")
 				{
@@ -551,11 +551,11 @@ bool EncoderProxy::liveRecorder()
 						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
 						if (cdnName == "aws")
 						{
-							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
-							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							json awsRoot = JSONUtils::as<json>(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::as<string>(awsRoot, "channelId", "");
 							if (!awsChannelId.empty())
 								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
@@ -618,7 +618,7 @@ bool EncoderProxy::liveRecorder()
 			{
 				json outputRoot = outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				if (outputType == "RTMP_Channel")
 				{
@@ -628,11 +628,11 @@ bool EncoderProxy::liveRecorder()
 						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
 						if (cdnName == "aws")
 						{
-							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
-							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							json awsRoot = JSONUtils::as<json>(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::as<string>(awsRoot, "channelId", "");
 							if (!awsChannelId.empty())
 								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
@@ -702,8 +702,8 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 	string streamSourceType;
 	string encodersPool;
 	{
-		streamSourceType = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "streamSourceType", "");
-		encodersPool = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodersPoolLabel", "");
+		streamSourceType = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "streamSourceType", "");
+		encodersPool = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodersPoolLabel", "");
 	}
 
 	bool timePeriod = true;
@@ -713,7 +713,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 	bool autoRenew;
 	{
 		if (streamSourceType == "IP_PUSH")
-			ipPushStreamConfigurationLabel = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "configurationLabel", "");
+			ipPushStreamConfigurationLabel = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, "configurationLabel", "");
 
 		string field = "schedule";
 		json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)[field];
@@ -733,7 +733,7 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 
 			throw runtime_error(errorMessage);
 		}
-		string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
+		string recordingPeriodStart = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 		utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 		field = "end";
@@ -751,11 +751,11 @@ bool EncoderProxy::liveRecorder_through_ffmpeg()
 
 			throw runtime_error(errorMessage);
 		}
-		string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
+		string recordingPeriodEnd = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 		utcRecordingPeriodEnd = Datetime::parseUtcStringToUtcInSecs(recordingPeriodEnd);
 
 		field = "autoRenew";
-		autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
+		autoRenew = JSONUtils::as<bool>(recordingPeriodRoot, field, false);
 	}
 
 	long maxAttemptsNumberInCaseOfErrors = 5;

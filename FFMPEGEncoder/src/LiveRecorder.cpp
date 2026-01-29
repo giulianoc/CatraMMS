@@ -21,7 +21,7 @@ LiveRecorder::LiveRecorder(
 	_tvChannelsPortsMutex = tvChannelsPortsMutex;
 	_tvChannelPort_CurrentOffset = tvChannelPort_CurrentOffset;
 
-	_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
+	_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::as<int32_t>(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
@@ -60,19 +60,19 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 		json metadataRoot = JSONUtils::toJson<json>(requestBody);
 
-		liveRecording->_externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		liveRecording->_externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		// _chunksTranscoderStagingContentsPath is a transcoder LOCAL path,
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
-		liveRecording->_chunksTranscoderStagingContentsPath = JSONUtils::asString(encodingParametersRoot, "chunksTranscoderStagingContentsPath", "");
-		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
+		liveRecording->_chunksTranscoderStagingContentsPath = JSONUtils::as<string>(encodingParametersRoot, "chunksTranscoderStagingContentsPath", "");
+		string userAgent = JSONUtils::as<string>(ingestedParametersRoot, "userAgent", "");
 
 		// this is the global shared path where the chunks would be moved for the ingestion
 		// see the comments in EncoderVideoAudioProxy.cpp
-		liveRecording->_chunksNFSStagingContentsPath = JSONUtils::asString(encodingParametersRoot, "chunksNFSStagingContentsPath", "");
+		liveRecording->_chunksNFSStagingContentsPath = JSONUtils::as<string>(encodingParametersRoot, "chunksNFSStagingContentsPath", "");
 		// 2022-08-09: the chunksNFSStagingContentsPath directory was created by EncoderVideoAudioProxy.cpp
 		// 		into the shared working area.
 		// 		In case of an external encoder, the external working area does not have this directory
@@ -95,16 +95,16 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		}
 		*/
 
-		liveRecording->_segmentListFileName = JSONUtils::asString(encodingParametersRoot, "segmentListFileName", "");
-		liveRecording->_recordedFileNamePrefix = JSONUtils::asString(encodingParametersRoot, "recordedFileNamePrefix", "");
+		liveRecording->_segmentListFileName = JSONUtils::as<string>(encodingParametersRoot, "segmentListFileName", "");
+		liveRecording->_recordedFileNamePrefix = JSONUtils::as<string>(encodingParametersRoot, "recordedFileNamePrefix", "");
 		// see the comments in EncoderVideoAudioProxy.cpp
 		if (liveRecording->_externalEncoder)
 			liveRecording->_virtualVODStagingContentsPath =
-				JSONUtils::asString(encodingParametersRoot, "virtualVODTranscoderStagingContentsPath", "");
+				JSONUtils::as<string>(encodingParametersRoot, "virtualVODTranscoderStagingContentsPath", "");
 		else
-			liveRecording->_virtualVODStagingContentsPath = JSONUtils::asString(encodingParametersRoot, "virtualVODStagingContentsPath", "");
+			liveRecording->_virtualVODStagingContentsPath = JSONUtils::as<string>(encodingParametersRoot, "virtualVODStagingContentsPath", "");
 		liveRecording->_liveRecorderVirtualVODImageMediaItemKey =
-			JSONUtils::asInt64(encodingParametersRoot, "liveRecorderVirtualVODImageMediaItemKey", -1);
+			JSONUtils::as<int64_t>(encodingParametersRoot, "liveRecorderVirtualVODImageMediaItemKey", -1);
 
 		// _encodingParametersRoot has to be the last field to be set because liveRecorderChunksIngestion()
 		//		checks this field is set before to see if there are chunks to be ingested
@@ -134,7 +134,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 				throw runtime_error(errorMessage);
 			}
-			string recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
+			string recordingPeriodStart = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 			utcRecordingPeriodStart = Datetime::parseUtcStringToUtcInSecs(recordingPeriodStart);
 
 			field = "end";
@@ -151,11 +151,11 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 				throw runtime_error(errorMessage);
 			}
-			string recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
+			string recordingPeriodEnd = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 			utcRecordingPeriodEnd = Datetime::parseUtcStringToUtcInSecs(recordingPeriodEnd);
 
 			field = "autoRenew";
-			autoRenew = JSONUtils::asBool(recordingPeriodRoot, field, false);
+			autoRenew = JSONUtils::as<bool>(recordingPeriodRoot, field, false);
 
 			field = "segmentDuration";
 			if (!JSONUtils::isPresent(liveRecording->_ingestedParametersRoot, field))
@@ -171,15 +171,15 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 				throw runtime_error(errorMessage);
 			}
-			segmentDurationInSeconds = JSONUtils::asInt32(liveRecording->_ingestedParametersRoot, field, -1);
+			segmentDurationInSeconds = JSONUtils::as<int32_t>(liveRecording->_ingestedParametersRoot, field, -1);
 
 			field = "outputFileFormat";
-			outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
+			outputFileFormat = JSONUtils::as<string>(liveRecording->_ingestedParametersRoot, field, "ts");
 		}
 
-		liveRecording->_monitoringEnabled = JSONUtils::asBool(liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
+		liveRecording->_monitoringEnabled = JSONUtils::as<bool>(liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
 		liveRecording->_monitoringRealTimeInfoEnabled =
-			JSONUtils::asBool(liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+			JSONUtils::as<bool>(liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
 		liveRecording->_lastOutputFfmpegFileSize = 0;
 		liveRecording->_lastRealTimeInfo = {};
 		liveRecording->_realTimeLastChange = chrono::system_clock::now();
@@ -187,15 +187,15 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		// -1 perchè liveRecording fa un incremento quando il live recording parte che quindi setta a 0 correttamente la variabile
 		liveRecording->_numberOfRestartBecauseOfFailure = -1;
 
-		liveRecording->_channelLabel = JSONUtils::asString(liveRecording->_ingestedParametersRoot, "configurationLabel", "");
+		liveRecording->_channelLabel = JSONUtils::as<string>(liveRecording->_ingestedParametersRoot, "configurationLabel", "");
 
 		liveRecording->_lastRecordedAssetFileName = "";
 		liveRecording->_lastRecordedAssetDurationInSeconds = 0.0;
 		liveRecording->_lastRecordedSegmentUtcStartTimeInMillisecs = -1;
 
-		liveRecording->_streamSourceType = JSONUtils::asString(encodingParametersRoot, "streamSourceType", "IP_PULL");
-		int ipMMSAsServer_listenTimeoutInSeconds = JSONUtils::asInt32(encodingParametersRoot, "actAsServerListenTimeout", 300);
-		int pushListenTimeout = JSONUtils::asInt32(encodingParametersRoot, "pushListenTimeout", -1);
+		liveRecording->_streamSourceType = JSONUtils::as<string>(encodingParametersRoot, "streamSourceType", "IP_PULL");
+		int ipMMSAsServer_listenTimeoutInSeconds = JSONUtils::as<int32_t>(encodingParametersRoot, "actAsServerListenTimeout", 300);
+		int pushListenTimeout = JSONUtils::as<int32_t>(encodingParametersRoot, "pushListenTimeout", -1);
 
 		int captureLive_videoDeviceNumber = -1;
 		string captureLive_videoInputFormat;
@@ -206,27 +206,27 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		int captureLive_channelsNumber = -1;
 		if (liveRecording->_streamSourceType == "CaptureLive")
 		{
-			captureLive_videoDeviceNumber = JSONUtils::asInt32(encodingParametersRoot["capture"], "videoDeviceNumber", -1);
-			captureLive_videoInputFormat = JSONUtils::asString(encodingParametersRoot["capture"], "videoInputFormat", "");
-			captureLive_frameRate = JSONUtils::asInt32(encodingParametersRoot["capture"], "frameRate", -1);
-			captureLive_width = JSONUtils::asInt32(encodingParametersRoot["capture"], "width", -1);
-			captureLive_height = JSONUtils::asInt32(encodingParametersRoot["capture"], "height", -1);
-			captureLive_audioDeviceNumber = JSONUtils::asInt32(encodingParametersRoot["capture"], "audioDeviceNumber", -1);
-			captureLive_channelsNumber = JSONUtils::asInt32(encodingParametersRoot["capture"], "channelsNumber", -1);
+			captureLive_videoDeviceNumber = JSONUtils::as<int32_t>(encodingParametersRoot["capture"], "videoDeviceNumber", -1);
+			captureLive_videoInputFormat = JSONUtils::as<string>(encodingParametersRoot["capture"], "videoInputFormat", "");
+			captureLive_frameRate = JSONUtils::as<int32_t>(encodingParametersRoot["capture"], "frameRate", -1);
+			captureLive_width = JSONUtils::as<int32_t>(encodingParametersRoot["capture"], "width", -1);
+			captureLive_height = JSONUtils::as<int32_t>(encodingParametersRoot["capture"], "height", -1);
+			captureLive_audioDeviceNumber = JSONUtils::as<int32_t>(encodingParametersRoot["capture"], "audioDeviceNumber", -1);
+			captureLive_channelsNumber = JSONUtils::as<int32_t>(encodingParametersRoot["capture"], "channelsNumber", -1);
 		}
 
 		string liveURL;
 
 		if (liveRecording->_streamSourceType == "TV")
 		{
-			tvType = JSONUtils::asString(encodingParametersRoot["tv"], "tvType", "");
-			tvServiceId = JSONUtils::asInt64(encodingParametersRoot["tv"], "tvServiceId", -1);
-			tvFrequency = JSONUtils::asInt64(encodingParametersRoot["tv"], "tvFrequency", -1);
-			tvSymbolRate = JSONUtils::asInt64(encodingParametersRoot["tv"], "tvSymbolRate", -1);
-			tvBandwidthInHz = JSONUtils::asInt64(encodingParametersRoot["tv"], "tvBandwidthInHz", -1);
-			tvModulation = JSONUtils::asString(encodingParametersRoot["tv"], "tvModulation", "");
-			tvVideoPid = JSONUtils::asInt32(encodingParametersRoot["tv"], "tvVideoPid", -1);
-			tvAudioItalianPid = JSONUtils::asInt32(encodingParametersRoot["tv"], "tvAudioItalianPid", -1);
+			tvType = JSONUtils::as<string>(encodingParametersRoot["tv"], "tvType", "");
+			tvServiceId = JSONUtils::as<int64_t>(encodingParametersRoot["tv"], "tvServiceId", -1);
+			tvFrequency = JSONUtils::as<int64_t>(encodingParametersRoot["tv"], "tvFrequency", -1);
+			tvSymbolRate = JSONUtils::as<int64_t>(encodingParametersRoot["tv"], "tvSymbolRate", -1);
+			tvBandwidthInHz = JSONUtils::as<int64_t>(encodingParametersRoot["tv"], "tvBandwidthInHz", -1);
+			tvModulation = JSONUtils::as<string>(encodingParametersRoot["tv"], "tvModulation", "");
+			tvVideoPid = JSONUtils::as<int32_t>(encodingParametersRoot["tv"], "tvVideoPid", -1);
+			tvAudioItalianPid = JSONUtils::as<int32_t>(encodingParametersRoot["tv"], "tvAudioItalianPid", -1);
 
 			// In case ffmpeg crashes and is automatically restarted, it should use the same
 			// IP-PORT it was using before because we already have a dbvlast sending the stream
@@ -275,26 +275,26 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			// in case of actAsServer
 			//	true: it is set into the MMSEngineProcessor::manageLiveRecorder method
 			//	false: it comes from the LiveRecorder json ingested
-			liveURL = JSONUtils::asString(encodingParametersRoot, "liveURL", "");
+			liveURL = JSONUtils::as<string>(encodingParametersRoot, "liveURL", "");
 		}
 
 		json outputsRoot = encodingParametersRoot["outputsRoot"];
 
 		{
-			bool monitorHLS = JSONUtils::asBool(encodingParametersRoot, "monitorHLS", false);
-			liveRecording->_virtualVOD = JSONUtils::asBool(encodingParametersRoot, "liveRecorderVirtualVOD", false);
+			bool monitorHLS = JSONUtils::as<bool>(encodingParametersRoot, "monitorHLS", false);
+			liveRecording->_virtualVOD = JSONUtils::as<bool>(encodingParametersRoot, "liveRecorderVirtualVOD", false);
 
 			if (monitorHLS || liveRecording->_virtualVOD)
 			{
 				// monitorVirtualVODOutputRootIndex has to be initialized in case of monitor/virtualVOD
-				int monitorVirtualVODOutputRootIndex = JSONUtils::asInt32(encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
+				int monitorVirtualVODOutputRootIndex = JSONUtils::as<int32_t>(encodingParametersRoot, "monitorVirtualVODOutputRootIndex", -1);
 
 				if (monitorVirtualVODOutputRootIndex >= 0)
 				{
 					liveRecording->_monitorVirtualVODManifestDirectoryPath =
-						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex], "manifestDirectoryPath", "");
+						JSONUtils::as<string>(outputsRoot[monitorVirtualVODOutputRootIndex], "manifestDirectoryPath", "");
 					liveRecording->_monitorVirtualVODManifestFileName =
-						JSONUtils::asString(outputsRoot[monitorVirtualVODOutputRootIndex], "manifestFileName", "");
+						JSONUtils::as<string>(outputsRoot[monitorVirtualVODOutputRootIndex], "manifestFileName", "");
 				}
 			}
 		}
@@ -343,8 +343,8 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		{
 			for (const auto& outputRoot : outputsRoot)
 			{
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-				string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
+				string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
 
 				// if (outputType == "HLS" || outputType == "DASH")
 				if (outputType == "HLS_Channel")
@@ -382,9 +382,9 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 		json framesToBeDetectedRoot = encodingParametersRoot["framesToBeDetected"];
 
-		string otherInputOptions = JSONUtils::asString(liveRecording->_ingestedParametersRoot, "otherInputOptions", "");
-		string otherOutputOptions = JSONUtils::asString(liveRecording->_ingestedParametersRoot, "otherOutputOptions", "");
-		bool utcTimeOverlay = JSONUtils::asBool(liveRecording->_ingestedParametersRoot, "utcTimeOverlay", false);
+		string otherInputOptions = JSONUtils::as<string>(liveRecording->_ingestedParametersRoot, "otherInputOptions", "");
+		string otherOutputOptions = JSONUtils::as<string>(liveRecording->_ingestedParametersRoot, "otherOutputOptions", "");
+		bool utcTimeOverlay = JSONUtils::as<bool>(liveRecording->_ingestedParametersRoot, "utcTimeOverlay", false);
 
 		liveRecording->_segmenterType = "hlsSegmenter";
 		// liveRecording->_segmenterType = "streamSegmenter";

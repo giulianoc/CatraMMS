@@ -38,7 +38,7 @@ void MMSEngineProcessor::manageEncodeTask(
 			}
 			else
 			{
-				encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+				encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 			}
 		}
 
@@ -54,11 +54,11 @@ void MMSEngineProcessor::manageEncodeTask(
 			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+				string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 				encodingProfileKey = _mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace->_workspaceKey, contentType, encodingProfileLabel);
 			}
@@ -198,7 +198,7 @@ void MMSEngineProcessor::manageEncodeTask(
 					string encodedFileName;
 					string fileFormat;
 					{
-						fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+						fileFormat = JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat", "");
 
 						encodedFileName = to_string(ingestionJobKey) + "_" + to_string(encodingProfileKey) +
 										  getEncodedFileExtensionByEncodingProfile(encodingProfileDetailsRoot);

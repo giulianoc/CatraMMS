@@ -71,17 +71,17 @@ void API::addRequestStatistic(
 
 				throw runtime_error(errorMessage);
 			}
-			userId = JSONUtils::asString(requestBodyRoot, field, "");
+			userId = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "ipAddress";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
-				ipAddress = JSONUtils::asString(requestBodyRoot, field, "");
+				ipAddress = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "physicalPathKey";
-			physicalPathKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			physicalPathKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "confStreamKey";
-			confStreamKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			confStreamKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			if (physicalPathKey == -1 && confStreamKey == -1)
 			{
@@ -107,7 +107,7 @@ void API::addRequestStatistic(
 
 				throw runtime_error(errorMessage);
 			}
-			title = JSONUtils::asString(requestBodyRoot, field, "");
+			title = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{

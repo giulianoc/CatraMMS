@@ -80,7 +80,7 @@ void EncoderProxy::processSlideShow()
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
 			string errorMessage = std::format(
@@ -146,7 +146,7 @@ void EncoderProxy::processSlideShow()
 
 		int outputFrameRate;
 		string field = "outputFrameRate";
-		outputFrameRate = JSONUtils::asInt32(_encodingItem->_encodingParametersRoot, field, 25);
+		outputFrameRate = JSONUtils::as<int32_t>(_encodingItem->_encodingParametersRoot, field, 25);
 
 		shared_ptr<LocalAssetIngestionEvent> localAssetIngestionEvent =
 			_multiEventsSet->getEventsFactory()->getFreeEvent<LocalAssetIngestionEvent>(MMSENGINE_EVENTTYPEIDENTIFIER_LOCALASSETINGESTIONEVENT);
@@ -232,7 +232,7 @@ void EncoderProxy::processIntroOutroOverlay()
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
 			string errorMessage = std::format(
@@ -371,7 +371,7 @@ void EncoderProxy::processCutFrameAccurate()
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
 			string errorMessage = std::format(
@@ -422,13 +422,13 @@ void EncoderProxy::processCutFrameAccurate()
 		string sourceFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
 		string field = "sourceVideoMediaItemKey";
-		int64_t sourceVideoMediaItemKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		int64_t sourceVideoMediaItemKey = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, field, -1);
 
 		field = "newUtcStartTimeInMilliSecs";
-		int64_t newUtcStartTimeInMilliSecs = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		int64_t newUtcStartTimeInMilliSecs = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, field, -1);
 
 		field = "newUtcEndTimeInMilliSecs";
-		int64_t newUtcEndTimeInMilliSecs = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, -1);
+		int64_t newUtcEndTimeInMilliSecs = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, field, -1);
 
 		if (newUtcStartTimeInMilliSecs != -1 && newUtcEndTimeInMilliSecs != -1)
 		{
@@ -612,7 +612,7 @@ void EncoderProxy::processAddSilentAudio(bool killed)
 		{
 			json sourceRoot = sourcesRoot[sourceIndex];
 
-			stagingEncodedAssetPathName = JSONUtils::asString(sourceRoot, "encodedNFSStagingAssetPathName", "");
+			stagingEncodedAssetPathName = JSONUtils::as<string>(sourceRoot, "encodedNFSStagingAssetPathName", "");
 			if (stagingEncodedAssetPathName == "")
 			{
 				string errorMessage = std::format(
@@ -767,7 +767,7 @@ void EncoderProxy::processPictureInPicture(bool killed)
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
 			string errorMessage = std::format(
@@ -906,7 +906,7 @@ void EncoderProxy::processOverlayedTextOnVideo(bool killed)
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName.empty())
 		{
 			string errorMessage = std::format(
@@ -1045,7 +1045,7 @@ void EncoderProxy::processVideoSpeed(bool killed)
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
 			string errorMessage = std::format(
@@ -1184,7 +1184,7 @@ void EncoderProxy::processOverlayedImageOnVideo(bool killed)
 	string stagingEncodedAssetPathName;
 	try
 	{
-		stagingEncodedAssetPathName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
+		stagingEncodedAssetPathName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, "encodedNFSStagingAssetPathName", "");
 		if (stagingEncodedAssetPathName == "")
 		{
 			string errorMessage = std::format(

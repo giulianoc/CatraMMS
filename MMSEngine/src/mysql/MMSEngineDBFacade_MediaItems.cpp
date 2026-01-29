@@ -5321,7 +5321,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string contentProviderName;
             
-			contentProviderName = JSONUtils::asString(parametersRoot, "contentProviderName", _defaultContentProviderName);
+			contentProviderName = JSONUtils::as<string>(parametersRoot, "contentProviderName", _defaultContentProviderName);
 
             lastSQLCommand = 
                 "select contentProviderKey from MMS_ContentProvider where workspaceKey = ? and name = ?";
@@ -5369,10 +5369,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             // string encodingProfilesSet;
 
             string field = "title";
-            title = JSONUtils::asString(parametersRoot, field, "");
+            title = JSONUtils::as<string>(parametersRoot, field, "");
             
             field = "ingester";
-			ingester = JSONUtils::asString(parametersRoot, field, "");
+			ingester = JSONUtils::as<string>(parametersRoot, field, "");
 
             field = "userData";
             if (JSONUtils::isPresent(parametersRoot, field))
@@ -5380,7 +5380,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == Json::stringValue)
 				{
-					userData = JSONUtils::asString(parametersRoot, field, "");
+					userData = JSONUtils::as<string>(parametersRoot, field, "");
 
 					// _logger->error(__FILEREF__ + "STRING AAAAAAAAAAA"
 					// 	+ ", userData: " + userData
@@ -5397,12 +5397,12 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             }
 
             field = "deliveryFileName";
-			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
+			deliveryFileName = JSONUtils::as<string>(parametersRoot, field, "");
 
             field = "retention";
             if (JSONUtils::isPresent(parametersRoot, field))
             {
-                string retention = JSONUtils::asString(parametersRoot, field, "1d");
+                string retention = JSONUtils::as<string>(parametersRoot, field, "1d");
 				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
             }
 
@@ -5415,10 +5415,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
                     Json::Value publishingRoot = parametersRoot[field];
 
                     field = "startPublishing";
-					startPublishing = JSONUtils::asString(publishingRoot, field, "NOW");
+					startPublishing = JSONUtils::as<string>(publishingRoot, field, "NOW");
 
                     field = "endPublishing";
-					endPublishing = JSONUtils::asString(publishingRoot, field, "FOREVER");
+					endPublishing = JSONUtils::as<string>(publishingRoot, field, "FOREVER");
                 }
                 
                 if (startPublishing == "NOW")
@@ -5549,13 +5549,13 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
         {
             string uniqueName;
             if (JSONUtils::isPresent(parametersRoot, "uniqueName"))
-                uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
+                uniqueName = JSONUtils::as<string>(parametersRoot, "uniqueName", "");
 
             if (uniqueName != "")
             {
 				bool allowUniqueNameOverride = false;
 				allowUniqueNameOverride =
-					JSONUtils::asBool(parametersRoot, "allowUniqueNameOverride", false);
+					JSONUtils::as<bool>(parametersRoot, "allowUniqueNameOverride", false);
 
 				manageExternalUniqueName(conn, workspace->_workspaceKey, mediaItemKey,
 					allowUniqueNameOverride, uniqueName);
@@ -5571,7 +5571,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 				field = "type";
 				MMSEngineDBFacade::CrossReferenceType crossReferenceType =
-					MMSEngineDBFacade::toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
+					MMSEngineDBFacade::toCrossReferenceType(JSONUtils::as<string>(crossReferenceRoot, field, ""));
 
 				int64_t sourceMediaItemKey;
 				int64_t targetMediaItemKey;
@@ -5583,7 +5583,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					targetMediaItemKey = mediaItemKey;
 
 					field = "mediaItemKey";
-					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+					sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 				}
 				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfPoster)
 				{
@@ -5592,7 +5592,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					targetMediaItemKey = mediaItemKey;
 
 					field = "mediaItemKey";
-					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+					sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 				}
 				else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)
 				{
@@ -5601,14 +5601,14 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					targetMediaItemKey = mediaItemKey;
 
 					field = "mediaItemKey";
-					sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+					sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 				}
 				else
 				{
 					sourceMediaItemKey = mediaItemKey;
 
 					field = "mediaItemKey";
-					targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+					targetMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 				}
 
                 Json::Value crossReferenceParametersRoot;
@@ -5628,10 +5628,10 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		string externalDeliveryURL;
 		{
             string field = "externalDeliveryTechnology";
-			externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
+			externalDeliveryTechnology = JSONUtils::as<string>(parametersRoot, field, "");
 
             field = "externalDeliveryURL";
-			externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
+			externalDeliveryURL = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		int64_t physicalItemRetentionInMinutes = -1;
@@ -5639,7 +5639,7 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
             string field = "physicalItemRetention";
             if (JSONUtils::isPresent(parametersRoot, field))
             {
-                string retention = JSONUtils::asString(parametersRoot, field, "1d");
+                string retention = JSONUtils::as<string>(parametersRoot, field, "1d");
 				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
             }
 		}
@@ -5673,13 +5673,13 @@ pair<int64_t,int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 						field = "ingestionJobKey";
 						if (JSONUtils::isPresent(mmsDataRoot, "liveRecordingChunk"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveRecordingChunk"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["liveRecordingChunk"], field, -1);
 						else if (JSONUtils::isPresent(mmsDataRoot, "generatedFrame"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["generatedFrame"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["generatedFrame"], field, -1);
 						else if (JSONUtils::isPresent(mmsDataRoot, "externalTranscoder"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["externalTranscoder"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["externalTranscoder"], field, -1);
 						else if (JSONUtils::isPresent(mmsDataRoot, "liveCut"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveCut"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["liveCut"], field, -1);
 					}
 				}
 			}
@@ -6499,7 +6499,7 @@ void MMSEngineDBFacade::addTags(
 
 		for (int tagIndex = 0; tagIndex < localTagsRoot.size(); tagIndex++)
 		{
-			string tag = JSONUtils::asString(localTagsRoot[tagIndex]);
+			string tag = JSONUtils::as<string>(localTagsRoot[tagIndex]);
 
 			tag = StringUtils::trim(tag);
 

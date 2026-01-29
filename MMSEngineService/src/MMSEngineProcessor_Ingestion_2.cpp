@@ -179,14 +179,14 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			// 	- rivedere la documentazione (se non esiste scriverla) per essere sicuri di non avere problemi
 			/*
 			{
-				int64_t encodingProfileKey = JSONUtils::asInt64(parametersRoot, "encodingProfileKey", -1);
+				int64_t encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, "encodingProfileKey", -1);
 				if (encodingProfileKey != -1)
 					workspaceIngestionBinaryPathName.append(std::format("-{}", encodingProfileKey));
 			}
 			*/
 
 			string field = "fileFormat";
-			string fileFormat = JSONUtils::asString(parametersRoot, field, "");
+			string fileFormat = JSONUtils::as<string>(parametersRoot, field, "");
 			if (fileFormat == "streaming-to-mp4")
 			{
 				// .mp4 is used in
@@ -1874,13 +1874,13 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			string variantOfIngestionJobKeyField = "VariantOfIngestionJobKey";
 			if (JSONUtils::isPresent(parametersRoot, variantOfMediaItemKeyField))
 			{
-				variantOfMediaItemKey = JSONUtils::asInt64(parametersRoot, variantOfMediaItemKeyField, -1);
+				variantOfMediaItemKey = JSONUtils::as<int64_t>(parametersRoot, variantOfMediaItemKeyField, -1);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, variantOfUniqueNameField))
 			{
 				bool warningIfMissing = false;
 
-				string variantOfUniqueName = JSONUtils::asString(parametersRoot, variantOfUniqueNameField, "");
+				string variantOfUniqueName = JSONUtils::as<string>(parametersRoot, variantOfUniqueNameField, "");
 
 				pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyDetails = _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 					localAssetIngestionEvent.getWorkspace()->_workspaceKey, variantOfUniqueName, warningIfMissing,
@@ -1892,7 +1892,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			else if (JSONUtils::isPresent(parametersRoot, variantOfIngestionJobKeyField))
 			{
-				int64_t variantOfIngestionJobKey = JSONUtils::asInt64(parametersRoot, variantOfIngestionJobKeyField, -1);
+				int64_t variantOfIngestionJobKey = JSONUtils::as<int64_t>(parametersRoot, variantOfIngestionJobKeyField, -1);
 				vector<tuple<int64_t, int64_t, MMSEngineDBFacade::ContentType>> mediaItemsDetails;
 				bool warningIfMissing = false;
 
@@ -1929,7 +1929,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		int64_t encodingProfileKey = -1;
 		{
 			string field = "encodingProfileKey";
-			encodingProfileKey = JSONUtils::asInt64(parametersRoot, field, -1);
+			encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, field, -1);
 		}
 
 		if (variantOfMediaItemKey == -1)
@@ -1974,10 +1974,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			string externalDeliveryURL;
 			{
 				string field = "externalDeliveryTechnology";
-				externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
+				externalDeliveryTechnology = JSONUtils::as<string>(parametersRoot, field, "");
 
 				field = "externalDeliveryURL";
-				externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
+				externalDeliveryURL = JSONUtils::as<string>(parametersRoot, field, "");
 			}
 
 			int64_t physicalItemRetentionInMinutes = -1;
@@ -1985,7 +1985,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				string field = "physicalItemRetention";
 				if (JSONUtils::isPresent(parametersRoot, field))
 				{
-					string retention = JSONUtils::asString(parametersRoot, field, "1d");
+					string retention = JSONUtils::as<string>(parametersRoot, field, "1d");
 					physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 				}
 			}
@@ -2008,7 +2008,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 						if (JSONUtils::isPresent(mmsDataRoot, "externalTranscoder"))
 						{
 							field = "ingestionJobKey";
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot, field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot, field, -1);
 						}
 					}
 				}
@@ -2428,7 +2428,7 @@ void MMSEngineProcessor::handleMultiLocalAssetIngestionEventThread(
 				{
 					string field = "title";
 					if (JSONUtils::isPresent(multiLocalAssetIngestionEvent.getParametersRoot(), field))
-						title = JSONUtils::asString(multiLocalAssetIngestionEvent.getParametersRoot(), field, "");
+						title = JSONUtils::as<string>(multiLocalAssetIngestionEvent.getParametersRoot(), field, "");
 					title += (" (" + to_string(it - generatedFramesFileNames.begin() + 1) + " / " + to_string(generatedFramesFileNames.size()) + ")");
 				}
 				int64_t imageOfVideoMediaItemKey = -1;
@@ -2678,9 +2678,9 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, 
 	externalReadOnlyStorage = false;
 	{
 		if (JSONUtils::isPresent(parametersRoot, "sourceURL"))
-			mediaSourceURL = JSONUtils::asString(parametersRoot, "sourceURL", "");
+			mediaSourceURL = JSONUtils::as<string>(parametersRoot, "sourceURL", "");
 
-		mediaFileFormat = JSONUtils::asString(parametersRoot, "fileFormat", "");
+		mediaFileFormat = JSONUtils::as<string>(parametersRoot, "fileFormat", "");
 
 		if (mediaSourceURL.starts_with("http://") || mediaSourceURL.starts_with("https://") || mediaSourceURL.starts_with("ftp://") ||
 			mediaSourceURL.starts_with("ftps://"))
@@ -2695,10 +2695,10 @@ tuple<MMSEngineDBFacade::IngestionStatus, string, string, int64_t, string, int, 
 			nextIngestionStatus = MMSEngineDBFacade::IngestionStatus::SourceUploadingInProgress;
 	}
 
-	string md5FileCheckSum = JSONUtils::asString(parametersRoot, "md5FileCheckSum");
+	string md5FileCheckSum = JSONUtils::as<string>(parametersRoot, "md5FileCheckSum");
 
-	int fileSizeInBytes = JSONUtils::asInt32(parametersRoot, "fileSizeInBytes", -1);
-	int64_t encodingProfileKey = JSONUtils::asInt32(parametersRoot, "encodingProfileKey", -1);
+	int fileSizeInBytes = JSONUtils::as<int32_t>(parametersRoot, "fileSizeInBytes", -1);
+	int64_t encodingProfileKey = JSONUtils::as<int32_t>(parametersRoot, "encodingProfileKey", -1);
 
 	LOG_INFO(
 		"media source details"

@@ -33,19 +33,19 @@ void GenerateFrames::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
-		double startTimeInSeconds = JSONUtils::asDouble(encodingParametersRoot, "startTimeInSeconds", 0);
-		int maxFramesNumber = JSONUtils::asInt32(encodingParametersRoot, "maxFramesNumber", -1);
-		string videoFilter = JSONUtils::asString(encodingParametersRoot, "videoFilter", "");
-		int periodInSeconds = JSONUtils::asInt32(encodingParametersRoot, "periodInSeconds", -1);
-		bool mjpeg = JSONUtils::asBool(encodingParametersRoot, "mjpeg", false);
-		int imageWidth = JSONUtils::asInt32(encodingParametersRoot, "imageWidth", -1);
-		int imageHeight = JSONUtils::asInt32(encodingParametersRoot, "imageHeight", -1);
-		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
+		double startTimeInSeconds = JSONUtils::as<double>(encodingParametersRoot, "startTimeInSeconds", 0);
+		int maxFramesNumber = JSONUtils::as<int32_t>(encodingParametersRoot, "maxFramesNumber", -1);
+		string videoFilter = JSONUtils::as<string>(encodingParametersRoot, "videoFilter", "");
+		int periodInSeconds = JSONUtils::as<int32_t>(encodingParametersRoot, "periodInSeconds", -1);
+		bool mjpeg = JSONUtils::as<bool>(encodingParametersRoot, "mjpeg", false);
+		int imageWidth = JSONUtils::as<int32_t>(encodingParametersRoot, "imageWidth", -1);
+		int imageHeight = JSONUtils::as<int32_t>(encodingParametersRoot, "imageHeight", -1);
+		int64_t videoDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
 
 		string field = "sourceFileExtension";
 		if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -61,7 +61,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 			throw runtime_error(errorMessage);
 		}
-		string sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+		string sourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 		string sourceAssetPathName;
 
@@ -81,10 +81,10 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
+			imagesDirectory = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, "sourcePhysicalDeliveryURL", "");
-			string sourceTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, "sourceTranscoderStagingAssetPathName", "");
+			string sourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, "sourcePhysicalDeliveryURL", "");
+			string sourceTranscoderStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, "sourceTranscoderStagingAssetPathName", "");
 
 			{
 				string sourceTranscoderStagingAssetDirectory;
@@ -143,7 +143,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "nfsImagesDirectory";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -159,7 +159,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			imagesDirectory = JSONUtils::asString(encodingParametersRoot, field, "");
+			imagesDirectory = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string imageBaseFileName = to_string(_encoding->_ingestionJobKey);
@@ -189,7 +189,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 						  0 == entry.path().filename().string().compare(0, imageBaseFileName.size(), imageBaseFileName)))
 						continue;
 
-					string generateFrameTitle = JSONUtils::asString(ingestedParametersRoot, "title", "");
+					string generateFrameTitle = JSONUtils::as<string>(ingestedParametersRoot, "title", "");
 
 					string ingestionJobLabel = generateFrameTitle + " (" + to_string(generatedFrameIndex) + ")";
 
@@ -361,7 +361,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string mmsIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string mmsIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 				*/
 				int64_t userKey;
 				string apiKey;
@@ -377,10 +377,10 @@ void GenerateFrames::encodeContent(json metadataRoot)
 							json credentialsRoot = internalMMSRoot[field];
 
 							field = "userKey";
-							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+							userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 							field = "apiKey";
-							string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+							string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 						}
 					}
@@ -465,7 +465,7 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string ingestionJobStatus = JSONUtils::asString(ingestionJobRoot, field, "");
+					string ingestionJobStatus = JSONUtils::as<string>(ingestionJobRoot, field, "");
 
 					string prefix = "End_";
 					if (ingestionJobStatus.size() >= prefix.size() && 0 == ingestionJobStatus.compare(0, prefix.size(), prefix))
@@ -663,10 +663,10 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+					userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 			}
@@ -688,7 +688,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 			*/
 		}
 
@@ -762,7 +762,7 @@ int64_t GenerateFrames::generateFrames_ingestFrame(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsBinaryIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 		*/
 

@@ -126,7 +126,7 @@ void API::saveWorkflowAsLibrary(
 
 					throw runtime_error(errorMessage);
 				}
-				workflowLabel = JSONUtils::asString(requestBodyRoot, field, "");
+				workflowLabel = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 				workflowAsLibraryScope = requestData.getQueryParameter("scope", "", true);
 

@@ -151,13 +151,13 @@ void MMSEngineProcessor::manageConcatThread(
 						string utcStartTimeInMilliSecsField = "utcStartTimeInMilliSecs";
 						// string utcChunkStartTimeField = "utcChunkStartTime";
 						if (JSONUtils::isPresent(sourceMmsDataRoot, utcStartTimeInMilliSecsField))
-							utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
+							utcStartTimeInMilliSecs = JSONUtils::as<int64_t>(sourceMmsDataRoot, utcStartTimeInMilliSecsField, 0);
 						/*
 						else if (JSONUtils::isPresent(sourceMmsDataRoot,
 						utcChunkStartTimeField))
 						{
 							utcStartTimeInMilliSecs =
-						JSONUtils::asInt64(sourceMmsDataRoot,
+						JSONUtils::as<int64_t>(sourceMmsDataRoot,
 						utcChunkStartTimeField, 0); utcStartTimeInMilliSecs *=
 						1000;
 						}
@@ -257,13 +257,13 @@ void MMSEngineProcessor::manageConcatThread(
 					string utcEndTimeInMilliSecsField = "utcEndTimeInMilliSecs";
 					// string utcChunkEndTimeField = "utcChunkEndTime";
 					if (JSONUtils::isPresent(sourceMmsDataRoot, utcEndTimeInMilliSecsField))
-						utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
+						utcEndTimeInMilliSecs = JSONUtils::as<int64_t>(sourceMmsDataRoot, utcEndTimeInMilliSecsField, 0);
 					/*
 					else if (JSONUtils::isPresent(sourceMmsDataRoot,
 					utcChunkEndTimeField))
 					{
 						utcEndTimeInMilliSecs =
-					JSONUtils::asInt64(sourceMmsDataRoot, utcChunkEndTimeField,
+					JSONUtils::as<int64_t>(sourceMmsDataRoot, utcChunkEndTimeField,
 					0); utcEndTimeInMilliSecs *= 1000;
 					}
 					*/
@@ -383,12 +383,12 @@ void MMSEngineProcessor::manageConcatThread(
 		string field = "MaxDurationInSeconds";
 		if (JSONUtils::isPresent(parametersRoot, field))
 		{
-			maxDurationInSeconds = JSONUtils::asDouble(parametersRoot, field, 0.0);
+			maxDurationInSeconds = JSONUtils::as<double>(parametersRoot, field, 0.0);
 
 			field = "ExtraSecondsToCutWhenMaxDurationIsReached";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
-				extraSecondsToCutWhenMaxDurationIsReached = JSONUtils::asDouble(parametersRoot, field, 0.0);
+				extraSecondsToCutWhenMaxDurationIsReached = JSONUtils::as<double>(parametersRoot, field, 0.0);
 
 				if (extraSecondsToCutWhenMaxDurationIsReached >= abs(maxDurationInSeconds))
 					extraSecondsToCutWhenMaxDurationIsReached = 0.0;
@@ -737,7 +737,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string startTime;
 		string endTime = "0.0";
 		{
-			startTime = JSONUtils::asString(parametersRoot, "startTime", "");
+			startTime = JSONUtils::as<string>(parametersRoot, "startTime", "");
 
 			if (!JSONUtils::isPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
@@ -755,15 +755,15 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				throw runtime_error(errorMessage);
 			}
-			endTime = JSONUtils::asString(parametersRoot, "endTime", "");
+			endTime = JSONUtils::as<string>(parametersRoot, "endTime", "");
 
 			if (referenceContentType == MMSEngineDBFacade::ContentType::Video)
-				framesNumber = JSONUtils::asInt32(parametersRoot, "framesNumber", -1);
+				framesNumber = JSONUtils::as<int32_t>(parametersRoot, "framesNumber", -1);
 
 			// 2021-02-05: default is set to true because often we have the error
 			//	endTimeInSeconds is bigger of few milliseconds of the duration
 			// of the media 	For this reason this field is set to true by default
-			bool fixEndTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, "fixEndTimeIfOvercomeDuration", true);
+			bool fixEndTimeIfOvercomeDuration = JSONUtils::as<bool>(parametersRoot, "fixEndTimeIfOvercomeDuration", true);
 
 			// startTime/endTime potrebbero avere anche il formato HH:MM:SS:FF.
 			// Questo formato è stato utile per il cut di file mxf ma non è supportato da ffmpeg (il formato supportati da ffmpeg sono quelli
@@ -815,13 +815,13 @@ void MMSEngineProcessor::manageCutMediaThread(
 			double startTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, startTime).first;
 			double endTimeInSeconds = FFMpegWrapper::timeToSeconds(ingestionJobKey, endTime).first;
 
-			string timesRelativeToMetaDataField = JSONUtils::asString(parametersRoot, "timesRelativeToMetaDataField", "");
+			string timesRelativeToMetaDataField = JSONUtils::as<string>(parametersRoot, "timesRelativeToMetaDataField", "");
 			string timeCode;
 			if (timesRelativeToMetaDataField != "")
 			{
 				json metaDataRoot = _mmsEngineDBFacade->physicalPath_columnAsJson("metadata", sourcePhysicalPathKey);
 
-				timeCode = JSONUtils::asString(metaDataRoot, timesRelativeToMetaDataField, "");
+				timeCode = JSONUtils::as<string>(metaDataRoot, timesRelativeToMetaDataField, "");
 				if (timeCode == "")
 				{
 					string errorMessage = std::format(
@@ -994,8 +994,8 @@ void MMSEngineProcessor::manageCutMediaThread(
 					", timeCode: {}"
 					", sourceDurationInMilliSecs: {} ({})"
 					", endTimeChangedToDurationBecauseTooBig: {}",
-					_processorIdentifier, ingestionJobKey, sourceMediaItemKey, JSONUtils::asString(parametersRoot, "startTime", ""), startTime,
-					startTimeInSeconds, JSONUtils::asString(parametersRoot, "endTime", ""), endTime, endTimeInSeconds, timeCode,
+					_processorIdentifier, ingestionJobKey, sourceMediaItemKey, JSONUtils::as<string>(parametersRoot, "startTime", ""), startTime,
+					startTimeInSeconds, JSONUtils::as<string>(parametersRoot, "endTime", ""), endTime, endTimeInSeconds, timeCode,
 					sourceDurationInMilliSecs, FFMpegWrapper::secondsToTime(ingestionJobKey, sourceDurationInMilliSecs),
 					endTimeChangedToDurationBecauseTooBig
 				);
@@ -1013,11 +1013,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 			{
 				json sourceMmsDataRoot = sourceUserDataRoot["mmsData"];
 
-				int64_t utcStartTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, "utcStartTimeInMilliSecs", -1);
+				int64_t utcStartTimeInMilliSecs = JSONUtils::as<int64_t>(sourceMmsDataRoot, "utcStartTimeInMilliSecs", -1);
 
 				if (utcStartTimeInMilliSecs != -1)
 				{
-					int64_t utcEndTimeInMilliSecs = JSONUtils::asInt64(sourceMmsDataRoot, "utcEndTimeInMilliSecs", -1);
+					int64_t utcEndTimeInMilliSecs = JSONUtils::as<int64_t>(sourceMmsDataRoot, "utcEndTimeInMilliSecs", -1);
 
 					if (utcEndTimeInMilliSecs != -1)
 					{
@@ -1031,7 +1031,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		}
 
 		string field = "cutType";
-		string cutType = JSONUtils::asString(parametersRoot, field, "KeyFrameSeeking");
+		string cutType = JSONUtils::as<string>(parametersRoot, field, "KeyFrameSeeking");
 
 		LOG_INFO(
 			"manageCutMediaThread new start/end"
@@ -1054,7 +1054,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		{
 			string outputFileFormat;
 			field = "outputFileFormat";
-			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
+			outputFileFormat = JSONUtils::as<string>(parametersRoot, field, "");
 
 			LOG_INFO(
 				"1 manageCutMediaThread new start/end"
@@ -1225,7 +1225,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			if (!JSONUtils::isPresent(parametersRoot, field))
 				encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 			else
-				encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+				encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 
 			int64_t encodingProfileKey;
 			json encodingProfileDetailsRoot;
@@ -1234,11 +1234,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 				string labelField = "encodingProfileLabel";
 				if (JSONUtils::isPresent(parametersRoot, keyField))
 				{
-					encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+					encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 				}
 				else if (JSONUtils::isPresent(parametersRoot, labelField))
 				{
-					string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+					string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 					encodingProfileKey =
@@ -1273,7 +1273,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 			{
 				/*
 				string fileFormat =
-				JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat",
+				JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat",
 				""); string fileFormatLowerCase;
 				fileFormatLowerCase.resize(fileFormat.size());
 				transform(fileFormat.begin(), fileFormat.end(),

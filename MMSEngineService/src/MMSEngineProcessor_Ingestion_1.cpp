@@ -455,7 +455,7 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 											// docs/TASK_01_Add_Content_JSON_Format.txt)
 											bool regenerateTimestamps = false;
 											if (mediaFileFormat == "streaming-to-mp4")
-												regenerateTimestamps = JSONUtils::asBool(parametersRoot, "regenerateTimestamps", false);
+												regenerateTimestamps = JSONUtils::as<bool>(parametersRoot, "regenerateTimestamps", false);
 
 											thread downloadMediaSource(
 												&MMSEngineProcessor::downloadMediaSourceFileThread, this, _processorsThreadsNumber, mediaSourceURL,

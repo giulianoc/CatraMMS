@@ -26,20 +26,20 @@ void VideoSpeed::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
-		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "sourceDurationInMilliSeconds", -1);
+		int64_t videoDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "sourceDurationInMilliSeconds", -1);
 
 		string videoSpeedType;
 		videoSpeedType =
-			JSONUtils::asString(ingestedParametersRoot, "speedType", MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown));
+			JSONUtils::as<string>(ingestedParametersRoot, "speedType", MMSEngineDBFacade::toString(MMSEngineDBFacade::VideoSpeedType::SlowDown));
 
-		int videoSpeedSize = JSONUtils::asInt32(ingestedParametersRoot, "videoSpeedSize", 3);
+		int videoSpeedSize = JSONUtils::as<int32_t>(ingestedParametersRoot, "videoSpeedSize", 3);
 
 		string sourceFileExtension;
 		{
@@ -57,7 +57,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string sourceAssetPathName;
@@ -79,7 +79,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -118,7 +118,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -157,7 +157,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			string sourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
@@ -179,7 +179,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -195,7 +195,7 @@ void VideoSpeed::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		_encoding->_encodingStart = chrono::system_clock::now();
@@ -233,9 +233,9 @@ void VideoSpeed::encodeContent(json metadataRoot)
 				fs::remove_all(sourceAssetPathName);
 			}
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add videoSpeed from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add videoSpeed from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

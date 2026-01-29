@@ -32,7 +32,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 			throw runtime_error(errorMessage);
 		}
-		string inputType = JSONUtils::asString(parametersRoot, field, "Stream");
+		string inputType = JSONUtils::as<string>(parametersRoot, field, "Stream");
 
 		string streamingUrl;
 		if (inputType == "Stream")
@@ -45,7 +45,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			string configurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 			/*
 			bool warningIfMissing = false;
@@ -71,7 +71,7 @@ void MMSEngineProcessor::checkStreamingThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string streamingName = JSONUtils::asString(parametersRoot, field, "");
+			string streamingName = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "streamingUrl";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -81,10 +81,10 @@ void MMSEngineProcessor::checkStreamingThread(
 
 				throw runtime_error(errorMessage);
 			}
-			streamingUrl = JSONUtils::asString(parametersRoot, field, "");
+			streamingUrl = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
-		bool isVideo = JSONUtils::asBool(parametersRoot, "isVideo", true);
+		bool isVideo = JSONUtils::as<bool>(parametersRoot, "isVideo", true);
 
 		LOG_INFO(
 			string() + "checkStreamingThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +

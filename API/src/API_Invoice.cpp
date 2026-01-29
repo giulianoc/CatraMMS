@@ -67,7 +67,7 @@ void API::addInvoice(
 
 				throw runtime_error(errorMessage);
 			}
-			userKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			userKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "description";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -81,7 +81,7 @@ void API::addInvoice(
 
 				throw runtime_error(errorMessage);
 			}
-			description = JSONUtils::asString(requestBodyRoot, field, "");
+			description = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "amount";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -95,11 +95,11 @@ void API::addInvoice(
 
 				throw runtime_error(errorMessage);
 			}
-			amount = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			amount = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "expirationDate";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
-				expirationDate = JSONUtils::asString(requestBodyRoot, field, "");
+				expirationDate = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{

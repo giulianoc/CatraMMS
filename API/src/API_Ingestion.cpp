@@ -108,10 +108,10 @@ void API::ingestion(
 
 				throw runtime_error(errorMessage);
 			}
-			string rootType = JSONUtils::asString(requestBodyRoot, "type", "");
+			string rootType = JSONUtils::as<string>(requestBodyRoot, "type", "");
 
-			string rootLabel = JSONUtils::asString(requestBodyRoot, "label", "");
-			bool rootHidden = JSONUtils::asBool(requestBodyRoot, "hidden", false);
+			string rootLabel = JSONUtils::as<string>(requestBodyRoot, "label", "");
+			bool rootHidden = JSONUtils::as<bool>(requestBodyRoot, "hidden", false);
 
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
@@ -141,7 +141,7 @@ void API::ingestion(
 
 				throw runtime_error(errorMessage);
 			}
-			string taskType = JSONUtils::asString(taskRoot, "type", "");
+			string taskType = JSONUtils::as<string>(taskRoot, "type", "");
 
 			if (taskType == "GroupOfTasks")
 			{
@@ -374,10 +374,10 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 						json variableDetails = valRoot;
 
 						field = "type";
-						string variableType = JSONUtils::asString(variableDetails, field, "");
+						string variableType = JSONUtils::as<string>(variableDetails, field, "");
 
 						field = "isNull";
-						bool variableIsNull = JSONUtils::asBool(variableDetails, field, false);
+						bool variableIsNull = JSONUtils::as<bool>(variableDetails, field, false);
 
 						if (variableType == "jsonObject" || variableType == "jsonArray")
 							variableToBeReplaced = string("\"${") + sKey + "}\"";
@@ -395,7 +395,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 								}
 								else
 								{
-									sValue = JSONUtils::asString(variableDetails, field, "");
+									sValue = JSONUtils::as<string>(variableDetails, field, "");
 
 									// scenario, the json will be: "field":
 									// "${var_name}"
@@ -409,14 +409,14 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 								if (variableIsNull)
 									sValue = "null";
 								else
-									sValue = to_string(JSONUtils::asInt64(variableDetails, field, 0));
+									sValue = to_string(JSONUtils::as<int64_t>(variableDetails, field, 0));
 							}
 							else if (variableType == "decimal")
 							{
 								if (variableIsNull)
 									sValue = "null";
 								else
-									sValue = to_string(JSONUtils::asDouble(variableDetails, field, 0.0));
+									sValue = to_string(JSONUtils::as<double>(variableDetails, field, 0.0));
 							}
 							else if (variableType == "boolean")
 							{
@@ -424,7 +424,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 									sValue = "null";
 								else
 								{
-									bool bValue = JSONUtils::asBool(variableDetails, field, false);
+									bool bValue = JSONUtils::as<bool>(variableDetails, field, false);
 									sValue = bValue ? "true" : "false";
 								}
 							}
@@ -433,14 +433,14 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 								if (variableIsNull)
 									sValue = "";
 								else
-									sValue = JSONUtils::asString(variableDetails, field, "");
+									sValue = JSONUtils::as<string>(variableDetails, field, "");
 							}
 							else if (variableType == "datetime-millisecs")
 							{
 								if (variableIsNull)
 									sValue = "";
 								else
-									sValue = JSONUtils::asString(variableDetails, field, "");
+									sValue = JSONUtils::as<string>(variableDetails, field, "");
 							}
 							else if (variableType == "jsonObject")
 							{
@@ -486,7 +486,7 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 						{
 							if (variableType == "string")
 							{
-								sValue = JSONUtils::asString(variablesValuesToBeUsedRoot, sKey, "");
+								sValue = JSONUtils::as<string>(variablesValuesToBeUsedRoot, sKey, "");
 
 								// scenario, the json will be: "field":
 								// "${var_name}"
@@ -495,18 +495,18 @@ json API::manageWorkflowVariables(const string_view& requestBody, json variables
 								sValue = regex_replace(sValue, regex("\""), "\\\"");
 							}
 							else if (variableType == "integer")
-								sValue = to_string(JSONUtils::asInt64(variablesValuesToBeUsedRoot, sKey, 0));
+								sValue = to_string(JSONUtils::as<int64_t>(variablesValuesToBeUsedRoot, sKey, 0));
 							else if (variableType == "decimal")
-								sValue = to_string(JSONUtils::asDouble(variablesValuesToBeUsedRoot, sKey, 0.0));
+								sValue = to_string(JSONUtils::as<double>(variablesValuesToBeUsedRoot, sKey, 0.0));
 							else if (variableType == "boolean")
 							{
-								bool bValue = JSONUtils::asBool(variablesValuesToBeUsedRoot, sKey, false);
+								bool bValue = JSONUtils::as<bool>(variablesValuesToBeUsedRoot, sKey, false);
 								sValue = bValue ? "true" : "false";
 							}
 							else if (variableType == "datetime")
-								sValue = JSONUtils::asString(variablesValuesToBeUsedRoot, sKey, "");
+								sValue = JSONUtils::as<string>(variablesValuesToBeUsedRoot, sKey, "");
 							else if (variableType == "datetime-millisecs")
-								sValue = JSONUtils::asString(variablesValuesToBeUsedRoot, sKey, "");
+								sValue = JSONUtils::as<string>(variablesValuesToBeUsedRoot, sKey, "");
 							else if (variableType == "jsonObject")
 							{
 								if (variableIsNull)
@@ -680,7 +680,7 @@ void API::manageReferencesInput(
 		field = "dependenciesToBeAddedToReferencesAt";
 		if (JSONUtils::isPresent(parametersRoot, field))
 		{
-			dependenciesToBeAddedToReferencesAt = JSONUtils::asString(parametersRoot, field, "");
+			dependenciesToBeAddedToReferencesAt = JSONUtils::as<string>(parametersRoot, field, "");
 			if (!dependenciesToBeAddedToReferencesAt.empty())
 			{
 				if (dependenciesToBeAddedToReferencesAt == atTheBeginning)
@@ -721,7 +721,7 @@ void API::manageReferencesInput(
 			field = "label";
 			if (JSONUtils::isPresent(referenceRoot, field))
 			{
-				string referenceLabel = JSONUtils::asString(referenceRoot, field, "");
+				string referenceLabel = JSONUtils::as<string>(referenceRoot, field, "");
 
 				if (referenceLabel.empty())
 				{
@@ -962,11 +962,11 @@ vector<int64_t> API::ingestionSingleTask(
 #endif
 {
 	string field = "type";
-	string type = JSONUtils::asString(taskRoot, field, "");
+	string type = JSONUtils::as<string>(taskRoot, field, "");
 
 	string taskLabel;
 	field = "label";
-	taskLabel = JSONUtils::asString(taskRoot, field, "");
+	taskLabel = JSONUtils::as<string>(taskRoot, field, "");
 
 	LOG_INFO(
 		"Processing SingleTask..."
@@ -1054,7 +1054,7 @@ vector<int64_t> API::ingestionSingleTask(
 
 				if (JSONUtils::isPresent(parametersRoot, encodingProfilesSetKeyField))
 				{
-					int64_t encodingProfilesSetKey = JSONUtils::asInt64(parametersRoot, encodingProfilesSetKeyField, 0);
+					int64_t encodingProfilesSetKey = JSONUtils::as<int64_t>(parametersRoot, encodingProfilesSetKeyField, 0);
 
 					encodingProfilesSetReference = to_string(encodingProfilesSetKey);
 
@@ -1071,7 +1071,7 @@ vector<int64_t> API::ingestionSingleTask(
 				else // if (JSONUtils::isPresent(parametersRoot,
 					 // encodingProfilesSetLabelField))
 				{
-					string encodingProfilesSetLabel = JSONUtils::asString(parametersRoot, encodingProfilesSetLabelField, "");
+					string encodingProfilesSetLabel = JSONUtils::as<string>(parametersRoot, encodingProfilesSetLabelField, "");
 
 					encodingProfilesSetReference = encodingProfilesSetLabel;
 
@@ -1492,7 +1492,7 @@ json internalMMSRoot;
 		string field = "variantOfReferencedLabel";
 		if (JSONUtils::isPresent(parametersRoot, field))
 		{
-			string referenceLabel = JSONUtils::asString(parametersRoot, field, "");
+			string referenceLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 			if (referenceLabel.empty())
 			{
@@ -1564,8 +1564,8 @@ json internalMMSRoot;
 				throw runtime_error(errorMessage);
 			}
 
-			string workflowAsLibraryType = JSONUtils::asString(parametersRoot, workflowAsLibraryTypeField, "");
-			string workflowAsLibraryLabel = JSONUtils::asString(parametersRoot, workflowAsLibraryLabelField, "");
+			string workflowAsLibraryType = JSONUtils::as<string>(parametersRoot, workflowAsLibraryTypeField, "");
+			string workflowAsLibraryLabel = JSONUtils::as<string>(parametersRoot, workflowAsLibraryLabelField, "");
 
 			int64_t workspaceKey;
 			if (workflowAsLibraryType == "MMS")
@@ -1672,7 +1672,7 @@ json internalMMSRoot;
 				field = "globalIngestionLabel";
 				if (JSONUtils::isPresent(waitForLabelRoot, field))
 				{
-					string waitForGlobalIngestionLabel = JSONUtils::asString(waitForLabelRoot, field, "");
+					string waitForGlobalIngestionLabel = JSONUtils::as<string>(waitForLabelRoot, field, "");
 
 					_mmsEngineDBFacade->ingestionJob_IngestionJobKeys(
 						workspace->_workspaceKey, waitForGlobalIngestionLabel,
@@ -1698,7 +1698,7 @@ json internalMMSRoot;
 	{
 		field = "processingStartingFrom";
 		if (JSONUtils::isPresent(parametersRoot, field))
-			processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
+			processingStartingFrom = JSONUtils::as<string>(parametersRoot, field, "");
 
 		if (processingStartingFrom.empty())
 		{
@@ -1859,7 +1859,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 
 	string groupOfTaskLabel;
 	string field = "label";
-	groupOfTaskLabel = JSONUtils::asString(groupOfTasksRoot, field, "");
+	groupOfTaskLabel = JSONUtils::as<string>(groupOfTasksRoot, field, "");
 
 	LOG_INFO(
 		"Processing GroupOfTasks..."
@@ -1889,7 +1889,7 @@ vector<int64_t> API::ingestionGroupOfTasks(
 
 		throw runtime_error(errorMessage);
 	}
-	string executionType = JSONUtils::asString(parametersRoot, field, "");
+	string executionType = JSONUtils::as<string>(parametersRoot, field, "");
 	if (executionType == "parallel")
 		parallelTasks = true;
 	else if (executionType == "sequential")
@@ -1950,7 +1950,7 @@ GroupOfTasks item"; LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		string taskType = JSONUtils::asString(taskRoot, field, "");
+		string taskType = JSONUtils::as<string>(taskRoot, field, "");
 
 		vector<int64_t> localIngestionTaskDependOnIngestionJobKeyExecution;
 		if (parallelTasks)
@@ -2120,7 +2120,7 @@ GroupOfTasks item"; LOG_ERROR(errorMessage);
 				field = "label";
 				if (JSONUtils::isPresent(referenceOutputRoot, field))
 				{
-					string referenceLabel = JSONUtils::asString(referenceOutputRoot, field, "");
+					string referenceLabel = JSONUtils::as<string>(referenceOutputRoot, field, "");
 
 					if (referenceLabel.empty())
 					{
@@ -2216,7 +2216,7 @@ GroupOfTasks item"; LOG_ERROR(errorMessage);
 	string processingStartingFrom;
 	{
 		field = "processingStartingFrom";
-		processingStartingFrom = JSONUtils::asString(parametersRoot, field, "");
+		processingStartingFrom = JSONUtils::as<string>(parametersRoot, field, "");
 
 		if (processingStartingFrom.empty())
 		{
@@ -2469,10 +2469,10 @@ void API::ingestionEvents(
 
 			throw runtime_error(errorMessage);
 		}
-		string taskType = JSONUtils::asString(taskRoot, field, "");
+		string taskType = JSONUtils::as<string>(taskRoot, field, "");
 
 		field = "label";
-		string taskLabel = JSONUtils::asString(taskRoot, field, "");
+		string taskLabel = JSONUtils::as<string>(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
 		if (taskType == "GroupOfTasks")
@@ -2581,10 +2581,10 @@ void API::ingestionEvents(
 
 			throw runtime_error(errorMessage);
 		}
-		string taskType = JSONUtils::asString(taskRoot, field, "");
+		string taskType = JSONUtils::as<string>(taskRoot, field, "");
 
 		field = "label";
-		string taskLabel = JSONUtils::asString(taskRoot, field, "");
+		string taskLabel = JSONUtils::as<string>(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
 		if (taskType == "GroupOfTasks")
@@ -2702,7 +2702,7 @@ void API::ingestionEvents(
 
 			throw runtime_error(errorMessage);
 		}
-		string taskType = JSONUtils::asString(taskRoot, field, "");
+		string taskType = JSONUtils::as<string>(taskRoot, field, "");
 
 		vector<int64_t> localIngestionJobKeys;
 		if (taskType == "GroupOfTasks")
@@ -2836,7 +2836,7 @@ void API::uploadedBinary(
 			string field = "fileFormat";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
-				string fileFormat = JSONUtils::asString(parametersRoot, field, "");
+				string fileFormat = JSONUtils::as<string>(parametersRoot, field, "");
 				// 2022-08-11: I guess the correct fileFormat is m3u8-tar.gz and
 				// not m3u8 if (fileFormat == "m3u8")
 				if (fileFormat == "m3u8-tar.gz")
@@ -3264,7 +3264,7 @@ void API::fileUploadProgressCheckThread()
 					// { "state" : "uploading", "received" : 731195032, "size" :
 					// 745871360 } At the end: { "state" : "done" } In case of
 					// error: { "state" : "error", "status" : 500 }
-					string state = JSONUtils::asString(uploadProgressResponse, "state", "");
+					string state = JSONUtils::as<string>(uploadProgressResponse, "state", "");
 					if (state == "done")
 					{
 						double relativeProgress = 100.0;
@@ -3371,11 +3371,11 @@ void API::fileUploadProgressCheckThread()
 					}
 					else if (state == "uploading")
 					{
-						int64_t relativeReceived = JSONUtils::asInt64(uploadProgressResponse, "received", 0);
+						int64_t relativeReceived = JSONUtils::as<int64_t>(uploadProgressResponse, "received", 0);
 						int64_t absoluteReceived = -1;
 						if (itr->_contentRangePresent)
 							absoluteReceived = relativeReceived + itr->_contentRangeStart;
-						int64_t relativeSize = JSONUtils::asInt64(uploadProgressResponse, "size", 0);
+						int64_t relativeSize = JSONUtils::as<int64_t>(uploadProgressResponse, "size", 0);
 						int64_t absoluteSize = -1;
 						if (itr->_contentRangePresent)
 							absoluteSize = itr->_contentRangeSize;
@@ -3967,7 +3967,7 @@ void API::updateIngestionJob(
 
 				throw runtime_error(errorMessage);
 			}
-			string sIngestionType = JSONUtils::asString(metadataRoot, "IngestionType", "");
+			string sIngestionType = JSONUtils::as<string>(metadataRoot, "IngestionType", "");
 
 			if (sIngestionType == MMSEngineDBFacade::toString(MMSEngineDBFacade::IngestionType::LiveRecorder))
 			{
@@ -4002,35 +4002,35 @@ void API::updateIngestionJob(
 						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							ingestionJobLabelModified = true;
-							newIngestionJobLabel = JSONUtils::asString(metadataRoot, "IngestionJobLabel", "");
+							newIngestionJobLabel = JSONUtils::as<string>(metadataRoot, "IngestionJobLabel", "");
 						}
 
 						field = "ChannelLabel";
 						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							channelLabelModified = true;
-							newChannelLabel = JSONUtils::asString(metadataRoot, "ChannelLabel", "");
+							newChannelLabel = JSONUtils::as<string>(metadataRoot, "ChannelLabel", "");
 						}
 
 						field = "scheduleStart";
 						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							recordingPeriodStartModified = true;
-							newRecordingPeriodStart = JSONUtils::asString(metadataRoot, "scheduleStart", "");
+							newRecordingPeriodStart = JSONUtils::as<string>(metadataRoot, "scheduleStart", "");
 						}
 
 						field = "scheduleEnd";
 						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							recordingPeriodEndModified = true;
-							newRecordingPeriodEnd = JSONUtils::asString(metadataRoot, "scheduleEnd", "");
+							newRecordingPeriodEnd = JSONUtils::as<string>(metadataRoot, "scheduleEnd", "");
 						}
 
 						field = "RecordingVirtualVOD";
 						if (JSONUtils::isPresent(metadataRoot, field))
 						{
 							recordingVirtualVODModified = true;
-							newRecordingVirtualVOD = JSONUtils::asBool(metadataRoot, "RecordingVirtualVOD", false);
+							newRecordingVirtualVOD = JSONUtils::as<bool>(metadataRoot, "RecordingVirtualVOD", false);
 						}
 					}
 
@@ -4176,7 +4176,7 @@ void API::ingestionJobSwitchToEncoder(
 
 		if (ingestionType == MMSEngineDBFacade::IngestionType::LiveProxy)
 		{
-			json broadcasterRoot = JSONUtils::asJson(metadataContentRoot["internalMMS"], "broadcaster");
+			json broadcasterRoot = JSONUtils::as<json>(metadataContentRoot["internalMMS"], "broadcaster");
 			if (broadcasterRoot != nullptr)
 			{
 				// ingestionJobKey is referring a Broadcaster / Live Channel
@@ -4198,8 +4198,8 @@ void API::ingestionJobSwitchToEncoder(
 
 				// modifica broadcasterIngestionJob->metadataContentRoot in modo che l'engine faccia partire l'encodingJob su newPushEncoderKey
 				{
-					json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, "internalMMS");
-					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
+					json internalMMSRoot = JSONUtils::as<json>(metadataContentRoot, "internalMMS");
+					json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails");
 					if (encodersDetailsRoot == nullptr)
 					{
 						string errorMessage = std::format(
@@ -4239,7 +4239,7 @@ void API::ingestionJobSwitchToEncoder(
 					}
 				}
 
-				int64_t broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, "broadcastIngestionJobKey", -1);
+				int64_t broadcastIngestionJobKey = JSONUtils::as<int64_t>(broadcasterRoot, "broadcastIngestionJobKey", -1);
 
 				// 1. modifica broadcastIngestionJob->metadataContentRoot in modo che l'engine faccia partire l'encodingJob su newEncodersPoolLabel
 				// 2. modifica broadcastEncodingJob->outputsRoot[0]->udpUrl per farlo puntare al nuovo encoder/server su cui ascolta il broadcaster
@@ -4265,8 +4265,8 @@ void API::ingestionJobSwitchToEncoder(
 						throw runtime_error(errorMessage);
 					}
 
-					json internalMMSRoot = JSONUtils::asJson(broadcastMetadataContentRoot, "internalMMS");
-					json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
+					json internalMMSRoot = JSONUtils::as<json>(broadcastMetadataContentRoot, "internalMMS");
+					json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails");
 					if (encodersDetailsRoot == nullptr)
 					{
 						string errorMessage = std::format(
@@ -4293,7 +4293,7 @@ void API::ingestionJobSwitchToEncoder(
 					// nel caso del broadcast, è necessario anche aggiornare outputsRoot[0]->udpUrl
 					// per farlo puntare al nuovo server su cui ascolta il broadcaster
 					{
-						string broadcasterStreamConfigurationLabel = JSONUtils::asString(metadataContentRoot, "configurationLabel");
+						string broadcasterStreamConfigurationLabel = JSONUtils::as<string>(metadataContentRoot, "configurationLabel");
 
 						string newOutputUdpUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
 							apiAuthorizationDetails->workspace->_workspaceKey, ingestionJobKey, broadcasterStreamConfigurationLabel, newPushEncoderKey,
@@ -4352,8 +4352,8 @@ void API::ingestionJobSwitchToEncoder(
 					throw runtime_error(errorMessage);
 				}
 
-				json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, "internalMMS");
-				json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails");
+				json internalMMSRoot = JSONUtils::as<json>(metadataContentRoot, "internalMMS");
+				json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails");
 				if (encodersDetailsRoot == nullptr)
 				{
 					string errorMessage = std::format(
@@ -4510,26 +4510,26 @@ void API::changeLiveProxyPlaylist(
 			}
 
 			string field = "internalMMS";
-			json internalMMSRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
+			json internalMMSRoot = JSONUtils::as<json>(metadataContentRoot, field, json(), {}, true);
 
 			field = "broadcaster";
-			json broadcasterRoot = JSONUtils::asJson(internalMMSRoot, field, json(), true);
+			json broadcasterRoot = JSONUtils::as<json>(internalMMSRoot, field, json(), {}, true);
 
 			field = "broadcastIngestionJobKey";
-			broadcastIngestionJobKey = JSONUtils::asInt64(broadcasterRoot, field, 0, true);
+			broadcastIngestionJobKey = JSONUtils::as<int64_t>(broadcasterRoot, field, 0, {}, true);
 
 			field = "schedule";
-			json proxyPeriodRoot = JSONUtils::asJson(metadataContentRoot, field, json(), true);
+			json proxyPeriodRoot = JSONUtils::as<json>(metadataContentRoot, field, json(), {}, true);
 
 			field = "timePeriod";
-			bool timePeriod = JSONUtils::asBool(metadataContentRoot, field, false, true);
+			bool timePeriod = JSONUtils::as<bool>(metadataContentRoot, field, false, {}, true);
 
 			field = "start";
-			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
+			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
 			utcBroadcasterStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
 			field = "end";
-			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
+			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
 			utcBroadcasterEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
 
 			field = "broadcastDefaultPlaylistItem";
@@ -4540,12 +4540,12 @@ void API::changeLiveProxyPlaylist(
 				field = "mediaType";
 				if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
 				{
-					broadcastDefaultMediaType = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
+					broadcastDefaultMediaType = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 
 					if (broadcastDefaultMediaType == "Stream")
 					{
 						field = "streamConfigurationLabel";
-						string broadcastDefaultConfigurationLabel = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
+						string broadcastDefaultConfigurationLabel = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 						int maxWidth = -1;
 						string userAgent;
 						string otherInputOptions;
@@ -4579,8 +4579,8 @@ void API::changeLiveProxyPlaylist(
 							{
 								json referencePhysicalPathKeyRoot = referencePhysicalPathKeysRoot[referencePhysicalPathKeyIndex];
 
-								int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(referencePhysicalPathKeyRoot, "physicalPathKey", -1);
-								string broadcastDefaultTitle = JSONUtils::asString(referencePhysicalPathKeyRoot, "mediaItemTitle", "");
+								int64_t broadcastDefaultPhysicalPathKey = JSONUtils::as<int64_t>(referencePhysicalPathKeyRoot, "physicalPathKey", -1);
+								string broadcastDefaultTitle = JSONUtils::as<string>(referencePhysicalPathKeyRoot, "mediaItemTitle", "");
 
 								// controllo che tutti i media usano lo stesso encoding profile
 								{
@@ -4677,9 +4677,9 @@ void API::changeLiveProxyPlaylist(
 							}
 						}
 
-						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, "filters", json());
+						json filtersRoot = JSONUtils::as<json>(broadcastDefaultPlaylistItemRoot, "filters", json());
 
-						string otherInputOptions = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, "otherInputOptions");
+						string otherInputOptions = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, "otherInputOptions");
 
 						/*
 						if (JSONUtils::isPresent(broadcastDefaultPlaylistItemRoot, field))
@@ -4693,13 +4693,13 @@ void API::changeLiveProxyPlaylist(
 					else if (broadcastDefaultMediaType == "Countdown")
 					{
 						field = "physicalPathKey";
-						int64_t broadcastDefaultPhysicalPathKey = JSONUtils::asInt64(broadcastDefaultPlaylistItemRoot, field, -1);
+						int64_t broadcastDefaultPhysicalPathKey = JSONUtils::as<int64_t>(broadcastDefaultPlaylistItemRoot, field, -1);
 						field = "text";
-						string broadcastDefaultText = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
+						string broadcastDefaultText = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 						field = "textPosition_X_InPixel";
-						string broadcastDefaultTextPosition_X_InPixel = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
+						string broadcastDefaultTextPosition_X_InPixel = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 						field = "textPosition_Y_InPixel";
-						string broadcastDefaultTextPosition_Y_InPixel = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
+						string broadcastDefaultTextPosition_Y_InPixel = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 
 						MMSEngineDBFacade::ContentType vodContentType;
 						string sourcePhysicalPathName;
@@ -4808,10 +4808,10 @@ void API::changeLiveProxyPlaylist(
 					else if (broadcastDefaultMediaType == "Direct URL")
 					{
 						field = "url";
-						string broadcastDefaultURL = JSONUtils::asString(broadcastDefaultPlaylistItemRoot, field, "");
+						string broadcastDefaultURL = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 
 						field = "filters";
-						json filtersRoot = JSONUtils::asJson(broadcastDefaultPlaylistItemRoot, field, json());
+						json filtersRoot = JSONUtils::as<json>(broadcastDefaultPlaylistItemRoot, field, json());
 
 						broadcastDefaultDirectURLInputRoot = _mmsEngineDBFacade->getDirectURLInputRoot(broadcastDefaultURL, filtersRoot);
 					}
@@ -4922,7 +4922,7 @@ void API::changeLiveProxyPlaylist(
 							vodInputRoot["filters"] = getReviewedFiltersRoot(vodInputRoot["filters"], apiAuthorizationDetails->workspace, -1);
 
 							// field = "sources";
-							json sourcesRoot = JSONUtils::asJson(vodInputRoot, "sources", json(), true);
+							json sourcesRoot = JSONUtils::as<json>(vodInputRoot, "sources", json(), {}, true);
 
 							if (sourcesRoot.size() == 0)
 							{
@@ -4956,7 +4956,7 @@ void API::changeLiveProxyPlaylist(
 
 									throw runtime_error(errorMessage);
 								}
-								int64_t physicalPathKey = JSONUtils::asInt64(sourceRoot, "physicalPathKey", -1);
+								int64_t physicalPathKey = JSONUtils::as<int64_t>(sourceRoot, "physicalPathKey", -1);
 
 								// controllo che tutti i media usano lo stesso encoding profile
 								try
@@ -5091,7 +5091,7 @@ void API::changeLiveProxyPlaylist(
 
 								throw runtime_error(errorMessage);
 							}
-							int64_t physicalPathKey = JSONUtils::asInt64(countdownInputRoot, "physicalPathKey", -1);
+							int64_t physicalPathKey = JSONUtils::as<int64_t>(countdownInputRoot, "physicalPathKey", -1);
 
 							MMSEngineDBFacade::ContentType vodContentType;
 							string sourcePhysicalPathName;
@@ -5164,8 +5164,8 @@ void API::changeLiveProxyPlaylist(
 					vNewReceivedPlaylist.begin(), vNewReceivedPlaylist.end(),
 					[](json aRoot, json bRoot)
 					{
-						int64_t aUtcProxyPeriodStart = JSONUtils::asInt64(aRoot, "utcScheduleStart", -1);
-						int64_t bUtcProxyPeriodStart = JSONUtils::asInt64(bRoot, "utcScheduleStart", -1);
+						int64_t aUtcProxyPeriodStart = JSONUtils::as<int64_t>(aRoot, "utcScheduleStart", -1);
+						int64_t bUtcProxyPeriodStart = JSONUtils::as<int64_t>(bRoot, "utcScheduleStart", -1);
 
 						return aUtcProxyPeriodStart < bUtcProxyPeriodStart;
 					}
@@ -5192,7 +5192,7 @@ void API::changeLiveProxyPlaylist(
 						if (liveProxyRoot.contains("playlist") && liveProxyRoot["playlist"].is_object())
 						{
 							const json &playlistRoot = liveProxyRoot["playlist"];
-							playlistItemsRetentionInHours = JSONUtils::asInt32(playlistRoot, "retentionInHours", playlistItemsRetentionInHours);
+							playlistItemsRetentionInHours = JSONUtils::as<int32_t>(playlistRoot, "retentionInHours", playlistItemsRetentionInHours);
 						}
 					}
 				}
@@ -5206,8 +5206,8 @@ void API::changeLiveProxyPlaylist(
 				{
 					const json& newReceivedPlaylistItemRoot = vNewReceivedPlaylist[newReceivedPlaylistIndex];
 
-					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleStart", -1);
-					// int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, "utcScheduleEnd", -1);
+					int64_t utcProxyPeriodStart = JSONUtils::as<int64_t>(newReceivedPlaylistItemRoot, "utcScheduleStart", -1);
+					// int64_t utcProxyPeriodEnd = JSONUtils::as<int64_t>(newReceivedPlaylistItemRoot, "utcScheduleEnd", -1);
 
 					if (newReceivedPlaylistIndex != 0 && utcProxyPeriodStart >= utcRetention)
 					{
@@ -5271,9 +5271,9 @@ void API::changeLiveProxyPlaylist(
 					//	utcCurrentBroadcasterStart <= utcProxyPeriodStart < utcProxyPeriodEnd
 					// the last utcProxyPeriodEnd has to be equal to utcBroadcasterEnd
 					string field = "utcScheduleStart";
-					int64_t utcProxyPeriodStart = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
+					int64_t utcProxyPeriodStart = JSONUtils::as<int64_t>(newReceivedPlaylistItemRoot, field, -1);
 					field = "utcScheduleEnd";
-					int64_t utcProxyPeriodEnd = JSONUtils::asInt64(newReceivedPlaylistItemRoot, field, -1);
+					int64_t utcProxyPeriodEnd = JSONUtils::as<int64_t>(newReceivedPlaylistItemRoot, field, -1);
 
 					LOG_INFO(
 						"Processing newReceivedPlaylistRoot"

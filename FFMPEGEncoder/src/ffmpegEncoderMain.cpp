@@ -43,21 +43,21 @@ void signalHandler(int signal)
 
 std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
 {
-	const string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "errorPathName", "");
-	string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
+	const string logErrorPathName = JSONUtils::as<string>(configurationRoot["log"]["encoder"], "errorPathName", "");
+	string logType = JSONUtils::as<string>(configurationRoot["log"]["encoder"], "type", "");
 
 	std::shared_ptr<spdlog::sinks::sink> errorSink;
 	if (logType == "daily")
 	{
-		int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
-		int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
+		int logRotationHour = JSONUtils::as<int32_t>(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
+		int logRotationMinute = JSONUtils::as<int32_t>(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
 
 		errorSink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
 	}
 	else if (logType == "rotating")
 	{
-		int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
-		int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
+		int64_t maxSizeInKBytes = JSONUtils::as<int64_t>(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
+		int maxFiles = JSONUtils::as<int32_t>(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
 
 		errorSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 	}
@@ -68,17 +68,17 @@ std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
 
 shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
 {
-	string logPathName = JSONUtils::asString(configurationRoot["log"]["encoder"], "pathName", "");
-	string logType = JSONUtils::asString(configurationRoot["log"]["encoder"], "type", "");
-	bool stdout = JSONUtils::asBool(configurationRoot["log"]["encoder"], "stdout", false);
+	string logPathName = JSONUtils::as<string>(configurationRoot["log"]["encoder"], "pathName", "");
+	string logType = JSONUtils::as<string>(configurationRoot["log"]["encoder"], "type", "");
+	bool stdout = JSONUtils::as<bool>(configurationRoot["log"]["encoder"], "stdout", false);
 
 	std::vector<spdlog::sink_ptr> sinks;
 	{
-		string logLevel = JSONUtils::asString(configurationRoot["log"]["encoder"], "level", "");
+		string logLevel = JSONUtils::as<string>(configurationRoot["log"]["encoder"], "level", "");
 		if (logType == "daily")
 		{
-			int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
-			int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
+			int logRotationHour = JSONUtils::as<int32_t>(configurationRoot["log"]["encoder"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::as<int32_t>(configurationRoot["log"]["encoder"]["daily"], "rotationMinute", 1);
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
@@ -96,8 +96,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shar
 		}
 		else if (logType == "rotating")
 		{
-			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
-			int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
+			int64_t maxSizeInKBytes = JSONUtils::as<int64_t>(configurationRoot["log"]["encoder"]["rotating"], "maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::as<int32_t>(configurationRoot["log"]["encoder"]["rotating"], "maxFiles", 10);
 
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
@@ -134,7 +134,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shar
 
 	// livello di log sul logger
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
-	string pattern = JSONUtils::asString(configurationRoot["log"]["encoder"], "pattern", "");
+	string pattern = JSONUtils::as<string>(configurationRoot["log"]["encoder"], "pattern", "");
 	spdlog::set_pattern(pattern);
 
 	// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 
 		FCGX_Init();
 
-		int threadsNumber = JSONUtils::asInt32(configurationRoot["ffmpeg"], "encoderThreadsNumber", 1);
+		int threadsNumber = JSONUtils::as<int32_t>(configurationRoot["ffmpeg"], "encoderThreadsNumber", 1);
 		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->encoderThreadsNumber: {}",
@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 		chrono::system_clock::time_point lastEncodingCompletedCheck;
 
 		{
-			// int maxEncodingsCapability =  JSONUtils::asInt32(
+			// int maxEncodingsCapability =  JSONUtils::as<int32_t>(
 			// 	encoderCapabilityConfiguration["ffmpeg"], "maxEncodingsCapability", 1);
 			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxEncodingsCapability: " + to_string(maxEncodingsCapability)
@@ -309,7 +309,7 @@ int main(int argc, char **argv)
 				encodingsCapability.push_back(encoding);
 			}
 
-			// int maxLiveProxiesCapability =  JSONUtils::asInt32(encoderCapabilityConfiguration["ffmpeg"],
+			// int maxLiveProxiesCapability =  JSONUtils::as<int32_t>(encoderCapabilityConfiguration["ffmpeg"],
 			// 		"maxLiveProxiesCapability", 10);
 			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxLiveProxiesCapability: " + to_string(maxLiveProxiesCapability)
@@ -327,7 +327,7 @@ int main(int argc, char **argv)
 				liveProxiesCapability.push_back(liveProxy);
 			}
 
-			// int maxLiveRecordingsCapability =  JSONUtils::asInt32(encoderCapabilityConfiguration["ffmpeg"],
+			// int maxLiveRecordingsCapability =  JSONUtils::as<int32_t>(encoderCapabilityConfiguration["ffmpeg"],
 			// 		"maxLiveRecordingsCapability", 10);
 			// info(__FILEREF__ + "Configuration item"
 			// 	+ ", ffmpeg->maxLiveRecordingsCapability: " + to_string(maxLiveRecordingsCapability)

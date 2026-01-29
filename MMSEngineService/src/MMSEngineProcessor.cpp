@@ -43,104 +43,104 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_cpuUsage = cpuUsage;
 	_cpuUsageThreadShutdown = false;
 
-	_processorThreads = JSONUtils::asInt32(configurationRoot["mms"], "processorThreads", 1);
-	_cpuUsageThreshold = JSONUtils::asInt32(configurationRoot["mms"], "cpuUsageThreshold", 10);
+	_processorThreads = JSONUtils::as<int32_t>(configurationRoot["mms"], "processorThreads", 1);
+	_cpuUsageThreshold = JSONUtils::as<int32_t>(configurationRoot["mms"], "cpuUsageThreshold", 10);
 
-	_maxDownloadAttemptNumber = JSONUtils::asInt32(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
+	_maxDownloadAttemptNumber = JSONUtils::as<int32_t>(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
 	LOG_TRACE(
 		"Configuration item"
 		", download->maxDownloadAttemptNumber: {}",
 		_maxDownloadAttemptNumber
 	);
-	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(configurationRoot["download"], "progressUpdatePeriodInSeconds", 5);
+	_progressUpdatePeriodInSeconds = JSONUtils::as<int32_t>(configurationRoot["download"], "progressUpdatePeriodInSeconds", 5);
 	LOG_TRACE(string() + "Configuration item" + ", download->progressUpdatePeriodInSeconds: " + to_string(_progressUpdatePeriodInSeconds));
-	_secondsWaitingAmongDownloadingAttempt = JSONUtils::asInt32(configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5);
+	_secondsWaitingAmongDownloadingAttempt = JSONUtils::as<int32_t>(configurationRoot["download"], "secondsWaitingAmongDownloadingAttempt", 5);
 	LOG_TRACE(
 		string() + "Configuration item" + ", download->secondsWaitingAmongDownloadingAttempt: " + to_string(_secondsWaitingAmongDownloadingAttempt)
 	);
 
-	_maxIngestionJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
+	_maxIngestionJobsPerEvent = JSONUtils::as<int32_t>(configurationRoot["mms"], "maxIngestionJobsPerEvent", 5);
 	LOG_TRACE(string() + "Configuration item" + ", mms->maxIngestionJobsPerEvent: " + to_string(_maxIngestionJobsPerEvent));
-	_maxEncodingJobsPerEvent = JSONUtils::asInt32(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
+	_maxEncodingJobsPerEvent = JSONUtils::as<int32_t>(configurationRoot["mms"], "maxEncodingJobsPerEvent", 5);
 	LOG_TRACE(string() + "Configuration item" + ", mms->maxEncodingJobsPerEvent: " + to_string(_maxEncodingJobsPerEvent));
 
-	_maxEventManagementTimeInSeconds = JSONUtils::asInt32(configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5);
+	_maxEventManagementTimeInSeconds = JSONUtils::as<int32_t>(configurationRoot["mms"], "maxEventManagementTimeInSeconds", 5);
 	LOG_TRACE(string() + "Configuration item" + ", mms->maxEventManagementTimeInSeconds: " + to_string(_maxEventManagementTimeInSeconds));
 
-	_dependencyExpirationInHours = JSONUtils::asInt32(configurationRoot["mms"], "dependencyExpirationInHours", 5);
+	_dependencyExpirationInHours = JSONUtils::as<int32_t>(configurationRoot["mms"], "dependencyExpirationInHours", 5);
 	LOG_TRACE(string() + "Configuration item" + ", mms->dependencyExpirationInHours: " + to_string(_dependencyExpirationInHours));
 
-	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(configurationRoot["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
+	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::as<int32_t>(configurationRoot["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 
-	_downloadChunkSizeInMegaBytes = JSONUtils::asInt32(configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5);
+	_downloadChunkSizeInMegaBytes = JSONUtils::as<int32_t>(configurationRoot["download"], "downloadChunkSizeInMegaBytes", 5);
 	LOG_TRACE(string() + "Configuration item" + ", download->downloadChunkSizeInMegaBytes: " + to_string(_downloadChunkSizeInMegaBytes));
 
-	_emailProviderURL = JSONUtils::asString(_configurationRoot["EmailNotification"], "providerURL", "");
+	_emailProviderURL = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "providerURL", "");
 	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->providerURL: " + _emailProviderURL);
-	_emailUserName = JSONUtils::asString(_configurationRoot["EmailNotification"], "userName", "");
+	_emailUserName = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "userName", "");
 	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->userName: " + _emailUserName);
 	{
-		string encryptedPassword = JSONUtils::asString(_configurationRoot["EmailNotification"], "password", "");
+		string encryptedPassword = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
 		LOG_TRACE(
 			string() + "Configuration item" + ", EmailNotification->password: " + encryptedPassword
 			// + ", EmailNotification->password: " + _emailPassword
 		);
 	}
-	_emailCcsCommaSeparated = JSONUtils::asString(_configurationRoot["EmailNotification"], "cc", "");
+	_emailCcsCommaSeparated = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "cc", "");
 	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->cc: " + _emailCcsCommaSeparated);
 
-	_facebookGraphAPIProtocol = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "protocol", "");
+	_facebookGraphAPIProtocol = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "protocol", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->protocol: " + _facebookGraphAPIProtocol);
-	_facebookGraphAPIHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "hostName", "");
+	_facebookGraphAPIHostName = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "hostName", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->hostName: " + _facebookGraphAPIHostName);
-	_facebookGraphAPIVideoHostName = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "videoHostName", "");
+	_facebookGraphAPIVideoHostName = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "videoHostName", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->videoHostName: " + _facebookGraphAPIVideoHostName);
-	_facebookGraphAPIPort = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "port", 0);
+	_facebookGraphAPIPort = JSONUtils::as<int32_t>(_configurationRoot["FacebookGraphAPI"], "port", 0);
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->port: " + to_string(_facebookGraphAPIPort));
-	_facebookGraphAPIVersion = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "version", "");
+	_facebookGraphAPIVersion = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "version", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->version: " + _facebookGraphAPIVersion);
-	_facebookGraphAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
+	_facebookGraphAPITimeoutInSeconds = JSONUtils::as<int32_t>(_configurationRoot["FacebookGraphAPI"], "timeout", 0);
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->timeout: " + to_string(_facebookGraphAPITimeoutInSeconds));
-	_facebookGraphAPIClientId = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientId", "");
+	_facebookGraphAPIClientId = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "clientId", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientId: " + _facebookGraphAPIClientId);
-	_facebookGraphAPIClientSecret = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "clientSecret", "");
+	_facebookGraphAPIClientSecret = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "clientSecret", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->clientSecret: " + _facebookGraphAPIClientSecret);
-	_facebookGraphAPIRedirectURL = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "redirectURL", "");
+	_facebookGraphAPIRedirectURL = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "redirectURL", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->redirectURL: " + _facebookGraphAPIRedirectURL);
-	_facebookGraphAPIAccessTokenURI = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "accessTokenURI", "");
+	_facebookGraphAPIAccessTokenURI = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "accessTokenURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->accessTokenURI: " + _facebookGraphAPIAccessTokenURI);
-	_facebookGraphAPILiveVideosURI = JSONUtils::asString(_configurationRoot["FacebookGraphAPI"], "liveVideosURI", "");
+	_facebookGraphAPILiveVideosURI = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "liveVideosURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", FacebookGraphAPI->liveVideosURI: " + _facebookGraphAPILiveVideosURI);
 
-	_youTubeDataAPIProtocol = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "protocol", "");
+	_youTubeDataAPIProtocol = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "protocol", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->protocol: " + _youTubeDataAPIProtocol);
-	_youTubeDataAPIHostName = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "hostName", "");
+	_youTubeDataAPIHostName = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "hostName", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->hostName: " + _youTubeDataAPIHostName);
-	_youTubeDataAPIPort = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "port", 0);
+	_youTubeDataAPIPort = JSONUtils::as<int32_t>(_configurationRoot["YouTubeDataAPI"], "port", 0);
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->port: " + to_string(_youTubeDataAPIPort));
-	_youTubeDataAPIRefreshTokenURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "refreshTokenURI", "");
+	_youTubeDataAPIRefreshTokenURI = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "refreshTokenURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->refreshTokenURI: " + _youTubeDataAPIRefreshTokenURI);
-	_youTubeDataAPIUploadVideoURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "uploadVideoURI", "");
+	_youTubeDataAPIUploadVideoURI = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "uploadVideoURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->uploadVideoURI: " + _youTubeDataAPIUploadVideoURI);
-	_youTubeDataAPILiveBroadcastURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastURI", "");
+	_youTubeDataAPILiveBroadcastURI = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "liveBroadcastURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastURI: " + _youTubeDataAPILiveBroadcastURI);
-	_youTubeDataAPILiveStreamURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveStreamURI", "");
+	_youTubeDataAPILiveStreamURI = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "liveStreamURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveStreamURI: " + _youTubeDataAPILiveStreamURI);
-	_youTubeDataAPILiveBroadcastBindURI = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "liveBroadcastBindURI", "");
+	_youTubeDataAPILiveBroadcastBindURI = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "liveBroadcastBindURI", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->liveBroadcastBindURI: " + _youTubeDataAPILiveBroadcastBindURI);
-	_youTubeDataAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
+	_youTubeDataAPITimeoutInSeconds = JSONUtils::as<int32_t>(_configurationRoot["YouTubeDataAPI"], "timeout", 0);
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->timeout: " + to_string(_youTubeDataAPITimeoutInSeconds));
-	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::asInt32(_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
+	_youTubeDataAPITimeoutInSecondsForUploadVideo = JSONUtils::as<int32_t>(_configurationRoot["YouTubeDataAPI"], "timeoutForUploadVideo", 0);
 	LOG_TRACE(
 		string() + "Configuration item" + ", YouTubeDataAPI->timeoutForUploadVideo: " + to_string(_youTubeDataAPITimeoutInSecondsForUploadVideo)
 	);
-	_youTubeDataAPIClientId = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientId", "");
+	_youTubeDataAPIClientId = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "clientId", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientId: " + _youTubeDataAPIClientId);
-	_youTubeDataAPIClientSecret = JSONUtils::asString(_configurationRoot["YouTubeDataAPI"], "clientSecret", "");
+	_youTubeDataAPIClientSecret = JSONUtils::as<string>(_configurationRoot["YouTubeDataAPI"], "clientSecret", "");
 	LOG_TRACE(string() + "Configuration item" + ", YouTubeDataAPI->clientSecret: " + _youTubeDataAPIClientSecret);
 
-	_localCopyTaskEnabled = JSONUtils::asBool(_configurationRoot["mms"], "localCopyTaskEnabled", false);
+	_localCopyTaskEnabled = JSONUtils::as<bool>(_configurationRoot["mms"], "localCopyTaskEnabled", false);
 	LOG_TRACE(string() + "Configuration item" + ", mms->localCopyTaskEnabled: " + to_string(_localCopyTaskEnabled));
 
 	auto mmsAPIProtocol = JsonPath(&_configurationRoot)["api"]["protocol"].as<string>();
@@ -168,23 +168,23 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_mmsAPITimeoutInSeconds = JsonPath(&_configurationRoot)["api"]["timeoutInSeconds"].as<int32_t>(120);
 	LOG_TRACE(string() + "Configuration item" + ", api->timeoutInSeconds: " + to_string(_mmsAPITimeoutInSeconds));
 
-	_deliveryProtocol = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryProtocol", "");
+	_deliveryProtocol = JSONUtils::as<string>(_configurationRoot["api"]["delivery"], "deliveryProtocol", "");
 	LOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryProtocol: " + _deliveryProtocol);
-	_deliveryHost = JSONUtils::asString(_configurationRoot["api"]["delivery"], "deliveryHost", "");
+	_deliveryHost = JSONUtils::as<string>(_configurationRoot["api"]["delivery"], "deliveryHost", "");
 	LOG_TRACE(string() + "Configuration item" + ", api->delivery->deliveryHost: " + _deliveryHost);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::as<int32_t>(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	LOG_TRACE(
 		string() + "Configuration item" + ", storage->_waitingNFSSync_maxMillisecondsToWait: " + to_string(_waitingNFSSync_maxMillisecondsToWait)
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
-		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+		JSONUtils::as<int32_t>(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	LOG_TRACE(
 		string() + "Configuration item" +
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: " + to_string(_waitingNFSSync_milliSecondsWaitingBetweenChecks)
 	);
 
-	_liveRecorderVirtualVODImageLabel = JSONUtils::asString(_configurationRoot["ffmpeg"], "liveRecorderVirtualVODImageLabel", "");
+	_liveRecorderVirtualVODImageLabel = JSONUtils::as<string>(_configurationRoot["ffmpeg"], "liveRecorderVirtualVODImageLabel", "");
 	LOG_TRACE(string() + "Configuration item" + ", ffmpeg->liveRecorderVirtualVODImageLabel: " + _liveRecorderVirtualVODImageLabel);
 
 	_mmsWorkflowIngestionURL = std::format("{}://{}:{}/catramms/{}/{}",
@@ -675,22 +675,22 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		json drawTextDetailsRoot = nullptr;
 
 		string field = "videoMap";
-		videoMap = JSONUtils::asString(outputRoot, field, "default");
+		videoMap = JSONUtils::as<string>(outputRoot, field, "default");
 
 		field = "audioMap";
-		audioMap = JSONUtils::asString(outputRoot, field, "default");
+		audioMap = JSONUtils::as<string>(outputRoot, field, "default");
 
 		field = "outputType";
-		outputType = JSONUtils::asString(outputRoot, field, "HLS_Channel");
+		outputType = JSONUtils::as<string>(outputRoot, field, "HLS_Channel");
 
 		field = "otherOutputOptions";
-		otherOutputOptions = JSONUtils::asString(outputRoot, field, "");
+		otherOutputOptions = JSONUtils::as<string>(outputRoot, field, "");
 
 		// field = "videoTrackIndexToBeUsed";
-		// videoTrackIndexToBeUsed = JSONUtils::asInt32(outputRoot, field, -1);
+		// videoTrackIndexToBeUsed = JSONUtils::as<int32_t>(outputRoot, field, -1);
 
 		// field = "audioTrackIndexToBeUsed";
-		// audioTrackIndexToBeUsed = JSONUtils::asInt32(outputRoot, field, -1);
+		// audioTrackIndexToBeUsed = JSONUtils::as<int32_t>(outputRoot, field, -1);
 
 		field = "filters";
 		if (JSONUtils::isPresent(outputRoot, field))
@@ -702,23 +702,23 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		{
 			// it could not exist in case of SHARED RTMP
 			field = "rtmpChannelConfigurationLabel";
-			rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
+			rtmpChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, field, "");
 		}
 		else if (outputType == "SRT_Channel")
 		{
 			// it could not exist in case of SHARED RTMP
-			srtChannelConfigurationLabel = JSONUtils::asString(outputRoot, "srtChannelConfigurationLabel", "");
+			srtChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "srtChannelConfigurationLabel", "");
 		}
 		else if (outputType == "HLS_Channel")
 		{
 			// it could not exist in case of SHARED RTMP
 			field = "hlsChannelConfigurationLabel";
-			hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot, field, "");
+			hlsChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, field, "");
 		}
 		else // if (outputType == "UDP_Stream")
 		{
 			field = "udpUrl";
-			udpUrl = JSONUtils::asString(outputRoot, field, "");
+			udpUrl = JSONUtils::as<string>(outputRoot, field, "");
 		}
 
 		string keyField = "encodingProfileKey";
@@ -726,7 +726,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		string contentTypeField = "contentType";
 		if (JSONUtils::isPresent(outputRoot, keyField))
 		{
-			encodingProfileKey = JSONUtils::asInt64(outputRoot, keyField, 0);
+			encodingProfileKey = JSONUtils::as<int64_t>(outputRoot, keyField, 0);
 
 			LOG_INFO(
 				string() + "outputRoot encodingProfileKey" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -735,13 +735,13 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		}
 		else if (JSONUtils::isPresent(outputRoot, labelField))
 		{
-			string encodingProfileLabel = JSONUtils::asString(outputRoot, labelField, "");
+			string encodingProfileLabel = JSONUtils::as<string>(outputRoot, labelField, "");
 			if (encodingProfileLabel != "")
 			{
 				MMSEngineDBFacade::ContentType contentType;
 				if (JSONUtils::isPresent(outputRoot, contentTypeField))
 				{
-					contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(outputRoot, contentTypeField, ""));
+					contentType = MMSEngineDBFacade::toContentType(JSONUtils::as<string>(outputRoot, contentTypeField, ""));
 
 					encodingProfileKey =
 						_mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace->_workspaceKey, contentType, encodingProfileLabel);
@@ -956,7 +956,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 	string field = "fileFormat";
 	if (JSONUtils::isPresent(parametersRoot, field))
 	{
-		string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
+		string fileFormatSpecifiedByUser = JSONUtils::as<string>(parametersRoot, field, "");
 		if (fileFormatSpecifiedByUser != fileFormat)
 		{
 			string errorMessage = string("Wrong fileFormat") + ", _processorIdentifier: " + to_string(_processorIdentifier) +
@@ -1526,7 +1526,7 @@ string MMSEngineProcessor::getEncodedFileExtensionByEncodingProfile(json encodin
 {
 	string extension;
 
-	string fileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+	string fileFormat = JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat", "");
 	string fileFormatLowerCase;
 	fileFormatLowerCase.resize(fileFormat.size());
 	transform(fileFormat.begin(), fileFormat.end(), fileFormatLowerCase.begin(), [](unsigned char c) { return tolower(c); });

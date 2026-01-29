@@ -95,13 +95,13 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			recordingCode = JSONUtils::asInt64(liveCutParametersRoot, field, -1);
+			recordingCode = JSONUtils::as<int64_t>(liveCutParametersRoot, field, -1);
 
 			field = "maxWaitingForLastChunkInSeconds";
-			maxWaitingForLastChunkInSeconds = JSONUtils::asInt64(liveCutParametersRoot, field, 90);
+			maxWaitingForLastChunkInSeconds = JSONUtils::as<int64_t>(liveCutParametersRoot, field, 90);
 
 			field = "errorIfAChunkIsMissing";
-			errorIfAChunkIsMissing = JSONUtils::asBool(liveCutParametersRoot, field, false);
+			errorIfAChunkIsMissing = JSONUtils::as<bool>(liveCutParametersRoot, field, false);
 
 			field = "cutPeriod";
 			json cutPeriodRoot = liveCutParametersRoot[field];
@@ -115,7 +115,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			cutPeriodStartTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
+			cutPeriodStartTimeInMilliSeconds = JSONUtils::as<string>(cutPeriodRoot, field, "");
 
 			field = "end";
 			if (!JSONUtils::isPresent(cutPeriodRoot, field))
@@ -126,7 +126,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 				throw runtime_error(errorMessage);
 			}
-			cutPeriodEndTimeInMilliSeconds = JSONUtils::asString(cutPeriodRoot, field, "");
+			cutPeriodEndTimeInMilliSeconds = JSONUtils::as<string>(cutPeriodRoot, field, "");
 		}
 
 		// Validator validator(_logger, _mmsEngineDBFacade, _configuration);
@@ -278,12 +278,12 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					json mediaItemRoot = mediaItemsRoot[mediaItemIndex];
 
 					field = "mediaItemKey";
-					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemRoot, field, 0);
+					int64_t mediaItemKey = JSONUtils::as<int64_t>(mediaItemRoot, field, 0);
 
 					json userDataRoot;
 					{
 						field = "userData";
-						string userData = JSONUtils::asString(mediaItemRoot, field, "");
+						string userData = JSONUtils::as<string>(mediaItemRoot, field, "");
 						if (userData == "")
 						{
 							string errorMessage = string() + "recording media item without userData!!!" +
@@ -301,10 +301,10 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					json mmsDataRoot = userDataRoot[field];
 
 					field = "utcChunkStartTime";
-					time_t currentUtcChunkStartTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+					time_t currentUtcChunkStartTime = JSONUtils::as<int64_t>(mmsDataRoot, field, 0);
 
 					field = "utcChunkEndTime";
-					time_t currentUtcChunkEndTime = JSONUtils::asInt64(mmsDataRoot, field, 0);
+					time_t currentUtcChunkEndTime = JSONUtils::as<int64_t>(mmsDataRoot, field, 0);
 
 					string currentChunkStartTime;
 					string currentChunkEndTime;
@@ -529,10 +529,10 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+					userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -614,7 +614,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 				}
 
 				field = "retention";
-				cutParametersRoot[field] = JSONUtils::asString(liveCutParametersRoot, field, "");
+				cutParametersRoot[field] = JSONUtils::as<string>(liveCutParametersRoot, field, "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds - (utcFirstChunkStartTime * 1000);
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
@@ -662,7 +662,7 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 
 						if (valueType == json::value_t::string)
 						{
-							string sUserData = JSONUtils::asString(liveCutParametersRoot, field, "");
+							string sUserData = JSONUtils::as<string>(liveCutParametersRoot, field, "");
 
 							if (sUserData != "")
 								userDataRoot = JSONUtils::toJson<json>(sUserData);
@@ -1013,12 +1013,12 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 				for (const auto& mediaItemRoot : mediaItemsRoot)
 				{
-					int64_t mediaItemKey = JSONUtils::asInt64(mediaItemRoot, "mediaItemKey", 0);
+					int64_t mediaItemKey = JSONUtils::as<int64_t>(mediaItemRoot, "mediaItemKey", 0);
 
 					json userDataRoot = JsonPath(&mediaItemRoot)["userData"].as<json>(json::object());
 					/*
 					{
-						string userData = JSONUtils::asString(mediaItemRoot, "userData", "");
+						string userData = JSONUtils::as<string>(mediaItemRoot, "userData", "");
 						if (userData.empty())
 						{
 							string errorMessage = std::format(
@@ -1292,9 +1292,9 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				{
 					json credentialsRoot = internalMMSRoot["credentials"];
 
-					userKey = JSONUtils::asInt64(credentialsRoot, "userKey", -1);
+					userKey = JSONUtils::as<int64_t>(credentialsRoot, "userKey", -1);
 
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, "apiKey", "");
+					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, "apiKey", "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -1354,7 +1354,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 				json cutParametersRoot = concatDemuxerParametersRoot;
 				cutParametersRoot.erase("references");
 
-				cutParametersRoot["retention"] = JSONUtils::asString(liveCutParametersRoot, "retention", "");
+				cutParametersRoot["retention"] = JSONUtils::as<string>(liveCutParametersRoot, "retention", "");
 
 				double startTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds - utcFirstChunkStartTimeInMilliSecs;
 				double startTimeInSeconds = startTimeInMilliSeconds / 1000;
@@ -1402,7 +1402,7 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 
 						if (valueType == json::value_t::string)
 						{
-							string sUserData = JSONUtils::asString(liveCutParametersRoot, "userData", "");
+							string sUserData = JSONUtils::as<string>(liveCutParametersRoot, "userData", "");
 
 							if (!sUserData.empty())
 								userDataRoot = JSONUtils::toJson<json>(sUserData);
@@ -1544,10 +1544,10 @@ task Live-Recorder.
 				json tasksRoot = workflowResponseRoot["tasks"];
 				for (const auto& taskRoot : tasksRoot)
 				{
-					string taskIngestionJobLabel = JSONUtils::asString(taskRoot, "label", "");
+					string taskIngestionJobLabel = JSONUtils::as<string>(taskRoot, "label", "");
 					if (taskIngestionJobLabel == cutLabel)
 					{
-						cutIngestionJobKey = JSONUtils::asInt64(taskRoot, "ingestionJobKey", -1);
+						cutIngestionJobKey = JSONUtils::as<int64_t>(taskRoot, "ingestionJobKey", -1);
 
 						break;
 					}

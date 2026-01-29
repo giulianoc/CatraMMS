@@ -73,7 +73,7 @@ void API::addYouTubeConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "tokenType";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -87,7 +87,7 @@ void API::addYouTubeConf(
 
 				throw runtime_error(errorMessage);
 			}
-			tokenType = JSONUtils::asString(requestBodyRoot, field, "");
+			tokenType = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			if (tokenType == "RefreshToken")
 			{
@@ -103,7 +103,7 @@ void API::addYouTubeConf(
 
 					throw runtime_error(errorMessage);
 				}
-				refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
+				refreshToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 			}
 			else // if (tokenType == "AccessToken")
 			{
@@ -119,7 +119,7 @@ void API::addYouTubeConf(
 
 					throw runtime_error(errorMessage);
 				}
-				accessToken = JSONUtils::asString(requestBodyRoot, field, "");
+				accessToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 			}
 		}
 		catch (exception &e)
@@ -243,28 +243,28 @@ void API::modifyYouTubeConf(
 			string field = "label";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				label = JSONUtils::asString(requestBodyRoot, field, "");
+				label = JSONUtils::as<string>(requestBodyRoot, field, "");
 				labelModified = true;
 			}
 
 			field = "tokenType";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				tokenType = JSONUtils::asString(requestBodyRoot, field, "");
+				tokenType = JSONUtils::as<string>(requestBodyRoot, field, "");
 				tokenTypeModified = true;
 			}
 
 			field = "refreshToken";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
+				refreshToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 				refreshTokenModified = true;
 			}
 
 			field = "accessToken";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				accessToken = JSONUtils::asString(requestBodyRoot, field, "");
+				accessToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 				accessTokenModified = true;
 			}
 		}
@@ -487,7 +487,7 @@ void API::addFacebookConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "UserAccessToken";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -501,7 +501,7 @@ void API::addFacebookConf(
 
 				throw runtime_error(errorMessage);
 			}
-			userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");
+			userAccessToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -594,7 +594,7 @@ void API::modifyFacebookConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "UserAccessToken";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -608,7 +608,7 @@ void API::modifyFacebookConf(
 
 				throw runtime_error(errorMessage);
 			}
-			userAccessToken = JSONUtils::asString(requestBodyRoot, field, "");
+			userAccessToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -782,7 +782,7 @@ void API::addTwitchConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "RefreshToken";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -796,7 +796,7 @@ void API::addTwitchConf(
 
 				throw runtime_error(errorMessage);
 			}
-			refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
+			refreshToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -889,7 +889,7 @@ void API::modifyTwitchConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "RefreshToken";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -903,7 +903,7 @@ void API::modifyTwitchConf(
 
 				throw runtime_error(errorMessage);
 			}
-			refreshToken = JSONUtils::asString(requestBodyRoot, field, "");
+			refreshToken = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -1066,7 +1066,7 @@ void API::addTiktokConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Token";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1080,7 +1080,7 @@ void API::addTiktokConf(
 
 				throw runtime_error(errorMessage);
 			}
-			token = JSONUtils::asString(requestBodyRoot, field, "");
+			token = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -1163,7 +1163,7 @@ void API::modifyTiktokConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Token";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1177,7 +1177,7 @@ void API::modifyTiktokConf(
 
 				throw runtime_error(errorMessage);
 			}
-			token = JSONUtils::asString(requestBodyRoot, field, "");
+			token = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -1369,7 +1369,7 @@ void API::addStream(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "sourceType";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -1383,79 +1383,79 @@ void API::addStream(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceType = JSONUtils::asString(requestBodyRoot, field, "");
+			sourceType = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "encodersPoolKey";
-			encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			encodersPoolKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "url";
-			url = JSONUtils::asString(requestBodyRoot, field, "");
+			url = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "pushProtocol";
-			pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");
+			pushProtocol = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "pushEncoderKey";
-			pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			pushEncoderKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "pushPublicEncoderName";
-			pushPublicEncoderName = JSONUtils::asBool(requestBodyRoot, field, false);
+			pushPublicEncoderName = JSONUtils::as<bool>(requestBodyRoot, field, false);
 
 			field = "pushServerPort";
-			pushServerPort = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			pushServerPort = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "pushURI";
-			pushUri = JSONUtils::asString(requestBodyRoot, field, "");
+			pushUri = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "pushListenTimeout";
-			pushListenTimeout = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			pushListenTimeout = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "captureLiveVideoDeviceNumber";
-			captureLiveVideoDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			captureLiveVideoDeviceNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "captureLiveVideoInputFormat";
-			captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
+			captureLiveVideoInputFormat = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "captureLiveFrameRate";
-			captureLiveFrameRate = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			captureLiveFrameRate = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "captureLiveWidth";
-			captureLiveWidth = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			captureLiveWidth = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "captureLiveHeight";
-			captureLiveHeight = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			captureLiveHeight = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "captureLiveAudioDeviceNumber";
-			captureLiveAudioDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			captureLiveAudioDeviceNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "captureLiveChannelsNumber";
-			captureLiveChannelsNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			captureLiveChannelsNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "sourceTVConfKey";
-			tvSourceTVConfKey = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			tvSourceTVConfKey = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "type";
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "description";
-			description = JSONUtils::asString(requestBodyRoot, field, "");
+			description = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "name";
-			name = JSONUtils::asString(requestBodyRoot, field, "");
+			name = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "region";
-			region = JSONUtils::asString(requestBodyRoot, field, "");
+			region = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "country";
-			country = JSONUtils::asString(requestBodyRoot, field, "");
+			country = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "imageMediaItemKey";
-			imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			imageMediaItemKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "imageUniqueName";
-			imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");
+			imageUniqueName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "position";
-			position = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			position = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "userData";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -1603,7 +1603,7 @@ void API::modifyStream(
 			string field = "label";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				label = JSONUtils::asString(requestBodyRoot, field, "");
+				label = JSONUtils::as<string>(requestBodyRoot, field, "");
 				labelToBeModified = true;
 			}
 
@@ -1611,7 +1611,7 @@ void API::modifyStream(
 			field = "sourceType";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				sourceType = JSONUtils::asString(requestBodyRoot, field, "");
+				sourceType = JSONUtils::as<string>(requestBodyRoot, field, "");
 				sourceTypeToBeModified = true;
 			}
 
@@ -1619,7 +1619,7 @@ void API::modifyStream(
 			field = "encodersPoolKey";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				encodersPoolKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				encodersPoolKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				encodersPoolKeyToBeModified = true;
 			}
 
@@ -1627,7 +1627,7 @@ void API::modifyStream(
 			field = "url";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				url = JSONUtils::asString(requestBodyRoot, field, "");
+				url = JSONUtils::as<string>(requestBodyRoot, field, "");
 				urlToBeModified = true;
 			}
 
@@ -1635,7 +1635,7 @@ void API::modifyStream(
 			field = "pushProtocol";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				pushProtocol = JSONUtils::asString(requestBodyRoot, field, "");
+				pushProtocol = JSONUtils::as<string>(requestBodyRoot, field, "");
 				pushProtocolToBeModified = true;
 			}
 
@@ -1643,7 +1643,7 @@ void API::modifyStream(
 			field = "pushEncoderKey";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				pushEncoderKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				pushEncoderKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				pushEncoderKeyToBeModified = true;
 			}
 
@@ -1651,7 +1651,7 @@ void API::modifyStream(
 			field = "pushPublicEncoderName";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				pushPublicEncoderName = JSONUtils::asBool(requestBodyRoot, field, false);
+				pushPublicEncoderName = JSONUtils::as<bool>(requestBodyRoot, field, false);
 				pushPublicEncoderNameToBeModified = true;
 			}
 
@@ -1659,7 +1659,7 @@ void API::modifyStream(
 			field = "pushServerPort";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				pushServerPort = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				pushServerPort = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				pushServerPortToBeModified = true;
 			}
 
@@ -1667,7 +1667,7 @@ void API::modifyStream(
 			field = "pushURI";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				pushUri = JSONUtils::asString(requestBodyRoot, field, "");
+				pushUri = JSONUtils::as<string>(requestBodyRoot, field, "");
 				pushUriToBeModified = true;
 			}
 
@@ -1675,7 +1675,7 @@ void API::modifyStream(
 			field = "pushListenTimeout";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				pushListenTimeout = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				pushListenTimeout = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				pushListenTimeoutToBeModified = true;
 			}
 
@@ -1683,7 +1683,7 @@ void API::modifyStream(
 			field = "captureLiveVideoDeviceNumber";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveVideoDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				captureLiveVideoDeviceNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				captureLiveVideoDeviceNumberToBeModified = true;
 			}
 
@@ -1691,7 +1691,7 @@ void API::modifyStream(
 			field = "captureLiveVideoInputFormat";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveVideoInputFormat = JSONUtils::asString(requestBodyRoot, field, "");
+				captureLiveVideoInputFormat = JSONUtils::as<string>(requestBodyRoot, field, "");
 				captureLiveVideoInputFormatToBeModified = true;
 			}
 
@@ -1699,7 +1699,7 @@ void API::modifyStream(
 			field = "captureLiveFrameRate";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveFrameRate = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				captureLiveFrameRate = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				captureLiveFrameRateToBeModified = true;
 			}
 
@@ -1707,7 +1707,7 @@ void API::modifyStream(
 			field = "captureLiveWidth";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveWidth = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				captureLiveWidth = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				captureLiveWidthToBeModified = true;
 			}
 
@@ -1715,7 +1715,7 @@ void API::modifyStream(
 			field = "captureLiveHeight";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveHeight = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				captureLiveHeight = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				captureLiveHeightToBeModified = true;
 			}
 
@@ -1723,7 +1723,7 @@ void API::modifyStream(
 			field = "captureLiveAudioDeviceNumber";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveAudioDeviceNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				captureLiveAudioDeviceNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				captureLiveAudioDeviceNumberToBeModified = true;
 			}
 
@@ -1731,7 +1731,7 @@ void API::modifyStream(
 			field = "captureLiveChannelsNumber";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				captureLiveChannelsNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				captureLiveChannelsNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				captureLiveChannelsNumberToBeModified = true;
 			}
 
@@ -1739,7 +1739,7 @@ void API::modifyStream(
 			field = "sourceTVConfKey";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				tvSourceTVConfKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				tvSourceTVConfKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				tvSourceTVConfKeyToBeModified = true;
 			}
 
@@ -1747,7 +1747,7 @@ void API::modifyStream(
 			field = "type";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				type = JSONUtils::asString(requestBodyRoot, field, "");
+				type = JSONUtils::as<string>(requestBodyRoot, field, "");
 				typeToBeModified = true;
 			}
 
@@ -1755,7 +1755,7 @@ void API::modifyStream(
 			field = "description";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				description = JSONUtils::asString(requestBodyRoot, field, "");
+				description = JSONUtils::as<string>(requestBodyRoot, field, "");
 				descriptionToBeModified = true;
 			}
 
@@ -1763,7 +1763,7 @@ void API::modifyStream(
 			field = "name";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				name = JSONUtils::asString(requestBodyRoot, field, "");
+				name = JSONUtils::as<string>(requestBodyRoot, field, "");
 				nameToBeModified = true;
 			}
 
@@ -1771,7 +1771,7 @@ void API::modifyStream(
 			field = "region";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				region = JSONUtils::asString(requestBodyRoot, field, "");
+				region = JSONUtils::as<string>(requestBodyRoot, field, "");
 				regionToBeModified = true;
 			}
 
@@ -1779,7 +1779,7 @@ void API::modifyStream(
 			field = "country";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				country = JSONUtils::asString(requestBodyRoot, field, "");
+				country = JSONUtils::as<string>(requestBodyRoot, field, "");
 				countryToBeModified = true;
 			}
 
@@ -1787,7 +1787,7 @@ void API::modifyStream(
 			field = "imageMediaItemKey";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				imageMediaItemKey = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				imageMediaItemKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				imageToBeModified = true;
 			}
 
@@ -1795,7 +1795,7 @@ void API::modifyStream(
 			field = "imageUniqueName";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				imageUniqueName = JSONUtils::asString(requestBodyRoot, field, "");
+				imageUniqueName = JSONUtils::as<string>(requestBodyRoot, field, "");
 				imageToBeModified = true;
 			}
 
@@ -1803,7 +1803,7 @@ void API::modifyStream(
 			field = "position";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				position = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				position = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				positionToBeModified = true;
 			}
 			else if (JSONUtils::isNull(requestBodyRoot, field))
@@ -2141,16 +2141,16 @@ void API::addSourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "serviceId";
-			serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			serviceId = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "networkId";
-			networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			networkId = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "transportStreamId";
-			transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			transportStreamId = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "name";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2164,10 +2164,10 @@ void API::addSourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			name = JSONUtils::asString(requestBodyRoot, field, "");
+			name = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "satellite";
-			satellite = JSONUtils::asString(requestBodyRoot, field, "");
+			satellite = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "frequency";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2181,43 +2181,43 @@ void API::addSourceTVStream(
 
 				throw runtime_error(errorMessage);
 			}
-			frequency = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			frequency = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "lnb";
-			lnb = JSONUtils::asString(requestBodyRoot, field, "");
+			lnb = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "videoPid";
-			videoPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			videoPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "audioPids";
-			audioPids = JSONUtils::asString(requestBodyRoot, field, "");
+			audioPids = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "audioItalianPid";
-			audioItalianPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			audioItalianPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "audioEnglishPid";
-			audioEnglishPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			audioEnglishPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "teletextPid";
-			teletextPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			teletextPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "modulation";
-			modulation = JSONUtils::asString(requestBodyRoot, field, "");
+			modulation = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "polarization";
-			polarization = JSONUtils::asString(requestBodyRoot, field, "");
+			polarization = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "symbolRate";
-			symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			symbolRate = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "bandwidthInHz";
-			bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			bandwidthInHz = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "country";
-			country = JSONUtils::asString(requestBodyRoot, field, "");
+			country = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "deliverySystem";
-			deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");
+			deliverySystem = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -2340,133 +2340,133 @@ void API::modifySourceTVStream(
 			string field = "type";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				type = JSONUtils::asString(requestBodyRoot, field, "");
+				type = JSONUtils::as<string>(requestBodyRoot, field, "");
 				typeToBeModified = true;
 			}
 
 			field = "serviceId";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				serviceId = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				serviceId = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				serviceIdToBeModified = true;
 			}
 
 			field = "networkId";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				networkId = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				networkId = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				networkIdToBeModified = true;
 			}
 
 			field = "transportStreamId";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				transportStreamId = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				transportStreamId = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				transportStreamIdToBeModified = true;
 			}
 
 			field = "name";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				name = JSONUtils::asString(requestBodyRoot, field, "");
+				name = JSONUtils::as<string>(requestBodyRoot, field, "");
 				nameToBeModified = true;
 			}
 
 			field = "satellite";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				satellite = JSONUtils::asString(requestBodyRoot, field, "");
+				satellite = JSONUtils::as<string>(requestBodyRoot, field, "");
 				satelliteToBeModified = true;
 			}
 
 			field = "frequency";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				frequency = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				frequency = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				frequencyToBeModified = true;
 			}
 
 			field = "lnb";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				lnb = JSONUtils::asString(requestBodyRoot, field, "");
+				lnb = JSONUtils::as<string>(requestBodyRoot, field, "");
 				lnbToBeModified = true;
 			}
 
 			field = "videoPid";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				videoPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				videoPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				videoPidToBeModified = true;
 			}
 
 			field = "audioPids";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				audioPids = JSONUtils::asString(requestBodyRoot, field, "");
+				audioPids = JSONUtils::as<string>(requestBodyRoot, field, "");
 				audioPidsToBeModified = true;
 			}
 
 			field = "audioItalianPid";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				audioItalianPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				audioItalianPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				audioItalianPidToBeModified = true;
 			}
 
 			field = "audioEnglishPid";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				audioEnglishPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				audioEnglishPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				audioEnglishPidToBeModified = true;
 			}
 
 			field = "teletextPid";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				teletextPid = JSONUtils::asInt32(requestBodyRoot, field, -1);
+				teletextPid = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 				teletextPidToBeModified = true;
 			}
 
 			field = "modulation";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				modulation = JSONUtils::asString(requestBodyRoot, field, "");
+				modulation = JSONUtils::as<string>(requestBodyRoot, field, "");
 				modulationToBeModified = true;
 			}
 
 			field = "polarization";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				polarization = JSONUtils::asString(requestBodyRoot, field, "");
+				polarization = JSONUtils::as<string>(requestBodyRoot, field, "");
 				polarizationToBeModified = true;
 			}
 
 			field = "symbolRate";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				symbolRate = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				symbolRate = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				symbolRateToBeModified = true;
 			}
 
 			field = "bandwidthInHz";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				bandwidthInHz = JSONUtils::asInt64(requestBodyRoot, field, -1);
+				bandwidthInHz = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 				bandwidthInHzToBeModified = true;
 			}
 
 			field = "country";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				country = JSONUtils::asString(requestBodyRoot, field, "");
+				country = JSONUtils::as<string>(requestBodyRoot, field, "");
 				countryToBeModified = true;
 			}
 
 			field = "deliverySystem";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				deliverySystem = JSONUtils::asString(requestBodyRoot, field, "");
+				deliverySystem = JSONUtils::as<string>(requestBodyRoot, field, "");
 				deliverySystemToBeModified = true;
 			}
 		}
@@ -2681,7 +2681,7 @@ void API::addRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "rtmpURL";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2695,19 +2695,19 @@ void API::addRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
+			rtmpURL = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "streamName";
-			streamName = JSONUtils::asString(requestBodyRoot, field, "");
+			streamName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "userName";
-			userName = JSONUtils::asString(requestBodyRoot, field, "");
+			userName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "password";
-			password = JSONUtils::asString(requestBodyRoot, field, "");
+			password = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "playURLDetails";
-			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
+			playURLDetailsRoot = JSONUtils::as<json>(requestBodyRoot, field, json(nullptr));
 
 			field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2721,7 +2721,7 @@ void API::addRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -2823,7 +2823,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "rtmpURL";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2837,7 +2837,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			rtmpURL = JSONUtils::asString(requestBodyRoot, field, "");
+			rtmpURL = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "streamName";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2851,7 +2851,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			streamName = JSONUtils::asString(requestBodyRoot, field, "");
+			streamName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "userName";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2865,7 +2865,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			userName = JSONUtils::asString(requestBodyRoot, field, "");
+			userName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "password";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2879,7 +2879,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			password = JSONUtils::asString(requestBodyRoot, field, "");
+			password = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "playURLDetails";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2893,7 +2893,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			playURLDetailsRoot = JSONUtils::asJson(requestBodyRoot, field, json(nullptr));
+			playURLDetailsRoot = JSONUtils::as<json>(requestBodyRoot, field, json(nullptr));
 
 			field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -2907,7 +2907,7 @@ void API::modifyRTMPChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -3094,7 +3094,7 @@ void API::addSRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "srtURL";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3108,16 +3108,16 @@ void API::addSRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
+			srtURL = JSONUtils::as<string>(requestBodyRoot, field, "");
 
-			mode = JSONUtils::asString(requestBodyRoot, "mode", "");
+			mode = JSONUtils::as<string>(requestBodyRoot, "mode", "");
 
-			streamId = JSONUtils::asString(requestBodyRoot, "streamId", "");
+			streamId = JSONUtils::as<string>(requestBodyRoot, "streamId", "");
 
-			passphrase = JSONUtils::asString(requestBodyRoot, "passphrase", "");
+			passphrase = JSONUtils::as<string>(requestBodyRoot, "passphrase", "");
 
 			field = "playURL";
-			playURL = JSONUtils::asString(requestBodyRoot, field, "");
+			playURL = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3131,7 +3131,7 @@ void API::addSRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -3230,7 +3230,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "srtURL";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3244,7 +3244,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			srtURL = JSONUtils::asString(requestBodyRoot, field, "");
+			srtURL = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "mode";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3258,7 +3258,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			mode = JSONUtils::asString(requestBodyRoot, field, "");
+			mode = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "streamId";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3272,7 +3272,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			streamId = JSONUtils::asString(requestBodyRoot, field, "");
+			streamId = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "passphrase";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3286,7 +3286,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			passphrase = JSONUtils::asString(requestBodyRoot, field, "");
+			passphrase = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "playURL";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3300,7 +3300,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			playURL = JSONUtils::asString(requestBodyRoot, field, "");
+			playURL = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3314,7 +3314,7 @@ void API::modifySRTChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -3496,7 +3496,7 @@ void API::addHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "deliveryCode";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3510,13 +3510,13 @@ void API::addHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			deliveryCode = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			deliveryCode = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "segmentDuration";
-			segmentDuration = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			segmentDuration = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "playlistEntriesNumber";
-			playlistEntriesNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			playlistEntriesNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3530,7 +3530,7 @@ void API::addHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -3627,7 +3627,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "deliveryCode";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3641,7 +3641,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			deliveryCode = JSONUtils::asInt64(requestBodyRoot, field, -1);
+			deliveryCode = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
 
 			field = "segmentDuration";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3655,7 +3655,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			segmentDuration = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			segmentDuration = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "playlistEntriesNumber";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3669,7 +3669,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			playlistEntriesNumber = JSONUtils::asInt32(requestBodyRoot, field, -1);
+			playlistEntriesNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
 
 			field = "type";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3683,7 +3683,7 @@ void API::modifyHLSChannelConf(
 
 				throw runtime_error(errorMessage);
 			}
-			type = JSONUtils::asString(requestBodyRoot, field, "");
+			type = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -3868,7 +3868,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Server";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3882,7 +3882,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			server = JSONUtils::asString(requestBodyRoot, field, "");
+			server = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Port";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3896,7 +3896,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			port = JSONUtils::asInt32(requestBodyRoot, field, 0);
+			port = JSONUtils::as<int32_t>(requestBodyRoot, field, 0);
 
 			field = "UserName";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3910,7 +3910,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			userName = JSONUtils::asString(requestBodyRoot, field, "");
+			userName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Password";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3924,7 +3924,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			password = JSONUtils::asString(requestBodyRoot, field, "");
+			password = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "RemoteDirectory";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -3938,7 +3938,7 @@ void API::addFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");
+			remoteDirectory = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -4035,7 +4035,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Server";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4049,7 +4049,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			server = JSONUtils::asString(requestBodyRoot, field, "");
+			server = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Port";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4063,7 +4063,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			port = JSONUtils::asInt32(requestBodyRoot, field, 0);
+			port = JSONUtils::as<int32_t>(requestBodyRoot, field, 0);
 
 			field = "UserName";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4077,7 +4077,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			userName = JSONUtils::asString(requestBodyRoot, field, "");
+			userName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Password";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4091,7 +4091,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			password = JSONUtils::asString(requestBodyRoot, field, "");
+			password = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "RemoteDirectory";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4105,7 +4105,7 @@ void API::modifyFTPConf(
 
 				throw runtime_error(errorMessage);
 			}
-			remoteDirectory = JSONUtils::asString(requestBodyRoot, field, "");
+			remoteDirectory = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -4273,7 +4273,7 @@ void API::addEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Addresses";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4287,7 +4287,7 @@ void API::addEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			addresses = JSONUtils::asString(requestBodyRoot, field, "");
+			addresses = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Subject";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4301,7 +4301,7 @@ void API::addEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			subject = JSONUtils::asString(requestBodyRoot, field, "");
+			subject = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Message";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4315,7 +4315,7 @@ void API::addEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			message = JSONUtils::asString(requestBodyRoot, field, "");
+			message = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{
@@ -4410,7 +4410,7 @@ void API::modifyEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Addresses";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4424,7 +4424,7 @@ void API::modifyEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			addresses = JSONUtils::asString(requestBodyRoot, field, "");
+			addresses = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Subject";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4438,7 +4438,7 @@ void API::modifyEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			subject = JSONUtils::asString(requestBodyRoot, field, "");
+			subject = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Message";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -4452,7 +4452,7 @@ void API::modifyEMailConf(
 
 				throw runtime_error(errorMessage);
 			}
-			message = JSONUtils::asString(requestBodyRoot, field, "");
+			message = JSONUtils::as<string>(requestBodyRoot, field, "");
 		}
 		catch (exception &e)
 		{

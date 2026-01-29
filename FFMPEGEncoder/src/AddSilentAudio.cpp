@@ -26,13 +26,13 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-		string addType = JSONUtils::asString(ingestedParametersRoot, "addType", "entireTrack");
-		int silentDurationInSeconds = JSONUtils::asInt32(ingestedParametersRoot, "silentDurationInSeconds", 1);
+		string addType = JSONUtils::as<string>(ingestedParametersRoot, "addType", "entireTrack");
+		int silentDurationInSeconds = JSONUtils::as<int32_t>(ingestedParametersRoot, "silentDurationInSeconds", 1);
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
@@ -42,9 +42,9 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 		{
 			const json& sourceRoot = sourcesRoot[sourceIndex];
 
-			bool stopIfReferenceProcessingError = JSONUtils::asBool(sourceRoot, "stopIfReferenceProcessingError", false);
-			int64_t sourceDurationInMilliSeconds = JSONUtils::asInt64(sourceRoot, "sourceDurationInMilliSeconds", 0);
-			string sourceFileExtension = JSONUtils::asString(sourceRoot, "sourceFileExtension", "");
+			bool stopIfReferenceProcessingError = JSONUtils::as<bool>(sourceRoot, "stopIfReferenceProcessingError", false);
+			int64_t sourceDurationInMilliSeconds = JSONUtils::as<int64_t>(sourceRoot, "sourceDurationInMilliSeconds", 0);
+			string sourceFileExtension = JSONUtils::as<string>(sourceRoot, "sourceFileExtension", "");
 
 			string sourceAssetPathName;
 			string encodedStagingAssetPathName;
@@ -53,7 +53,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 
 			if (externalEncoder)
 			{
-				sourceAssetPathName = JSONUtils::asString(sourceRoot, "sourceTranscoderStagingAssetPathName", "");
+				sourceAssetPathName = JSONUtils::as<string>(sourceRoot, "sourceTranscoderStagingAssetPathName", "");
 
 				{
 					size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -78,7 +78,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					}
 				}
 
-				encodedStagingAssetPathName = JSONUtils::asString(sourceRoot, "encodedTranscoderStagingAssetPathName", "");
+				encodedStagingAssetPathName = JSONUtils::as<string>(sourceRoot, "encodedTranscoderStagingAssetPathName", "");
 
 				{
 					size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -103,7 +103,7 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					}
 				}
 
-				string sourcePhysicalDeliveryURL = JSONUtils::asString(sourceRoot, "sourcePhysicalDeliveryURL", "");
+				string sourcePhysicalDeliveryURL = JSONUtils::as<string>(sourceRoot, "sourcePhysicalDeliveryURL", "");
 
 				sourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
@@ -111,8 +111,8 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 			}
 			else
 			{
-				sourceAssetPathName = JSONUtils::asString(sourceRoot, "sourceAssetPathName", "");
-				encodedStagingAssetPathName = JSONUtils::asString(sourceRoot, "encodedNFSStagingAssetPathName", "");
+				sourceAssetPathName = JSONUtils::as<string>(sourceRoot, "sourceAssetPathName", "");
+				encodedStagingAssetPathName = JSONUtils::as<string>(sourceRoot, "encodedNFSStagingAssetPathName", "");
 			}
 
 			try
@@ -191,9 +191,9 @@ void AddSilentAudio::encodeContent(json metadataRoot)
 					fs::remove_all(sourceAssetPathName);
 				}
 
-				string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add " + api + " from external transcoder)";
+				string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add " + api + " from external transcoder)";
 
-				int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+				int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 				uploadLocalMediaToMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot,

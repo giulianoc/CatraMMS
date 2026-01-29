@@ -30,7 +30,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 		if (!JSONUtils::isPresent(parametersRoot, field))
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		else
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 
 		string faceRecognitionCascadeName;
 		string faceRecognitionOutput;
@@ -47,7 +47,7 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 				throw runtime_error(errorMessage);
 			}
-			faceRecognitionCascadeName = JSONUtils::asString(parametersRoot, field, "");
+			faceRecognitionCascadeName = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "output";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -59,17 +59,17 @@ void MMSEngineProcessor::manageFaceRecognitionMediaTask(
 
 				throw runtime_error(errorMessage);
 			}
-			faceRecognitionOutput = JSONUtils::asString(parametersRoot, field, "");
+			faceRecognitionOutput = JSONUtils::as<string>(parametersRoot, field, "");
 
 			initialFramesNumberToBeSkipped = 0;
 			oneFramePerSecond = true;
 			if (faceRecognitionOutput == "FrameContainingFace")
 			{
 				field = "initialFramesNumberToBeSkipped";
-				initialFramesNumberToBeSkipped = JSONUtils::asInt32(parametersRoot, field, 0);
+				initialFramesNumberToBeSkipped = JSONUtils::as<int32_t>(parametersRoot, field, 0);
 
 				field = "oneFramePerSecond";
-				oneFramePerSecond = JSONUtils::asBool(parametersRoot, field, true);
+				oneFramePerSecond = JSONUtils::as<bool>(parametersRoot, field, true);
 			}
 		}
 
@@ -170,7 +170,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 		if (!JSONUtils::isPresent(parametersRoot, field))
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		else
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 
 		string faceIdentificationCascadeName;
 		string deepLearnedModelTagsCommaSeparated;
@@ -185,7 +185,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
 				throw runtime_error(errorMessage);
 			}
-			faceIdentificationCascadeName = JSONUtils::asString(parametersRoot, field, "");
+			faceIdentificationCascadeName = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "deepLearnedModelTags";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -197,7 +197,7 @@ void MMSEngineProcessor::manageFaceIdentificationMediaTask(
 
 				throw runtime_error(errorMessage);
 			}
-			deepLearnedModelTagsCommaSeparated = JSONUtils::asString(parametersRoot, field, "");
+			deepLearnedModelTagsCommaSeparated = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		{

@@ -49,10 +49,10 @@ void MMSEngineProcessor::httpCallbackThread(
 		json httpHeadersRoot = json::array();
 		bool forwardInputMedia;
 		{
-			addMediaData = JSONUtils::asBool(parametersRoot, "addMediaData", true);
-			httpProtocol = JSONUtils::asString(parametersRoot, "protocol", "http");
-			userName = JSONUtils::asString(parametersRoot, "userName", "");
-			password = JSONUtils::asString(parametersRoot, "password", "");
+			addMediaData = JSONUtils::as<bool>(parametersRoot, "addMediaData", true);
+			httpProtocol = JSONUtils::as<string>(parametersRoot, "protocol", "http");
+			userName = JSONUtils::as<string>(parametersRoot, "userName", "");
+			password = JSONUtils::as<string>(parametersRoot, "password", "");
 			string field = "hostName";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
@@ -66,7 +66,7 @@ void MMSEngineProcessor::httpCallbackThread(
 
 				throw runtime_error(errorMessage);
 			}
-			httpHostName = JSONUtils::asString(parametersRoot, field, "");
+			httpHostName = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "port";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -77,9 +77,9 @@ void MMSEngineProcessor::httpCallbackThread(
 					httpPort = 443;
 			}
 			else
-				httpPort = JSONUtils::asInt32(parametersRoot, field, 0);
+				httpPort = JSONUtils::as<int32_t>(parametersRoot, field, 0);
 
-			callbackTimeoutInSeconds = JSONUtils::asInt32(parametersRoot, "timeout", 120);
+			callbackTimeoutInSeconds = JSONUtils::as<int32_t>(parametersRoot, "timeout", 120);
 
 			field = "uri";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -94,18 +94,18 @@ void MMSEngineProcessor::httpCallbackThread(
 
 				throw runtime_error(errorMessage);
 			}
-			httpURI = JSONUtils::asString(parametersRoot, field, "");
+			httpURI = JSONUtils::as<string>(parametersRoot, field, "");
 
-			httpURLParameters = JSONUtils::asString(parametersRoot, "parameters", "");
-			formData = JSONUtils::asBool(parametersRoot, "formData", false);
-			httpMethod = JSONUtils::asString(parametersRoot, "method", "POST");
-			httpBody = JSONUtils::asString(parametersRoot, "httpBody", "");
+			httpURLParameters = JSONUtils::as<string>(parametersRoot, "parameters", "");
+			formData = JSONUtils::as<bool>(parametersRoot, "formData", false);
+			httpMethod = JSONUtils::as<string>(parametersRoot, "method", "POST");
+			httpBody = JSONUtils::as<string>(parametersRoot, "httpBody", "");
 
 			field = "headers";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				// semicolon as separator
-				stringstream ss(JSONUtils::asString(parametersRoot, field, ""));
+				stringstream ss(JSONUtils::as<string>(parametersRoot, field, ""));
 				string token;
 				char delim = ';';
 				while (getline(ss, token, delim))
@@ -116,8 +116,8 @@ void MMSEngineProcessor::httpCallbackThread(
 				// httpHeadersRoot = parametersRoot[field];
 			}
 
-			maxRetries = JSONUtils::asInt32(parametersRoot, "maxRetries", 1);
-			forwardInputMedia = JSONUtils::asBool(parametersRoot, "forwardInputMedia", false);
+			maxRetries = JSONUtils::as<int32_t>(parametersRoot, "maxRetries", 1);
+			forwardInputMedia = JSONUtils::as<bool>(parametersRoot, "forwardInputMedia", false);
 		}
 
 		if (addMediaData && (httpMethod == "POST" || httpMethod == "PUT"))
@@ -612,7 +612,7 @@ void MMSEngineProcessor::userHttpCallback(
 		vector<string> otherHeaders;
 		for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
 		{
-			string userHeader = JSONUtils::asString(userHeadersRoot[userHeaderIndex]);
+			string userHeader = JSONUtils::as<string>(userHeadersRoot[userHeaderIndex]);
 
 			otherHeaders.push_back(userHeader);
 		}
@@ -628,8 +628,8 @@ void MMSEngineProcessor::userHttpCallback(
 					{
 						json formFieldRoot = formDataParametersRoot[formFieldIndex];
 
-						string name = JSONUtils::asString(formFieldRoot, "name", "");
-						string value = JSONUtils::asString(formFieldRoot, "value", "");
+						string name = JSONUtils::as<string>(formFieldRoot, "name", "");
+						string value = JSONUtils::as<string>(formFieldRoot, "value", "");
 
 						if (name != "")
 							formData.push_back(make_pair(name, value));
@@ -663,8 +663,8 @@ void MMSEngineProcessor::userHttpCallback(
 					{
 						json formFieldRoot = formDataParametersRoot[formFieldIndex];
 
-						string name = JSONUtils::asString(formFieldRoot, "name", "");
-						string value = JSONUtils::asString(formFieldRoot, "value", "");
+						string name = JSONUtils::as<string>(formFieldRoot, "name", "");
+						string value = JSONUtils::as<string>(formFieldRoot, "value", "");
 
 						if (name != "")
 							formData.push_back(make_pair(name, value));

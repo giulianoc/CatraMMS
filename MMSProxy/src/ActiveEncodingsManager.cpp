@@ -29,7 +29,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 	_hostName = System::hostName();
 
-	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 0);
+	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::as<int32_t>(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 0);
 	LOG_INFO(
 		"Configuration item"
 		", mms->locks->maxSecondsToWaitUpdateEncodingJobLock: {}",
@@ -38,7 +38,7 @@ ActiveEncodingsManager::ActiveEncodingsManager(
 
 	{
 		shared_ptr<long> faceRecognitionNumber = make_shared<long>(0);
-		int maxFaceRecognitionNumber = JSONUtils::asInt32(_configuration["mms"], "maxFaceRecognitionNumber", 0);
+		int maxFaceRecognitionNumber = JSONUtils::as<int32_t>(_configuration["mms"], "maxFaceRecognitionNumber", 0);
 		LOG_INFO(
 			"Configuration item"
 			", mms->maxFaceRecognitionNumber: {}",

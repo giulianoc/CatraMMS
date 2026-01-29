@@ -678,27 +678,27 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			{
 				json geoServiceResponseIpRoot = geoServiceResponseRoot[index];
 
-				string status = JSONUtils::asString(geoServiceResponseIpRoot, "status", "");
+				string status = JSONUtils::as<string>(geoServiceResponseIpRoot, "status", "");
 				if (status != "success")
 				{
 					LOG_ERROR(
 						"geoService failed"
 						", message: {}",
-						JSONUtils::asString(geoServiceResponseIpRoot, "message", "")
+						JSONUtils::as<string>(geoServiceResponseIpRoot, "message", "")
 					);
 
 					continue;
 				}
 
-				string query = JSONUtils::asString(geoServiceResponseIpRoot, "query", "");
-				string continent = JSONUtils::asString(geoServiceResponseIpRoot, "continent", "");
-				string continentCode = JSONUtils::asString(geoServiceResponseIpRoot, "continentCode", "");
-				string country = JSONUtils::asString(geoServiceResponseIpRoot, "country", "");
-				string countryCode = JSONUtils::asString(geoServiceResponseIpRoot, "countryCode", "");
-				string regionName = JSONUtils::asString(geoServiceResponseIpRoot, "regionName", "");
-				string city = JSONUtils::asString(geoServiceResponseIpRoot, "city", "");
-				string org = JSONUtils::asString(geoServiceResponseIpRoot, "org", "");
-				string isp = JSONUtils::asString(geoServiceResponseIpRoot, "isp", "");
+				string query = JSONUtils::as<string>(geoServiceResponseIpRoot, "query", "");
+				string continent = JSONUtils::as<string>(geoServiceResponseIpRoot, "continent", "");
+				string continentCode = JSONUtils::as<string>(geoServiceResponseIpRoot, "continentCode", "");
+				string country = JSONUtils::as<string>(geoServiceResponseIpRoot, "country", "");
+				string countryCode = JSONUtils::as<string>(geoServiceResponseIpRoot, "countryCode", "");
+				string regionName = JSONUtils::as<string>(geoServiceResponseIpRoot, "regionName", "");
+				string city = JSONUtils::as<string>(geoServiceResponseIpRoot, "city", "");
+				string org = JSONUtils::as<string>(geoServiceResponseIpRoot, "org", "");
+				string isp = JSONUtils::as<string>(geoServiceResponseIpRoot, "isp", "");
 
 				ipsAPIGEOInfo.push_back(make_tuple(query, continent, continentCode, country, countryCode, regionName, city, org, isp));
 			}
@@ -711,27 +711,27 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			vector<string> otherHeaders;
 			json geoServiceResponseIp = CurlWrapper::httpGetJson(geoServiceURL, _geoServiceTimeoutInSeconds, "", otherHeaders);
 
-			string status = JSONUtils::asString(geoServiceResponseIp, "status", "");
+			string status = JSONUtils::as<string>(geoServiceResponseIp, "status", "");
 			if (status != "success")
 			{
 				LOG_ERROR(
 					"geoService failed"
 					", message: {}",
-					JSONUtils::asString(geoServiceResponseIp, "message", "")
+					JSONUtils::as<string>(geoServiceResponseIp, "message", "")
 				);
 
 				return ipsAPIGEOInfo;
 			}
 
-			string query = JSONUtils::asString(geoServiceResponseIp, "query", "");
-			string continent = JSONUtils::asString(geoServiceResponseIp, "continent", "");
-			string continentCode = JSONUtils::asString(geoServiceResponseIp, "continentCode", "");
-			string country = JSONUtils::asString(geoServiceResponseIp, "country", "");
-			string countryCode = JSONUtils::asString(geoServiceResponseIp, "countryCode", "");
-			string regionName = JSONUtils::asString(geoServiceResponseIp, "regionName", "");
-			string city = JSONUtils::asString(geoServiceResponseIp, "city", "");
-			string org = JSONUtils::asString(geoServiceResponseIp, "org", "");
-			string isp = JSONUtils::asString(geoServiceResponseIp, "isp", "");
+			string query = JSONUtils::as<string>(geoServiceResponseIp, "query", "");
+			string continent = JSONUtils::as<string>(geoServiceResponseIp, "continent", "");
+			string continentCode = JSONUtils::as<string>(geoServiceResponseIp, "continentCode", "");
+			string country = JSONUtils::as<string>(geoServiceResponseIp, "country", "");
+			string countryCode = JSONUtils::as<string>(geoServiceResponseIp, "countryCode", "");
+			string regionName = JSONUtils::as<string>(geoServiceResponseIp, "regionName", "");
+			string city = JSONUtils::as<string>(geoServiceResponseIp, "city", "");
+			string org = JSONUtils::as<string>(geoServiceResponseIp, "org", "");
+			string isp = JSONUtils::as<string>(geoServiceResponseIp, "isp", "");
 
 			ipsAPIGEOInfo.push_back(make_tuple(query, continent, continentCode, country, countryCode, regionName, city, org, isp));
 		}
@@ -770,7 +770,7 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 
 			bool geoSuccess;
 			string field = "success";
-			geoSuccess = JSONUtils::asBool(geoServiceResponse, field, false);
+			geoSuccess = JSONUtils::as<bool>(geoServiceResponse, field, false);
 			if (!geoSuccess)
 			{
 				string errorMessage = __FILEREF__ + "geoService failed" + ", geoSuccess: " + to_string(geoSuccess);
@@ -780,21 +780,21 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			}
 
 			field = "continent";
-			string continent = JSONUtils::asString(geoServiceResponse, field, "");
+			string continent = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "continent_code";
-			string continentCode = JSONUtils::asString(geoServiceResponse, field, "");
+			string continentCode = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "country";
-			string country = JSONUtils::asString(geoServiceResponse, field, "");
+			string country = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "country_code";
-			string countryCode = JSONUtils::asString(geoServiceResponse, field, "");
+			string countryCode = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "region";
-			string regionName = JSONUtils::asString(geoServiceResponse, field, "");
+			string regionName = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "city";
-			string city = JSONUtils::asString(geoServiceResponse, field, "");
+			string city = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "org";
-			string org = JSONUtils::asString(geoServiceResponse, field, "");
+			string org = JSONUtils::as<string>(geoServiceResponse, field, "");
 			field = "isp";
-			string isp = JSONUtils::asString(geoServiceResponse, field, "");
+			string isp = JSONUtils::as<string>(geoServiceResponse, field, "");
 
 			ipsAPIGEOInfo.push_back(make_tuple(ip, continent, continentCode, country, countryCode, regionName, city, org, isp));
 		}

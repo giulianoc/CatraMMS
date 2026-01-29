@@ -33,21 +33,21 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 	// --upload-file ./email.txt --user 'info@catramms-cloud.com:<write here the password>'
 
 	// string emailServerURL = "smtp://smtp.gmail.com:587";
-	string emailProtocol = JSONUtils::asString(_configuration["EmailNotification"], "protocol", "");
-	string emailServer = JSONUtils::asString(_configuration["EmailNotification"], "server", "");
-	int emailPort = JSONUtils::asInt32(_configuration["EmailNotification"], "port", 0);
-	string userName = JSONUtils::asString(_configuration["EmailNotification"], "userName", "");
+	string emailProtocol = JSONUtils::as<string>(_configuration["EmailNotification"], "protocol", "");
+	string emailServer = JSONUtils::as<string>(_configuration["EmailNotification"], "server", "");
+	int emailPort = JSONUtils::as<int32_t>(_configuration["EmailNotification"], "port", 0);
+	string userName = JSONUtils::as<string>(_configuration["EmailNotification"], "userName", "");
 	string password;
 	{
-		string encryptedPassword = JSONUtils::asString(_configuration["EmailNotification"], "password", "");
+		string encryptedPassword = JSONUtils::as<string>(_configuration["EmailNotification"], "password", "");
 		password = Encrypt::opensslDecrypt(encryptedPassword);
 	}
-	string from = JSONUtils::asString(_configuration["EmailNotification"], "from", "");
+	string from = JSONUtils::as<string>(_configuration["EmailNotification"], "from", "");
 	// string to = "giulianoc@catrasoftware.it";
 	string cc;
 
 	if (useMMSCCToo)
-		cc = JSONUtils::asString(_configuration["EmailNotification"], "cc", "");
+		cc = JSONUtils::as<string>(_configuration["EmailNotification"], "cc", "");
 
 	string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
 

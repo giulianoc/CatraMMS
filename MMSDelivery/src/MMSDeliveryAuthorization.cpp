@@ -47,13 +47,13 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 	_apiPort = JsonPath(&_configuration)["api"]["port"].as<int32_t>(0);
 	_apiVersion = JsonPath(&_configuration)["api"]["version"].as<string>();
 
-	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
+	_keyPairId = JSONUtils::as<string>(_configuration["aws"], "keyPairId", "");
 	LOG_INFO(
 		"Configuration item"
 		", aws->keyPairId: {}",
 		_keyPairId
 	);
-	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
+	_privateKeyPEMPathName = JSONUtils::as<string>(_configuration["aws"], "privateKeyPEMPathName", "");
 	LOG_INFO(
 		"Configuration item"
 		", aws->privateKeyPEMPathName: {}",
@@ -80,19 +80,19 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 
 	json api = _configuration["api"];
 
-	_deliveryProtocol = JSONUtils::asString(api["delivery"], "deliveryProtocol", "");
+	_deliveryProtocol = JSONUtils::as<string>(api["delivery"], "deliveryProtocol", "");
 	LOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryProtocol: {}",
 		_deliveryProtocol
 	);
-	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
+	_deliveryHost_authorizationThroughParameter = JSONUtils::as<string>(api["delivery"], "deliveryHost_authorizationThroughParameter", "");
 	LOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughParameter: {}",
 		_deliveryHost_authorizationThroughParameter
 	);
-	_deliveryHost_authorizationThroughPath = JSONUtils::asString(api["delivery"], "deliveryHost_authorizationThroughPath", "");
+	_deliveryHost_authorizationThroughPath = JSONUtils::as<string>(api["delivery"], "deliveryHost_authorizationThroughPath", "");
 	LOG_INFO(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
@@ -370,7 +370,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				throw runtime_error(errorMessage);
 			}
-			json outputsRoot = JSONUtils::asJson(ingestionJobRoot, "outputs", json::array());
+			json outputsRoot = JSONUtils::as<json>(ingestionJobRoot, "outputs", json::array());
 
 			// Option 1: OutputType HLS with deliveryCode
 			// Option 2: OutputType RTMP_Channel with playURL
@@ -384,7 +384,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				int64_t localDeliveryCode = -1;
 				string playURL;
 
-				outputType = JSONUtils::asString(outputRoot, "outputType", "HLS_Channel");
+				outputType = JSONUtils::as<string>(outputRoot, "outputType", "HLS_Channel");
 
 				if (outputType == "RTMP_Channel")
 				{
@@ -411,22 +411,22 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						*/
 						json playURLDetailsRoot = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
 
-						string securityType = JSONUtils::asString(playURLDetailsRoot, "securityType", "none");
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
-						string playURLProtocol = JSONUtils::asString(playURLDetailsRoot, "playURLProtocol", "https");
-						string playURLHostName = JSONUtils::asString(playURLDetailsRoot, "playURLHostName", "");
-						string uri = JSONUtils::asString(playURLDetailsRoot, "uri", "");
+						string securityType = JSONUtils::as<string>(playURLDetailsRoot, "securityType", "none");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
+						string playURLProtocol = JSONUtils::as<string>(playURLDetailsRoot, "playURLProtocol", "https");
+						string playURLHostName = JSONUtils::as<string>(playURLDetailsRoot, "playURLHostName", "");
+						string uri = JSONUtils::as<string>(playURLDetailsRoot, "uri", "");
 						if (securityType == "token")
 						{
-							string secureToken = JSONUtils::asString(playURLDetailsRoot, "token", "");
+							string secureToken = JSONUtils::as<string>(playURLDetailsRoot, "token", "");
 							if (cdnName == "medianova")
 							{
-								json medianovaRoot = JSONUtils::asJson(playURLDetailsRoot, "medianova", json(nullptr));
+								json medianovaRoot = JSONUtils::as<json>(playURLDetailsRoot, "medianova", json(nullptr));
 								// uriEnabled deve essere consistente con la conf. in Medianova (security->Security Token->URI)
-								bool uriEnabled = JSONUtils::asBool(medianovaRoot, "uriEnabled", false);
+								bool uriEnabled = JSONUtils::as<bool>(medianovaRoot, "uriEnabled", false);
 								// playerIPEnabled deve essere consistente con la conf. in Medianova (se ho capito bene dobbiamo
 								// chiedere Medianova di abilitare/disattivare questa opzione)
-								bool playerIPEnabled = JSONUtils::asBool(medianovaRoot, "playerIPEnabled", false);
+								bool playerIPEnabled = JSONUtils::as<bool>(medianovaRoot, "playerIPEnabled", false);
 
 								playURL = getMedianovaSignedTokenURL(
 									playURLProtocol, playURLHostName, uri, secureToken, ttlInSeconds, playerIP,
@@ -501,7 +501,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 				}
 				else if (outputType == "HLS_Channel")
 				{
-					localDeliveryCode = JSONUtils::asInt64(outputRoot, "deliveryCode", -1);
+					localDeliveryCode = JSONUtils::as<int64_t>(outputRoot, "deliveryCode", -1);
 				}
 
 				LOG_INFO(
@@ -833,7 +833,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 				throw runtime_error(errorMessage);
 			}
-			deliveryCode = JSONUtils::asInt64(ingestionJobRoot, field, 0);
+			deliveryCode = JSONUtils::as<int64_t>(ingestionJobRoot, field, 0);
 
 			string deliveryURI;
 			string liveFileExtension = "m3u8";
@@ -940,18 +940,18 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		}}
 		*/
 
-		json hlsLiveRoot = JSONUtils::asJson(requestWorkspace->_externalDeliveriesRoot, "HLS-live", json());
+		json hlsLiveRoot = JSONUtils::as<json>(requestWorkspace->_externalDeliveriesRoot, "HLS-live", json());
 
-		json countryMapRoot = JSONUtils::asJson(hlsLiveRoot, "countryMap", json());
-		json hostGroupsRoot = JSONUtils::asJson(hlsLiveRoot, "hostGroups", json());
+		json countryMapRoot = JSONUtils::as<json>(hlsLiveRoot, "countryMap", json());
+		json hostGroupsRoot = JSONUtils::as<json>(hlsLiveRoot, "hostGroups", json());
 
 		string externalDeliveriesGroup = "default";
 		if (!playerRegion.empty())
-			externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, std::format("{}-{}", playerCountry, playerRegion), "default");
+			externalDeliveriesGroup = JSONUtils::as<string>(countryMapRoot, std::format("{}-{}", playerCountry, playerRegion), "default");
 		if (externalDeliveriesGroup == "default")
-			externalDeliveriesGroup = JSONUtils::asString(countryMapRoot, playerCountry, "default");
+			externalDeliveriesGroup = JSONUtils::as<string>(countryMapRoot, playerCountry, "default");
 
-		json hostGroupRoot = JSONUtils::asJson(hostGroupsRoot, externalDeliveriesGroup, json::array());
+		json hostGroupRoot = JSONUtils::as<json>(hostGroupsRoot, externalDeliveriesGroup, json::array());
 		if (!hostGroupRoot.empty())
 		{
 			shared_ptr<HostsBandwidthTracker> hostBandwidthTracker =

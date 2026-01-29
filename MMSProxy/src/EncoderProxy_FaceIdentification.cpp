@@ -43,7 +43,7 @@ string EncoderProxy::faceIdentification()
 		vector<string> deepLearnedModelTags;
 
 		string field = "deepLearnedModelTagsCommaSeparated";
-		stringstream ssDeepLearnedModelTagsCommaSeparated(JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, ""));
+		stringstream ssDeepLearnedModelTagsCommaSeparated(JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, ""));
 		while (ssDeepLearnedModelTagsCommaSeparated.good())
 		{
 			string tag;
@@ -100,7 +100,7 @@ string EncoderProxy::faceIdentification()
 			if (totalImagesNumber == -1)
 			{
 				field = "numFound";
-				totalImagesNumber = JSONUtils::asInt32(responseRoot, field, 0);
+				totalImagesNumber = JSONUtils::as<int32_t>(responseRoot, field, 0);
 			}
 
 			field = "mediaItems";
@@ -127,7 +127,7 @@ string EncoderProxy::faceIdentification()
 				unordered_map<string, int>::iterator tagIdIterator;
 
 				field = "tags";
-				string tags = JSONUtils::asString(mediaItemRoot, field, "");
+				string tags = JSONUtils::as<string>(mediaItemRoot, field, "");
 				if (tags.front() == ',')
 					tags = tags.substr(1);
 				if (tags.back() == ',')
@@ -157,7 +157,7 @@ string EncoderProxy::faceIdentification()
 					json physicalPathRoot = physicalPathsArrayRoot[0];
 
 					field = "physicalPathKey";
-					int64_t physicalPathKey = JSONUtils::asInt64(physicalPathRoot, field, 0);
+					int64_t physicalPathKey = JSONUtils::as<int64_t>(physicalPathRoot, field, 0);
 
 					tuple<string, int, string, string, int64_t, string> physicalPathFileNameSizeInBytesAndDeliveryFileName =
 						_mmsStorage->getPhysicalPathDetails(
@@ -202,10 +202,10 @@ string EncoderProxy::faceIdentification()
 	string sourcePhysicalPath;
 	{
 		string field = "faceIdentificationCascadeName";
-		faceIdentificationCascadeName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, string());
+		faceIdentificationCascadeName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, string());
 
 		field = "sourcePhysicalPath";
-		sourcePhysicalPath = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, string());
+		sourcePhysicalPath = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, string());
 	}
 
 	string cascadePathName = _computerVisionCascadePath + "/" + faceIdentificationCascadeName + ".xml";

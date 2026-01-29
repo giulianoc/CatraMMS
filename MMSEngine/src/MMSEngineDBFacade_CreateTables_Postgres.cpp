@@ -1113,8 +1113,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						json encodingMedatada = JSONUtils::toJson<json>(jsonProfile);
 
-						string label = JSONUtils::asString(encodingMedatada, "label", "");
-						string fileFormat = JSONUtils::asString(encodingMedatada, "fileFormat", "");
+						string label = JSONUtils::as<string>(encodingMedatada, "label", "");
+						string fileFormat = JSONUtils::as<string>(encodingMedatada, "fileFormat", "");
 
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 
@@ -1417,21 +1417,27 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create table if not exists MMS_DeliveryServer ("
-				"deliveryServerKey		bigint GENERATED ALWAYS AS IDENTITY,"
-				"label					text NOT NULL,"
-				"external				boolean NOT NULL,"
-				"enabled				boolean NOT NULL,"
-				"publicServerName		text NOT NULL,"
-				"internalServerName		text NOT NULL,"
-				"txAvgBandwidthUsage	bigint,"
-				"rxAvgBandwidthUsage	bigint,"
-				"bandwidthUsageUpdateTime	timestamp without time zone,"
-				"cpuUsage				integer,"
-				"cpuUsageUpdateTime		timestamp without time zone,"
-				"selectedLastTime		timestamp without time zone not null default (NOW() at time zone 'utc'),"
-				"constraint MMS_DeliveryServer_PK PRIMARY KEY (deliveryServerKey), "
-				"UNIQUE (label)) ";
+			string sqlStatement = R"(
+				create table if not exists MMS_DeliveryServer (
+					deliveryServerKey bigint GENERATED ALWAYS AS IDENTITY,
+					label text NOT NULL,
+					type text NOT NULL, -- origin/edge
+					originDeliveryServerKey	bigint, -- null if type = origin (indica l'origin server associato ad un edge)
+					external boolean NOT NULL,
+					enabled boolean NOT NULL,
+					publicServerName text NOT NULL,
+					internalServerName text NOT NULL,
+					txAvgBandwidthUsage	bigint,
+					rxAvgBandwidthUsage	bigint,
+					bandwidthUsageUpdateTime timestamp without time zone,
+					cpuUsage integer,
+					cpuUsageUpdateTime timestamp without time zone,
+					selectedLastTime timestamp without time zone not null default (NOW() at time zone 'utc'),
+					constraint MMS_DeliveryServer_PK PRIMARY KEY (deliveryServerKey),
+					constraint MMS_DeliveryServer_FK1 foreign key (originDeliveryServerKey)
+						references MMS_DeliveryServer (deliveryServerKey) on delete cascade,
+					UNIQUE (label))
+			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -2047,7 +2053,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						json workflowRoot = JSONUtils::toJson<json>(jsonWorkflow);
 
-						string label = JSONUtils::asString(workflowRoot, "label", "");
+						string label = JSONUtils::as<string>(workflowRoot, "label", "");
 
 						int64_t workspaceKey = -1;
 						addUpdateWorkflowAsLibrary(trans, -1, workspaceKey, label, -1, jsonWorkflow, true);

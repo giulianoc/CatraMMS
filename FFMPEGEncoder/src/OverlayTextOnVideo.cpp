@@ -26,12 +26,12 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "sourceDurationInMilliSeconds", -1);
+		int64_t videoDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "sourceDurationInMilliSeconds", -1);
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
@@ -51,7 +51,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string sourceAssetPathName;
@@ -73,7 +73,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -112,7 +112,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -151,7 +151,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			string sourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
@@ -173,7 +173,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -189,7 +189,7 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		json drawTextDetailsRoot = metadataRoot["ingestedParametersRoot"]["drawTextDetails"];
@@ -229,9 +229,9 @@ void OverlayTextOnVideo::encodeContent(json metadataRoot)
 				fs::remove_all(sourceAssetPathName);
 			}
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add overlayTextOnVideo from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add overlayTextOnVideo from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

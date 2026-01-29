@@ -32,7 +32,7 @@ void MMSEngineProcessor::manageVODProxy(
 		// l'encodersPool che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
 		// In questo modo è possibile cambiare tramite API l'encoder per fare uno switch di un ingestionJob da un encoder ad un'altro
 		{
-			string taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, "encodersPool", "");
+			string taskEncodersPoolLabel = JSONUtils::as<string>(parametersRoot, "encodersPool", "");
 
 			json encodersDetailsRoot;
 
@@ -59,7 +59,7 @@ void MMSEngineProcessor::manageVODProxy(
 			string field = "timePeriod";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
-				timePeriod = JSONUtils::asBool(parametersRoot, field, false);
+				timePeriod = JSONUtils::as<bool>(parametersRoot, field, false);
 				if (timePeriod)
 				{
 					field = "schedule";
@@ -87,7 +87,7 @@ void MMSEngineProcessor::manageVODProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
+					string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
 					utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
 					field = "end";
@@ -100,13 +100,13 @@ void MMSEngineProcessor::manageVODProxy(
 						throw runtime_error(errorMessage);
 					}
 
-					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
+					string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
 					utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
 				}
 			}
 
 			field = "defaultBroadcast";
-			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
+			defaultBroadcast = JSONUtils::as<bool>(parametersRoot, field, false);
 
 			field = "outputs";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -268,7 +268,7 @@ void MMSEngineProcessor::manageVODProxy(
 			if (JSONUtils::isPresent(parametersRoot, "broadcastFilters"))
 				filtersRoot = parametersRoot["broadcastFilters"];
 
-			string otherInputOptions = JSONUtils::asString(parametersRoot, "otherInputOptions");
+			string otherInputOptions = JSONUtils::as<string>(parametersRoot, "otherInputOptions");
 
 			// same json structure is used in
 			// API_Ingestion::changeLiveProxyPlaylist

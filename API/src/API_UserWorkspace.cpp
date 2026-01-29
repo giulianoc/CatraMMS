@@ -90,7 +90,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			}
 		}
 
-		email = JSONUtils::asString(metadataRoot, "email", "");
+		email = JSONUtils::as<string>(metadataRoot, "email", "");
 		try
 		{
 			emailFormatCheck(email);
@@ -106,12 +106,12 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			throw runtime_error(errorMessage);
 		}
 
-		password = JSONUtils::asString(metadataRoot, "password", "");
-		shareWorkspaceCode = JSONUtils::asString(metadataRoot, "shareWorkspaceCode", "");
+		password = JSONUtils::as<string>(metadataRoot, "password", "");
+		shareWorkspaceCode = JSONUtils::as<string>(metadataRoot, "shareWorkspaceCode", "");
 
-		string name = JSONUtils::asString(metadataRoot, "name", "");
-		string country = JSONUtils::asString(metadataRoot, "country", "");
-		string timezone = JSONUtils::asString(metadataRoot, "timezone", "CET");
+		string name = JSONUtils::as<string>(metadataRoot, "name", "");
+		string country = JSONUtils::as<string>(metadataRoot, "country", "");
+		string timezone = JSONUtils::as<string>(metadataRoot, "timezone", "CET");
 
 		if (shareWorkspaceCode.empty())
 		{
@@ -120,7 +120,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			int maxIngestionsNumber;
 			int maxStorageInMB;
 
-			string workspaceName = JSONUtils::asString(metadataRoot, "workspaceName", "");
+			string workspaceName = JSONUtils::as<string>(metadataRoot, "workspaceName", "");
 			if (workspaceName.empty())
 			{
 				if (!name.empty())
@@ -690,7 +690,7 @@ void API::shareWorkspace_(
 		string name;
 		bool userAlreadyPresent;
 
-		string email = JSONUtils::asString(metadataRoot, "email", "");
+		string email = JSONUtils::as<string>(metadataRoot, "email", "");
 		try
 		{
 			emailFormatCheck(email);
@@ -1116,13 +1116,13 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				}
 
 				string field = "email";
-				string email = JSONUtils::asString(metadataRoot, field, "");
+				string email = JSONUtils::as<string>(metadataRoot, field, "");
 
 				field = "password";
-				string password = JSONUtils::asString(metadataRoot, field, "");
+				string password = JSONUtils::as<string>(metadataRoot, field, "");
 
 				field = "remoteClientIPAddress";
-				remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
+				remoteClientIPAddress = JSONUtils::as<string>(metadataRoot, field, "");
 
 				try
 				{
@@ -1141,7 +1141,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 					loginDetailsRoot[field] = _mmsVersion;
 
 					field = "userKey";
-					userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
+					userKey = JSONUtils::as<int64_t>(loginDetailsRoot, field, 0);
 
 					LOG_INFO(
 						"Login User"
@@ -1179,13 +1179,13 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 				}
 
 				string field = "name";
-				string userName = JSONUtils::asString(metadataRoot, field, "");
+				string userName = JSONUtils::as<string>(metadataRoot, field, "");
 
 				field = "password";
-				string password = JSONUtils::asString(metadataRoot, field, "");
+				string password = JSONUtils::as<string>(metadataRoot, field, "");
 
 				field = "remoteClientIPAddress";
-				remoteClientIPAddress = JSONUtils::asString(metadataRoot, field, "");
+				remoteClientIPAddress = JSONUtils::as<string>(metadataRoot, field, "");
 
 				try
 				{
@@ -1265,7 +1265,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						loginDetailsRoot[field] = _ldapEnabled;
 
 						field = "userKey";
-						userKey = JSONUtils::asInt64(loginDetailsRoot, field, 0);
+						userKey = JSONUtils::as<int64_t>(loginDetailsRoot, field, 0);
 
 						LOG_INFO(
 							"Login User"
@@ -1347,7 +1347,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						);
 
 						loginDetailsRoot["ldapEnabled"] = _ldapEnabled;
-						userKey = JSONUtils::asInt64(loginDetailsRoot, "userKey", 0);
+						userKey = JSONUtils::as<int64_t>(loginDetailsRoot, "userKey", 0);
 
 						LOG_INFO(
 							"Login User"
@@ -1515,14 +1515,14 @@ void API::updateUser(
 			string field = "name";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
-				name = JSONUtils::asString(metadataRoot, field, "");
+				name = JSONUtils::as<string>(metadataRoot, field, "");
 				nameChanged = true;
 			}
 
 			field = "email";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
-				email = JSONUtils::asString(metadataRoot, field, "");
+				email = JSONUtils::as<string>(metadataRoot, field, "");
 				try
 				{
 					emailFormatCheck(email);
@@ -1546,14 +1546,14 @@ void API::updateUser(
 			field = "country";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
-				country = JSONUtils::asString(metadataRoot, field, "");
+				country = JSONUtils::as<string>(metadataRoot, field, "");
 				countryChanged = true;
 			}
 
 			field = "timezone";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
-				timezone = JSONUtils::asString(metadataRoot, field, "CET");
+				timezone = JSONUtils::as<string>(metadataRoot, field, "CET");
 				timezoneChanged = true;
 			}
 
@@ -1562,7 +1562,7 @@ void API::updateUser(
 				field = "insolvent";
 				if (JSONUtils::isPresent(metadataRoot, field))
 				{
-					insolvent = JSONUtils::asBool(metadataRoot, field, false);
+					insolvent = JSONUtils::as<bool>(metadataRoot, field, false);
 					insolventChanged = true;
 				}
 			}
@@ -1572,7 +1572,7 @@ void API::updateUser(
 				field = "expirationDate";
 				if (JSONUtils::isPresent(metadataRoot, field))
 				{
-					expirationUtcDate = JSONUtils::asString(metadataRoot, field, "");
+					expirationUtcDate = JSONUtils::as<string>(metadataRoot, field, "");
 					expirationDateChanged = true;
 				}
 			}
@@ -1580,8 +1580,8 @@ void API::updateUser(
 			if (JSONUtils::isPresent(metadataRoot, "newPassword") && JSONUtils::isPresent(metadataRoot, "oldPassword"))
 			{
 				passwordChanged = true;
-				newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
-				oldPassword = JSONUtils::asString(metadataRoot, "oldPassword", "");
+				newPassword = JSONUtils::as<string>(metadataRoot, "newPassword", "");
+				oldPassword = JSONUtils::as<string>(metadataRoot, "oldPassword", "");
 			}
 		}
 		else
@@ -1589,14 +1589,14 @@ void API::updateUser(
 			string field = "country";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
-				country = JSONUtils::asString(metadataRoot, field, "");
+				country = JSONUtils::as<string>(metadataRoot, field, "");
 				countryChanged = true;
 			}
 
 			field = "timezone";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
-				timezone = JSONUtils::asString(metadataRoot, field, "CET");
+				timezone = JSONUtils::as<string>(metadataRoot, field, "CET");
 				timezoneChanged = true;
 			}
 		}
@@ -1792,7 +1792,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 			throw runtime_error(errorMessage);
 		}
 
-		resetPasswordToken = JSONUtils::asString(metadataRoot, "resetPasswordToken", "");
+		resetPasswordToken = JSONUtils::as<string>(metadataRoot, "resetPasswordToken", "");
 		if (resetPasswordToken.empty())
 		{
 			string errorMessage = "The 'resetPasswordToken' parameter is not found";
@@ -1801,7 +1801,7 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 			throw runtime_error(errorMessage);
 		}
 
-		newPassword = JSONUtils::asString(metadataRoot, "newPassword", "");
+		newPassword = JSONUtils::as<string>(metadataRoot, "newPassword", "");
 		if (newPassword.empty())
 		{
 			string errorMessage = "The 'newPassword' parameter is not found";
@@ -1991,152 +1991,152 @@ void API::updateWorkspace(
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			enabledChanged = true;
-			newEnabled = JSONUtils::asBool(metadataRoot, field, false);
+			newEnabled = JSONUtils::as<bool>(metadataRoot, field, false);
 		}
 
 		field = "workspaceName";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			nameChanged = true;
-			newName = JSONUtils::asString(metadataRoot, field, "");
+			newName = JSONUtils::as<string>(metadataRoot, field, "");
 		}
 
 		field = "workspaceNotes";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			notesChanged = true;
-			newNotes = JSONUtils::asString(metadataRoot, field, "");
+			newNotes = JSONUtils::as<string>(metadataRoot, field, "");
 		}
 
 		field = "maxEncodingPriority";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			maxEncodingPriorityChanged = true;
-			newMaxEncodingPriority = JSONUtils::asString(metadataRoot, field, "");
+			newMaxEncodingPriority = JSONUtils::as<string>(metadataRoot, field, "");
 		}
 
 		field = "encodingPeriod";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			encodingPeriodChanged = true;
-			newEncodingPeriod = JSONUtils::asString(metadataRoot, field, "");
+			newEncodingPeriod = JSONUtils::as<string>(metadataRoot, field, "");
 		}
 
 		field = "maxIngestionsNumber";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			maxIngestionsNumberChanged = true;
-			newMaxIngestionsNumber = JSONUtils::asInt64(metadataRoot, field, 0);
+			newMaxIngestionsNumber = JSONUtils::as<int64_t>(metadataRoot, field, 0);
 		}
 
 		field = "languageCode";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			languageCodeChanged = true;
-			newLanguageCode = JSONUtils::asString(metadataRoot, field, "");
+			newLanguageCode = JSONUtils::as<string>(metadataRoot, field, "");
 		}
 
 		field = "timezone";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			timezoneChanged = true;
-			newTimezone = JSONUtils::asString(metadataRoot, field, "CET");
+			newTimezone = JSONUtils::as<string>(metadataRoot, field, "CET");
 		}
 
 		if (JSONUtils::isPresent(metadataRoot, "preferences"))
 		{
 			preferencesChanged = true;
-			newPreferences = JSONUtils::asString(metadataRoot, "preferences", "");
+			newPreferences = JSONUtils::as<string>(metadataRoot, "preferences", "");
 		}
 
 		if (JSONUtils::isPresent(metadataRoot, "externalDeliveries"))
 		{
 			externalDeliveriesChanged = true;
-			newExternalDeliveries = JSONUtils::asString(metadataRoot, "externalDeliveries", "");
+			newExternalDeliveries = JSONUtils::as<string>(metadataRoot, "externalDeliveries", "");
 		}
 
 		field = "maxStorageInGB";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			maxStorageInGBChanged = true;
-			maxStorageInGB = JSONUtils::asInt64(metadataRoot, field, -1);
+			maxStorageInGB = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForStorage";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForStorageChanged = true;
-			currentCostForStorage = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForStorage = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "dedicatedEncoder_power_1";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			dedicatedEncoder_power_1Changed = true;
-			dedicatedEncoder_power_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+			dedicatedEncoder_power_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForDedicatedEncoder_power_1";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForDedicatedEncoder_power_1Changed = true;
-			currentCostForDedicatedEncoder_power_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForDedicatedEncoder_power_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "dedicatedEncoder_power_2";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			dedicatedEncoder_power_2Changed = true;
-			dedicatedEncoder_power_2 = JSONUtils::asInt64(metadataRoot, field, -1);
+			dedicatedEncoder_power_2 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForDedicatedEncoder_power_2";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForDedicatedEncoder_power_2Changed = true;
-			currentCostForDedicatedEncoder_power_2 = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForDedicatedEncoder_power_2 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "dedicatedEncoder_power_3";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			dedicatedEncoder_power_3Changed = true;
-			dedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
+			dedicatedEncoder_power_3 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForDedicatedEncoder_power_3";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForDedicatedEncoder_power_3Changed = true;
-			currentCostForDedicatedEncoder_power_3 = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForDedicatedEncoder_power_3 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "CDN_type_1";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			CDN_type_1Changed = true;
-			CDN_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+			CDN_type_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "currentCostForCDN_type_1";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForCDN_type_1Changed = true;
-			currentCostForCDN_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForCDN_type_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "support_type_1";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			support_type_1Changed = true;
-			support_type_1 = JSONUtils::asBool(metadataRoot, field, false);
+			support_type_1 = JSONUtils::as<bool>(metadataRoot, field, false);
 		}
 
 		field = "currentCostForSupport_type_1";
 		if (JSONUtils::isPresent(metadataRoot, field))
 		{
 			currentCostForSupport_type_1Changed = true;
-			currentCostForSupport_type_1 = JSONUtils::asInt64(metadataRoot, field, -1);
+			currentCostForSupport_type_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
 		}
 
 		field = "userAPIKey";
@@ -2171,46 +2171,46 @@ void API::updateWorkspace(
 			if (JSONUtils::isPresent(userAPIKeyRoot, field))
 			{
 				expirationDateChanged = true;
-				newExpirationUtcDate = JSONUtils::asString(userAPIKeyRoot, field, "");
+				newExpirationUtcDate = JSONUtils::as<string>(userAPIKeyRoot, field, "");
 			}
 
 			field = "createRemoveWorkspace";
-			newCreateRemoveWorkspace = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newCreateRemoveWorkspace = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "ingestWorkflow";
-			newIngestWorkflow = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newIngestWorkflow = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "createProfiles";
-			newCreateProfiles = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newCreateProfiles = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "deliveryAuthorization";
-			newDeliveryAuthorization = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newDeliveryAuthorization = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "shareWorkspace";
-			newShareWorkspace = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newShareWorkspace = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "editMedia";
-			newEditMedia = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newEditMedia = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "editConfiguration";
-			newEditConfiguration = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newEditConfiguration = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "killEncoding";
-			newKillEncoding = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newKillEncoding = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "cancelIngestionJob";
-			newCancelIngestionJob = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newCancelIngestionJob = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
 			field = "editEncodersPool";
-			newEditEncodersPool = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newEditEncodersPool = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
-			newEditDeliveryServersPool = JSONUtils::asBool(userAPIKeyRoot, "editDeliveryServersPool", false);
+			newEditDeliveryServersPool = JSONUtils::as<bool>(userAPIKeyRoot, "editDeliveryServersPool", false);
 
 			field = "applicationRecorder";
-			newApplicationRecorder = JSONUtils::asBool(userAPIKeyRoot, field, false);
+			newApplicationRecorder = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
 
-			newCreateRemoveLiveChannel = JSONUtils::asBool(userAPIKeyRoot, "createRemoveLiveChannel", false);
-			newUpdateEncoderAndDeliveryStats = JSONUtils::asBool(userAPIKeyRoot, "updateEncoderAndDeliveryStats", false);
+			newCreateRemoveLiveChannel = JSONUtils::as<bool>(userAPIKeyRoot, "createRemoveLiveChannel", false);
+			newUpdateEncoderAndDeliveryStats = JSONUtils::as<bool>(userAPIKeyRoot, "updateEncoderAndDeliveryStats", false);
 		}
 
 		try

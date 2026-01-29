@@ -32,20 +32,20 @@ LiveRecorderDaemons::LiveRecorderDaemons(
 		_liveRecorderChunksIngestionThreadShutdown = false;
 		_liveRecorderVirtualVODIngestionThreadShutdown = false;
 
-		_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
+		_liveRecorderChunksIngestionCheckInSeconds = JSONUtils::as<int32_t>(configurationRoot["ffmpeg"], "liveRecorderChunksIngestionCheckInSeconds", 5);
 		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->liveRecorderChunksIngestionCheckInSeconds: {}",
 			_liveRecorderChunksIngestionCheckInSeconds
 		);
 
-		_liveRecorderVirtualVODRetention = JSONUtils::asString(configurationRoot["ffmpeg"], "liveRecorderVirtualVODRetention", "15m");
+		_liveRecorderVirtualVODRetention = JSONUtils::as<string>(configurationRoot["ffmpeg"], "liveRecorderVirtualVODRetention", "15m");
 		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->liveRecorderVirtualVODRetention: {}",
 			_liveRecorderVirtualVODRetention
 		);
-		_liveRecorderVirtualVODIngestionInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
+		_liveRecorderVirtualVODIngestionInSeconds = JSONUtils::as<int32_t>(configurationRoot["ffmpeg"], "liveRecorderVirtualVODIngestionInSeconds", 5);
 		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->liveRecorderVirtualVODIngestionInSeconds: {}",
@@ -118,10 +118,10 @@ void LiveRecorderDaemons::startChunksIngestionThread()
 							string outputFileFormat;
 							{
 								string field = "segmentDuration";
-								segmentDurationInSeconds = JSONUtils::asInt32(liveRecording->_ingestedParametersRoot, field, -1);
+								segmentDurationInSeconds = JSONUtils::as<int32_t>(liveRecording->_ingestedParametersRoot, field, -1);
 
 								field = "outputFileFormat";
-								outputFileFormat = JSONUtils::asString(liveRecording->_ingestedParametersRoot, field, "ts");
+								outputFileFormat = JSONUtils::as<string>(liveRecording->_ingestedParametersRoot, field, "ts");
 							}
 
 							tuple<string, int, int64_t> lastRecordedAssetInfo;
@@ -344,8 +344,8 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 					try
 					{
-						int64_t recordingCode = JSONUtils::asInt64(copiedLiveRecording->_ingestedParametersRoot, "recordingCode", 0);
-						string ingestionJobLabel = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, "ingestionJobLabel", "");
+						int64_t recordingCode = JSONUtils::as<int64_t>(copiedLiveRecording->_ingestedParametersRoot, "recordingCode", 0);
+						string ingestionJobLabel = JSONUtils::as<string>(copiedLiveRecording->_encodingParametersRoot, "ingestionJobLabel", "");
 						string liveRecorderVirtualVODUniqueName =
 							ingestionJobLabel + "(" + to_string(recordingCode) + "_" + to_string(copiedLiveRecording->_ingestionJobKey) + ")";
 
@@ -363,10 +363,10 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 									json credentialsRoot = internalMMSRoot[field];
 
 									field = "userKey";
-									userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+									userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 									field = "apiKey";
-									string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+									string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 									apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 								}
 							}
@@ -390,7 +390,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 								throw runtime_error(errorMessage);
 							}
-							mmsWorkflowIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
+							mmsWorkflowIngestionURL = JSONUtils::as<string>(copiedLiveRecording->_encodingParametersRoot, field, "");
 
 							field = "mmsBinaryIngestionURL";
 							if (!JSONUtils::isPresent(copiedLiveRecording->_encodingParametersRoot, field))
@@ -406,7 +406,7 @@ void LiveRecorderDaemons::startVirtualVODIngestionThread()
 
 								throw runtime_error(errorMessage);
 							}
-							mmsBinaryIngestionURL = JSONUtils::asString(copiedLiveRecording->_encodingParametersRoot, field, "");
+							mmsBinaryIngestionURL = JSONUtils::as<string>(copiedLiveRecording->_encodingParametersRoot, field, "");
 							*/
 						}
 
@@ -685,14 +685,14 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 			string uniqueName;
 			{
-				int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+				int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 
 				uniqueName = to_string(recordingCode);
 				uniqueName += " - ";
 				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
 			}
 
-			string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
+			string ingestionJobLabel = JSONUtils::as<string>(encodingParametersRoot, "ingestionJobLabel", "");
 
 			// UserData
 			json userDataRoot;
@@ -704,7 +704,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 				json liveRecordingChunkRoot;
 				{
-					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+					int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 					// recordingCode is used by DB generated column
 					liveRecordingChunkRoot["recordingCode"] = recordingCode;
 				}
@@ -729,7 +729,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				if (streamSourceType == "IP_PUSH")
 				{
 					int64_t recordingCode =
-				JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+				JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 					addContentTitle = to_string(recordingCode);
 				}
 				else
@@ -749,7 +749,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				// "").asString();
 				if (ingestionJobLabel == "")
 				{
-					int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+					int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 					addContentTitle = to_string(recordingCode);
 				}
 				else
@@ -1185,14 +1185,14 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 						{
 							string uniqueName;
 							{
-								int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+								int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 
 								uniqueName = to_string(recordingCode);
 								uniqueName += " - ";
 								uniqueName += to_string(toBeIngestedSegmentUtcStartTimeInMillisecs);
 							}
 
-							string ingestionJobLabel = JSONUtils::asString(encodingParametersRoot, "ingestionJobLabel", "");
+							string ingestionJobLabel = JSONUtils::as<string>(encodingParametersRoot, "ingestionJobLabel", "");
 
 							// UserData
 							json userDataRoot;
@@ -1205,7 +1205,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 								json liveRecordingChunkRoot;
 
 								{
-									int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+									int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 									// recordingCode is used by DB generated
 									// column
 									liveRecordingChunkRoot["recordingCode"] = recordingCode;
@@ -1234,7 +1234,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 							{
 								if (ingestionJobLabel == "")
 								{
-									int64_t recordingCode = JSONUtils::asInt64(ingestedParametersRoot, "recordingCode", 0);
+									int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
 									addContentTitle = to_string(recordingCode);
 								}
 								else
@@ -1611,10 +1611,10 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+					userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 			}
@@ -1635,7 +1635,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 			*/
 		}
 
@@ -1693,9 +1693,9 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 			{
 				json credentialsRoot = internalMMSRoot["credentials"];
 
-				userKey = JSONUtils::asInt64(credentialsRoot, "userKey", -1);
+				userKey = JSONUtils::as<int64_t>(credentialsRoot, "userKey", -1);
 
-				string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, "apiKey", "");
+				string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, "apiKey", "");
 				apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 			}
 		}
@@ -1714,7 +1714,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsWorkflowIngestionURL", "");
+			mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, "mmsWorkflowIngestionURL", "");
 			*/
 		}
 
@@ -1787,7 +1787,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfExternalTranscoder(
 
 				throw runtime_error(errorMessage);
 			}
-			mmsBinaryIngestionURL = JSONUtils::asString(encodingParametersRoot, "mmsBinaryIngestionURL", "");
+			mmsBinaryIngestionURL = JSONUtils::as<string>(encodingParametersRoot, "mmsBinaryIngestionURL", "");
 		}
 		*/
 

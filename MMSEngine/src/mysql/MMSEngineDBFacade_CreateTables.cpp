@@ -942,8 +942,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						Json::Value encodingMedatada = JSONUtils::toJson<json>(-1, -1, jsonProfile);
 
-						string label = JSONUtils::asString(encodingMedatada, "label", "");
-						string fileFormat = JSONUtils::asString(encodingMedatada, "fileFormat", "");
+						string label = JSONUtils::as<string>(encodingMedatada, "label", "");
+						string fileFormat = JSONUtils::as<string>(encodingMedatada, "fileFormat", "");
 
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology =
 							MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
@@ -1686,7 +1686,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						Json::Value workflowRoot = JSONUtils::toJson<json>(-1, -1, jsonWorkflow);
 
-						string label = JSONUtils::asString(workflowRoot, "label", "");
+						string label = JSONUtils::as<string>(workflowRoot, "label", "");
 
 						int64_t workspaceKey = -1;
 						addUpdateWorkflowAsLibrary(conn, -1, workspaceKey, label, -1,

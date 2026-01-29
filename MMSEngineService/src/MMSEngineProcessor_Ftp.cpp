@@ -37,7 +37,7 @@ void MMSEngineProcessor::ftpDeliveryContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			configurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		string ftpServer;

@@ -35,20 +35,20 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 		_liveProxyData->_killedBecauseOfNotWorking = false;
 		json metadataRoot = JSONUtils::toJson<json>(requestBody);
 
-		_liveProxyData->_ingestionJobKey = _encoding->_ingestionJobKey; // JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		_liveProxyData->_ingestionJobKey = _encoding->_ingestionJobKey; // JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
 
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 
 		json inputChannelsRoot = encodingParametersRoot["inputChannels"];
 
-		string userAgent = JSONUtils::asString(ingestedParametersRoot, "userAgent", "");
+		string userAgent = JSONUtils::as<string>(ingestedParametersRoot, "userAgent", "");
 
-		int gridColumns = JSONUtils::asInt32(ingestedParametersRoot, "columns", 0);
-		int gridWidth = JSONUtils::asInt32(ingestedParametersRoot, "gridWidth", 0);
-		int gridHeight = JSONUtils::asInt32(ingestedParametersRoot, "gridHeight", 0);
+		int gridColumns = JSONUtils::as<int32_t>(ingestedParametersRoot, "columns", 0);
+		int gridWidth = JSONUtils::as<int32_t>(ingestedParametersRoot, "gridWidth", 0);
+		int gridHeight = JSONUtils::as<int32_t>(ingestedParametersRoot, "gridHeight", 0);
 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 
 		_liveProxyData->_outputsRoot = encodingParametersRoot["outputsRoot"];
 		{
@@ -56,12 +56,12 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 			{
 				json outputRoot = _liveProxyData->_outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				// if (outputType == "HLS" || outputType == "DASH")
 				if (outputType == "HLS_Channel")
 				{
-					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+					string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
 
 					if (fs::exists(manifestDirectoryPath))
 					{

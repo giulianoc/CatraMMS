@@ -26,22 +26,22 @@ void SlideShow::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
 		float durationOfEachSlideInSeconds = 2.0;
 		string field = "durationOfEachSlideInSeconds";
-		durationOfEachSlideInSeconds = JSONUtils::asDouble(ingestedParametersRoot, field, 2.0);
+		durationOfEachSlideInSeconds = JSONUtils::as<double>(ingestedParametersRoot, field, 2.0);
 
 		float shortestAudioDurationInSeconds = -1.0;
 		field = "shortestAudioDurationInSeconds";
-		shortestAudioDurationInSeconds = JSONUtils::asDouble(encodingParametersRoot, field, -1.0);
+		shortestAudioDurationInSeconds = JSONUtils::as<double>(encodingParametersRoot, field, -1.0);
 
 		string frameRateMode = "vfr";
 		field = "frameRateMode";
-		frameRateMode = JSONUtils::asString(ingestedParametersRoot, field, "vfr");
+		frameRateMode = JSONUtils::as<string>(ingestedParametersRoot, field, "vfr");
 
 		vector<string> imagesPathNames;
 		{
@@ -66,7 +66,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceFileExtension = JSONUtils::asString(imageRoot, field, "");
+					string sourceFileExtension = JSONUtils::as<string>(imageRoot, field, "");
 
 					field = "sourcePhysicalDeliveryURL";
 					if (!JSONUtils::isPresent(imageRoot, field))
@@ -82,7 +82,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string sourcePhysicalDeliveryURL = JSONUtils::asString(imageRoot, field, "");
+					string sourcePhysicalDeliveryURL = JSONUtils::as<string>(imageRoot, field, "");
 
 					field = "sourceTranscoderStagingAssetPathName";
 					if (!JSONUtils::isPresent(imageRoot, field))
@@ -98,7 +98,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceTranscoderStagingAssetPathName = JSONUtils::asString(imageRoot, field, "");
+					string sourceTranscoderStagingAssetPathName = JSONUtils::as<string>(imageRoot, field, "");
 
 					{
 						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
@@ -130,7 +130,7 @@ void SlideShow::encodeContent(json metadataRoot)
 				}
 				else
 				{
-					imagesPathNames.push_back(JSONUtils::asString(imageRoot, "sourceAssetPathName", ""));
+					imagesPathNames.push_back(JSONUtils::as<string>(imageRoot, "sourceAssetPathName", ""));
 				}
 			}
 		}
@@ -158,7 +158,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceFileExtension = JSONUtils::asString(audioRoot, field, "");
+					string sourceFileExtension = JSONUtils::as<string>(audioRoot, field, "");
 
 					field = "sourcePhysicalDeliveryURL";
 					if (!JSONUtils::isPresent(audioRoot, field))
@@ -174,7 +174,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string sourcePhysicalDeliveryURL = JSONUtils::asString(audioRoot, field, "");
+					string sourcePhysicalDeliveryURL = JSONUtils::as<string>(audioRoot, field, "");
 
 					field = "sourceTranscoderStagingAssetPathName";
 					if (!JSONUtils::isPresent(audioRoot, field))
@@ -190,7 +190,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 						throw runtime_error(errorMessage);
 					}
-					string sourceTranscoderStagingAssetPathName = JSONUtils::asString(audioRoot, field, "");
+					string sourceTranscoderStagingAssetPathName = JSONUtils::as<string>(audioRoot, field, "");
 
 					{
 						size_t endOfDirectoryIndex = sourceTranscoderStagingAssetPathName.find_last_of("/");
@@ -222,7 +222,7 @@ void SlideShow::encodeContent(json metadataRoot)
 				}
 				else
 				{
-					audiosPathNames.push_back(JSONUtils::asString(audioRoot, "sourceAssetPathName", ""));
+					audiosPathNames.push_back(JSONUtils::as<string>(audioRoot, "sourceAssetPathName", ""));
 				}
 			}
 		}
@@ -244,7 +244,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -285,7 +285,7 @@ void SlideShow::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetailsRoot"];
@@ -346,11 +346,11 @@ void SlideShow::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string targetFileFormat = JSONUtils::asString(encodingParametersRoot, field, "");
+			string targetFileFormat = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add slideShow from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add slideShow from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

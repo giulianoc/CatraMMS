@@ -66,7 +66,7 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	);
 	/*
 	_addContentIngestionJobsNotCompletedRetentionInDays =
-		JSONUtils::asInt32(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
+		JSONUtils::as<int32_t>(configuration["mms"], "addContentIngestionJobsNotCompletedRetentionInDays", 1);
 	_logger->info(
 		__FILEREF__ + "Configuration item" +
 		", mms->addContentIngestionJobsNotCompletedRetentionInDays: " + to_string(_addContentIngestionJobsNotCompletedRetentionInDays)
@@ -216,7 +216,7 @@ MMSEngineDBFacade::~MMSEngineDBFacade() = default;
 
 void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigurationRoot)
 {
-	_defaultMaxQueryElapsed = JSONUtils::asInt32(slowQueryConfigurationRoot, "defaultMaxQueryElapsed", 100);
+	_defaultMaxQueryElapsed = JSONUtils::as<int32_t>(slowQueryConfigurationRoot, "defaultMaxQueryElapsed", 100);
 	LOG_DEBUG(
 		"Configuration item"
 		", defaultMaxQueryElapsed: {}",
@@ -231,8 +231,8 @@ void MMSEngineDBFacade::loadMaxQueryElapsedConfiguration(json slowQueryConfigura
 		{
 			for (auto &[keyRoot, valRoot] : maxQueryElapsedRoot.items())
 			{
-				string queryLabel = JSONUtils::asString(json(keyRoot), "", "");
-				long maxQueryElapsed = JSONUtils::asInt32(valRoot, "", 100);
+				string queryLabel = JSONUtils::as<string>(json(keyRoot), "", "");
+				long maxQueryElapsed = JSONUtils::as<int32_t>(valRoot, "", 100);
 				_maxQueryElapsed.insert(make_pair(queryLabel, maxQueryElapsed));
 			}
 		}
@@ -1644,7 +1644,7 @@ string MMSEngineDBFacade::getPostgresArray(const json& arrayRoot, const bool emp
 	bool first = true;
 	for (const auto& elementRoot : arrayRoot)
 	{
-		string element = JSONUtils::asString(elementRoot);
+		string element = JSONUtils::as<string>(elementRoot);
 
 		if (emptyElementToBeRemoved && element.empty())
 			continue;

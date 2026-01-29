@@ -29,7 +29,7 @@ void MMSEngineProcessor::manageCountdown(
 		// l'encodersPool che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
 		// In questo modo è possibile cambiare tramite API l'encoder per fare uno switch di un ingestionJob da un encoder ad un'altro
 		{
-			string taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, "encodersPool", "");
+			string taskEncodersPoolLabel = JSONUtils::as<string>(parametersRoot, "encodersPool", "");
 
 			json encodersDetailsRoot;
 
@@ -53,7 +53,7 @@ void MMSEngineProcessor::manageCountdown(
 		int64_t utcProxyPeriodEnd = -1;
 		{
 			string field = "defaultBroadcast";
-			defaultBroadcast = JSONUtils::asBool(parametersRoot, field, false);
+			defaultBroadcast = JSONUtils::as<bool>(parametersRoot, field, false);
 
 			field = "schedule";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -78,7 +78,7 @@ void MMSEngineProcessor::manageCountdown(
 
 				throw runtime_error(errorMessage);
 			}
-			string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, field, "");
+			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
 			utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
 			field = "end";
@@ -90,7 +90,7 @@ void MMSEngineProcessor::manageCountdown(
 
 				throw runtime_error(errorMessage);
 			}
-			string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, field, "");
+			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
 			utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
 		}
 

@@ -715,7 +715,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 		vector<int64_t> encoderKeys;
 		for (const auto & encoderLabelRoot : sharedEncodersLabel)
 		{
-			string encoderLabel = JSONUtils::asString(encoderLabelRoot);
+			string encoderLabel = JSONUtils::as<string>(encoderLabelRoot);
 
 			string sqlStatement = std::format(
 				"select encoderKey from MMS_Encoder "

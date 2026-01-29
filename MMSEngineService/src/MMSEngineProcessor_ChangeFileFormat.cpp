@@ -44,7 +44,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 
 				throw runtime_error(errorMessage);
 			}
-			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
+			outputFileFormat = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		int dependencyIndex = 0;
@@ -385,7 +385,7 @@ void MMSEngineProcessor::changeFileFormatThread(
 							string field = "physicalItemRetention";
 							if (JSONUtils::isPresent(parametersRoot, field))
 							{
-								string retention = JSONUtils::asString(parametersRoot, field, "1d");
+								string retention = JSONUtils::as<string>(parametersRoot, field, "1d");
 								physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 							}
 						}

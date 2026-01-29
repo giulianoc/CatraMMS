@@ -45,7 +45,7 @@ void MMSEngineProcessor::manageLiveGrid(
 			json inputChannelsRoot = parametersRoot[field];
 			for (int inputChannelIndex = 0; inputChannelIndex < inputChannelsRoot.size(); inputChannelIndex++)
 			{
-				string configurationLabel = JSONUtils::asString(inputChannelsRoot[inputChannelIndex]);
+				string configurationLabel = JSONUtils::as<string>(inputChannelsRoot[inputChannelIndex]);
 
 				/*
 				bool warningIfMissing = false;

@@ -69,21 +69,21 @@ void API::updateMediaItem(
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				titleModified = true;
-				newTitle = JSONUtils::asString(metadataRoot, "title", "");
+				newTitle = JSONUtils::as<string>(metadataRoot, "title", "");
 			}
 
 			field = "userData";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				userDataModified = true;
-				newUserData = JSONUtils::asString(metadataRoot, "userData", "");
+				newUserData = JSONUtils::as<string>(metadataRoot, "userData", "");
 			}
 
 			field = "RetentionInMinutes";
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				retentionInMinutesModified = true;
-				newRetentionInMinutes = JSONUtils::asInt64(metadataRoot, "RetentionInMinutes", 0);
+				newRetentionInMinutes = JSONUtils::as<int64_t>(metadataRoot, "RetentionInMinutes", 0);
 			}
 
 			field = "tags";
@@ -97,7 +97,7 @@ void API::updateMediaItem(
 			if (JSONUtils::isPresent(metadataRoot, field))
 			{
 				uniqueNameModified = true;
-				newUniqueName = JSONUtils::asString(metadataRoot, field, "");
+				newUniqueName = JSONUtils::as<string>(metadataRoot, field, "");
 			}
 
 			field = "crossReferences";
@@ -211,7 +211,7 @@ void API::updatePhysicalPath(
 				}
 			}
 
-			newRetentionInMinutes = JSONUtils::asInt64(metadataRoot, "RetentionInMinutes", 0);
+			newRetentionInMinutes = JSONUtils::as<int64_t>(metadataRoot, "RetentionInMinutes", 0);
 		}
 
 		try

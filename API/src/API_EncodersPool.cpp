@@ -74,13 +74,13 @@ void API::addEncoder(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "External";
-			external = JSONUtils::asBool(requestBodyRoot, field, false);
+			external = JSONUtils::as<bool>(requestBodyRoot, field, false);
 
 			field = "Enabled";
-			enabled = JSONUtils::asBool(requestBodyRoot, field, true);
+			enabled = JSONUtils::as<bool>(requestBodyRoot, field, true);
 
 			field = "Protocol";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -94,7 +94,7 @@ void API::addEncoder(
 
 				throw runtime_error(errorMessage);
 			}
-			protocol = JSONUtils::asString(requestBodyRoot, field, "");
+			protocol = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "PublicServerName";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -108,7 +108,7 @@ void API::addEncoder(
 
 				throw runtime_error(errorMessage);
 			}
-			publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
+			publicServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "InternalServerName";
 			if (!JSONUtils::isPresent(requestBodyRoot, field))
@@ -122,12 +122,12 @@ void API::addEncoder(
 
 				throw runtime_error(errorMessage);
 			}
-			internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
+			internalServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "Port";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				port = JSONUtils::asInt32(requestBodyRoot, field, 80);
+				port = JSONUtils::as<int32_t>(requestBodyRoot, field, 80);
 			}
 			else
 			{
@@ -241,7 +241,7 @@ void API::modifyEncoder(
 			string field = "label";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				label = JSONUtils::asString(requestBodyRoot, field, "");
+				label = JSONUtils::as<string>(requestBodyRoot, field, "");
 				labelToBeModified = true;
 			}
 			else
@@ -250,7 +250,7 @@ void API::modifyEncoder(
 			field = "External";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				external = JSONUtils::asBool(requestBodyRoot, field, false);
+				external = JSONUtils::as<bool>(requestBodyRoot, field, false);
 				externalToBeModified = true;
 			}
 			else
@@ -259,7 +259,7 @@ void API::modifyEncoder(
 			field = "Enabled";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				enabled = JSONUtils::asBool(requestBodyRoot, field, true);
+				enabled = JSONUtils::as<bool>(requestBodyRoot, field, true);
 				enabledToBeModified = true;
 			}
 			else
@@ -268,7 +268,7 @@ void API::modifyEncoder(
 			field = "Protocol";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				protocol = JSONUtils::asString(requestBodyRoot, field, "");
+				protocol = JSONUtils::as<string>(requestBodyRoot, field, "");
 				protocolToBeModified = true;
 			}
 			else
@@ -277,7 +277,7 @@ void API::modifyEncoder(
 			field = "PublicServerName";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				publicServerName = JSONUtils::asString(requestBodyRoot, field, "");
+				publicServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
 				publicServerNameToBeModified = true;
 			}
 			else
@@ -286,7 +286,7 @@ void API::modifyEncoder(
 			field = "InternalServerName";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				internalServerName = JSONUtils::asString(requestBodyRoot, field, "");
+				internalServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
 				internalServerNameToBeModified = true;
 			}
 			else
@@ -295,7 +295,7 @@ void API::modifyEncoder(
 			field = "Port";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
 			{
-				port = JSONUtils::asInt32(requestBodyRoot, field, 80);
+				port = JSONUtils::as<int32_t>(requestBodyRoot, field, 80);
 				portToBeModified = true;
 			}
 			else
@@ -764,7 +764,7 @@ void API::addEncodersPool(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "encoderKeys";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -772,7 +772,7 @@ void API::addEncodersPool(
 				json encoderKeysRoot = requestBodyRoot[field];
 
 				for (const auto & encoderIndex : encoderKeysRoot)
-					encoderKeys.push_back(JSONUtils::asInt64(encoderIndex));
+					encoderKeys.push_back(JSONUtils::as<int64_t>(encoderIndex));
 			}
 		}
 		catch (exception &e)
@@ -871,7 +871,7 @@ void API::modifyEncodersPool(
 
 				throw runtime_error(errorMessage);
 			}
-			label = JSONUtils::asString(requestBodyRoot, field, "");
+			label = JSONUtils::as<string>(requestBodyRoot, field, "");
 
 			field = "encoderKeys";
 			if (JSONUtils::isPresent(requestBodyRoot, field))
@@ -880,7 +880,7 @@ void API::modifyEncodersPool(
 
 				for (int encoderIndex = 0; encoderIndex < encoderKeysRoot.size(); ++encoderIndex)
 				{
-					encoderKeys.push_back(JSONUtils::asInt64(encoderKeysRoot[encoderIndex]));
+					encoderKeys.push_back(JSONUtils::as<int64_t>(encoderKeysRoot[encoderIndex]));
 				}
 			}
 		}

@@ -28,7 +28,7 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 
 		_monitorThreadShutdown = false;
 
-		_monitorCheckInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
+		_monitorCheckInSeconds = JSONUtils::as<int32_t>(configurationRoot["ffmpeg"], "monitorCheckInSeconds", 5);
 		LOG_INFO(
 			"Configuration item"
 			", ffmpeg->monitorCheckInSeconds: {}",
@@ -121,7 +121,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						json streamInputRoot = inputRoot[field];
 						field = "configurationLabel";
-						configurationLabel = JSONUtils::asString(streamInputRoot, field, "");
+						configurationLabel = JSONUtils::as<string>(streamInputRoot, field, "");
 					}
 				}
 
@@ -271,7 +271,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						json outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+						string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 						if (!liveProxyWorking)
 							break;
@@ -279,8 +279,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// if (outputType == "HLS" || outputType == "DASH")
 						if (outputType == "HLS_Channel")
 						{
-							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
+							string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
+							string manifestFileName = JSONUtils::as<string>(outputRoot, "manifestFileName", "");
 
 							try
 							{
@@ -456,7 +456,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						json outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+						string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 						if (!liveProxyWorking)
 							break;
@@ -464,8 +464,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// if (outputType == "HLS" || outputType == "DASH")
 						if (outputType == "HLS_Channel")
 						{
-							string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-							string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
+							string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
+							string manifestFileName = JSONUtils::as<string>(outputRoot, "manifestFileName", "");
 
 							try
 							{
@@ -1266,7 +1266,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				}
 
 				string field = "segmentDuration";
-				int segmentDurationInSeconds = JSONUtils::asInt32(copiedLiveRecording->_ingestedParametersRoot, field, -1);
+				int segmentDurationInSeconds = JSONUtils::as<int32_t>(copiedLiveRecording->_ingestedParametersRoot, field, -1);
 
 				// check is done after 5 minutes + segmentDurationInSeconds LiveRecording started,
 				// in order to be sure the file was already created
@@ -1468,9 +1468,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
 					for (const auto& outputRoot : outputsRoot)
 					{
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
+						string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
+						string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
+						string manifestFileName = JSONUtils::as<string>(outputRoot, "manifestFileName", "");
 
 						if (!liveRecorderWorking)
 							break;
@@ -1653,11 +1653,11 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					json outputsRoot = copiedLiveRecording->_encodingParametersRoot["outputsRoot"];
 					for (const auto& outputRoot : outputsRoot)
 					{
-						string outputType = JSONUtils::asString(outputRoot, "outputType", "");
-						string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
-						string manifestFileName = JSONUtils::asString(outputRoot, "manifestFileName", "");
-						int outputPlaylistEntriesNumber = JSONUtils::asInt32(outputRoot, "playlistEntriesNumber", 10);
-						int outputSegmentDurationInSeconds = JSONUtils::asInt32(outputRoot, "segmentDurationInSeconds", 10);
+						string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
+						string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
+						string manifestFileName = JSONUtils::as<string>(outputRoot, "manifestFileName", "");
+						int outputPlaylistEntriesNumber = JSONUtils::as<int32_t>(outputRoot, "playlistEntriesNumber", 10);
+						int outputSegmentDurationInSeconds = JSONUtils::as<int32_t>(outputRoot, "segmentDurationInSeconds", 10);
 
 						if (!liveRecorderWorking)
 							break;

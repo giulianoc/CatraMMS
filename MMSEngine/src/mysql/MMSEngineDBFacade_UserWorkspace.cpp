@@ -2472,7 +2472,7 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 				string permissions = resultSet->getString("permissions");
 				Json::Value permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 
-				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+				admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 				isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
 			}
 		}
@@ -2870,12 +2870,12 @@ MMSEngineDBFacade::checkAPIKey(string apiKey, bool fromMaster)
 	}
 
 	return make_tuple(
-		userKey, workspace, JSONUtils::asBool(permissionsRoot, "admin", false), JSONUtils::asBool(permissionsRoot, "createRemoveWorkspace", false),
-		JSONUtils::asBool(permissionsRoot, "ingestWorkflow", false), JSONUtils::asBool(permissionsRoot, "createProfiles", false),
-		JSONUtils::asBool(permissionsRoot, "deliveryAuthorization", false), JSONUtils::asBool(permissionsRoot, "shareWorkspace", false),
-		JSONUtils::asBool(permissionsRoot, "editMedia", false), JSONUtils::asBool(permissionsRoot, "editConfiguration", false),
-		JSONUtils::asBool(permissionsRoot, "killEncoding", false), JSONUtils::asBool(permissionsRoot, "cancelIngestionJob", false),
-		JSONUtils::asBool(permissionsRoot, "editEncodersPool", false), JSONUtils::asBool(permissionsRoot, "applicationRecorder", false)
+		userKey, workspace, JSONUtils::as<bool>(permissionsRoot, "admin", false), JSONUtils::as<bool>(permissionsRoot, "createRemoveWorkspace", false),
+		JSONUtils::as<bool>(permissionsRoot, "ingestWorkflow", false), JSONUtils::as<bool>(permissionsRoot, "createProfiles", false),
+		JSONUtils::as<bool>(permissionsRoot, "deliveryAuthorization", false), JSONUtils::as<bool>(permissionsRoot, "shareWorkspace", false),
+		JSONUtils::as<bool>(permissionsRoot, "editMedia", false), JSONUtils::as<bool>(permissionsRoot, "editConfiguration", false),
+		JSONUtils::as<bool>(permissionsRoot, "killEncoding", false), JSONUtils::as<bool>(permissionsRoot, "cancelIngestionJob", false),
+		JSONUtils::as<bool>(permissionsRoot, "editEncodersPool", false), JSONUtils::as<bool>(permissionsRoot, "applicationRecorder", false)
 	);
 }
 
@@ -3573,74 +3573,74 @@ Json::Value MMSEngineDBFacade::getWorkspaceDetailsRoot(
 			Json::Value permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 
 			field = "admin";
-			bool admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+			bool admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 			userAPIKeyRoot[field] = admin;
 
 			field = "createRemoveWorkspace";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "createRemoveWorkspace", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "createRemoveWorkspace", false);
 
 			field = "ingestWorkflow";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "ingestWorkflow", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "ingestWorkflow", false);
 
 			field = "createProfiles";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "createProfiles", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "createProfiles", false);
 
 			field = "deliveryAuthorization";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "deliveryAuthorization", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "deliveryAuthorization", false);
 
 			field = "shareWorkspace";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "shareWorkspace", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "shareWorkspace", false);
 
 			field = "editMedia";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "editMedia", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "editMedia", false);
 
 			field = "editConfiguration";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "editConfiguration", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "editConfiguration", false);
 
 			field = "killEncoding";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "killEncoding", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "killEncoding", false);
 
 			field = "cancelIngestionJob";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "cancelIngestionJob", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "cancelIngestionJob", false);
 
 			field = "editEncodersPool";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "editEncodersPool", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "editEncodersPool", false);
 
 			field = "applicationRecorder";
 			if (admin)
 				userAPIKeyRoot[field] = true;
 			else
-				userAPIKeyRoot[field] = JSONUtils::asBool(permissionsRoot, "applicationRecorder", false);
+				userAPIKeyRoot[field] = JSONUtils::as<bool>(permissionsRoot, "applicationRecorder", false);
 
 			field = "userAPIKey";
 			workspaceDetailRoot[field] = userAPIKeyRoot;
@@ -3747,7 +3747,7 @@ Json::Value MMSEngineDBFacade::updateWorkspaceDetails(
 				string permissions = resultSet->getString("permissions");
 				Json::Value permissionsRoot = JSONUtils::toJson<json>(-1, -1, permissions);
 
-				admin = JSONUtils::asBool(permissionsRoot, "admin", false);
+				admin = JSONUtils::as<bool>(permissionsRoot, "admin", false);
 				isOwner = resultSet->getInt("isOwner") == 1 ? "true" : "false";
 			}
 			else

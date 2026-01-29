@@ -708,7 +708,7 @@ void MMSEngineDBFacade::addAssociationWorkspaceEncoder(int64_t workspaceKey, str
 		vector<int64_t> encoderKeys;
 		for (int encoderIndex = 0; encoderIndex < sharedEncodersLabel.size(); encoderIndex++)
 		{
-			string encoderLabel = JSONUtils::asString(sharedEncodersLabel[encoderIndex]);
+			string encoderLabel = JSONUtils::as<string>(sharedEncodersLabel[encoderIndex]);
 
 			lastSQLCommand = "select encoderKey from MMS_Encoder "
 							 "where label = ?";
@@ -1452,7 +1452,7 @@ pair<bool, int> MMSEngineDBFacade::getEncoderInfo(bool external, string protocol
 			MMSCURL::httpGetJson(ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, _ffmpegEncoderUser, _ffmpegEncoderPassword, otherHeaders);
 
 		string field = "cpuUsage";
-		cpuUsage = JSONUtils::asInt32(infoResponseRoot, field, 0);
+		cpuUsage = JSONUtils::as<int32_t>(infoResponseRoot, field, 0);
 	}
 	catch (ServerNotReachable e)
 	{

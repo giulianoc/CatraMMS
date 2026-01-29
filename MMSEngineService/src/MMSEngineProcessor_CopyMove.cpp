@@ -38,10 +38,10 @@ void MMSEngineProcessor::localCopyContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			localPath = JSONUtils::asString(parametersRoot, field, "");
+			localPath = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "LocalFileName";
-			localFileName = JSONUtils::asString(parametersRoot, field, "");
+			localFileName = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		int dependencyIndex = 0;

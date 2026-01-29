@@ -52,17 +52,17 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 		{
 			json firstInputRoot = inputsRoot[0];
 
-			timePeriod = JSONUtils::asBool(firstInputRoot, "timePeriod", false);
+			timePeriod = JSONUtils::as<bool>(firstInputRoot, "timePeriod", false);
 
 			if (timePeriod)
-				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, "utcScheduleStart", -1);
+				utcProxyPeriodStart = JSONUtils::as<int64_t>(firstInputRoot, "utcScheduleStart", -1);
 
 			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
-			timePeriod = JSONUtils::asBool(lastInputRoot, "timePeriod", false);
+			timePeriod = JSONUtils::as<bool>(lastInputRoot, "timePeriod", false);
 
 			if (timePeriod)
-				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, "utcScheduleEnd", -1);
+				utcProxyPeriodEnd = JSONUtils::as<int64_t>(lastInputRoot, "utcScheduleEnd", -1);
 		}
 	}
 
@@ -118,13 +118,13 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 			{
 				json outputRoot = outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				if (outputType == "RTMP_Channel")
 				{
 					// RtmpUrl fields have to be initialized
 
-					string rtmpChannelConfigurationLabel = JSONUtils::asString(outputRoot, "rtmpChannelConfigurationLabel", "");
+					string rtmpChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "rtmpChannelConfigurationLabel", "");
 
 					// reserveRTMPChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
@@ -193,11 +193,11 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 					// is already started Maybe just start again is not an issue!!! Let's see
 					if (!channelAlreadyReserved)
 					{
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
 						if (cdnName == "aws")
 						{
-							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
-							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							json awsRoot = JSONUtils::as<json>(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::as<string>(awsRoot, "channelId", "");
 							if (!awsChannelId.empty())
 								awsStartChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
@@ -207,7 +207,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 				{
 					// SrtUrl and PlayUrl fields have to be initialized
 
-					string srtChannelConfigurationLabel = JSONUtils::asString(outputRoot, "srtChannelConfigurationLabel", "");
+					string srtChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "srtChannelConfigurationLabel", "");
 
 					// reserveSRTChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
@@ -290,7 +290,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 				{
 					// RtmpUrl and PlayUrl fields have to be initialized
 
-					string hlsChannelConfigurationLabel = JSONUtils::asString(outputRoot, "hlsChannelConfigurationLabel", "");
+					string hlsChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "hlsChannelConfigurationLabel", "");
 
 					// reserveHLSChannel ritorna exception se non ci sono piu canali liberi o quello dedicato è già occupato
 					// In caso di ripartenza di mmsEngine, nel caso di richiesta già attiva, ritornerebbe le stesse info
@@ -317,7 +317,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 						outputRoot["manifestFileName"] = manifestFileName;
 
-						string otherOutputOptions = JSONUtils::asString(outputRoot, "otherOutputOptions", "");
+						string otherOutputOptions = JSONUtils::as<string>(outputRoot, "otherOutputOptions", "");
 
 						outputsRoot[outputIndex] = outputRoot;
 
@@ -386,7 +386,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 			{
 				json outputRoot = outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				if (outputType == "RTMP_Channel")
 				{
@@ -396,11 +396,11 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
 						if (cdnName == "aws")
 						{
-							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
-							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							json awsRoot = JSONUtils::as<json>(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::as<string>(awsRoot, "channelId", "");
 							if (!awsChannelId.empty())
 								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
@@ -460,7 +460,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 			{
 				json outputRoot = outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				if (outputType == "RTMP_Channel")
 				{
@@ -470,11 +470,11 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						json playURLDetailsRoot = _mmsEngineDBFacade->releaseRTMPChannel(
 							_encodingItem->_workspace->_workspaceKey, outputIndex, _encodingItem->_ingestionJobKey
 						);
-						string cdnName = JSONUtils::asString(playURLDetailsRoot, "cdnName", "");
+						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
 						if (cdnName == "aws")
 						{
-							json awsRoot = JSONUtils::asJson(playURLDetailsRoot, "aws", json(nullptr));
-							string awsChannelId = JSONUtils::asString(awsRoot, "channelId", "");
+							json awsRoot = JSONUtils::as<json>(playURLDetailsRoot, "aws", json(nullptr));
+							string awsChannelId = JSONUtils::as<string>(awsRoot, "channelId", "");
 							if (!awsChannelId.empty())
 								awsStopChannel(_encodingItem->_ingestionJobKey, awsChannelId);
 						}
@@ -559,31 +559,31 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 		if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy)
 		{
 			// se proxyType == "liveProxy" vuold dire che abbiamo uno Stream
-			string streamSourceType = JSONUtils::asString(proxyInputRoot, "streamSourceType", "");
+			string streamSourceType = JSONUtils::as<string>(proxyInputRoot, "streamSourceType", "");
 			if (streamSourceType == "IP_PUSH")
-				ipPushStreamConfigurationLabel = JSONUtils::asString(proxyInputRoot, "configurationLabel", "");
+				ipPushStreamConfigurationLabel = JSONUtils::as<string>(proxyInputRoot, "configurationLabel", "");
 		}
 
-		maxAttemptsNumberInCaseOfErrors = JSONUtils::asInt32(_encodingItem->_ingestedParametersRoot, "maxAttemptsNumberInCaseOfErrors", -1);
+		maxAttemptsNumberInCaseOfErrors = JSONUtils::as<int32_t>(_encodingItem->_ingestedParametersRoot, "maxAttemptsNumberInCaseOfErrors", -1);
 		// 2022-07-20: this is to allow the next loop to exit after 2 errors
 		if (maxAttemptsNumberInCaseOfErrors == -1)
 			maxAttemptsNumberInCaseOfErrors = 2;
 
 		{
-			timePeriod = JSONUtils::asBool(firstInputRoot, "timePeriod", false);
+			timePeriod = JSONUtils::as<bool>(firstInputRoot, "timePeriod", false);
 
 			if (timePeriod)
-				utcProxyPeriodStart = JSONUtils::asInt64(firstInputRoot, "utcScheduleStart", -1);
+				utcProxyPeriodStart = JSONUtils::as<int64_t>(firstInputRoot, "utcScheduleStart", -1);
 
 			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
-			timePeriod = JSONUtils::asBool(lastInputRoot, "timePeriod", false);
+			timePeriod = JSONUtils::as<bool>(lastInputRoot, "timePeriod", false);
 
 			if (timePeriod)
 			{
-				utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, "utcScheduleEnd", -1);
+				utcProxyPeriodEnd = JSONUtils::as<int64_t>(lastInputRoot, "utcScheduleEnd", -1);
 				if (utcProxyPeriodEnd == -1)
-					utcProxyPeriodEnd = JSONUtils::asInt64(lastInputRoot, "utcProxyPeriodEnd", -1);
+					utcProxyPeriodEnd = JSONUtils::as<int64_t>(lastInputRoot, "utcProxyPeriodEnd", -1);
 			}
 		}
 	}

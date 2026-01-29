@@ -733,9 +733,9 @@ void API::mmsSupport(
 			}
 		}
 
-		userEmailAddress = JSONUtils::asString(metadataRoot, "UserEmailAddress", "");
-		subject = JSONUtils::asString(metadataRoot, "Subject", "");
-		text = JSONUtils::asString(metadataRoot, "Text", "");
+		userEmailAddress = JSONUtils::as<string>(metadataRoot, "UserEmailAddress", "");
+		subject = JSONUtils::as<string>(metadataRoot, "Subject", "");
+		text = JSONUtils::as<string>(metadataRoot, "Text", "");
 
 		{
 			shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
@@ -1500,14 +1500,14 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 		_encodingPriorityWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPriority::Low;
 	}
 
-	_maxPageSize = JSONUtils::asInt32(configurationRoot["postgres"], "maxPageSize", 5);
+	_maxPageSize = JSONUtils::as<int32_t>(configurationRoot["postgres"], "maxPageSize", 5);
 	LOG_TRACE(
 		"Configuration item"
 		", postgres->maxPageSize: {}",
 		_maxPageSize
 	);
 
-	string encodingPeriod = JSONUtils::asString(configurationRoot["api"]["workspaceDefaults"], "encodingPeriod", "daily");
+	string encodingPeriod = JSONUtils::as<string>(configurationRoot["api"]["workspaceDefaults"], "encodingPeriod", "daily");
 	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->encodingPeriod: {}",
@@ -1518,19 +1518,19 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	else
 		_encodingPeriodWorkspaceDefaultValue = MMSEngineDBFacade::EncodingPeriod::Daily;
 
-	_maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
+	_maxIngestionsNumberWorkspaceDefaultValue = JSONUtils::as<int32_t>(configurationRoot["api"]["workspaceDefaults"], "maxIngestionsNumber", 100);
 	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->maxIngestionsNumber: {}",
 		_maxIngestionsNumberWorkspaceDefaultValue
 	);
-	_maxStorageInMBWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "maxStorageInMB", 100);
+	_maxStorageInMBWorkspaceDefaultValue = JSONUtils::as<int32_t>(configurationRoot["api"]["workspaceDefaults"], "maxStorageInMB", 100);
 	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->maxStorageInMBWorkspaceDefaultValue: {}",
 		_maxStorageInMBWorkspaceDefaultValue
 	);
-	_expirationInDaysWorkspaceDefaultValue = JSONUtils::asInt32(configurationRoot["api"]["workspaceDefaults"], "expirationInDays", 30);
+	_expirationInDaysWorkspaceDefaultValue = JSONUtils::as<int32_t>(configurationRoot["api"]["workspaceDefaults"], "expirationInDays", 30);
 	LOG_TRACE(
 		"Configuration item"
 		", api->workspaceDefaults->expirationInDaysWorkspaceDefaultValue: {}",
@@ -1540,7 +1540,7 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	{
 		json sharedEncodersPoolRoot = configurationRoot["api"]["sharedEncodersPool"];
 
-		_sharedEncodersPoolLabel = JSONUtils::asString(sharedEncodersPoolRoot, "label", "");
+		_sharedEncodersPoolLabel = JSONUtils::as<string>(sharedEncodersPoolRoot, "label", "");
 		LOG_TRACE(
 			"Configuration item"
 			", api->sharedEncodersPool->label: {}",
@@ -1557,32 +1557,32 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 
 	json apiRoot = configurationRoot["api"];
 
-	_defaultSharedHLSChannelsNumber = JSONUtils::asInt32(apiRoot, "defaultSharedHLSChannelsNumber", 1);
+	_defaultSharedHLSChannelsNumber = JSONUtils::as<int32_t>(apiRoot, "defaultSharedHLSChannelsNumber", 1);
 	LOG_TRACE(
 		"Configuration item"
 		", api->defaultSharedHLSChannelsNumber: {}",
 		_defaultSharedHLSChannelsNumber
 	);
 
-	_apiProtocol = JSONUtils::asString(apiRoot, "protocol", "");
+	_apiProtocol = JSONUtils::as<string>(apiRoot, "protocol", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->protocol: {}",
 		_apiProtocol
 	);
-	_apiHostname = JSONUtils::asString(apiRoot, "hostname", "");
+	_apiHostname = JSONUtils::as<string>(apiRoot, "hostname", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->hostname: {}",
 		_apiHostname
 	);
-	_apiPort = JSONUtils::asInt32(apiRoot, "port", 0);
+	_apiPort = JSONUtils::as<int32_t>(apiRoot, "port", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", api->port: {}",
 		_apiPort
 	);
-	_apiVersion = JSONUtils::asString(apiRoot, "version", "");
+	_apiVersion = JSONUtils::as<string>(apiRoot, "version", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->version: {}",
@@ -1593,115 +1593,115 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	// LOG_INFO(__FILEREF__ + "Configuration item"
 	//    + ", api->binary->binaryBufferLength: " + to_string(_binaryBufferLength)
 	// );
-	_progressUpdatePeriodInSeconds = JSONUtils::asInt32(apiRoot["binary"], "progressUpdatePeriodInSeconds", 0);
+	_progressUpdatePeriodInSeconds = JSONUtils::as<int32_t>(apiRoot["binary"], "progressUpdatePeriodInSeconds", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", api->binary->progressUpdatePeriodInSeconds: {}",
 		_progressUpdatePeriodInSeconds
 	);
-	_webServerPort = JSONUtils::asInt32(apiRoot["binary"], "webServerPort", 0);
+	_webServerPort = JSONUtils::as<int32_t>(apiRoot["binary"], "webServerPort", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", api->binary->webServerPort: {}",
 		_webServerPort
 	);
-	_maxProgressCallFailures = JSONUtils::asInt32(apiRoot["binary"], "maxProgressCallFailures", 0);
+	_maxProgressCallFailures = JSONUtils::as<int32_t>(apiRoot["binary"], "maxProgressCallFailures", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", api->binary->maxProgressCallFailures: {}",
 		_maxProgressCallFailures
 	);
-	_progressURI = JSONUtils::asString(apiRoot["binary"], "progressURI", "");
+	_progressURI = JSONUtils::as<string>(apiRoot["binary"], "progressURI", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->binary->progressURI: {}",
 		_progressURI
 	);
 
-	_defaultTTLInSeconds = JSONUtils::asInt32(apiRoot["delivery"], "defaultTTLInSeconds", 60);
+	_defaultTTLInSeconds = JSONUtils::as<int32_t>(apiRoot["delivery"], "defaultTTLInSeconds", 60);
 	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->defaultTTLInSeconds: {}",
 		_defaultTTLInSeconds
 	);
 
-	_defaultMaxRetries = JSONUtils::asInt32(apiRoot["delivery"], "defaultMaxRetries", 60);
+	_defaultMaxRetries = JSONUtils::as<int32_t>(apiRoot["delivery"], "defaultMaxRetries", 60);
 	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->defaultMaxRetries: {}",
 		_defaultMaxRetries
 	);
 
-	_defaultRedirect = JSONUtils::asBool(apiRoot["delivery"], "defaultRedirect", true);
+	_defaultRedirect = JSONUtils::as<bool>(apiRoot["delivery"], "defaultRedirect", true);
 	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->defaultRedirect: {}",
 		_defaultRedirect
 	);
 
-	_deliveryProtocol = JSONUtils::asString(apiRoot["delivery"], "deliveryProtocol", "");
+	_deliveryProtocol = JSONUtils::as<string>(apiRoot["delivery"], "deliveryProtocol", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->deliveryProtocol: {}",
 		_deliveryProtocol
 	);
-	_deliveryHost_authorizationThroughParameter = JSONUtils::asString(apiRoot["delivery"], "deliveryHost_authorizationThroughParameter", "");
+	_deliveryHost_authorizationThroughParameter = JSONUtils::as<string>(apiRoot["delivery"], "deliveryHost_authorizationThroughParameter", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughParameter: {}",
 		_deliveryHost_authorizationThroughParameter
 	);
-	_deliveryHost_authorizationThroughPath = JSONUtils::asString(apiRoot["delivery"], "deliveryHost_authorizationThroughPath", "");
+	_deliveryHost_authorizationThroughPath = JSONUtils::as<string>(apiRoot["delivery"], "deliveryHost_authorizationThroughPath", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
 	);
 
-	_ldapEnabled = JSONUtils::asBool(apiRoot["activeDirectory"], "enabled", false);
+	_ldapEnabled = JSONUtils::as<bool>(apiRoot["activeDirectory"], "enabled", false);
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->enabled: {}",
 		_ldapEnabled
 	);
-	_ldapURL = JSONUtils::asString(apiRoot["activeDirectory"], "ldapURL", "");
+	_ldapURL = JSONUtils::as<string>(apiRoot["activeDirectory"], "ldapURL", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->ldapURL: {}",
 		_ldapURL
 	);
-	_ldapCertificatePathName = JSONUtils::asString(apiRoot["activeDirectory"], "certificatePathName", "");
+	_ldapCertificatePathName = JSONUtils::as<string>(apiRoot["activeDirectory"], "certificatePathName", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->certificatePathName: {}",
 		_ldapCertificatePathName
 	);
-	_ldapManagerUserName = JSONUtils::asString(apiRoot["activeDirectory"], "managerUserName", "");
+	_ldapManagerUserName = JSONUtils::as<string>(apiRoot["activeDirectory"], "managerUserName", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->managerUserName: {}",
 		_ldapManagerUserName
 	);
-	_ldapManagerPassword = JSONUtils::asString(apiRoot["activeDirectory"], "managerPassword", "");
+	_ldapManagerPassword = JSONUtils::as<string>(apiRoot["activeDirectory"], "managerPassword", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->managerPassword: {}",
 		_ldapManagerPassword
 	);
-	_ldapBaseDn = JSONUtils::asString(apiRoot["activeDirectory"], "baseDn", "");
+	_ldapBaseDn = JSONUtils::as<string>(apiRoot["activeDirectory"], "baseDn", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->baseDn: {}",
 		_ldapBaseDn
 	);
-	_ldapDefaultWorkspaceKeys = JSONUtils::asString(apiRoot["activeDirectory"], "defaultWorkspaceKeys", "");
+	_ldapDefaultWorkspaceKeys = JSONUtils::as<string>(apiRoot["activeDirectory"], "defaultWorkspaceKeys", "");
 	LOG_TRACE(
 		"Configuration item"
 		", api->activeDirectory->defaultWorkspaceKeys: {}",
 		_ldapDefaultWorkspaceKeys
 	);
 
-	_registerUserEnabled = JSONUtils::asBool(apiRoot, "registerUserEnabled", false);
+	_registerUserEnabled = JSONUtils::as<bool>(apiRoot, "registerUserEnabled", false);
 	LOG_TRACE(
 		"Configuration item"
 		", api->registerUserEnabled: {}",
@@ -1713,69 +1713,69 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	LOG_INFO(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderProtocol: " + _ffmpegEncoderProtocol
 	);
-	_ffmpegEncoderPort = JSONUtils::asInt32(_configuration["ffmpeg"], "encoderPort", 0);
+	_ffmpegEncoderPort = JSONUtils::as<int32_t>(_configuration["ffmpeg"], "encoderPort", 0);
 	LOG_INFO(__FILEREF__ + "Configuration item"
 		+ ", ffmpeg->encoderPort: " + to_string(_ffmpegEncoderPort)
 	);
 	*/
-	_ffmpegEncoderUser = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderUser", "");
+	_ffmpegEncoderUser = JSONUtils::as<string>(configurationRoot["ffmpeg"], "encoderUser", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_ffmpegEncoderUser
 	);
-	_ffmpegEncoderPassword = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderPassword", "");
+	_ffmpegEncoderPassword = JSONUtils::as<string>(configurationRoot["ffmpeg"], "encoderPassword", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderPassword: {}",
 		"..."
 	);
-	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt32(configurationRoot["ffmpeg"], "encoderTimeoutInSeconds", 120);
+	_ffmpegEncoderTimeoutInSeconds = JSONUtils::as<int32_t>(configurationRoot["ffmpeg"], "encoderTimeoutInSeconds", 120);
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderTimeoutInSeconds: {}",
 		_ffmpegEncoderTimeoutInSeconds
 	);
-	_ffmpegEncoderKillEncodingURI = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderKillEncodingURI", "");
+	_ffmpegEncoderKillEncodingURI = JSONUtils::as<string>(configurationRoot["ffmpeg"], "encoderKillEncodingURI", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderKillEncodingURI: {}",
 		_ffmpegEncoderKillEncodingURI
 	);
-	_ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
+	_ffmpegEncoderChangeLiveProxyPlaylistURI = JSONUtils::as<string>(configurationRoot["ffmpeg"], "encoderChangeLiveProxyPlaylistURI", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderChangeLiveProxyPlaylistURI: {}",
 		_ffmpegEncoderChangeLiveProxyPlaylistURI
 	);
-	_ffmpegEncoderChangeLiveProxyOverlayTextURI = JSONUtils::asString(configurationRoot["ffmpeg"], "encoderChangeLiveProxyOverlayTextURI", "");
+	_ffmpegEncoderChangeLiveProxyOverlayTextURI = JSONUtils::as<string>(configurationRoot["ffmpeg"], "encoderChangeLiveProxyOverlayTextURI", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderChangeLiveProxyOverlayTextURI: {}",
 		_ffmpegEncoderChangeLiveProxyOverlayTextURI
 	);
 
-	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt32(configurationRoot["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
+	_intervalInSecondsToCheckEncodingFinished = JSONUtils::as<int32_t>(configurationRoot["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
 		_intervalInSecondsToCheckEncodingFinished
 	);
 
-	_maxSecondsToWaitAPIIngestionLock = JSONUtils::asInt32(configurationRoot["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
+	_maxSecondsToWaitAPIIngestionLock = JSONUtils::as<int32_t>(configurationRoot["mms"]["locks"], "maxSecondsToWaitAPIIngestionLock", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", mms->locks->maxSecondsToWaitAPIIngestionLock: {}",
 		_maxSecondsToWaitAPIIngestionLock
 	);
 
-	_keyPairId = JSONUtils::asString(configurationRoot["aws"], "keyPairId", "");
+	_keyPairId = JSONUtils::as<string>(configurationRoot["aws"], "keyPairId", "");
 	LOG_TRACE(
 		"Configuration item"
 		", aws->keyPairId: {}",
 		_keyPairId
 	);
-	_privateKeyPEMPathName = JSONUtils::asString(configurationRoot["aws"], "privateKeyPEMPathName", "");
+	_privateKeyPEMPathName = JSONUtils::as<string>(configurationRoot["aws"], "privateKeyPEMPathName", "");
 	LOG_TRACE(
 		"Configuration item"
 		", aws->privateKeyPEMPathName: {}",
@@ -1790,20 +1790,20 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	);
 	*/
 
-	_emailProviderURL = JSONUtils::asString(configurationRoot["EmailNotification"], "providerURL", "");
+	_emailProviderURL = JSONUtils::as<string>(configurationRoot["EmailNotification"], "providerURL", "");
 	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->providerURL: {}",
 		_emailProviderURL
 	);
-	_emailUserName = JSONUtils::asString(configurationRoot["EmailNotification"], "userName", "");
+	_emailUserName = JSONUtils::as<string>(configurationRoot["EmailNotification"], "userName", "");
 	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->userName: {}",
 		_emailUserName
 	);
 	{
-		string encryptedPassword = JSONUtils::asString(configurationRoot["EmailNotification"], "password", "");
+		string encryptedPassword = JSONUtils::as<string>(configurationRoot["EmailNotification"], "password", "");
 		_emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
 		LOG_TRACE(
 			"Configuration item"
@@ -1812,40 +1812,40 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 			// + ", _emailPassword: " + _emailPassword
 		);
 	}
-	_emailCcsCommaSeparated = JSONUtils::asString(configurationRoot["EmailNotification"], "cc", "");
+	_emailCcsCommaSeparated = JSONUtils::as<string>(configurationRoot["EmailNotification"], "cc", "");
 	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->cc: {}",
 		_emailCcsCommaSeparated
 	);
 
-	_guiProtocol = JSONUtils::asString(configurationRoot["mms"], "guiProtocol", "");
+	_guiProtocol = JSONUtils::as<string>(configurationRoot["mms"], "guiProtocol", "");
 	LOG_TRACE(
 		"Configuration item"
 		", mms->guiProtocol: {}",
 		_guiProtocol
 	);
-	_guiHostname = JSONUtils::asString(configurationRoot["mms"], "guiHostname", "");
+	_guiHostname = JSONUtils::as<string>(configurationRoot["mms"], "guiHostname", "");
 	LOG_TRACE(
 		"Configuration item"
 		", mms->guiHostname: {}",
 		_guiHostname
 	);
-	_guiPort = JSONUtils::asInt32(_configurationRoot["mms"], "guiPort", 0);
+	_guiPort = JSONUtils::as<int32_t>(_configurationRoot["mms"], "guiPort", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", mms->guiPort: {}",
 		_guiPort
 	);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::as<int32_t>(configurationRoot["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	LOG_TRACE(
 		"Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
-		JSONUtils::asInt32(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+		JSONUtils::as<int32_t>(configurationRoot["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	LOG_TRACE(
 		"Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",

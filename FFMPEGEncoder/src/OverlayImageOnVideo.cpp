@@ -26,15 +26,15 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-		string imagePosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_X_InPixel", "0");
-		string imagePosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot, "imagePosition_Y_InPixel", "0");
+		string imagePosition_X_InPixel = JSONUtils::as<string>(ingestedParametersRoot, "imagePosition_X_InPixel", "0");
+		string imagePosition_Y_InPixel = JSONUtils::as<string>(ingestedParametersRoot, "imagePosition_Y_InPixel", "0");
 
-		int64_t videoDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
+		int64_t videoDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "videoDurationInMilliSeconds", -1);
 
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
@@ -54,7 +54,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceVideoFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceVideoFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string sourceVideoAssetPathName;
@@ -77,7 +77,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceVideoAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceVideoAssetPathName.find_last_of("/");
@@ -116,7 +116,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -155,7 +155,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsSourceImageAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "sourceVideoPhysicalDeliveryURL";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -171,7 +171,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string sourceVideoPhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+			string sourceVideoPhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			sourceVideoAssetPathName = downloadMediaFromMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceVideoFileExtension, sourceVideoPhysicalDeliveryURL,
@@ -194,7 +194,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceVideoAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceVideoAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -210,7 +210,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "mmsSourceImageAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -226,7 +226,7 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			mmsSourceImageAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			mmsSourceImageAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		_encoding->_encodingStart = chrono::system_clock::now();
@@ -261,9 +261,9 @@ void OverlayImageOnVideo::encodeContent(json metadataRoot)
 				fs::remove_all(sourceVideoAssetPathName);
 			}
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add overlayImageOnVideo from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add overlayImageOnVideo from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

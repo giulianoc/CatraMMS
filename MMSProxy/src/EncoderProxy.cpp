@@ -62,145 +62,145 @@ void EncoderProxy::init(
 
 	_hostName = System::hostName();
 
-	_mp4Encoder = JSONUtils::asString(_configuration["encoding"], "mp4Encoder", "");
+	_mp4Encoder = JSONUtils::as<string>(_configuration["encoding"], "mp4Encoder", "");
 	LOG_INFO(
 		"Configuration item"
 		", encoding->mp4Encoder: {}",
 		_mp4Encoder
 	);
-	_mpeg2TSEncoder = JSONUtils::asString(_configuration["encoding"], "mpeg2TSEncoder", "");
+	_mpeg2TSEncoder = JSONUtils::as<string>(_configuration["encoding"], "mpeg2TSEncoder", "");
 	LOG_INFO(
 		"Configuration item"
 		", encoding->mpeg2TSEncoder: {}",
 		_mpeg2TSEncoder
 	);
 
-	_intervalInSecondsToCheckEncodingFinished = JSONUtils::asInt32(_configuration["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
+	_intervalInSecondsToCheckEncodingFinished = JSONUtils::as<int32_t>(_configuration["encoding"], "intervalInSecondsToCheckEncodingFinished", 0);
 	LOG_INFO(
 		"Configuration item"
 		", encoding->intervalInSecondsToCheckEncodingFinished: {}",
 		_intervalInSecondsToCheckEncodingFinished
 	);
-	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::asInt32(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 30);
+	_maxSecondsToWaitUpdateEncodingJobLock = JSONUtils::as<int32_t>(_configuration["mms"]["locks"], "maxSecondsToWaitUpdateEncodingJobLock", 30);
 	LOG_INFO(
 		"Configuration item"
 		", encoding->maxSecondsToWaitUpdateEncodingJobLock: {}",
 		_maxSecondsToWaitUpdateEncodingJobLock
 	);
 
-	_ffmpegEncoderUser = JSONUtils::asString(_configuration["ffmpeg"], "encoderUser", "");
+	_ffmpegEncoderUser = JSONUtils::as<string>(_configuration["ffmpeg"], "encoderUser", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_ffmpegEncoderUser
 	);
-	_ffmpegEncoderPassword = JSONUtils::asString(_configuration["ffmpeg"], "encoderPassword", "");
+	_ffmpegEncoderPassword = JSONUtils::as<string>(_configuration["ffmpeg"], "encoderPassword", "");
 	LOG_INFO("Configuration item"
 				", ffmpeg->encoderPassword: ...");
-	_ffmpegEncoderTimeoutInSeconds = JSONUtils::asInt32(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
+	_ffmpegEncoderTimeoutInSeconds = JSONUtils::as<int32_t>(_configuration["ffmpeg"], "encoderTimeoutInSeconds", 120);
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderTimeoutInSeconds: {}",
 		_ffmpegEncoderTimeoutInSeconds
 	);
-	_ffmpegEncoderProgressURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderProgressURI", "");
+	_ffmpegEncoderProgressURI = JSONUtils::as<string>(_configuration["ffmpeg"], "encoderProgressURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderProgressURI: {}",
 		_ffmpegEncoderProgressURI
 	);
-	_ffmpegEncoderStatusURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderStatusURI", "");
+	_ffmpegEncoderStatusURI = JSONUtils::as<string>(_configuration["ffmpeg"], "encoderStatusURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderStatusURI: {}",
 		_ffmpegEncoderStatusURI
 	);
-	_ffmpegEncoderKillEncodingURI = JSONUtils::asString(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
+	_ffmpegEncoderKillEncodingURI = JSONUtils::as<string>(_configuration["ffmpeg"], "encoderKillEncodingURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encoderKillEncodingURI: {}",
 		_ffmpegEncoderKillEncodingURI
 	);
-	_ffmpegEncodeURI = JSONUtils::asString(_configuration["ffmpeg"], "encodeURI", "");
+	_ffmpegEncodeURI = JSONUtils::as<string>(_configuration["ffmpeg"], "encodeURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->encodeURI: {}",
 		_ffmpegEncodeURI
 	);
-	_ffmpegOverlayImageOnVideoURI = JSONUtils::asString(_configuration["ffmpeg"], "overlayImageOnVideoURI", "");
+	_ffmpegOverlayImageOnVideoURI = JSONUtils::as<string>(_configuration["ffmpeg"], "overlayImageOnVideoURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->overlayImageOnVideoURI: {}",
 		_ffmpegOverlayImageOnVideoURI
 	);
-	_ffmpegOverlayTextOnVideoURI = JSONUtils::asString(_configuration["ffmpeg"], "overlayTextOnVideoURI", "");
+	_ffmpegOverlayTextOnVideoURI = JSONUtils::as<string>(_configuration["ffmpeg"], "overlayTextOnVideoURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->overlayTextOnVideoURI: {}",
 		_ffmpegOverlayTextOnVideoURI
 	);
-	_ffmpegGenerateFramesURI = JSONUtils::asString(_configuration["ffmpeg"], "generateFramesURI", "");
+	_ffmpegGenerateFramesURI = JSONUtils::as<string>(_configuration["ffmpeg"], "generateFramesURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->generateFramesURI: {}",
 		_ffmpegGenerateFramesURI
 	);
-	_ffmpegSlideShowURI = JSONUtils::asString(_configuration["ffmpeg"], "slideShowURI", "");
+	_ffmpegSlideShowURI = JSONUtils::as<string>(_configuration["ffmpeg"], "slideShowURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->slideShowURI: {}",
 		_ffmpegSlideShowURI
 	);
-	_ffmpegLiveRecorderURI = JSONUtils::asString(_configuration["ffmpeg"], "liveRecorderURI", "");
+	_ffmpegLiveRecorderURI = JSONUtils::as<string>(_configuration["ffmpeg"], "liveRecorderURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveRecorderURI: {}",
 		_ffmpegLiveRecorderURI
 	);
-	_ffmpegLiveProxyURI = JSONUtils::asString(_configuration["ffmpeg"], "liveProxyURI", "");
+	_ffmpegLiveProxyURI = JSONUtils::as<string>(_configuration["ffmpeg"], "liveProxyURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveProxyURI: {}",
 		_ffmpegLiveProxyURI
 	);
-	_ffmpegLiveGridURI = JSONUtils::asString(_configuration["ffmpeg"], "liveGridURI", "");
+	_ffmpegLiveGridURI = JSONUtils::as<string>(_configuration["ffmpeg"], "liveGridURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->liveGridURI: {}",
 		_ffmpegLiveGridURI
 	);
-	_ffmpegVideoSpeedURI = JSONUtils::asString(_configuration["ffmpeg"], "videoSpeedURI", "");
+	_ffmpegVideoSpeedURI = JSONUtils::as<string>(_configuration["ffmpeg"], "videoSpeedURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->videoSpeedURI: {}",
 		_ffmpegVideoSpeedURI
 	);
-	_ffmpegAddSilentAudioURI = JSONUtils::asString(_configuration["ffmpeg"], "addSilentAudioURI", "");
+	_ffmpegAddSilentAudioURI = JSONUtils::as<string>(_configuration["ffmpeg"], "addSilentAudioURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->addSilentAudioURI: {}",
 		_ffmpegAddSilentAudioURI
 	);
-	_ffmpegPictureInPictureURI = JSONUtils::asString(_configuration["ffmpeg"], "pictureInPictureURI", "");
+	_ffmpegPictureInPictureURI = JSONUtils::as<string>(_configuration["ffmpeg"], "pictureInPictureURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->pictureInPictureURI: {}",
 		_ffmpegPictureInPictureURI
 	);
-	_ffmpegIntroOutroOverlayURI = JSONUtils::asString(_configuration["ffmpeg"], "introOutroOverlayURI", "");
+	_ffmpegIntroOutroOverlayURI = JSONUtils::as<string>(_configuration["ffmpeg"], "introOutroOverlayURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->ffmpegIntroOutroOverlayURI: {}",
 		_ffmpegIntroOutroOverlayURI
 	);
-	_ffmpegCutFrameAccurateURI = JSONUtils::asString(_configuration["ffmpeg"], "cutFrameAccurateURI", "");
+	_ffmpegCutFrameAccurateURI = JSONUtils::as<string>(_configuration["ffmpeg"], "cutFrameAccurateURI", "");
 	LOG_INFO(
 		"Configuration item"
 		", ffmpeg->ffmpegCutFrameAccurateURI: {}",
 		_ffmpegCutFrameAccurateURI
 	);
 
-	_computerVisionCascadePath = JSONUtils::asString(_configuration["computerVision"], "cascadePath", "");
+	_computerVisionCascadePath = JSONUtils::as<string>(_configuration["computerVision"], "cascadePath", "");
 	LOG_INFO(
 		"Configuration item"
 		", computerVision->cascadePath: {}",
@@ -208,53 +208,53 @@ void EncoderProxy::init(
 	);
 	if (_computerVisionCascadePath.size() > 0 && _computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
-	_computerVisionDefaultScale = JSONUtils::asDouble(_configuration["computerVision"], "defaultScale", 1.1);
+	_computerVisionDefaultScale = JSONUtils::as<double>(_configuration["computerVision"], "defaultScale", 1.1);
 	LOG_INFO(
 		"Configuration item"
 		", computerVision->defaultScale: {}",
 		_computerVisionDefaultScale
 	);
-	_computerVisionDefaultMinNeighbors = JSONUtils::asInt32(_configuration["computerVision"], "defaultMinNeighbors", 2);
+	_computerVisionDefaultMinNeighbors = JSONUtils::as<int32_t>(_configuration["computerVision"], "defaultMinNeighbors", 2);
 	LOG_INFO(
 		"Configuration item"
 		", computerVision->defaultMinNeighbors: {}",
 		_computerVisionDefaultMinNeighbors
 	);
-	_computerVisionDefaultTryFlip = JSONUtils::asBool(_configuration["computerVision"], "defaultTryFlip", false);
+	_computerVisionDefaultTryFlip = JSONUtils::as<bool>(_configuration["computerVision"], "defaultTryFlip", false);
 	LOG_INFO(
 		"Configuration item"
 		", computerVision->defaultTryFlip: {}",
 		_computerVisionDefaultTryFlip
 	);
 
-	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::asInt32(_configuration["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
+	_timeBeforeToPrepareResourcesInMinutes = JSONUtils::as<int32_t>(_configuration["mms"], "liveRecording_timeBeforeToPrepareResourcesInMinutes", 2);
 	LOG_INFO(
 		"Configuration item"
 		", mms->liveRecording_timeBeforeToPrepareResourcesInMinutes: {}",
 		_timeBeforeToPrepareResourcesInMinutes
 	);
 
-	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(_configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+	_waitingNFSSync_maxMillisecondsToWait = JSONUtils::as<int32_t>(_configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 	LOG_INFO(
 		"Configuration item"
 		", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 		_waitingNFSSync_maxMillisecondsToWait
 	);
 	_waitingNFSSync_milliSecondsWaitingBetweenChecks =
-		JSONUtils::asInt32(_configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
+		JSONUtils::as<int32_t>(_configuration["storage"], "waitingNFSSync_milliSecondsWaitingBetweenChecks", 100);
 	LOG_INFO(
 		"Configuration item"
 		", storage->waitingNFSSync_milliSecondsWaitingBetweenChecks: {}",
 		_waitingNFSSync_milliSecondsWaitingBetweenChecks
 	);
 
-	_keyPairId = JSONUtils::asString(_configuration["aws"], "keyPairId", "");
+	_keyPairId = JSONUtils::as<string>(_configuration["aws"], "keyPairId", "");
 	LOG_INFO(
 		"Configuration item"
 		", aws->keyPairId: {}",
 		_keyPairId
 	);
-	_privateKeyPEMPathName = JSONUtils::asString(_configuration["aws"], "privateKeyPEMPathName", "");
+	_privateKeyPEMPathName = JSONUtils::as<string>(_configuration["aws"], "privateKeyPEMPathName", "");
 	LOG_INFO(
 		"Configuration item"
 		", aws->privateKeyPEMPathName: {}",
@@ -1050,37 +1050,37 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 
 		try
 		{
-			completedWithError = JSONUtils::asBool(encodeStatusResponse, "completedWithError", false);
+			completedWithError = JSONUtils::as<bool>(encodeStatusResponse, "completedWithError", false);
 			{
-				json dataRoot = JSONUtils::asJson(encodeStatusResponse, "data", json());
+				json dataRoot = JSONUtils::as<json>(encodeStatusResponse, "data", json());
 
-				newErrorMessagesRoot = JSONUtils::asJson(dataRoot, "errorMessages", json::array());
+				newErrorMessagesRoot = JSONUtils::as<json>(dataRoot, "errorMessages", json::array());
 
-				urlForbidden = JSONUtils::asBool(dataRoot, "urlForbidden", false);
-				urlNotFound = JSONUtils::asBool(dataRoot, "urlNotFound", false);
+				urlForbidden = JSONUtils::as<bool>(dataRoot, "urlForbidden", false);
+				urlNotFound = JSONUtils::as<bool>(dataRoot, "urlNotFound", false);
 				{
-					realTimeInfoRoot["framePerSeconds"] = JSONUtils::asInt32(dataRoot, "framePerSeconds", -1);
-					realTimeInfoRoot["bitRateKbps"] = JSONUtils::asDouble(dataRoot, "bitRateKbps", -1.0);
-					realTimeInfoRoot["avgBitRateKbps"] = JSONUtils::asDouble(dataRoot, "avgBitRateKbps", -1.0);
-					realTimeInfoRoot["dropFrames"] = JSONUtils::asInt32(dataRoot, "dropFrames", -1);
-					realTimeInfoRoot["dupFrames"] = JSONUtils::asInt32(dataRoot, "dupFrames", -1);
-					realTimeInfoRoot["processedFrames"] = JSONUtils::asInt32(dataRoot, "processedFrames", -1);
-					realTimeInfoRoot["processedOutputTimestampMilliSecs"] = JSONUtils::asInt32(dataRoot, "processedOutputTimestampMilliSecs", -1);
-					realTimeInfoRoot["speed"] = JSONUtils::asDouble(dataRoot, "speed", -1.0);
-					realTimeInfoRoot["stream_0_0_q"] = JSONUtils::asDouble(dataRoot, "stream_0_0_q", -1.0);
-					realTimeInfoRoot["stream_1_0_q"] = JSONUtils::asDouble(dataRoot, "stream_1_0_q", -1.0);
-					realTimeInfoRoot["processedSizeKBps"] = JSONUtils::asDouble(dataRoot, "processedSizeKBps", -1.0);
+					realTimeInfoRoot["framePerSeconds"] = JSONUtils::as<int32_t>(dataRoot, "framePerSeconds", -1);
+					realTimeInfoRoot["bitRateKbps"] = JSONUtils::as<double>(dataRoot, "bitRateKbps", -1.0);
+					realTimeInfoRoot["avgBitRateKbps"] = JSONUtils::as<double>(dataRoot, "avgBitRateKbps", -1.0);
+					realTimeInfoRoot["dropFrames"] = JSONUtils::as<int32_t>(dataRoot, "dropFrames", -1);
+					realTimeInfoRoot["dupFrames"] = JSONUtils::as<int32_t>(dataRoot, "dupFrames", -1);
+					realTimeInfoRoot["processedFrames"] = JSONUtils::as<int32_t>(dataRoot, "processedFrames", -1);
+					realTimeInfoRoot["processedOutputTimestampMilliSecs"] = JSONUtils::as<int32_t>(dataRoot, "processedOutputTimestampMilliSecs", -1);
+					realTimeInfoRoot["speed"] = JSONUtils::as<double>(dataRoot, "speed", -1.0);
+					realTimeInfoRoot["stream_0_0_q"] = JSONUtils::as<double>(dataRoot, "stream_0_0_q", -1.0);
+					realTimeInfoRoot["stream_1_0_q"] = JSONUtils::as<double>(dataRoot, "stream_1_0_q", -1.0);
+					realTimeInfoRoot["processedSizeKBps"] = JSONUtils::as<double>(dataRoot, "processedSizeKBps", -1.0);
 				}
 			}
-			encodingFinished = JSONUtils::asBool(encodeStatusResponse, "encodingFinished", false);
-			killed = JSONUtils::asBool(encodeStatusResponse, "killedByUser", false);
-			killTypeReceived = FFMpegWrapper::toKillType(JSONUtils::asString(encodeStatusResponse, "killTypeReceived",
+			encodingFinished = JSONUtils::as<bool>(encodeStatusResponse, "encodingFinished", false);
+			killed = JSONUtils::as<bool>(encodeStatusResponse, "killedByUser", false);
+			killTypeReceived = FFMpegWrapper::toKillType(JSONUtils::as<string>(encodeStatusResponse, "killTypeReceived",
 				FFMpegWrapper::toString(FFMpegWrapper::KillType::None)));
 			if (JSONUtils::isPresent(encodeStatusResponse, "encodingProgress")
 				&& !JSONUtils::isNull(encodeStatusResponse, "encodingProgress"))
-				encodingProgress = JSONUtils::asDouble(encodeStatusResponse, "encodingProgress", 0.0);
-			pid = JSONUtils::asInt32(encodeStatusResponse, "pid", -1);
-			numberOfRestartBecauseOfFailure = JSONUtils::asInt32(encodeStatusResponse, "numberOfRestartBecauseOfFailure", -1);
+				encodingProgress = JSONUtils::as<double>(encodeStatusResponse, "encodingProgress", 0.0);
+			pid = JSONUtils::as<int32_t>(encodeStatusResponse, "pid", -1);
+			numberOfRestartBecauseOfFailure = JSONUtils::as<int32_t>(encodeStatusResponse, "numberOfRestartBecauseOfFailure", -1);
 		}
 		catch (exception& e)
 		{
@@ -1135,7 +1135,7 @@ string EncoderProxy::generateMediaMetadataToIngest(
 	string field = "fileFormat";
 	if (JSONUtils::isPresent(parametersRoot, field))
 	{
-		string fileFormatSpecifiedByUser = JSONUtils::asString(parametersRoot, field, "");
+		string fileFormatSpecifiedByUser = JSONUtils::as<string>(parametersRoot, field, "");
 		if (fileFormatSpecifiedByUser != fileFormat)
 		{
 			string errorMessage = std::format(
@@ -1639,8 +1639,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					int64_t updatedPushEncoderKey = -1;
 					string updatedUrl;
 					{
-						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
-						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", json(nullptr));
+						json internalMMSRoot = JSONUtils::as<json>(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
+						json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails", json(nullptr));
 						/*
 						if (encodersDetailsRoot == nullptr)
 						{
@@ -1655,7 +1655,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						{
 							// questo quello corretto, l'if sopra dovrebbe essere eliminato
 
-							updatedPushEncoderKey = JSONUtils::asInt64(encodersDetailsRoot, "pushEncoderKey", static_cast<int64_t>(-1));
+							updatedPushEncoderKey = JSONUtils::as<int64_t>(encodersDetailsRoot, "pushEncoderKey", static_cast<int64_t>(-1));
 							if (updatedPushEncoderKey == -1)
 							{
 								string errorMessage = std::format(
@@ -1670,7 +1670,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 								throw runtime_error(errorMessage);
 							}
 
-							bool pushPublicEncoderName = JSONUtils::asBool(encodersDetailsRoot, "pushPublicEncoderName", false);
+							bool pushPublicEncoderName = JSONUtils::as<bool>(encodersDetailsRoot, "pushPublicEncoderName", false);
 
 							updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
 								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, ipPushStreamConfigurationLabel,
@@ -1731,14 +1731,14 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					{
 						// both vodProxy and countdownProxy work with VODs and
 						// the encodersPool is defined by the ingestedParameters field
-						encodersPool = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
+						encodersPool = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
 					}
 					else // if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType ==
 						 // MMSEngineDBFacade::EncodingType::LiveRecorder)
 					{
-						json internalMMSRoot = JSONUtils::asJson(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
-						json encodersDetailsRoot = JSONUtils::asJson(internalMMSRoot, "encodersDetails", json(nullptr));
-						encodersPool = JSONUtils::asString(encodersDetailsRoot, "encodersPoolLabel", string());
+						json internalMMSRoot = JSONUtils::as<json>(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
+						json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails", json(nullptr));
+						encodersPool = JSONUtils::as<string>(encodersDetailsRoot, "encodersPoolLabel", string());
 					}
 
 					int64_t encoderKeyToBeSkipped = -1;
@@ -2244,7 +2244,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				if (encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
 				{
 					json recordingPeriodRoot = (_encodingItem->_ingestedParametersRoot)["schedule"];
-					bool autoRenew = JSONUtils::asBool(recordingPeriodRoot, "autoRenew", false);
+					bool autoRenew = JSONUtils::as<bool>(recordingPeriodRoot, "autoRenew", false);
 					if (autoRenew)
 					{
 						LOG_INFO(

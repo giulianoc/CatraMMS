@@ -45,12 +45,12 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		liveProxyData->_ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 
-		long maxStreamingDurationInMinutes = JSONUtils::asInt64(liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInMinutes", -1);
+		long maxStreamingDurationInMinutes = JSONUtils::as<int64_t>(liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInMinutes", -1);
 
 		liveProxyData->_monitoringRealTimeInfoEnabled =
-			JSONUtils::asBool(liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+			JSONUtils::as<bool>(liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
 		liveProxyData->_lastRealTimeInfo = {};
 		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
@@ -63,12 +63,12 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			{
 				json outputRoot = liveProxyData->_outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::asString(outputRoot, "outputType", "");
+				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				// if (outputType == "HLS" || outputType == "DASH")
 				if (outputType == "HLS_Channel")
 				{
-					string manifestDirectoryPath = JSONUtils::asString(outputRoot, "manifestDirectoryPath", "");
+					string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
 
 					if (fs::exists(manifestDirectoryPath))
 					{
@@ -109,17 +109,17 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				continue;
 			json streamInputRoot = inputRoot["streamInput"];
 
-			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
+			string streamSourceType = JSONUtils::as<string>(streamInputRoot, "streamSourceType", "");
 			if (streamSourceType == "TV")
 			{
-				string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-				int tvVideoPid = JSONUtils::asInt32(streamInputRoot, "tvVideoPid", -1);
-				int tvAudioItalianPid = JSONUtils::asInt32(streamInputRoot, "tvAudioItalianPid", -1);
+				string tvType = JSONUtils::as<string>(streamInputRoot, "tvType", "");
+				int64_t tvServiceId = JSONUtils::as<int64_t>(streamInputRoot, "tvServiceId", -1);
+				int64_t tvFrequency = JSONUtils::as<int64_t>(streamInputRoot, "tvFrequency", -1);
+				int64_t tvSymbolRate = JSONUtils::as<int64_t>(streamInputRoot, "tvSymbolRate", -1);
+				int64_t tvBandwidthInHz = JSONUtils::as<int64_t>(streamInputRoot, "tvBandwidthInHz", -1);
+				string tvModulation = JSONUtils::as<string>(streamInputRoot, "tvModulation", "");
+				int tvVideoPid = JSONUtils::as<int32_t>(streamInputRoot, "tvVideoPid", -1);
+				int tvAudioItalianPid = JSONUtils::as<int32_t>(streamInputRoot, "tvAudioItalianPid", -1);
 
 				// In case ffmpeg crashes and is automatically restarted, it should use the same
 				// IP-PORT it was using before because we already have a dbvlast sending the stream
@@ -186,19 +186,19 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			{
 				json inputRoot = liveProxyData->_inputsRoot[0];
 
-				int64_t utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcScheduleStart", -1);
+				int64_t utcProxyPeriodStart = JSONUtils::as<int64_t>(inputRoot, "utcScheduleStart", -1);
 				// if (utcProxyPeriodStart == -1)
-				// 	utcProxyPeriodStart = JSONUtils::asInt64(inputRoot, "utcProxyPeriodStart", -1);
+				// 	utcProxyPeriodStart = JSONUtils::as<int64_t>(inputRoot, "utcProxyPeriodStart", -1);
 
 				if (JSONUtils::isPresent(inputRoot, "streamInput"))
 				{
 					json streamInputRoot = inputRoot["streamInput"];
 
-					string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
+					string streamSourceType = JSONUtils::as<string>(streamInputRoot, "streamSourceType", "");
 
 					if (streamSourceType == "IP_PUSH")
 					{
-						int pushListenTimeout = JSONUtils::asInt32(streamInputRoot, "pushListenTimeout", -1);
+						int pushListenTimeout = JSONUtils::as<int32_t>(streamInputRoot, "pushListenTimeout", -1);
 
 						if (utcProxyPeriodStart != -1)
 						{
@@ -263,20 +263,20 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 				continue;
 			json streamInputRoot = inputRoot["streamInput"];
 
-			string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
+			string streamSourceType = JSONUtils::as<string>(streamInputRoot, "streamSourceType", "");
 			if (streamSourceType == "TV")
 			{
-				string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-				string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
+				string tvMulticastIP = JSONUtils::as<string>(streamInputRoot, "tvMulticastIP", "");
+				string tvMulticastPort = JSONUtils::as<string>(streamInputRoot, "tvMulticastPort", "");
 
-				string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-				int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-				int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-				int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-				int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-				string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-				int tvVideoPid = JSONUtils::asInt32(streamInputRoot, "tvVideoPid", -1);
-				int tvAudioItalianPid = JSONUtils::asInt32(streamInputRoot, "tvAudioItalianPid", -1);
+				string tvType = JSONUtils::as<string>(streamInputRoot, "tvType", "");
+				int64_t tvServiceId = JSONUtils::as<int64_t>(streamInputRoot, "tvServiceId", -1);
+				int64_t tvFrequency = JSONUtils::as<int64_t>(streamInputRoot, "tvFrequency", -1);
+				int64_t tvSymbolRate = JSONUtils::as<int64_t>(streamInputRoot, "tvSymbolRate", -1);
+				int64_t tvBandwidthInHz = JSONUtils::as<int64_t>(streamInputRoot, "tvBandwidthInHz", -1);
+				string tvModulation = JSONUtils::as<string>(streamInputRoot, "tvModulation", "");
+				int tvVideoPid = JSONUtils::as<int32_t>(streamInputRoot, "tvVideoPid", -1);
+				int tvAudioItalianPid = JSONUtils::as<int32_t>(streamInputRoot, "tvAudioItalianPid", -1);
 
 				if (tvServiceId != -1) // this is just to be sure variables are initialized
 				{
@@ -309,20 +309,20 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 					continue;
 				json streamInputRoot = inputRoot["streamInput"];
 
-				string streamSourceType = JSONUtils::asString(streamInputRoot, "streamSourceType", "");
+				string streamSourceType = JSONUtils::as<string>(streamInputRoot, "streamSourceType", "");
 				if (streamSourceType == "TV")
 				{
-					string tvMulticastIP = JSONUtils::asString(streamInputRoot, "tvMulticastIP", "");
-					string tvMulticastPort = JSONUtils::asString(streamInputRoot, "tvMulticastPort", "");
+					string tvMulticastIP = JSONUtils::as<string>(streamInputRoot, "tvMulticastIP", "");
+					string tvMulticastPort = JSONUtils::as<string>(streamInputRoot, "tvMulticastPort", "");
 
-					string tvType = JSONUtils::asString(streamInputRoot, "tvType", "");
-					int64_t tvServiceId = JSONUtils::asInt64(streamInputRoot, "tvServiceId", -1);
-					int64_t tvFrequency = JSONUtils::asInt64(streamInputRoot, "tvFrequency", -1);
-					int64_t tvSymbolRate = JSONUtils::asInt64(streamInputRoot, "tvSymbolRate", -1);
-					int64_t tvBandwidthInHz = JSONUtils::asInt64(streamInputRoot, "tvBandwidthInHz", -1);
-					string tvModulation = JSONUtils::asString(streamInputRoot, "tvModulation", "");
-					int tvVideoPid = JSONUtils::asInt32(streamInputRoot, "tvVideoPid", -1);
-					int tvAudioItalianPid = JSONUtils::asInt32(streamInputRoot, "tvAudioItalianPid", -1);
+					string tvType = JSONUtils::as<string>(streamInputRoot, "tvType", "");
+					int64_t tvServiceId = JSONUtils::as<int64_t>(streamInputRoot, "tvServiceId", -1);
+					int64_t tvFrequency = JSONUtils::as<int64_t>(streamInputRoot, "tvFrequency", -1);
+					int64_t tvSymbolRate = JSONUtils::as<int64_t>(streamInputRoot, "tvSymbolRate", -1);
+					int64_t tvBandwidthInHz = JSONUtils::as<int64_t>(streamInputRoot, "tvBandwidthInHz", -1);
+					string tvModulation = JSONUtils::as<string>(streamInputRoot, "tvModulation", "");
+					int tvVideoPid = JSONUtils::as<int32_t>(streamInputRoot, "tvVideoPid", -1);
+					int tvAudioItalianPid = JSONUtils::as<int32_t>(streamInputRoot, "tvAudioItalianPid", -1);
 
 					if (tvServiceId != -1) // this is just to be sure variables are initialized
 					{

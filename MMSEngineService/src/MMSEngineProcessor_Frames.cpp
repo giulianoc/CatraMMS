@@ -300,7 +300,7 @@ void MMSEngineProcessor::manageGenerateFramesTask(
 		}
 		else
 		{
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 		}
 
 		int64_t sourceMediaItemKey;
@@ -425,7 +425,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 
 					throw runtime_error(errorMessage);
 				}
-				periodInSeconds = JSONUtils::asInt32(parametersRoot, field, 0);
+				periodInSeconds = JSONUtils::as<int32_t>(parametersRoot, field, 0);
 			}
 			else // if (ingestionType ==
 				 // MMSEngineDBFacade::IngestionType::IFrames || ingestionType
@@ -439,7 +439,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
 			{
 				field = "instantInSeconds";
-				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
+				startTimeInSeconds = JSONUtils::as<double>(parametersRoot, field, 0);
 			}
 			else if (ingestionType == MMSEngineDBFacade::IngestionType::PeriodicalFrames ||
 					 ingestionType == MMSEngineDBFacade::IngestionType::IFrames ||
@@ -447,7 +447,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					 ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
 			{
 				field = "startTimeInSeconds";
-				startTimeInSeconds = JSONUtils::asDouble(parametersRoot, field, 0);
+				startTimeInSeconds = JSONUtils::as<double>(parametersRoot, field, 0);
 			}
 		}
 
@@ -463,7 +463,7 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 					 ingestionType == MMSEngineDBFacade::IngestionType::MotionJPEGByIFrames)
 			{
 				field = "MaxFramesNumber";
-				maxFramesNumber = JSONUtils::asInt32(parametersRoot, field, -1);
+				maxFramesNumber = JSONUtils::as<int32_t>(parametersRoot, field, -1);
 			}
 		}
 
@@ -472,9 +472,9 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		// the media 	For this reason this field is set to true by default
 		bool fixStartTimeIfOvercomeDuration = true;
 		if (JSONUtils::isPresent(parametersRoot, "fixInstantInSecondsIfOvercomeDuration"))
-			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, "fixInstantInSecondsIfOvercomeDuration", true);
+			fixStartTimeIfOvercomeDuration = JSONUtils::as<bool>(parametersRoot, "fixInstantInSecondsIfOvercomeDuration", true);
 		else if (JSONUtils::isPresent(parametersRoot, "FixStartTimeIfOvercomeDuration"))
-			fixStartTimeIfOvercomeDuration = JSONUtils::asBool(parametersRoot, "FixStartTimeIfOvercomeDuration", true);
+			fixStartTimeIfOvercomeDuration = JSONUtils::as<bool>(parametersRoot, "FixStartTimeIfOvercomeDuration", true);
 
 		{
 			if (ingestionType == MMSEngineDBFacade::IngestionType::Frame)
@@ -505,13 +505,13 @@ void MMSEngineProcessor::fillGenerateFramesParameters(
 		int width = -1;
 		{
 			field = "width";
-			width = JSONUtils::asInt32(parametersRoot, field, -1);
+			width = JSONUtils::as<int32_t>(parametersRoot, field, -1);
 		}
 
 		int height = -1;
 		{
 			field = "height";
-			height = JSONUtils::asInt32(parametersRoot, field, -1);
+			height = JSONUtils::as<int32_t>(parametersRoot, field, -1);
 		}
 
 		int videoWidth;

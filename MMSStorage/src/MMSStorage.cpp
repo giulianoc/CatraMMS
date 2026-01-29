@@ -28,21 +28,21 @@ MMSStorage::MMSStorage(
 
 		_hostName = System::hostName();
 
-		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::asInt32(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::as<int32_t>(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
 		LOG_INFO(
 			"Configuration item"
 			", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 			_waitingNFSSync_maxMillisecondsToWait
 		);
 
-		_storage = JSONUtils::asString(configuration["storage"], "path", "");
+		_storage = JSONUtils::as<string>(configuration["storage"], "path", "");
 		LOG_INFO(
 			"Configuration item"
 			", storage->path: {}",
 			_storage.string()
 		);
 
-		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::asInt32(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
+		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::as<int32_t>(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
 		LOG_INFO(
 			"Configuration item"
 			", storage->freeSpaceToLeaveInEachPartitionInMB: {}",
@@ -82,7 +82,7 @@ void MMSStorage::createDirectories(json configuration, shared_ptr<spdlog::logger
 	// 	throw runtime_error(errorMessage);
 	// }
 
-	fs::path storage = JSONUtils::asString(configuration["storage"], "path", "");
+	fs::path storage = JSONUtils::as<string>(configuration["storage"], "path", "");
 	logger->info(__FILEREF__ + "Configuration item" + ", storage->path: " + storage.string());
 
 	// 2023-02-13: scenario: fs::permissions è fallito, genera un eccezione e la creazione delle
@@ -1922,7 +1922,7 @@ void MMSStorage::refreshPartitionsFreeSizes()
 			pMMSPartitionName = std::format("{:0>4}", partitionKey);
 			string freeSpaceConfField = string("freeSpaceToLeaveInEachPartitionInMB_") + pMMSPartitionName;
 
-			localFreeSpaceToLeaveInMB = JSONUtils::asInt32(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
+			localFreeSpaceToLeaveInMB = JSONUtils::as<int32_t>(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
 		}
 
 		LOG_INFO(

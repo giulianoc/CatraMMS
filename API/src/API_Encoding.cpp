@@ -778,7 +778,7 @@ void API::addUpdateEncodingProfilesSet(
 
 				throw runtime_error(errorMessage);
 			}
-			string label = JSONUtils::asString(encodingProfilesSetRoot, field, "");
+			string label = JSONUtils::as<string>(encodingProfilesSetRoot, field, "");
 
 			bool removeEncodingProfilesIfPresent = true;
 #ifdef __POSTGRES__
@@ -796,7 +796,7 @@ void API::addUpdateEncodingProfilesSet(
 
 			for (int profileIndex = 0; profileIndex < profilesRoot.size(); profileIndex++)
 			{
-				string profileLabel = JSONUtils::asString(profilesRoot[profileIndex]);
+				string profileLabel = JSONUtils::as<string>(profilesRoot[profileIndex]);
 
 #ifdef __POSTGRES__
 				int64_t encodingProfileKey = _mmsEngineDBFacade->addEncodingProfileIntoSetIfNotAlreadyPresent(
@@ -899,12 +899,12 @@ void API::addEncodingProfile(
 
 				throw runtime_error(errorMessage);
 			}
-			string profileLabel = JSONUtils::asString(encodingProfileRoot, field, "");
+			string profileLabel = JSONUtils::as<string>(encodingProfileRoot, field, "");
 
 			MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
 			{
 				field = "fileFormat";
-				string fileFormat = JSONUtils::asString(encodingProfileRoot, field, "");
+				string fileFormat = JSONUtils::as<string>(encodingProfileRoot, field, "");
 
 				deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 				/*

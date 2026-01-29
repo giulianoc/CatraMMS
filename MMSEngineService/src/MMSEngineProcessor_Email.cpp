@@ -126,7 +126,7 @@ void MMSEngineProcessor::emailNotificationThread(
 						field = "ingestionJobKey";
 						if (JSONUtils::isPresent(referenceRoot, field))
 						{
-							int64_t referenceIngestionJobKey = JSONUtils::asInt64(referenceRoot, field, 0);
+							int64_t referenceIngestionJobKey = JSONUtils::as<int64_t>(referenceRoot, field, 0);
 
 							auto [referenceLabel, ingestionType, parametersRoot, referenceErrorMessage] =
 								_mmsEngineDBFacade->ingestionJob_LabelIngestionTypeMetadataContentErrorMessage(
@@ -147,14 +147,14 @@ void MMSEngineProcessor::emailNotificationThread(
 							{
 								string inputType;
 								field = "inputType";
-								inputType = JSONUtils::asString(parametersRoot, field, "");
+								inputType = JSONUtils::as<string>(parametersRoot, field, "");
 
 								if (inputType == "Channel")
 								{
 									field = "channelConfigurationLabel";
 									if (JSONUtils::isPresent(parametersRoot, field))
 									{
-										checkStreaming_streamingName = JSONUtils::asString(parametersRoot, field, "");
+										checkStreaming_streamingName = JSONUtils::as<string>(parametersRoot, field, "");
 
 										/*
 										bool warningIfMissing = false;
@@ -177,10 +177,10 @@ void MMSEngineProcessor::emailNotificationThread(
 								{
 									field = "streamingName";
 									if (JSONUtils::isPresent(parametersRoot, field))
-										checkStreaming_streamingName = JSONUtils::asString(parametersRoot, field, "");
+										checkStreaming_streamingName = JSONUtils::as<string>(parametersRoot, field, "");
 									field = "streamingUrl";
 									if (JSONUtils::isPresent(parametersRoot, field))
-										checkStreaming_streamingUrl = JSONUtils::asString(parametersRoot, field, "");
+										checkStreaming_streamingUrl = JSONUtils::as<string>(parametersRoot, field, "");
 								}
 							}
 						}
@@ -222,7 +222,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 			throw runtime_error(errorMessage);
 		}
-		string configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+		string configurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 		string tosCommaSeparated;
 		string subject;
@@ -247,7 +247,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 					continue;
 				}
-				string strToBeReplaced = JSONUtils::asString(userSubstitutionRoot, field, "");
+				string strToBeReplaced = JSONUtils::as<string>(userSubstitutionRoot, field, "");
 
 				field = "ReplaceWith";
 				if (!JSONUtils::isPresent(userSubstitutionRoot, field))
@@ -257,7 +257,7 @@ void MMSEngineProcessor::emailNotificationThread(
 
 					continue;
 				}
-				string strToReplace = JSONUtils::asString(userSubstitutionRoot, field, "");
+				string strToReplace = JSONUtils::as<string>(userSubstitutionRoot, field, "");
 
 				LOG_INFO(
 					string() + "User substitution" + ", _processorIdentifier: " + to_string(_processorIdentifier) +

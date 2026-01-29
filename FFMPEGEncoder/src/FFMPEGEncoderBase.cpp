@@ -153,7 +153,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 
 				throw runtime_error(errorMessage);
 			}
-			string type = JSONUtils::asString(ingestionJobRoot, field, "");
+			string type = JSONUtils::as<string>(ingestionJobRoot, field, "");
 
 			if (type == "Add-Content")
 			{
@@ -170,7 +170,7 @@ long FFMPEGEncoderBase::getAddContentIngestionJobKey(int64_t ingestionJobKey, st
 
 					throw runtime_error(errorMessage);
 				}
-				addContentIngestionJobKey = JSONUtils::asInt64(ingestionJobRoot, field, -1);
+				addContentIngestionJobKey = JSONUtils::as<int64_t>(ingestionJobRoot, field, -1);
 
 				break;
 			}

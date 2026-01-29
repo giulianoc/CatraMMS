@@ -22,7 +22,7 @@ using json = nlohmann::json;
 
 void EncoderProxy::encodeContentImage()
 {
-	int64_t encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, "encodingProfileKey", 0);
+	int64_t encodingProfileKey = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, "encodingProfileKey", 0);
 
 	json sourcesToBeEncodedRoot = _encodingItem->_encodingParametersRoot["sourcesToBeEncoded"];
 
@@ -30,16 +30,16 @@ void EncoderProxy::encodeContentImage()
 	{
 		json sourceToBeEncodedRoot = sourcesToBeEncodedRoot[sourceIndex];
 
-		bool stopIfReferenceProcessingError = JSONUtils::asBool(sourceToBeEncodedRoot, "stopIfReferenceProcessingError", false);
+		bool stopIfReferenceProcessingError = JSONUtils::as<bool>(sourceToBeEncodedRoot, "stopIfReferenceProcessingError", false);
 
 		string stagingEncodedAssetPathName;
 
 		try
 		{
-			string sourceFileName = JSONUtils::asString(sourceToBeEncodedRoot, "sourceFileName", "");
-			string sourceRelativePath = JSONUtils::asString(sourceToBeEncodedRoot, "sourceRelativePath", "");
-			string sourceFileExtension = JSONUtils::asString(sourceToBeEncodedRoot, "sourceFileExtension", "");
-			string mmsSourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, "mmsSourceAssetPathName", "");
+			string sourceFileName = JSONUtils::as<string>(sourceToBeEncodedRoot, "sourceFileName", "");
+			string sourceRelativePath = JSONUtils::as<string>(sourceToBeEncodedRoot, "sourceRelativePath", "");
+			string sourceFileExtension = JSONUtils::as<string>(sourceToBeEncodedRoot, "sourceFileExtension", "");
+			string mmsSourceAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, "mmsSourceAssetPathName", "");
 			json encodingProfileDetailsRoot = _encodingItem->_encodingParametersRoot["encodingProfileDetails"];
 
 			string encodedFileName;
@@ -377,14 +377,14 @@ void EncoderProxy::encodeContentImage()
 
 void EncoderProxy::processEncodedImage()
 {
-	int64_t encodingProfileKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, "encodingProfileKey", 0);
+	int64_t encodingProfileKey = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, "encodingProfileKey", 0);
 
 	int64_t physicalItemRetentionInMinutes = -1;
 	{
 		string field = "physicalItemRetention";
 		if (JSONUtils::isPresent(_encodingItem->_ingestedParametersRoot, field))
 		{
-			string retention = JSONUtils::asString(_encodingItem->_ingestedParametersRoot, field, "1d");
+			string retention = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, field, "1d");
 			physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 		}
 	}
@@ -396,16 +396,16 @@ void EncoderProxy::processEncodedImage()
 		json sourceToBeEncodedRoot = sourcesToBeEncodedRoot[sourceIndex];
 
 		// bool stopIfReferenceProcessingError =
-		// JSONUtils::asBool(sourceToBeEncodedRoot,
+		// JSONUtils::as<bool>(sourceToBeEncodedRoot,
 		// 	"stopIfReferenceProcessingError", false);
 
 		try
 		{
-			string stagingEncodedAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, "out_stagingEncodedAssetPathName", "");
+			string stagingEncodedAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, "out_stagingEncodedAssetPathName", "");
 
-			string sourceRelativePath = JSONUtils::asString(sourceToBeEncodedRoot, "sourceRelativePath", "");
+			string sourceRelativePath = JSONUtils::as<string>(sourceToBeEncodedRoot, "sourceRelativePath", "");
 
-			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourceMediaItemKey", 0);
+			int64_t sourceMediaItemKey = JSONUtils::as<int64_t>(sourceToBeEncodedRoot, "sourceMediaItemKey", 0);
 
 			if (stagingEncodedAssetPathName == "")
 				continue;
@@ -943,7 +943,7 @@ tuple<string, int, int, bool, int, int, Magick::InterlaceType> EncoderProxy::rea
 
 	// FileFormat
 	{
-		newFormat = JSONUtils::asString(encodingProfileRoot, "fileFormat", "", true);
+		newFormat = JSONUtils::as<string>(encodingProfileRoot, "fileFormat", "", {}, true);
 		encodingImageFormatValidation(newFormat);
 	}
 
@@ -960,15 +960,15 @@ tuple<string, int, int, bool, int, int, Magick::InterlaceType> EncoderProxy::rea
 		encodingProfileImageRoot = encodingProfileRoot["Image"];
 	}
 
-	newWidth = JSONUtils::asInt32(encodingProfileImageRoot, "width", 0, true);
-	newHeight = JSONUtils::asInt32(encodingProfileImageRoot, "height", 0, true);
-	newAspectRatio = JSONUtils::asBool(encodingProfileImageRoot, "aspectRatio", false, true);
-	newMaxWidth = JSONUtils::asInt32(encodingProfileImageRoot, "maxWidth", 0, false);
-	newMaxHeight = JSONUtils::asInt32(encodingProfileImageRoot, "maxHeight", 0, false);
+	newWidth = JSONUtils::as<int32_t>(encodingProfileImageRoot, "width", 0, {}, true);
+	newHeight = JSONUtils::as<int32_t>(encodingProfileImageRoot, "height", 0, {}, true);
+	newAspectRatio = JSONUtils::as<bool>(encodingProfileImageRoot, "aspectRatio", false, {}, true);
+	newMaxWidth = JSONUtils::as<int32_t>(encodingProfileImageRoot, "maxWidth", 0, {}, false);
+	newMaxHeight = JSONUtils::as<int32_t>(encodingProfileImageRoot, "maxHeight", 0, {}, false);
 
 	// Interlace
 	{
-		string sNewInterlaceType = JSONUtils::asString(encodingProfileImageRoot, "interlaceType", "", true);
+		string sNewInterlaceType = JSONUtils::as<string>(encodingProfileImageRoot, "interlaceType", "", {}, true);
 		newInterlaceType = encodingImageInterlaceTypeValidation(sNewInterlaceType);
 	}
 

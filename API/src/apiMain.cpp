@@ -49,21 +49,21 @@ void signalHandler(int signal)
 
 std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
 {
-	const string logErrorPathName = JSONUtils::asString(configurationRoot["log"]["api"], "errorPathName", "");
-	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
+	const string logErrorPathName = JSONUtils::as<string>(configurationRoot["log"]["api"], "errorPathName", "");
+	string logType = JSONUtils::as<string>(configurationRoot["log"]["api"], "type", "");
 
 	std::shared_ptr<spdlog::sinks::sink> errorSink;
 	if (logType == "daily")
 	{
-		int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
-		int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
+		int logRotationHour = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
+		int logRotationMinute = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
 
 		errorSink = make_shared<spdlog::sinks::daily_file_sink_mt>(logErrorPathName.c_str(), logRotationHour, logRotationMinute);
 	}
 	else if (logType == "rotating")
 	{
-		int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
-		int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
+		int64_t maxSizeInKBytes = JSONUtils::as<int64_t>(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
+		int maxFiles = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
 
 		errorSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logErrorPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 	}
@@ -74,17 +74,17 @@ std::shared_ptr<spdlog::sinks::sink> buildErrorSink(json configurationRoot)
 
 shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
 {
-	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"], "pathName", "");
-	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
-	bool stdout = JSONUtils::asBool(configurationRoot["log"]["api"], "stdout", false);
+	string logPathName = JSONUtils::as<string>(configurationRoot["log"]["api"], "pathName", "");
+	string logType = JSONUtils::as<string>(configurationRoot["log"]["api"], "type", "");
+	bool stdout = JSONUtils::as<bool>(configurationRoot["log"]["api"], "stdout", false);
 
 	std::vector<spdlog::sink_ptr> sinks;
 	{
-		string logLevel = JSONUtils::asString(configurationRoot["log"]["api"], "level", "");
+		string logLevel = JSONUtils::as<string>(configurationRoot["log"]["api"], "level", "");
 		if (logType == "daily")
 		{
-			int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
-			int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
+			int logRotationHour = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
@@ -101,8 +101,8 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shar
 		}
 		else if (logType == "rotating")
 		{
-			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
-			int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
+			int64_t maxSizeInKBytes = JSONUtils::as<int64_t>(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
 
 			// livello di log sul sink
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
@@ -137,7 +137,7 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shar
 	// livello di log sul logger
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
-	string pattern = JSONUtils::asString(configurationRoot["log"]["api"], "pattern", "");
+	string pattern = JSONUtils::as<string>(configurationRoot["log"]["api"], "pattern", "");
 	spdlog::set_pattern(pattern);
 
 	// globally register the loggers so so the can be accessed using spdlog::get(logger_name)
@@ -152,13 +152,13 @@ shared_ptr<spdlog::logger> setMainLogger(json configurationRoot, const std::shar
 
 void registerSlowQueryLogger(json configurationRoot)
 {
-	string logPathName = JSONUtils::asString(configurationRoot["log"]["api"]["slowQuery"], "pathName", "");
+	string logPathName = JSONUtils::as<string>(configurationRoot["log"]["api"]["slowQuery"], "pathName", "");
 	LOG_INFO(
 		"Configuration item"
 		", log->api->slowQuery->pathName: {}",
 		logPathName
 	);
-	string logType = JSONUtils::asString(configurationRoot["log"]["api"], "type", "");
+	string logType = JSONUtils::as<string>(configurationRoot["log"]["api"], "type", "");
 	LOG_INFO(
 		"Configuration item"
 		", log->api->type: {}",
@@ -170,8 +170,8 @@ void registerSlowQueryLogger(json configurationRoot)
 	{
 		if (logType == "daily")
 		{
-			int logRotationHour = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
-			int logRotationMinute = JSONUtils::asInt32(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
+			int logRotationHour = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["daily"], "rotationHour", 1);
+			int logRotationMinute = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["daily"], "rotationMinute", 1);
 
 			auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
 			sinks.push_back(dailySink);
@@ -179,8 +179,8 @@ void registerSlowQueryLogger(json configurationRoot)
 		}
 		else if (logType == "rotating")
 		{
-			int64_t maxSizeInKBytes = JSONUtils::asInt64(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
-			int maxFiles = JSONUtils::asInt32(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
+			int64_t maxSizeInKBytes = JSONUtils::as<int64_t>(configurationRoot["log"]["api"]["rotating"], "maxSizeInKBytes", 1000);
+			int maxFiles = JSONUtils::as<int32_t>(configurationRoot["log"]["api"]["rotating"], "maxFiles", 10);
 
 			auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
 			sinks.push_back(rotatingSink);
@@ -197,7 +197,7 @@ void registerSlowQueryLogger(json configurationRoot)
 	// inizializza il livello del logger a trace in modo che ogni messaggio possa raggiungere i logger nei sinks
 	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
 
-	string pattern = JSONUtils::asString(configurationRoot["log"]["api"], "pattern", "");
+	string pattern = JSONUtils::as<string>(configurationRoot["log"]["api"], "pattern", "");
 	LOG_INFO(
 		"Configuration item"
 		", log->api->pattern: {}",
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 		if (noDatabaseAccess)
 			masterDbPoolSize = 0;
 		else
-			masterDbPoolSize = JSONUtils::asInt32(configurationRoot["postgres"]["master"], "apiPoolSize", 5);
+			masterDbPoolSize = JSONUtils::as<int32_t>(configurationRoot["postgres"]["master"], "apiPoolSize", 5);
 		LOG_INFO(
 			"Configuration item"
 			", postgres->master->apiPoolSize: {}",
@@ -270,16 +270,16 @@ int main(int argc, char **argv)
 		if (noDatabaseAccess)
 			slaveDbPoolSize = 0;
 		else
-			slaveDbPoolSize = JSONUtils::asInt32(configurationRoot["postgres"]["slave"], "apiPoolSize", 5);
+			slaveDbPoolSize = JSONUtils::as<int32_t>(configurationRoot["postgres"]["slave"], "apiPoolSize", 5);
 		LOG_INFO(
 			"Configuration item"
 			", postgres->slave->apiPoolSize: {}",
 			slaveDbPoolSize
 		);
 #else
-		size_t masterDbPoolSize = JSONUtils::asInt32(configuration["database"]["master"], "apiPoolSize", 5);
+		size_t masterDbPoolSize = JSONUtils::as<int32_t>(configuration["database"]["master"], "apiPoolSize", 5);
 		info(__FILEREF__ + "Configuration item" + ", database->master->apiPoolSize: " + to_string(masterDbPoolSize));
-		size_t slaveDbPoolSize = JSONUtils::asInt32(configuration["database"]["slave"], "apiPoolSize", 5);
+		size_t slaveDbPoolSize = JSONUtils::as<int32_t>(configuration["database"]["slave"], "apiPoolSize", 5);
 		info(__FILEREF__ + "Configuration item" + ", database->slave->apiPoolSize: " + to_string(slaveDbPoolSize));
 #endif
 		LOG_INFO("Creating MMSEngineDBFacade");
@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 
 		FCGX_Init();
 
-		int threadsNumber = JSONUtils::asInt32(configurationRoot["api"], "threadsNumber", 1);
+		int threadsNumber = JSONUtils::as<int32_t>(configurationRoot["api"], "threadsNumber", 1);
 		LOG_INFO(
 			"Configuration item"
 			", api->threadsNumber: {}",

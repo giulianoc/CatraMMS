@@ -49,7 +49,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			facebookConfigurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "facebookNodeType";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -60,7 +60,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookNodeType = JSONUtils::asString(parametersRoot, field, "");
+			facebookNodeType = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "facebookNodeId";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -71,7 +71,7 @@ void MMSEngineProcessor::postOnFacebookThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookNodeId = JSONUtils::asString(parametersRoot, field, "");
+			facebookNodeId = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		int dependencyIndex = 0;
@@ -311,26 +311,26 @@ void MMSEngineProcessor::postOnYouTubeThread(
 
 				throw runtime_error(errorMessage);
 			}
-			youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			youTubeConfigurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "title";
-			youTubeTitle = JSONUtils::asString(parametersRoot, field, "");
+			youTubeTitle = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "description";
-			youTubeDescription = JSONUtils::asString(parametersRoot, field, "");
+			youTubeDescription = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "tags";
 			if (JSONUtils::isPresent(parametersRoot, field))
 				youTubeTags = parametersRoot[field];
 
 			field = "categoryId";
-			youTubeCategoryId = JSONUtils::asInt32(parametersRoot, field, -1);
+			youTubeCategoryId = JSONUtils::as<int32_t>(parametersRoot, field, -1);
 
 			field = "privacyStatus";
-			youTubePrivacyStatus = JSONUtils::asString(parametersRoot, field, "private");
+			youTubePrivacyStatus = JSONUtils::as<string>(parametersRoot, field, "private");
 
 			field = "madeForKids";
-			youTubeMadeForKids = JSONUtils::asBool(parametersRoot, field, false);
+			youTubeMadeForKids = JSONUtils::as<bool>(parametersRoot, field, false);
 		}
 
 		int dependencyIndex = 0;
@@ -565,7 +565,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			youTubeConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			youTubeConfigurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "title";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -576,19 +576,19 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			youTubeLiveBroadcastTitle = JSONUtils::asString(parametersRoot, field, "");
+			youTubeLiveBroadcastTitle = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "MadeForKids";
-			youTubeLiveBroadcastMadeForKids = JSONUtils::asBool(parametersRoot, "MadeForKids", true);
+			youTubeLiveBroadcastMadeForKids = JSONUtils::as<bool>(parametersRoot, "MadeForKids", true);
 
 			field = "Description";
-			youTubeLiveBroadcastDescription = JSONUtils::asString(parametersRoot, field, "");
+			youTubeLiveBroadcastDescription = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "PrivacyStatus";
-			youTubeLiveBroadcastPrivacyStatus = JSONUtils::asString(parametersRoot, field, "unlisted");
+			youTubeLiveBroadcastPrivacyStatus = JSONUtils::as<string>(parametersRoot, field, "unlisted");
 
 			field = "LatencyPreference";
-			youTubeLiveBroadcastLatencyPreference = JSONUtils::asString(parametersRoot, field, "normal");
+			youTubeLiveBroadcastLatencyPreference = JSONUtils::as<string>(parametersRoot, field, "normal");
 
 			field = "youTubeSchedule";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -610,7 +610,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			scheduleStartTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
+			scheduleStartTimeInSeconds = JSONUtils::as<string>(scheduleRoot, field, "");
 
 			field = "end";
 			if (!JSONUtils::isPresent(scheduleRoot, field))
@@ -621,7 +621,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			scheduleEndTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
+			scheduleEndTimeInSeconds = JSONUtils::as<string>(scheduleRoot, field, "");
 
 			field = "SourceType";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -632,7 +632,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceType = JSONUtils::asString(parametersRoot, field, "");
+			sourceType = JSONUtils::as<string>(parametersRoot, field, "");
 
 			if (sourceType == "Live")
 			{
@@ -645,7 +645,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					throw runtime_error(errorMessage);
 				}
-				streamConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
+				streamConfigurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 			}
 			else // if (sourceType == "MediaItem")
 			{
@@ -911,7 +911,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			broadcastId = JSONUtils::asString(responseRoot, field, "");
+			broadcastId = JSONUtils::as<string>(responseRoot, field, "");
 
 			sResponse = "";
 		}
@@ -1098,7 +1098,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			streamId = JSONUtils::asString(responseRoot, field, "");
+			streamId = JSONUtils::as<string>(responseRoot, field, "");
 
 			field = "cdn";
 			if (!JSONUtils::isPresent(responseRoot, field))
@@ -1134,7 +1134,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string streamName = JSONUtils::asString(ingestionInfoRoot, field, "");
+			string streamName = JSONUtils::as<string>(ingestionInfoRoot, field, "");
 
 			field = "ingestionAddress";
 			if (!JSONUtils::isPresent(ingestionInfoRoot, field))
@@ -1146,7 +1146,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string ingestionAddress = JSONUtils::asString(ingestionInfoRoot, field, "");
+			string ingestionAddress = JSONUtils::as<string>(ingestionInfoRoot, field, "");
 
 			rtmpURL = ingestionAddress + "/" + streamName;
 
@@ -1303,10 +1303,10 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+					userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -1647,7 +1647,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookNodeType = JSONUtils::asString(parametersRoot, field, "");
+			facebookNodeType = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "facebookNodeId";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -1658,7 +1658,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookNodeId = JSONUtils::asString(parametersRoot, field, "");
+			facebookNodeId = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "facebookLiveType";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -1669,7 +1669,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookLiveType = JSONUtils::asString(parametersRoot, field, "");
+			facebookLiveType = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "facebookConfigurationLabel";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -1680,7 +1680,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			facebookConfigurationLabel = JSONUtils::asString(parametersRoot, field, "");
+			facebookConfigurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "title";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -1691,10 +1691,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			title = JSONUtils::asString(parametersRoot, field, "");
+			title = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "description";
-			description = JSONUtils::asString(parametersRoot, field, "");
+			description = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "facebookSchedule";
 			if (!JSONUtils::isPresent(parametersRoot, field))
@@ -1716,7 +1716,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			string scheduleStartTimeInSeconds = JSONUtils::asString(scheduleRoot, field, "");
+			string scheduleStartTimeInSeconds = JSONUtils::as<string>(scheduleRoot, field, "");
 			utcScheduleStartTimeInSeconds = Datetime::parseUtcStringToUtcInSecs(scheduleStartTimeInSeconds);
 
 			field = "sourceType";
@@ -1728,7 +1728,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			sourceType = JSONUtils::asString(parametersRoot, field, "");
+			sourceType = JSONUtils::as<string>(parametersRoot, field, "");
 
 			if (sourceType == "Live")
 			{
@@ -1741,7 +1741,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 					throw runtime_error(errorMessage);
 				}
-				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+				configurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 			}
 			else // if (sourceType == "MediaItem")
 			{
@@ -1828,7 +1828,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 
 				throw runtime_error(errorMessage);
 			}
-			rtmpURL = JSONUtils::asString(responseRoot, field, "");
+			rtmpURL = JSONUtils::as<string>(responseRoot, field, "");
 		}
 		catch (runtime_error &e)
 		{
@@ -1871,10 +1871,10 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 					json credentialsRoot = internalMMSRoot[field];
 
 					field = "userKey";
-					userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+					userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 				}
 
@@ -2304,7 +2304,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 				throw runtime_error(errorMessage);
 			}
-			uploadSessionId = JSONUtils::asString(facebookResponseRoot, field, "");
+			uploadSessionId = JSONUtils::as<string>(facebookResponseRoot, field, "");
 
 			field = "video_id";
 			if (!JSONUtils::isPresent(facebookResponseRoot, field))
@@ -2315,7 +2315,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 				throw runtime_error(errorMessage);
 			}
-			videoId = JSONUtils::asString(facebookResponseRoot, field, "");
+			videoId = JSONUtils::as<string>(facebookResponseRoot, field, "");
 
 			field = "start_offset";
 			if (!JSONUtils::isPresent(facebookResponseRoot, field))
@@ -2326,7 +2326,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 				throw runtime_error(errorMessage);
 			}
-			string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+			string sStartOffset = JSONUtils::as<string>(facebookResponseRoot, field, "");
 			startOffset = stoll(sStartOffset);
 
 			field = "end_offset";
@@ -2338,7 +2338,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 				throw runtime_error(errorMessage);
 			}
-			string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+			string sEndOffset = JSONUtils::as<string>(facebookResponseRoot, field, "");
 			endOffset = stoll(sEndOffset);
 		}
 
@@ -2386,7 +2386,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 					throw runtime_error(errorMessage);
 				}
-				string sStartOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+				string sStartOffset = JSONUtils::as<string>(facebookResponseRoot, field, "");
 				startOffset = stoll(sStartOffset);
 
 				field = "end_offset";
@@ -2397,7 +2397,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 					throw runtime_error(errorMessage);
 				}
-				string sEndOffset = JSONUtils::asString(facebookResponseRoot, field, "");
+				string sEndOffset = JSONUtils::as<string>(facebookResponseRoot, field, "");
 				endOffset = stoll(sEndOffset);
 			}
 		}
@@ -2436,7 +2436,7 @@ void MMSEngineProcessor::postVideoOnFacebook(
 
 				throw runtime_error(errorMessage);
 			}
-			success = JSONUtils::asBool(facebookResponseRoot, field, false);
+			success = JSONUtils::as<bool>(facebookResponseRoot, field, false);
 
 			if (!success)
 			{
@@ -3234,7 +3234,7 @@ string MMSEngineProcessor::getYouTubeAccessTokenByConfigurationLabel(
 			throw runtime_error(errorMessage);
 		}
 
-		return JSONUtils::asString(youTubeResponseRoot, field, "");
+		return JSONUtils::as<string>(youTubeResponseRoot, field, "");
 	}
 	catch (runtime_error &e)
 	{
@@ -3296,7 +3296,7 @@ string MMSEngineProcessor::getFacebookPageToken(
 			throw runtime_error(errorMessage);
 		}
 
-		return JSONUtils::asString(responseRoot, field, "");
+		return JSONUtils::as<string>(responseRoot, field, "");
 	}
 	catch (runtime_error &e)
 	{

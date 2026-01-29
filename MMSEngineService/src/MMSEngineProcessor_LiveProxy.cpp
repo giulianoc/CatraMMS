@@ -52,9 +52,9 @@ void MMSEngineProcessor::manageLiveProxy(
 			string streamEncodersPoolLabel;
 			bool pushPublicEncoderName;
 			{
-				configurationLabel = JSONUtils::asString(parametersRoot, "configurationLabel", "", true);
+				configurationLabel = JSONUtils::as<string>(parametersRoot, "configurationLabel", "", {}, true);
 
-				useVideoTrackFromMediaItemKey = JSONUtils::asInt64(parametersRoot, "useVideoTrackFromMediaItemKey", -1);
+				useVideoTrackFromMediaItemKey = JSONUtils::as<int64_t>(parametersRoot, "useVideoTrackFromMediaItemKey", -1);
 
 				{
 					tie(streamSourceType, streamEncodersPoolLabel, pushEncoderKey, pushPublicEncoderName) =
@@ -69,7 +69,7 @@ void MMSEngineProcessor::manageLiveProxy(
 			}
 
 			// EncodersPool override the one included in ChannelConf if present
-			taskEncodersPoolLabel = JSONUtils::asString(parametersRoot, "encodersPool", "");
+			taskEncodersPoolLabel = JSONUtils::as<string>(parametersRoot, "encodersPool", "");
 
 			// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
 			// l'encodersPool o l'encoderKey in caso di IP_PUSH che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
@@ -97,11 +97,11 @@ void MMSEngineProcessor::manageLiveProxy(
 				_mmsEngineDBFacade->updateIngestionJobMetadataContent(ingestionJobKey, JSONUtils::toString(parametersRoot));
 			}
 
-			defaultBroadcast = JSONUtils::asBool(parametersRoot, "defaultBroadcast", false);
+			defaultBroadcast = JSONUtils::as<bool>(parametersRoot, "defaultBroadcast", false);
 
 			if (JSONUtils::isPresent(parametersRoot, "timePeriod"))
 			{
-				timePeriod = JSONUtils::asBool(parametersRoot, "timePeriod", false);
+				timePeriod = JSONUtils::as<bool>(parametersRoot, "timePeriod", false);
 				if (timePeriod)
 				{
 					if (!JSONUtils::isPresent(parametersRoot, "schedule"))
@@ -122,21 +122,21 @@ void MMSEngineProcessor::manageLiveProxy(
 
 					json proxyPeriodRoot = parametersRoot["schedule"];
 
-					string proxyPeriodStart = JSONUtils::asString(proxyPeriodRoot, "start", "", true);
+					string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, "start", "", {}, true);
 					utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
 
-					string proxyPeriodEnd = JSONUtils::asString(proxyPeriodRoot, "end", "", true);
+					string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, "end", "", {}, true);
 					utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
 				}
 			}
 
-			maxWidth = JSONUtils::asInt32(parametersRoot, "maxWidth", -1);
+			maxWidth = JSONUtils::as<int32_t>(parametersRoot, "maxWidth", -1);
 
-			userAgent = JSONUtils::asString(parametersRoot, "userAgent", "");
+			userAgent = JSONUtils::as<string>(parametersRoot, "userAgent", "");
 
-			otherInputOptions = JSONUtils::asString(parametersRoot, "otherInputOptions", "");
+			otherInputOptions = JSONUtils::as<string>(parametersRoot, "otherInputOptions", "");
 
-			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::asInt64(parametersRoot, "waitingSecondsBetweenAttemptsInCaseOfErrors", 5);
+			waitingSecondsBetweenAttemptsInCaseOfErrors = JSONUtils::as<int64_t>(parametersRoot, "waitingSecondsBetweenAttemptsInCaseOfErrors", 5);
 
 			if (!JSONUtils::isPresent(parametersRoot, "outputs"))
 			{

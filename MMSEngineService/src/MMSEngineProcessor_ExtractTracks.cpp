@@ -59,11 +59,11 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 						throw runtime_error(errorMessage);
 					}
-					string trackType = JSONUtils::asString(trackRoot, field, "");
+					string trackType = JSONUtils::as<string>(trackRoot, field, "");
 
 					int trackNumber = 0;
 					field = "TrackNumber";
-					trackNumber = JSONUtils::asInt32(trackRoot, field, 0);
+					trackNumber = JSONUtils::as<int32_t>(trackRoot, field, 0);
 
 					tracksToBeExtracted.push_back(make_pair(trackType, trackNumber));
 				}
@@ -78,7 +78,7 @@ void MMSEngineProcessor::extractTracksContentThread(
 
 				throw runtime_error(errorMessage);
 			}
-			outputFileFormat = JSONUtils::asString(parametersRoot, field, "");
+			outputFileFormat = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		int dependencyIndex = 0;

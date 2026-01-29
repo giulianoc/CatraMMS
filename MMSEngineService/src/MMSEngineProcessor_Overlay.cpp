@@ -30,7 +30,7 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 		}
 		else
 		{
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 		}
 
 		int64_t introSourceMediaItemKey;
@@ -91,11 +91,11 @@ void MMSEngineProcessor::manageIntroOutroOverlayTask(
 			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+				string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 				encodingProfileKey =
@@ -226,7 +226,7 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 		}
 		else
 		{
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 		}
 
 		int64_t sourceMediaItemKey_1;
@@ -326,11 +326,11 @@ void MMSEngineProcessor::manageOverlayImageOnVideoTask(
 			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+				string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 				encodingProfileKey =
@@ -441,7 +441,7 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 		}
 		else
 		{
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 		}
 
 		int64_t sourceMediaItemKey;
@@ -466,11 +466,11 @@ void MMSEngineProcessor::manageOverlayTextOnVideoTask(
 			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+				string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 				MMSEngineDBFacade::ContentType videoContentType = MMSEngineDBFacade::ContentType::Video;
 				encodingProfileKey =

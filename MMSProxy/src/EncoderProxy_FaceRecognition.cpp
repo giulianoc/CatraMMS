@@ -61,24 +61,24 @@ string EncoderProxy::faceRecognition()
 	bool oneFramePerSecond;
 	{
 		string field = "sourceMediaItemKey";
-		sourceMediaItemKey = JSONUtils::asInt64(_encodingItem->_encodingParametersRoot, field, 0);
+		sourceMediaItemKey = JSONUtils::as<int64_t>(_encodingItem->_encodingParametersRoot, field, 0);
 
 		field = "faceRecognitionCascadeName";
-		faceRecognitionCascadeName = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
+		faceRecognitionCascadeName = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, "");
 
 		field = "sourcePhysicalPath";
-		sourcePhysicalPath = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
+		sourcePhysicalPath = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, "");
 
 		// VideoWithHighlightedFaces, ImagesToBeUsedInDeepLearnedModel or
 		// FrameContainingFace
 		field = "faceRecognitionOutput";
-		faceRecognitionOutput = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
+		faceRecognitionOutput = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, "");
 
 		field = "initialFramesNumberToBeSkipped";
-		initialFramesNumberToBeSkipped = JSONUtils::asInt32(_encodingItem->_encodingParametersRoot, field, 0);
+		initialFramesNumberToBeSkipped = JSONUtils::as<int32_t>(_encodingItem->_encodingParametersRoot, field, 0);
 
 		field = "oneFramePerSecond";
-		oneFramePerSecond = JSONUtils::asBool(_encodingItem->_encodingParametersRoot, field, false);
+		oneFramePerSecond = JSONUtils::as<bool>(_encodingItem->_encodingParametersRoot, field, false);
 	}
 
 	string cascadePathName = _computerVisionCascadePath + "/" + faceRecognitionCascadeName + ".xml";
@@ -709,7 +709,7 @@ void EncoderProxy::processFaceRecognition(string stagingEncodedAssetPathName)
 		{
 			// VideoWithHighlightedFaces or ImagesToBeUsedInDeepLearnedModel
 			string field = "faceRecognitionOutput";
-			faceRecognitionOutput = JSONUtils::asString(_encodingItem->_encodingParametersRoot, field, "");
+			faceRecognitionOutput = JSONUtils::as<string>(_encodingItem->_encodingParametersRoot, field, "");
 		}
 
 		if (faceRecognitionOutput == "FacesImagesToBeUsedInDeepLearnedModel" || faceRecognitionOutput == "FrameContainingFace")

@@ -685,7 +685,7 @@ void FFMPEGEncoder::requestManagement(
 
 			json metadataRoot = JSONUtils::toJson<json>(requestData.requestBody);
 			/*
-			bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+			bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 
 			// se si tratta di un encoder esterno,
 			// aspettiamo piu tempo in modo che la variabile
@@ -1603,10 +1603,10 @@ void FFMPEGEncoder::filterNotification(
 							json credentialsRoot = internalMMSRoot[field];
 
 							field = "userKey";
-							userKey = JSONUtils::asInt64(credentialsRoot, field, -1);
+							userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
 
 							field = "apiKey";
-							string apiKeyEncrypted = JSONUtils::asString(credentialsRoot, field, "");
+							string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
 							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 						}
 					}
@@ -1627,7 +1627,7 @@ void FFMPEGEncoder::filterNotification(
 
 						throw runtime_error(errorMessage);
 					}
-					mmsWorkflowIngestionURL = JSONUtils::asString(encodingParametersRoot, field, "");
+					mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 					*/
 				}
 
@@ -2942,53 +2942,53 @@ void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, const
 void FFMPEGEncoder::loadConfiguration(const json& configurationRoot)
 {
 	_configurationRoot = configurationRoot;
-	_encodingCompletedRetentionInSeconds = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
+	_encodingCompletedRetentionInSeconds = JSONUtils::as<int32_t>(_configurationRoot["ffmpeg"], "encodingCompletedRetentionInSeconds", 0);
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encodingCompletedRetentionInSeconds: {}",
 		_encodingCompletedRetentionInSeconds
 	);
 
-	_cpuUsageThresholdForEncoding = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
+	_cpuUsageThresholdForEncoding = JSONUtils::as<int32_t>(_configurationRoot["ffmpeg"], "cpuUsageThresholdForEncoding", 50);
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForEncoding: {}",
 		_cpuUsageThresholdForEncoding
 	);
-	_cpuUsageThresholdForRecording = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
+	_cpuUsageThresholdForRecording = JSONUtils::as<int32_t>(_configurationRoot["ffmpeg"], "cpuUsageThresholdForRecording", 60);
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForRecording: {}",
 		_cpuUsageThresholdForRecording
 	);
-	_cpuUsageThresholdForProxy = JSONUtils::asInt32(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
+	_cpuUsageThresholdForProxy = JSONUtils::as<int32_t>(_configurationRoot["ffmpeg"], "cpuUsageThresholdForProxy", 70);
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->cpuUsageThresholdForProxy: {}",
 		_cpuUsageThresholdForProxy
 	);
 	_intervalInSecondsBetweenEncodingAccept =
-		JSONUtils::asInt32(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
+		JSONUtils::as<int32_t>(_configurationRoot["ffmpeg"], "intervalInSecondsBetweenEncodingAccept", 30);
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->intervalInSecondsBetweenEncodingAccept: {}",
 		_intervalInSecondsBetweenEncodingAccept
 	);
 
-	_encoderUser = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderUser", "");
+	_encoderUser = JSONUtils::as<string>(_configurationRoot["ffmpeg"], "encoderUser", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderUser: {}",
 		_encoderUser
 	);
-	_encoderPassword = JSONUtils::asString(_configurationRoot["ffmpeg"], "encoderPassword", "");
+	_encoderPassword = JSONUtils::as<string>(_configurationRoot["ffmpeg"], "encoderPassword", "");
 	LOG_TRACE(
 		"Configuration item"
 		", ffmpeg->encoderPassword: {}",
 		_encoderPassword
 	);
 
-	_mmsAPITimeoutInSeconds = JSONUtils::asInt32(_configurationRoot["api"], "timeoutInSeconds", 120);
+	_mmsAPITimeoutInSeconds = JSONUtils::as<int32_t>(_configurationRoot["api"], "timeoutInSeconds", 120);
 	LOG_TRACE(
 		"Configuration item"
 		", api->timeoutInSeconds: {}",

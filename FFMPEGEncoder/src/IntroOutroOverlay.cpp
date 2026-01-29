@@ -27,8 +27,8 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
@@ -50,7 +50,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			introSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			introSourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string mainSourceFileExtension;
@@ -69,7 +69,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			mainSourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string outroSourceFileExtension;
@@ -88,7 +88,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			outroSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			outroSourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string introSourceAssetPathName;
@@ -113,7 +113,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+				introSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = introSourceAssetPathName.find_last_of("/");
@@ -152,7 +152,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string introSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string introSourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				introSourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, introSourceFileExtension, introSourcePhysicalDeliveryURL,
@@ -175,7 +175,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+				mainSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
@@ -214,7 +214,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string mainSourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, mainSourceFileExtension, mainSourcePhysicalDeliveryURL,
@@ -237,7 +237,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+				outroSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = outroSourceAssetPathName.find_last_of("/");
@@ -276,7 +276,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string outroSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string outroSourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				outroSourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, outroSourceFileExtension, outroSourcePhysicalDeliveryURL,
@@ -298,7 +298,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -339,7 +339,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			introSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			introSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "mainSourceAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -355,7 +355,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			mainSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "outroSourceAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -371,7 +371,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			outroSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			outroSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -387,17 +387,17 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
-		int64_t introSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "introSourceDurationInMilliSeconds", -1);
-		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "mainSourceDurationInMilliSeconds", -1);
-		int64_t outroSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "outroSourceDurationInMilliSeconds", -1);
+		int64_t introSourceDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "introSourceDurationInMilliSeconds", -1);
+		int64_t mainSourceDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "mainSourceDurationInMilliSeconds", -1);
+		int64_t outroSourceDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "outroSourceDurationInMilliSeconds", -1);
 
-		int introOverlayDurationInSeconds = JSONUtils::asInt32(ingestedParametersRoot, "introOverlayDurationInSeconds", -1);
-		int outroOverlayDurationInSeconds = JSONUtils::asInt32(ingestedParametersRoot, "outroOverlayDurationInSeconds", -1);
-		bool muteIntroOverlay = JSONUtils::asInt32(ingestedParametersRoot, "muteIntroOverlay", true);
-		bool muteOutroOverlay = JSONUtils::asInt32(ingestedParametersRoot, "muteOutroOverlay", true);
+		int introOverlayDurationInSeconds = JSONUtils::as<int32_t>(ingestedParametersRoot, "introOverlayDurationInSeconds", -1);
+		int outroOverlayDurationInSeconds = JSONUtils::as<int32_t>(ingestedParametersRoot, "outroOverlayDurationInSeconds", -1);
+		bool muteIntroOverlay = JSONUtils::as<bool>(ingestedParametersRoot, "muteIntroOverlay", true);
+		bool muteOutroOverlay = JSONUtils::as<bool>(ingestedParametersRoot, "muteOutroOverlay", true);
 
 		_encoding->_encodingStart = chrono::system_clock::now();
 
@@ -496,7 +496,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string encodedTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field);
+			string encodedTranscoderStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field);
 
 			size_t endOfDirectoryIndex = encodedTranscoderStagingAssetPathName.find_last_of('/');
 			if (endOfDirectoryIndex == string::npos)
@@ -524,7 +524,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					_encoding->_ingestionJobKey, mainSourceAssetPathName, selectedChunkPeriodInSeconds, stagingBasePath, chunkBaseFileName
 				);
 
-				string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+				string destFileFormat = JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat", "");
 
 				vector<string> concatSourcePhysicalPaths;
 
@@ -737,7 +737,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string encodedTranscoderStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field);
+			string encodedTranscoderStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field);
 
 			size_t endOfDirectoryIndex = encodedTranscoderStagingAssetPathName.find_last_of("/");
 			if (endOfDirectoryIndex == string::npos)
@@ -856,7 +856,7 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 					mainCenterPathName);
 			}
 
-			string destFileFormat = JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+			string destFileFormat = JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat", "");
 
 			string mainIntroPathName = stagingBasePath + "mainIntro." + destFileFormat;
 			if (fs::exists(mainIntroPathName))
@@ -1001,12 +1001,12 @@ void IntroOutroOverlay::encodeContent(json metadataRoot)
 				fs::remove_all(outroSourceAssetPathName);
 			}
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add introOutroOverlay from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add introOutroOverlay from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			// string encodingProfileFileFormat =
-			// 	JSONUtils::asString(encodingProfileDetailsRoot, "fileFormat", "");
+			// 	JSONUtils::as<string>(encodingProfileDetailsRoot, "fileFormat", "");
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

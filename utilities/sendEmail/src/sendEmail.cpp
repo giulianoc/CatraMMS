@@ -46,12 +46,12 @@ int main(int iArgc, char *pArgv[])
 	{
 		LOG_INFO("Sending email to {}", tosCommaSeparated);
 
-		emailProviderURL = JSONUtils::asString(configuration["EmailNotification"], "providerURL", "");
-		emailUserName = JSONUtils::asString(configuration["EmailNotification"], "userName", "");
+		emailProviderURL = JSONUtils::as<string>(configuration["EmailNotification"], "providerURL", "");
+		emailUserName = JSONUtils::as<string>(configuration["EmailNotification"], "userName", "");
 		emailUserName = "support@catramms-cloud.com";
 
 		{
-			string encryptedPassword = JSONUtils::asString(configuration["EmailNotification"], "password", "");
+			string encryptedPassword = JSONUtils::as<string>(configuration["EmailNotification"], "password", "");
 			emailPassword = Encrypt::opensslDecrypt(encryptedPassword);
 		}
 

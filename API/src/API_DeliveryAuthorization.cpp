@@ -252,20 +252,20 @@ void API::createBulkOfDeliveryAuthorization(
 				for (auto &[keyRoot, valRoot] : mediaItemKeyListRoot.items())
 				{
 					field = "mediaItemKey";
-					int64_t mediaItemKey = JSONUtils::asInt64(valRoot, field, -1);
+					int64_t mediaItemKey = JSONUtils::as<int64_t>(valRoot, field, -1);
 					field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::asInt64(valRoot, field, -1);
+					int64_t encodingProfileKey = JSONUtils::as<int64_t>(valRoot, field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = JSONUtils::asString(valRoot, field, "");
+					string encodingProfileLabel = JSONUtils::as<string>(valRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::asString(valRoot, field, "");
+					string deliveryType = JSONUtils::as<string>(valRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic = JSONUtils::asBool(valRoot, field, false);
+					bool filteredByStatistic = JSONUtils::as<bool>(valRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::asString(valRoot, field, "");
+					string userId = JSONUtils::as<string>(valRoot, field, "");
 
 					string requestKey = std::format(
 						"{}_{}_{}_{}_{}_{}", mediaItemKey, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
@@ -344,20 +344,20 @@ void API::createBulkOfDeliveryAuthorization(
 					json uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
 
 					field = "uniqueName";
-					string uniqueName = JSONUtils::asString(uniqueNameRoot, field, "");
+					string uniqueName = JSONUtils::as<string>(uniqueNameRoot, field, "");
 					field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::asInt64(uniqueNameRoot, field, -1);
+					int64_t encodingProfileKey = JSONUtils::as<int64_t>(uniqueNameRoot, field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = JSONUtils::asString(uniqueNameRoot, field, "");
+					string encodingProfileLabel = JSONUtils::as<string>(uniqueNameRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::asString(uniqueNameRoot, field, "");
+					string deliveryType = JSONUtils::as<string>(uniqueNameRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic = JSONUtils::asBool(uniqueNameRoot, field, false);
+					bool filteredByStatistic = JSONUtils::as<bool>(uniqueNameRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::asString(uniqueNameRoot, field, "");
+					string userId = JSONUtils::as<string>(uniqueNameRoot, field, "");
 
 					string requestKey = std::format(
 						"{}_{}_{}_{}_{}_{}", uniqueName, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
@@ -432,18 +432,18 @@ void API::createBulkOfDeliveryAuthorization(
 					json liveIngestionJobKeyRoot = liveIngestionJobKeyListRoot[liveIngestionJobKeyIndex];
 
 					field = "ingestionJobKey";
-					int64_t ingestionJobKey = JSONUtils::asInt64(liveIngestionJobKeyRoot, field, -1);
+					int64_t ingestionJobKey = JSONUtils::as<int64_t>(liveIngestionJobKeyRoot, field, -1);
 					field = "deliveryCode";
-					int64_t deliveryCode = JSONUtils::asInt64(liveIngestionJobKeyRoot, field, -1);
+					int64_t deliveryCode = JSONUtils::as<int64_t>(liveIngestionJobKeyRoot, field, -1);
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::asString(liveIngestionJobKeyRoot, field, "");
+					string deliveryType = JSONUtils::as<string>(liveIngestionJobKeyRoot, field, "");
 
 					field = "filteredByStatistic";
-					bool filteredByStatistic = JSONUtils::asBool(liveIngestionJobKeyRoot, field, false);
+					bool filteredByStatistic = JSONUtils::as<bool>(liveIngestionJobKeyRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::asString(liveIngestionJobKeyRoot, field, "");
+					string userId = JSONUtils::as<string>(liveIngestionJobKeyRoot, field, "");
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try

@@ -27,7 +27,7 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 		if (!JSONUtils::isPresent(parametersRoot, field))
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		else
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 
 		int64_t sourceMediaItemKey;
 		int64_t sourcePhysicalPathKey;
@@ -58,11 +58,11 @@ void MMSEngineProcessor::manageVideoSpeedTask(
 			string labelField = "encodingProfileLabel";
 			if (JSONUtils::isPresent(parametersRoot, keyField))
 			{
-				encodingProfileKey = JSONUtils::asInt64(parametersRoot, keyField, 0);
+				encodingProfileKey = JSONUtils::as<int64_t>(parametersRoot, keyField, 0);
 			}
 			else if (JSONUtils::isPresent(parametersRoot, labelField))
 			{
-				string encodingProfileLabel = JSONUtils::asString(parametersRoot, labelField, "");
+				string encodingProfileLabel = JSONUtils::as<string>(parametersRoot, labelField, "");
 
 				encodingProfileKey =
 					_mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace->_workspaceKey, referenceContentType, encodingProfileLabel);

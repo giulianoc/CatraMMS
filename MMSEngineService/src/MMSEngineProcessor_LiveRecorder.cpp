@@ -21,7 +21,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 		if (!JSONUtils::isPresent(parametersRoot, field))
 			encodingPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(workspace->_maxEncodingPriority);
 		else
-			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::asString(parametersRoot, field, ""));
+			encodingPriority = MMSEngineDBFacade::toEncodingPriority(JSONUtils::as<string>(parametersRoot, field, ""));
 
 		string configurationLabel;
 
@@ -67,7 +67,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					throw runtime_error(errorMessage);
 				}
-				configurationLabel = JSONUtils::asString(parametersRoot, field, "");
+				configurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
 
 				{
 					tie(confKey, streamSourceType, encodersPoolLabel, pullUrl, pushEncoderKey, pushPublicEncoderName, pushListenTimeout,
@@ -82,9 +82,9 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 			// EncodersPool override the one included in ChannelConf if present
 			field = "encodersPool";
-			encodersPoolLabel = JSONUtils::asString(parametersRoot, field, encodersPoolLabel);
+			encodersPoolLabel = JSONUtils::as<string>(parametersRoot, field, encodersPoolLabel);
 
-			utcTimeOverlay = JSONUtils::asBool(parametersRoot, "utcTimeOverlay", false);
+			utcTimeOverlay = JSONUtils::as<bool>(parametersRoot, "utcTimeOverlay", false);
 
 			// aggiungiomo 'encodersDetails' in ingestion parameters. In questo oggetto json mettiamo
 			// l'encodersPool o l'encoderKey in caso di IP_PUSH che viene realmente utilizzato dall'MMS (MMSEngine::EncoderProxy).
@@ -124,7 +124,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				throw runtime_error(errorMessage);
 			}
-			recordingPeriodStart = JSONUtils::asString(recordingPeriodRoot, field, "");
+			recordingPeriodStart = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 
 			field = "end";
 			if (!JSONUtils::isPresent(recordingPeriodRoot, field))
@@ -135,7 +135,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 				throw runtime_error(errorMessage);
 			}
-			recordingPeriodEnd = JSONUtils::asString(recordingPeriodRoot, field, "");
+			recordingPeriodEnd = JSONUtils::as<string>(recordingPeriodRoot, field, "");
 
 			field = "monitorHLS";
 			if (JSONUtils::isPresent(parametersRoot, field))
@@ -145,29 +145,29 @@ void MMSEngineProcessor::manageLiveRecorder(
 				monitorHLS = true;
 
 				field = "hlsChannelConfigurationLabel";
-				monitorHlsChannelConfigurationLabel = JSONUtils::asString(monitorHLSRoot, field, "");
+				monitorHlsChannelConfigurationLabel = JSONUtils::as<string>(monitorHLSRoot, field, "");
 
 				// field = "playlistEntriesNumber";
 				// monitorPlaylistEntriesNumber =
-				// JSONUtils::asInt32(monitorHLSRoot, field, 6);
+				// JSONUtils::as<int32_t>(monitorHLSRoot, field, 6);
 
 				// field = "segmentDurationInSeconds";
 				// monitorSegmentDurationInSeconds =
-				// JSONUtils::asInt32(monitorHLSRoot, field, 10);
+				// JSONUtils::as<int32_t>(monitorHLSRoot, field, 10);
 
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
 				string contentTypeField = "contentType";
 				if (JSONUtils::isPresent(monitorHLSRoot, keyField))
-					monitorEncodingProfileKey = JSONUtils::asInt64(monitorHLSRoot, keyField, 0);
+					monitorEncodingProfileKey = JSONUtils::as<int64_t>(monitorHLSRoot, keyField, 0);
 				else if (JSONUtils::isPresent(monitorHLSRoot, labelField))
 				{
-					string encodingProfileLabel = JSONUtils::asString(monitorHLSRoot, labelField, "");
+					string encodingProfileLabel = JSONUtils::as<string>(monitorHLSRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType contentType;
 					if (JSONUtils::isPresent(monitorHLSRoot, contentTypeField))
 					{
-						contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(monitorHLSRoot, contentTypeField, ""));
+						contentType = MMSEngineDBFacade::toContentType(JSONUtils::as<string>(monitorHLSRoot, contentTypeField, ""));
 
 						monitorEncodingProfileKey =
 							_mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace->_workspaceKey, contentType, encodingProfileLabel);
@@ -194,25 +194,25 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVOD = true;
 
 				field = "hlsChannelConfigurationLabel";
-				virtualVODHlsChannelConfigurationLabel = JSONUtils::asString(virtualVODRoot, field, "");
+				virtualVODHlsChannelConfigurationLabel = JSONUtils::as<string>(virtualVODRoot, field, "");
 
 				// field = "segmentDurationInSeconds";
 				// virtualVODSegmentDurationInSeconds =
-				// JSONUtils::asInt32(virtualVODRoot, field, 10);
+				// JSONUtils::as<int32_t>(virtualVODRoot, field, 10);
 
 				string keyField = "encodingProfileKey";
 				string labelField = "encodingProfileLabel";
 				string contentTypeField = "contentType";
 				if (JSONUtils::isPresent(virtualVODRoot, keyField))
-					virtualVODEncodingProfileKey = JSONUtils::asInt64(virtualVODRoot, keyField, 0);
+					virtualVODEncodingProfileKey = JSONUtils::as<int64_t>(virtualVODRoot, keyField, 0);
 				else if (JSONUtils::isPresent(virtualVODRoot, labelField))
 				{
-					string encodingProfileLabel = JSONUtils::asString(virtualVODRoot, labelField, "");
+					string encodingProfileLabel = JSONUtils::as<string>(virtualVODRoot, labelField, "");
 
 					MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
 					if (JSONUtils::isPresent(virtualVODRoot, contentTypeField))
 					{
-						contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(virtualVODRoot, contentTypeField, ""));
+						contentType = MMSEngineDBFacade::toContentType(JSONUtils::as<string>(virtualVODRoot, contentTypeField, ""));
 
 						virtualVODEncodingProfileKey =
 							_mmsEngineDBFacade->getEncodingProfileKeyByLabel(workspace->_workspaceKey, contentType, encodingProfileLabel);
@@ -231,7 +231,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 				liveRecorderVirtualVOD = false;
 			}
 
-			outputsRoot = JSONUtils::asJson(parametersRoot, "outputs", json::array());
+			outputsRoot = JSONUtils::as<json>(parametersRoot, "outputs", json::array());
 
 			if (JSONUtils::isPresent(parametersRoot, "framesToBeDetected"))
 			{
@@ -243,7 +243,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 
 					if (JSONUtils::isPresent(frameToBeDetectedRoot, "picturePhysicalPathKey"))
 					{
-						int64_t physicalPathKey = JSONUtils::asInt64(frameToBeDetectedRoot, "picturePhysicalPathKey", -1);
+						int64_t physicalPathKey = JSONUtils::as<int64_t>(frameToBeDetectedRoot, "picturePhysicalPathKey", -1);
 						string picturePathName;
 
 						tuple<string, int, string, string, int64_t, string> physicalPathDetails = _mmsStorage->getPhysicalPathDetails(
@@ -254,7 +254,7 @@ void MMSEngineProcessor::manageLiveRecorder(
 						);
 						tie(picturePathName, ignore, ignore, ignore, ignore, ignore) = physicalPathDetails;
 
-						bool videoFrameToBeCropped = JSONUtils::asBool(frameToBeDetectedRoot, "videoFrameToBeCropped", false);
+						bool videoFrameToBeCropped = JSONUtils::as<bool>(frameToBeDetectedRoot, "videoFrameToBeCropped", false);
 						if (videoFrameToBeCropped)
 						{
 							int width;
@@ -403,8 +403,8 @@ void MMSEngineProcessor::manageLiveRecorder(
 		{
 			for (auto& outputRoot: outputsRoot)
 			{
-				json filtersRoot = JSONUtils::asJson(outputRoot, "filters", json::object());
-				json videoFiltersRoot = JSONUtils::asJson(filtersRoot, "video", json::array());
+				json filtersRoot = JSONUtils::as<json>(outputRoot, "filters", json::object());
+				json videoFiltersRoot = JSONUtils::as<json>(filtersRoot, "video", json::array());
 
 				videoFiltersRoot.push_back(FFMpegFilters::createTimecodeDrawTextFilter());
 				filtersRoot["video"] = videoFiltersRoot;

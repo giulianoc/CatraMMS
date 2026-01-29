@@ -30,7 +30,7 @@ void MMSEngineProcessor::manageMediaCrossReferenceTask(
 
 		string field = "type";
 		MMSEngineDBFacade::CrossReferenceType crossReferenceType =
-			MMSEngineDBFacade::toCrossReferenceType(JSONUtils::asString(parametersRoot, field, "", true));
+			MMSEngineDBFacade::toCrossReferenceType(JSONUtils::as<string>(parametersRoot, field, "", {}, true));
 		if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::VideoOfImage)
 			crossReferenceType = MMSEngineDBFacade::CrossReferenceType::ImageOfVideo;
 		else if (crossReferenceType == MMSEngineDBFacade::CrossReferenceType::AudioOfImage)

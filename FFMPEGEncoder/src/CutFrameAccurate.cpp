@@ -25,7 +25,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 	{
 		// json metadataRoot = JSONUtils::toJson<json>(-1, _encodingJobKey, requestBody);
 
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
@@ -47,7 +47,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string sourceAssetPathName;
@@ -70,7 +70,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+				sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -109,7 +109,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string sourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string sourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				sourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
@@ -130,7 +130,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -171,7 +171,7 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -187,14 +187,14 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->cutFrameAccurateWithEncoding(
 			_encoding->_ingestionJobKey, sourceAssetPathName, _encoding->_encodingJobKey, encodingProfileDetailsRoot,
-			JSONUtils::asString(ingestedParametersRoot, "startTime", ""), JSONUtils::asString(encodingParametersRoot, "endTime", ""),
-			JSONUtils::asInt32(ingestedParametersRoot, "framesNumber", -1), encodedStagingAssetPathName,
+			JSONUtils::as<string>(ingestedParametersRoot, "startTime", ""), JSONUtils::as<string>(encodingParametersRoot, "endTime", ""),
+			JSONUtils::as<int32_t>(ingestedParametersRoot, "framesNumber", -1), encodedStagingAssetPathName,
 
 			_encoding->_childProcessId, _encoding->_callbackData
 		);
@@ -222,9 +222,9 @@ void CutFrameAccurate::encodeContent(json metadataRoot)
 				fs::remove_all(sourceAssetPathName);
 			}
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add cutFrameAccurate from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add cutFrameAccurate from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

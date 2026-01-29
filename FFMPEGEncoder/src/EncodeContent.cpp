@@ -31,15 +31,15 @@ void EncodeContent::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
+		// ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
 
-		externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
-		int videoTrackIndexToBeUsed = JSONUtils::asInt32(ingestedParametersRoot, "VideoTrackIndex", -1);
-		int audioTrackIndexToBeUsed = JSONUtils::asInt32(ingestedParametersRoot, "AudioTrackIndex", -1);
+		int videoTrackIndexToBeUsed = JSONUtils::as<int32_t>(ingestedParametersRoot, "VideoTrackIndex", -1);
+		int audioTrackIndexToBeUsed = JSONUtils::as<int32_t>(ingestedParametersRoot, "AudioTrackIndex", -1);
 
 		json filtersRoot = nullptr;
 		if (JSONUtils::isPresent(ingestedParametersRoot, "filters"))
@@ -49,9 +49,9 @@ void EncodeContent::encodeContent(json metadataRoot)
 		json sourceToBeEncodedRoot = sourcesToBeEncodedRoot[0];
 		json encodingProfileDetailsRoot = encodingParametersRoot["encodingProfileDetails"];
 
-		int64_t durationInMilliSeconds = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourceDurationInMilliSecs", -1);
-		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(JSONUtils::asString(encodingParametersRoot, "contentType", ""));
-		int64_t physicalPathKey = JSONUtils::asInt64(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
+		int64_t durationInMilliSeconds = JSONUtils::as<int64_t>(sourceToBeEncodedRoot, "sourceDurationInMilliSecs", -1);
+		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::toContentType(JSONUtils::as<string>(encodingParametersRoot, "contentType", ""));
+		int64_t physicalPathKey = JSONUtils::as<int64_t>(sourceToBeEncodedRoot, "sourcePhysicalPathKey", -1);
 
 		json videoTracksRoot;
 		string field = "videoTracks";
@@ -76,7 +76,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 			throw runtime_error(errorMessage);
 		}
-		string sourceFileExtension = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+		string sourceFileExtension = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 		bool useOfLocalStorageForProcessingOutput = true;
 
@@ -96,7 +96,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = sourceAssetPathName.find_last_of("/");
@@ -135,7 +135,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			string sourcePhysicalDeliveryURL = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+			string sourcePhysicalDeliveryURL = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 			field = "encodedTranscoderStagingAssetPathName";
 			if (!JSONUtils::isPresent(sourceToBeEncodedRoot, field))
@@ -151,7 +151,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 			sourceAssetPathName = downloadMediaFromMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, sourceFileExtension, sourcePhysicalDeliveryURL, sourceAssetPathName
@@ -173,7 +173,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			sourceAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+			sourceAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 			if (useOfLocalStorageForProcessingOutput)
 				field = "encodedTranscoderStagingAssetPathName";
@@ -192,7 +192,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 		}
 
 		LOG_INFO(
@@ -249,7 +249,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			int64_t sourceMediaItemKey = JSONUtils::asInt64(sourceToBeEncodedRoot, field, -1);
+			int64_t sourceMediaItemKey = JSONUtils::as<int64_t>(sourceToBeEncodedRoot, field, -1);
 
 			field = "encodingProfileKey";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -265,7 +265,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, field, -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, field, -1);
 
 			string workflowLabel =
 				"Add Variant " + to_string(sourceMediaItemKey) + " - " + to_string(encodingProfileKey) + " (encoding from external transcoder)";
@@ -294,7 +294,7 @@ void EncodeContent::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string encodedNFSStagingAssetPathName = JSONUtils::asString(sourceToBeEncodedRoot, field, "");
+				string encodedNFSStagingAssetPathName = JSONUtils::as<string>(sourceToBeEncodedRoot, field, "");
 
 				// move encodedStagingAssetPathName (encodedTranscoderStagingAssetPathName) in encodedNFSStagingAssetPathName
 				LOG_INFO(

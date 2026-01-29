@@ -26,8 +26,8 @@ void PictureInPicture::encodeContent(json metadataRoot)
 		// json metadataRoot = JSONUtils::toJson<json>(
 		// 	-1, _encodingJobKey, requestBody);
 
-		// int64_t ingestionJobKey = JSONUtils::asInt64(metadataRoot, "ingestionJobKey", -1);
-		bool externalEncoder = JSONUtils::asBool(metadataRoot, "externalEncoder", false);
+		// int64_t ingestionJobKey = JSONUtils::as<int64_t>(metadataRoot, "ingestionJobKey", -1);
+		bool externalEncoder = JSONUtils::as<bool>(metadataRoot, "externalEncoder", false);
 		json ingestedParametersRoot = metadataRoot["ingestedParametersRoot"];
 		json encodingParametersRoot = metadataRoot["encodingParametersRoot"];
 
@@ -49,7 +49,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			mainSourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string overlaySourceFileExtension;
@@ -68,7 +68,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			overlaySourceFileExtension = JSONUtils::asString(encodingParametersRoot, field, "");
+			overlaySourceFileExtension = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
 		string mainSourceAssetPathName;
@@ -92,7 +92,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+				mainSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = mainSourceAssetPathName.find_last_of("/");
@@ -131,7 +131,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string mainSourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string mainSourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				mainSourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, mainSourceFileExtension, mainSourcePhysicalDeliveryURL,
@@ -154,7 +154,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+				overlaySourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				{
 					size_t endOfDirectoryIndex = overlaySourceAssetPathName.find_last_of("/");
@@ -193,7 +193,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 					throw runtime_error(errorMessage);
 				}
-				string overlaySourcePhysicalDeliveryURL = JSONUtils::asString(encodingParametersRoot, field, "");
+				string overlaySourcePhysicalDeliveryURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 				overlaySourceAssetPathName = downloadMediaFromMMS(
 					_encoding->_ingestionJobKey, _encoding->_encodingJobKey, _encoding->_ffmpeg, overlaySourceFileExtension, overlaySourcePhysicalDeliveryURL,
@@ -215,7 +215,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			{
 				size_t endOfDirectoryIndex = encodedStagingAssetPathName.find_last_of("/");
@@ -256,7 +256,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			mainSourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			mainSourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "overlaySourceAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -272,7 +272,7 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			overlaySourceAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			overlaySourceAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 
 			field = "encodedNFSStagingAssetPathName";
 			if (!JSONUtils::isPresent(encodingParametersRoot, field))
@@ -288,17 +288,17 @@ void PictureInPicture::encodeContent(json metadataRoot)
 
 				throw runtime_error(errorMessage);
 			}
-			encodedStagingAssetPathName = JSONUtils::asString(encodingParametersRoot, field, "");
+			encodedStagingAssetPathName = JSONUtils::as<string>(encodingParametersRoot, field, "");
 		}
 
-		int64_t mainSourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "mainSourceDurationInMilliSeconds", 0);
-		int64_t overlaySourceDurationInMilliSeconds = JSONUtils::asInt64(encodingParametersRoot, "overlaySourceDurationInMilliSeconds", 0);
-		bool soundOfMain = JSONUtils::asBool(encodingParametersRoot, "soundOfMain", false);
+		int64_t mainSourceDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "mainSourceDurationInMilliSeconds", 0);
+		int64_t overlaySourceDurationInMilliSeconds = JSONUtils::as<int64_t>(encodingParametersRoot, "overlaySourceDurationInMilliSeconds", 0);
+		bool soundOfMain = JSONUtils::as<bool>(encodingParametersRoot, "soundOfMain", false);
 
-		string overlayPosition_X_InPixel = JSONUtils::asString(ingestedParametersRoot, "overlayPosition_X_InPixel", "0");
-		string overlayPosition_Y_InPixel = JSONUtils::asString(ingestedParametersRoot, "overlayPosition_Y_InPixel", "0");
-		string overlay_Width_InPixel = JSONUtils::asString(ingestedParametersRoot, "overlay_Width_InPixel", "100");
-		string overlay_Height_InPixel = JSONUtils::asString(ingestedParametersRoot, "overlay_Height_InPixel", "100");
+		string overlayPosition_X_InPixel = JSONUtils::as<string>(ingestedParametersRoot, "overlayPosition_X_InPixel", "0");
+		string overlayPosition_Y_InPixel = JSONUtils::as<string>(ingestedParametersRoot, "overlayPosition_Y_InPixel", "0");
+		string overlay_Width_InPixel = JSONUtils::as<string>(ingestedParametersRoot, "overlay_Width_InPixel", "100");
+		string overlay_Height_InPixel = JSONUtils::as<string>(ingestedParametersRoot, "overlay_Height_InPixel", "100");
 
 		_encoding->_encodingStart = chrono::system_clock::now();
 		_encoding->_ffmpeg->pictureInPicture(
@@ -350,9 +350,9 @@ void PictureInPicture::encodeContent(json metadataRoot)
 				fs::remove_all(overlaySourceAssetPathName);
 			}
 
-			string workflowLabel = JSONUtils::asString(ingestedParametersRoot, "title", "") + " (add pictureInPicture from external transcoder)";
+			string workflowLabel = JSONUtils::as<string>(ingestedParametersRoot, "title", "") + " (add pictureInPicture from external transcoder)";
 
-			int64_t encodingProfileKey = JSONUtils::asInt64(encodingParametersRoot, "encodingProfileKey", -1);
+			int64_t encodingProfileKey = JSONUtils::as<int64_t>(encodingParametersRoot, "encodingProfileKey", -1);
 
 			uploadLocalMediaToMMS(
 				_encoding->_ingestionJobKey, _encoding->_encodingJobKey, ingestedParametersRoot, encodingProfileDetailsRoot, encodingParametersRoot,

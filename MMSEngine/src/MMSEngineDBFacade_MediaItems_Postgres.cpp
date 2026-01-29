@@ -4166,28 +4166,28 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			// string encodingProfilesSet;
 
 			string field = "title";
-			title = JSONUtils::asString(parametersRoot, field, "");
+			title = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "ingester";
-			ingester = JSONUtils::asString(parametersRoot, field, "");
+			ingester = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "userData";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
 				// 2020-03-15: when it is set by the GUI it arrive here as a string
 				if ((parametersRoot[field]).type() == json::value_t::string)
-					userData = JSONUtils::asString(parametersRoot, field, "");
+					userData = JSONUtils::as<string>(parametersRoot, field, "");
 				else
 					userData = JSONUtils::toString(parametersRoot[field]);
 			}
 
 			field = "deliveryFileName";
-			deliveryFileName = JSONUtils::asString(parametersRoot, field, "");
+			deliveryFileName = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "retention";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
-				string retention = JSONUtils::asString(parametersRoot, field, "1d");
+				string retention = JSONUtils::as<string>(parametersRoot, field, "1d");
 				retentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 			}
 
@@ -4200,10 +4200,10 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 					json publishingRoot = parametersRoot[field];
 
 					field = "startPublishing";
-					startPublishing = JSONUtils::asString(publishingRoot, field, "NOW");
+					startPublishing = JSONUtils::as<string>(publishingRoot, field, "NOW");
 
 					field = "endPublishing";
-					endPublishing = JSONUtils::asString(publishingRoot, field, "FOREVER");
+					endPublishing = JSONUtils::as<string>(publishingRoot, field, "FOREVER");
 				}
 
 				if (startPublishing == "NOW")
@@ -4286,12 +4286,12 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		{
 			string uniqueName;
 			if (JSONUtils::isPresent(parametersRoot, "uniqueName"))
-				uniqueName = JSONUtils::asString(parametersRoot, "uniqueName", "");
+				uniqueName = JSONUtils::as<string>(parametersRoot, "uniqueName", "");
 
 			if (uniqueName != "")
 			{
 				bool allowUniqueNameOverride = false;
-				allowUniqueNameOverride = JSONUtils::asBool(parametersRoot, "allowUniqueNameOverride", false);
+				allowUniqueNameOverride = JSONUtils::as<bool>(parametersRoot, "allowUniqueNameOverride", false);
 
 				manageExternalUniqueName(trans, workspace->_workspaceKey, mediaItemKey, allowUniqueNameOverride, uniqueName);
 			}
@@ -4312,10 +4312,10 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 		string externalDeliveryURL;
 		{
 			string field = "externalDeliveryTechnology";
-			externalDeliveryTechnology = JSONUtils::asString(parametersRoot, field, "");
+			externalDeliveryTechnology = JSONUtils::as<string>(parametersRoot, field, "");
 
 			field = "externalDeliveryURL";
-			externalDeliveryURL = JSONUtils::asString(parametersRoot, field, "");
+			externalDeliveryURL = JSONUtils::as<string>(parametersRoot, field, "");
 		}
 
 		int64_t physicalItemRetentionInMinutes = -1;
@@ -4323,7 +4323,7 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 			string field = "physicalItemRetention";
 			if (JSONUtils::isPresent(parametersRoot, field))
 			{
-				string retention = JSONUtils::asString(parametersRoot, field, "1d");
+				string retention = JSONUtils::as<string>(parametersRoot, field, "1d");
 				physicalItemRetentionInMinutes = MMSEngineDBFacade::parseRetention(retention);
 			}
 		}
@@ -4357,13 +4357,13 @@ pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 
 						field = "ingestionJobKey";
 						if (JSONUtils::isPresent(mmsDataRoot, "liveRecordingChunk"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveRecordingChunk"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["liveRecordingChunk"], field, -1);
 						else if (JSONUtils::isPresent(mmsDataRoot, "generatedFrame"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["generatedFrame"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["generatedFrame"], field, -1);
 						else if (JSONUtils::isPresent(mmsDataRoot, "externalTranscoder"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["externalTranscoder"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["externalTranscoder"], field, -1);
 						else if (JSONUtils::isPresent(mmsDataRoot, "liveCut"))
-							sourceIngestionJobKey = JSONUtils::asInt64(mmsDataRoot["liveCut"], field, -1);
+							sourceIngestionJobKey = JSONUtils::as<int64_t>(mmsDataRoot["liveCut"], field, -1);
 					}
 				}
 			}
@@ -5237,7 +5237,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 			json crossReferenceRoot = crossReferencesRoot[crossReferenceIndex];
 
 			string field = "type";
-			CrossReferenceType crossReferenceType = toCrossReferenceType(JSONUtils::asString(crossReferenceRoot, field, ""));
+			CrossReferenceType crossReferenceType = toCrossReferenceType(JSONUtils::as<string>(crossReferenceRoot, field, ""));
 
 			int64_t sourceMediaItemKey;
 			int64_t targetMediaItemKey;
@@ -5249,7 +5249,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 			else if (crossReferenceType == CrossReferenceType::VideoOfPoster)
 			{
@@ -5258,7 +5258,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 			else if (crossReferenceType == CrossReferenceType::VideoOfFace)
 			{
@@ -5267,7 +5267,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 			else if (crossReferenceType == CrossReferenceType::ImageForSlideShow)
 			{
@@ -5276,7 +5276,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 			else if (crossReferenceType == CrossReferenceType::AudioForSlideShow)
 			{
@@ -5285,7 +5285,7 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 			else if (crossReferenceType == CrossReferenceType::AudioOfImage)
 			{
@@ -5294,14 +5294,14 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				sourceMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				sourceMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 			else
 			{
 				sourceMediaItemKey = mediaItemKey;
 
 				field = "mediaItemKey";
-				targetMediaItemKey = JSONUtils::asInt64(crossReferenceRoot, field, 0);
+				targetMediaItemKey = JSONUtils::as<int64_t>(crossReferenceRoot, field, 0);
 			}
 
 			json crossReferenceParametersRoot;
