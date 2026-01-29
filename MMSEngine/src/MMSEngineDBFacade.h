@@ -2489,6 +2489,12 @@ class MMSEngineDBFacade
 		bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, int64_t deliveryServerKey, std::string label,
 		std::string serverName, std::string labelOrder
 	);
+	std::string deliveryServer_columnAsString(std::string columnName, int64_t deliveryServerKey, bool fromMaster = false);
+	std::shared_ptr<PostgresHelper::SqlResultSet> deliveryServerQuery(
+		std::vector<std::string> &requestedColumns, int64_t deliveryServerKey, bool fromMaster,
+		int startIndex = -1, int rows = -1, std::string orderBy = "",
+		bool notFoundAsException = true, std::chrono::milliseconds *sqlDuration = nullptr
+	);
 	nlohmann::json getDeliveryServersPoolList(int start, int rows, int64_t workspaceKey, int64_t deliveryServersPoolKey,
 		std::string label, std::string labelOrder);
 	int64_t addDeliveryServersPool(int64_t workspaceKey, const std::string &label, std::vector<int64_t> &deliveryServerKeys);

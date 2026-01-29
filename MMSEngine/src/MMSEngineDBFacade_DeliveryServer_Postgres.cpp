@@ -527,22 +527,26 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			string sqlStatement;
 			if (allDeliveryServers)
 				sqlStatement = std::format(
-					"select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled, "
-					"d.publicServerName, d.internalServerName, "
-					"to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
-					"d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
-					"d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage, to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
-					"from MMS_DeliveryServer d {} {} limit {} offset {}",
+				R"(
+					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
+					d.publicServerName, d.internalServerName,
+					to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
+					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
+					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage, to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+					from MMS_DeliveryServer d {} {} limit {} offset {}
+					)",
 					sqlWhere, orderByCondition, rows, start
 				);
 			else
 				sqlStatement = std::format(
-					"select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled, "
-					"d.publicServerName, d.internalServerName, "
-					"to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
-					"d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
-					"d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage, to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
-					"from MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping dwm {} {} limit {} offset {}",
+				R"(
+					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
+					d.publicServerName, d.internalServerName,
+					to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
+					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
+					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage, to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+					from MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping dwm {} {} limit {} offset {}
+					)",
 					sqlWhere, orderByCondition, rows, start
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -599,6 +603,153 @@ json MMSEngineDBFacade::getDeliveryServerList(
 	return deliveryServerListRoot;
 }
 
+string MMSEngineDBFacade::deliveryServer_columnAsString(string columnName, int64_t deliveryServerKey, bool fromMaster)
+{
+	try
+	{
+		string requestedColumn = std::format("mms_deliveryserver:.{}", columnName);
+		vector<string> requestedColumns = vector<string>(1, requestedColumn);
+		const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = deliveryServerQuery(requestedColumns, deliveryServerKey, fromMaster);
+
+		return (*sqlResultSet)[0][0].as<string>();
+	}
+	catch (exception &e)
+	{
+		if (!dynamic_cast<DBRecordNotFound*>(&e))
+			LOG_ERROR(
+				"deliveryServer_columnAsString failed"
+				", deliveryServerKey: {}"
+				", fromMaster: {}"
+				", exception: {}",
+				deliveryServerKey, fromMaster, e.what()
+			);
+
+		throw;
+	}
+}
+
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
+	vector<string> &requestedColumns, int64_t deliveryServerKey, bool fromMaster,
+	int startIndex, int rows, string orderBy, bool notFoundAsException,
+	chrono::milliseconds *sqlDuration
+)
+{
+	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
+	try
+	{
+		if (rows > _maxRows)
+		{
+			string errorMessage = std::format(
+				"Too many rows requested"
+				", rows: {}"
+				", maxRows: {}",
+				rows, _maxRows
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+		if ((startIndex != -1 || rows != -1) && orderBy.empty())
+		{
+			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
+			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
+			// subsets of a query result will give inconsistent results unless you enforce a predictable result ordering with ORDER BY. This is not a
+			// bug; it is an inherent consequence of the fact that SQL does not promise to deliver the results of a query in any particular order
+			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
+			// therefore a large OFFSET might be inefficient.
+			string errorMessage = std::format(
+				"Using startIndex/row without orderBy will give inconsistent results"
+				", startIndex: {}"
+				", rows: {}"
+				", orderBy: {}",
+				startIndex, rows, orderBy
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
+		{
+			string where;
+			if (deliveryServerKey != -1)
+				where += std::format("{} deliveryServerKey = {} ", !where.empty() ? "and" : "", deliveryServerKey);
+
+			string limit;
+			string offset;
+			string orderByCondition;
+			if (rows != -1)
+				limit = std::format("limit {} ", rows);
+			if (startIndex != -1)
+				offset = std::format("offset {} ", startIndex);
+			if (!orderBy.empty())
+				orderByCondition = std::format("order by {} ", orderBy);
+
+			string sqlStatement = std::format(
+				"select {} "
+				"from MMS_DeliveryServer "
+				"{} {} "
+				"{} {} {}",
+				_postgresHelper.buildQueryColumns(requestedColumns), !where.empty() ? "where " : "", where,
+				limit, offset, orderByCondition
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec(sqlStatement);
+			sqlResultSet = PostgresHelper::buildResult(res);
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
+			long elapsed = sqlResultSet->getSqlDuration().count();
+			if (sqlDuration != nullptr)
+				*sqlDuration = sqlResultSet->getSqlDuration();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+
+			if (empty(res) && deliveryServerKey != -1 && notFoundAsException)
+			{
+				string errorMessage = std::format(
+					"deliveryServer not found"
+					", deliveryServerKey: {}",
+					deliveryServerKey
+				);
+				// abbiamo il log nel catch
+				// LOG_WARN(errorMessage);
+
+				throw DBRecordNotFound(errorMessage);
+			}
+		}
+
+		return sqlResultSet;
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			LOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			LOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
 json MMSEngineDBFacade::getDeliveryServerRoot(bool admin, PostgresHelper::SqlResultSet::SqlRow &row,
 	chrono::milliseconds *extraDuration)
 {
@@ -615,18 +766,31 @@ json MMSEngineDBFacade::getDeliveryServerRoot(bool admin, PostgresHelper::SqlRes
 		deliveryServerRoot["deliveryServerKey"] = deliveryServerKey;
 		deliveryServerRoot["label"] = row["label"].as<string>();
 		deliveryServerRoot["type"] = row["type"].as<string>();
-		deliveryServerRoot["originDeliveryServerKey"] = row["originDeliveryServerKey"].as<int64_t>();
+		if (row["originDeliveryServerKey"].isNull())
+			deliveryServerRoot["originDeliveryServerKey"] = nullptr;
+		else
+		{
+			auto originDeliveryServerKey = row["originDeliveryServerKey"].as<int64_t>();
+			deliveryServerRoot["originDeliveryServerKey"] = originDeliveryServerKey;
+			deliveryServerRoot["originDeliveryServerLabel"] = deliveryServer_columnAsString("label",  originDeliveryServerKey);
+		}
 		deliveryServerRoot["external"] = row["external"].as<bool>();
 		deliveryServerRoot["enabled"] = row["enabled"].as<bool>();
 		deliveryServerRoot["publicServerName"] = row["publicServerName"].as<string>();
 		deliveryServerRoot["internalServerName"] = row["internalServerName"].as<string>();
 		deliveryServerRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
-		deliveryServerRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
+		if (row["cpuUsage"].isNull())
+			deliveryServerRoot["cpuUsage"] = nullptr;
+		else
+			deliveryServerRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
 		if (row["cpuUsageUpdateTime"].isNull())
 			deliveryServerRoot["cpuUsageUpdateTime"] = nullptr;
 		else
 			deliveryServerRoot["cpuUsageUpdateTime"] = row["cpuUsageUpdateTime"].as<string>();
-		deliveryServerRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
+		if (row["txAvgBandwidthUsage"].isNull())
+			deliveryServerRoot["txAvgBandwidthUsage"] = nullptr;
+		else
+			deliveryServerRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
 		deliveryServerRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
 		if (row["bandwidthUsageUpdateTime"].isNull())
 			deliveryServerRoot["bandwidthUsageUpdateTime"] = nullptr;

@@ -1185,13 +1185,22 @@ json MMSEngineDBFacade::getEncoderRoot(bool admin, bool runningInfo, PostgresHel
 		encoderRoot[field] = port;
 
 		encoderRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
-		encoderRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
+		if (row["cpuUsage"].isNull())
+			encoderRoot["cpuUsage"] = nullptr;
+		else
+			encoderRoot["cpuUsage"] = row["cpuUsage"].as<int32_t>();
 		if (row["cpuUsageUpdateTime"].isNull())
 			encoderRoot["cpuUsageUpdateTime"] = nullptr;
 		else
 			encoderRoot["cpuUsageUpdateTime"] = row["cpuUsageUpdateTime"].as<string>();
-		encoderRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
-		encoderRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
+		if (row["txAvgBandwidthUsage"].isNull())
+			encoderRoot["txAvgBandwidthUsage"] = nullptr;
+		else
+			encoderRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
+		if (row["rxAvgBandwidthUsage"].isNull())
+			encoderRoot["rxAvgBandwidthUsage"] = nullptr;
+		else
+			encoderRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
 		if (row["bandwidthUsageUpdateTime"].isNull())
 			encoderRoot["bandwidthUsageUpdateTime"] = nullptr;
 		else
