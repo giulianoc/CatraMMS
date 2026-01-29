@@ -2470,12 +2470,13 @@ class MMSEngineDBFacade
 	void addUpdatePartitionInfo(int partitionKey, std::string partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB);
 
 	int64_t addDeliveryServer(
-		const std::string &label, bool external, bool enabled, const std::string &publicServerName, const std::string &internalServerName
+		const std::string &label, const std::string &type, std::optional<long long> originDeliveryServerKey, bool external, bool enabled,
+		const std::string &publicServerName, const std::string &internalServerName
 	);
 	void modifyDeliveryServer(
-		int64_t deliveryServerKey, bool labelToBeModified, const std::string &label, bool externalToBeModified, bool external, bool enabledToBeModified,
-		bool enabled, bool publicServerNameToBeModified, const std::string &publicServerName,
-		bool internalServerNameToBeModified, const std::string &internalServerName
+		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string> &type,
+		const std::optional<long long> &originDeliveryServerKey, std::optional<bool> external, std::optional<bool> enabled,
+		const std::optional<std::string> &publicServerName, const std::optional<std::string> &internalServerName
 	);
 	void updateDeliveryServerAvgBandwidthUsage(
 		int64_t deliveryServerKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage

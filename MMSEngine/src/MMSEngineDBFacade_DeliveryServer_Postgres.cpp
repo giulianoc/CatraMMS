@@ -15,8 +15,8 @@ using json = nlohmann::json;
 using namespace pqxx;
 
 int64_t MMSEngineDBFacade::addDeliveryServer(
-	const string& label, bool external, bool enabled, const string& publicServerName,
-	const string& internalServerName
+	const string& label, const string& type, optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
+	const string& publicServerName, const string& internalServerName
 )
 {
 	int64_t deliveryServerKey;
@@ -26,10 +26,13 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 	{
 		{
 			string sqlStatement = std::format(
-				"insert into MMS_DeliveryServer(label, external, enabled, publicServerName, internalServerName "
-				") values ("
-				"{}, {}, {}, {}, {}) returning deliveryServerKey",
-				trans.transaction->quote(label), external, enabled, trans.transaction->quote(publicServerName),
+			R"(
+				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey external, enabled, publicServerName,
+					internalServerName) values (
+					{}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
+				trans.transaction->quote(label),
+				trans.transaction->quote(type), originDeliveryServerKey ? to_string(originDeliveryServerKey) : "null",
+				external, enabled, trans.transaction->quote(publicServerName),
 				trans.transaction->quote(internalServerName)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -73,9 +76,9 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 }
 
 void MMSEngineDBFacade::modifyDeliveryServer(
-	int64_t deliveryServerKey, bool labelToBeModified, const string& label, bool externalToBeModified, bool external, bool enabledToBeModified,
-	bool enabled, bool publicServerNameToBeModified, const string& publicServerName,
-	bool internalServerNameToBeModified, const string& internalServerName
+	int64_t deliveryServerKey, const optional<string>& label, const optional<string>& type, const optional<int64_t>& originDeliveryServerKey,
+	optional<bool> external, optional<bool> enabled, const optional<string>& publicServerName,
+	const optional<string>& internalServerName
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -85,43 +88,59 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
 
-			if (labelToBeModified)
+			if (label)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("label = " + trans.transaction->quote(label));
+				setSQL += std::format("label = {}", trans.transaction->quote(*label));
 				oneParameterPresent = true;
 			}
 
-			if (externalToBeModified)
+			if (type)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += (external ? "external = true" : "external = false");
+				setSQL += std::format("type = {}", trans.transaction->quote(*type));
 				oneParameterPresent = true;
 			}
 
-			if (enabledToBeModified)
+			if (originDeliveryServerKey)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += (enabled ? "enabled = true" : "enabled = false");
+				setSQL += std::format("originDeliveryServerKey = {}", *originDeliveryServerKey);
 				oneParameterPresent = true;
 			}
 
-			if (publicServerNameToBeModified)
+			if (external)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("publicServerName = " + trans.transaction->quote(publicServerName));
+				setSQL += std::format("external = {}", *external);
 				oneParameterPresent = true;
 			}
 
-			if (internalServerNameToBeModified)
+			if (enabled)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("internalServerName = " + trans.transaction->quote(internalServerName));
+				setSQL += std::format("enabled = {}", *enabled);
+				oneParameterPresent = true;
+			}
+
+			if (publicServerName)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("publicServerName = {}", trans.transaction->quote(*publicServerName));
+				oneParameterPresent = true;
+			}
+
+			if (internalServerName)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("internalServerName = {}", trans.transaction->quote(*internalServerName));
 				oneParameterPresent = true;
 			}
 
@@ -508,7 +527,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			string sqlStatement;
 			if (allDeliveryServers)
 				sqlStatement = std::format(
-					"select d.deliveryServerKey, d.label, d.external, d.enabled, "
+					"select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled, "
 					"d.publicServerName, d.internalServerName, "
 					"to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 					"d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
@@ -518,7 +537,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				);
 			else
 				sqlStatement = std::format(
-					"select d.deliveryServerKey, d.label, d.external, d.enabled, "
+					"select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled, "
 					"d.publicServerName, d.internalServerName, "
 					"to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 					"d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
@@ -595,6 +614,8 @@ json MMSEngineDBFacade::getDeliveryServerRoot(bool admin, PostgresHelper::SqlRes
 
 		deliveryServerRoot["deliveryServerKey"] = deliveryServerKey;
 		deliveryServerRoot["label"] = row["label"].as<string>();
+		deliveryServerRoot["type"] = row["type"].as<string>();
+		deliveryServerRoot["originDeliveryServerKey"] = row["originDeliveryServerKey"].as<int64_t>();
 		deliveryServerRoot["external"] = row["external"].as<bool>();
 		deliveryServerRoot["enabled"] = row["enabled"].as<bool>();
 		deliveryServerRoot["publicServerName"] = row["publicServerName"].as<string>();
@@ -978,7 +999,7 @@ json MMSEngineDBFacade::getDeliveryServersPoolList(
 
 						{
 							string sqlStatement = std::format(
-								"select deliveryServerKey, label, external, enabled, "
+								"select deliveryServerKey, label, type, originDeliveryServerKey, external, enabled, "
 								"publicServerName, internalServerName, "
 								"to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 								"cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "

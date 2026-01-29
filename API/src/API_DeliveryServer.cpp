@@ -63,7 +63,10 @@ void API::addDeliveryServer(
 			auto requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			label = JSONUtils::as<string>(requestBodyRoot, "label", "", {}, true);
-			type = JSONUtils::as<string>(requestBodyRoot, "type", "", {}, true);
+			type = JSONUtils::as<string>(requestBodyRoot, "type", "origin", {"origin", "edge"}, true);
+			if (type == "edge")
+				originDeliveryServerKey = JSONUtils::as<int64_t>(requestBodyRoot, "originDeliveryServerKey", -1,
+					{}, true);
 			external = JSONUtils::as<bool>(requestBodyRoot, "External", false);
 			enabled = JSONUtils::as<bool>(requestBodyRoot, "Enabled", true);
 			publicServerName = JSONUtils::as<string>(requestBodyRoot, "PublicServerName", "", {}, true);
@@ -85,7 +88,8 @@ void API::addDeliveryServer(
 		json responseRoot;
 		try
 		{
-			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(label, external, enabled, publicServerName, internalServerName);
+			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(label, type, originDeliveryServerKey,
+				external, enabled, publicServerName, internalServerName);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}
@@ -146,69 +150,25 @@ void API::modifyDeliveryServer(
 
 	try
 	{
-		string label;
-		bool labelToBeModified;
-
-		bool external;
-		bool externalToBeModified;
-
-		bool enabled;
-		bool enabledToBeModified;
-
-		string publicServerName;
-		bool publicServerNameToBeModified;
-
-		string internalServerName;
-		bool internalServerNameToBeModified;
+		optional<string> label;
+		optional<string> type;
+		optional<int64_t> originDeliveryServerKey;
+		optional<bool> external;
+		optional<bool> enabled;
+		optional<string> publicServerName;
+		optional<string> internalServerName;
 
 		try
 		{
-			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
+			auto requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
-			string field = "label";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				label = JSONUtils::as<string>(requestBodyRoot, field, "");
-				labelToBeModified = true;
-			}
-			else
-				labelToBeModified = false;
-
-			field = "External";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				external = JSONUtils::as<bool>(requestBodyRoot, field, false);
-				externalToBeModified = true;
-			}
-			else
-				externalToBeModified = false;
-
-			field = "Enabled";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				enabled = JSONUtils::as<bool>(requestBodyRoot, field, true);
-				enabledToBeModified = true;
-			}
-			else
-				enabledToBeModified = false;
-
-			field = "PublicServerName";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				publicServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
-				publicServerNameToBeModified = true;
-			}
-			else
-				publicServerNameToBeModified = false;
-
-			field = "InternalServerName";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				internalServerName = JSONUtils::as<string>(requestBodyRoot, field, "");
-				internalServerNameToBeModified = true;
-			}
-			else
-				internalServerNameToBeModified = false;
+			label = JSONUtils::asOpt<string>(requestBodyRoot, "label");
+			type = JSONUtils::asOpt<string>(requestBodyRoot, "type", {"origin", "edge"});
+			originDeliveryServerKey = JSONUtils::asOpt<int64_t>(requestBodyRoot, "originDeliveryServerKey");
+			external = JSONUtils::asOpt<bool>(requestBodyRoot, "external");
+			enabled = JSONUtils::asOpt<bool>(requestBodyRoot, "enabled");
+			publicServerName = JSONUtils::asOpt<string>(requestBodyRoot, "publicServerName");
+			internalServerName = JSONUtils::asOpt<string>(requestBodyRoot, "internalServerName");
 		}
 		catch (exception &e)
 		{
@@ -226,11 +186,11 @@ void API::modifyDeliveryServer(
 		json responseRoot;
 		try
 		{
-			int64_t deliveryServerKey = requestData.getQueryParameter("deliveryServerKey", static_cast<int64_t>(-1), true);
+			int64_t deliveryServerKey = requestData.getQueryParameter("deliveryServerKey", -1, true);
 
 			_mmsEngineDBFacade->modifyDeliveryServer(
-				deliveryServerKey, labelToBeModified, label, externalToBeModified, external, enabledToBeModified, enabled,
-				publicServerNameToBeModified, publicServerName, internalServerNameToBeModified, internalServerName
+				deliveryServerKey, label, type, originDeliveryServerKey, external, enabled,
+				publicServerName, internalServerName
 			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
