@@ -772,7 +772,7 @@ json MMSEngineDBFacade::getDeliveryServerRoot(bool admin, PostgresHelper::SqlRes
 		{
 			auto originDeliveryServerKey = row["originDeliveryServerKey"].as<int64_t>();
 			deliveryServerRoot["originDeliveryServerKey"] = originDeliveryServerKey;
-			deliveryServerRoot["originDeliveryServerLabel"] = deliveryServer_columnAsString("label",  originDeliveryServerKey);
+			// deliveryServerRoot["originDeliveryServerLabel"] = deliveryServer_columnAsString("label",  originDeliveryServerKey);
 		}
 		deliveryServerRoot["external"] = row["external"].as<bool>();
 		deliveryServerRoot["enabled"] = row["enabled"].as<bool>();
