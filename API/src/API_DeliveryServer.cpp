@@ -67,10 +67,10 @@ void API::addDeliveryServer(
 			if (type == "edge")
 				originDeliveryServerKey = JSONUtils::as<int64_t>(requestBodyRoot, "originDeliveryServerKey", -1,
 					{}, true);
-			external = JSONUtils::as<bool>(requestBodyRoot, "External", false);
-			enabled = JSONUtils::as<bool>(requestBodyRoot, "Enabled", true);
-			publicServerName = JSONUtils::as<string>(requestBodyRoot, "PublicServerName", "", {}, true);
-			internalServerName = JSONUtils::as<string>(requestBodyRoot, "InternalServerName", "", {}, true);
+			external = JSONUtils::as<bool>(requestBodyRoot, "external", false);
+			enabled = JSONUtils::as<bool>(requestBodyRoot, "enabled", true);
+			publicServerName = JSONUtils::as<string>(requestBodyRoot, "publicServerName", "", {}, true);
+			internalServerName = JSONUtils::as<string>(requestBodyRoot, "internalServerName", "", {}, true);
 		}
 		catch (exception &e)
 		{
