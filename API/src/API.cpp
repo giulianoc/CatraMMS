@@ -1423,7 +1423,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 		throw FastCGIError::HTTPError(401);
 	}
 
-	if (apiAuthorizationDetails->userKey != StringUtils::toInt64(userName))
+	if (apiAuthorizationDetails->userKey != StringUtils::toNumber<int64_t>(userName))
 	{
 		LOG_INFO(
 			"Username of the basic authorization (UserKey) is not the same UserKey the apiKey is referring"
