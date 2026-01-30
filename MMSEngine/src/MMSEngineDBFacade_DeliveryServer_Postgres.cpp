@@ -479,13 +479,13 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			// join with MMS_EncoderWorkspaceMapping
 			if (!sqlWhere.empty())
 				sqlWhere = std::format(
-				   "where d.deliveryServerKey = ewm.deliveryServerKey "
-				   "and ewm.workspaceKey = {} and {}",
+				   "where d.deliveryServerKey = dwm.deliveryServerKey "
+				   "and dwm.workspaceKey = {} and {}",
 				   workspaceKey, sqlWhere);
 			else
 				sqlWhere = std::format(
-					"where d.deliveryServerKey = ewm.deliveryServerKey "
-					"and ewm.workspaceKey = {} ",
+					"where d.deliveryServerKey = dwm.deliveryServerKey "
+					"and dwm.workspaceKey = {} ",
 					workspaceKey
 				);
 		}
