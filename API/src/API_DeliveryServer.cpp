@@ -442,10 +442,10 @@ void API::deliveryServerList(
 
 	try
 	{
-		int64_t deliveryServerKey = requestData.getQueryParameter("deliveryServerKey", static_cast<int64_t>(-1));
+		auto deliveryServerKey = requestData.getOptQueryParameter<int64_t>("deliveryServerKey");
 
-		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
-		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(30));
+		auto start = requestData.getQueryParameter<int32_t>("start", 0);
+		auto rows = requestData.getQueryParameter<int32_t>("rows", 30);
 		if (rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
@@ -453,16 +453,18 @@ void API::deliveryServerList(
 
 			// rows = _maxPageSize;
 
-			string errorMessage =
-				__FILEREF__ + "rows parameter too big" + ", rows: " + to_string(rows) + ", _maxPageSize: " + to_string(_maxPageSize);
+			string errorMessage = std::format("rows parameter too big"
+				", rows: {}"
+				", _maxPageSize: {}", rows, _maxPageSize);
+			LOG_ERROR(errorMessage);
 			throw runtime_error(errorMessage);
 		}
 
-		string label = requestData.getQueryParameter("label", "");
+		string label = requestData.getQueryParameter("label");
 
-		string serverName = requestData.getQueryParameter("serverName", "");
+		string serverName = requestData.getQueryParameter("serverName");
 
-		string labelOrder = requestData.getQueryParameter("labelOrder", "");
+		string labelOrder = requestData.getQueryParameter("labelOrder");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
 			LOG_WARN(

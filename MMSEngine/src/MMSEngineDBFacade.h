@@ -2486,8 +2486,8 @@ class MMSEngineDBFacade
 	);
 	void removeDeliveryServer(int64_t deliveryServerKey);
 	nlohmann::json getDeliveryServerList(
-		bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, int64_t deliveryServerKey, std::string label,
-		std::string serverName, std::string labelOrder
+		bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, std::optional<int64_t> deliveryServerKey,
+		std::string label, std::string serverName, std::string labelOrder
 	);
 	std::string deliveryServer_columnAsString(std::string columnName, int64_t deliveryServerKey, bool fromMaster = false);
 	std::shared_ptr<PostgresHelper::SqlResultSet> deliveryServerQuery(

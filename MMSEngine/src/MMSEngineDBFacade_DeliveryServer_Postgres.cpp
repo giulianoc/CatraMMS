@@ -401,7 +401,7 @@ void MMSEngineDBFacade::removeDeliveryServer(int64_t deliveryServerKey)
 }
 
 json MMSEngineDBFacade::getDeliveryServerList(
-	bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, int64_t deliveryServerKey, string label, string serverName,
+	bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, optional<int64_t> deliveryServerKey, string label, string serverName,
 	string labelOrder // "" or "asc" or "desc"
 )
 {
@@ -420,14 +420,14 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			", label: {}"
 			", serverName: {}"
 			", labelOrder: {}",
-			start, rows, allDeliveryServers, workspaceKey, deliveryServerKey, label, serverName, labelOrder
+			start, rows, allDeliveryServers, workspaceKey, deliveryServerKey ? *deliveryServerKey : -1, label, serverName, labelOrder
 		);
 
 		{
 			json requestParametersRoot;
 
-			if (deliveryServerKey != -1)
-				requestParametersRoot["deliveryServerKey"] = deliveryServerKey;
+			if (deliveryServerKey)
+				requestParametersRoot["deliveryServerKey"] = *deliveryServerKey;
 			requestParametersRoot["start"] = start;
 			requestParametersRoot["rows"] = rows;
 			if (!label.empty())
@@ -440,12 +440,12 @@ json MMSEngineDBFacade::getDeliveryServerList(
 		}
 
 		string sqlWhere;
-		if (deliveryServerKey != -1)
+		if (deliveryServerKey)
 		{
 			if (!sqlWhere.empty())
-				sqlWhere += std::format("and d.deliveryServerKey = {} ", deliveryServerKey);
+				sqlWhere += std::format("and d.deliveryServerKey = {} ", *deliveryServerKey);
 			else
-				sqlWhere += std::format("d.deliveryServerKey = {} ", deliveryServerKey);
+				sqlWhere += std::format("d.deliveryServerKey = {} ", *deliveryServerKey);
 		}
 		if (!label.empty())
 		{
@@ -549,9 +549,9 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					)",
 					sqlWhere, orderByCondition, rows, start
 				);
+			LOG_INFO("sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
 			for (auto& sqlRow : *sqlResultSet)
 			{
