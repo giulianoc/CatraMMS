@@ -208,6 +208,93 @@ void registerSlowQueryLogger(json configurationRoot)
 	// logger->warn("Test...");
 }
 
+void registerNewLogger(const json& configurationLoggerRoot, const string& loggerName, const std::shared_ptr<spdlog::sinks::sink>& errorSink)
+{
+	auto logPathName = JsonPath(&configurationLoggerRoot)[loggerName]["pathName"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->{}->pathName: {}",
+		loggerName, logPathName
+	);
+	auto logType = JsonPath(&configurationLoggerRoot)[loggerName]["type"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->{}->type: {}",
+		loggerName, logType
+	);
+	auto logLevel = JsonPath(&configurationLoggerRoot)[loggerName]["level"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->{}->level: {}",
+		loggerName, logLevel
+	);
+
+	LOG_INFO("registerLogger");
+	std::vector<spdlog::sink_ptr> sinks;
+	{
+		if (logType == "daily")
+		{
+			int logRotationHour = JsonPath(&configurationLoggerRoot)["daily"]["rotationHour"].as<int32_t>(1);
+			int logRotationMinute = JsonPath(&configurationLoggerRoot)["daily"]["rotationMinute"].as<int32_t>(1);
+
+			const auto dailySink = make_shared<spdlog::sinks::daily_file_sink_mt>(logPathName.c_str(), logRotationHour, logRotationMinute);
+			sinks.push_back(dailySink);
+
+			// livello di log sul sink
+			if (logLevel == "debug")
+				dailySink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				dailySink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				dailySink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				dailySink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				dailySink->set_level(spdlog::level::critical);
+		}
+		else if (logType == "rotating")
+		{
+			const auto maxSizeInKBytes = JsonPath(&configurationLoggerRoot)["rotating"]["maxSizeInKBytes"].as<int64_t>(1000);
+			int maxFiles = JsonPath(&configurationLoggerRoot)["rotating"]["maxFiles"].as<int32_t>(10);
+
+			const auto rotatingSink = make_shared<spdlog::sinks::rotating_file_sink_mt>(logPathName.c_str(), maxSizeInKBytes * 1000, maxFiles);
+			sinks.push_back(rotatingSink);
+
+			// livello di log sul sink
+			if (logLevel == "debug")
+				rotatingSink->set_level(spdlog::level::debug);
+			else if (logLevel == "info")
+				rotatingSink->set_level(spdlog::level::info);
+			else if (logLevel == "warn")
+				rotatingSink->set_level(spdlog::level::warn);
+			else if (logLevel == "err")
+				rotatingSink->set_level(spdlog::level::err);
+			else if (logLevel == "critical")
+				rotatingSink->set_level(spdlog::level::critical);
+		}
+	}
+	sinks.push_back(errorSink);
+
+	const auto logger = std::make_shared<spdlog::logger>(std::format("{}-log", loggerName), begin(sinks), end(sinks));
+	spdlog::register_logger(logger);
+
+	// trigger flush if the log severity is error or higher
+	logger->flush_on(spdlog::level::trace);
+
+	// inizializza il livello del logger a trace in modo che ogni messaggio possa raggiungere i logger nei sinks
+	logger->set_level(spdlog::level::trace); // trace, debug, info, warn, err, critical, off
+
+	auto pattern = JsonPath(&configurationLoggerRoot)["pattern"].as<string>();
+	LOG_INFO(
+		"Configuration item"
+		", log->pattern: {}",
+		pattern
+	);
+	logger->set_pattern(pattern);
+
+	// logger->warn("Test...");
+}
+
 int main(int argc, char **argv)
 {
 	try
@@ -248,6 +335,7 @@ int main(int argc, char **argv)
 		std::shared_ptr<spdlog::sinks::sink> errorSink = buildErrorSink(configurationRoot);
 		shared_ptr<spdlog::logger> logger = setMainLogger(configurationRoot, errorSink);
 		registerSlowQueryLogger(configurationRoot);
+		registerNewLogger(JsonPath(&configurationRoot)["log"]["api"].as<json>(), "stats", errorSink);
 
 		// install a signal handler
 		signal(SIGSEGV, signalHandler);
