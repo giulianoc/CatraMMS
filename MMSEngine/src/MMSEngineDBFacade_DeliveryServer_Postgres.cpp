@@ -530,9 +530,10 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
 					d.publicServerName, d.internalServerName,
-					to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
-					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
-					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage, to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
+					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
+					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
+					to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 					from MMS_DeliveryServer d {} {} limit {} offset {}
 					)",
 					sqlWhere, orderByCondition, rows, start
@@ -542,9 +543,10 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
 					d.publicServerName, d.internalServerName,
-					to_char(d.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
-					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
-					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage, to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
+					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
+					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
+					to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 					from MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping dwm {} {} limit {} offset {}
 					)",
 					sqlWhere, orderByCondition, rows, start
