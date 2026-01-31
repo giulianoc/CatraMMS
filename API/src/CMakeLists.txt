@@ -33,6 +33,8 @@ set(SOURCES
         API_Configuration.cpp
         API_EncodersPool.cpp
         API_Statistic.cpp
+        DeliveryServerBandwidthUsageThread.cpp
+        DeliveryServerCPUUsageThread.cpp
 )
 
 set(HEADERS
