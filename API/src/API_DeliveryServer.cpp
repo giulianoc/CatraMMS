@@ -488,12 +488,12 @@ void API::deliveryServerList(
 		}
 
 		{
-			json encoderListRoot = _mmsEngineDBFacade->getDeliveryServerList(
+			json deliveryServerListRoot = _mmsEngineDBFacade->getDeliveryServerList(
 				apiAuthorizationDetails->admin, start, rows, allDeliveryServers, workspaceKey, deliveryServerKey, label, serverName,
 				labelOrder
 			);
 
-			string responseBody = JSONUtils::toString(encoderListRoot);
+			string responseBody = JSONUtils::toString(deliveryServerListRoot);
 
 			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200,
 				responseBody);

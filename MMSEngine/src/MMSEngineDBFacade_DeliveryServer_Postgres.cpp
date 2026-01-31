@@ -552,12 +552,11 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
-			LOG_INFO("sqlResultSet->size: {}", sqlResultSet->size());
 			for (auto& sqlRow : *sqlResultSet)
 			{
-			LOG_INFO("sqlResultSet->size: {}", sqlResultSet->size());
 				chrono::milliseconds localSqlDuration(0);
 				json deliveryServerRoot = getDeliveryServerRoot(admin, sqlRow, &localSqlDuration);
+				LOG_INFO("deliveryServerRoot: {}", JSONUtils::toString(deliveryServerRoot));
 				internalSqlDuration += localSqlDuration;
 
 				deliveryServersRoot.push_back(deliveryServerRoot);
@@ -751,7 +750,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 	}
 }
 
-json MMSEngineDBFacade::getDeliveryServerRoot(bool admin, PostgresHelper::SqlResultSet::SqlRow &row,
+json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::SqlResultSet::SqlRow &row,
 	chrono::milliseconds *extraDuration)
 {
 	json deliveryServerRoot;
