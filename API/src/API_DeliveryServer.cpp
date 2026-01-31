@@ -63,8 +63,9 @@ void API::addDeliveryServer(
 			auto requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			label = JSONUtils::as<string>(requestBodyRoot, "label", "", {}, true);
-			type = JSONUtils::as<string>(requestBodyRoot, "type", "origin", {"origin", "edge"}, true);
-			if (type == "edge")
+			type = JSONUtils::as<string>(requestBodyRoot, "type", "origin",
+				{"origin", "edge", "mid-origin"}, true);
+			if (type == "edge" || type == "mid-origin")
 				originDeliveryServerKey = JSONUtils::as<int64_t>(requestBodyRoot, "originDeliveryServerKey", -1,
 					{}, true);
 			external = JSONUtils::as<bool>(requestBodyRoot, "external", false);
