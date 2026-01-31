@@ -27,7 +27,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 		{
 			string sqlStatement = std::format(
 			R"(
-				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey external, enabled, publicServerName,
+				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey, external, enabled, publicServerName,
 					internalServerName) values (
 					{}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
 				trans.transaction->quote(label),
