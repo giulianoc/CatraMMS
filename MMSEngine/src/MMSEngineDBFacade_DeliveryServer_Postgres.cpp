@@ -549,12 +549,13 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					)",
 					sqlWhere, orderByCondition, rows, start
 				);
-			LOG_INFO("sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
+			LOG_INFO("sqlResultSet->size: {}", sqlResultSet->size());
 			for (auto& sqlRow : *sqlResultSet)
 			{
+			LOG_INFO("sqlResultSet->size: {}", sqlResultSet->size());
 				chrono::milliseconds localSqlDuration(0);
 				json deliveryServerRoot = getDeliveryServerRoot(admin, sqlRow, &localSqlDuration);
 				internalSqlDuration += localSqlDuration;
