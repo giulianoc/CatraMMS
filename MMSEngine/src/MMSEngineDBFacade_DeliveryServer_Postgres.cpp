@@ -556,7 +556,6 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			{
 				chrono::milliseconds localSqlDuration(0);
 				json deliveryServerRoot = getDeliveryServerRoot(admin, sqlRow, &localSqlDuration);
-				LOG_INFO("deliveryServerRoot: {}", JSONUtils::toString(deliveryServerRoot));
 				internalSqlDuration += localSqlDuration;
 
 				deliveryServersRoot.push_back(deliveryServerRoot);
@@ -573,7 +572,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			);
 		}
 
-		responseRoot["deliversServers"] = deliveryServersRoot;
+		responseRoot["deliveryServers"] = deliveryServersRoot;
 		deliveryServerListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
