@@ -355,12 +355,14 @@ int main(int argc, char **argv)
 		std::optional<std::string> optInterfaceNameToMonitor = nullopt;
 		if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
 			optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
-		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor);
+		auto bandwidthUsageThread = make_shared<EncoderBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor,
+			spdlog::get("stats-log"));
 		bandwidthUsageThread->start();
 
 		auto cpuStatsUpdateIntervalInSeconds = JsonPath(&configurationRoot)["scheduler"]["cpuStatsUpdateIntervalInSeconds"].
 			as<int16_t>(10);
-		auto cpuUsageThread = make_shared<EncoderCPUUsageThread>(configurationRoot, cpuStatsUpdateIntervalInSeconds);
+		auto cpuUsageThread = make_shared<EncoderCPUUsageThread>(configurationRoot, cpuStatsUpdateIntervalInSeconds,
+			spdlog::get("stats-log"));
 		cpuUsageThread->start();
 
 		vector<shared_ptr<FFMPEGEncoder>> ffmpegEncoders;

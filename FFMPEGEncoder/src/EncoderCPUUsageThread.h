@@ -33,7 +33,8 @@ using json = nlohmann::json;
 class EncoderCPUUsageThread final : public CPUUsageThread
 {
 public:
-	explicit EncoderCPUUsageThread(const json & configurationRoot, int16_t cpuStatsUpdateIntervalInSeconds);
+	explicit EncoderCPUUsageThread(const json & configurationRoot, int16_t cpuStatsUpdateIntervalInSeconds,
+		const std::shared_ptr<spdlog::logger>& logger = nullptr);
 
 	void newCPUUsageAvailable(uint16_t& cpuUsage) const override;
 

@@ -14,8 +14,10 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 
 #include "API.h"
-#include "CPUUsageThread.h"
 #include "BandwidthUsageThread.h"
+#include "CPUUsageThread.h"
+#include "DeliveryServerBandwidthUsageThread.h"
+#include "DeliveryServerCPUUsageThread.h"
 #include "JSONUtils.h"
 #include "JsonPath.h"
 #include "spdlog/spdlog.h"
@@ -314,6 +316,8 @@ int main(int argc, char **argv)
 				noDatabaseAccess = true;
 		}
 
+		bool isDeliveryServer = noDatabaseAccess;
+
 		CurlWrapper::globalInitialize();
 
 		// Init libxml
@@ -398,17 +402,31 @@ int main(int argc, char **argv)
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
 
-		auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["api"]["bandwithUsageInterfaceName"].as<string>();
-		std::optional<std::string> optInterfaceNameToMonitor = nullopt;
-		if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
-			optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
-		auto bandwidthUsageThread = make_shared<BandwidthUsageThread>(optInterfaceNameToMonitor);
-		bandwidthUsageThread->start();
+		shared_ptr<BandwidthUsageThread> bandwidthUsageThread;
+		{
+			auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["api"]["bandwithUsageInterfaceName"].as<string>();
+			std::optional<std::string> optInterfaceNameToMonitor = nullopt;
+			if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
+				optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
+			if (isDeliveryServer)
+				bandwidthUsageThread = make_shared<DeliveryServerBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor,
+					spdlog::get("stats-log"));
+			else
+				bandwidthUsageThread = make_shared<BandwidthUsageThread>(optInterfaceNameToMonitor, spdlog::get("stats-log"));
+			bandwidthUsageThread->start();
+		}
 
-		auto cpuStatsUpdateIntervalInSeconds = JsonPath(&configurationRoot)["scheduler"]["cpuStatsUpdateIntervalInSeconds"].
-			as<int16_t>(10);
-		const auto cpuUsageThread = make_shared<CPUUsageThread>(cpuStatsUpdateIntervalInSeconds);
-		cpuUsageThread->start();
+		shared_ptr<CPUUsageThread> cpuUsageThread;
+		{
+			auto cpuStatsUpdateIntervalInSeconds = JsonPath(&configurationRoot)["scheduler"]["cpuStatsUpdateIntervalInSeconds"].
+				as<int16_t>(10);
+			if (isDeliveryServer)
+				cpuUsageThread = make_shared<DeliveryServerCPUUsageThread>(configurationRoot, cpuStatsUpdateIntervalInSeconds,
+					spdlog::get("stats-log"));
+			else
+				cpuUsageThread = make_shared<CPUUsageThread>(cpuStatsUpdateIntervalInSeconds, spdlog::get("stats-log"));
+			cpuUsageThread->start();
+		}
 
 		vector<shared_ptr<API>> apis;
 		vector<thread> apiThreads;

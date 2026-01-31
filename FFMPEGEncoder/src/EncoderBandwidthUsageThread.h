@@ -34,7 +34,8 @@ class EncoderBandwidthUsageThread final : public BandwidthUsageThread
 {
 public:
 	explicit EncoderBandwidthUsageThread(const json & configurationRoot,
-		const std::optional<std::string> &interfaceNameToMonitor = std::nullopt);
+		const std::optional<std::string> &interfaceNameToMonitor = std::nullopt,
+		const std::shared_ptr<spdlog::logger>& logger = nullptr);
 
 	void newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const override;
 

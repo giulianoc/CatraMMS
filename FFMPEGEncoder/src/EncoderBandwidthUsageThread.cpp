@@ -28,8 +28,9 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 #include "Encrypt.h"
 
 EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurationRoot,
-	const std::optional<std::string> &interfaceNameToMonitor):
-	BandwidthUsageThread(interfaceNameToMonitor)
+	const std::optional<std::string> &interfaceNameToMonitor,
+	const std::shared_ptr<spdlog::logger>& logger):
+	BandwidthUsageThread(interfaceNameToMonitor, logger)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
 	LOG_INFO("Configuration item"
