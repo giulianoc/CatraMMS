@@ -92,6 +92,12 @@ DeliveryServerCPUUsageThread::DeliveryServerCPUUsageThread(const json& configura
 
 void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) const
 {
+	LOG_INFO("Sending CPU usage to MMS API Server"
+		", _deliveryServerKey: {}"
+		", _isDeliveryAndAPIServerTogether: {}"
+		", cpuUsage: {}", _deliveryServerKey, _isDeliveryAndAPIServerTogether,
+		cpuUsage
+	);
 	if (_deliveryServerKey < 0)
 	{
 		LOG_ERROR("The 'deliveryServerKey' configuration item is not valid and CPU stats is not sent to API MMS Server"

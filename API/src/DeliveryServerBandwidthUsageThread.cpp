@@ -93,6 +93,14 @@ DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const jso
 
 void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const
 {
+	LOG_INFO("Sending bandwidth usage stats to MMS API Server"
+		", _deliveryServerKey: {}"
+		", _isDeliveryAndAPIServerTogether: {}"
+		", txAvgBandwidthUsage: {}"
+		", rxAvgBandwidthUsage: {}", _deliveryServerKey, _isDeliveryAndAPIServerTogether,
+		txAvgBandwidthUsage, rxAvgBandwidthUsage
+	);
+
 	if (_deliveryServerKey < 0)
 	{
 		LOG_ERROR("The 'deliveryServerKey' configuration item is not valid and bandwidth stats is not sent to API MMS Server"
