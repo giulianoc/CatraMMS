@@ -2481,9 +2481,7 @@ class MMSEngineDBFacade
 	void updateDeliveryServerAvgBandwidthUsage(
 		int64_t deliveryServerKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
 	);
-	void updateDeliveryServerCPUUsage(
-		int64_t deliveryServerKey, uint32_t& cpuUsage
-	);
+	void updateDeliveryServerCPUUsage(int64_t deliveryServerKey, uint16_t &cpuUsage);
 	void removeDeliveryServer(int64_t deliveryServerKey);
 	nlohmann::json getDeliveryServerList(
 		bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, std::optional<int64_t> deliveryServerKey,

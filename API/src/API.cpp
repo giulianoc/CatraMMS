@@ -11,7 +11,6 @@
  * Created on February 18, 2018, 1:27 AM
  */
 
-#include "Convert.h"
 #include "CurlWrapper.h"
 #include "Encrypt.h"
 #include "JSONUtils.h"
@@ -19,7 +18,6 @@
 #include "StringUtils.h"
 #include "System.h"
 #include "spdlog/sinks/daily_file_sink.h"
-#include "spdlog/sinks/rotating_file_sink.h"
 #include "spdlog/spdlog.h"
 #include <format>
 #include <fstream>
@@ -31,7 +29,6 @@
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
-#include <unordered_map>
 #include <utility>
 
 #include "API.h"

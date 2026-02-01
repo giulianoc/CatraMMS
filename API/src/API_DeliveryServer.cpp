@@ -328,7 +328,7 @@ void API::updateDeliveryServerCPUUsageStats(
 		try
 		{
 			deliveryServerKey = requestData.getQueryParameter<int64_t>("deliveryServerKey", -1, true);
-			auto cpuUsage = requestData.getQueryParameter<uint32_t>("cpuUsage", 0, true);
+			auto cpuUsage = requestData.getQueryParameter<uint16_t>("cpuUsage", 0, true);
 
 			_mmsEngineDBFacade->updateDeliveryServerCPUUsage(deliveryServerKey, cpuUsage);
 

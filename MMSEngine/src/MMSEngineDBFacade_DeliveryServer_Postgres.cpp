@@ -280,7 +280,7 @@ void MMSEngineDBFacade::updateDeliveryServerAvgBandwidthUsage(
 }
 
 void MMSEngineDBFacade::updateDeliveryServerCPUUsage(
-	int64_t deliveryServerKey, uint32_t& cpuUsage
+	int64_t deliveryServerKey, uint16_t& cpuUsage
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -403,8 +403,8 @@ void MMSEngineDBFacade::removeDeliveryServer(int64_t deliveryServerKey)
 }
 
 json MMSEngineDBFacade::getDeliveryServerList(
-	bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, optional<int64_t> deliveryServerKey, string label, string serverName,
-	string labelOrder // "" or "asc" or "desc"
+	bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, optional<int64_t> deliveryServerKey,
+	string label, string serverName, string labelOrder // "" or "asc" or "desc"
 )
 {
 	json deliveryServerListRoot;

@@ -26,11 +26,17 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #include "CurlWrapper.h"
 #include "Encrypt.h"
+#include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 
+using namespace std;
+
 DeliveryServerCPUUsageThread::DeliveryServerCPUUsageThread(const json& configurationRoot, int16_t cpuStatsUpdateIntervalInSeconds,
+	const bool isDeliveryAndAPIServerTogether,
+	const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
 	const std::shared_ptr<spdlog::logger>& logger):
-	CPUUsageThread(cpuStatsUpdateIntervalInSeconds, logger)
+	CPUUsageThread(cpuStatsUpdateIntervalInSeconds, logger),
+	_isDeliveryAndAPIServerTogether(isDeliveryAndAPIServerTogether), _mmsEngineDBFacade(mmsEngineDBFacade)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
 	LOG_INFO("Configuration item"
@@ -99,20 +105,25 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		return;
 	}
 
-	const std::string mmsAPIUpdateCPUStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}",
-		_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateCPUStatsURI,
-		cpuUsage);
+	if (_isDeliveryAndAPIServerTogether)
+		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);
+	else
+	{
+		const std::string mmsAPIUpdateCPUStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}",
+			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateCPUStatsURI,
+			cpuUsage);
 
-	constexpr int32_t mmsAPITimeoutInSeconds = 3;
-	LOG_INFO("UpdateCPUStats"
-		", cpuUsage: {}",
-		cpuUsage
+		constexpr int32_t mmsAPITimeoutInSeconds = 3;
+		LOG_INFO("UpdateCPUStats"
+			", cpuUsage: {}",
+			cpuUsage
+			);
+		constexpr std::vector<std::string> otherHeaders;
+		nlohmann::json apiResponseRoot = CurlWrapper::httpPutStringAndGetJson(
+			mmsAPIUpdateCPUStatsURL, mmsAPITimeoutInSeconds,
+			CurlWrapper::basicAuthorization(_updateStatsUser, _updateStatsPassword),
+			"", "application/json", // contentType
+			otherHeaders, ""
 		);
-	constexpr std::vector<std::string> otherHeaders;
-	nlohmann::json apiResponseRoot = CurlWrapper::httpPutStringAndGetJson(
-		mmsAPIUpdateCPUStatsURL, mmsAPITimeoutInSeconds,
-		CurlWrapper::basicAuthorization(_updateStatsUser, _updateStatsPassword),
-		"", "application/json", // contentType
-		otherHeaders, ""
-	);
+	}
 }

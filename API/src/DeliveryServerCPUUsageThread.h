@@ -24,8 +24,8 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 #pragma once
 
 #include "CPUUsageThread.h"
+#include "MMSEngineDBFacade.h"
 #include "JsonPath.h"
-
 #include <nlohmann/json_fwd.hpp>
 
 using json = nlohmann::json;
@@ -34,6 +34,8 @@ class DeliveryServerCPUUsageThread final : public CPUUsageThread
 {
 public:
 	explicit DeliveryServerCPUUsageThread(const json & configurationRoot, int16_t cpuStatsUpdateIntervalInSeconds,
+		bool isDeliveryAndAPIServer = false,
+		const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade = nullptr,
 		const std::shared_ptr<spdlog::logger>& logger = nullptr);
 
 	void newCPUUsageAvailable(uint16_t& cpuUsage) const override;
@@ -47,4 +49,6 @@ private:
 	std::string _updateStatsUser;
 	std::string _updateStatsPassword;
 	int64_t _deliveryServerKey;
+	bool _isDeliveryAndAPIServerTogether;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 };

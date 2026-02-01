@@ -26,11 +26,18 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 
 #include "CurlWrapper.h"
 #include "Encrypt.h"
+#include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 
+using namespace std;
+
 DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const json & configurationRoot,
-	const std::optional<std::string> &interfaceNameToMonitor, const std::shared_ptr<spdlog::logger>& logger):
-	BandwidthUsageThread(interfaceNameToMonitor, logger)
+	const std::optional<std::string> &interfaceNameToMonitor,
+	const bool isDeliveryAndAPIServerTogether,
+	const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
+	const std::shared_ptr<spdlog::logger>& logger):
+	BandwidthUsageThread(interfaceNameToMonitor, logger),
+	_isDeliveryAndAPIServerTogether(isDeliveryAndAPIServerTogether), _mmsEngineDBFacade(mmsEngineDBFacade)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
 	LOG_INFO("Configuration item"
@@ -99,21 +106,26 @@ void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& tx
 		return;
 	}
 
-	const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}/{}",
-		_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateBandwidthStatsURI,
-		txAvgBandwidthUsage, rxAvgBandwidthUsage);
+	if (_isDeliveryAndAPIServerTogether)
+		_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(_deliveryServerKey, txAvgBandwidthUsage, rxAvgBandwidthUsage);
+	else
+	{
+		const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}/{}",
+			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateBandwidthStatsURI,
+			txAvgBandwidthUsage, rxAvgBandwidthUsage);
 
-	constexpr int32_t mmsAPITimeoutInSeconds = 3;
-	LOG_INFO("UpdateBandwidthStats"
-		", txAvgBandwidthUsage: {}"
-		", rxAvgBandwidthUsage: {}",
-		txAvgBandwidthUsage, rxAvgBandwidthUsage
+		constexpr int32_t mmsAPITimeoutInSeconds = 3;
+		LOG_INFO("UpdateBandwidthStats"
+			", txAvgBandwidthUsage: {}"
+			", rxAvgBandwidthUsage: {}",
+			txAvgBandwidthUsage, rxAvgBandwidthUsage
+			);
+		constexpr std::vector<std::string> otherHeaders;
+		nlohmann::json apiResponseRoot = CurlWrapper::httpPutStringAndGetJson(
+			mmsAPIUpdateBandwidthStatsURL, mmsAPITimeoutInSeconds,
+			CurlWrapper::basicAuthorization(_updateStatsUser, _updateStatsPassword),
+			"", "application/json", // contentType
+			otherHeaders, ""
 		);
-	constexpr std::vector<std::string> otherHeaders;
-	nlohmann::json apiResponseRoot = CurlWrapper::httpPutStringAndGetJson(
-		mmsAPIUpdateBandwidthStatsURL, mmsAPITimeoutInSeconds,
-		CurlWrapper::basicAuthorization(_updateStatsUser, _updateStatsPassword),
-		"", "application/json", // contentType
-		otherHeaders, ""
-	);
+	}
 }

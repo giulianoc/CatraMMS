@@ -24,8 +24,8 @@ Copyright (C) Giuliano Catrambone (giulianocatrambone@gmail.com)
 #pragma once
 
 #include "BandwidthUsageThread.h"
+#include "MMSEngineDBFacade.h"
 #include "JsonPath.h"
-
 #include <nlohmann/json_fwd.hpp>
 
 using json = nlohmann::json;
@@ -35,6 +35,8 @@ class DeliveryServerBandwidthUsageThread final : public BandwidthUsageThread
 public:
 	explicit DeliveryServerBandwidthUsageThread(const json & configurationRoot,
 		const std::optional<std::string> &interfaceNameToMonitor = std::nullopt,
+		bool isDeliveryAndAPIServer = false,
+	  const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade = nullptr,
 		const std::shared_ptr<spdlog::logger>& logger = nullptr);
 
 	void newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const override;
@@ -48,4 +50,6 @@ private:
 	std::string _updateStatsUser;
 	std::string _updateStatsPassword;
 	int32_t _deliveryServerKey;
+	bool _isDeliveryAndAPIServerTogether;
+	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 };
