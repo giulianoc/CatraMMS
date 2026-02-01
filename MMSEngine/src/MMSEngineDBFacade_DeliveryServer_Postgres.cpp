@@ -766,15 +766,17 @@ json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::
 
 		deliveryServerRoot["deliveryServerKey"] = deliveryServerKey;
 		deliveryServerRoot["label"] = row["label"].as<string>();
-		deliveryServerRoot["type"] = row["type"].as<string>();
-		if (row["originDeliveryServerKey"].isNull())
-			deliveryServerRoot["originDeliveryServerKey"] = nullptr;
-		else
+		auto type = row["type"].as<string>();
+		deliveryServerRoot["type"] = type;
+		if (type == "edge" || type == "mid-origin")
 		{
-			auto originDeliveryServerKey = row["originDeliveryServerKey"].as<int64_t>();
-			deliveryServerRoot["originDeliveryServerKey"] = originDeliveryServerKey;
-			// deliveryServerRoot["originDeliveryServerLabel"] = deliveryServer_columnAsString("label",  originDeliveryServerKey);
+			if (row["originDeliveryServerKey"].isNull())
+				deliveryServerRoot["originDeliveryServerKey"] = nullptr;
+			else
+				deliveryServerRoot["originDeliveryServerKey"] = row["originDeliveryServerKey"].as<int64_t>();
 		}
+		else
+			deliveryServerRoot["originDeliveryServerKey"] = nullptr;
 		deliveryServerRoot["external"] = row["external"].as<bool>();
 		deliveryServerRoot["enabled"] = row["enabled"].as<bool>();
 		deliveryServerRoot["publicServerName"] = row["publicServerName"].as<string>();
