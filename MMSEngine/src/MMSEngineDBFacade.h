@@ -2474,7 +2474,7 @@ class MMSEngineDBFacade
 		const std::string &publicServerName, const std::string &internalServerName
 	);
 	void modifyDeliveryServer(
-		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string> &type,
+		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string>& type,
 		const std::optional<int64_t> &originDeliveryServerKey, std::optional<bool> external, std::optional<bool> enabled,
 		const std::optional<std::string> &publicServerName, const std::optional<std::string> &internalServerName
 	);
