@@ -84,6 +84,71 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
+		if (type)
+		{
+			// type can be changed ONLY if the deliveryServer does not have any children
+
+			string previousType;
+			{
+				string sqlStatement = std::format("select type from MMS_DeliveryServer where deliveryServerKey = {}",
+					deliveryServerKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				auto sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+				if (sqlResultSet->empty())
+				{
+					string errorMessage = std::format(
+						"Cannot find the deliveryServer to be modified"
+						", deliveryServerKey: {}",
+						deliveryServerKey
+					);
+					LOG_ERROR(errorMessage);
+					throw runtime_error(errorMessage);
+				}
+				previousType = (*sqlResultSet)[0][0].as<string>();
+				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+				SQLQUERYLOG(
+					"default", elapsed,
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, trans.connection->getConnectionId(), elapsed
+				);
+			}
+
+			if (type != previousType)
+			{
+				string sqlStatement = std::format("select count(*) from MMS_DeliveryServer where originDeliveryServerKey = {}",
+					deliveryServerKey);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				auto childrenNumber = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+				SQLQUERYLOG(
+					"default", elapsed,
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, trans.connection->getConnectionId(), elapsed
+				);
+
+				if (childrenNumber > 0)
+				{
+					string errorMessage = std::format(
+						"Cannot be changed the type if the deliveryServer has children"
+						", deliveryServerKey: {}"
+						", newType: {}"
+						", previousType: {}"
+						", childrenNumber: {}",
+						deliveryServerKey, *type, previousType, childrenNumber
+					);
+					LOG_ERROR(errorMessage);
+
+					throw runtime_error(errorMessage);
+				}
+			}
+		}
+
 		{
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
