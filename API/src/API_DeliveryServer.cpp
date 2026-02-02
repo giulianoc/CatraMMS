@@ -461,10 +461,9 @@ void API::deliveryServerList(
 			throw runtime_error(errorMessage);
 		}
 
-		string label = requestData.getQueryParameter("label");
-
-		string serverName = requestData.getQueryParameter("serverName");
-
+		optional<string> label = requestData.getOptQueryParameter<string>("label");
+		optional<string> serverName = requestData.getOptQueryParameter<string>("serverName");
+		optional<string> type = requestData.getOptQueryParameter<string>("type", {"origin", "mid-origin", "edge"});
 		string labelOrder = requestData.getQueryParameter("labelOrder");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
 		{
@@ -491,7 +490,7 @@ void API::deliveryServerList(
 		{
 			json deliveryServerListRoot = _mmsEngineDBFacade->getDeliveryServerList(
 				apiAuthorizationDetails->admin, start, rows, allDeliveryServers, workspaceKey, deliveryServerKey, label, serverName,
-				labelOrder
+				type, labelOrder
 			);
 
 			string responseBody = JSONUtils::toString(deliveryServerListRoot);
@@ -727,8 +726,7 @@ void API::modifyDeliveryServersPool(
 		string label;
 		vector<int64_t> deliveryServerKeys;
 
-		int64_t deliveryServersPoolKey = requestData.getQueryParameter("deliveryServersPoolKey", static_cast<int64_t>(-1),
-			true);
+		int64_t deliveryServersPoolKey = requestData.getQueryParameter("deliveryServersPoolKey", static_cast<int64_t>(-1), true);
 
 		try
 		{

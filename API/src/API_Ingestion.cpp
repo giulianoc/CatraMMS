@@ -4437,8 +4437,8 @@ void API::changeLiveProxyPlaylist(
 
 	try
 	{
-		int64_t broadcasterIngestionJobKey = requestData.getQueryParameter("ingestionJobKey", -1, true, nullptr);
-		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false, nullptr);
+		int64_t broadcasterIngestionJobKey = requestData.getQueryParameter("ingestionJobKey", -1, true);
+		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false);
 
 		LOG_INFO(
 			"Received {}"

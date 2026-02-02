@@ -404,7 +404,7 @@ void MMSEngineDBFacade::removeDeliveryServer(int64_t deliveryServerKey)
 
 json MMSEngineDBFacade::getDeliveryServerList(
 	bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, optional<int64_t> deliveryServerKey,
-	string label, string serverName, string labelOrder // "" or "asc" or "desc"
+	optional<string> label, optional<string> serverName, optional<string> type, optional<string> labelOrder // "" or "asc" or "desc"
 )
 {
 	json deliveryServerListRoot;
@@ -421,8 +421,11 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			", deliveryServerKey: {}"
 			", label: {}"
 			", serverName: {}"
+			", type: {}"
 			", labelOrder: {}",
-			start, rows, allDeliveryServers, workspaceKey, deliveryServerKey ? *deliveryServerKey : -1, label, serverName, labelOrder
+			start, rows, allDeliveryServers, workspaceKey, deliveryServerKey ? *deliveryServerKey : -1,
+			label ? *label : "", serverName ? *serverName : "", type ? *type : "",
+			labelOrder ? *labelOrder : ""
 		);
 
 		{
@@ -432,43 +435,32 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				requestParametersRoot["deliveryServerKey"] = *deliveryServerKey;
 			requestParametersRoot["start"] = start;
 			requestParametersRoot["rows"] = rows;
-			if (!label.empty())
-				requestParametersRoot["label"] = label;
-			if (!serverName.empty())
-				requestParametersRoot["serverName"] = serverName;
-			if (!labelOrder.empty())
-				requestParametersRoot["labelOrder"] = labelOrder;
+			if (label && !(*label).empty())
+				requestParametersRoot["label"] = *label;
+			if (serverName && !(*serverName).empty())
+				requestParametersRoot["serverName"] = *serverName;
+			if (type && !(*type).empty())
+				requestParametersRoot["type"] = *type;
+			if (labelOrder && !(*labelOrder).empty())
+				requestParametersRoot["labelOrder"] = *labelOrder;
 			deliveryServerListRoot["requestParameters"] = requestParametersRoot;
 		}
 
 		string sqlWhere;
 		if (deliveryServerKey)
-		{
-			if (!sqlWhere.empty())
-				sqlWhere += std::format("and d.deliveryServerKey = {} ", *deliveryServerKey);
-			else
-				sqlWhere += std::format("d.deliveryServerKey = {} ", *deliveryServerKey);
-		}
-		if (!label.empty())
-		{
-			if (!sqlWhere.empty())
-				sqlWhere += std::format("and LOWER(d.label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
-			else
-				sqlWhere += std::format("LOWER(d.label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
-		}
-		if (!serverName.empty())
-		{
-			if (!sqlWhere.empty())
-				sqlWhere += std::format(
-					"and (d.publicServerName like {} or d.internalServerName like {}) ", trans.transaction->quote("%" + serverName + "%"),
-					trans.transaction->quote("%" + serverName + "%")
-				);
-			else
-				sqlWhere += std::format(
-					"(d.publicServerName like {} or d.internalServerName like {}) ", trans.transaction->quote(serverName),
-					trans.transaction->quote(serverName)
-				);
-		}
+			sqlWhere += std::format("{} d.deliveryServerKey = {} ",
+				sqlWhere.empty() ? "" : "AND", *deliveryServerKey);
+		if (label && !(*label).empty())
+			sqlWhere += std::format("{} LOWER(d.label) like LOWER({}) ",
+				sqlWhere.empty() ? "" : "AND", trans.transaction->quote("%" + *label + "%"));
+		if (serverName && !(*serverName).empty())
+			sqlWhere += std::format(
+				"{} (d.publicServerName like {} or d.internalServerName like {}) ",
+				sqlWhere.empty() ? "" : "AND", trans.transaction->quote("%" + *serverName + "%"),
+				trans.transaction->quote("%" + *serverName + "%")
+			);
+		if (type && !(*type).empty())
+			sqlWhere += std::format("{} d.type = {} ", sqlWhere.empty() ? "" : "AND", trans.transaction->quote(*type));
 
 		if (allDeliveryServers)
 		{
@@ -521,10 +513,10 @@ json MMSEngineDBFacade::getDeliveryServerList(
 		json deliveryServersRoot = json::array();
 		{
 			string orderByCondition;
-			if (labelOrder.empty())
-				orderByCondition = "order by d.deliveryServerKey "; // aggiunto solo perchè in base a explain analyze, è piu veloce nella sua esecuzione
+			if (labelOrder && !(*labelOrder).empty())
+				orderByCondition = std::format("order by label {} ", *labelOrder);
 			else
-				orderByCondition = std::format("order by label {} ", labelOrder);
+				orderByCondition = "order by d.deliveryServerKey "; // aggiunto solo perchè in base a explain analyze, è piu veloce nella sua esecuzione
 
 			string sqlStatement;
 			if (allDeliveryServers)

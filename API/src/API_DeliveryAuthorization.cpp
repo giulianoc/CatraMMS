@@ -35,32 +35,32 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 		// - ci sia un sistema intermedio tra i veri client e MMS e
 		// - sia questo sistema intermedio che crea le richieste di delivery
 		// Questo sistema forward l'IP del client come parametro
-		string playerIP = requestData.getQueryParameter("remoteIPAddress", requestData.clientIPAddress, false);
+		string playerIP = requestData.getQueryParameter("remoteIPAddress", requestData.clientIPAddress);
 		if (playerIP == requestData.clientIPAddress)
-			playerIP = requestData.getQueryParameter("playerIP", requestData.clientIPAddress, false);
-		bool playerIPToBeAuthorized = requestData.getQueryParameter("playerIPToBeAuthorized", false, false);
+			playerIP = requestData.getQueryParameter("playerIP", requestData.clientIPAddress);
+		bool playerIPToBeAuthorized = requestData.getQueryParameter("playerIPToBeAuthorized", false);
 
-		string playerCountry = requestData.getQueryParameter("playerCountry", string(), false);
-		string playerRegion = requestData.getQueryParameter("playerRegion", string(), false);
+		string playerCountry = requestData.getQueryParameter("playerCountry", string());
+		string playerRegion = requestData.getQueryParameter("playerRegion", string());
 
-		int64_t physicalPathKey = requestData.getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), false);
-		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
+		auto physicalPathKey = requestData.getQueryParameter<int64_t>("physicalPathKey", -1);
+		auto mediaItemKey = requestData.getQueryParameter<int64_t>("mediaItemKey", -1);
 		if (mediaItemKey == 0)
 			mediaItemKey = -1;
 
-		string uniqueName = requestData.getQueryParameter("uniqueName", string(), false);
+		string uniqueName = requestData.getQueryParameter("uniqueName", string());
 
-		int64_t encodingProfileKey = requestData.getQueryParameter("encodingProfileKey", static_cast<int64_t>(-1), false);
+		auto encodingProfileKey = requestData.getQueryParameter<int64_t>("encodingProfileKey", -1);
 		if (encodingProfileKey == 0)
 			encodingProfileKey = -1;
 
-		string encodingProfileLabel = requestData.getQueryParameter("encodingProfileLabel", string(), false);
+		string encodingProfileLabel = requestData.getQueryParameter("encodingProfileLabel", string());
 
 		// this is for live authorization
-		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), false);
+		auto ingestionJobKey = requestData.getQueryParameter<int64_t>("ingestionJobKey", -1);
 
 		// this is for live authorization
-		int64_t deliveryCode = requestData.getQueryParameter("deliveryCode", static_cast<int64_t>(-1), false);
+		auto deliveryCode = requestData.getQueryParameter<int64_t>("deliveryCode", -1);
 
 		if (physicalPathKey == -1 &&
 			((mediaItemKey == -1 && uniqueName.empty())
@@ -74,18 +74,18 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 			throw runtime_error(errorMessage);
 		}
 
-		int32_t ttlInSeconds = requestData.getQueryParameter("ttlInSeconds", _defaultTTLInSeconds, false);
-		int32_t maxRetries = requestData.getQueryParameter("maxRetries", _defaultMaxRetries, false);
+		int32_t ttlInSeconds = requestData.getQueryParameter("ttlInSeconds", _defaultTTLInSeconds);
+		int32_t maxRetries = requestData.getQueryParameter("maxRetries", _defaultMaxRetries);
 
-		bool reuseAuthIfPresent = requestData.getQueryParameter("reuseAuthIfPresent", true, false);
-		bool redirect = requestData.getQueryParameter("redirect", _defaultRedirect, false);
-		bool save = requestData.getQueryParameter("save", false, false);
+		bool reuseAuthIfPresent = requestData.getQueryParameter("reuseAuthIfPresent", true);
+		bool redirect = requestData.getQueryParameter("redirect", _defaultRedirect);
+		bool save = requestData.getQueryParameter("save", false);
 
-		string deliveryType = requestData.getQueryParameter("deliveryType", string(), false);
+		string deliveryType = requestData.getQueryParameter("deliveryType", string());
 
-		bool filteredByStatistic = requestData.getQueryParameter("filteredByStatistic", false, false);
+		bool filteredByStatistic = requestData.getQueryParameter("filteredByStatistic", false);
 
-		string userId = requestData.getQueryParameter("userId", string(), false);
+		string userId = requestData.getQueryParameter("userId", string());
 
 		try
 		{
@@ -551,17 +551,16 @@ void API::binaryAuthorization(
 
 		bool bBinaryVirtualHostName;
 		string binaryVirtualHostName = requestData.getQueryParameter("binaryVirtualHostName", "",
-			false, &bBinaryVirtualHostName);
+			false, {}, &bBinaryVirtualHostName);
 
 		bool bBinaryListenHost;
-		string binaryListenHost = requestData.getQueryParameter("binaryListenHost", "",
-			false, &bBinaryListenHost);
+		string binaryListenHost = requestData.getQueryParameter("binaryListenHost", "", false, {}, &bBinaryListenHost);
 
 		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the progress id (set in the nginx server configuration)
 		bool bProgressId;
-		string progressId = requestData.getHeaderParameter("x-original-method", "", false, &bProgressId);
+		string progressId = requestData.getHeaderParameter("x-original-method", "", false, {}, &bProgressId);
 		bool bOriginalURI;
-		string originalURI = requestData.getHeaderParameter("x-original-uri", "", false, &bOriginalURI);
+		string originalURI = requestData.getHeaderParameter("x-original-uri", "", false, {}, &bOriginalURI);
 		if (bBinaryVirtualHostName && bBinaryListenHost && bProgressId && bOriginalURI)
 		{
 			size_t ingestionJobKeyIndex = originalURI.find_last_of("/");
@@ -585,7 +584,7 @@ void API::binaryAuthorization(
 					progressRequestData._contentRangeEnd = -1;
 					progressRequestData._contentRangeSize = -1;
 					bool bContentRange;
-					string contentRange = requestData.getHeaderParameter("content-range", "", false, &bContentRange);
+					string contentRange = requestData.getHeaderParameter("content-range", "", false, {}, &bContentRange);
 					if (bContentRange)
 					{
 						try
@@ -673,11 +672,9 @@ void API::deliveryAuthorizationThroughParameter(
 		// retrieve the HTTP_X_ORIGINAL_METHOD to retrieve the token to be checked (set in the nginx server configuration)
 
 		bool bToken;
-		string token = requestData.getHeaderParameter("x-original-method", "",
-			false, &bToken);
+		string token = requestData.getHeaderParameter("x-original-method", "", false, {}, &bToken);
 		bool bOriginalURI;
-		string originalURI = requestData.getHeaderParameter("x-original-uri", "",
-			false, &bOriginalURI);
+		string originalURI = requestData.getHeaderParameter("x-original-uri", "", false, {}, &bOriginalURI);
 		if (!bToken || !bOriginalURI)
 		{
 			string errorMessage = std::format(

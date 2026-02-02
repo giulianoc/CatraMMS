@@ -134,7 +134,7 @@ void API::encodingJobPriority(
 
 		bool newEncodingJobPriorityPresent = false;
 		int32_t iNewEncodingJobPriority = requestData.getQueryParameter("newEncodingJobPriorityCode", static_cast<int32_t>(-1),
-			false, &newEncodingJobPriorityPresent);
+			false, {}, &newEncodingJobPriorityPresent);
 		MMSEngineDBFacade::EncodingPriority newEncodingJobPriority;
 		if (newEncodingJobPriorityPresent && iNewEncodingJobPriority >= 0)
 			newEncodingJobPriority = static_cast<MMSEngineDBFacade::EncodingPriority>(iNewEncodingJobPriority);
