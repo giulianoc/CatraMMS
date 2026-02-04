@@ -2114,12 +2114,26 @@ void FFMPEGEncoderDaemons::termProcess(
 		chrono::system_clock::time_point start = chrono::system_clock::now();
 		ProcessUtility::ProcessId previousChildProcessId = selectedEncoding->_childProcessId;
 		if (!previousChildProcessId.isInitialized())
+		{
+			LOG_ERROR(
+				"ProcessUtility::termProcess not executed because childProcessId is not initialized"
+				", ingestionJobKey: {}"
+				", encodingJobKey: {}"
+				", label: {}"
+				", message: {}"
+				", childProcessId: {}"
+				", kill: {}",
+				ingestionJobKey, selectedEncoding->_encodingJobKey, label, message, previousChildProcessId.toString(),
+				kill
+			);
 			return;
+		}
 		constexpr long secondsToWait = 10;
 		int counter = 0;
 		do
 		{
-			if (!selectedEncoding->_childProcessId.isInitialized() || selectedEncoding->_childProcessId != previousChildProcessId)
+			if (!selectedEncoding->_childProcessId.isInitialized()
+				|| selectedEncoding->_childProcessId != previousChildProcessId)
 				break;
 
 			if (kill)
@@ -2141,7 +2155,9 @@ void FFMPEGEncoderDaemons::termProcess(
 			);
 			this_thread::sleep_for(chrono::seconds(1));
 			// ripete il loop se la condizione è true
-		} while (selectedEncoding->_childProcessId == previousChildProcessId && chrono::system_clock::now() - start <= chrono::seconds(secondsToWait)
+		}
+		while (selectedEncoding->_childProcessId == previousChildProcessId
+			&& chrono::system_clock::now() - start <= chrono::seconds(secondsToWait)
 		);
 	}
 	catch (exception& e)

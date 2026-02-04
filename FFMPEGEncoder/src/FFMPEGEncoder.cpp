@@ -1873,28 +1873,31 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 {
 	string api = "changeLiveProxyPlaylist";
 
+	/* log già presente sotto
 	LOG_INFO(
 		"Received {}"
 		", requestBody: {}",
 		api, requestData.requestBody
 	);
+	*/
 
 	try
 	{
-		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
-		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false);
+		auto encodingJobKey = requestData.getQueryParameter<int64_t>("encodingJobKey", -1, true);
+		bool interruptPlaylist = requestData.getQueryParameter<bool>("interruptPlaylist", false);
 
 		LOG_INFO(
 			"Received changeLiveProxyPlaylist"
-			", encodingJobKey: {}",
-			encodingJobKey
+			", encodingJobKey: {}"
+			", interruptPlaylist: {}",
+			encodingJobKey, interruptPlaylist
 		);
 
-		json newInputsRoot = JSONUtils::toJson<json>(requestData.requestBody);
+		auto newInputsRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 		{
 			bool encodingFound = false;
-			lock_guard<mutex> locker(*_liveProxyMutex);
+			lock_guard locker(*_liveProxyMutex);
 
 			shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> selectedLiveProxy;
 
@@ -1913,7 +1916,6 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 			{
 				string errorMessage = std::format("EncodingJobKey: {}, {}", encodingJobKey, NoEncodingJobKeyFound().what());
 				LOG_ERROR(errorMessage);
-
 				throw FastCGIError::HTTPError(500, errorMessage);
 			}
 
@@ -1925,7 +1927,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 					selectedLiveProxy->_ingestionJobKey, encodingJobKey
 				);
 
-				lock_guard<mutex> locker(selectedLiveProxy->_inputsRootMutex);
+				lock_guard lockerInput(selectedLiveProxy->_inputsRootMutex);
 
 				selectedLiveProxy->_inputsRoot = newInputsRoot;
 			}
@@ -1940,7 +1942,7 @@ void FFMPEGEncoder::changeLiveProxyPlaylist(
 				{
 					FFMPEGEncoderDaemons::termProcess(selectedLiveProxy, selectedLiveProxy->_ingestionJobKey, "unknown", "received changeLiveProxyPlaylist", false);
 				}
-				catch (runtime_error &e)
+				catch (exception &e)
 				{
 					string errorMessage = std::format(
 						"ProcessUtility::termProcess failed"

@@ -4428,17 +4428,19 @@ void API::changeLiveProxyPlaylist(
 
 	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
 
+	/* log già eseguito nel try con i parametri
 	LOG_INFO(
 		"Received {}"
 		", workspace->_workspaceKey: {}"
 		", requestData.requestBody: {}",
 		api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody
 	);
+	*/
 
 	try
 	{
 		int64_t broadcasterIngestionJobKey = requestData.getQueryParameter("ingestionJobKey", -1, true);
-		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false, false);
+		bool interruptPlaylist = requestData.getQueryParameter("interruptPlaylist", false);
 
 		LOG_INFO(
 			"Received {}"
@@ -5784,9 +5786,10 @@ void API::changeLiveProxyPlaylist(
 	{
 		LOG_ERROR(
 			"{} failed"
+			", workspace->_workspaceKey: {}"
 			", requestData.requestBody: {}"
 			", e.what(): {}",
-			api, requestData.requestBody, e.what()
+			api, apiAuthorizationDetails->workspace->_workspaceKey, requestData.requestBody, e.what()
 		);
 		throw;
 	}
