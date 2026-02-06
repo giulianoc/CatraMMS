@@ -2421,7 +2421,7 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 			// 2023-02-16: In caso di ripartenza di mmsEngine, in caso di richiesta
 			// già attiva, deve ritornare le stesse info associate a ingestionJobKey
 			string sqlStatement;
-			if (label == "") // type is SHARED
+			if (label.empty()) // type is SHARED
 			{
 				// In caso di ripartenza di mmsEngine, nella tabella avremo già la riga con
 				// l'ingestionJobKey e, questo metodo, deve ritornare le info di quella riga.
@@ -2469,11 +2469,10 @@ MMSEngineDBFacade::reserveHLSChannel(int64_t workspaceKey, string label, int out
 			if (empty(res))
 			{
 				string errorMessage = std::format(
-					"No HLS Channel found"
+					"No HLS Channel found (label: {})"
 					", ingestionJobKey: {}"
-					", workspaceKey: {}"
-					", label: {}",
-					ingestionJobKey, workspaceKey, label
+					", workspaceKey: {}",
+					label, ingestionJobKey, workspaceKey
 				);
 				LOG_ERROR(errorMessage);
 
