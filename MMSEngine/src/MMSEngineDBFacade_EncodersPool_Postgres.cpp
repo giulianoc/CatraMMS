@@ -2422,58 +2422,117 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			// Viene in questo modo anche implementato una sorta di roundrobin nel caso in cui un encoder fallisce
 			// e viene rieseguita la select
 			int32_t encodersUnavailableAfterSelectedInSeconds = _cpuStatsUpdateIntervalInSeconds * 2 + 5;
-			int16_t maxCPUUsage = 70;
+			// commentato perchè non dobbiamo rischiare che nessun encoder sia ritornato
+			// int16_t maxCPUUsage = 70;
 
 			// un encoder non viene considerato se non ha ricevuto aggiornamenti delle statistiche da almeno XX seconds
-			int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 30;
-			string sqlStatement = std::format(
-			"WITH params AS ( "
-					"SELECT NOW() at time zone 'utc' AS ts), "
-				"selectedEncoder AS ( "
-					"SELECT e.encoderKey "
-					"from MMS_Encoder e "
-					"CROSS JOIN params p "
-					"where e.encoderKey in ({}) and e.enabled = true {} "
-					"AND (e.cpuUsage IS NULL OR e.cpuUsage <= {}) "
-					"AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds' "
-					"AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds' " // indica anche che è running
-					"AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds' " // indica anche che è running
-					"ORDER BY e.cpuUsage ASC NULLS LAST, (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST "
-					"limit 1 FOR UPDATE SKIP LOCKED "
-				") "
-				"UPDATE MMS_Encoder e "
-				"SET selectedLastTime = p.ts "
-				"FROM selectedEncoder s "
-				"CROSS JOIN params p "
-				"WHERE e.encoderKey = s.encoderKey "
-				"RETURNING e.encoderKey, e.external, "
-				"e.protocol, e.publicServerName, "
-				"e.internalServerName, e.port ",
-				encodersKeyList, externalEncoderCondition, maxCPUUsage, encodersUnavailableAfterSelectedInSeconds,
-				encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
+			// Il controllo su bandwidthUsageUpdateTime e cpuUsageUpdateTime indicano anche che l'encoder è running
+			// FROM MMS_Encoder e CROSS JOIN params p (prodotto cartesiano) indica che ogni riga di MMS_Encoder/selectedEncoder
+			//		contiene anche il timestamp ts
+			int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
+			{
+				// Query 1 – tentativo “ideale” (metriche fresche)
+				string sqlStatement = std::format(
+				R"(
+				WITH params AS (
+					SELECT NOW() at time zone 'utc' AS ts),
+				selectedEncoder AS (
+					SELECT e.encoderKey
+					FROM MMS_Encoder e CROSS JOIN params p
+					WHERE e.enabled = true {}
+						AND e.encoderKey in ({})
+						AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds'
+						AND e.cpuUsageUpdateTime IS NOT NULL
+						AND e.bandwidthUsageUpdateTime IS NOT NULL
+						AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds'
+						AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds'
+					ORDER BY
+						e.cpuUsage ASC NULLS LAST,
+						(e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST
+					LIMIT 1
+					FOR UPDATE SKIP LOCKED
+				)
+				UPDATE MMS_Encoder e
+				SET selectedLastTime = p.ts
+				FROM selectedEncoder s CROSS JOIN params p
+				WHERE e.encoderKey = s.encoderKey
+				RETURNING
+					e.encoderKey, e.external, e.protocol,
+					e.publicServerName, e.internalServerName, e.port
+				)",
+					externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds,
+					encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
+				);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+				SQLQUERYLOG(
+					"default", elapsed,
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, trans.connection->getConnectionId(), elapsed
+				);
+			}
 			if (sqlResultSet->empty())
 			{
-				string errorMessage = std::format(
-					"Encoder not found"
-					", workspaceKey: {}"
-					", encodersPoolLabel: {}",
-					workspaceKey, encodersPoolLabel
-				);
-				LOG_ERROR(errorMessage);
+				LOG_WARN("getEncoderUsingLeastResources. Ideal encoder not selected, trying without considering cpu/bandwidth usage");
 
-				throw EncoderNotFound(errorMessage);
+				// Query 2 – fallback (metriche stale ammesse)
+				// se cpu/banda smettono di aggiornarsi è importante ritornare un encoder ed evitare che il sistema si blocchi
+				string sqlStatement = std::format(
+				R"(
+					WITH params AS (
+						SELECT NOW() AT TIME ZONE 'utc' AS ts
+					),
+					selectedEncoder AS (
+						SELECT e.encoderKey
+						FROM MMS_Encoder e CROSS JOIN params p
+						WHERE e.enabled = true {}
+						  AND e.encoderKey IN ({})
+						  AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds'
+						ORDER BY
+						  (p.ts - e.selectedLastTime) DESC,  -- rotazione degli encoder
+						  e.cpuUsage ASC NULLS LAST,
+						  (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST
+						LIMIT 1
+						FOR UPDATE SKIP LOCKED
+					)
+					UPDATE MMS_Encoder e
+					SET selectedLastTime = p.ts
+					FROM selectedEncoder s CROSS JOIN params p
+					WHERE e.encoderKey = s.encoderKey
+					RETURNING
+					  e.encoderKey, e.external, e.protocol,
+					  e.publicServerName, e.internalServerName, e.port
+					)",
+				externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds
+				);
+				chrono::system_clock::time_point startSql = chrono::system_clock::now();
+				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+				SQLQUERYLOG(
+					"default", elapsed,
+					"SQL statement"
+					", sqlStatement: @{}@"
+					", getConnectionId: @{}@"
+					", elapsed (millisecs): @{}@",
+					sqlStatement, trans.connection->getConnectionId(), elapsed
+				);
+				if (sqlResultSet->empty())
+				{
+					string errorMessage = std::format(
+						"Encoder not found"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}",
+						workspaceKey, encodersPoolLabel
+					);
+					LOG_ERROR(errorMessage);
+
+					throw EncoderNotFound(errorMessage);
+				}
 			}
 
 			encoderKey = (*sqlResultSet)[0]["encoderKey"].as<int64_t>();

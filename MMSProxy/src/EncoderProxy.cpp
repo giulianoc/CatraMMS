@@ -2043,9 +2043,9 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							", _encodingJobKey: {}"
 							", _currentUsedFFMpegEncoderHost: {}"
 							", completedWithError: {}"
-							", newErrorMessagesRoot: {}",
+							", newErrorMessagesRoot.size: {}",
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost, completedWithError,
-							JSONUtils::toString(newErrorMessagesRoot)
+							newErrorMessagesRoot.size()
 						);
 
 						/*
