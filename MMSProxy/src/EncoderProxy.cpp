@@ -2119,10 +2119,10 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 							", urlForbidden: {}"
 							", urlNotFound: {}"
 							", completedWithError: {}"
-							", newErrorMessagesRoot: {}",
+							", newErrorMessagesRoot.size: {}", // solo size per evitare di loggare messaggi troppo lunghi
 							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _currentUsedFFMpegEncoderHost,
 							killed,
-							urlForbidden, urlNotFound, completedWithError, JSONUtils::toString(newErrorMessagesRoot)
+							urlForbidden, urlNotFound, completedWithError, newErrorMessagesRoot.size()
 						);
 				}
 				catch (exception &e)
