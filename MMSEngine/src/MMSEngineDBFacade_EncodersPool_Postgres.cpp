@@ -2420,7 +2420,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 
 			// lo stesso encoder non puo essere riutilizzato se non sono passati almeno XX seconds
 			// Viene in questo modo anche implementato una sorta di roundrobin nel caso in cui un encoder fallisce
-			// e viene rieseguita la select
+			// e viene rieseguita immediatamente la select
 			int32_t encodersUnavailableAfterSelectedInSeconds = _cpuStatsUpdateIntervalInSeconds * 2 + 5;
 			// commentato perchè non dobbiamo rischiare che nessun encoder sia ritornato
 			// int16_t maxCPUUsage = 70;
@@ -2429,9 +2429,10 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			// Il controllo su bandwidthUsageUpdateTime e cpuUsageUpdateTime indicano anche che l'encoder è running
 			// FROM MMS_Encoder e CROSS JOIN params p (prodotto cartesiano) indica che ogni riga di MMS_Encoder/selectedEncoder
 			//		contiene anche il timestamp ts
-			int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 			{
+				int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
+
 				// Query 1 – tentativo “ideale” (metriche fresche)
 				string sqlStatement = std::format(
 				R"(
