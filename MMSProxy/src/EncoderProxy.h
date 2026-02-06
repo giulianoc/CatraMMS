@@ -209,7 +209,7 @@ class EncoderProxy
 
 	std::string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, std::string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
-		double endTimeInSeconds, std::vector<long long> slideShowOfImageMediaItemKeys, std::vector<int64_t> slideShowOfAudioMediaItemKeys,
+		double endTimeInSeconds, std::vector<int64_t> slideShowOfImageMediaItemKeys, std::vector<int64_t> slideShowOfAudioMediaItemKeys,
 		nlohmann::json parametersRoot
 	);
 
