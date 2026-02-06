@@ -13,8 +13,6 @@
 
 #pragma once
 
-#include
-#include
 #include "FFMpegWrapper.h"
 
 #ifdef __LOCALENCODER__
@@ -30,29 +28,20 @@
 #define ENCODERPROXY "EncoderProxy"
 #define MMSENGINEPROCESSORNAME "MMSEngineProcessor"
 
-struct EncoderError : public std::exception
+struct EncoderError : std::exception
 {
-	char const *what() const throw() { return "Encoder error"; };
+	[[nodiscard]] char const *what() const noexcept override { return "Encoder error"; };
 };
 
-struct EncodingKilledByUser : public std::exception
+struct EncodingKilledByUser : std::exception
 {
-	char const *what() const throw() { return "Encoding was killed by the User"; };
+	[[nodiscard]] char const *what() const noexcept override { return "Encoding was killed by the User"; };
 };
 
 struct EncoderNotReachable : public std::exception
 {
-	char const *what() const throw() { return "Encoder not reachable"; };
+	[[nodiscard]] char const *what() const noexcept override { return "Encoder not reachable"; };
 };
-
-/*
-struct EncodingStatusNotAvailable: public exception {
-	char const* what() const throw()
-	{
-		return "Encoding status not available";
-	};
-};
-*/
 
 class EncoderProxy
 {
