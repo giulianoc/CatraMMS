@@ -1650,7 +1650,8 @@ configure-mms-rsync-daemon-package()
     	echo "endscript" >> /etc/logrotate.d/rsyncd
 	echo "}" >> /etc/logrotate.d/rsyncd
 
-	echo "Assicurati che nel servizio /usr/lib/systemd/system/rsync.service ci siano"
+	echo ""
+	echo "Assicurati che nel servizio /usr/lib/systemd/system/rsync.service ci siano (User=root to be added after RestartSec)"
 	echo "Restart=always"
 	echo "RestartSec=3"
 	echo "User=root"
@@ -1728,7 +1729,7 @@ install-mms-CatraMMS-package()
 
 	packageName=CatraMMS
 	echo ""
-	catraMMSVersion=1.0.6842
+	catraMMSVersion=1.0.6900
 	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1923,7 +1924,13 @@ firewall-rules()
 		ufw allow 443
 		ufw allow 8088
 	elif [ "$moduleType" == "storage" ]; then
-		internalNetwork=10.0.0.0/16
+		echo ""
+		serverInternalNetwork=10.0.0.0/16
+		echo -n "internalNetwork? (i.e.: $serverInternalNetwork)? "
+		read serverInternalNetwork
+		if [ "$serverInternalNetwork" == "" ]; then
+			internalNetwork=$serverInternalNetwork
+		fi
 		ufw allow from $internalNetwork to any port 2049 proto tcp
 		ufw allow from $internalNetwork to any port 2049 proto udp
 
@@ -2037,6 +2044,11 @@ echo ""
 echo ""
 
 
+if [[ $EUID -ne 0 ]]; then
+    echo "Questo script deve essere eseguito come root" >&2
+    exit 1
+fi
+
 if [ "$moduleType" != "integration" ]; then
 	ssh-port
 fi
@@ -2103,6 +2115,16 @@ create-directory $moduleType
 install-mms-packages $moduleType
 firewall-rules $moduleType
 
+if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "externalDelivery" ]; then
+	read -n 1 -s -r -p "tramite la GUI aggiungere il server di delivery e marcare la sua Key"
+	echo ""
+	echo ""
+elif [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" ]; then
+	read -n 1 -s -r -p "tramite la GUI aggiungere l'encoder e marcare la sua Key"
+	echo ""
+	echo ""
+fi
+
 read -n 1 -s -r -p "verificare ~/mms/conf/* (in particolare mms-env.sh) e attivare il crontab -u mms ~/mms/conf/crontab.txt"
 echo ""
 echo ""
@@ -2116,7 +2138,7 @@ read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (s
 echo ""
 echo ""
 
-read -n 1 -s -r -p "Aggiornare foglio su google Server List's e diagrammi MMS CDN"
+read -n 1 -s -r -p "Aggiornare foglio su google Server List's"
 echo ""
 echo ""
 

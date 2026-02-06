@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include
+#include
 #include "FFMpegWrapper.h"
 
 #ifdef __LOCALENCODER__
@@ -84,9 +86,9 @@ class EncoderProxy
 	virtual ~EncoderProxy();
 
 	void init(
-		int proxyIdentifier, std::mutex *mtEncodingJobs, nlohmann::json configuration, std::shared_ptr<MultiEventsSet> multiEventsSet,
-		std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, std::shared_ptr<MMSStorage> mmsStorage, std::shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
-		std::shared_ptr<long> faceRecognitionNumber,
+		int proxyIdentifier, std::mutex *mtEncodingJobs, const nlohmann::json &configuration, const std::shared_ptr<MultiEventsSet> &multiEventsSet,
+		const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const std::shared_ptr<MMSStorage> &mmsStorage,
+		const std::shared_ptr<EncodersLoadBalancer> &encodersLoadBalancer, const std::shared_ptr<long> &faceRecognitionNumber,
 		int maxFaceRecognitionNumber
 #ifdef __LOCALENCODER__
 		int *pRunningEncodingsNumber,
@@ -94,7 +96,7 @@ class EncoderProxy
 #endif
 	);
 
-	void setEncodingData(EncodingJobStatus *status, std::shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem);
+	void setEncodingData(EncodingJobStatus *status, const std::shared_ptr<MMSEngineDBFacade::EncodingItem> &encodingItem);
 
 	void operator()();
 
@@ -173,8 +175,8 @@ class EncoderProxy
 	void encodeContentImage();
 	void processEncodedImage();
 	std::tuple<std::string, int, int, bool, int, int, Magick::InterlaceType> readingImageProfile(nlohmann::json encodingProfileRoot);
-	void encodingImageFormatValidation(std::string newFormat);
-	Magick::InterlaceType encodingImageInterlaceTypeValidation(std::string sNewInterlaceType);
+	static void encodingImageFormatValidation(const std::string &newFormat);
+	static Magick::InterlaceType encodingImageInterlaceTypeValidation(const std::string &sNewInterlaceType);
 
 	void encodeContentVideoAudio(std::string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
 	bool encodeContent_VideoAudio_through_ffmpeg(std::string ffmpegURI, int maxConsecutiveEncodingStatusFailures);
@@ -218,7 +220,8 @@ class EncoderProxy
 
 	std::string generateMediaMetadataToIngest(
 		int64_t ingestionJobKey, std::string fileFormat, int64_t faceOfVideoMediaItemKey, int64_t cutOfVideoMediaItemKey, double startTimeInSeconds,
-		double endTimeInSeconds, std::vector<int64_t> slideShowOfImageMediaItemKeys, std::vector<int64_t> slideShowOfAudioMediaItemKeys, nlohmann::json parametersRoot
+		double endTimeInSeconds, std::vector<long long> slideShowOfImageMediaItemKeys, std::vector<int64_t> slideShowOfAudioMediaItemKeys,
+		nlohmann::json parametersRoot
 	);
 
 	// void killEncodingJob(std::string transcoderHost, int64_t encodingJobKey);

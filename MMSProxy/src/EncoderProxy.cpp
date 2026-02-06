@@ -37,10 +37,10 @@ EncoderProxy::EncoderProxy()
 EncoderProxy::~EncoderProxy() = default;
 
 void EncoderProxy::init(
-	int proxyIdentifier, mutex *mtEncodingJobs, json configuration, shared_ptr<MultiEventsSet> multiEventsSet,
-	shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, shared_ptr<MMSStorage> mmsStorage, shared_ptr<EncodersLoadBalancer> encodersLoadBalancer,
-	shared_ptr<long> faceRecognitionNumber,
-	int maxFaceRecognitionNumber
+	const int proxyIdentifier, mutex *mtEncodingJobs, const json& configuration, const shared_ptr<MultiEventsSet> &multiEventsSet,
+	const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade, const shared_ptr<MMSStorage> &mmsStorage,
+	const shared_ptr<EncodersLoadBalancer> &encodersLoadBalancer, const shared_ptr<long> &faceRecognitionNumber,
+	const int maxFaceRecognitionNumber
 #ifdef __LOCALENCODER__
 	int *pRunningEncodingsNumber,
 #endif
@@ -206,7 +206,7 @@ void EncoderProxy::init(
 		", computerVision->cascadePath: {}",
 		_computerVisionCascadePath
 	);
-	if (_computerVisionCascadePath.size() > 0 && _computerVisionCascadePath.back() == '/')
+	if (!_computerVisionCascadePath.empty() && _computerVisionCascadePath.back() == '/')
 		_computerVisionCascadePath.pop_back();
 	_computerVisionDefaultScale = JSONUtils::as<double>(_configuration["computerVision"], "defaultScale", 1.1);
 	LOG_INFO(
@@ -274,7 +274,7 @@ void EncoderProxy::init(
 #endif
 }
 
-void EncoderProxy::setEncodingData(EncodingJobStatus *status, shared_ptr<MMSEngineDBFacade::EncodingItem> encodingItem)
+void EncoderProxy::setEncodingData(EncodingJobStatus *status, const shared_ptr<MMSEngineDBFacade::EncodingItem> &encodingItem)
 {
 	_status = status;
 
@@ -301,93 +301,39 @@ void EncoderProxy::operator()()
 	try
 	{
 		if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeImage)
-		{
 			encodeContentImage();
-		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::EncodeVideoAudio)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegEncodeURI, maxConsecutiveEncodingStatusFailures);
-		}
+			encodeContentVideoAudio(_ffmpegEncodeURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayImageOnVideo)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegOverlayImageOnVideoURI, maxConsecutiveEncodingStatusFailures);
-			// killedByUser = overlayImageOnVideo();
-		}
+			encodeContentVideoAudio(_ffmpegOverlayImageOnVideoURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::OverlayTextOnVideo)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegOverlayTextOnVideoURI, maxConsecutiveEncodingStatusFailures);
-			// killedByUser = overlayTextOnVideo();
-		}
+			encodeContentVideoAudio(_ffmpegOverlayTextOnVideoURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::GenerateFrames)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegGenerateFramesURI, maxConsecutiveEncodingStatusFailures);
-			// killedByUser = generateFrames();
-		}
+			encodeContentVideoAudio(_ffmpegGenerateFramesURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::SlideShow)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegSlideShowURI, maxConsecutiveEncodingStatusFailures);
-		}
+			encodeContentVideoAudio(_ffmpegSlideShowURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceRecognition)
-		{
 			stagingEncodedAssetPathName = faceRecognition();
-		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::FaceIdentification)
-		{
 			stagingEncodedAssetPathName = faceIdentification();
-		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-		{
 			killed = liveRecorder();
-			// tie(killedByUser, main) = killedByUserAndMain;
-		}
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy ||
 				 _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VODProxy ||
 				 _encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::Countdown)
 			killed = liveProxy(_encodingItem->_encodingType);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveGrid)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegLiveGridURI, maxConsecutiveEncodingStatusFailures);
-			// killedByUser = liveGrid();
-		}
+			encodeContentVideoAudio(_ffmpegLiveGridURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::VideoSpeed)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegVideoSpeedURI, maxConsecutiveEncodingStatusFailures);
-		}
+			encodeContentVideoAudio(_ffmpegVideoSpeedURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::AddSilentAudio)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegAddSilentAudioURI, maxConsecutiveEncodingStatusFailures);
-		}
+			encodeContentVideoAudio(_ffmpegAddSilentAudioURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::PictureInPicture)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegPictureInPictureURI, maxConsecutiveEncodingStatusFailures);
-			// pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser =
-			// pictureInPicture(); tie(stagingEncodedAssetPathName,
-			// killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
-		}
+			encodeContentVideoAudio(_ffmpegPictureInPictureURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::IntroOutroOverlay)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegIntroOutroOverlayURI, maxConsecutiveEncodingStatusFailures);
-			// tie(stagingEncodedAssetPathName, killedByUser) =
-			// stagingEncodedAssetPathNameAndKilledByUser;
-		}
+			encodeContentVideoAudio(_ffmpegIntroOutroOverlayURI, 1);
 		else if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::CutFrameAccurate)
-		{
-			int maxConsecutiveEncodingStatusFailures = 1;
-			encodeContentVideoAudio(_ffmpegCutFrameAccurateURI, maxConsecutiveEncodingStatusFailures);
-			// pair<string, bool> stagingEncodedAssetPathNameAndKilledByUser =
-			// cutFrameAccurate(); tie(stagingEncodedAssetPathName,
-			// killedByUser) = stagingEncodedAssetPathNameAndKilledByUser;
-		}
+			encodeContentVideoAudio(_ffmpegCutFrameAccurateURI, 1);
 		else
 		{
 			string errorMessage = std::format(
@@ -398,10 +344,10 @@ void EncoderProxy::operator()()
 				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 			);
 			LOG_ERROR(errorMessage);
-
 			throw runtime_error(errorMessage);
 		}
 	}
+	/*
 	catch (MaxConcurrentJobsReached &e)
 	{
 		LOG_WARN(
@@ -603,34 +549,58 @@ void EncoderProxy::operator()()
 		// throw e;
 		return;
 	}
+	*/
 	catch (exception &e)
 	{
-		LOG_ERROR(
-			"{}: {}"
-			", _proxyIdentifier: {}"
-			", _ingestionJobKey: {}"
-			", _encodingJobKey: {}",
-			MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey,
-			_encodingItem->_encodingJobKey
-		);
+		MMSEngineDBFacade::EncodingError encodingError;
+		string errorMessage;
+		bool forceEncodingToBeFailed = false;
+		if (dynamic_cast<MaxConcurrentJobsReached const *>(&e) != nullptr)
+		{
+			encodingError = MMSEngineDBFacade::EncodingError::MaxCapacityReached;
+			forceEncodingToBeFailed = false;
+			LOG_WARN(
+				"{}: {}"
+				", _proxyIdentifier: {}",
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier
+			);
+		}
+		else
+		{
+			if (dynamic_cast<EncodingKilledByUser const *>(&e) != nullptr)
+				encodingError = MMSEngineDBFacade::EncodingError::KilledByUser;
+			else
+				encodingError = MMSEngineDBFacade::EncodingError::PunctualError;
+			errorMessage = e.what();
+			// 2020-09-17: in case of YouTubeURLNotRetrieved there is no retries just a failure of the ingestion job
+			if (dynamic_cast<YouTubeURLNotRetrieved const *>(&e) != nullptr)
+				forceEncodingToBeFailed = true;
+			else if (dynamic_cast<EncodingKilledByUser const *>(&e) != nullptr)
+				forceEncodingToBeFailed = false;
+			else
+			{
+				// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up to the end of the recording
+				if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy ||
+					_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+					forceEncodingToBeFailed = true;
+				else
+					forceEncodingToBeFailed = false;
+			}
+
+			LOG_ERROR(
+				"{}: {}"
+				", _proxyIdentifier: {}"
+				", _ingestionJobKey: {}"
+				", _encodingJobKey: {}",
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), e.what(), _proxyIdentifier, _encodingItem->_ingestionJobKey,
+				_encodingItem->_encodingJobKey
+			);
+		}
 
 		try
 		{
-			bool forceEncodingToBeFailed;
-			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveProxy ||
-				_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
-				forceEncodingToBeFailed = true;
-			}
-			else
-			{
-				forceEncodingToBeFailed = false;
-			}
-
 			LOG_INFO(
-				"updateEncodingJob PunctualError"
+				"updateEncodingJob"
 				", _proxyIdentifier: {}"
 				", _encodingJobKey: {}"
 				", _ingestionJobKey: {}"
@@ -640,34 +610,30 @@ void EncoderProxy::operator()()
 				MMSEngineDBFacade::toString(_encodingItem->_encodingType), forceEncodingToBeFailed
 			);
 
-			// in case of HighAvailability of the liveRecording, only the main
-			// should update the ingestionJob status This because, if also the
-			// 'backup' liverecording updates the ingestionJob, it will generate
-			// an erro 'no update is done'
 			int encodingFailureNumber = _mmsEngineDBFacade->updateEncodingJob(
-				_encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::PunctualError,
+				_encodingItem->_encodingJobKey, encodingError,
 				false, // isIngestionJobFinished: this field is not used by
 					   // updateEncodingJob
-				_encodingItem->_ingestionJobKey, e.what(),
-				// main ? _encodingItem->_ingestionJobKey : -1, e.what(),
+				_encodingItem->_ingestionJobKey, errorMessage,
 				forceEncodingToBeFailed
 			);
 		}
-		catch (...)
+		catch (exception& ex)
 		{
 			LOG_ERROR(
-				"updateEncodingJob PunctualError FAILED"
+				"updateEncodingJob FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
-				", _encodingType: {}",
+				", _encodingType: {}"
+				", exception: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), ex.what()
 			);
 		}
 
 		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
+			lock_guard locker(*_mtEncodingJobs);
 
 			*_status = EncodingJobStatus::Free;
 		}
@@ -876,16 +842,11 @@ void EncoderProxy::operator()()
 		try
 		{
 			bool forceEncodingToBeFailed;
+			// 2020-05-26: in case of LiveRecorder there is no more retries since it already run up to the end of the recording
 			if (_encodingItem->_encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
-			{
-				// 2020-05-26: in case of LiveRecorder there is no more retries
-				// since it already run up to the end of the recording
 				forceEncodingToBeFailed = true;
-			}
 			else
-			{
 				forceEncodingToBeFailed = false;
-			}
 
 			LOG_INFO(
 				"updateEncodingJob PunctualError"
@@ -913,21 +874,22 @@ void EncoderProxy::operator()()
 				forceEncodingToBeFailed
 			);
 		}
-		catch (...)
+		catch (exception& ex)
 		{
 			LOG_ERROR(
 				"updateEncodingJob PunctualError FAILED"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
-				", _encodingType: {}",
+				", _encodingType: {}"
+				", exception: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
-				MMSEngineDBFacade::toString(_encodingItem->_encodingType)
+				MMSEngineDBFacade::toString(_encodingItem->_encodingType), ex.what()
 			);
 		}
 
 		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
+			lock_guard locker(*_mtEncodingJobs);
 
 			*_status = EncodingJobStatus::Free;
 		}
@@ -959,8 +921,8 @@ void EncoderProxy::operator()()
 			MMSEngineDBFacade::toString(_encodingItem->_encodingType)
 		);
 
-		_mmsEngineDBFacade->updateEncodingJob(
-			_encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::NoError, isIngestionJobCompleted, _encodingItem->_ingestionJobKey
+		_mmsEngineDBFacade->updateEncodingJob(_encodingItem->_encodingJobKey, MMSEngineDBFacade::EncodingError::NoError,
+			isIngestionJobCompleted, _encodingItem->_ingestionJobKey
 		);
 	}
 	catch (exception &e)
@@ -974,7 +936,7 @@ void EncoderProxy::operator()()
 		);
 
 		{
-			lock_guard<mutex> locker(*_mtEncodingJobs);
+			lock_guard locker(*_mtEncodingJobs);
 
 			*_status = EncodingJobStatus::Free;
 		}
@@ -994,7 +956,7 @@ void EncoderProxy::operator()()
 	}
 
 	{
-		lock_guard<mutex> locker(*_mtEncodingJobs);
+		lock_guard locker(*_mtEncodingJobs);
 
 		*_status = EncodingJobStatus::Free;
 	}
@@ -1257,19 +1219,19 @@ string EncoderProxy::generateMediaMetadataToIngest(
 	return mediaMetadata;
 }
 
-void EncoderProxy::encodingImageFormatValidation(string newFormat)
+void EncoderProxy::encodingImageFormatValidation(const string& newFormat)
 {
 	if (newFormat != "JPG" && newFormat != "GIF" && newFormat != "PNG")
 	{
-		string errorMessage = __FILEREF__ + "newFormat is wrong" + ", newFormat: " + newFormat;
-
+		const string errorMessage = std::format("newFormat is wrong"
+			", newFormat: {}", newFormat);
 		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
 	}
 }
 
-Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(string sNewInterlaceType)
+Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(const string& sNewInterlaceType)
 {
 	Magick::InterlaceType interlaceType;
 
@@ -1283,8 +1245,8 @@ Magick::InterlaceType EncoderProxy::encodingImageInterlaceTypeValidation(string 
 		interlaceType = Magick::PartitionInterlace;
 	else
 	{
-		string errorMessage = __FILEREF__ + "sNewInterlaceType is wrong" + ", sNewInterlaceType: " + sNewInterlaceType;
-
+		const string errorMessage = std::format("sNewInterlaceType is wrong"
+			", sNewInterlaceType: {}", sNewInterlaceType);
 		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
@@ -1344,8 +1306,9 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 					LOG_ERROR(
 						"updateIngestionJobErrorMessages failed"
 						", _ingestionJobKey: {}"
-						", _encodingJobKey: {}",
-						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+						", _encodingJobKey: {}"
+						", exception: {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
 					);
 				}
 			}
@@ -1441,7 +1404,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 			// encodingStatusFailures is reset.
 			encodingStatusFailures = 0;
 		}
-		catch (...)
+		catch (exception &e)
 		{
 			encodingStatusFailures++;
 
@@ -1450,8 +1413,9 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
 				", encodingStatusFailures: {}"
-				", maxConsecutiveEncodingStatusFailures: {}",
-				_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, encodingStatusFailures, maxConsecutiveEncodingStatusFailures
+				", maxConsecutiveEncodingStatusFailures: {}"
+				", exception: {}", _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey,
+				encodingStatusFailures, maxConsecutiveEncodingStatusFailures, e.what()
 			);
 
 			if (encodingStatusFailures >= maxConsecutiveEncodingStatusFailures)
@@ -1512,14 +1476,15 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 		killed = _mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey,
 			currentAttemptsNumberInCaseOfErrors);
 	}
-	catch (...)
+	catch (exception& e)
 	{
 		LOG_ERROR(
 			"updateEncodingJobFailuresNumber FAILED"
 			", _ingestionJobKey: {}"
 			", _encodingJobKey: {}"
-			", currentAttemptsNumberInCaseOfErrors: {}",
-			_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors
+			", currentAttemptsNumberInCaseOfErrors: {}"
+			", exception: {}",
+			_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors, e.what()
 		);
 	}
 
@@ -1799,7 +1764,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 					);
 				}
-				catch (runtime_error &e)
+				catch (exception &e)
 				{
 					string error = e.what();
 					if (error.find(EncodingIsAlreadyRunning().what()) != string::npos)
@@ -1825,7 +1790,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 						);
 					}
 					else
-						throw e;
+						throw;
 				}
 			}
 			else
@@ -2335,13 +2300,14 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				int64_t encodedPhysicalPathKey = -1;
 				_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
 			}
-			catch (...)
+			catch (exception& ex)
 			{
 				LOG_ERROR(
 					"updateEncodingJobFailuresNumber failed"
 					", _ingestionJobKey: {}"
-					", _encodingJobKey: {}",
-					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+					", _encodingJobKey: {}"
+					", exception: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ex.what()
 				);
 			}
 
@@ -2353,6 +2319,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 			// throw e;
 		}
+		/*
 		catch (MaxConcurrentJobsReached &e)
 		{
 			LOG_WARN(
@@ -2436,16 +2403,51 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 			// throw e;
 		}
+		*/
 		catch (exception& e)
 		{
+			if (dynamic_cast<MaxConcurrentJobsReached const *>(&e) != nullptr)
+			{
+				LOG_WARN(
+					"MaxConcurrentJobsReached"
+					", _proxyIdentifier: {}"
+					", _ingestionJobKey: {}"
+					", _encodingJobKey: {}"
+					", response.str: {}"
+					", e.what(): {}",
+					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, responseInitialized ? response.str() : "", e.what()
+				);
+
+				// in this case we will through the exception independently
+				// if the live streaming time (utcRecordingPeriodEnd)
+				// is finished or not. This task will come back by the MMS system
+				throw;
+			}
+			if (dynamic_cast<runtime_error const *>(&e) != nullptr)
+			{
+				if (string error = e.what(); error.find(NoEncodingAvailable().what()) != string::npos)
+				{
+					LOG_WARN(
+						"No Encodings available / MaxConcurrentJobsReached"
+						", _proxyIdentifier: {}"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+					);
+
+					throw MaxConcurrentJobsReached();
+				}
+			}
+
 			LOG_ERROR(
-				"Encoding URL failed (exception)"
+				"Encoding URL failed"
 				", _proxyIdentifier: {}"
 				", _ingestionJobKey: {}"
 				", _encodingJobKey: {}"
 				", ffmpegEncoderURL: {}"
 				", response.str: {}"
-				", e.what(): {}",
+				", exception: {}",
 				_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ffmpegEncoderURL,
 				responseInitialized ? response.str() : "", e.what()
 			);
@@ -2453,6 +2455,9 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			// update EncodingJob failures number to notify the GUI EncodingJob is failing
 			try
 			{
+				// 2021-02-12: scenario, encodersPool does not exist, a runtime_error is generated contiuosly. The task will
+				// never exist from this loop because currentAttemptsNumberInCaseOfErrors always remain to 0
+				// and the main loop look currentAttemptsNumberInCaseOfErrors. So added currentAttemptsNumberInCaseOfErrors++
 				currentAttemptsNumberInCaseOfErrors++;
 
 				LOG_INFO(
@@ -2467,13 +2472,14 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 				int64_t encodedPhysicalPathKey = -1;
 				_mmsEngineDBFacade->updateEncodingJobFailuresNumber(_encodingItem->_encodingJobKey, currentAttemptsNumberInCaseOfErrors);
 			}
-			catch (...)
+			catch (exception& ex)
 			{
 				LOG_ERROR(
 					"updateEncodingJobFailuresNumber failed"
 					", _ingestionJobKey: {}"
-					", _encodingJobKey: {}",
-					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey
+					", _encodingJobKey: {}"
+					", exception: {}",
+					_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, ex.what()
 				);
 			}
 
@@ -2499,7 +2505,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 		throw FFMpegURLForbidden();
 	}
-	else if (urlNotFound)
+	if (urlNotFound)
 	{
 		LOG_ERROR(
 			"LiveProxy/Recording: URL Not Found"
@@ -2511,7 +2517,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 		throw FFMpegURLNotFound();
 	}
-	else if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
+	if (currentAttemptsNumberInCaseOfErrors >= maxAttemptsNumberInCaseOfErrors)
 	{
 		LOG_ERROR(
 			"Reached the max number of attempts to the URL"
@@ -2526,7 +2532,7 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 
 		throw EncoderError();
 	}
-	else if (encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
+	if (encodingType == MMSEngineDBFacade::EncodingType::LiveRecorder)
 	{
 		long ingestionJobOutputsCount = _mmsEngineDBFacade->getIngestionJobOutputsCount(
 			_encodingItem->_ingestionJobKey,
