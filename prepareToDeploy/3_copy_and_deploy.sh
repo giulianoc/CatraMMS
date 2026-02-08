@@ -24,7 +24,7 @@ destModuleName=MMS
 #linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 2, length($0) - 2)); else printf("%s", $0) }')
 
 #tarFileName=$moduleName-$version-$linuxName.tar.gz
-tarFileName=destModuleName-$version.tar.gz
+tarFileName=$destModuleName-$version.tar.gz
 
 source /opt/catrasoftware/CatraMMS/scripts/servers.sh
 
@@ -54,7 +54,7 @@ deploy()
 	echo "deploy..."
 	if ! ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "[ -f '${MMSOPT}/${destModuleName}/scripts/deploy.sh' ]"; then
 		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tar xfz ${MMSOPT}/$tarFileName -C ${MMSOPT}"
-		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "ln -s ${MMSOPT}/$moduleName-$version ${MMSOPT}/${destModuleName}"
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "ln -s ${MMSOPT}/${destModuleName}-$version ${MMSOPT}/${destModuleName}"
 	fi
 	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "${MMSOPT}/${destModuleName}/scripts/deploy.sh $version"
 
