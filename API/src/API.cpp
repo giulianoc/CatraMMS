@@ -1793,7 +1793,8 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 		", EmailNotification->providerURL: {}",
 		_emailProviderURL
 	);
-	_emailUserName = JSONUtils::as<string>(configurationRoot["EmailNotification"], "userName", "");
+	auto cryptedEmailUserName = JSONUtils::as<string>(configurationRoot["EmailNotification"], "userName", "");
+	_emailUserName = Encrypt::opensslDecrypt(cryptedEmailUserName);
 	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->userName: {}",
@@ -1809,7 +1810,8 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 			// + ", _emailPassword: " + _emailPassword
 		);
 	}
-	_emailCcsCommaSeparated = JSONUtils::as<string>(configurationRoot["EmailNotification"], "cc", "");
+	auto cryptedEmailCcsCommaSeparated = JSONUtils::as<string>(configurationRoot["EmailNotification"], "cc", "");
+	_emailCcsCommaSeparated = Encrypt::opensslDecrypt(cryptedEmailCcsCommaSeparated);
 	LOG_TRACE(
 		"Configuration item"
 		", EmailNotification->cc: {}",

@@ -36,18 +36,23 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 	string emailProtocol = JSONUtils::as<string>(_configuration["EmailNotification"], "protocol", "");
 	string emailServer = JSONUtils::as<string>(_configuration["EmailNotification"], "server", "");
 	int emailPort = JSONUtils::as<int32_t>(_configuration["EmailNotification"], "port", 0);
-	string userName = JSONUtils::as<string>(_configuration["EmailNotification"], "userName", "");
+	auto cryptedUserName = JSONUtils::as<string>(_configuration["EmailNotification"], "userName", "");
+	string userName = Encrypt::opensslDecrypt(cryptedUserName);
 	string password;
 	{
 		string encryptedPassword = JSONUtils::as<string>(_configuration["EmailNotification"], "password", "");
 		password = Encrypt::opensslDecrypt(encryptedPassword);
 	}
-	string from = JSONUtils::as<string>(_configuration["EmailNotification"], "from", "");
+	auto cryptedFrom = JSONUtils::as<string>(_configuration["EmailNotification"], "from", "");
+	string from = Encrypt::opensslDecrypt(cryptedFrom);
 	// string to = "giulianoc@catrasoftware.it";
 	string cc;
 
 	if (useMMSCCToo)
-		cc = JSONUtils::as<string>(_configuration["EmailNotification"], "cc", "");
+	{
+		auto cryptedCc = JSONUtils::as<string>(_configuration["EmailNotification"], "cc", "");
+		cc = Encrypt::opensslDecrypt(cryptedCc);
+	}
 
 	string emailServerURL = emailProtocol + "://" + emailServer + ":" + to_string(emailPort);
 

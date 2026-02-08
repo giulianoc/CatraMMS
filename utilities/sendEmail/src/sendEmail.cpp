@@ -47,7 +47,8 @@ int main(int iArgc, char *pArgv[])
 		LOG_INFO("Sending email to {}", tosCommaSeparated);
 
 		emailProviderURL = JSONUtils::as<string>(configuration["EmailNotification"], "providerURL", "");
-		emailUserName = JSONUtils::as<string>(configuration["EmailNotification"], "userName", "");
+		auto cryptedEmailUserName = JSONUtils::as<string>(configuration["EmailNotification"], "userName", "");
+		emailUserName = Encrypt::opensslDecrypt(cryptedEmailUserName);
 		emailUserName = "support@catramms-cloud.com";
 
 		{

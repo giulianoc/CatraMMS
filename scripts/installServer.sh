@@ -1,6 +1,7 @@
 #!/bin/bash
 
-#'sudo su' before to run the command
+MMSVAR="/var/mms"
+MMSOPT="/opt/mms"
 
 ssh-port()
 {
@@ -451,8 +452,8 @@ install-ftpserver()
 	echo "#logging:"
 	echo "dual_log_enable=YES"
 	echo "xferlog_enable=YES"
-	echo "xferlog_file=/var/catramms/logs/vsftpd/vsftpd_wuftp.log"
-	echo "vsftpd_log_file=/var/catramms/logs/vsftpd/vsftpd_standard.log"
+	echo "xferlog_file=${MMSVAR}/logs/vsftpd/vsftpd_wuftp.log"
+	echo "vsftpd_log_file=${MMSVAR}/logs/vsftpd/vsftpd_standard.log"
 	echo "# If you want, you can have your log file in standard ftpd xferlog format"
 	echo "xferlog_std_format=NO"
 	echo "log_ftp_protocol=YES"
@@ -549,20 +550,20 @@ create-directory()
 
 create-directory-storage()
 {
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 }
 
 create-directory-api()
 {
 	moduleType=$1
 
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-	chown -R mms:mms /var/catramms
+	mkdir -p ${MMSVAR}
+	mkdir -p ${MMSVAR}/pids
+	chown -R mms:mms ${MMSVAR}
 
 	if [ "$moduleType" == "api" ]; then
 		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/storage-1/commonConfiguration; chown -R mms:mms /mnt/storage-1), press a key once done"
@@ -578,42 +579,42 @@ create-directory-api()
 		mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
 	fi
 
-	mkdir -p /var/catramms/storage
+	mkdir -p ${MMSVAR}/storage
 	if [ ! -e /home/mms/storage ]; then
-		ln -s /var/catramms/storage /home/mms
+		ln -s ${MMSVAR}/storage /home/mms
 	fi
 
 	mkdir -p /mnt/local-data/logs/mmsAPI
 	mkdir -p /mnt/local-data/logs/catraMMSWEBServices
 	mkdir -p /mnt/local-data/logs/nginx
-	if [ ! -e /var/catramms/logs ]; then
-		ln -s /mnt/local-data/logs /var/catramms
+	if [ ! -e ${MMSVAR}/logs ]; then
+		ln -s /mnt/local-data/logs ${MMSVAR}
 	fi
 	chown -R mms:mms /mnt/local-data/logs
 
 	mkdir -p /mnt/local-data/cache/nginx
-	if [ ! -e /var/catramms/cache ]; then
-		ln -s /mnt/local-data/cache /var/catramms/cache
+	if [ ! -e ${MMSVAR}/cache ]; then
+		ln -s /mnt/local-data/cache ${MMSVAR}/cache
 	fi
 	chown -R mms:mms /mnt/local-data/cache
 
-	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/commonConfiguration ]; then
+		ln -s /mnt/mmsStorage-1/commonConfiguration ${MMSVAR}/storage
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
-		ln -s /var/catramms/logs /home/mms
+		ln -s ${MMSVAR}/logs /home/mms
 	fi
 }
 
 create-directory-delivery()
 {
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-	chown -R mms:mms /var/catramms
+	mkdir -p ${MMSVAR}
+	mkdir -p ${MMSVAR}/pids
+	chown -R mms:mms ${MMSVAR}
 
 	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSGUI /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 	echo ""
@@ -624,11 +625,11 @@ create-directory-delivery()
 	mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
 
 	#aggiunta a seguito di externalDelivery
-	mkdir -p /var/catramms/storage/nginxWorkingAreaRepository
+	mkdir -p ${MMSVAR}/storage/nginxWorkingAreaRepository
 
-	mkdir -p /var/catramms/storage/MMSRepository
+	mkdir -p ${MMSVAR}/storage/MMSRepository
 	if [ ! -e /home/mms/storage ]; then
-		ln -s /var/catramms/storage /home/mms
+		ln -s ${MMSVAR}/storage /home/mms
 	fi
 
 	mkdir -p /mnt/local-data/logs/mmsAPI
@@ -638,99 +639,99 @@ create-directory-delivery()
 	mkdir -p /mnt/local-data/logs/tomeeWorkDir/work
 	mkdir -p /mnt/local-data/logs/tomeeWorkDir/temp
 	mkdir -p /mnt/local-data/cache/nginx
-	if [ ! -e /var/catramms/logs ]; then
-		ln -s /mnt/local-data/logs /var/catramms
+	if [ ! -e ${MMSVAR}/logs ]; then
+		ln -s /mnt/local-data/logs ${MMSVAR}
 	fi
-	if [ ! -e /var/catramms/cache ]; then
-		ln -s /mnt/local-data/cache /var/catramms/cache
+	if [ ! -e ${MMSVAR}/cache ]; then
+		ln -s /mnt/local-data/cache ${MMSVAR}/cache
 	fi
 	chown -R mms:mms /mnt/local-data/logs
 	chown -R mms:mms /mnt/local-data/cache
 
-	if [ ! -e /var/catramms/storage/IngestionRepository ]; then
-		ln -s /mnt/mmsStorage-1/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+	if [ ! -e ${MMSVAR}/storage/IngestionRepository ]; then
+		ln -s /mnt/mmsStorage-1/mmsIngestionRepository ${MMSVAR}/storage/IngestionRepository
 	fi
 
-	if [ ! -e /var/catramms/storage/MMSGUI ]; then
-		ln -s /mnt/mmsStorage-1/MMSGUI /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/MMSGUI ]; then
+		ln -s /mnt/mmsStorage-1/MMSGUI ${MMSVAR}/storage
 	fi
 
-	if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-		ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+	if [ ! -e ${MMSVAR}/storage/MMSRepository/MMS_0000 ]; then
+		ln -s /mnt/mmsStorage-1/mmsRepository0000 ${MMSVAR}/storage/MMSRepository/MMS_0000
 	fi
-	if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-		ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
-	fi
-
-	if [ ! -e /var/catramms/storage/MMSRepository-free ]; then
-		ln -s /mnt/mmsStorage-1/MMSRepositoryFree /var/catramms/storage/MMSRepository-free
+	if [ ! -e ${MMSVAR}/storage/MMSRepository/MMSLive ]; then
+		ln -s /mnt/mmsStorage-1/MMSLive ${MMSVAR}/storage/MMSRepository
 	fi
 
-	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/MMSRepository-free ]; then
+		ln -s /mnt/mmsStorage-1/MMSRepositoryFree ${MMSVAR}/storage/MMSRepository-free
+	fi
+
+	if [ ! -e ${MMSVAR}/storage/commonConfiguration ]; then
+		ln -s /mnt/mmsStorage-1/commonConfiguration ${MMSVAR}/storage
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
-		ln -s /var/catramms/logs /home/mms
+		ln -s ${MMSVAR}/logs /home/mms
 	fi
 }
 
 create-directory-externalDelivery()
 {
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-	chown -R mms:mms /var/catramms
+	mkdir -p ${MMSVAR}
+	mkdir -p ${MMSVAR}/pids
+	chown -R mms:mms ${MMSVAR}
 
 	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSRepositoryFree; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
 	echo ""
 
-	mkdir -p /var/catramms/storage/nginxWorkingAreaRepository
+	mkdir -p ${MMSVAR}/storage/nginxWorkingAreaRepository
 
-	mkdir -p /var/catramms/storage/MMSRepository
+	mkdir -p ${MMSVAR}/storage/MMSRepository
 	if [ ! -e /home/mms/storage ]; then
-		ln -s /var/catramms/storage /home/mms
+		ln -s ${MMSVAR}/storage /home/mms
 	fi
 
 	mkdir -p /mnt/local-data/logs/mmsAPI
 	mkdir -p /mnt/local-data/logs/nginx
 	mkdir -p /mnt/local-data/logs/rsyncd
 	mkdir -p /mnt/local-data/cache/nginx
-	if [ ! -e /var/catramms/logs ]; then
-		ln -s /mnt/local-data/logs /var/catramms
+	if [ ! -e ${MMSVAR}/logs ]; then
+		ln -s /mnt/local-data/logs ${MMSVAR}
 	fi
-	if [ ! -e /var/catramms/cache ]; then
-		ln -s /mnt/local-data/cache /var/catramms/cache
+	if [ ! -e ${MMSVAR}/cache ]; then
+		ln -s /mnt/local-data/cache ${MMSVAR}/cache
 	fi
 	chown -R mms:mms /mnt/local-data/logs
 	chown -R mms:mms /mnt/local-data/cache
 
-	if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-		ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+	if [ ! -e ${MMSVAR}/storage/MMSRepository/MMS_0000 ]; then
+		ln -s /mnt/mmsStorage-1/mmsRepository0000 ${MMSVAR}/storage/MMSRepository/MMS_0000
 	fi
-	if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-		ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+	if [ ! -e ${MMSVAR}/storage/MMSRepository/MMSLive ]; then
+		ln -s /mnt/mmsStorage-1/MMSLive ${MMSVAR}/storage/MMSRepository
 	fi
 
-	if [ ! -e /var/catramms/storage/MMSRepository-free ]; then
-		ln -s /mnt/mmsStorage-1/MMSRepositoryFree /var/catramms/storage/MMSRepository-free
+	if [ ! -e ${MMSVAR}/storage/MMSRepository-free ]; then
+		ln -s /mnt/mmsStorage-1/MMSRepositoryFree ${MMSVAR}/storage/MMSRepository-free
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
-		ln -s /var/catramms/logs /home/mms
+		ln -s ${MMSVAR}/logs /home/mms
 	fi
 }
 
 create-directory-engine()
 {
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-	chown -R mms:mms /var/catramms
+	mkdir -p ${MMSVAR}
+	mkdir -p ${MMSVAR}/pids
+	chown -R mms:mms ${MMSVAR}
 
 	#Non usiamo RAID. Usiamo un disco separato di 1TB SSD dove mettere dati del DB. 500GB per il logs e 500GB per il sistema operativo
 	read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/local-data-logs /mnt/local-data-mmsDatabaseData /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000 /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/dbDump /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
@@ -741,9 +742,9 @@ create-directory-engine()
 	#mkdir -p serve per evitare l'errore nel caso in cui la dir già esiste
 	mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
 
-	mkdir -p /var/catramms/storage/MMSRepository
+	mkdir -p ${MMSVAR}/storage/MMSRepository
 	if [ ! -e /home/mms/storage ]; then
-		ln -s /var/catramms/storage /home/mms
+		ln -s ${MMSVAR}/storage /home/mms
 	fi
 
 	mkdir -p /mnt/local-data
@@ -757,40 +758,40 @@ create-directory-engine()
 	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 	#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
-	ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
+	ln -s ${MMSVAR}/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
 	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
-	if [ ! -e /var/catramms/logs ]; then
-		ln -s /mnt/local-data/logs /var/catramms
+	if [ ! -e ${MMSVAR}/logs ]; then
+		ln -s /mnt/local-data/logs ${MMSVAR}
 	fi
-	if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
-		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/MMSTranscoderWorkingAreaRepository ]; then
+		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository ${MMSVAR}/storage
 	fi
 	chown -R mms:mms /mnt/local-data/logs/mmsEngineService
 	chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
 
-	if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-		ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/commonConfiguration ]; then
+		ln -s /mnt/mmsStorage-1/commonConfiguration ${MMSVAR}/storage
 	fi
-	if [ ! -e /var/catramms/storage/dbDump ]; then
-		ln -s /mnt/mmsStorage-1/dbDump /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/dbDump ]; then
+		ln -s /mnt/mmsStorage-1/dbDump ${MMSVAR}/storage
 	fi
-	if [ ! -e /var/catramms/storage/IngestionRepository ]; then
-		ln -s /mnt/mmsStorage-1/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+	if [ ! -e ${MMSVAR}/storage/IngestionRepository ]; then
+		ln -s /mnt/mmsStorage-1/mmsIngestionRepository ${MMSVAR}/storage/IngestionRepository
 	fi
-	if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-		ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+	if [ ! -e ${MMSVAR}/storage/MMSRepository/MMS_0000 ]; then
+		ln -s /mnt/mmsStorage-1/mmsRepository0000 ${MMSVAR}/storage/MMSRepository/MMS_0000
 	fi
-	if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-		ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+	if [ ! -e ${MMSVAR}/storage/MMSRepository/MMSLive ]; then
+		ln -s /mnt/mmsStorage-1/MMSLive ${MMSVAR}/storage/MMSRepository
 	fi
 
 	mkdir -p /mnt/mmsStorage-1/MMSWorkingAreaRepository/nginx
-	if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
-		ln -s /mnt/mmsStorage-1/MMSWorkingAreaRepository /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/MMSWorkingAreaRepository ]; then
+		ln -s /mnt/mmsStorage-1/MMSWorkingAreaRepository ${MMSVAR}/storage
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
-		ln -s /var/catramms/logs /home/mms
+		ln -s ${MMSVAR}/logs /home/mms
 	fi
 }
 
@@ -798,12 +799,12 @@ create-directory-encoder()
 {
 	moduleType=$1
 
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-	chown -R mms:mms /var/catramms
+	mkdir -p ${MMSVAR}
+	mkdir -p ${MMSVAR}/pids
+	chown -R mms:mms ${MMSVAR}
 
 	if [ "$moduleType" == "encoder" ]; then
 		read -n 1 -s -r -p "create the following directories (mkdir -p /mnt/mmsStorage-1/commonConfiguration /mnt/mmsStorage-1/MMSLive /mnt/mmsStorage-1/MMSWorkingAreaRepository /mnt/mmsStorage-1/mmsIngestionRepository /mnt/mmsStorage-1/mmsRepository0000; chown -R mms:mms /mnt/mmsStorage-1), press a key once done"
@@ -821,70 +822,70 @@ create-directory-encoder()
 		mkdir -p /mnt/mmsStorage-1/mmsIngestionRepository/users
 	fi
 
-	mkdir -p /var/catramms/storage/MMSRepository
+	mkdir -p ${MMSVAR}/storage/MMSRepository
 	if [ ! -e /home/mms/storage ]; then
-		ln -s /var/catramms/storage /home/mms
+		ln -s ${MMSVAR}/storage /home/mms
 	fi
 
 	mkdir -p /mnt/local-data/logs/mmsEncoder
 	mkdir -p /mnt/local-data/logs/nginx
 	mkdir -p /mnt/local-data/logs/rsyncd
-	if [ ! -e /var/catramms/logs ]; then
-		ln -s /mnt/local-data/logs /var/catramms
+	if [ ! -e ${MMSVAR}/logs ]; then
+		ln -s /mnt/local-data/logs ${MMSVAR}
 	fi
 	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpeg
 	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist
 	#questo link è importante perchè i path all'interno delle playlist in ffmpegEndlessRecursivePlaylist iniziano con storage/.../...
-	ln -s /var/catramms/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
+	ln -s ${MMSVAR}/storage /mnt/local-data/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/storage
 	mkdir -p /mnt/local-data/MMSTranscoderWorkingAreaRepository/Staging
-	if [ ! -e /var/catramms/storage/MMSTranscoderWorkingAreaRepository ]; then
-		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository /var/catramms/storage
+	if [ ! -e ${MMSVAR}/storage/MMSTranscoderWorkingAreaRepository ]; then
+		ln -s /mnt/local-data/MMSTranscoderWorkingAreaRepository ${MMSVAR}/storage
 	fi
-	if [ ! -e /var/catramms/storage/IngestionRepository ]; then
-		ln -s /mnt/mmsStorage-1/mmsIngestionRepository /var/catramms/storage/IngestionRepository
+	if [ ! -e ${MMSVAR}/storage/IngestionRepository ]; then
+		ln -s /mnt/mmsStorage-1/mmsIngestionRepository ${MMSVAR}/storage/IngestionRepository
 	fi
 	#cache: anche se solo api, webapi e integration usano la cache, bisogna creare la dir anche per encoder, delivery perchè
 	#path proxy_cache_path sono configurati in nginx.conf (globale a tutti gli nginx)
 	mkdir -p /mnt/local-data/cache/nginx
-	if [ ! -e /var/catramms/cache ]; then
-		ln -s /mnt/local-data/cache /var/catramms
+	if [ ! -e ${MMSVAR}/cache ]; then
+		ln -s /mnt/local-data/cache ${MMSVAR}
 	fi
 			chown -R mms:mms /mnt/local-data/logs
 	chown -R mms:mms /mnt/local-data/MMSTranscoderWorkingAreaRepository
 	chown -R mms:mms /mnt/local-data/cache
 
-	mkdir -p /var/catramms/tv
-	chown -R mms:mms /var/catramms/tv
+	mkdir -p ${MMSVAR}/tv
+	chown -R mms:mms ${MMSVAR}/tv
 
 	#link comodo per avere accesso ai file di log di ffmpeg
-	ln -s /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg /home/mms/
+	ln -s ${MMSVAR}/storage/MMSTranscoderWorkingAreaRepository/ffmpeg /home/mms/
 
 	if [ "$moduleType" == "encoder" ]; then
-		if [ ! -e /var/catramms/storage/commonConfiguration ]; then
-			ln -s /mnt/mmsStorage-1/commonConfiguration /var/catramms/storage
+		if [ ! -e ${MMSVAR}/storage/commonConfiguration ]; then
+			ln -s /mnt/mmsStorage-1/commonConfiguration ${MMSVAR}/storage
 		fi
 		mkdir -p /mnt/mmsStorage-1/MMSWorkingAreaRepository/nginx
-		if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
-			ln -s /mnt/mmsStorage-1/MMSWorkingAreaRepository /var/catramms/storage
+		if [ ! -e ${MMSVAR}/storage/MMSWorkingAreaRepository ]; then
+			ln -s /mnt/mmsStorage-1/MMSWorkingAreaRepository ${MMSVAR}/storage
 		fi
-		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-			ln -s /mnt/mmsStorage-1/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		if [ ! -e ${MMSVAR}/storage/MMSRepository/MMS_0000 ]; then
+			ln -s /mnt/mmsStorage-1/mmsRepository0000 ${MMSVAR}/storage/MMSRepository/MMS_0000
 		fi
-		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-			ln -s /mnt/mmsStorage-1/MMSLive /var/catramms/storage/MMSRepository
+		if [ ! -e ${MMSVAR}/storage/MMSRepository/MMSLive ]; then
+			ln -s /mnt/mmsStorage-1/MMSLive ${MMSVAR}/storage/MMSRepository
 		fi
 	else
 		mkdir -p /mnt/local-data/MMSWorkingAreaRepository/nginx
-		if [ ! -e /var/catramms/storage/MMSWorkingAreaRepository ]; then
-			ln -s /mnt/local-data/MMSWorkingAreaRepository /var/catramms/storage
+		if [ ! -e ${MMSVAR}/storage/MMSWorkingAreaRepository ]; then
+			ln -s /mnt/local-data/MMSWorkingAreaRepository ${MMSVAR}/storage
 		fi
 		mkdir -p /mnt/local-data/mmsRepository0000
-		if [ ! -e /var/catramms/storage/MMSRepository/MMS_0000 ]; then
-			ln -s /mnt/local-data/mmsRepository0000 /var/catramms/storage/MMSRepository/MMS_0000
+		if [ ! -e ${MMSVAR}/storage/MMSRepository/MMS_0000 ]; then
+			ln -s /mnt/local-data/mmsRepository0000 ${MMSVAR}/storage/MMSRepository/MMS_0000
 		fi
 		mkdir -p /mnt/local-data/MMSLive
-		if [ ! -e /var/catramms/storage/MMSRepository/MMSLive ]; then
-			ln -s /mnt/local-data/MMSLive /var/catramms/storage/MMSRepository
+		if [ ! -e ${MMSVAR}/storage/MMSRepository/MMSLive ]; then
+			ln -s /mnt/local-data/MMSLive ${MMSVAR}/storage/MMSRepository
 		fi
 
 		chown -R mms:mms /mnt/local-data/MMSWorkingAreaRepository
@@ -893,18 +894,18 @@ create-directory-encoder()
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
-		ln -s /var/catramms/logs /home/mms
+		ln -s ${MMSVAR}/logs /home/mms
 	fi
 }
 
 create-directory-integration()
 {
-	mkdir -p /opt/catramms
-	chown -R mms:mms /opt/catramms
+	mkdir -p ${MMSOPT}
+	chown -R mms:mms ${MMSOPT}
 
-	mkdir -p /var/catramms
-	mkdir -p /var/catramms/pids
-	chown -R mms:mms /var/catramms
+	mkdir -p ${MMSVAR}
+	mkdir -p ${MMSVAR}/pids
+	chown -R mms:mms ${MMSVAR}
 
 	#DA VERIFICARE
 	#mkdir -p /mnt/local-data/logs/tomcat-gui
@@ -912,18 +913,18 @@ create-directory-integration()
 	#mkdir -p /mnt/local-data/logs/tomcatWorkDir/temp
 	mkdir -p /mnt/local-data/logs/nginx
 	mkdir -p /mnt/local-data/cache/nginx
-	if [ ! -e /var/catramms/cache ]; then
-		ln -s /mnt/local-data/cache /var/catramms
+	if [ ! -e ${MMSVAR}/cache ]; then
+		ln -s /mnt/local-data/cache ${MMSVAR}
 	fi
 	chown -R mms:mms /mnt/local-data/logs
 	chown -R mms:mms /mnt/local-data/cache
 
-	if [ ! -e /var/catramms/logs ]; then
-		ln -s /mnt/local-data/logs /var/catramms
+	if [ ! -e ${MMSVAR}/logs ]; then
+		ln -s /mnt/local-data/logs ${MMSVAR}
 	fi
 
 	if [ ! -e /home/mms/logs ]; then
-		ln -s /var/catramms/logs /home/mms
+		ln -s ${MMSVAR}/logs /home/mms
 	fi
 }
 
@@ -1118,39 +1119,39 @@ install-mms-packages()
 		ln -s /home/mms/mms/scripts/mmsStopALL.sh /home/mms
 	fi
 	if [ ! -e /home/mms/nginx.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/nginx.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/nginx.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsEncoder.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/mmsEncoder.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/mmsEncoder.sh /home/mms
 	fi
 
 	if [ ! -e /home/mms/micro-service.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/micro-service.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/micro-service.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsApi.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/mmsApi.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/mmsApi.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsDelivery.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/mmsDelivery.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/mmsDelivery.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsExternalDelivery.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/mmsExternalDelivery.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/mmsExternalDelivery.sh /home/mms
 	fi
 
 	if [ ! -e /home/mms/mmsEngineService.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/mmsEngineService.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/mmsEngineService.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsTail.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/mmsTail.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/mmsTail.sh /home/mms
 	fi
 	#if [ ! -e /home/mms/tomcat.sh ]; then
-	#	ln -s /opt/catramms/CatraMMS/scripts/tomcat.sh /home/mms
+	#	ln -s ${MMSOPT}/CatraMMS/scripts/tomcat.sh /home/mms
 	#fi
 	if [ ! -e /home/mms/tomee.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/tomee.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/tomee.sh /home/mms
 	fi
 	if [ ! -e /home/mms/printLogFileName.sh ]; then
-		ln -s /opt/catramms/CatraMMS/scripts/printLogFileName.sh /home/mms
+		ln -s ${MMSOPT}/CatraMMS/scripts/printLogFileName.sh /home/mms
 	fi
 }
 
@@ -1290,8 +1291,8 @@ install-mms-aws-sdk-cpp-package()
 	read -n 1 -s -r -p "Downloading $package..."
 	echo ""
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
 
 	if [ "$moduleType" == "externalEncoder" ]; then
 		echo ""
@@ -1305,7 +1306,7 @@ install-mms-aws-sdk-cpp-package()
 		echo "aws_access_key_id = $awsAccessKeyId" >> /home/mms/.aws/credentials
 		echo "aws_secret_access_key = $awsSecretAccessKey" >> /home/mms/.aws/credentials
 	else
-		ln -s /var/catramms/storage/commonConfiguration/.aws ~mms
+		ln -s ${MMSVAR}/storage/commonConfiguration/.aws ~mms
 	fi
 }
 
@@ -1314,10 +1315,10 @@ install-mms-youtube-dl-package()
 	architecture=$1
 
 	#Only in case we have to download it again, AS mms user
-	#	mkdir /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')
-	#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
-	#	chmod a+rx /opt/catramms/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
-	#	rm /opt/catramms/youtube-dl; ln -s /opt/catramms/youtube-dl-$(date +'%Y-%m-%d') /opt/catramms/youtube-dl
+	#	mkdir ${MMSOPT}/youtube-dl-$(date +'%Y-%m-%d')
+	#	curl -k -L https://yt-dl.org/downloads/latest/youtube-dl -o ${MMSOPT}/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
+	#	chmod a+rx ${MMSOPT}/youtube-dl-$(date +'%Y-%m-%d')/youtube-dl
+	#	rm ${MMSOPT}/youtube-dl; ln -s ${MMSOPT}/youtube-dl-$(date +'%Y-%m-%d') ${MMSOPT}/youtube-dl
 	packageName=youtube-dl
 	echo ""
 	youtubeDlVersion=2022-08-07
@@ -1328,9 +1329,9 @@ install-mms-youtube-dl-package()
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 install-mms-opencv-package()
@@ -1340,8 +1341,8 @@ install-mms-opencv-package()
 	package=opencv
 	read -n 1 -s -r -p "Downloading $package..."
 	echo ""
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
 }
 
 install-mms-tomcat-package()
@@ -1356,26 +1357,26 @@ install-mms-tomcat-package()
 		VERSION=$tomcatVersion
 	fi
 	wget https://www-eu.apache.org/dist/tomcat/tomcat-9/v${VERSION}/bin/apache-tomcat-${VERSION}.tar.gz -P /tmp
-	tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/apache-tomcat-${VERSION} /opt/catramms/tomcat
+	tar -xvf /tmp/apache-tomcat-${VERSION}.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/apache-tomcat-${VERSION} ${MMSOPT}/tomcat
 
-	rm -rf /opt/catramms/tomcat/logs
-	ln -s /var/catramms/logs/tomcat-gui /opt/catramms/tomcat/logs
+	rm -rf ${MMSOPT}/tomcat/logs
+	ln -s ${MMSVAR}/logs/tomcat-gui ${MMSOPT}/tomcat/logs
 
-	#/opt/catramms/tomcat/work viene anche usato da tomcat per salvare i chunks
+	#${MMSOPT}/tomcat/work viene anche usato da tomcat per salvare i chunks
 	#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
-	#in /var/catramms/logs/tomcatWorkDir
-	rm -rf /opt/catramms/tomcat/work
-	ln -s /var/catramms/logs/tomcatWorkDir/work /opt/catramms/tomcat/work
-	#/opt/catramms/tomcat/temp viene anche usato da tomcat per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
-	rm -rf /opt/catramms/tomcat/temp
-	ln -s /var/catramms/logs/tomcatWorkDir/temp /opt/catramms/tomcat/temp
+	#in ${MMSVAR}/logs/tomcatWorkDir
+	rm -rf ${MMSOPT}/tomcat/work
+	ln -s ${MMSVAR}/logs/tomcatWorkDir/work ${MMSOPT}/tomcat/work
+	#${MMSOPT}/tomcat/temp viene anche usato da tomcat per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
+	rm -rf ${MMSOPT}/tomcat/temp
+	ln -s ${MMSVAR}/logs/tomcatWorkDir/temp ${MMSOPT}/tomcat/temp
 
-	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomcat/webapps/ROOT/index.html
+	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > ${MMSOPT}/tomcat/webapps/ROOT/index.html
 
-	chown -R mms:mms /opt/catramms/apache-tomcat-${VERSION}
+	chown -R mms:mms ${MMSOPT}/apache-tomcat-${VERSION}
 
-	chmod u+x /opt/catramms/tomcat/bin/*.sh
+	chmod u+x ${MMSOPT}/tomcat/bin/*.sh
 
 	echo "[Unit]" > /etc/systemd/system/tomcat.service
 	echo "Description=Tomcat 9 servlet container" >> /etc/systemd/system/tomcat.service
@@ -1390,13 +1391,13 @@ install-mms-tomcat-package()
 	echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64\"" >> /etc/systemd/system/tomcat.service
 	echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomcat.service
 	echo "" >> /etc/systemd/system/tomcat.service
-	echo "Environment=\"CATALINA_BASE=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
-	echo "Environment=\"CATALINA_HOME=/opt/catramms/tomcat\"" >> /etc/systemd/system/tomcat.service
-	echo "Environment=\"CATALINA_PID=/var/catramms/pids/tomcat.pid\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_BASE=${MMSOPT}/tomcat\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_HOME=${MMSOPT}/tomcat\"" >> /etc/systemd/system/tomcat.service
+	echo "Environment=\"CATALINA_PID=${MMSVAR}/pids/tomcat.pid\"" >> /etc/systemd/system/tomcat.service
 	echo "Environment=\"CATALINA_OPTS=-Xms512M -Xmx4096M -server -XX:+UseParallelGC\"" >> /etc/systemd/system/tomcat.service
 	echo "" >> /etc/systemd/system/tomcat.service
-	echo "ExecStart=/opt/catramms/tomcat/bin/startup.sh" >> /etc/systemd/system/tomcat.service
-	echo "ExecStop=/opt/catramms/tomcat/bin/shutdown.sh" >> /etc/systemd/system/tomcat.service
+	echo "ExecStart=${MMSOPT}/tomcat/bin/startup.sh" >> /etc/systemd/system/tomcat.service
+	echo "ExecStop=${MMSOPT}/tomcat/bin/shutdown.sh" >> /etc/systemd/system/tomcat.service
 	echo "" >> /etc/systemd/system/tomcat.service
 	echo "[Install]" >> /etc/systemd/system/tomcat.service
 	echo "WantedBy=multi-user.target" >> /etc/systemd/system/tomcat.service
@@ -1421,11 +1422,11 @@ install-mms-tomcat-package()
 	echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
 	echo "</Context>"
 	echo ""
-	echo "copiare catramms.war in /opt/catramms/tomcat/webapps"
+	echo "copiare catramms.war in ${MMSOPT}/tomcat/webapps"
 	echo "far partire tomcat in modo che crea la directory catramms"
-	echo "ln -s /opt/catramms/tomcat/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomcat/conf/catramms.properties"
+	echo "ln -s ${MMSOPT}/tomcat/webapps/catramms/WEB-INF/classes/catramms.cloud.properties ${MMSOPT}/tomcat/conf/catramms.properties"
 	#favicon is selected by the <link ...> tag inside the xhtml of the project
-	#echo "cp /opt/catramms/tomcat/webapps/catramms/favicon_2.ico /opt/catramms/tomcat/webapps/ROOT/"
+	#echo "cp ${MMSOPT}/tomcat/webapps/catramms/favicon_2.ico ${MMSOPT}/tomcat/webapps/ROOT/"
 }
 
 install-mms-tomee-package()
@@ -1440,26 +1441,26 @@ install-mms-tomee-package()
 		VERSION=$tomeeVersion
 	fi
 	wget https://dlcdn.apache.org/tomee/tomee-${VERSION}/apache-tomee-${VERSION}-webprofile.tar.gz -P /tmp
-	tar -xvf /tmp/apache-tomee-${VERSION}-webprofile.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/apache-tomee-webprofile-${VERSION} /opt/catramms/tomee
+	tar -xvf /tmp/apache-tomee-${VERSION}-webprofile.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/apache-tomee-webprofile-${VERSION} ${MMSOPT}/tomee
 
-	rm -rf /opt/catramms/tomee/logs
-	ln -s /var/catramms/logs/tomee-gui /opt/catramms/tomee/logs
+	rm -rf ${MMSOPT}/tomee/logs
+	ln -s ${MMSVAR}/logs/tomee-gui ${MMSOPT}/tomee/logs
 
-	#/opt/catramms/tomee/work viene anche usato da tomee per salvare i chunks
+	#${MMSOPT}/tomee/work viene anche usato da tomee per salvare i chunks
 	#di p:fileUpload della GUI catramms. Per questo motivo viene rediretto, tramite questo link,
-	#in /var/catramms/logs/tomeeWorkDir
-	rm -rf /opt/catramms/tomee/work
-	ln -s /var/catramms/logs/tomeeWorkDir/work /opt/catramms/tomee/work
-	#/opt/catramms/tomee/temp viene anche usato da tomee per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
-	rm -rf /opt/catramms/tomee/temp
-	ln -s /var/catramms/logs/tomeeWorkDir/temp /opt/catramms/tomee/temp
+	#in ${MMSVAR}/logs/tomeeWorkDir
+	rm -rf ${MMSOPT}/tomee/work
+	ln -s ${MMSVAR}/logs/tomeeWorkDir/work ${MMSOPT}/tomee/work
+	#${MMSOPT}/tomee/temp viene anche usato da tomee per salvare i file temporanei (System.getProperty("java.io.tmpdir"))
+	rm -rf ${MMSOPT}/tomee/temp
+	ln -s ${MMSVAR}/logs/tomeeWorkDir/temp ${MMSOPT}/tomee/temp
 
-	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > /opt/catramms/tomee/webapps/ROOT/index.html
+	echo "<meta http-equiv=\"Refresh\" content=\"0; URL=/catramms/login.xhtml\"/>" > ${MMSOPT}/tomee/webapps/ROOT/index.html
 
-	chown -R mms:mms /opt/catramms/apache-tomee-webprofile-${VERSION}
+	chown -R mms:mms ${MMSOPT}/apache-tomee-webprofile-${VERSION}
 
-	chmod u+x /opt/catramms/tomee/bin/*.sh
+	chmod u+x ${MMSOPT}/tomee/bin/*.sh
 
 	echo "[Unit]" > /etc/systemd/system/tomee.service
 	echo "Description=Tomee 10 servlet container" >> /etc/systemd/system/tomee.service
@@ -1474,13 +1475,13 @@ install-mms-tomee-package()
 	echo "Environment=\"JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64\"" >> /etc/systemd/system/tomee.service
 	echo "Environment=\"JAVA_OPTS=-Djava.security.egd=file:///dev/urandom -Djava.awt.headless=true\"" >> /etc/systemd/system/tomee.service
 	echo "" >> /etc/systemd/system/tomee.service
-	echo "Environment=\"CATALINA_BASE=/opt/catramms/tomee\"" >> /etc/systemd/system/tomee.service
-	echo "Environment=\"CATALINA_HOME=/opt/catramms/tomee\"" >> /etc/systemd/system/tomee.service
-	echo "Environment=\"CATALINA_PID=/var/catramms/pids/tomee.pid\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_BASE=${MMSOPT}/tomee\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_HOME=${MMSOPT}/tomee\"" >> /etc/systemd/system/tomee.service
+	echo "Environment=\"CATALINA_PID=${MMSVAR}/pids/tomee.pid\"" >> /etc/systemd/system/tomee.service
 	echo "Environment=\"CATALINA_OPTS=-Xms512M -Xmx4096M -server -XX:+UseParallelGC\"" >> /etc/systemd/system/tomee.service
 	echo "" >> /etc/systemd/system/tomee.service
-	echo "ExecStart=/opt/catramms/tomee/bin/startup.sh" >> /etc/systemd/system/tomee.service
-	echo "ExecStop=/opt/catramms/tomee/bin/shutdown.sh" >> /etc/systemd/system/tomee.service
+	echo "ExecStart=${MMSOPT}/tomee/bin/startup.sh" >> /etc/systemd/system/tomee.service
+	echo "ExecStop=${MMSOPT}/tomee/bin/shutdown.sh" >> /etc/systemd/system/tomee.service
 	echo "" >> /etc/systemd/system/tomee.service
 	echo "[Install]" >> /etc/systemd/system/tomee.service
 	echo "WantedBy=multi-user.target" >> /etc/systemd/system/tomee.service
@@ -1505,11 +1506,11 @@ install-mms-tomee-package()
 	echo "<WatchedResource>WEB-INF/web.xml</WatchedResource>"
 	echo "</Context>"
 	echo ""
-	echo "copiare catramms.war in /opt/catramms/tomee/webapps"
+	echo "copiare catramms.war in ${MMSOPT}/tomee/webapps"
 	echo "far partire tomee in modo che crea la directory catramms"
-	echo "ln -s /opt/catramms/tomee/webapps/catramms/WEB-INF/classes/catramms.cloud.properties /opt/catramms/tomee/conf/catramms.properties"
+	echo "ln -s ${MMSOPT}/tomee/webapps/catramms/WEB-INF/classes/catramms.cloud.properties ${MMSOPT}/tomee/conf/catramms.properties"
 	#favicon is selected by the <link ...> tag inside the xhtml of the project
-	#echo "cp /opt/catramms/tomee/webapps/catramms/favicon_2.ico /opt/catramms/tomee/webapps/ROOT/"
+	#echo "cp ${MMSOPT}/tomee/webapps/catramms/favicon_2.ico ${MMSOPT}/tomee/webapps/ROOT/"
 }
 
 install-mms-nginx-package()
@@ -1527,26 +1528,26 @@ install-mms-nginx-package()
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 
 	#nginx configuration
-	rm -rf /opt/catramms/nginx/logs
-	ln -s /var/catramms/logs/nginx /opt/catramms/nginx/logs
+	rm -rf ${MMSOPT}/nginx/logs
+	ln -s ${MMSVAR}/logs/nginx ${MMSOPT}/nginx/logs
 
-	if [[ -f /opt/catramms/nginx/conf/nginx.conf ]]
+	if [[ -f ${MMSOPT}/nginx/conf/nginx.conf ]]
 	then
-		mv /opt/catramms/nginx/conf/nginx.conf /opt/catramms/nginx/conf/nginx.conf.backup
+		mv ${MMSOPT}/nginx/conf/nginx.conf ${MMSOPT}/nginx/conf/nginx.conf.backup
 	fi
-	ln -s /opt/catramms/CatraMMS/conf/nginx.conf /opt/catramms/nginx/conf/
+	ln -s ${MMSOPT}/CatraMMS/conf/nginx.conf ${MMSOPT}/nginx/conf/
 
-	mkdir /opt/catramms/nginx/conf/sites-enabled
+	mkdir ${MMSOPT}/nginx/conf/sites-enabled
 
 	if [ "$moduleType" == "load-balancer" ]; then
-		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx /opt/catramms/nginx/conf/sites-enabled/
+		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx ${MMSOPT}/nginx/conf/sites-enabled/
 	else
-		ln -s /home/mms/mms/conf/catramms.nginx /opt/catramms/nginx/conf/sites-enabled/
+		ln -s /home/mms/mms/conf/catramms.nginx ${MMSOPT}/nginx/conf/sites-enabled/
 	fi
 
 	#per evitare errori nginx: 24: Too many open files                                                        
@@ -1622,7 +1623,7 @@ configure-mms-rsync-daemon-package()
 	echo "gid = mms" >> /etc/rsyncd.conf
 	echo "use chroot = false" >> /etc/rsyncd.conf
 	echo "max connections = 50" >> /etc/rsyncd.conf
-	echo "log file = /var/catramms/logs/rsyncd/rsyncd.log" >> /etc/rsyncd.conf
+	echo "log file = ${MMSVAR}/logs/rsyncd/rsyncd.log" >> /etc/rsyncd.conf
 	echo "pid file = /run/rsyncd.pid" >> /etc/rsyncd.conf
 	echo "timeout = 600" >> /etc/rsyncd.conf
 	echo "" >> /etc/rsyncd.conf
@@ -1637,7 +1638,7 @@ configure-mms-rsync-daemon-package()
 
 	#logrotate funziona con il sistema operativo, non bisogna istallare nulla
 	#/etc/logrotate.d/rsyncd
-	echo "/var/catramms/logs/rsyncd/rsyncd.log {" > /etc/logrotate.d/rsyncd
+	echo "${MMSVAR}/logs/rsyncd/rsyncd.log {" > /etc/logrotate.d/rsyncd
     	echo "daily" >> /etc/logrotate.d/rsyncd
     	echo "rotate 7" >> /etc/logrotate.d/rsyncd
     	echo "compress" >> /etc/logrotate.d/rsyncd
@@ -1718,28 +1719,28 @@ install-mms-libpqxx-package()
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 install-mms-CatraMMS-package()
 {
 	architecture=$1
 
-	packageName=CatraMMS
+	packageName=MMS
 	echo ""
-	catraMMSVersion=1.0.6900
-	echo -n "$packageName version (i.e.: $catraMMSVersion)? "
+	mmsVersion=1.0.6900
+	echo -n "$packageName version (i.e.: mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
-		version=$catraMMSVersion
+		version=mmsVersion
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$packageName-$version /opt/catramms/$packageName
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/$packageName-$version ${MMSOPT}/MMS
 }
 
 install-mms-ImageMagick-package()
@@ -1756,9 +1757,9 @@ install-mms-ImageMagick-package()
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 install-mms-FFMpeg-package()
@@ -1775,9 +1776,9 @@ install-mms-FFMpeg-package()
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
-	curl -o /opt/catramms/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
-	tar xvfz /opt/catramms/$package.tar.gz -C /opt/catramms
-	ln -rs /opt/catramms/$package /opt/catramms/$packageName
+	curl -o ${MMSOPT}/$package.tar.gz "https://mms-delivery-f.catramms-cloud.com/packages/$architecture/$package.tar.gz"
+	tar xvfz ${MMSOPT}/$package.tar.gz -C ${MMSOPT}
+	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
 firewall-rules()
@@ -2176,7 +2177,7 @@ else
 	echo ""
 	#echo "- in case of api/engine/load-balancer, initialize /etc/hosts (add db-master e db-slaves)"
 	#echo ""
-	echo "- run the commands as mms user <sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 /var/catramms/storage/MMSRepository/MMS_0001> for the others repositories"
+	echo "- run the commands as mms user <sudo mkdir /mnt/mmsRepository0001; sudo chown mms:mms /mnt/mmsRepository0001; ln -s /mnt/mmsRepository0001 ${MMSVAR}/storage/MMSRepository/MMS_0001> for the others repositories"
 	echo ""
 	echo "- in case of the storage is just created and has to be initialized OR in case of an external transcoder, run the following commands (it is assumed the storage partition is /mnt/mmsStorage): mkdir /mnt/mmsIngestionRepository; mkdir /mnt/mmsStorage/MMSGUI; mkdir /mnt/mmsStorage/MMSWorkingAreaRepository; mkdir /mnt/mmsStorage/MMSRepository-free; mkdir /mnt/mmsStorage/MMSLive; mkdir /mnt/mmsStorage/dbDump; mkdir /mnt/mmsStorage/commonConfiguration; chown -R mms:mms /mnt/mmsStorage/*"
 	echo ""

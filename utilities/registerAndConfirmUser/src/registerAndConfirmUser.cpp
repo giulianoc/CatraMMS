@@ -121,7 +121,8 @@ int main(const int iArgc, char *pArgv[])
 
 		{
 			auto emailProviderURL = JsonPath(&configuration)["EmailNotification"]["providerURL"].as<string>();
-			auto emailUserName = JsonPath(&configuration)["EmailNotification"]["userName"].as<string>();
+			auto cryptedEmailUserName = JsonPath(&configuration)["EmailNotification"]["userName"].as<string>();
+			string emailUserName = Encrypt::opensslDecrypt(cryptedEmailUserName);
 
 			auto encryptedPassword = JsonPath(&configuration)["EmailNotification"]["password"].as<string>();
 			string emailPassword = Encrypt::opensslDecrypt(encryptedPassword);

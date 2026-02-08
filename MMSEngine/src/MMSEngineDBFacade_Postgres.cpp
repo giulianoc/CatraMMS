@@ -133,9 +133,20 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
 	for (auto& adminEmailAddressesRoot : JsonPath(&configurationRoot)["api"]["adminEmailAddresses"].as<json>(json::array()))
 	{
-		auto adminEmailAddress = JsonPath(&adminEmailAddressesRoot).as<string>("");
-		_adminEmailAddresses.push_back(adminEmailAddress);
-		_logger->trace(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[]: " + adminEmailAddress);
+		auto adminCryptedEmailAddress = JsonPath(&adminEmailAddressesRoot).as<string>("");
+		try
+		{
+			string adminEmailAddress = Encrypt::opensslDecrypt(adminCryptedEmailAddress);
+			_adminEmailAddresses.push_back(adminEmailAddress);
+			_logger->trace(__FILEREF__ + "Configuration item" + ", mms->adminEmailAddresses[]: " + adminEmailAddress);
+		}
+		catch (std::exception& e)
+		{
+			LOG_ERROR("Encrypt::opensslDecrypt failed"
+				", adminCryptedEmailAddress: {}"
+				", exception: {}", adminCryptedEmailAddress, e.what()
+				);
+		}
 	}
 
 	_dbConnectionPoolStatsReportPeriodInSeconds = JsonPath(&configurationRoot)["postgres"]["dbConnectionPoolStatsReportPeriodInSeconds"].as<int32_t>(5);

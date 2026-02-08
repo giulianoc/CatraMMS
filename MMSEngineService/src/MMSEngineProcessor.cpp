@@ -77,7 +77,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 
 	_emailProviderURL = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "providerURL", "");
 	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->providerURL: " + _emailProviderURL);
-	_emailUserName = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "userName", "");
+	auto cryptedEmailUserName = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "userName", "");
+	_emailUserName = Encrypt::opensslDecrypt(cryptedEmailUserName);
 	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->userName: " + _emailUserName);
 	{
 		string encryptedPassword = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "password", "");
@@ -87,7 +88,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 			// + ", EmailNotification->password: " + _emailPassword
 		);
 	}
-	_emailCcsCommaSeparated = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "cc", "");
+	auto cryptedEmailCcsCommaSeparated = JSONUtils::as<string>(_configurationRoot["EmailNotification"], "cc", "");
+	_emailCcsCommaSeparated = Encrypt::opensslDecrypt(cryptedEmailCcsCommaSeparated);
 	LOG_TRACE(string() + "Configuration item" + ", EmailNotification->cc: " + _emailCcsCommaSeparated);
 
 	_facebookGraphAPIProtocol = JSONUtils::as<string>(_configurationRoot["FacebookGraphAPI"], "protocol", "");
