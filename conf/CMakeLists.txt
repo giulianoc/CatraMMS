@@ -22,15 +22,15 @@
 
 SET (CONFs
 	nginx.conf
-	catramms.nginx
-	catrammsAPIServer.nginx
-	catrammsWEBAPIServer.nginx
-	catrammsGUIServer.nginx
-	catrammsDeliveryServer.nginx
-	catrammsDelivery-pathServer.nginx
-	catrammsDelivery-fServer.nginx
-	catrammsBinaryServer.nginx
-	catrammsEncoderServer.nginx
+	mms.nginx
+	mmsAPIServer.nginx
+	mmsWEBAPIServer.nginx
+	mmsGUIServer.nginx
+	mmsDeliveryServer.nginx
+	mmsDelivery-pathServer.nginx
+	mmsDelivery-fServer.nginx
+	mmsBinaryServer.nginx
+	mmsEncoderServer.nginx
 	mms-env.sh.example
 	mms.cfg
 	crontab.txt
