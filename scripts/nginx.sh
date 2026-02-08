@@ -47,12 +47,12 @@ then
 	then
 		sudo bash -c "
 		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
-	  $MMS_PATH/nginx/sbin/nginx -s stop -p $MMS_PATH/nginx
+		$MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx -s stop
 		"
 		#sudo LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -s stop
 	else
 		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
-		timeout 15 $MMS_PATH/nginx/sbin/nginx -s stop
+		timeout 15 $MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx -s stop
 		if [ $? -eq 124 ]
 		then
 			#timeout expired, let's try a kill

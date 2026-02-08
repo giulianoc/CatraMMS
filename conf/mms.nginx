@@ -69,7 +69,7 @@ server {
 	#we should call the encoder machine as encoder-1, encoder-2, ...
 	server_name mmsengine-1;
 
-	include /opt/mms/MMS/conf/catrammsEncoderServer.nginx;
+	include /opt/mms/MMS/conf/mmsEncoderServer.nginx;
 }
 
 #delivery

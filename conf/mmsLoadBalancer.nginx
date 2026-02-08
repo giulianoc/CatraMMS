@@ -1,5 +1,5 @@
 
-#it is the same in catrammsBinaryServer.nginx
+#it is the same in mmsBinaryServer.nginx
 client_max_body_size 2G;
 
 upstream api {
