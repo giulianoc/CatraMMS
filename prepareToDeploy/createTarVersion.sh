@@ -10,7 +10,8 @@ NC='\033[0m' # No Color
 version=$(cat ./version.txt)
 
 currentDir=$(pwd)
-moduleName=$(basename $currentDir)
+#moduleName=$(basename $currentDir)
+moduleName=MMS
 
 #linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
 ##linuxName using centos will be "centos", next remove "
