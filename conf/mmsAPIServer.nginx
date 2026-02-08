@@ -1,6 +1,6 @@
 
-	access_log   /var/catramms/logs/nginx/mms-api.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-api.error.log error;
+	access_log   /var/mms/logs/nginx/mms-api.access.log main;
+	error_log    /var/mms/logs/nginx/mms-api.error.log error;
 
 	#defines the shared memory zone used for storing the cache keys and other metadata
 	fastcgi_cache api_cache;
@@ -434,6 +434,6 @@
 		#add a “X-Cache” header to the response, indicating if the cache was missed or hit
 		add_header X-Cache $upstream_cache_status;
 
-		include /opt/catramms/nginx/conf/fastcgi_params;
+		include /opt/mms/nginx/conf/fastcgi_params;
 	}
 

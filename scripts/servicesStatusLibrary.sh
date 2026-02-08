@@ -356,7 +356,7 @@ nginx_error()
 
 #aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y/%m/%d %H:')
-	nginxErrorsCount=$(grep "${dateFilter}" /var/catramms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | grep -v "was not found in \"/etc/.htpasswd\"" | wc -l)
+	nginxErrorsCount=$(grep "${dateFilter}" /var/mms/logs/nginx/mms-${serviceName}.error.log | grep -v "No such file or directory" | grep -v "is forbidden" | grep -v "Stale file handle" | grep -v "was not found in \"/etc/.htpasswd\"" | wc -l)
 
 	if [ $nginxErrorsCount -eq 0 ]; then
 		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_nginx_error, nginx ${serviceName} is fine: $nginxErrorsCount" >> $debugFilename
@@ -477,7 +477,7 @@ ffmpeg_filter_detect()
     # 2880 : 2 giorni
 	find /tmp -maxdepth 1 -name "alarm_${filterName}_*" -mmin +2880 -type f -delete
 
-    folders=( /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveRecorder_*.log /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveProxy_*.log )
+    folders=( /var/mms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveRecorder_*.log /var/mms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/liveProxy_*.log )
 	for logFile in "${folders[@]}"
 	do
 		fileName=$(basename $logFile)
@@ -599,7 +599,7 @@ mms_api_timing_check_service()
 	fi
 
 	maxAPIDuration=2000
-	warningMessage=$(grep "manageRequestAndResponse, _requestIdentifier" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxAPIDuration=$maxAPIDuration ' \
+	warningMessage=$(grep "manageRequestAndResponse, _requestIdentifier" /var/mms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxAPIDuration=$maxAPIDuration ' \
       BEGIN { FS="@"; newLastLogTimestampChecked=-1; }  \
       { \
         datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2); \
@@ -663,7 +663,7 @@ mms_webservices_timing_check_service()
 	fi
 
 	maxAPIDuration=1000
-	warningMessage=$(grep "API statistics" /var/catramms/logs/$logDirName/$logFileName.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxAPIDuration=$maxAPIDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
+	warningMessage=$(grep "API statistics" /var/mms/logs/$logDirName/$logFileName.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v lastLogTimestampCheckedFile=$lastLogTimestampCheckedFile -v maxAPIDuration=$maxAPIDuration 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
 		newLastLogTimestampChecked=mktime(datespec);	\
@@ -743,9 +743,9 @@ logfile_slowquery_newlines_check()
 	serverType=$1
 
 	if [ "$serviceType" == "engine" ]; then
-		logFilePathName=/var/catramms/logs/mmsEngineService/mmsEngineService-slowquery.log
+		logFilePathName=/var/mms/logs/mmsEngineService/mmsEngineService-slowquery.log
 	elif [ "$serviceType" == "api" ]; then
-		logFilePathName=/var/catramms/logs/mmsAPI/mmsAPI-slowquery.log
+		logFilePathName=/var/mms/logs/mmsAPI/mmsAPI-slowquery.log
 	else
 		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_sql_timing_check_service, wrong serverType: $serverType" >> $debugFilename
 		return 1
@@ -876,7 +876,7 @@ mms_delivery_check_bandwidth_usage()
 	fi
 
 	maxBandwidth=950
-	warningMessage=$(grep "bandwidthUsageThread, peakBandwidthInMbps" /var/catramms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v previousBandwidth=$previousBandwidth -v lastLogTimestampCheckedAndLastBandwidthFile=$lastLogTimestampCheckedAndLastBandwidthFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; lastBandwidth=previousBandwidth }	\
+	warningMessage=$(grep "bandwidthUsageThread, peakBandwidthInMbps" /var/mms/logs/mmsAPI/mmsAPI.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v previousBandwidth=$previousBandwidth -v lastLogTimestampCheckedAndLastBandwidthFile=$lastLogTimestampCheckedAndLastBandwidthFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; lastBandwidth=previousBandwidth }	\
 	{	\
 		datespec=substr($0, 2, 4)" "substr($0, 7, 2)" "substr($0, 10, 2)" "substr($0, 13, 2)" "substr($0, 16, 2)" "substr($0, 19, 2);	\
 		newLastLogTimestampChecked=mktime(datespec);	\
@@ -932,7 +932,7 @@ mms_incrontab_check_locks()
 	#aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y-%m-%d %H:%M' -d "- 1 min")
 	incrontab -l | cut -f1 | while read path; do
-		#/var/catramms/storage/MMSRepository/MMSLive/6/5240
+		#/var/mms/storage/MMSRepository/MMSLive/6/5240
     channel=$(basename "$path")
     maxAllowedConsecutiveLocks=3
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
@@ -988,7 +988,7 @@ mms_incrontab_check_rsync()
 	#aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y-%m-%d %H:%M' -d "- 1 min")
 	incrontab -l | cut -f1 | while read path; do
-		#/var/catramms/storage/MMSRepository/MMSLive/6/5240
+		#/var/mms/storage/MMSRepository/MMSLive/6/5240
     channel=$(basename "$path")
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
     alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 2 && prevprev ~ /rsync failed/ && prev ~ /rsync failed/ && $0 ~ /rsync failed/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')

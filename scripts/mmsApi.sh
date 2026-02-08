@@ -49,13 +49,13 @@ else
 	FORK_OPTION=""
 fi
 
-CatraMMS_PATH=/opt/catramms
+MMS_PATH=/opt/mms
 
-export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/libpqxx/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib:$CatraMMS_PATH/aws-sdk-cpp/lib
+export LD_LIBRARY_PATH=$MMS_PATH/MMS/lib:$MMS_PATH/libpqxx/lib:$MMS_PATH/ImageMagick/lib:$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64:$MMS_PATH/jsoncpp/lib:$MMS_PATH/opencv/lib64:$MMS_PATH/opencv/lib:$MMS_PATH/aws-sdk-cpp/lib
 source ~/mms/conf/mms-env.sh
-export MMS_CONFIGPATHNAME=/opt/catramms/CatraMMS/conf/mms.cfg
+export MMS_CONFIGPATHNAME=/opt/mms/MMS/conf/mms.cfg
 
-PIDFILE=/var/catramms/pids/api.pid
+PIDFILE=/var/mms/pids/api.pid
 #port used by nginx (see conf/*.nginx files)
 PORT=8010
 
@@ -63,7 +63,7 @@ sleepWaitingLoadBalancer=10
 
 if [ "$command" == "start" ]
 then
-	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $CatraMMS_PATH/CatraMMS/bin/cgi/api.fcgi NoFileSystem
+	spawn-fcgi -p $PORT -P $PIDFILE $FORK_OPTION $MMS_PATH/MMS/bin/cgi/api.fcgi NoFileSystem
 
 	if [ "$MMS_ENV" == "prod" ]; then
 		privateIPAddress=$(ifconfig | grep "inet 10.0" | grep -Eo '([0-9]*\.){3}[0-9]*' | head -n 1)

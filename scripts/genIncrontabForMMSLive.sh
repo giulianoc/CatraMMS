@@ -17,9 +17,9 @@ fi
 NEW_RULES=$(mktemp)
 
 # Genera nuove regole
-for dir in /var/catramms/storage/MMSRepository/MMSLive/*/*; do
+for dir in /var/mms/storage/MMSRepository/MMSLive/*/*; do
     if [[ -d "$dir" && "$(basename "$dir")" =~ ^[0-9]+$ ]]; then
-        echo "$dir	IN_MODIFY,IN_CREATE,IN_DELETE,IN_MOVE_SELF,IN_MOVE	/opt/catramms/CatraMMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
+        echo "$dir	IN_MODIFY,IN_CREATE,IN_DELETE,IN_MOVE_SELF,IN_MOVE	/opt/mms/MMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
     fi
 done
 

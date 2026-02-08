@@ -18,9 +18,9 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
-	root /opt/catramms/CatraMMS/www;
+	root /opt/mms/MMS/www;
 }
 
 #api
@@ -30,7 +30,7 @@ server {
 		#better to bind to a specific IP, better if internal IP
         listen 192.168.1.105:80;
 
-        include /opt/catramms/CatraMMS/conf/catrammsAPIServer.nginx;
+        include /opt/mms/MMS/conf/mmsAPIServer.nginx;
 }
 
 #in case of direct call from client
@@ -55,9 +55,9 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
-	include /opt/catramms/CatraMMS/conf/catrammsAPIServer.nginx;
+	include /opt/mms/MMS/conf/mmsAPIServer.nginx;
 }
 
 #encoder
@@ -69,7 +69,7 @@ server {
 	#we should call the encoder machine as encoder-1, encoder-2, ...
 	server_name mmsengine-1;
 
-	include /opt/catramms/CatraMMS/conf/catrammsEncoderServer.nginx;
+	include /opt/mms/MMS/conf/catrammsEncoderServer.nginx;
 }
 
 #delivery
@@ -81,7 +81,7 @@ server {
 
 	set $deliveryHostName 192.168.1.105;
 	set $guiHostName mms-gui.catrasoft.cloud;
-	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
+	include /opt/mms/MMS/conf/mmsDeliveryServer.nginx;
 }
 
 #in case of direct call from client
@@ -94,11 +94,11 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	set $deliveryHostName 127.0.0.1;
 	set $guiHostName mms-gui.catrasoft.cloud;
-	include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
+	include /opt/mms/MMS/conf/mmsDeliveryServer.nginx;
 }
 
 #in case of direct call from client
@@ -109,7 +109,7 @@ server {
 
     set $deliveryHostName 127.0.0.1;
     set $guiHostName mms-gui.catrasoft.cloud;
-    include /opt/catramms/CatraMMS/conf/catrammsDeliveryServer.nginx;
+    include /opt/mms/MMS/conf/mmsDeliveryServer.nginx;
 }
 
 
@@ -122,7 +122,7 @@ server {
 
 	set $deliveryHostName 192.168.1.105;
 	set $guiHostName mms-gui.catrasoft.cloud;
-	include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
+	include /opt/mms/MMS/conf/mmsDelivery-pathServer.nginx;
 }
 
 #in case of direct call from client
@@ -135,11 +135,11 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	set $deliveryHostName 127.0.0.1;
 	set $guiHostName mms-gui.catrasoft.cloud;
-	include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
+	include /opt/mms/MMS/conf/mmsDelivery-pathServer.nginx;
 }
 
 #in case of direct call from client
@@ -150,7 +150,7 @@ server {
 
     set $deliveryHostName 127.0.0.1;
     set $guiHostName mms-gui.catrasoft.cloud;
-    include /opt/catramms/CatraMMS/conf/catrammsDelivery-pathServer.nginx;
+    include /opt/mms/MMS/conf/mmsDelivery-pathServer.nginx;
 }
 
 
@@ -161,7 +161,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
-	include /opt/catramms/CatraMMS/conf/catrammsDelivery-fServer.nginx;
+	include /opt/mms/MMS/conf/mmsDelivery-fServer.nginx;
 }
 
 #in case of direct call from client
@@ -174,9 +174,9 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
-	include /opt/catramms/CatraMMS/conf/catrammsDelivery-fServer.nginx;
+	include /opt/mms/MMS/conf/mmsDelivery-fServer.nginx;
 }
 
 #binary
@@ -187,7 +187,7 @@ server {
 	listen 192.168.1.105:80;
 
 	set $binaryHostName 192.168.1.105;
-	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
+	include /opt/mms/MMS/conf/mmsBinaryServer.nginx;
 }
 
 #in case of direct call from client
@@ -199,7 +199,7 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	#request_uri:
 	# per https://www.webhosting24.com/understanding-nginx-request_uri/, $request_uri viene popolata come /understanding-nginx-request_uri/
@@ -215,7 +215,7 @@ server {
 	listen mms-binary-1.restream.ovh:80;
 
 	set $binaryHostName 127.0.0.1;
-	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
+	include /opt/mms/MMS/conf/mmsBinaryServer.nginx;
 }
 
 #in case of direct call from client
@@ -225,7 +225,7 @@ server {
 	listen 127.0.0.1:80;
 
 	set $binaryHostName 127.0.0.1;
-	include /opt/catramms/CatraMMS/conf/catrammsBinaryServer.nginx;
+	include /opt/mms/MMS/conf/mmsBinaryServer.nginx;
 }
 
 
@@ -236,7 +236,7 @@ server {
 	#better to bind to a specific IP, better if internal IP
 	listen 192.168.1.105:80;
 
-	include /opt/catramms/CatraMMS/conf/catrammsGUIServer.nginx;
+	include /opt/mms/MMS/conf/mmsGUIServer.nginx;
 }
 
 #in case of direct call from client
@@ -261,8 +261,8 @@ server {
 	ssl_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/catrasoft.cloud/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/catrasoft.cloud/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
-	include /opt/catramms/CatraMMS/conf/catrammsGUIServer.nginx;
+	include /opt/mms/MMS/conf/mmsGUIServer.nginx;
 }
 

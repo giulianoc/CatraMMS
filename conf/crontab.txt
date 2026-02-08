@@ -1,28 +1,28 @@
 
 #every hour
-0 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 0
+0 * * * * /opt/mms/MMS/scripts/crontab.sh 0
 
-2 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 1
-4 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 2
-6 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 3
-8 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 4
-10 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 5
-12 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 6
-14 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 7
-16 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 9
-18 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 10
-20 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 11
-22 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 13
-24 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 14
-0 3 * * * /opt/catramms/CatraMMS/scripts/crontab.sh 15 0 "dbUser dbPwd dbName"
-* * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 engine
-* * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 load-balancer
-* * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 16 0 "http://mms-api.catrasoft.cloud/catramms/1.0.1/status"
+2 * * * * /opt/mms/MMS/scripts/crontab.sh 1
+4 * * * * /opt/mms/MMS/scripts/crontab.sh 2
+6 * * * * /opt/mms/MMS/scripts/crontab.sh 3
+8 * * * * /opt/mms/MMS/scripts/crontab.sh 4
+10 * * * * /opt/mms/MMS/scripts/crontab.sh 5
+12 * * * * /opt/mms/MMS/scripts/crontab.sh 6
+14 * * * * /opt/mms/MMS/scripts/crontab.sh 7
+16 * * * * /opt/mms/MMS/scripts/crontab.sh 9
+18 * * * * /opt/mms/MMS/scripts/crontab.sh 10
+20 * * * * /opt/mms/MMS/scripts/crontab.sh 11
+22 * * * * /opt/mms/MMS/scripts/crontab.sh 13
+24 * * * * /opt/mms/MMS/scripts/crontab.sh 14
+0 3 * * * /opt/mms/MMS/scripts/crontab.sh 15 0 "dbUser dbPwd dbName"
+* * * * * /opt/mms/MMS/scripts/crontab.sh 16 0 engine
+* * * * * /opt/mms/MMS/scripts/crontab.sh 16 0 load-balancer
+* * * * * /opt/mms/MMS/scripts/crontab.sh 16 0 "http://mms-api.catrasoft.cloud/catramms/1.0.1/status"
 
 
 #StreamingRepository is not used
-#16 * * * * /opt/catramms/CatraMMS/scripts/crontab.sh 8
+#16 * * * * /opt/mms/MMS/scripts/crontab.sh 8
 
 #retention for nginx logs
 #next line requires root rights, so set it through the command 'sudo crontab -e'
-#0 4 * * * /opt/catramms/CatraMMS/scripts/crontab.sh 12
+#0 4 * * * /opt/mms/MMS/scripts/crontab.sh 12

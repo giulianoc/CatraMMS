@@ -246,7 +246,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				// <ingestionJobKey>_source.
 
 				// i.e.:
-				// /var/catramms/storage/IngestionRepository/users/8/2848783_source.tar.gz
+				// /var/mms/storage/IngestionRepository/users/8/2848783_source.tar.gz
 				string localWorkspaceIngestionBinaryPathName = workspaceIngestionBinaryPathName + ".tar.gz";
 				if (fs::exists(localWorkspaceIngestionBinaryPathName) && fs::is_regular_file(localWorkspaceIngestionBinaryPathName))
 				{
@@ -273,7 +273,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 
 				// i.e.:
-				// /var/catramms/storage/IngestionRepository/users/8/2848783_source
+				// /var/mms/storage/IngestionRepository/users/8/2848783_source
 				binaryPathName = workspaceIngestionBinaryPathName;
 			}
 			else
@@ -1311,7 +1311,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 					}
 					string sourcePathName = mmsAssetPathName;
 					string destBinaryPathName =
-					"/var/catramms/storage/MMSWorkingAreaRepository/Staging" +
+					"/var/mms/storage/MMSWorkingAreaRepository/Staging" +
 					mmsAssetPathName.substr(fileNameIndex);
 					LOG_INFO(string() + "Moving"
 						+ ", _processorIdentifier: " +

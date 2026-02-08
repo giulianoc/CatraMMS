@@ -1,8 +1,8 @@
 #!/bin/bash
 
-CatraMMS_PATH=/opt/catramms
+MMS_PATH=/opt/mms
 
-export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/libpqxx/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/curlpp/lib64:$CatraMMS_PATH/curlpp/lib:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib:$CatraMMS_PATH/aws-sdk-cpp/lib
+export LD_LIBRARY_PATH=$MMS_PATH/MMS/lib:$MMS_PATH/libpqxx/lib:$MMS_PATH/ImageMagick/lib:$MMS_PATH/curlpp/lib64:$MMS_PATH/curlpp/lib:$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64:$MMS_PATH/jsoncpp/lib:$MMS_PATH/opencv/lib64:$MMS_PATH/opencv/lib:$MMS_PATH/aws-sdk-cpp/lib
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
-export PATH=$PATH:$CatraMMS_PATH/ffmpeg/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+export PATH=$PATH:$MMS_PATH/ffmpeg/bin

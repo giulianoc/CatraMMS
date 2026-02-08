@@ -3,8 +3,8 @@ This procedure copy the database data, for a specific Workspace, from the DB cal
 It is assumed that all the media files were already copied:
 REMARK: HAS TO BE USED THE SOURCE/DESTINATION WORKSPACE KEY
 	log in mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com
-		mkdir /var/catramms/storage/MMSRepository/MMS_0003/<DESTINATION WORKSPACE KEY>
-	nohup rsync -az -e "ssh -i ~/aws-key-ireland.pem" --delete --partial --progress --archive --verbose --compress --omit-dir-times /var/catramms/storage/MMSRepository/MMS_0003/<SOURCE WORKSPACE KEY>/* mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/var/catramms/storage/MMSRepository/MMS_0003/<DESTINATION WORKSPACE KEY> &
+		mkdir /var/mms/storage/MMSRepository/MMS_0003/<DESTINATION WORKSPACE KEY>
+	nohup rsync -az -e "ssh -i ~/aws-key-ireland.pem" --delete --partial --progress --archive --verbose --compress --omit-dir-times /var/mms/storage/MMSRepository/MMS_0003/<SOURCE WORKSPACE KEY>/* mms@ec2-34-248-199-119.eu-west-1.compute.amazonaws.com:/var/mms/storage/MMSRepository/MMS_0003/<DESTINATION WORKSPACE KEY> &
 
 1. create a new database called 'sourceMms' at the same place where the 'mms' destination DB is present
 	as root

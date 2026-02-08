@@ -91,7 +91,7 @@ class LiveRecorderDaemons : public FFMPEGEncoderBase
 		int64_t liveRecorderIngestionJobKey, int64_t liveRecorderEncodingJobKey, bool externalEncoder,
 
 		std::string sourceSegmentsDirectoryPathName, std::string sourceManifestFileName,
-		// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
+		// /var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
 		std::string stagingLiveRecorderVirtualVODPathName,
 
 		int64_t recordingCode, std::string liveRecorderIngestionJobLabel, std::string liveRecorderVirtualVODUniqueName, std::string liveRecorderVirtualVODRetention,

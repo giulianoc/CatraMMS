@@ -15,7 +15,7 @@ fi
 while [ 1 ]
 do
 	before=$(date +%s)
-	/opt/catramms/CatraMMS/scripts/servicesStatusAgent.sh $*
+	/opt/mms/MMS/scripts/servicesStatusAgent.sh $*
 	after=$(date +%s)
 
 	elapsed=$((after-before))

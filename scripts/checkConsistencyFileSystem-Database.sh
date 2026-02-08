@@ -30,7 +30,7 @@ echo ""
 
 currentDir=$(pwd)
 
-workspacePathName=/var/catramms/storage/MMSRepository/$repositoryName/$workspaceDirectoryName
+workspacePathName=/var/mms/storage/MMSRepository/$repositoryName/$workspaceDirectoryName
 cd $workspacePathName
 
 #check of the directory media (m3u8 directory/files)

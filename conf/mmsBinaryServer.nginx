@@ -1,6 +1,6 @@
 
-	access_log   /var/catramms/logs/nginx/mms-binary.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-binary.error.log error;
+	access_log   /var/mms/logs/nginx/mms-binary.access.log main;
+	error_log    /var/mms/logs/nginx/mms-binary.error.log error;
 
 	#it is the same in nginx.conf of LoadBalancer
 	client_max_body_size 10G;
@@ -9,7 +9,7 @@
 	#	#2, #3, #4, #5, #7 (fcgi: /catramms/binary/authorization --> add monitoring with progressId...)
 	#2. once the upload is finished, /catramms/uploadedBinary?x-api-version=v1&x-api-method=uploadedBinary&ingestionJobKey=1989409&X-Progress-ID=1601367441.975 is called, it goes through:
 	#	#1, #7
-	#Nginx carica i file uploadati temporaneamente in (client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository).
+	#Nginx carica i file uploadati temporaneamente in (client_body_temp_path /var/mms/storage/nginxWorkingAreaRepository).
 	#Il metodo uploadedBinary si preoccupa di gestire il file caricato da nginx
 
 	#1
@@ -55,7 +55,7 @@
 		auth_request /catramms/binary/checkAuthorization;
 		#auth_request_set $auth_status $upstream_status;
 
-		client_body_temp_path /var/catramms/storage/nginxWorkingAreaRepository;
+		client_body_temp_path /var/mms/storage/nginxWorkingAreaRepository;
 
 		# When set to the value on, temporary files are not removed after request processing
 		#The value clean does it.
@@ -152,6 +152,6 @@
 
 		#the api fastcgi listen to 8010 port (see scripts/mmsApi.sh)
 		fastcgi_pass   127.0.0.1:8010;
-		include /opt/catramms/nginx/conf/fastcgi_params;
+		include /opt/mms/nginx/conf/fastcgi_params;
 	}
 

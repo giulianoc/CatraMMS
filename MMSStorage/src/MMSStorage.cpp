@@ -1965,10 +1965,10 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 	int64_t ingestionJobKey, string tarBinaryPathName, string workspaceIngestionRepository, string sourcePathName
 )
 {
-	// tarBinaryPathName like /var/catramms/storage/IngestionRepository/users/2/1449874_source.tar.gz
-	// workspaceIngestionRepository like /var/catramms/storage/IngestionRepository/users/2
+	// tarBinaryPathName like /var/mms/storage/IngestionRepository/users/2/1449874_source.tar.gz
+	// workspaceIngestionRepository like /var/mms/storage/IngestionRepository/users/2
 	// sourcePathName:
-	// /var/catramms/storage/MMSWorkingAreaRepository/Staging/2_1449859_virtualVOD_2022_08_11_12_41_46_0212/1449859_liveRecorderVirtualVOD.tar.gz
+	// /var/mms/storage/MMSWorkingAreaRepository/Staging/2_1449859_virtualVOD_2022_08_11_12_41_46_0212/1449859_liveRecorderVirtualVOD.tar.gz
 
 	string executeCommand;
 	try
@@ -2114,8 +2114,8 @@ void MMSStorage::manageTarFileInCaseOfIngestionOfSegments(
 		}
 
 		// rename directory generated from tar: from user_tar_filename to 1247848_source
-		// Example from /var/catramms/storage/IngestionRepository/users/1/9670725_liveRecorderVirtualVOD
-		//	to /var/catramms/storage/IngestionRepository/users/1/9676038_source
+		// Example from /var/mms/storage/IngestionRepository/users/1/9670725_liveRecorderVirtualVOD
+		//	to /var/mms/storage/IngestionRepository/users/1/9676038_source
 		{
 			fs::path sourceDirectory = workIngestionDirectory;
 			sourceDirectory /= sourceFileName;

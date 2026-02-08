@@ -9,7 +9,7 @@ fi
 
 currentDir=$(pwd)
 
-cd /opt/catramms
+cd /opt/mms
 
 serviceFileName=$1
 conf=$2

@@ -26,7 +26,7 @@
 					"label": "${titleOfImage_1}",
 					"type": "Add-Content",
 					"parameters": {
-						"sourceURL": "copy:///home/mms/catramms/CatraMMS/samples/free-logo.jpg",
+						"sourceURL": "copy:///home/mms/mms/MMS/samples/free-logo.jpg",
 						"fileFormat": "jpg",
 						"contentType": "image",
 						"userData": { "MyData": "this is my image data" },

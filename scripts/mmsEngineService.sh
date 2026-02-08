@@ -42,7 +42,7 @@ sleepIfNeeded()
 }
 
 
-PIDFILE=/var/catramms/pids/mmsEngineService.pid
+PIDFILE=/var/mms/pids/mmsEngineService.pid
 
 if [ "$2" == "nodaemon" ]
 then
@@ -51,12 +51,12 @@ else
 	OPTIONS="--pidfile $PIDFILE"
 fi
 
-CatraMMS_PATH=/opt/catramms
+MMS_PATH=/opt/mms
 source ~/mms/conf/mms-env.sh
 
 #used by ImageMagick to look for the configuration files
-export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick/etc/ImageMagick-7
-export MAGICK_HOME=$CatraMMS_PATH/ImageMagick
+export MAGICK_CONFIGURE_PATH=$MMS_PATH/ImageMagick/etc/ImageMagick-7
+export MAGICK_HOME=$MMS_PATH/ImageMagick
 
 #When Image Magick read a png file we had the error 'error bad parameters to zlib'
 #This is probable because of more than one libz available or it is related
@@ -64,7 +64,7 @@ export MAGICK_HOME=$CatraMMS_PATH/ImageMagick
 #we can try to remove the next export
 export LD_PRELOAD=libz.so.1
 
-export LD_LIBRARY_PATH=$CatraMMS_PATH/CatraMMS/lib:$CatraMMS_PATH/libpqxx/lib:$CatraMMS_PATH/ImageMagick/lib:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64:$CatraMMS_PATH/jsoncpp/lib:$CatraMMS_PATH/opencv/lib64:$CatraMMS_PATH/opencv/lib:$CatraMMS_PATH/aws-sdk-cpp/lib
+export LD_LIBRARY_PATH=$MMS_PATH/MMS/lib:$MMS_PATH/libpqxx/lib:$MMS_PATH/ImageMagick/lib:$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64:$MMS_PATH/jsoncpp/lib:$MMS_PATH/opencv/lib64:$MMS_PATH/opencv/lib:$MMS_PATH/aws-sdk-cpp/lib
 
 processorShutdownPathName=/tmp/processorShutdown.txt
 
@@ -78,10 +78,10 @@ then
 	#2. run mmsEngineService as nodaemon with '&' to run as background
 	#3. waiting the core
 	#ulimit -c unlimited
-	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService $OPTIONS /opt/catramms/CatraMMS/conf/mms.cfg
+	$MMS_PATH/MMS/bin/mmsEngineService $OPTIONS /opt/mms/MMS/conf/mms.cfg
 elif [ "$command" == "resetdata" ]
 then
-	$CatraMMS_PATH/CatraMMS/bin/mmsEngineService --resetdata /opt/catramms/CatraMMS/conf/mms.cfg
+	$MMS_PATH/MMS/bin/mmsEngineService --resetdata /opt/mms/MMS/conf/mms.cfg
 elif [ "$command" == "status" ]
 then
 	ps -ef | grep "mmsEngineService" | grep -v grep | grep -v status

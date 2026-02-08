@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source /opt/catramms/CatraMMS/scripts/servicesStatusLibrary.sh
+source /opt/mms/MMS/scripts/servicesStatusLibrary.sh
 
 if [ $# -eq 0 ]
 then

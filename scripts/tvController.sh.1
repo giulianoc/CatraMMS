@@ -2,15 +2,15 @@
 
 #RUN AS ROOR
 
-export CatraMMS_PATH=/opt/catramms
-export CatraMMS_PATH=/opt/catrasoftware/deploy
-#aggiungere mkdir /var/catramms/satellite
-#aggiungere mkdir /var/catramms/logs/satellite
+export MMS_PATH=/opt/mms
+export MMS_PATH=/opt/catrasoftware/deploy
+#aggiungere mkdir /var/mms/satellite
+#aggiungere mkdir /var/mms/logs/satellite
 #aggiungere retention per i log file del satellite
 #i file di log potrebbero crescere troppo? questa é una omanda in generale
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
-export PATH=$PATH:$CatraMMS_PATH/ffmpeg/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+export PATH=$PATH:$MMS_PATH/ffmpeg/bin
 
 
 #mmsEncoder
@@ -24,7 +24,7 @@ export PATH=$PATH:$CatraMMS_PATH/ffmpeg/bin
 #		His content will be: <PID video>:<PID audio>
 #2. when the frequency-channel stops, the extension of the file is renamed from active to removed
 
-dvbChannelsPathName=/opt/catramms/CatraMMS/conf/dvb_channels.conf
+dvbChannelsPathName=/opt/mms/MMS/conf/dvb_channels.conf
 
 debug=0
 
@@ -82,7 +82,7 @@ getActualDeviceNumber()
 
 
 
-satelliteChannelsDir=/var/catramms/satellite
+satelliteChannelsDir=/var/mms/satellite
 
 satelliteFrequencies=$(ls $satelliteChannelsDir)
 for satelliteFrequency in $satelliteFrequencies
@@ -91,7 +91,7 @@ do
 		echo "satelliteFrequency: $satelliteFrequency"
 	fi
 
-	pidZapPathName=/var/catramms/pids/satellite_$satelliteFrequency"_zap.pid"
+	pidZapPathName=/var/mms/pids/satellite_$satelliteFrequency"_zap.pid"
 
 	zapToBeStarted=0
 
@@ -190,7 +190,7 @@ do
 		echo "ffmpegCommandChanged: $ffmpegCommandChanged, activesNumber: $activesNumber"
 	fi
 
-	pidFfmpegPathName=/var/catramms/pids/satellite_$satelliteFrequency"_ffmpeg.pid"
+	pidFfmpegPathName=/var/mms/pids/satellite_$satelliteFrequency"_ffmpeg.pid"
 	if [ $ffmpegCommandChanged -eq 1 ]
 	then
 		if [ -s "$pidFfmpegPathName" ]
@@ -213,7 +213,7 @@ do
 					echo "dvbv5-zap. satelliteFrequency: $satelliteFrequency, deviceNumber: $deviceNumber, dvbChannelsPathName: $dvbChannelsPathName"
 				fi
 
-				logPathName=/var/catramms/logs/satellite/$satelliteFrequency"_zap.log"
+				logPathName=/var/mms/logs/satellite/$satelliteFrequency"_zap.log"
 				nohup dvbv5-zap $satelliteFrequency -a $deviceNumber -ss --all-pids -c $dvbChannelsPathName > $logPathName 2>&1 &
 				echo $! > $pidZapPathName
 			fi
@@ -222,7 +222,7 @@ do
 				echo "ffmpeg. deviceNumber: $deviceNumber, ffmpegMapParameters: $ffmpegMapParameters"
 			fi
 
-			logPathName=/var/catramms/logs/satellite/$satelliteFrequency"_ffmpeg.log"
+			logPathName=/var/mms/logs/satellite/$satelliteFrequency"_ffmpeg.log"
 			nohup ffmpeg -i /dev/dvb/adapter$deviceNumber/dvr0 $ffmpegMapParameters > $logPathName 2>&1 &
 			echo $! > $pidFfmpegPathName
 		else
@@ -271,7 +271,7 @@ do
 					echo "dvbv5-zap. satelliteFrequency: $satelliteFrequency, deviceNumber: $deviceNumber, dvbChannelsPathName: $dvbChannelsPathName"
 				fi
 
-				logPathName=/var/catramms/logs/satellite/$satelliteFrequency"_zap.log"
+				logPathName=/var/mms/logs/satellite/$satelliteFrequency"_zap.log"
 				nohup dvbv5-zap $satelliteFrequency -a $deviceNumber -ss --all-pids -c $dvbChannelsPathName > $logPathName 2>&1 &
 				echo $! > $pidZapPathName
 			fi

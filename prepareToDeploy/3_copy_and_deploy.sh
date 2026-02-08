@@ -10,17 +10,21 @@ requestedServerName=$2
 
 date
 
+MMSOPT="/opt/mms"
+MMSVAR="/var/mms"
+
 version=$(cat ./version.txt)
 
 currentDir=$(pwd)
-moduleName=$(basename $currentDir)
+#moduleName=$(basename $currentDir)
+destModuleName=MMS
 
 #linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
 ##linuxName using centos will be "centos", next remove "
 #linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 2, length($0) - 2)); else printf("%s", $0) }')
 
 #tarFileName=$moduleName-$version-$linuxName.tar.gz
-tarFileName=$moduleName-$version.tar.gz
+tarFileName=destModuleName-$version.tar.gz
 
 source /opt/catrasoftware/CatraMMS/scripts/servers.sh
 
@@ -42,17 +46,17 @@ deploy()
 	printf "${RED}"
 	echo $serverName
 	printf "${NC}"
-	scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:/opt/catramms
+	scp -P $serverPort -i ~/ssh-keys/$serverKey.pem /opt/catrasoftware/deploy/$tarFileName mms@$serverAddress:${MMSOPT}
 	echo ""
 
 	echo ""
 	echo ""
 	echo "deploy..."
-	if ! ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "[ -f '/opt/catramms/CatraMMS/scripts/deploy.sh' ]"; then
-		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tar xfz /opt/catramms/$tarFileName -C /opt/catramms"
-		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "ln -s /opt/catramms/$moduleName-$version /opt/catramms/CatraMMS"
+	if ! ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "[ -f '${MMSOPT}/${destModuleName}/scripts/deploy.sh' ]"; then
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "tar xfz ${MMSOPT}/$tarFileName -C ${MMSOPT}"
+		ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "ln -s ${MMSOPT}/$moduleName-$version ${MMSOPT}/${destModuleName}"
 	fi
-	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "/opt/catramms/CatraMMS/scripts/deploy.sh $version"
+	ssh -p $serverPort -i ~/ssh-keys/$serverKey.pem mms@$serverAddress "${MMSOPT}/${destModuleName}/scripts/deploy.sh $version"
 
 	#if [ "$serverType" = "api" -o "$serverType" = "api-and-delivery" -o "$serverType" = "delivery" ]; then
 	#	tailCommand="tail -f logs/mmsAPI/mmsAPI-error.log"
@@ -154,13 +158,13 @@ fi
 #echo -n "Load package to MMSRepository-free (ubuntu 22.04)? " 
 #read deploy
 #if [ "$deploy" == "y" ]; then
-#	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@168.119.250.162:/var/catramms/storage/MMSRepository-free/packages/ubuntu-22.04
+#	scp -P 9255 -i ~/ssh-keys/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@168.119.250.162:/var/mms/storage/MMSRepository-free/packages/ubuntu-22.04
 #fi
 
 echo -n "Load package to MMSRepository-free (ubuntu 24.04)? " 
 read deploy
 if [ "$deploy" == "y" ]; then
 	#delivery-binary-gui-2
-	scp -P 9255 -i ~/ssh-keys/mms/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@116.202.53.105:/var/catramms/storage/MMSRepository-free/packages/ubuntu-24.04
+	scp -P 9255 -i ~/ssh-keys/mms/hetzner-mms-key.pem /opt/catrasoftware/deploy/$tarFileName mms@116.202.53.105:${MMSVAR}/storage/MMSRepository-free/packages/ubuntu-24.04
 fi
 

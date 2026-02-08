@@ -2,7 +2,7 @@
 
 if [ $# -ne 1 ]
 then
-    echo "$(date): usage $0 <catramms version, i.e.: 1.0.0>"
+    echo "$(date): usage $0 <mms version, i.e.: 1.0.0>"
 
     exit
 fi
@@ -29,7 +29,7 @@ sleepIfNeeded()
 
 removePreviousVersions()
 {
-	currentPathNameVersion=$(readlink -f /opt/catramms/CatraMMS)
+	currentPathNameVersion=$(readlink -f /opt/mms/MMS)
 	if [ "${currentPathNameVersion}" != "" ];
 	then
 		tenDaysInMinutes=14400
@@ -37,8 +37,8 @@ removePreviousVersions()
 		echo ""
 		echo "------------------------------------------------------------------------------------------------------------------------------------------"
 		echo "Remove previous versions (retention $tenDaysInMinutes)"
-		echo "find /opt/catramms -maxdepth 1 -mmin +$tenDaysInMinutes -name \"CatraMMS-*\" -not -path \"${currentPathNameVersion}*\" -exec rm -rf {} \;"
-		find /opt/catramms -maxdepth 1 -mmin +$tenDaysInMinutes -name "CatraMMS-*" -not -path "${currentPathNameVersion}*" -exec rm -rf {} \;
+		echo "find /opt/mms -maxdepth 1 -mmin +$tenDaysInMinutes -name \"MMS-*\" -not -path \"${currentPathNameVersion}*\" -exec rm -rf {} \;"
+		find /opt/mms -maxdepth 1 -mmin +$tenDaysInMinutes -name "MMS-*" -not -path "${currentPathNameVersion}*" -exec rm -rf {} \;
 	fi
 }
 
@@ -47,13 +47,13 @@ removePreviousVersions()
 ##linuxName using centos will be "centos", next remove "
 #linuxName=$(echo $linuxName | awk '{ if (substr($0, 0, 1) == "\"") printf("%s", substr($0, 2, length($0) - 2)); else printf("%s", $0) }')
 
-#if [ ! -f "/opt/catramms/CatraMMS-$version-$linuxName.tar.gz" ]; then
-#    echo "/opt/catramms/CatraMMS-$version-$linuxName.tar.gz does not exist."
+#if [ ! -f "/opt/mms/MMS-$version-$linuxName.tar.gz" ]; then
+#    echo "/opt/mms/MMS-$version-$linuxName.tar.gz does not exist."
 
 #	exit
 #fi
-if [ ! -f "/opt/catramms/CatraMMS-$version.tar.gz" ]; then
-    echo "/opt/catramms/CatraMMS-$version.tar.gz does not exist."
+if [ ! -f "/opt/mms/MMS-$version.tar.gz" ]; then
+    echo "/opt/mms/MMS-$version.tar.gz does not exist."
 
 	exit
 fi
@@ -66,25 +66,25 @@ echo "--------------------------------------------------------------------------
 echo "mmsStopAll.sh"
 ~/mmsStopALL.sh
 
-echo "cd /opt/catramms"
-cd /opt/catramms
+echo "cd /opt/mms"
+cd /opt/mms
 
-echo "rm -f CatraMMS"
-rm -f CatraMMS
+echo "rm -f MMS"
+rm -f MMS
 
 sleep 1
 
-#echo "tar xvfz CatraMMS-$version-$linuxName.tar.gz"
-#tar xvfz CatraMMS-$version-$linuxName.tar.gz
+#echo "tar xvfz MMS-$version-$linuxName.tar.gz"
+#tar xvfz MMS-$version-$linuxName.tar.gz
 echo ""
 echo "------------------------------------------------------------------------------------------------------------------------------------------"
-echo "tar xfz CatraMMS-$version.tar.gz"
-tar xfz CatraMMS-$version.tar.gz
+echo "tar xfz MMS-$version.tar.gz"
+tar xfz MMS-$version.tar.gz
 
 echo ""
 echo ""
-echo "ln -s CatraMMS-$version CatraMMS"
-ln -s CatraMMS-$version CatraMMS
+echo "ln -s MMS-$version MMS"
+ln -s MMS-$version MMS
 
 cd
 

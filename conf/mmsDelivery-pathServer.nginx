@@ -1,8 +1,8 @@
 
-	access_log   /var/catramms/logs/nginx/mms-delivery-path.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-delivery-path.error.log error;
+	access_log   /var/mms/logs/nginx/mms-delivery-path.access.log main;
+	error_log    /var/mms/logs/nginx/mms-delivery-path.error.log error;
 
-	root /var/catramms/storage/MMSRepository/;
+	root /var/mms/storage/MMSRepository/;
 
 	#nel caso di un externalDelivery abbiamo solo il servizion nginx di delivery-path running, non abbiamo il servizio di api
 	#Viene aggiunto quindi l'api status solo per verificare che l'agent sia up and running
@@ -93,7 +93,7 @@
 
 		#the api fastcgi listen to 8010 port (see scripts/mmsApi.sh)
 		fastcgi_pass   127.0.0.1:8010;
-		include /opt/catramms/nginx/conf/fastcgi_params;
+		include /opt/mms/nginx/conf/fastcgi_params;
 	}
 
 	#match qualunque URL o URI che inizia con /

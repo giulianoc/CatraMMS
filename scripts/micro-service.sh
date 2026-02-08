@@ -18,11 +18,11 @@ then
 	exit
 fi
 
-PIDFILE=/var/catramms/pids/$serviceName.pid
+PIDFILE=/var/mms/pids/$serviceName.pid
 
 if [ "$command" == "start" ]
 then
-	/opt/catramms/$serviceName-0.1/bin/$serviceName &
+	/opt/mms/$serviceName-0.1/bin/$serviceName &
 	pid=$!
 	echo "$pid" > $PIDFILE
 elif [ "$command" == "status" ]

@@ -8,8 +8,8 @@
 	"parameters": {
 		// mandatory in case of a pull (http/https/ftp/ftps/move/mv/copy/cp/externalStorage)
 		//	externalStorage means that the relative path is referring a content that is into
-		//		an external storage. The external storage is mounted inside /var/catramms/storage/MMSRepository
-		//		as ExternalStorage_<workspace key>, in the RSI customer, inside /var/catramms/storage/MMSRepository
+		//		an external storage. The external storage is mounted inside /var/mms/storage/MMSRepository
+		//		as ExternalStorage_<workspace key>, in the RSI customer, inside /var/mms/storage/MMSRepository
 		//		we have ExternalStorage_8 -> /mnt/soa/.
 		//		The external storage, from the MMS point of view, it is just a 'read only' storage.
 		"sourceURL": "http://myhost/example.mp4",

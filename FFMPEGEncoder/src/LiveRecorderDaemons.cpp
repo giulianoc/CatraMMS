@@ -2271,7 +2271,7 @@ long LiveRecorderDaemons::buildAndIngestVirtualVOD(
 	int64_t liveRecorderIngestionJobKey, int64_t liveRecorderEncodingJobKey, bool externalEncoder,
 
 	string sourceSegmentsDirectoryPathName, string sourceManifestFileName,
-	// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
+	// /var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/.../content
 	string stagingLiveRecorderVirtualVODPathName,
 
 	int64_t recordingCode, string liveRecorderIngestionJobLabel, string liveRecorderVirtualVODUniqueName, string liveRecorderVirtualVODRetention,

@@ -1,6 +1,6 @@
 
-	access_log   /var/catramms/logs/nginx/mms-webapi.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-webapi.error.log error;
+	access_log   /var/mms/logs/nginx/mms-webapi.access.log main;
+	error_log    /var/mms/logs/nginx/mms-webapi.error.log error;
 
 	#defines the shared memory zone used for storing the cache keys and other metadata
 	proxy_cache webapi_cache;

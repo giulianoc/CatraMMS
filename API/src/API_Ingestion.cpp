@@ -2789,7 +2789,7 @@ void API::uploadedBinary(
 		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
 
 		// sourceBinaryPathFile will be something like:
-		// /var/catramms/storage/nginxWorkingAreaRepository/0000001023
+		// /var/mms/storage/nginxWorkingAreaRepository/0000001023
 		string sourceBinaryPathFile = requestData.getHeaderParameter("x-file", string(""), true);
 
 		// Content-Range: bytes 0-99999/100000

@@ -1473,7 +1473,7 @@ void API::loadConfiguration(const json &configurationRoot, FileUploadProgressDat
 	try
 	{
 		{
-			fs::path versionPathFileName = "/opt/catramms/CatraMMS/version.txt";
+			fs::path versionPathFileName = "/opt/mms/MMS/version.txt";
 			if (fs::exists(versionPathFileName) && fs::is_regular_file(versionPathFileName))
 			{
 				ifstream f(versionPathFileName);

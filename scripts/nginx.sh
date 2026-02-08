@@ -20,7 +20,7 @@ then
 	exit
 fi
 
-export CatraMMS_PATH=/opt/catramms
+export MMS_PATH=/opt/mms
 
 if [ "$command" == "start" ]
 then
@@ -30,13 +30,13 @@ then
 		#abbiamo impostato in /etc/security/limits.conf 65536 per mms. Se nginx parte con sudo non usa questo setting, per cui forziamo qui il setting
 		sudo bash -c "
 		ulimit -n 65536
-		export LD_LIBRARY_PATH='$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64'
-		'$CatraMMS_PATH/nginx/sbin/nginx' -p '$CatraMMS_PATH/nginx'
+		export LD_LIBRARY_PATH='$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64'
+		'$MMS_PATH/nginx/sbin/nginx' -p '$MMS_PATH/nginx'
 		"
-		#$sudoToBeUsed LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
+		#$sudoToBeUsed LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx
 	else
-		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
-		$CatraMMS_PATH/nginx/sbin/nginx -p $CatraMMS_PATH/nginx
+		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+		$MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx
 	fi
 elif [ "$command" == "status" ]
 then
@@ -46,20 +46,20 @@ then
 	if [ "$sudoToBeUsed" == "sudo" ]
 	then
 		sudo bash -c "
-		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
-	  $CatraMMS_PATH/nginx/sbin/nginx -s stop -p $CatraMMS_PATH/nginx
+		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+	  $MMS_PATH/nginx/sbin/nginx -s stop -p $MMS_PATH/nginx
 		"
-		#sudo LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -s stop
+		#sudo LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -s stop
 	else
-		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
-		timeout 15 $CatraMMS_PATH/nginx/sbin/nginx -s stop
+		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+		timeout 15 $MMS_PATH/nginx/sbin/nginx -s stop
 		if [ $? -eq 124 ]
 		then
 			#timeout expired, let's try a kill
 			pkill nginx
 		fi
 	fi
-	#PIDFILE=$(cat $CatraMMS_PATH/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)
+	#PIDFILE=$(cat $MMS_PATH/nginx/conf/nginx.conf | grep -Ev '^\s*#' | awk 'BEGIN { RS="[;{}]" } { if ($1 == "pid") print $2 }' | head -n1)
 	##echo $PIDFILE
 	##sudo start-stop-daemon --stop --quiet  --retry=TERM/30/KILL/5 --pidfile $PID --name nginx
 	#sudo kill -QUIT $( cat $PIDFILE )
@@ -68,10 +68,10 @@ elif [ "$command" == "reload" ]
 then
 	if [ "$sudoToBeUsed" == "sudo" ]
 	then
-		sudo LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64 $CatraMMS_PATH/nginx/sbin/nginx -s reload
+		sudo LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -s reload
 	else
-		export LD_LIBRARY_PATH=$CatraMMS_PATH/ffmpeg/lib:$CatraMMS_PATH/ffmpeg/lib64
-		$CatraMMS_PATH/nginx/sbin/nginx -s reload
+		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+		$MMS_PATH/nginx/sbin/nginx -s reload
 	fi
 fi
 

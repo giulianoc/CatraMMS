@@ -1,14 +1,14 @@
 #!/bin/bash
 
-CatraMMS_PATH=/opt/catramms
+MMS_PATH=/opt/mms
 
 #used by ImageMagick to look for the configuration files
-export MAGICK_CONFIGURE_PATH=$CatraMMS_PATH/ImageMagick/etc/ImageMagick-7
+export MAGICK_CONFIGURE_PATH=$MMS_PATH/ImageMagick/etc/ImageMagick-7
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CatraMMS_PATH/ImageMagick/lib
-export PATH=$PATH:$CatraMMS_PATH/ImageMagick/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$MMS_PATH/ImageMagick/lib
+export PATH=$PATH:$MMS_PATH/ImageMagick/bin
 
 
-#$CatraMMS_PATH/ImageMagick/bin/convert LogoRSI.png LogoRSI.jpg
+#$MMS_PATH/ImageMagick/bin/convert LogoRSI.png LogoRSI.jpg
 
 

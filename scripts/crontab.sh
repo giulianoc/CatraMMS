@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CatraMMS_PATH=/opt/catramms
+export MMS_PATH=/opt/mms
 source ~/mms/conf/mms-env.sh
 
 #Retention (3 days: 4320 mins, 1 day: 1440 mins, 12 ore: 720 mins)
@@ -80,15 +80,15 @@ then
 	ubuntuVersion=$(cat /etc/lsb-release | grep -i RELEASE | cut -d'=' -f2 | cut -d'.' -f1)
 	if [ $ubuntuVersion -eq 18 ]
 	then
-		sudo /usr/bin/certbot --quiet renew --pre-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh stop" --post-hook "$CatraMMS_PATH/CatraMMS/scripts/nginx.sh start"
+		sudo /usr/bin/certbot --quiet renew --pre-hook "$MMS_PATH/MMS/scripts/nginx.sh stop" --post-hook "$MMS_PATH/MMS/scripts/nginx.sh start"
 	else
-		export LD_LIBRARY_PATH=/opt/catramms/ffmpeg/lib && sudo certbot --quiet renew  --nginx-ctl /opt/catramms/nginx/sbin/nginx --nginx-server-root /opt/catramms/nginx/conf
+		export LD_LIBRARY_PATH=/opt/mms/ffmpeg/lib && sudo certbot --quiet renew  --nginx-ctl /opt/mms/nginx/sbin/nginx --nginx-server-root /opt/mms/nginx/conf
 	fi
 else
 	if [ $commandIndex -eq 1 ]
 	then
 		#first manage catalina.out file size if present
-		file=/var/catramms/logs/tomee-gui/catalina.out
+		file=/var/mms/logs/tomee-gui/catalina.out
 		if [ -f "$file" ]
 		then
 			fileSizeInMegaBytes=$(du -m "$file" | awk '{print $1}')
@@ -105,8 +105,8 @@ else
 			timeoutInMinutes=$twentyDaysInMinutes
 		fi
 
-		retentionOnFileByBlocks "-L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -print"
-		#commandToBeExecuted="find -L /var/catramms/logs/ -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "-L /var/mms/logs/ -mmin +$timeoutInMinutes -type f -print"
+		#commandToBeExecuted="find -L /var/mms/logs/ -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 2 ]
 	then
@@ -117,11 +117,11 @@ else
 
 		#serve per eliminare i file temporanei generati a causa di p:fileUpload non terminati.
 		#Quelli che terminano vengono automaticamente eliminati.
-		retentionOnFileByBlocks "/opt/catramms/tomee/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f"
-		#find /opt/catramms/tomee/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete -print >> $debugFilename
+		retentionOnFileByBlocks "/opt/mms/tomee/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f"
+		#find /opt/mms/tomee/work/Catalina/localhost/catramms/ -mmin +$timeoutInMinutes -type f -delete -print >> $debugFilename
 
-		retentionOnFileByBlocks "/var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f"
-		#commandToBeExecuted="find /var/catramms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f"
+		#commandToBeExecuted="find /var/mms/storage/MMSGUI/temporaryPushUploads/ -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 3 ]
 	then
@@ -131,8 +131,8 @@ else
 		fi
 
 		# retention IngestionRepository for directories is nr. 8
-		retentionOnFileByBlocks "/var/catramms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f"
-		#commandToBeExecuted="find /var/catramms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f"
+		#commandToBeExecuted="find /var/mms/storage/IngestionRepository/ -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 4 ]
 	then
@@ -144,8 +144,8 @@ else
 		#2023-06-01: mantenere un numero di ore alto. Infatti, per video molto grandi,
 		#	una volta terminati, serve molto tempo solo per fare la getMediaInfo e la move ed in questo periodo rimarrebbero qui
 		#	senza cambiamenti e quindi, con 1h o 2h come timeout sarebbero eliminati prima di terminare la getMediaInfo/move causando un errore
-		retentionOnFileByBlocks "/var/catramms/storage/MMSWorkingAreaRepository/ -mmin +$timeoutInMinutes -type f"
-		#commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/ -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSWorkingAreaRepository/ -mmin +$timeoutInMinutes -type f"
+		#commandToBeExecuted="find /var/mms/storage/MMSWorkingAreaRepository/ -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 5 ]
 	then
@@ -160,10 +160,10 @@ else
 		#6 mesi di timeout potrebbero non essere sufficienti, spesso si esegue il VODProxy per anni!!!
 		#Bisogna anche dire che proabilmente, per ogni nuovo deploy dell'encoder, questi files vengono riscritti.
 		#Commentiamo per ora
-		#find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete -print >> $debugFilename
+		#find /var/mms/storage/MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist/ -mmin +$sixMonthsInMinutes -type f -delete -print >> $debugFilename
 
-		retentionOnFileByBlocks "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f"
-		#commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f"
+		#commandToBeExecuted="find /var/mms/storage/MMSTranscoderWorkingAreaRepository/ffmpeg/ -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 6 ]
 	then
@@ -174,8 +174,8 @@ else
 			timeoutInMinutes=$oneDayInMinutes
 		fi
 
-		retentionOnFileByBlocks "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f"
-		#commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f"
+		#commandToBeExecuted="find /var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	#2023-06-01: eliminata perchè già presente con commandIndex 4. Inoltre oneHour è troppo poco, per video molto grandi,
 	#	una volta terminati, serve molto tempo solo per fare la getMediaInfo e la move ed in questo periodo rimarrebbero qui
@@ -187,7 +187,7 @@ else
 	#		timeoutInMinutes=$oneHourInMinutes
 	#	fi
 
-	#	commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete -print"
+	#	commandToBeExecuted="find /var/mms/storage/MMSWorkingAreaRepository/Staging/ -mmin +$timeoutInMinutes -type f -delete -print"
 	#	timeoutValue="1h"
 	elif [ $commandIndex -eq 8 ]
 	then
@@ -198,8 +198,8 @@ else
 
 		# retention IngestionRepository for files is nr. 3
 		# 	-mindepth 2 -maxdepth 2: cerca solo nelle directory users/*/*, Non fai espandere */* alla shell → molto più veloce e sicuro
-		retentionOnFileByBlocks "/var/catramms/storage/IngestionRepository/users/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d"
-		#commandToBeExecuted="find /var/catramms/storage/IngestionRepository/users/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/IngestionRepository/users/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d"
+		#commandToBeExecuted="find /var/mms/storage/IngestionRepository/users/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 9 ]
 	then
@@ -209,8 +209,8 @@ else
 		fi
 
 		# 	-mindepth 2 -maxdepth 2: cerca solo nelle directory MMS_????/*/*, Non fai espandere */* alla shell → molto più veloce e sicuro
-		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMS_????/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d"
-		#commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMS_????/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSRepository/MMS_????/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d"
+		#commandToBeExecuted="find /var/mms/storage/MMSRepository/MMS_????/ -mindepth 2 -maxdepth 2 -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 10 ]
 	then
@@ -228,8 +228,8 @@ else
 		#	- a causa di un piccolo timeout qui, la directory in MMSWorkingAreaRepository/Staging viene rimossa
 		#	- quando finalmente è arrivato il flusso di streaming, la copia dei chunks in Staging falliva perchè
 		#		non esisteva piu la directory (rimossa dal comando find ... -delete)
-		retentionOnFileByBlocks "/var/catramms/storage/MMSWorkingAreaRepository/Staging -not -path /var/catramms/storage/MMSWorkingAreaRepository/Staging -empty -mmin +$timeoutInMinutes -type d"
-		#commandToBeExecuted="find /var/catramms/storage/MMSWorkingAreaRepository/Staging -not -path /var/catramms/storage/MMSWorkingAreaRepository/Staging -empty -mmin +$timeoutInMinutes -type d -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSWorkingAreaRepository/Staging -not -path /var/mms/storage/MMSWorkingAreaRepository/Staging -empty -mmin +$timeoutInMinutes -type d"
+		#commandToBeExecuted="find /var/mms/storage/MMSWorkingAreaRepository/Staging -not -path /var/mms/storage/MMSWorkingAreaRepository/Staging -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 11 ]
 	then
@@ -241,26 +241,26 @@ else
 		fi
 
 		#2019-05-06: moved from 720 min to 360 min because we had the 'Argument list too long' error
-		retentionOnFileByBlocks "/var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d"
-		#commandToBeExecuted="find /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d"
+		#commandToBeExecuted="find /var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 12 ]
 	then
 		DATE=$(date +%Y-%m-%d)
-		DIRPATHNAME=/var/catramms/logs/nginx/$DATE
+		DIRPATHNAME=/var/mms/logs/nginx/$DATE
 		if [ ! -d "$DIRPATHNAME" ]; then
 			mkdir $DIRPATHNAME
-			mv /var/catramms/logs/nginx/*.log $DIRPATHNAME
+			mv /var/mms/logs/nginx/*.log $DIRPATHNAME
 
 			#BE CAREFULL SUDO MAY ASK PASSWORD. 
 			#Add the command '.../crontab.rsi.sh 12' to 'sudo crontab -e'
-			#sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
-			nginxUser=$(stat -c "%U" /proc/$(cat /var/catramms/pids/nginx.pid))
+			#sudo kill -USR1 $(cat /var/mms/pids/nginx.pid)
+			nginxUser=$(stat -c "%U" /proc/$(cat /var/mms/pids/nginx.pid))
 			if [ "$nginxUser" = "root" ]; then
 				#nel caso di externalDelivery lo user è root
-				sudo kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+				sudo kill -USR1 $(cat /var/mms/pids/nginx.pid)
 			else
-				kill -USR1 $(cat /var/catramms/pids/nginx.pid)
+				kill -USR1 $(cat /var/mms/pids/nginx.pid)
 			fi
 		fi
 
@@ -270,8 +270,8 @@ else
 			timeoutInMinutes=$twentyDaysInMinutes
 		fi
 
-		retentionOnFileByBlocks "/var/catramms/logs/nginx/ -mmin +$timeoutInMinutes -type d"
-		#commandToBeExecuted="find /var/catramms/logs/nginx/ -mmin +$timeoutInMinutes -type d -print -exec rm -rv {} +"
+		retentionOnFileByBlocks "/var/mms/logs/nginx/ -mmin +$timeoutInMinutes -type d"
+		#commandToBeExecuted="find /var/mms/logs/nginx/ -mmin +$timeoutInMinutes -type d -print -exec rm -rv {} +"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 13 ]
 	then
@@ -282,8 +282,8 @@ else
 
 		#ho tolto -maxdepth 1 perchè altrimenti venivano eliminati solo i files che si trovano direttamente dentro .../MMSRepository/MMSLive/
 		#Nel mio caso ho files in sottodirectory interne a .../MMSRepository/MMSLive/ rimasti vecchi che devono essere rimossi
-		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -mmin +$timeoutInMinutes -type f"
-		#commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -mmin +$timeoutInMinutes -type f -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSRepository/MMSLive/ -mindepth 1 -mmin +$timeoutInMinutes -type f"
+		#commandToBeExecuted="find /var/mms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -mmin +$timeoutInMinutes -type f -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 14 ]
 	then
@@ -294,8 +294,8 @@ else
 
 		#ho tolto -maxdepth 1 perchè altrimenti venivano eliminati solo le dir vuote che si trovano direttamente dentro .../MMSRepository/MMSLive/
 		#Nel mio caso ho dir in sottodirectory interne a .../MMSRepository/MMSLive/ rimasti vecchie che devono essere rimosse
-		retentionOnFileByBlocks "/var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -empty -mmin +$timeoutInMinutes -type d"
-		#commandToBeExecuted="find /var/catramms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d -delete -print"
+		retentionOnFileByBlocks "/var/mms/storage/MMSRepository/MMSLive/ -mindepth 1 -empty -mmin +$timeoutInMinutes -type d"
+		#commandToBeExecuted="find /var/mms/storage/MMSRepository/MMSLive/ -mindepth 1 -maxdepth 1 -empty -mmin +$timeoutInMinutes -type d -delete -print"
 		#timeoutValue="1h"
 	elif [ $commandIndex -eq 15 ]
 	then
@@ -308,7 +308,7 @@ else
 
 		#2020-12-09: added / at the end of dumpDirectory (because it is a link,
 		#'find' would not work)
-		#dumpDirectory=/var/catramms/storage/dbDump/
+		#dumpDirectory=/var/mms/storage/dbDump/
 		arrayOfDBUserPwd=($dbDetails)
 		dbUserPwdNumber="${#arrayOfDBUserPwd[@]}"
 		dbUserPwdIndex=0

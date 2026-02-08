@@ -13,13 +13,13 @@ server {
 	#listen 80;
 	listen 443 ssl http2;
 
-	access_log   /var/catramms/logs/nginx/mms-api-load-balancer.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-api-load-balancer.error.log error;
+	access_log   /var/mms/logs/nginx/mms-api-load-balancer.access.log main;
+	error_log    /var/mms/logs/nginx/mms-api-load-balancer.error.log error;
 
 	ssl_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/mms-api.restream.ovh/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	#https://www.keycdn.com/support/nginx-location-directive
 	#match qualunque URL o URI che inizia con /
@@ -46,13 +46,13 @@ server {
 	#listen 80;
 	listen 443 ssl http2;
 
-	access_log   /var/catramms/logs/nginx/mms-gui-load-balancer.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-gui-load-balancer.error.log error;
+	access_log   /var/mms/logs/nginx/mms-gui-load-balancer.access.log main;
+	error_log    /var/mms/logs/nginx/mms-gui-load-balancer.error.log error;
 
 	ssl_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/mms-api.restream.ovh/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	#match qualunque URL o URI che inizia con /
 	location / {
@@ -78,13 +78,13 @@ server {
 	#listen 80;
 	listen 443 ssl http2;
 
-	access_log   /var/catramms/logs/nginx/mms-delivery-load-balancer.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-delivery-load-balancer.error.log error;
+	access_log   /var/mms/logs/nginx/mms-delivery-load-balancer.access.log main;
+	error_log    /var/mms/logs/nginx/mms-delivery-load-balancer.error.log error;
 
 	ssl_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/mms-api.restream.ovh/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	#match qualunque URL o URI che inizia con /
 	location / {
@@ -110,13 +110,13 @@ server {
 	#listen 80;
 	listen 443 ssl http2;
 
-	access_log   /var/catramms/logs/nginx/mms-delivery-f-load-balancer.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-delivery-f-load-balancer.error.log error;
+	access_log   /var/mms/logs/nginx/mms-delivery-f-load-balancer.access.log main;
+	error_log    /var/mms/logs/nginx/mms-delivery-f-load-balancer.error.log error;
 
 	ssl_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
 	ssl_certificate_key /etc/letsencrypt/live/mms-api.restream.ovh/privkey.pem;
 	ssl_trusted_certificate /etc/letsencrypt/live/mms-api.restream.ovh/fullchain.pem;
-	include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	#match qualunque URL o URI che inizia con /
 	location / {
@@ -142,13 +142,13 @@ server {
 	#listen 443 ssl http2;
 	listen 80;
 
-	access_log   /var/catramms/logs/nginx/mms-binary-load-balancer.access.log main;
-	error_log    /var/catramms/logs/nginx/mms-binary-load-balancer.error.log error;
+	access_log   /var/mms/logs/nginx/mms-binary-load-balancer.access.log main;
+	error_log    /var/mms/logs/nginx/mms-binary-load-balancer.error.log error;
 
 	#ssl_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
 	#ssl_certificate_key /etc/letsencrypt/live/mms-gui.restream.ovh/privkey.pem;
 	#ssl_trusted_certificate /etc/letsencrypt/live/mms-gui.restream.ovh/fullchain.pem;
-	#include /opt/catramms/nginx/conf/snippets/ssl-params.conf;
+	#include /opt/mms/nginx/conf/snippets/ssl-params.conf;
 
 	#match qualunque URL o URI che inizia con /
 	location / {

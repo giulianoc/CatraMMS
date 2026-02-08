@@ -475,7 +475,7 @@ int64_t FFMPEGEncoderTask::ingestContentByPushingBinary(
 		if (fileFormat == "hls")
 		{
 			// binaryPathFileName is a dir like
-			// /var/catramms/storage/MMSTranscoderWorkingAreaRepository/Staging/1_1607526_2022_11_09_09_11_04_0431/content
+			// /var/mms/storage/MMSTranscoderWorkingAreaRepository/Staging/1_1607526_2022_11_09_09_11_04_0431/content
 			// terminating with 'content' as built in MMSEngineProcessor.cpp
 
 			{

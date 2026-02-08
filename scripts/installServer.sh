@@ -172,7 +172,7 @@ install-packages()
 	echo ""
 	apt -y install spawn-fcgi
 
-	#in order to compile CatraMMS (~/dev/CatraMMS) it is needed libcurl-dev:
+	#in order to compile MMS (~/dev/CatraMMS) it is needed libcurl-dev:
 	echo ""
 	read -n 1 -s -r -p "install libcurl4-openssl-dev..."
 	echo ""
@@ -221,7 +221,7 @@ install-packages()
 	apt-get -y install libxcb-xfixes0-dev
 	#apt-get -y install libsndio6.1 (non funziona con ubuntu 20)
 
-	#This is to be able to compile CatraMMS (NOT install in case no compilation has to be done)
+	#This is to be able to compile MMS (NOT install in case no compilation has to be done)
 	#apt-get -y install --no-install-recommends libboost-all-dev
 
 	#used by the opencv package
@@ -991,7 +991,7 @@ install-mms-packages()
 
 	case "$moduleType" in
 		"storage")
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-storage-conf $architecture
 			configure-mms-sysctl $moduleType
 			return
@@ -1003,7 +1003,7 @@ install-mms-packages()
 			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-engine-conf $architecture
 
@@ -1025,7 +1025,7 @@ install-mms-packages()
 			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-api-conf $architecture
 			;;
@@ -1038,7 +1038,7 @@ install-mms-packages()
 			install-mms-tomee-package $architecture
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-delivery-conf $architecture
 			configure-mms-rsync-daemon-package
@@ -1051,7 +1051,7 @@ install-mms-packages()
 			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-externalDelivery-conf $architecture
 			configure-mms-rsync-daemon-package
@@ -1066,7 +1066,7 @@ install-mms-packages()
 			install-mms-tomee-package $architecture
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-api-and-delivery-conf $architecture
 			configure-mms-rsync-daemon-package
@@ -1079,7 +1079,7 @@ install-mms-packages()
 			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-encoder-conf $architecture
 			configure-mms-rsync-daemon-package
@@ -1092,7 +1092,7 @@ install-mms-packages()
 			install-mms-nginx-package $architecture $moduleType
 			install-mms-opencv-package $architecture
 			install-mms-youtube-dl-package $architecture
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-externalEncoder-conf $architecture
 			configure-mms-rsync-daemon-package
@@ -1101,7 +1101,7 @@ install-mms-packages()
 		"integration")
 			install-mms-FFMpeg-package $architecture
 			install-mms-nginx-package $architecture $moduleType
-			install-mms-CatraMMS-package $architecture
+			install-mms-MMS-package $architecture
 			install-mms-aws-sdk-cpp-package $architecture $moduleType
 			install-mms-integration-conf $architecture
 			;;
@@ -1119,39 +1119,39 @@ install-mms-packages()
 		ln -s /home/mms/mms/scripts/mmsStopALL.sh /home/mms
 	fi
 	if [ ! -e /home/mms/nginx.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/nginx.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/nginx.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsEncoder.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/mmsEncoder.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/mmsEncoder.sh /home/mms
 	fi
 
 	if [ ! -e /home/mms/micro-service.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/micro-service.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/micro-service.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsApi.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/mmsApi.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/mmsApi.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsDelivery.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/mmsDelivery.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/mmsDelivery.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsExternalDelivery.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/mmsExternalDelivery.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/mmsExternalDelivery.sh /home/mms
 	fi
 
 	if [ ! -e /home/mms/mmsEngineService.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/mmsEngineService.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/mmsEngineService.sh /home/mms
 	fi
 	if [ ! -e /home/mms/mmsTail.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/mmsTail.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/mmsTail.sh /home/mms
 	fi
 	#if [ ! -e /home/mms/tomcat.sh ]; then
-	#	ln -s ${MMSOPT}/CatraMMS/scripts/tomcat.sh /home/mms
+	#	ln -s ${MMSOPT}/MMS/scripts/tomcat.sh /home/mms
 	#fi
 	if [ ! -e /home/mms/tomee.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/tomee.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/tomee.sh /home/mms
 	fi
 	if [ ! -e /home/mms/printLogFileName.sh ]; then
-		ln -s ${MMSOPT}/CatraMMS/scripts/printLogFileName.sh /home/mms
+		ln -s ${MMSOPT}/MMS/scripts/printLogFileName.sh /home/mms
 	fi
 }
 
@@ -1540,14 +1540,14 @@ install-mms-nginx-package()
 	then
 		mv ${MMSOPT}/nginx/conf/nginx.conf ${MMSOPT}/nginx/conf/nginx.conf.backup
 	fi
-	ln -s ${MMSOPT}/CatraMMS/conf/nginx.conf ${MMSOPT}/nginx/conf/
+	ln -s ${MMSOPT}/MMS/conf/nginx.conf ${MMSOPT}/nginx/conf/
 
 	mkdir ${MMSOPT}/nginx/conf/sites-enabled
 
 	if [ "$moduleType" == "load-balancer" ]; then
-		ln -s /home/mms/mms/conf/catrammsLoadBalancer.nginx ${MMSOPT}/nginx/conf/sites-enabled/
+		ln -s /home/mms/mms/conf/mmsLoadBalancer.nginx ${MMSOPT}/nginx/conf/sites-enabled/
 	else
-		ln -s /home/mms/mms/conf/catramms.nginx ${MMSOPT}/nginx/conf/sites-enabled/
+		ln -s /home/mms/mms/conf/mms.nginx ${MMSOPT}/nginx/conf/sites-enabled/
 	fi
 
 	#per evitare errori nginx: 24: Too many open files                                                        
@@ -1602,11 +1602,11 @@ install-mms-nginx-package()
 		#sudo certbot renew --deploy-hook 'sudo -u mms /home/mms/nginx.sh stop && sleep 2 && sudo -u mms /home/mms/nginx.sh start' --quiet
 		#Se si vuole estendere il certificato con un nuovo hostname, devi inserire entrambi gli hostnames
 		#1. sudo certbot certonly --expand --manual --preferred-challenges dns -d us2-blade7-1.cbrtvlv.com -d us2-blade7-1.cibortvlive.com
-		#2. aggiungi il nuovo hostname in ~/mms/conf/catramms.nginx (campo server_name)
+		#2. aggiungi il nuovo hostname in ~/mms/conf/mms.nginx (campo server_name)
 		#3 restart di nginx
 
 		#inoltre blocchiamo (ritorno 444 che chiude la connessione senza inviare nessuna risposta) tutte le richieste HTTPS con Host sbagliato (tipo xj5zr.usdsh.com)
-		#Per questo motivo bisogna generare i files invalid.crt e invalid.key utilizzati in catramms.nginx
+		#Per questo motivo bisogna generare i files invalid.crt e invalid.key utilizzati in mms.nginx
 		openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   		-keyout /etc/ssl/invalid.key -out /etc/ssl/invalid.crt \
   		-subj "/CN=invalid.local"
@@ -1724,7 +1724,7 @@ install-mms-libpqxx-package()
 	ln -rs ${MMSOPT}/$package ${MMSOPT}/$packageName
 }
 
-install-mms-CatraMMS-package()
+install-mms-MMS-package()
 {
 	architecture=$1
 
@@ -1871,7 +1871,7 @@ firewall-rules()
 
 	elif [ "$moduleType" == "externalDelivery" ]; then
 		#HTTP Per ora commentato perchè le richieste saranno su https. Se si abilitasse HTTP
-		#dovremmo aggiungere la relativa sezione su catramms.nginx che dovrebbe redirigere o autorizzare la richiesta
+		#dovremmo aggiungere la relativa sezione su mms.nginx che dovrebbe redirigere o autorizzare la richiesta
 		#ufw allow 80 		#HTTP Per ora commentato perchè le richieste saranno su https
 		ufw allow 443 	#HTTPS/SSL
 		ufw allow 80 	#HTTP per permettere a certbot di aggiornare il certificato

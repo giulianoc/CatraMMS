@@ -264,14 +264,14 @@ then
 	}
 
 	#Example of events using debug:
-	#IN_CREATE --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
-	#IN_MODIFY --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
-	#IN_MODIFY --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
-	#IN_MODIFY --> 1258481.ts (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
+	#IN_CREATE --> 1258481.ts (/var/mms/storage/MMSRepository/MMSLive/1/1258)
+	#IN_MODIFY --> 1258481.ts (/var/mms/storage/MMSRepository/MMSLive/1/1258)
+	#IN_MODIFY --> 1258481.ts (/var/mms/storage/MMSRepository/MMSLive/1/1258)
+	#IN_MODIFY --> 1258481.ts (/var/mms/storage/MMSRepository/MMSLive/1/1258)
 	#temporary file: IN_CREATE --> 1258.m3u8.tmp
 	#temporary file: IN_MODIFY --> 1258.m3u8.tmp
 	#temporary file: IN_MOVED_FROM --> 1258.m3u8.tmp
-	#IN_MOVED_TO --> 1258.m3u8 (/var/catramms/storage/MMSRepository/MMSLive/1/1258)
+	#IN_MOVED_TO --> 1258.m3u8 (/var/mms/storage/MMSRepository/MMSLive/1/1258)
 
 
 	#invece di sincronizzare una directory che cambia in continuazione, congeliamo la directory prima di sincronizzarla
@@ -313,7 +313,7 @@ then
 
 		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
                 rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
-		#channelDirectory è qualcosa tipo /var/catramms/storage/MMSRepository/MMSLive/6/5297
+		#channelDirectory è qualcosa tipo /var/mms/storage/MMSRepository/MMSLive/6/5297
 		#Poiche in /etc/rsyncd.conf, path è /mnt/mmsStorage-1/MMSLive, rsyncDest deve essere del tipo /6/5297
 		#Il comando sotto dice: Rimuove dall’inizio della stringa channelDirectory tutto ciò che viene prima (e incluso) */MMSLive
                 rsyncDest="${channelDirectory#*/MMSLive}"
