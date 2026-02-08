@@ -10,8 +10,8 @@ NC='\033[0m' # No Color
 version=$(cat ./version.txt)
 
 currentDir=$(pwd)
-#moduleName=$(basename $currentDir)
-moduleName=MMS
+srcModuleName=$(basename $currentDir)
+destModuleName=MMS
 
 #linuxName=$(cat /etc/os-release | grep "^ID=" | cut -d'=' -f2)
 ##linuxName using centos will be "centos", next remove "
@@ -19,12 +19,12 @@ moduleName=MMS
 
 cd $deployDirectory
 #tarFileName=$moduleName-$version-$linuxName.tar.gz
-tarFileName=$moduleName-$version.tar.gz
+tarFileName=$destModuleName-$version.tar.gz
 
-rm -rf $moduleName-$version
-cp -r $moduleName $moduleName-$version
-tar cvfz $tarFileName $moduleName-$version
-rm -rf $moduleName-$version
+rm -rf $destModuleName-$version
+cp -r $srcModuleName $destModuleName-$version
+tar cvfz $tarFileName $destModuleName-$version
+rm -rf $destModuleName-$version
 
 cd $currentDir
 
