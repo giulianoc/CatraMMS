@@ -1730,11 +1730,11 @@ install-mms-MMS-package()
 
 	packageName=MMS
 	echo ""
-	mmsVersion=1.0.6900
-	echo -n "$packageName version (i.e.: mmsVersion)? "
+	mmsVersion=1.0.6910
+	echo -n "$packageName version (i.e.: $mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
-		version=mmsVersion
+		version=$mmsVersion
 	fi
 	package=$packageName-$version
 	echo "Downloading $package..."
