@@ -2,6 +2,8 @@
 
 debugFileName=/tmp/genIncrontabForMMSLive.log
 
+source ~/mms/conf/mms-env.sh
+
 if [ ! -f "$debugFileName" ]; then
 	echo "" > $debugFileName
 else
@@ -13,28 +15,38 @@ else
 	fi
 fi
 
-# File temporaneo per le nuove regole
-NEW_RULES=$(mktemp)
+if [[ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH:-}" \
+   || -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD:-}" ]]; then
 
-# Genera nuove regole
-for dir in /var/mms/storage/MMSRepository/MMSLive/*/*; do
-    if [[ -d "$dir" && "$(basename "$dir")" =~ ^[0-9]+$ ]]; then
-        echo "$dir	IN_MODIFY,IN_CREATE,IN_DELETE,IN_MOVE_SELF,IN_MOVE	/opt/mms/MMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
-    fi
-done
+	#questo server esegue un rsync, quindi aggiorno se necessario le regole
 
-# File temporaneo per le regole attuali
-CURRENT_RULES=$(mktemp)
-incrontab -l 2>/dev/null > "$CURRENT_RULES"
+	# File temporaneo per le nuove regole
+	NEW_RULES=$(mktemp)
 
-# Confronto
-if ! cmp -s "$NEW_RULES" "$CURRENT_RULES"; then
-    echo "$(date) Regole incrontab cambiate: aggiorno..." >> $debugFileName
-    incrontab "$NEW_RULES"
+	# Genera nuove regole
+	for dir in /var/mms/storage/MMSRepository/MMSLive/*/*; do
+    		if [[ -d "$dir" && "$(basename "$dir")" =~ ^[0-9]+$ ]]; then
+        		echo "$dir	IN_MODIFY,IN_CREATE,IN_DELETE,IN_MOVE_SELF,IN_MOVE	/opt/mms/MMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
+    		fi
+	done
+
+	# File temporaneo per le regole attuali
+	CURRENT_RULES=$(mktemp)
+	incrontab -l 2>/dev/null > "$CURRENT_RULES"
+
+	# Confronto
+	if ! cmp -s "$NEW_RULES" "$CURRENT_RULES"; then
+    		echo "$(date) Regole incrontab cambiate: aggiorno..." >> $debugFileName
+    		incrontab "$NEW_RULES"
+	else
+    		echo "$(date) Regole incrontab già aggiornate, nessuna modifica." >> $debugFileName
+	fi
+
+	# Pulizia
+	#echo "$NEW_RULES $CURRENT_RULES" >> $debugFileName
+	rm -f "$NEW_RULES" "$CURRENT_RULES"
 else
-    echo "$(date) Regole incrontab già aggiornate, nessuna modifica." >> $debugFileName
+	#rimuove le regole eventualmente configurate su incrontab
+	incrontab -r
 fi
 
-# Pulizia
-#echo "$NEW_RULES $CURRENT_RULES" >> $debugFileName
-rm -f "$NEW_RULES" "$CURRENT_RULES"

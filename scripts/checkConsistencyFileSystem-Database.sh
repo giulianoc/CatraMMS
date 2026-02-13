@@ -4,6 +4,7 @@
 #This script generates a script doing this check (media files and directories) and, if removeFilesDirectories is 1,
 #the files/directories not present into the database will be removed. In any case, a log file is generated with all the
 #file/directories not present into the database.
+#Probabile che questo script impiega tanto tempo per la sua esecuzione, per cui potrebbe essere eseguito con il nohup
 if [ $# -ne 4 ];
 then
 	echo "Usage $0 <removeFilesDirectories (1 means 'remove', 0 just log)> <dbPassword> <partitionNumber (i.e.: 0)> <workspaceDirectoryName (i.e.: 3)>"
@@ -25,7 +26,7 @@ repositoryName=$(printf MMS_%04d $partitionNumber)
 
 echo "removeFilesDirectories: $removeFilesDirectories, dbPassword: $dbPassword, workspaceDirectoryName: $workspaceDirectoryName, repositoryName: $repositoryName (partitionNumber: $partitionNumber)"
 
-read -n 1 -s -r -p "Press a key to start"
+#read -n 1 -s -r -p "Press a key to start"
 echo ""
 
 currentDir=$(pwd)
