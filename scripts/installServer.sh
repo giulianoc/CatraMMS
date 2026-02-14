@@ -2130,7 +2130,8 @@ read -n 1 -s -r -p "verificare ~/mms/conf/* (in particolare mms-env.sh) e attiva
 echo ""
 echo ""
 
-read -n 1 -s -r -p "verificare ~/mms/conf/mms-env.sh"
+read -n 1 -s -r -p "crontab -e di root ed aggiungere"
+read -n 1 -s -r -p "0 * * * * > /var/log/auth.log"
 echo ""
 echo ""
 

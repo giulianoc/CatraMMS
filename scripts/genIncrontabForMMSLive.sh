@@ -46,6 +46,7 @@ if [[ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH:-}" \
 	#echo "$NEW_RULES $CURRENT_RULES" >> $debugFileName
 	rm -f "$NEW_RULES" "$CURRENT_RULES"
 else
+    	echo "$(date) Regole regole non necessarie." >> $debugFileName
 	#rimuove le regole eventualmente configurate su incrontab
 	incrontab -r
 fi

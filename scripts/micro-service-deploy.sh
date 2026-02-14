@@ -61,14 +61,18 @@ cp "build/distributions/$serviceFileName-0.1.tar" ../
 
 cd ..
 
-~/mmsStopALL.sh
+~/nginx.sh stop
+~/micro-service.sh stop $serviceFileName
+#~/mmsStopALL.sh
 sleep 1
 
 rm -rf "$serviceFileName-0.1"
 tar -xvf "$serviceFileName-0.1.tar"
 rm -rf "$serviceFileName-0.1.tar"
 
-~/mmsStartALL.sh
+~/micro-service.sh start $serviceFileName
+~/nginx.sh start
+#~/mmsStartALL.sh
 
 cd $currentDir
 

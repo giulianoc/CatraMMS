@@ -164,7 +164,7 @@ void API::modifyDeliveryServer(
 			auto requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
 			label = JSONUtils::asOpt<string>(requestBodyRoot, "label");
-			type = JSONUtils::asOpt<string>(requestBodyRoot, "type", {"origin", "edge"});
+			type = JSONUtils::asOpt<string>(requestBodyRoot, "type", {"origin", "edge", "mid-origin"});
 			originDeliveryServerKey = JSONUtils::asOpt<int64_t>(requestBodyRoot, "originDeliveryServerKey");
 			external = JSONUtils::asOpt<bool>(requestBodyRoot, "external");
 			enabled = JSONUtils::asOpt<bool>(requestBodyRoot, "enabled");
