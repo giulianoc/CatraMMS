@@ -16,7 +16,7 @@ using namespace pqxx;
 
 int64_t MMSEngineDBFacade::addDeliveryServer(
 	const string& label, const string& type, const optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
-	const string& publicIP, const string& internalIP, const string& hostname
+	const string& publicIP, const string& internalIP, const string& hostname, double latitude, double longitude
 )
 {
 	int64_t deliveryServerKey;
@@ -28,12 +28,12 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 			string sqlStatement = std::format(
 			R"(
 				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey, external, enabled, publicIP,
-					internalIP, hostname) values (
-					{}, {}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
+					internalIP, hostname, latitude, longitude) values (
+					{}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
 				trans.transaction->quote(label),
 				trans.transaction->quote(type), originDeliveryServerKey ? to_string(originDeliveryServerKey) : "null",
 				external, enabled, trans.transaction->quote(publicIP), trans.transaction->quote(internalIP),
-				trans.transaction->quote(hostname)
+				trans.transaction->quote(hostname), latitude, longitude
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			deliveryServerKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
@@ -78,7 +78,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 void MMSEngineDBFacade::modifyDeliveryServer(
 	int64_t deliveryServerKey, const optional<string>& label, const optional<string>& type, const optional<int64_t>& originDeliveryServerKey,
 	optional<bool> external, optional<bool> enabled, const optional<string>& publicIP, const optional<string>& internalIP,
-	const optional<string>& hostname
+	const optional<string>& hostname, const optional<double>& latitude, const optional<double>& longitude
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -151,6 +151,22 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += std::format("hostname = {}", trans.transaction->quote(*hostname));
+				oneParameterPresent = true;
+			}
+
+			if (latitude)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("latitude = {}", *latitude);
+				oneParameterPresent = true;
+			}
+
+			if (longitude)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("longitude = {}", *longitude);
 				oneParameterPresent = true;
 			}
 
@@ -538,7 +554,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				sqlStatement = std::format(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
-					d.publicIP, d.internalIP, d.hostname,
+					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
@@ -551,7 +567,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				sqlStatement = std::format(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
-					d.publicIP, d.internalIP, d.hostname,
+					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
@@ -791,6 +807,8 @@ json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::
 		deliveryServerRoot["publicIP"] = row["publicIP"].as<string>();
 		deliveryServerRoot["internalIP"] = row["internalIP"].as<string>();
 		deliveryServerRoot["hostname"] = row["hostname"].as<string>();
+		deliveryServerRoot["latitude"] = row["latitude"].as<double>();
+		deliveryServerRoot["longitude"] = row["longitude"].as<double>();
 		deliveryServerRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
 		if (row["cpuUsage"].isNull())
 			deliveryServerRoot["cpuUsage"] = nullptr;
@@ -1177,7 +1195,7 @@ json MMSEngineDBFacade::getDeliveryServersPoolList(
 						{
 							string sqlStatement = std::format(
 								"select deliveryServerKey, label, type, originDeliveryServerKey, external, enabled, "
-								"publicIP, internalIP, hostname, "
+								"publicIP, internalIP, hostname, latitude, longitude, "
 								"to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 								"cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
 								"txAvgBandwidthUsage, rxAvgBandwidthUsage, to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "

@@ -58,6 +58,8 @@ void API::addDeliveryServer(
 		string hostname;
 		string publicIP;
 		string internalIP;
+		double latitude;
+		double longitude;
 
 		try
 		{
@@ -74,6 +76,8 @@ void API::addDeliveryServer(
 			hostname = JSONUtils::as<string>(requestBodyRoot, "hostname", "", {}, true);
 			publicIP = JSONUtils::as<string>(requestBodyRoot, "publicIP", "", {}, true);
 			internalIP = JSONUtils::as<string>(requestBodyRoot, "internalIP", "", {}, true);
+			latitude = JSONUtils::as<double>(requestBodyRoot, "latitude", 0.0, {}, true);
+			longitude = JSONUtils::as<double>(requestBodyRoot, "longitude", 0.0, {}, true);
 		}
 		catch (exception &e)
 		{
@@ -92,7 +96,7 @@ void API::addDeliveryServer(
 		try
 		{
 			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(label, type, originDeliveryServerKey,
-				external, enabled, publicIP, internalIP, hostname);
+				external, enabled, publicIP, internalIP, hostname, latitude, longitude);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}
@@ -161,6 +165,8 @@ void API::modifyDeliveryServer(
 		optional<string> publicIP;
 		optional<string> internalIP;
 		optional<string> hostname;
+		optional<double> latitude;
+		optional<double> longitude;
 
 		try
 		{
@@ -174,6 +180,8 @@ void API::modifyDeliveryServer(
 			publicIP = JSONUtils::asOpt<string>(requestBodyRoot, "publicIP");
 			internalIP = JSONUtils::asOpt<string>(requestBodyRoot, "internalIP");
 			hostname = JSONUtils::asOpt<string>(requestBodyRoot, "hostname");
+			latitude = JSONUtils::asOpt<double>(requestBodyRoot, "latitude");
+			longitude = JSONUtils::asOpt<double>(requestBodyRoot, "longitude");
 		}
 		catch (exception &e)
 		{
@@ -195,7 +203,7 @@ void API::modifyDeliveryServer(
 
 			_mmsEngineDBFacade->modifyDeliveryServer(
 				deliveryServerKey, label, type, originDeliveryServerKey, external, enabled,
-				publicIP, internalIP, hostname
+				publicIP, internalIP, hostname, latitude, longitude
 			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;

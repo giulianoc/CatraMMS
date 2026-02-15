@@ -1428,6 +1428,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					publicIP text NOT NULL,
 					internalIP text NOT NULL,
 					hostname text NOT NULL,
+					latitude DOUBLE PRECISION NOT NULL,
+					longitude DOUBLE PRECISION NOT NULL,
 					txAvgBandwidthUsage	bigint,
 					rxAvgBandwidthUsage	bigint,
 					bandwidthUsageUpdateTime timestamp without time zone,
