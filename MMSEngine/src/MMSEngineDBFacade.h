@@ -2470,7 +2470,7 @@ class MMSEngineDBFacade
 	void addUpdatePartitionInfo(int partitionKey, std::string partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB);
 
 	int64_t addDeliveryServer(
-		const std::string &label, const std::string &type, std::optional<long long> originDeliveryServerKey, bool external, bool enabled,
+		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
 		const std::string &publicIP, const std::string &internalIP, const std::string &hostname
 	);
 	void modifyDeliveryServer(
