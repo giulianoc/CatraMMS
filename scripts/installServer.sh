@@ -940,6 +940,8 @@ adds-to-bashrc()
 	echo -n "serverName for the 'bash prompt' (i.e. engine-db-1): "
 	read serverName
 
+	hostnamectl set-hostname $serverName
+
 	if [ "$moduleType" != "storage" ]; then
 		echo "export PATH=\$PATH:~mms" >> /home/mms/.bashrc
 		echo "alias encoderLog='vi \$(printLogFileName.sh encoder)'" >> /home/mms/.bashrc
@@ -950,7 +952,7 @@ adds-to-bashrc()
 	echo "alias h='history'" >> /home/mms/.bashrc
 	echo "export EDITOR=/usr/bin/vi" >> /home/mms/.bashrc
 
-	if [[ "$serverName" == *"engine"* ]]; then
+	if [ "$moduleType" == "engine" ]; then
 		echo "masterIP=\$(cat ~/mms/conf/mms-env.sh | grep MMS_DB_MASTER | cut -d'=' -f2)" >> /home/mms/.bashrc
 		echo "if [ \"\$(ifconfig | grep \"inet \$masterIP\")\" != \"\" ]; then" >> /home/mms/.bashrc
 		echo "	PS1=\${PS1//\\\\h/\\\\h-master-}" >> /home/mms/.bashrc
@@ -961,12 +963,12 @@ adds-to-bashrc()
 		echo "alias tm='tail -f logs/mmsEngineService/mmsEngineService.log'" >> /home/mms/.bashrc
 		echo "alias tme='tail -f logs/mmsEngineService/mmsEngineService-error.log'" >> /home/mms/.bashrc
 		echo "alias tms='tail -f logs/mmsEngineService/mmsEngineService-slowquery.log'" >> /home/mms/.bashrc
-	elif [[ "$serverName" == *"encoder"* ]]; then
+	elif [[ "$moduleType" == *"ncoder"* ]]; then
 		echo "alias tm='tail -f logs/mmsEncoder/mmsEncoder.log'" >> /home/mms/.bashrc
 		echo "alias tme='tail -f logs/mmsEncoder/mmsEncoder-error.log'" >> /home/mms/.bashrc
 
 		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
-	elif [[ "$serverName" == *"api"* || "$serverName" == *"delivery"* ]]; then
+	elif [[ "$moduleType" == *"api"* || "$serverType" == *"elivery"* ]]; then
 		echo "alias tm='tail -f logs/mmsAPI/mmsAPI.log'" >> /home/mms/.bashrc
 		echo "alias tme='tail -f logs/mmsAPI/mmsAPI-error.log'" >> /home/mms/.bashrc
 		echo "alias tw='tail -f logs/catraMMSWEBServices/catraMMSWEBServices.log'" >> /home/mms/.bashrc
@@ -2083,7 +2085,11 @@ if [ "$moduleType" == "storage" ]; then
 	echo "port = 32767"
 	echo ""
 	echo ""
-	echo "Configurare /etc/exports con le directory da esportare, ad es:"
+	echo "Configurare /etc/exports con le directory da esportare, ad es, per externalDelivery:"
+	echo "/mnt/mmsStorage-1/MMSLive 10.50.50.0/24(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/mmsRepository0000 10.50.50.0/24(rw,sync,no_subtree_check,no_root_squash)"
+	echo "/mnt/mmsStorage-1/MMSRepositoryFree 10.50.50.0/24(rw,sync,no_subtree_check,no_root_squash)"
+	echo ""
 	echo "/mnt/mmsStorage-1/dbDump 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
 	echo "/mnt/mmsStorage-1/MMSGUI 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"
 	echo "/mnt/mmsStorage-1/mmsIngestionRepository 10.0.0.0/16(rw,sync,no_subtree_check,no_root_squash)"

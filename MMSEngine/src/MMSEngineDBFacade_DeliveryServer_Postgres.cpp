@@ -15,8 +15,8 @@ using json = nlohmann::json;
 using namespace pqxx;
 
 int64_t MMSEngineDBFacade::addDeliveryServer(
-	const string& label, const string& type, optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
-	const string& publicServerName, const string& internalServerName
+	const string& label, const string& type, const optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
+	const string& publicIP, const string& internalIP, const string& hostname
 )
 {
 	int64_t deliveryServerKey;
@@ -27,13 +27,13 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 		{
 			string sqlStatement = std::format(
 			R"(
-				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey, external, enabled, publicServerName,
-					internalServerName) values (
-					{}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
+				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey, external, enabled, publicIP,
+					internalIP, hostname) values (
+					{}, {}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
 				trans.transaction->quote(label),
 				trans.transaction->quote(type), originDeliveryServerKey ? to_string(originDeliveryServerKey) : "null",
-				external, enabled, trans.transaction->quote(publicServerName),
-				trans.transaction->quote(internalServerName)
+				external, enabled, trans.transaction->quote(publicIP), trans.transaction->quote(internalIP),
+				trans.transaction->quote(hostname)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			deliveryServerKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
@@ -77,8 +77,8 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 
 void MMSEngineDBFacade::modifyDeliveryServer(
 	int64_t deliveryServerKey, const optional<string>& label, const optional<string>& type, const optional<int64_t>& originDeliveryServerKey,
-	optional<bool> external, optional<bool> enabled, const optional<string>& publicServerName,
-	const optional<string>& internalServerName
+	optional<bool> external, optional<bool> enabled, const optional<string>& publicIP, const optional<string>& internalIP,
+	const optional<string>& hostname
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -130,19 +130,27 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 				oneParameterPresent = true;
 			}
 
-			if (publicServerName)
+			if (publicIP)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("publicServerName = {}", trans.transaction->quote(*publicServerName));
+				setSQL += std::format("publicIP = {}", trans.transaction->quote(*publicIP));
 				oneParameterPresent = true;
 			}
 
-			if (internalServerName)
+			if (internalIP)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("internalServerName = {}", trans.transaction->quote(*internalServerName));
+				setSQL += std::format("internalIP = {}", trans.transaction->quote(*internalIP));
+				oneParameterPresent = true;
+			}
+
+			if (hostname)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("hostname = {}", trans.transaction->quote(*hostname));
 				oneParameterPresent = true;
 			}
 
@@ -404,7 +412,8 @@ void MMSEngineDBFacade::removeDeliveryServer(int64_t deliveryServerKey)
 
 json MMSEngineDBFacade::getDeliveryServerList(
 	bool admin, int start, int rows, bool allDeliveryServers, int64_t workspaceKey, optional<int64_t> deliveryServerKey,
-	optional<string> label, optional<string> serverName, optional<string> type, optional<string> labelOrder // "" or "asc" or "desc"
+	optional<string> label, optional<string> serverIP, optional<string> hostname, optional<string> type,
+	optional<string> labelOrder // "" or "asc" or "desc"
 )
 {
 	json deliveryServerListRoot;
@@ -420,11 +429,12 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			", workspaceKey: {}"
 			", deliveryServerKey: {}"
 			", label: {}"
-			", serverName: {}"
+			", serverIP: {}"
+			", hostname: {}"
 			", type: {}"
 			", labelOrder: {}",
 			start, rows, allDeliveryServers, workspaceKey, deliveryServerKey ? *deliveryServerKey : -1,
-			label ? *label : "", serverName ? *serverName : "", type ? *type : "",
+			label ? *label : "", serverIP ? *serverIP : "", hostname ? *hostname : "", type ? *type : "",
 			labelOrder ? *labelOrder : ""
 		);
 
@@ -437,8 +447,10 @@ json MMSEngineDBFacade::getDeliveryServerList(
 			requestParametersRoot["rows"] = rows;
 			if (label && !(*label).empty())
 				requestParametersRoot["label"] = *label;
-			if (serverName && !(*serverName).empty())
-				requestParametersRoot["serverName"] = *serverName;
+			if (serverIP && !(*serverIP).empty())
+				requestParametersRoot["serverIP"] = *serverIP;
+			if (hostname && !(*hostname).empty())
+				requestParametersRoot["hostname"] = *hostname;
 			if (type && !(*type).empty())
 				requestParametersRoot["type"] = *type;
 			if (labelOrder && !(*labelOrder).empty())
@@ -453,12 +465,15 @@ json MMSEngineDBFacade::getDeliveryServerList(
 		if (label && !(*label).empty())
 			sqlWhere += std::format("{} LOWER(d.label) like LOWER({}) ",
 				sqlWhere.empty() ? "" : "AND", trans.transaction->quote("%" + *label + "%"));
-		if (serverName && !(*serverName).empty())
+		if (serverIP && !(*serverIP).empty())
 			sqlWhere += std::format(
-				"{} (d.publicServerName like {} or d.internalServerName like {}) ",
-				sqlWhere.empty() ? "" : "AND", trans.transaction->quote("%" + *serverName + "%"),
-				trans.transaction->quote("%" + *serverName + "%")
+				"{} (d.publicIP like {} or d.internalIP like {}) ",
+				sqlWhere.empty() ? "" : "AND", trans.transaction->quote("%" + *serverIP + "%"),
+				trans.transaction->quote("%" + *serverIP + "%")
 			);
+		if (hostname && !(*hostname).empty())
+			sqlWhere += std::format("{} LOWER(d.hostname) like LOWER({}) ",
+				sqlWhere.empty() ? "" : "AND", trans.transaction->quote("%" + *hostname + "%"));
 		if (type && !(*type).empty())
 			sqlWhere += std::format("{} d.type = {} ", sqlWhere.empty() ? "" : "AND", trans.transaction->quote(*type));
 
@@ -523,7 +538,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				sqlStatement = std::format(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
-					d.publicServerName, d.internalServerName,
+					d.publicIP, d.internalIP, d.hostname,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
@@ -536,7 +551,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				sqlStatement = std::format(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
-					d.publicServerName, d.internalServerName,
+					d.publicIP, d.internalIP, d.hostname,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
@@ -773,8 +788,9 @@ json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::
 			deliveryServerRoot["originDeliveryServerKey"] = nullptr;
 		deliveryServerRoot["external"] = row["external"].as<bool>();
 		deliveryServerRoot["enabled"] = row["enabled"].as<bool>();
-		deliveryServerRoot["publicServerName"] = row["publicServerName"].as<string>();
-		deliveryServerRoot["internalServerName"] = row["internalServerName"].as<string>();
+		deliveryServerRoot["publicIP"] = row["publicIP"].as<string>();
+		deliveryServerRoot["internalIP"] = row["internalIP"].as<string>();
+		deliveryServerRoot["hostname"] = row["hostname"].as<string>();
 		deliveryServerRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
 		if (row["cpuUsage"].isNull())
 			deliveryServerRoot["cpuUsage"] = nullptr;
@@ -1161,7 +1177,7 @@ json MMSEngineDBFacade::getDeliveryServersPoolList(
 						{
 							string sqlStatement = std::format(
 								"select deliveryServerKey, label, type, originDeliveryServerKey, external, enabled, "
-								"publicServerName, internalServerName, "
+								"publicIP, internalIP, hostname, "
 								"to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 								"cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
 								"txAvgBandwidthUsage, rxAvgBandwidthUsage, to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "

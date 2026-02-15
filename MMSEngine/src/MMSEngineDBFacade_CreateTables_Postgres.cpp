@@ -1425,8 +1425,9 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					originDeliveryServerKey	bigint, -- null if type = origin (indica l'origin server associato ad un edge)
 					external boolean NOT NULL,
 					enabled boolean NOT NULL,
-					publicServerName text NOT NULL,
-					internalServerName text NOT NULL,
+					publicIP text NOT NULL,
+					internalIP text NOT NULL,
+					hostname text NOT NULL,
 					txAvgBandwidthUsage	bigint,
 					rxAvgBandwidthUsage	bigint,
 					bandwidthUsageUpdateTime timestamp without time zone,
@@ -1452,7 +1453,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create UNIQUE index if not exists MMS_DeliveryServer_idx on MMS_DeliveryServer (publicServerName)";
+			string sqlStatement = "create UNIQUE index if not exists MMS_DeliveryServer_idx on MMS_DeliveryServer (publicIP)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

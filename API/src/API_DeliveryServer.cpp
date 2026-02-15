@@ -55,8 +55,9 @@ void API::addDeliveryServer(
 		optional<int64_t> originDeliveryServerKey;
 		bool external;
 		bool enabled;
-		string publicServerName;
-		string internalServerName;
+		string hostname;
+		string publicIP;
+		string internalIP;
 
 		try
 		{
@@ -70,8 +71,9 @@ void API::addDeliveryServer(
 					{}, true);
 			external = JSONUtils::as<bool>(requestBodyRoot, "external", false);
 			enabled = JSONUtils::as<bool>(requestBodyRoot, "enabled", true);
-			publicServerName = JSONUtils::as<string>(requestBodyRoot, "publicServerName", "", {}, true);
-			internalServerName = JSONUtils::as<string>(requestBodyRoot, "internalServerName", "", {}, true);
+			hostname = JSONUtils::as<string>(requestBodyRoot, "hostname", "", {}, true);
+			publicIP = JSONUtils::as<string>(requestBodyRoot, "publicIP", "", {}, true);
+			internalIP = JSONUtils::as<string>(requestBodyRoot, "internalIP", "", {}, true);
 		}
 		catch (exception &e)
 		{
@@ -90,7 +92,7 @@ void API::addDeliveryServer(
 		try
 		{
 			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(label, type, originDeliveryServerKey,
-				external, enabled, publicServerName, internalServerName);
+				external, enabled, publicIP, internalIP, hostname);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}
@@ -156,8 +158,9 @@ void API::modifyDeliveryServer(
 		optional<int64_t> originDeliveryServerKey;
 		optional<bool> external;
 		optional<bool> enabled;
-		optional<string> publicServerName;
-		optional<string> internalServerName;
+		optional<string> publicIP;
+		optional<string> internalIP;
+		optional<string> hostname;
 
 		try
 		{
@@ -168,8 +171,9 @@ void API::modifyDeliveryServer(
 			originDeliveryServerKey = JSONUtils::asOpt<int64_t>(requestBodyRoot, "originDeliveryServerKey");
 			external = JSONUtils::asOpt<bool>(requestBodyRoot, "external");
 			enabled = JSONUtils::asOpt<bool>(requestBodyRoot, "enabled");
-			publicServerName = JSONUtils::asOpt<string>(requestBodyRoot, "publicServerName");
-			internalServerName = JSONUtils::asOpt<string>(requestBodyRoot, "internalServerName");
+			publicIP = JSONUtils::asOpt<string>(requestBodyRoot, "publicIP");
+			internalIP = JSONUtils::asOpt<string>(requestBodyRoot, "internalIP");
+			hostname = JSONUtils::asOpt<string>(requestBodyRoot, "hostname");
 		}
 		catch (exception &e)
 		{
@@ -191,7 +195,7 @@ void API::modifyDeliveryServer(
 
 			_mmsEngineDBFacade->modifyDeliveryServer(
 				deliveryServerKey, label, type, originDeliveryServerKey, external, enabled,
-				publicServerName, internalServerName
+				publicIP, internalIP, hostname
 			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
@@ -462,7 +466,8 @@ void API::deliveryServerList(
 		}
 
 		optional<string> label = requestData.getOptQueryParameter<string>("label");
-		optional<string> serverName = requestData.getOptQueryParameter<string>("serverName");
+		optional<string> serverIP = requestData.getOptQueryParameter<string>("serverIP");
+		optional<string> hostname = requestData.getOptQueryParameter<string>("hostname");
 		optional<string> type = requestData.getOptQueryParameter<string>("type", {"origin", "mid-origin", "edge"});
 		string labelOrder = requestData.getQueryParameter("labelOrder");
 		if (!labelOrder.empty() && labelOrder != "asc" && labelOrder != "desc")
@@ -489,8 +494,8 @@ void API::deliveryServerList(
 
 		{
 			json deliveryServerListRoot = _mmsEngineDBFacade->getDeliveryServerList(
-				apiAuthorizationDetails->admin, start, rows, allDeliveryServers, workspaceKey, deliveryServerKey, label, serverName,
-				type, labelOrder
+				apiAuthorizationDetails->admin, start, rows, allDeliveryServers, workspaceKey, deliveryServerKey,
+				label, serverIP, hostname, type, labelOrder
 			);
 
 			string responseBody = JSONUtils::toString(deliveryServerListRoot);
