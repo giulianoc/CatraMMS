@@ -997,7 +997,7 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		"getDeliveryHost"
 		", playerCountry: {}"
 		", playerRegion: {}"
-		", playerLotitude: {}"
+		", playerLatitude: {}"
 		", playerLongitude: {}"
 		", deliveryHost: {}",
 		// ", externalDeliveries: {}",

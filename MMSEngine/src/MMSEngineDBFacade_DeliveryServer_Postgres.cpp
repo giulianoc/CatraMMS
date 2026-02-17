@@ -830,13 +830,23 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 			constexpr int16_t maxCPUInPerCent = 90;
 			int16_t deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
 			// Query 1 – tentativo “ideale” (metriche fresche)
+			// ll_to_earth: converte latitudine e longitudine in un punto (x, y, z) sulla superficie terrestre rappresentato come un valore
+			// di tipo 'earth', che è un tipo di dato specifico di PostgreSQL per rappresentare posizioni geografiche sulla Terra.
+			// earth_distance: calcola la distanza in metri tra due punti sulla superficie terrestre
+			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(51.507351, -0.127758)) tra roma e londra:                 1436700 metri
+			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(40.712784, -74.005941)) tra roma e new york:              6898673 metri
+			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(47.606209, -122.332071)) tra roma e seattle:              9127714 metri
+			// earth_distance(ll_to_earth(40.712784, -74.005941), ll_to_earth(47.606209, -122.332071)) tra new york e seattle: 3869880 metri
 			string sqlStatement = fmt::format(
 				R"(
 				WITH rankedServers AS (
 					SELECT hostname, txAvgBandwidthUsage, cpuUsage,
 						CASE
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), earthCoord) < 200000 THEN 0.0   -- very close
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), earthCoord) < 600000 THEN 0.5   -- close
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 3000000 THEN 0.2
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 5000000 THEN 0.4
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
 							ELSE 1.0   -- far
 						END AS geoClass
 					FROM MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping a
@@ -861,7 +871,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+			const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
 			long elapsed = sqlResultSet->getSqlDuration().count();
 			SQLQUERYLOG(
@@ -925,9 +935,12 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 					AND enabled = true
 					ORDER BY
 						CASE
-				            WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 200000 THEN 0.0
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 600000 THEN 0.5
-							ELSE 1.0
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 3000000 THEN 0.2
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 5000000 THEN 0.4
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
+							ELSE 1.0   -- far
 						END,
 						d.selectedLastTime
 					LIMIT 1
