@@ -111,21 +111,21 @@
 #delivery-server
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=deliveryServerList&deliveryServerKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=deliveryServersPoolList&deliveryServersPoolKey=$2 last;
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/?([0-9]*)/?$ /api?x-api-version=$1&x-api-method=deliveryServersPoolList&deliveryServersPoolKey=$2 last;
         }
 		if ($request_method = POST) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/?$ /api?x-api-version=$1&x-api-method=addDeliveryServer last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/?$ /api?x-api-version=$1&x-api-method=addDeliveryServersPool last;
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/?$ /api?x-api-version=$1&x-api-method=addDeliveryServersPool last;
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyDeliveryServer&deliveryServerKey=$2 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/bandwidthStats/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateDeliveryServerBandwidthStats&deliveryServerKey=$2&txAvgBandwidthUsage=$3&rxAvgBandwidthUsage=$4 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/cpuStats/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateDeliveryServerCPUUsageStats&deliveryServerKey=$2&cpuUsage=$3 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyDeliveryServersPool&deliveryServersPoolKey=$2 last;
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyDeliveryServersPool&deliveryServersPoolKey=$2 last;
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeDeliveryServer&deliveryServerKey=$2 last;
-			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeDeliveryServersPool&deliveryServersPoolKey=$2 last;
+			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeDeliveryServersPool&deliveryServersPoolKey=$2 last;
 		}
 
 		if ($request_method = PUT) {

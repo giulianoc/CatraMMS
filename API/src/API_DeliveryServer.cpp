@@ -529,6 +529,7 @@ void API::deliveryServerList(
 	}
 }
 
+/*
 void API::deliveryServersPoolList(
 	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
@@ -884,6 +885,7 @@ void API::removeDeliveryServersPool(
 		throw;
 	}
 }
+*/
 
 void API::addAssociationWorkspaceDeliveryServer(
 	const string_view& sThreadId, FCGX_Request &request,

@@ -844,10 +844,12 @@ class API final : public FastCGIAPI
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);
+	/*
 	void deliveryServersPoolList(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 	void addDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 	void modifyDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 	void removeDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
+	*/
 	void addAssociationWorkspaceDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 	void removeAssociationWorkspaceDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 

@@ -1524,6 +1524,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/*
 		{
 			string sqlStatement = "create table if not exists MMS_DeliveryServersPool ("
 								  "deliveryServersPoolKey	bigint GENERATED ALWAYS AS IDENTITY,"
@@ -1582,6 +1583,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			string sqlStatement = "create table if not exists MMS_IngestionRoot ("

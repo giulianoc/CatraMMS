@@ -564,7 +564,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				sqlStatement = std::format(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
-					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude,
+					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude, d.maxTXBandwidthInGbps,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
@@ -577,7 +577,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				sqlStatement = std::format(
 				R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
-					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude,
+					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude, d.maxTXBandwidthInGbps,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
@@ -1029,6 +1029,7 @@ json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::
 		deliveryServerRoot["hostname"] = row["hostname"].as<string>();
 		deliveryServerRoot["latitude"] = row["latitude"].as<double>();
 		deliveryServerRoot["longitude"] = row["longitude"].as<double>();
+		deliveryServerRoot["maxTXBandwidthInGbps"] = row["maxTXBandwidthInGbps"].as<int64_t>();
 		deliveryServerRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
 		if (row["cpuUsage"].isNull())
 			deliveryServerRoot["cpuUsage"] = nullptr;
@@ -1313,6 +1314,7 @@ json MMSEngineDBFacade::getDeliveryServerWorkspacesAssociation(int64_t deliveryS
 	}
 }
 
+/*
 json MMSEngineDBFacade::getDeliveryServersPoolList(
 	int start, int rows, int64_t workspaceKey, int64_t deliveryServersPoolKey, string label,
 	string labelOrder // "" or "asc" or "desc"
@@ -1415,7 +1417,7 @@ json MMSEngineDBFacade::getDeliveryServersPoolList(
 						{
 							string sqlStatement = std::format(
 								"select deliveryServerKey, label, type, originDeliveryServerKey, external, enabled, "
-								"publicIP, internalIP, hostname, latitude, longitude, "
+								"publicIP, internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps, "
 								"to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
 								"cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
 								"txAvgBandwidthUsage, rxAvgBandwidthUsage, to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
@@ -1901,3 +1903,4 @@ void MMSEngineDBFacade::removeDeliveryServersPool(int64_t deliveryServersPoolKey
 		throw;
 	}
 }
+*/

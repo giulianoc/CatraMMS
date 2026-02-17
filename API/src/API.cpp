@@ -223,6 +223,7 @@ API::API(
 		"deliveryServerList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ deliveryServerList(sThreadId, request, requestData); }
 	);
+	/*
 	registerHandler(
 		"deliveryServersPoolList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ deliveryServersPoolList(sThreadId, request, requestData); }
@@ -241,6 +242,7 @@ API::API(
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ removeDeliveryServersPool(sThreadId, request, requestData); }
 	);
+	*/
 	registerHandler(
 		"addAssociationWorkspaceDeliveryServer",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
