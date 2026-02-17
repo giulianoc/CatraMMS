@@ -110,7 +110,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	int64_t ingestionJobKey, int64_t deliveryCode,
 
 	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized,
-	const string& playerCountry, const string& playerRegion,
+	const string& playerCountry, const string& playerRegion, const optional<double> playerLatitude, const optional<double> playerLongitude,
+	const optional<string>& deliveryHostToBeUsed,
 
 	bool save,
 	// deliveryType:
@@ -411,14 +412,14 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						*/
 						json playURLDetailsRoot = _mmsEngineDBFacade->rtmp_reservationDetails(ingestionJobKey, outputIndex);
 
-						string securityType = JSONUtils::as<string>(playURLDetailsRoot, "securityType", "none");
-						string cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
-						string playURLProtocol = JSONUtils::as<string>(playURLDetailsRoot, "playURLProtocol", "https");
-						string playURLHostName = JSONUtils::as<string>(playURLDetailsRoot, "playURLHostName", "");
-						string uri = JSONUtils::as<string>(playURLDetailsRoot, "uri", "");
+						auto securityType = JSONUtils::as<string>(playURLDetailsRoot, "securityType", "none");
+						auto cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
+						auto playURLProtocol = JSONUtils::as<string>(playURLDetailsRoot, "playURLProtocol", "https");
+						auto playURLHostName = JSONUtils::as<string>(playURLDetailsRoot, "playURLHostName", "");
+						auto uri = JSONUtils::as<string>(playURLDetailsRoot, "uri", "");
 						if (securityType == "token")
 						{
-							string secureToken = JSONUtils::as<string>(playURLDetailsRoot, "token", "");
+							auto secureToken = JSONUtils::as<string>(playURLDetailsRoot, "token", "");
 							if (cdnName == "medianova")
 							{
 								json medianovaRoot = JSONUtils::as<json>(playURLDetailsRoot, "medianova", json(nullptr));
@@ -640,7 +641,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol,
-							getDeliveryHost(requestWorkspace, playerCountry, playerRegion, _deliveryHost_authorizationThroughParameter), deliveryURI,
+							deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace, playerCountry, playerRegion,
+								playerLatitude, playerLongitude, _deliveryHost_authorizationThroughParameter),
+								deliveryURI,
 							CurlWrapper::escape(md5Base64), expirationTime
 						);
 					}
@@ -670,8 +673,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
 					deliveryURL = _deliveryProtocol + "://" +
-								  getDeliveryHost(requestWorkspace, playerCountry, playerRegion, _deliveryHost_authorizationThroughPath) + "/token_" +
-								  md5Base64 + "," + to_string(expirationTime) + deliveryURI;
+						(deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace,
+							playerCountry, playerRegion, playerLatitude, playerLongitude, _deliveryHost_authorizationThroughPath))
+						+ "/token_" + md5Base64 + "," + to_string(expirationTime) + deliveryURI;
 				}
 				/*
 				else
@@ -907,11 +911,30 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 }
 
 string MMSDeliveryAuthorization::getDeliveryHost(
-	const shared_ptr<Workspace>& requestWorkspace, const string& playerCountry, const string& playerRegion, const string& defaultDeliveryHost
+	const shared_ptr<Workspace>& requestWorkspace,
+	const string& playerCountry, const string& playerRegion, const optional<double> playerLatitude, const optional<double> playerLongitude,
+	const string& defaultDeliveryHost
 )
 {
+	/*
+
+	 */
 	string deliveryHost = defaultDeliveryHost;
-	if (!playerCountry.empty())
+	if (playerLatitude && playerLongitude)
+	{
+		try
+		{
+			deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(requestWorkspace->_workspaceKey,
+				*playerLatitude, *playerLongitude);
+		}
+		catch (exception& e)
+		{
+			LOG_ERROR("getDeliveryHost"
+				", exception: {}", e.what()
+				);
+		}
+	}
+	else if (!playerCountry.empty())
 	{
 		// verifica se abbiamo externalDeliveries per questo specifico playerCountry-playerRegion
 		/*
@@ -974,9 +997,14 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 		"getDeliveryHost"
 		", playerCountry: {}"
 		", playerRegion: {}"
+		", playerLotitude: {}"
+		", playerLongitude: {}"
 		", deliveryHost: {}",
 		// ", externalDeliveries: {}",
-		playerCountry, playerRegion, deliveryHost
+		playerCountry, playerRegion,
+		playerLatitude ? to_string(*playerLatitude) : "nullopt",
+		playerLongitude ? to_string(*playerLongitude) : "nullopt",
+		deliveryHost
 		// JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot),
 	);
 

@@ -404,6 +404,12 @@ install-packages()
 			echo "se serve eseguire il comando sotto"
 			echo "create table if not exists MMS_TestConnection (testConnectionKey integer)"
 			read
+			echo "Per la CDN dell'MMS, per calcolare il deliveryServer piu vicino player, serve l'estenzione earthdistance e cube."
+			echo "Le estenzioni sono 'per database', quindi sul master, la replicazione la crea automaticamente anche sugli slave,"
+			echo "collegarsi come superuser sul DB mms: sudo -u postgres psql -d mms"
+			echo "ed eseguire il comando: "
+			echo "CREATE EXTENSION earthdistance CASCADE;"
+			read
 		fi
 	fi
 

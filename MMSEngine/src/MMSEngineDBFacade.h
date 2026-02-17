@@ -2472,13 +2472,14 @@ class MMSEngineDBFacade
 	int64_t addDeliveryServer(
 		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
 		const std::string &publicIP, const std::string &internalIP, const std::string &hostname,
-		double latitude, double longitude
+		double latitude, double longitude, int64_t maxTXBandwidthInGbps
 	);
 	void modifyDeliveryServer(
 		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string>& type,
 		const std::optional<int64_t> &originDeliveryServerKey, std::optional<bool> external, std::optional<bool> enabled,
 		const std::optional<std::string> &publicIP, const std::optional<std::string> &internalIP,
-		const std::optional<std::string> &hostname, const std::optional<double>& latitude, const std::optional<double>& longitude
+		const std::optional<std::string> &hostname, const std::optional<double>& latitude, const std::optional<double>& longitude,
+		const std::optional<int64_t>& maxTXBandwidthInGbps
 	);
 	void updateDeliveryServerAvgBandwidthUsage(
 		int64_t deliveryServerKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
@@ -2491,6 +2492,8 @@ class MMSEngineDBFacade
 		std::optional<std::string> type, std::optional<std::string> labelOrder
 	);
 	std::string deliveryServer_columnAsString(std::string columnName, int64_t deliveryServerKey, bool fromMaster = false);
+	std::string getBestDeliveryServerBasedOnGeoProximityAndMetrics(int64_t workspaceKey, double playerLatitude, double playerLongitude);
+	std::string getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(int64_t workspaceKey, double playerLatitude, double playerLongitude);
 	std::shared_ptr<PostgresHelper::SqlResultSet> deliveryServerQuery(
 		std::vector<std::string> &requestedColumns, int64_t deliveryServerKey, bool fromMaster,
 		int startIndex = -1, int rows = -1, std::string orderBy = "",

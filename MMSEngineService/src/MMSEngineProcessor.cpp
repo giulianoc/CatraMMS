@@ -925,8 +925,7 @@ json MMSEngineProcessor::getReviewedFiltersRoot(json filtersRoot, const shared_p
 						999999,				// maxRetries,
 						false,				// reuseAuthIfPresent
 						false,				// playerIPToBeAuthorized
-						"",					// playerCountry
-						"",					// playerRegion
+						"", "", nullopt, nullopt, nullopt,
 						false,				// save,
 						"MMS_SignedURL",	// deliveryType,
 
@@ -1487,8 +1486,7 @@ MMSEngineProcessor::processDependencyInfo(
 			999999,				// maxRetries,
 			false,				// reuseAuthIfPresent
 			false,				// playerIPToBeAuthorized
-			"",					// playerCountry
-			"",					// playerRegion
+			"", "", nullopt, nullopt, nullopt,
 			false,				// save,
 			"MMS_SignedURL",	// deliveryType,
 

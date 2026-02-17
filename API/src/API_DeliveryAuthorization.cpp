@@ -42,6 +42,9 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 
 		string playerCountry = requestData.getQueryParameter("playerCountry", string());
 		string playerRegion = requestData.getQueryParameter("playerRegion", string());
+		auto playerLatitude = requestData.getOptQueryParameter<double>("playerLatitude");
+		auto playerLongitude = requestData.getOptQueryParameter<double>("playerLongitude");
+		auto deliveryHostToBeUsed = requestData.getOptQueryParameter<string>("deliveryHostToBeUsed");
 
 		auto physicalPathKey = requestData.getQueryParameter<int64_t>("physicalPathKey", -1);
 		auto mediaItemKey = requestData.getQueryParameter<int64_t>("mediaItemKey", -1);
@@ -99,7 +102,9 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 
 				ingestionJobKey, deliveryCode,
 
-				ttlInSeconds, maxRetries, reuseAuthIfPresent, playerIPToBeAuthorized, playerCountry, playerRegion, save, deliveryType,
+				ttlInSeconds, maxRetries, reuseAuthIfPresent, playerIPToBeAuthorized,
+				playerCountry, playerRegion, playerLatitude, playerLongitude, deliveryHostToBeUsed,
+				save, deliveryType,
 
 				warningIfMissingMediaItemKey, filteredByStatistic, userId
 			);
@@ -252,20 +257,20 @@ void API::createBulkOfDeliveryAuthorization(
 				for (auto &[keyRoot, valRoot] : mediaItemKeyListRoot.items())
 				{
 					field = "mediaItemKey";
-					int64_t mediaItemKey = JSONUtils::as<int64_t>(valRoot, field, -1);
+					auto mediaItemKey = JSONUtils::as<int64_t>(valRoot, field, -1);
 					field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::as<int64_t>(valRoot, field, -1);
+					auto encodingProfileKey = JSONUtils::as<int64_t>(valRoot, field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = JSONUtils::as<string>(valRoot, field, "");
+					auto encodingProfileLabel = JSONUtils::as<string>(valRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::as<string>(valRoot, field, "");
+					auto deliveryType = JSONUtils::as<string>(valRoot, field, "");
 
 					field = "filteredByStatistic";
 					bool filteredByStatistic = JSONUtils::as<bool>(valRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::as<string>(valRoot, field, "");
+					auto userId = JSONUtils::as<string>(valRoot, field, "");
 
 					string requestKey = std::format(
 						"{}_{}_{}_{}_{}_{}", mediaItemKey, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
@@ -291,8 +296,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 								ttlInSeconds, maxRetries, reuseAuthIfPresent,
 								false, // playerIPToBeAuthorized
-								"",	   // playerCountry
-								"",	   // playerRegion
+								"", "", nullopt, nullopt, nullopt,
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
@@ -344,25 +348,25 @@ void API::createBulkOfDeliveryAuthorization(
 					json uniqueNameRoot = uniqueNameListRoot[uniqueNameIndex];
 
 					field = "uniqueName";
-					string uniqueName = JSONUtils::as<string>(uniqueNameRoot, field, "");
+					auto uniqueName = JSONUtils::as<string>(uniqueNameRoot, field, "");
 					field = "encodingProfileKey";
-					int64_t encodingProfileKey = JSONUtils::as<int64_t>(uniqueNameRoot, field, -1);
+					auto encodingProfileKey = JSONUtils::as<int64_t>(uniqueNameRoot, field, -1);
 					field = "encodingProfileLabel";
-					string encodingProfileLabel = JSONUtils::as<string>(uniqueNameRoot, field, "");
+					auto encodingProfileLabel = JSONUtils::as<string>(uniqueNameRoot, field, "");
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::as<string>(uniqueNameRoot, field, "");
+					auto deliveryType = JSONUtils::as<string>(uniqueNameRoot, field, "");
 
 					field = "filteredByStatistic";
 					bool filteredByStatistic = JSONUtils::as<bool>(uniqueNameRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::as<string>(uniqueNameRoot, field, "");
+					auto userId = JSONUtils::as<string>(uniqueNameRoot, field, "");
 
 					string requestKey = std::format(
 						"{}_{}_{}_{}_{}_{}", uniqueName, encodingProfileKey, encodingProfileLabel, deliveryType, filteredByStatistic, userId
 					);
-					map<string, string>::const_iterator searchIt = deliveryURLAlreadyCreated.find(requestKey);
+					auto searchIt = deliveryURLAlreadyCreated.find(requestKey);
 					if (searchIt == deliveryURLAlreadyCreated.end())
 					{
 						pair<string, string> deliveryAuthorizationDetails;
@@ -382,8 +386,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 								ttlInSeconds, maxRetries, reuseAuthIfPresent,
 								false, // playerIPToBeAuthorized
-								"",	   // playerCountry
-								"",	   // playerRegion
+								"", "", nullopt, nullopt, nullopt,
 								save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 							);
 						}
@@ -432,18 +435,18 @@ void API::createBulkOfDeliveryAuthorization(
 					json liveIngestionJobKeyRoot = liveIngestionJobKeyListRoot[liveIngestionJobKeyIndex];
 
 					field = "ingestionJobKey";
-					int64_t ingestionJobKey = JSONUtils::as<int64_t>(liveIngestionJobKeyRoot, field, -1);
+					auto ingestionJobKey = JSONUtils::as<int64_t>(liveIngestionJobKeyRoot, field, -1);
 					field = "deliveryCode";
-					int64_t deliveryCode = JSONUtils::as<int64_t>(liveIngestionJobKeyRoot, field, -1);
+					auto deliveryCode = JSONUtils::as<int64_t>(liveIngestionJobKeyRoot, field, -1);
 
 					field = "deliveryType";
-					string deliveryType = JSONUtils::as<string>(liveIngestionJobKeyRoot, field, "");
+					auto deliveryType = JSONUtils::as<string>(liveIngestionJobKeyRoot, field, "");
 
 					field = "filteredByStatistic";
 					bool filteredByStatistic = JSONUtils::as<bool>(liveIngestionJobKeyRoot, field, false);
 
 					field = "userId";
-					string userId = JSONUtils::as<string>(liveIngestionJobKeyRoot, field, "");
+					auto userId = JSONUtils::as<string>(liveIngestionJobKeyRoot, field, "");
 
 					pair<string, string> deliveryAuthorizationDetails;
 					try
@@ -463,8 +466,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 							ttlInSeconds, maxRetries, reuseAuthIfPresent,
 							false, // playerIPToBeAuthorized
-							"",	   // playerCountry
-							"",	   // playerRegion
+							"", "", nullopt, nullopt,  nullopt,
 							save, deliveryType, warningIfMissingMediaItemKey, filteredByStatistic, userId
 						);
 					}

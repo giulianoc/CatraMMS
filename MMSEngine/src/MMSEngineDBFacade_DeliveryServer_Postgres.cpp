@@ -16,7 +16,8 @@ using namespace pqxx;
 
 int64_t MMSEngineDBFacade::addDeliveryServer(
 	const string& label, const string& type, const optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
-	const string& publicIP, const string& internalIP, const string& hostname, double latitude, double longitude
+	const string& publicIP, const string& internalIP, const string& hostname, double latitude, double longitude,
+	int64_t maxTXBandwidthInGbps
 )
 {
 	int64_t deliveryServerKey;
@@ -28,12 +29,12 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 			string sqlStatement = std::format(
 			R"(
 				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey, external, enabled, publicIP,
-					internalIP, hostname, latitude, longitude) values (
-					{}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
+					internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps) values (
+					{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
 				trans.transaction->quote(label),
 				trans.transaction->quote(type), originDeliveryServerKey ? to_string(originDeliveryServerKey) : "null",
 				external, enabled, trans.transaction->quote(publicIP), trans.transaction->quote(internalIP),
-				trans.transaction->quote(hostname), latitude, longitude
+				trans.transaction->quote(hostname), latitude, longitude, maxTXBandwidthInGbps
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			deliveryServerKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
@@ -78,7 +79,8 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 void MMSEngineDBFacade::modifyDeliveryServer(
 	int64_t deliveryServerKey, const optional<string>& label, const optional<string>& type, const optional<int64_t>& originDeliveryServerKey,
 	optional<bool> external, optional<bool> enabled, const optional<string>& publicIP, const optional<string>& internalIP,
-	const optional<string>& hostname, const optional<double>& latitude, const optional<double>& longitude
+	const optional<string>& hostname, const optional<double>& latitude, const optional<double>& longitude,
+	const optional<int64_t>& maxTXBandwidthInGbps
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -167,6 +169,14 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += std::format("longitude = {}", *longitude);
+				oneParameterPresent = true;
+			}
+
+			if (maxTXBandwidthInGbps)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("maxTXBandwidthInGbps = {}", *maxTXBandwidthInGbps);
 				oneParameterPresent = true;
 			}
 
@@ -750,6 +760,216 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 		}
 
 		return sqlResultSet;
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			LOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			LOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
+	const int64_t workspaceKey, const double playerLatitude, const double playerLongitude)
+{
+	/*
+	Geo-proximity–based server selection. Limiti di questa soluzione:
+	- la Distanza geografica è diversa dalla distanza di rete
+	- non viene considerato che un edge puo essere vicino al client ma lontano dal contenuto, ad esempio:
+		- origin -> mid-origin -> mid-origin -> edge -> client
+	- non viene considerato se l'edge deve leggere via NFS da un origin congestionato
+	*/
+
+	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
+	try
+	{
+		{
+			/*
+			SELECT *, earth_distance(ll_to_earth(:client_lat, :client_lon), ll_to_earth(lat, lon)) AS distance_m
+				FROM delivery_server
+				WHERE enabled = true
+				ORDER BY distance_m, cpuUsage, txAvgBandwidthUsage
+				LIMIT 1;
+			Abbiamo due opzioni:
+				1) ordinare per distanza, poi per cpuUsage, poi per txAvgBandwidthUsage
+				2) calcolare uno score che combina distanza, cpuUsage e txAvgBandwidthUsage, e ordinare per score
+				Opzione 1: usarlo quando vogliamo una priorità assoluta, una gerarchia di importanza
+					ORDER BY geoClass, (txAvgBandwidthUsage / maxBandwidth), (cpuUsage / 100.0)
+					Questo significa:
+					1.	Prima scegli tra i più vicini
+					2.	Tra quelli scegli il meno saturo di banda
+					3.	Se pari, scegli quello con meno CPU
+					Questo rispetta veramente la gerarchia.
+				Opzione 2: calcoliamo uno score. Se lo score lo calcoliamo come
+					(geoClass * 0.4 + (cpuUsage / 100.0) * 0.3 + (txAvgBandwidthUsage / (maxTXBandwidthInGbps * 1000000000)) * 0.3) AS score
+					è necessario normalizzare tutti i fattori che devono essere portati sulla stessa scala (tipicamente 0–1).
+					Altrimenti la banda, essendo un valore molto grande, dominerebbe completamente lo score, anche con moltiplicatore 50.
+					Nel calcolo dello score si potrebbe aggiungere anche '+ activeConnections * 10', ma non abbiamo ancora questa informazione in DB,
+					e comunque è un'informazione molto volatile, che potrebbe essere obsoleta al momento della lettura, per cui per ora non la consideriamo
+				Inoltre usiamo classi di distanza, questo evita micro-ottimizzazioni inutili.
+			 */
+			// 85% di utilizzo della banda massima, per evitare di saturare completamente la banda e lasciare un po di margine per picchi improvvisi
+			constexpr double maxTXBandwidthInPerCent = 0.85;
+			constexpr int16_t maxCPUInPerCent = 90;
+			int16_t deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
+			// Query 1 – tentativo “ideale” (metriche fresche)
+			string sqlStatement = fmt::format(
+				R"(
+				WITH rankedServers AS (
+					SELECT hostname, txAvgBandwidthUsage, cpuUsage,
+						CASE
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), earthCoord) < 200000 THEN 0.0   -- very close
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), earthCoord) < 600000 THEN 0.5   -- close
+							ELSE 1.0   -- far
+						END AS geoClass
+					FROM MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping a
+					WHERE d.deliveryServerKey = a.deliveryServerKey
+					AND a.workspaceKey = {workspaceKey}
+					AND enabled = true
+					-- 0.85: 85% di utilizzo della banda massima, 1/8: conversione da bit a byte
+					AND d.txAvgBandwidthUsage <= d.maxTXBandwidthInGbps * 1000000000 * {maxTXBandwidthInPerCent} / 8
+					AND cpuUsage < {maxCPUInPerCent} -- escludiamo server con CPU > 90%
+					AND cpuUsageUpdateTime IS NOT NULL
+					AND bandwidthUsageUpdateTime IS NOT NULL
+					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					AND (NOW() at time zone 'utc' - cpuUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+				)
+				SELECT hostname FROM rankedServers
+				ORDER BY geoClass, txAvgBandwidthUsage, cpuUsage
+				LIMIT 1
+					)",
+				fmt::arg("workspaceKey", workspaceKey),
+				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude),
+				fmt::arg("maxTXBandwidthInPerCent", maxTXBandwidthInPerCent), fmt::arg("maxCPUInPerCent", maxCPUInPerCent),
+				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
+			long elapsed = sqlResultSet->getSqlDuration().count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (!sqlResultSet->empty())
+				return (*sqlResultSet)[0]["hostname"].as<string>();
+		}
+
+		LOG_WARN("Ideal deliveryServer not selected, trying without considering cpu/bandwidth usage");
+		return getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(workspaceKey, playerLatitude, playerLongitude);
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			LOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			LOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
+string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(
+	const int64_t workspaceKey, const double playerLatitude, const double playerLongitude)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		// Query 2 – fallback (metriche stale ammesse)
+		// se cpu/banda smettono di aggiornarsi è importante ritornare un deliveryServer ed evitare che il sistema si blocchi
+		// selectedLastTime viene usato per fare round-robin tra i server con metriche stale, in modo da non sovraccaricare
+		// sempre lo stesso server quando le metriche sono stale
+		{
+			string sqlStatement = fmt::format(
+				R"(
+				WITH rankedServers AS (
+					SELECT d.deliveryServerKey
+					FROM MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping a
+					WHERE d.deliveryServerKey = a.deliveryServerKey
+					AND a.workspaceKey = {workspaceKey}
+					AND enabled = true
+					ORDER BY
+						CASE
+				            WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 200000 THEN 0.0
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 600000 THEN 0.5
+							ELSE 1.0
+						END,
+						d.selectedLastTime
+					LIMIT 1
+				)
+				-- Aggiorna le righe della tabella MMS_DeliveryServer usando dati provenienti da rankedServers
+				-- ma solo dove la condizione del WHERE è vera
+				UPDATE MMS_DeliveryServer d
+				SET selectedLastTime = NOW() at time zone 'utc'
+				FROM rankedServers r
+				WHERE d.deliveryServerKey = r.deliveryServerKey
+				RETURNING d.hostname
+					)",
+				fmt::arg("workspaceKey", workspaceKey),
+				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude)
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
+			long elapsed = sqlResultSet->getSqlDuration().count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (sqlResultSet->empty())
+			{
+				string errorMessage = std::format(
+					"deliveryServer was not found"
+					", workspaceKey: {}"
+					", playerLatitude: {}"
+					", playerLongitude: {}",
+					workspaceKey, playerLatitude, playerLongitude
+				);
+				LOG_ERROR(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+			return (*sqlResultSet)[0]["hostname"].as<string>();
+		}
 	}
 	catch (exception const &e)
 	{

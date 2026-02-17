@@ -60,6 +60,7 @@ void API::addDeliveryServer(
 		string internalIP;
 		double latitude;
 		double longitude;
+		int64_t maxTXBandwidthInGbps;
 
 		try
 		{
@@ -78,6 +79,7 @@ void API::addDeliveryServer(
 			internalIP = JSONUtils::as<string>(requestBodyRoot, "internalIP", "", {}, true);
 			latitude = JSONUtils::as<double>(requestBodyRoot, "latitude", 0.0, {}, true);
 			longitude = JSONUtils::as<double>(requestBodyRoot, "longitude", 0.0, {}, true);
+			maxTXBandwidthInGbps = JSONUtils::as<int64_t>(requestBodyRoot, "maxTXBandwidthInGbps", 1, {}, true);
 		}
 		catch (exception &e)
 		{
@@ -96,7 +98,7 @@ void API::addDeliveryServer(
 		try
 		{
 			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(label, type, originDeliveryServerKey,
-				external, enabled, publicIP, internalIP, hostname, latitude, longitude);
+				external, enabled, publicIP, internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}
@@ -167,6 +169,7 @@ void API::modifyDeliveryServer(
 		optional<string> hostname;
 		optional<double> latitude;
 		optional<double> longitude;
+		optional<int64_t> maxTXBandwidthInGbps;
 
 		try
 		{
@@ -182,6 +185,7 @@ void API::modifyDeliveryServer(
 			hostname = JSONUtils::asOpt<string>(requestBodyRoot, "hostname");
 			latitude = JSONUtils::asOpt<double>(requestBodyRoot, "latitude");
 			longitude = JSONUtils::asOpt<double>(requestBodyRoot, "longitude");
+			maxTXBandwidthInGbps = JSONUtils::asOpt<int64_t>(requestBodyRoot, "maxTXBandwidthInGbps");
 		}
 		catch (exception &e)
 		{
@@ -203,7 +207,7 @@ void API::modifyDeliveryServer(
 
 			_mmsEngineDBFacade->modifyDeliveryServer(
 				deliveryServerKey, label, type, originDeliveryServerKey, external, enabled,
-				publicIP, internalIP, hostname, latitude, longitude
+				publicIP, internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps
 			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;

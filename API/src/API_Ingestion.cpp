@@ -4660,8 +4660,7 @@ void API::changeLiveProxyPlaylist(
 										999999,							 // maxRetries,
 										false,							 // reuseAuthIfPresent
 										false,							 // playerIPToBeAuthorized
-										"",								 // playerCountry
-										"",								 // playerRegion
+										"", "", nullopt, nullopt, nullopt,
 										false,							 // save,
 										"MMS_SignedURL",				 // deliveryType,
 
@@ -4752,8 +4751,7 @@ void API::changeLiveProxyPlaylist(
 									999999,							 // maxRetries,
 									false,							 // reuseAuthIfPresent
 									false,							 // playerIPToBeAuthorized
-									"",								 // playerCountry
-									"",								 // playerRegion
+									"", "", nullopt, nullopt, nullopt,
 									false,							 // save,
 									"MMS_SignedURL",				 // deliveryType,
 
@@ -5048,8 +5046,7 @@ void API::changeLiveProxyPlaylist(
 										999999,							 // maxRetries,
 										false,							 // reuseAuthIfPresent
 										false,							 // playerIPToBeAuthorized
-										"",								 // playerCountry
-										"",								 // playerRegion
+										"", "", nullopt, nullopt,  nullopt,
 										false,							 // save,
 										"MMS_SignedURL",				 // deliveryType,
 
@@ -6001,8 +5998,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, const shared_ptr<Workspace>& 
 						999999,				// maxRetries,
 						false,				// reuseAuthIfPresent
 						false,				// playerIPToBeAuthorized
-						"",					// playerCountry
-						"",					// playerRegion
+						"", "", nullopt, nullopt,  nullopt,
 						false,				// save,
 						"MMS_SignedURL",	// deliveryType,
 

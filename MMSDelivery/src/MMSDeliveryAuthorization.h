@@ -29,8 +29,11 @@ class MMSDeliveryAuthorization
 	std::pair<std::string, std::string> createDeliveryAuthorization(
 		int64_t userKey, const std::shared_ptr<Workspace> &requestWorkspace, const std::string &playerIP, int64_t mediaItemKey, const std::string &uniqueName,
 		int64_t encodingProfileKey, const std::string &encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode,
-		int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized, const std::string &playerCountry,
-		const std::string &playerRegion, bool save, const std::string &deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic,
+		int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized,
+		const std::string &playerCountry, const std::string &playerRegion,
+		const std::optional<double> playerLatitude, const std::optional<double> playerLongitude,
+		const std::optional<std::string>& deliveryHostToBeUsed,
+		bool save, const std::string &deliveryType, bool warningIfMissingMediaItemKey, bool filteredByStatistic,
 		const std::string &userId
 	);
 
@@ -87,7 +90,10 @@ private:
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
 	static time_t getExpirationTime(int ttlInSeconds, bool reusable);
 	std::string getDeliveryHost(
-		const std::shared_ptr<Workspace> &requestWorkspace, const std::string &playerCountry, const std::string &playerRegion, const std::string &defaultDeliveryHost
+		const std::shared_ptr<Workspace> &requestWorkspace,
+		const std::string &playerCountry, const std::string &playerRegion,
+		const std::optional<double> playerLatitude, const std::optional<double> playerLongitude,
+		const std::string &defaultDeliveryHost
 	);
 	std::shared_ptr<HostsBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, const std::string &groupName, const nlohmann::json &hostGroupRoot);
 

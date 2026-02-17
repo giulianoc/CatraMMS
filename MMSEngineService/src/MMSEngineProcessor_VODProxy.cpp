@@ -240,8 +240,7 @@ void MMSEngineProcessor::manageVODProxy(
 						999999,				// maxRetries,
 						false,				// reuseAuthIfPresent
 						false,				// playerIPToBeAuthorized
-						"",					// playerCountry
-						"",					// playerRegion
+						"", "", nullopt, nullopt,  nullopt,
 						false,				// save,
 						"MMS_SignedURL",	// deliveryType,
 

@@ -1430,9 +1430,11 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					hostname text NOT NULL,
 					latitude DOUBLE PRECISION NOT NULL,
 					longitude DOUBLE PRECISION NOT NULL,
+					earthCoord earth GENERATED ALWAYS AS (ll_to_earth(latitude, longitude)) STORED,
 					txAvgBandwidthUsage	bigint,
 					rxAvgBandwidthUsage	bigint,
 					bandwidthUsageUpdateTime timestamp without time zone,
+					maxTXBandwidthInGbps bigint,
 					cpuUsage integer,
 					cpuUsageUpdateTime timestamp without time zone,
 					selectedLastTime timestamp without time zone not null default (NOW() at time zone 'utc'),
@@ -1472,6 +1474,21 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServer_idx2 ON MMS_DeliveryServer ("
 				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = "CREATE INDEX IF NOT EXISTS MMS_DeliveryServer_idx3 ON MMS_DeliveryServer USING GIST (earthCoord) ";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
