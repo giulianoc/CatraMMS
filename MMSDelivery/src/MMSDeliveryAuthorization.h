@@ -28,7 +28,8 @@ class MMSDeliveryAuthorization
 
 	std::pair<std::string, std::string> createDeliveryAuthorization(
 		int64_t userKey, const std::shared_ptr<Workspace> &requestWorkspace, const std::string &playerIP, int64_t mediaItemKey, const std::string &uniqueName,
-		int64_t encodingProfileKey, const std::string &encodingProfileLabel, int64_t physicalPathKey, int64_t ingestionJobKey, int64_t deliveryCode,
+		int64_t encodingProfileKey, const std::string &encodingProfileLabel, int64_t physicalPathKey,
+		int64_t ingestionJobKey, int64_t deliveryCode, std::optional<int16_t> requestedOutputIndex,
 		int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized,
 		const std::string &playerCountry, const std::string &playerRegion,
 		const std::optional<double> playerLatitude, const std::optional<double> playerLongitude,

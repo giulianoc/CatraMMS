@@ -175,6 +175,7 @@ void MMSEngineProcessor::manageCountdown(
 
 					-1, // ingestionJobKey,	(in case of live)
 					-1, // deliveryCode,
+					nullopt,
 
 					abs(utcNow - utcProxyPeriodEnd), // ttlInSeconds,
 					999999,							 // maxRetries,

@@ -61,9 +61,8 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 
 		// this is for live authorization
 		auto ingestionJobKey = requestData.getQueryParameter<int64_t>("ingestionJobKey", -1);
-
-		// this is for live authorization
 		auto deliveryCode = requestData.getQueryParameter<int64_t>("deliveryCode", -1);
+		auto outputIndex = requestData.getOptQueryParameter<int16_t>("outputIndex"); // indice dell'array json "outputs"
 
 		if (physicalPathKey == -1 &&
 			((mediaItemKey == -1 && uniqueName.empty())
@@ -100,7 +99,7 @@ void API::createDeliveryAuthorization(const string_view& sThreadId, FCGX_Request
 
 				physicalPathKey,
 
-				ingestionJobKey, deliveryCode,
+				ingestionJobKey, deliveryCode, outputIndex,
 
 				ttlInSeconds, maxRetries, reuseAuthIfPresent, playerIPToBeAuthorized,
 				playerCountry, playerRegion, playerLatitude, playerLongitude, deliveryHostToBeUsed,
@@ -293,6 +292,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 								-1, // ingestionJobKey,
 								-1, // deliveryCode,
+								nullopt,
 
 								ttlInSeconds, maxRetries, reuseAuthIfPresent,
 								false, // playerIPToBeAuthorized
@@ -383,6 +383,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 								-1, // ingestionJobKey,
 								-1, // deliveryCode,
+								nullopt,
 
 								ttlInSeconds, maxRetries, reuseAuthIfPresent,
 								false, // playerIPToBeAuthorized
@@ -462,7 +463,7 @@ void API::createBulkOfDeliveryAuthorization(
 
 							-1, // physicalPathKey,
 
-							ingestionJobKey, deliveryCode,
+							ingestionJobKey, deliveryCode, nullopt,
 
 							ttlInSeconds, maxRetries, reuseAuthIfPresent,
 							false, // playerIPToBeAuthorized

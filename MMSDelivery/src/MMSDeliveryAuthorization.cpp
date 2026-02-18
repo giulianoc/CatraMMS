@@ -103,11 +103,14 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 	int64_t userKey, const shared_ptr<Workspace>& requestWorkspace, const string& playerIP,
 
+	// 1. parametri per il delivery di un VOD
 	int64_t mediaItemKey, const string& uniqueName, int64_t encodingProfileKey, const string& encodingProfileLabel,
 
+	// 2. parametri per il delivery di un VOD
 	int64_t physicalPathKey,
 
-	int64_t ingestionJobKey, int64_t deliveryCode,
+	// 3. parametri per il delivery di un Live
+	int64_t ingestionJobKey, int64_t deliveryCode, optional<int16_t> requestedOutputIndex,
 
 	int ttlInSeconds, int maxRetries, bool reuseAuthIfPresent, bool playerIPToBeAuthorized,
 	const string& playerCountry, const string& playerRegion, const optional<double> playerLatitude, const optional<double> playerLongitude,
@@ -379,6 +382,9 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 			vector<tuple<string, int64_t, string>> outputDeliveryOptions;
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
+				if (requestedOutputIndex && outputIndex != *requestedOutputIndex)
+					continue;
+
 				const json& outputRoot = outputsRoot[outputIndex];
 
 				string outputType;

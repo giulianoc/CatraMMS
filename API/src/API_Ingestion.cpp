@@ -4655,6 +4655,7 @@ void API::changeLiveProxyPlaylist(
 
 										-1, // ingestionJobKey,	(in case of live)
 										-1, // deliveryCode,
+										nullopt,
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 										999999,							 // maxRetries,
@@ -4746,6 +4747,7 @@ void API::changeLiveProxyPlaylist(
 
 									-1, // ingestionJobKey,	(in case of live)
 									-1, // deliveryCode,
+									nullopt,
 
 									abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 									999999,							 // maxRetries,
@@ -5041,6 +5043,7 @@ void API::changeLiveProxyPlaylist(
 										-1, // ingestionJobKey,
 											// (in case of live)
 										-1, // deliveryCode,
+										nullopt,
 
 										abs(utcNow - utcBroadcasterEnd), // ttlInSeconds,
 										999999,							 // maxRetries,
@@ -5993,6 +5996,7 @@ json API::getReviewedFiltersRoot(json filtersRoot, const shared_ptr<Workspace>& 
 
 						-1, // ingestionJobKey,	(in case of live)
 						-1, // deliveryCode,
+						nullopt,
 
 						365 * 24 * 60 * 60, // ttlInSeconds, 365 days!!!
 						999999,				// maxRetries,
