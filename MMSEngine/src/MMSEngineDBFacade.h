@@ -2633,6 +2633,10 @@ class MMSEngineDBFacade
 	std::string _geoServiceKey;
 	int _geoServiceTimeoutInSeconds;
 
+	double _maxTXBandwidthPerCent;
+	int16_t _maxCPUPerCent;
+	int16_t _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds;
+
 #ifdef __POSTGRES__
 	void loadSqlColumnsSchema();
 	static std::string getPostgresArray(const std::vector<std::string> &arrayElements, bool emptyElementToBeRemoved, PostgresConnTrans &trans);

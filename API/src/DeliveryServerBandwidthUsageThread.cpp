@@ -73,7 +73,7 @@ DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const jso
 			", exception: {}", updateStatsCryptedPassword, e.what()
 			);
 	}
-	auto sDeliveryServerKey = JsonPath(&configurationRoot)["api"]["delivery"]["deliveryServerKey"].as<std::string>();
+	auto sDeliveryServerKey = JsonPath(&configurationRoot)["deliveryServer"]["deliveryServerKey"].as<std::string>();
 	LOG_INFO("Configuration item"
 		", api->delivery->deliveryServerKey: {}", sDeliveryServerKey);
 	try

@@ -122,6 +122,11 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	_geoServiceTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["geoService"]["timeoutInSeconds"].as<int32_t>(10);
 	_logger->trace(__FILEREF__ + "Configuration item" + ", mms->geoService->timeoutInSeconds: " + to_string(_geoServiceTimeoutInSeconds));
 
+	_maxTXBandwidthPerCent = JsonPath(&configurationRoot)["deliveryServer"]["maxTXBandwidthPerCent"].as<double>(0.75);
+	_maxCPUPerCent = JsonPath(&configurationRoot)["deliveryServer"]["maxCPUPerCent"].as<int16_t>(80);
+	_deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds = JsonPath(&configurationRoot)["deliveryServer"]
+		["unavailableIfNotReceivedStatsUpdatesInSeconds"].as<int16_t>(120);
+
 	_getIngestionJobsCurrentIndex = 0;
 	_getEncodingJobsCurrentIndex = 0;
 

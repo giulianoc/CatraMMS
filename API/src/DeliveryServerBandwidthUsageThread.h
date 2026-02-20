@@ -49,7 +49,7 @@ private:
 	std::string _mmsAPIUpdateBandwidthStatsURI;
 	std::string _updateStatsUser;
 	std::string _updateStatsPassword;
-	int32_t _deliveryServerKey;
+	int64_t _deliveryServerKey;
 	bool _isDeliveryAndAPIServerTogether;
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
 };

@@ -825,10 +825,6 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 					e comunque è un'informazione molto volatile, che potrebbe essere obsoleta al momento della lettura, per cui per ora non la consideriamo
 				Inoltre usiamo classi di distanza, questo evita micro-ottimizzazioni inutili.
 			 */
-			// 85% di utilizzo della banda massima, per evitare di saturare completamente la banda e lasciare un po di margine per picchi improvvisi
-			constexpr double maxTXBandwidthInPerCent = 0.85;
-			constexpr int16_t maxCPUInPerCent = 90;
-			int16_t deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
 			// Query 1 – tentativo “ideale” (metriche fresche)
 			// ll_to_earth: converte latitudine e longitudine in un punto (x, y, z) sulla superficie terrestre rappresentato come un valore
 			// di tipo 'earth', che è un tipo di dato specifico di PostgreSQL per rappresentare posizioni geografiche sulla Terra.
@@ -853,9 +849,9 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 					WHERE d.deliveryServerKey = a.deliveryServerKey
 					AND a.workspaceKey = {workspaceKey}
 					AND enabled = true
-					-- 0.85: 85% di utilizzo della banda massima, 1/8: conversione da bit a byte
-					AND d.txAvgBandwidthUsage <= d.maxTXBandwidthInGbps * 1000000000 * {maxTXBandwidthInPerCent} / 8
-					AND cpuUsage < {maxCPUInPerCent} -- escludiamo server con CPU > 90%
+					-- 0.75: 75% di utilizzo della banda massima, 1/8: conversione da bit a byte
+					AND d.txAvgBandwidthUsage <= d.maxTXBandwidthInGbps * 1000000000 * {maxTXBandwidthPerCent} / 8
+					AND cpuUsage < {maxCPUPerCent} -- escludiamo server con CPU > 80%
 					AND cpuUsageUpdateTime IS NOT NULL
 					AND bandwidthUsageUpdateTime IS NOT NULL
 					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
@@ -867,8 +863,8 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 					)",
 				fmt::arg("workspaceKey", workspaceKey),
 				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude),
-				fmt::arg("maxTXBandwidthInPerCent", maxTXBandwidthInPerCent), fmt::arg("maxCPUInPerCent", maxCPUInPerCent),
-				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
+				fmt::arg("maxTXBandwidthPerCent", _maxTXBandwidthPerCent), fmt::arg("maxCPUPerCent", _maxCPUPerCent),
+				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
