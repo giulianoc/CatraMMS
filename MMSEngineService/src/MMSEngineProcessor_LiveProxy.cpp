@@ -123,10 +123,10 @@ void MMSEngineProcessor::manageLiveProxy(
 					json proxyPeriodRoot = parametersRoot["schedule"];
 
 					string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, "start", "", {}, true);
-					utcProxyPeriodStart = Datetime::parseUtcStringToUtcInSecs(proxyPeriodStart);
+					utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
 
 					string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, "end", "", {}, true);
-					utcProxyPeriodEnd = Datetime::parseUtcStringToUtcInSecs(proxyPeriodEnd);
+					utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
 				}
 			}
 
