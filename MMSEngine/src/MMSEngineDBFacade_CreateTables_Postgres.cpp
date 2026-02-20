@@ -1443,6 +1443,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 						references MMS_DeliveryServer (deliveryServerKey) on delete cascade,
 					UNIQUE (label))
 			)";
+			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

@@ -26,8 +26,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 	try
 	{
 		{
-			string sqlStatement = std::format(
-			R"(
+			string sqlStatement = std::format(R"(
 				insert into MMS_DeliveryServer(label, type, originDeliveryServerKey, external, enabled, publicIP,
 					internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps) values (
 					{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}) returning deliveryServerKey)",
@@ -36,6 +35,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 				external, enabled, trans.transaction->quote(publicIP), trans.transaction->quote(internalIP),
 				trans.transaction->quote(hostname), latitude, longitude, maxTXBandwidthInGbps
 			);
+			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			deliveryServerKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -561,8 +561,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 
 			string sqlStatement;
 			if (allDeliveryServers)
-				sqlStatement = std::format(
-				R"(
+				sqlStatement = std::format(R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
 					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude, d.maxTXBandwidthInGbps,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
@@ -574,8 +573,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					sqlWhere, orderByCondition, rows, start
 				);
 			else
-				sqlStatement = std::format(
-				R"(
+				sqlStatement = std::format(R"(
 					select d.deliveryServerKey, d.label, d.type, d.originDeliveryServerKey, d.external, d.enabled,
 					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude, d.maxTXBandwidthInGbps,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
@@ -586,6 +584,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					)",
 					sqlWhere, orderByCondition, rows, start
 				);
+			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
@@ -833,8 +832,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(40.712784, -74.005941)) tra roma e new york:              6898673 metri
 			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(47.606209, -122.332071)) tra roma e seattle:              9127714 metri
 			// earth_distance(ll_to_earth(40.712784, -74.005941), ll_to_earth(47.606209, -122.332071)) tra new york e seattle: 3869880 metri
-			string sqlStatement = fmt::format(
-				R"(
+			string sqlStatement = fmt::format(R"(
 				WITH rankedServers AS (
 					SELECT hostname, txAvgBandwidthUsage, cpuUsage,
 						CASE
@@ -866,6 +864,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				fmt::arg("maxTXBandwidthPerCent", _maxTXBandwidthPerCent), fmt::arg("maxCPUPerCent", _maxCPUPerCent),
 				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 			);
+			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
@@ -921,8 +920,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 		// selectedLastTime viene usato per fare round-robin tra i server con metriche stale, in modo da non sovraccaricare
 		// sempre lo stesso server quando le metriche sono stale
 		{
-			string sqlStatement = fmt::format(
-				R"(
+			string sqlStatement = fmt::format(R"(
 				WITH rankedServers AS (
 					SELECT d.deliveryServerKey
 					FROM MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping a
@@ -952,6 +950,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 				fmt::arg("workspaceKey", workspaceKey),
 				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude)
 			);
+			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));

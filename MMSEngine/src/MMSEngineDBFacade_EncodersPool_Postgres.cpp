@@ -2434,37 +2434,37 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
 
 				// Query 1 – tentativo “ideale” (metriche fresche)
-				string sqlStatement = std::format(
-				R"(
-				WITH params AS (
-					SELECT NOW() at time zone 'utc' AS ts),
-				selectedEncoder AS (
-					SELECT e.encoderKey
-					FROM MMS_Encoder e CROSS JOIN params p
-					WHERE e.enabled = true {}
-						AND e.encoderKey in ({})
-						AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds'
-						AND e.cpuUsageUpdateTime IS NOT NULL
-						AND e.bandwidthUsageUpdateTime IS NOT NULL
-						AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds'
-						AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds'
-					ORDER BY
-						e.cpuUsage ASC NULLS LAST,
-						(e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST
-					LIMIT 1
-					FOR UPDATE SKIP LOCKED
-				)
-				UPDATE MMS_Encoder e
-				SET selectedLastTime = p.ts
-				FROM selectedEncoder s CROSS JOIN params p
-				WHERE e.encoderKey = s.encoderKey
-				RETURNING
-					e.encoderKey, e.external, e.protocol,
-					e.publicServerName, e.internalServerName, e.port
-				)",
+				string sqlStatement = std::format(R"(
+					WITH params AS (
+						SELECT NOW() at time zone 'utc' AS ts),
+					selectedEncoder AS (
+						SELECT e.encoderKey
+						FROM MMS_Encoder e CROSS JOIN params p
+						WHERE e.enabled = true {}
+							AND e.encoderKey in ({})
+							AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds'
+							AND e.cpuUsageUpdateTime IS NOT NULL
+							AND e.bandwidthUsageUpdateTime IS NOT NULL
+							AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds'
+							AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds'
+						ORDER BY
+							e.cpuUsage ASC NULLS LAST,
+							(e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST
+						LIMIT 1
+						FOR UPDATE SKIP LOCKED
+					)
+					UPDATE MMS_Encoder e
+					SET selectedLastTime = p.ts
+					FROM selectedEncoder s CROSS JOIN params p
+					WHERE e.encoderKey = s.encoderKey
+					RETURNING
+						e.encoderKey, e.external, e.protocol,
+						e.publicServerName, e.internalServerName, e.port
+					)",
 					externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds,
 					encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
 				);
+				StringUtils::normalizeWhitespace(sqlStatement);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -2483,8 +2483,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 
 				// Query 2 – fallback (metriche stale ammesse)
 				// se cpu/banda smettono di aggiornarsi è importante ritornare un encoder ed evitare che il sistema si blocchi
-				string sqlStatement = std::format(
-				R"(
+				string sqlStatement = std::format(R"(
 					WITH params AS (
 						SELECT NOW() AT TIME ZONE 'utc' AS ts
 					),
@@ -2511,6 +2510,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					)",
 				externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds
 				);
+				StringUtils::normalizeWhitespace(sqlStatement);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
