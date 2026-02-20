@@ -693,7 +693,7 @@ void API::deliveryAuthorizationThroughParameter(
 		}
 
 		string contentURI = originalURI;
-		size_t endOfURIIndex = contentURI.find_last_of("?");
+		size_t endOfURIIndex = contentURI.find_last_of('?');
 		if (endOfURIIndex == string::npos)
 		{
 			string errorMessage = std::format(
@@ -716,7 +716,7 @@ void API::deliveryAuthorizationThroughParameter(
 			contentURI, tokenParameter
 		);
 
-		_mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
+		(void) _mmsDeliveryAuthorization->checkDeliveryAuthorizationThroughParameter(contentURI, tokenParameter);
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200);
 	}
