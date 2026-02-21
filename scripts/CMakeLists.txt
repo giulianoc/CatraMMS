@@ -28,7 +28,7 @@ set(SCRIPTs
     ffmpegHelper.sh
     imageMagickHelper.sh
     nginx.sh
-    tomcat.sh
+    #tomcat.sh commentato perchè non piu usato
     tomee.sh
     setupALL.sh
     micro-service-deploy.sh
@@ -49,7 +49,7 @@ set(SCRIPTs
     tvControllerLoop.sh
     tvController.sh.1
     deploy.sh
-    installServer.sh
+    #installServer.sh commentato per evitare che venga copiato nei server
     getIngestionsToBeManaged.sh
     servicesStatusAgent.sh
     servicesStatusLibrary.sh

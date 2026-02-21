@@ -2464,7 +2464,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds,
 					encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
 				);
-				StringUtils::normalizeWhitespace(sqlStatement);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -2474,7 +2473,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, trans.connection->getConnectionId(), elapsed
+					StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
 				);
 			}
 			if (sqlResultSet->empty())
@@ -2510,7 +2509,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					)",
 				externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds
 				);
-				StringUtils::normalizeWhitespace(sqlStatement);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -2520,7 +2518,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					sqlStatement, trans.connection->getConnectionId(), elapsed
+					StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
 				);
 				if (sqlResultSet->empty())
 				{

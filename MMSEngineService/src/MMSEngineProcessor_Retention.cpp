@@ -5,12 +5,12 @@
 using namespace std;
 using json = nlohmann::json;
 
-void MMSEngineProcessor::handleContentRetentionEventThread(shared_ptr<long> processorsThreadsNumber)
+void MMSEngineProcessor::handleContentRetentionEventThread(const shared_ptr<long>& processorsThreadsNumber) const
 {
 
 	ThreadsStatistic::ThreadStatistic threadStatistic(
-		_mmsThreadsStatistic, "handleContentRetentionEventThread", _processorIdentifier, _processorsThreadsNumber.use_count(),
-		-1 // ingestionJobKey
+		_mmsThreadsStatistic, "handleContentRetentionEventThread", _processorIdentifier,
+		_processorsThreadsNumber.use_count(), -1 // ingestionJobKey
 	);
 
 	LOG_INFO(

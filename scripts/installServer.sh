@@ -974,7 +974,7 @@ adds-to-bashrc()
 		echo "alias tme='tail -f logs/mmsEncoder/mmsEncoder-error.log'" >> /home/mms/.bashrc
 
 		echo "PS1='$serverName-'\$PS1" >> /home/mms/.bashrc
-	elif [[ "$moduleType" == *"api"* || "$serverType" == *"elivery"* ]]; then
+	elif [[ "$moduleType" == *"api"* || "$moduleType" == *"elivery"* ]]; then
 		echo "alias tm='tail -f logs/mmsAPI/mmsAPI.log'" >> /home/mms/.bashrc
 		echo "alias tme='tail -f logs/mmsAPI/mmsAPI-error.log'" >> /home/mms/.bashrc
 		echo "alias tw='tail -f logs/catraMMSWEBServices/catraMMSWEBServices.log'" >> /home/mms/.bashrc
@@ -1678,7 +1678,7 @@ configure-mms-sysctl()
 
 	if [ "$moduleType" == "storage" ]; then
 		echo "" >> /etc/sysctl.conf
-		echo "because of storage" >> /etc/sysctl.conf
+		echo "#because of storage" >> /etc/sysctl.conf
 		echo "net.core.rmem_max = 134217728" >> /etc/sysctl.conf
 		echo "net.core.wmem_max = 134217728" >> /etc/sysctl.conf
 		echo "net.ipv4.tcp_rmem = 4096 87380 134217728" >> /etc/sysctl.conf
@@ -1691,7 +1691,7 @@ configure-mms-sysctl()
 		read -n 1 -s -r -p "premi un tasto per continuare"
 	elif [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "delivery" ]; then
 		echo "" >> /etc/sysctl.conf
-		echo "because of $moduleType (rsyncd)" >> /etc/sysctl.conf
+		echo "#because of $moduleType (rsyncd)" >> /etc/sysctl.conf
 		echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
 		echo "net.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
 		echo "net.ipv4.tcp_mtu_probing = 1" >> /etc/sysctl.conf
@@ -1738,7 +1738,7 @@ install-mms-MMS-package()
 
 	packageName=MMS
 	echo ""
-	mmsVersion=1.0.6928
+	mmsVersion=1.0.6930
 	echo -n "$packageName version (i.e.: $mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1808,9 +1808,15 @@ firewall-rules()
 	#ufw allow ssh
 	ufw allow 9255
 
+	#10.0.0.0/8: range 10.0.0.0 – 10.255.255.255 tutti ip di rete interna
+	internalNetwork_10=10.0.0.0/8
+	#192.168.0.0/16: range 192.168.0.0 – 192.168.255.255 tutti ip di rete interna
+	internalNetwork_192_168=192.168.0.0/16
+
 	if [ "$moduleType" == "encoder" ]; then
 		#api and engine -> transcoder(nginx)
-		ufw allow from 10.0.0.0/16 to any port 8088	#encoder internal
+		ufw allow from $internalNetwork_10 to any port 8088	#encoder internal
+		ufw allow from $internalNetwork_192_168 to any port 8088	#encoder internal
 
 		#connection rtmp from public
 		ufw allow 30000:31000/tcp
@@ -1818,8 +1824,8 @@ firewall-rules()
 		ufw allow 30000:31000/udp
 
 		#rsyncd
-		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
-		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+		ufw allow from $internalNetwork_10 to any port 873 proto tcp
+		ufw allow from $internalNetwork_192_168 to any port 873 proto tcp
 
 	elif [ "$moduleType" == "externalEncoder" ]; then
 		#external encoder (api ..., engine ...
@@ -1845,37 +1851,31 @@ firewall-rules()
 		ufw allow 30000:31000/udp
 
 		#rsyncd
-		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
-		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+		ufw allow from $internalNetwork_10 to any port 873 proto tcp
+		ufw allow from $internalNetwork_192_168 to any port 873 proto tcp
 
 	elif [ "$moduleType" == "api" ]; then
 		# -> http(nginx) and https(nginx)
-		#echo ""
-		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
-		#read internalNetwork
-		internalNetwork=10.0.0.0/16
-		ufw allow from $internalNetwork to any port 8086		#mms-webapi
-		ufw allow from $internalNetwork to any port 8088		#mms-api
+		ufw allow from $internalNetwork_10 to any port 8086		#mms-webapi
+		ufw allow from $internalNetwork_192_168 to any port 8086		#mms-webapi
+		ufw allow from $internalNetwork_10 to any port 8088		#mms-api
+		ufw allow from $internalNetwork_192_168 to any port 8088		#mms-api
 
 		echo "bisogna aggiungere l'IP di API/ENGINE tra le regole del firewall di tutti gli external transcoder (i.e.: aws, aruba, serverplan, ...). THIS IS VERY IMPORTANT altrimenti questi encoder, quando chiamati da API/ENGINE appariranno come 'not running' e i canali non potranno essere configurati su questi encoder"
 		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
 	elif [ "$moduleType" == "delivery" ]; then
 		# -> http(nginx) and https(nginx)
-		#echo ""
-		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
-		#read internalNetwork
-		internalNetwork=10.0.0.0/16
-		ufw allow from $internalNetwork to any port 8088		#mms-api
-		ufw allow from $internalNetwork to any port 8089		#mms-gui
-		ufw allow from $internalNetwork to any port 8090		#mms-binary
-		ufw allow from $internalNetwork to any port 8091		#mms-delivery
-		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
-		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
+		ufw allow from $internalNetwork_10 to any port 8088		#mms-api
+		ufw allow from $internalNetwork_10 to any port 8089		#mms-gui
+		ufw allow from $internalNetwork_10 to any port 8090		#mms-binary
+		ufw allow from $internalNetwork_10 to any port 8091		#mms-delivery
+		ufw allow from $internalNetwork_10 to any port 8092		#mms-delivery-path
+		ufw allow from $internalNetwork_10 to any port 8093		#mms-delivery-f
 
 		#rsyncd
-		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
-		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+		ufw allow from $internalNetwork_10 to any port 873 proto tcp
+		ufw allow from $internalNetwork_192_168 to any port 873 proto tcp
 
 	elif [ "$moduleType" == "externalDelivery" ]; then
 		#HTTP Per ora commentato perchè le richieste saranno su https. Se si abilitasse HTTP
@@ -1885,44 +1885,37 @@ firewall-rules()
 		ufw allow 80 	#HTTP per permettere a certbot di aggiornare il certificato
 
 		#rsyncd
-		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
-		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+		ufw allow from $internalNetwork_10 to any port 873 proto tcp
+		ufw allow from $internalNetwork_192_168 to any port 873 proto tcp
 
 	elif [ "$moduleType" == "api-and-delivery" ]; then
 		# -> http(nginx) and https(nginx)
-		#echo ""
-		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
-		#read internalNetwork
-		internalNetwork=10.0.0.0/16
-		ufw allow from $internalNetwork to any port 8086		#mms-webapi
-		ufw allow from $internalNetwork to any port 8088		#mms-api
-		ufw allow from $internalNetwork to any port 8089		#mms-gui
-		ufw allow from $internalNetwork to any port 8090		#mms-binary
-		ufw allow from $internalNetwork to any port 8091		#mms-delivery
-		ufw allow from $internalNetwork to any port 8092		#mms-delivery-path
-		ufw allow from $internalNetwork to any port 8093		#mms-delivery-f
+		ufw allow from $internalNetwork_10 to any port 8086		#mms-webapi
+		ufw allow from $internalNetwork_10 to any port 8088		#mms-api
+		ufw allow from $internalNetwork_10 to any port 8089		#mms-gui
+		ufw allow from $internalNetwork_10 to any port 8090		#mms-binary
+		ufw allow from $internalNetwork_10 to any port 8091		#mms-delivery
+		ufw allow from $internalNetwork_10 to any port 8092		#mms-delivery-path
+		ufw allow from $internalNetwork_10 to any port 8093		#mms-delivery-f
 
 		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
 		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
 		read
 
 		#rsyncd
-		ufw allow from 10.0.0.0/8 to any port 873 proto tcp
-		ufw allow from 192.168.0.0/16 to any port 873 proto tcp
+		ufw allow from $internalNetwork_10 to any port 873 proto tcp
+		ufw allow from $internalNetwork_192_168 to any port 873 proto tcp
 
 	elif [ "$moduleType" == "engine" ]; then
 		# -> mysql/postgres
 		#ufw allow 3306
 		#echo ""
-		#echo -n "internalNetwork (i.e.: 10.0.0.0/16 (prod), the same for the test)? "
-		#read internalNetwork
-		internalNetwork=10.0.0.0/16
 		#3306: commentato perchè non abbiamo piu mysql
 		#ufw allow from $internalNetwork to any port 3306
 		#anche se potrebbero esserci diverse versioni di postgres ognuna che ascolta su porte diverse,
 		#è importante che la porta del postgres attivo sia la 5432 perchè questa porta è usata dappertutto:
 		#dalla conf del load balancer per gli slaves, dagli script (monitoring agent, ....)
-		ufw allow from $internalNetwork to any port 5432
+		ufw allow from $internalNetwork_10 to any port 5432
 
 		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
 		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
@@ -1934,22 +1927,16 @@ firewall-rules()
 		ufw allow 8088
 	elif [ "$moduleType" == "storage" ]; then
 		echo ""
-		serverInternalNetwork=10.0.0.0/16
-		echo -n "internalNetwork? (i.e.: $serverInternalNetwork)? "
-		read serverInternalNetwork
-		if [ "$serverInternalNetwork" == "" ]; then
-			internalNetwork=$serverInternalNetwork
-		fi
-		ufw allow from $internalNetwork to any port 2049 proto tcp
-		ufw allow from $internalNetwork to any port 2049 proto udp
+		ufw allow from $internalNetwork_10 to any port 2049 proto tcp
+		ufw allow from $internalNetwork_10 to any port 2049 proto udp
 
-		ufw allow from $internalNetwork to any port 111 proto tcp
-		ufw allow from $internalNetwork to any port 111 proto udp
+		ufw allow from $internalNetwork_10 to any port 111 proto tcp
+		ufw allow from $internalNetwork_10 to any port 111 proto udp
 
-		ufw allow from $internalNetwork to any port 20048
+		ufw allow from $internalNetwork_10 to any port 20048
 
-		ufw allow from $internalNetwork to any port 32765:32767 proto tcp
-		ufw allow from $internalNetwork to any port 32765:32767 proto udp
+		ufw allow from $internalNetwork_10 to any port 32765:32767 proto tcp
+		ufw allow from $internalNetwork_10 to any port 32765:32767 proto udp
 	fi
 
 	ufw enable
@@ -2143,6 +2130,7 @@ echo ""
 echo ""
 
 read -n 1 -s -r -p "crontab -e di root ed aggiungere"
+echo ""
 read -n 1 -s -r -p "0 * * * * > /var/log/auth.log"
 echo ""
 echo ""

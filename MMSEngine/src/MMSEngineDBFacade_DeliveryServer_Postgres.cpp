@@ -35,7 +35,6 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 				external, enabled, trans.transaction->quote(publicIP), trans.transaction->quote(internalIP),
 				trans.transaction->quote(hostname), latitude, longitude, maxTXBandwidthInGbps
 			);
-			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			deliveryServerKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -45,7 +44,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
 			);
 		}
 	}
@@ -584,7 +583,6 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					)",
 					sqlWhere, orderByCondition, rows, start
 				);
-			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
@@ -604,7 +602,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				", getConnectionId: @{}@"
 				", internalSqlDuration: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
 			);
 		}
 
@@ -864,7 +862,6 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				fmt::arg("maxTXBandwidthPerCent", _maxTXBandwidthPerCent), fmt::arg("maxCPUPerCent", _maxCPUPerCent),
 				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 			);
-			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
@@ -875,7 +872,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
 			);
 			if (!sqlResultSet->empty())
 				return (*sqlResultSet)[0]["hostname"].as<string>();
@@ -950,7 +947,6 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 				fmt::arg("workspaceKey", workspaceKey),
 				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude)
 			);
-			StringUtils::normalizeWhitespace(sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
@@ -961,7 +957,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
 			);
 			if (sqlResultSet->empty())
 			{

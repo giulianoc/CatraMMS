@@ -168,7 +168,7 @@ class MMSEngineProcessor
 
 	void handleCheckEncodingEvent();
 
-	void handleContentRetentionEventThread(std::shared_ptr<long> processorsThreadsNumber);
+	void handleContentRetentionEventThread(const std::shared_ptr<long>& processorsThreadsNumber) const;
 
 	void handleDBDataRetentionEventThread();
 
