@@ -2473,7 +2473,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
+					StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 				);
 			}
 			if (sqlResultSet->empty())
@@ -2518,7 +2518,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@",
-					StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
+					StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 				);
 				if (sqlResultSet->empty())
 				{

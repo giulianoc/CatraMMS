@@ -44,7 +44,7 @@ int64_t MMSEngineDBFacade::addDeliveryServer(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 			);
 		}
 	}
@@ -602,7 +602,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 				", getConnectionId: @{}@"
 				", internalSqlDuration: @{}@"
 				", elapsed (millisecs): @{}@",
-				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
 			);
 		}
 
@@ -872,7 +872,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 			);
 			if (!sqlResultSet->empty())
 				return (*sqlResultSet)[0]["hostname"].as<string>();
@@ -957,7 +957,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 			);
 			if (sqlResultSet->empty())
 			{

@@ -1452,7 +1452,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				", sqlStatement: @{}@"
 				", getConnectionId: @{}@"
 				", elapsed (millisecs): @{}@",
-				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 			);
 		}
 
