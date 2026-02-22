@@ -738,11 +738,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string startTime;
 		string endTime = "0.0";
 		{
-			LOG_ERROR("ingestionJobKey: {}"
-				"parametersRoot: {}", ingestionJobKey, JSONUtils::toString(parametersRoot));
 			startTime = JSONUtils::as<string>(parametersRoot, "startTime", "");
-			LOG_ERROR("ingestionJobKey: {}"
-				", startTime: ", ingestionJobKey, startTime);
 
 			if (!JSONUtils::isPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
