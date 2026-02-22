@@ -424,7 +424,7 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"

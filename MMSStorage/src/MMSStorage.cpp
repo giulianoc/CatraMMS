@@ -741,14 +741,14 @@ fs::path MMSStorage::getMMSAssetPathName(
 
 	if (externalReadOnlyStorage)
 	{
-		assetPathName = MMSStorage::getMMSRootRepository(_storage) / ("ExternalStorage_" + workspaceDirectoryName) /
-						(relativePath.size() > 0 && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
+		assetPathName = getMMSRootRepository(_storage) / ("ExternalStorage_" + workspaceDirectoryName) /
+						(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
 	}
 	else
 	{
 		fs::path partitionPathName = _mmsEngineDBFacade->getPartitionPathName(partitionKey);
 		assetPathName = partitionPathName / workspaceDirectoryName /
-						(relativePath.size() > 0 && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
+						(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
 	}
 
 	return assetPathName;
@@ -957,7 +957,7 @@ fs::path MMSStorage::creatingDirsUsingTerritories(
 	return mmsAssetPathName;
 }
 
-void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
+void MMSStorage::	removePhysicalPath(int64_t physicalPathKey)
 {
 	try
 	{
@@ -1130,6 +1130,8 @@ void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPa
 			if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming || fileName.ends_with(".m3u8"))
 				fileName = ""; // in this case we have to removed the directory and not just the m3u8/mpd file
 
+			fs::path mmsAssetPathName = getMMSAssetPathName(externalReadOnlyStorage, partitionKey, workspaceDirectoryName,
+				relativePath, fileName);
 			LOG_INFO(
 				"getMMSAssetPathName"
 				", mediaItemKey: {}"
@@ -1138,11 +1140,11 @@ void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPa
 				", partitionKey: {}"
 				", workspaceDirectoryName: {}"
 				", relativePath: {}"
-				", fileName: {}",
-				mediaItemKey, physicalPathKey, externalReadOnlyStorage, partitionKey, workspaceDirectoryName, relativePath, fileName
+				", fileName: {}"
+				", mmsAssetPathName: {}",
+				mediaItemKey, physicalPathKey, externalReadOnlyStorage, partitionKey, workspaceDirectoryName,
+				relativePath, fileName, mmsAssetPathName
 			);
-			fs::path mmsAssetPathName = getMMSAssetPathName(externalReadOnlyStorage, partitionKey, workspaceDirectoryName,
-				relativePath, fileName);
 
 			if (fs::exists(mmsAssetPathName))
 			{
@@ -1320,8 +1322,9 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			string errorMessage = std::format(
 				"getPartitionToBeUsedAndUpdateFreeSpace failed"
 				", ingestionJobKey: {}"
-				", ullFSEntrySizeInBytes: {}",
-				ingestionJobKey, ullFSEntrySizeInBytes
+				", ullFSEntrySizeInBytes: {}"
+				", exception: {}",
+				ingestionJobKey, ullFSEntrySizeInBytes, e.what()
 			);
 			LOG_ERROR(errorMessage);
 
