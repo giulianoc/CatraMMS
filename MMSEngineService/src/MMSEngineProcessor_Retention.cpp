@@ -13,9 +13,9 @@ void MMSEngineProcessor::handleContentRetentionEventThread(const shared_ptr<long
 		_processorsThreadsNumber.use_count(), -1 // ingestionJobKey
 	);
 
-	LOG_INFO(
-		string() + "handleContentRetentionEventThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-		", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+	LOG_INFO("handleContentRetentionEventThread"
+		", _processorIdentifier: {}"
+		", _processorsThreadsNumber.use_count(): {}", _processorIdentifier, _processorsThreadsNumber.use_count()
 	);
 
 	chrono::system_clock::time_point start = chrono::system_clock::now();
@@ -28,32 +28,21 @@ void MMSEngineProcessor::handleContentRetentionEventThread(const shared_ptr<long
 		{
 			try
 			{
-				int maxMediaItemKeysNumber = 100;
+				const int maxMediaItemKeysNumber = 100;
 
 				mediaItemKeyOrPhysicalPathKeyToBeRemoved.clear();
 				_mmsEngineDBFacade->getExpiredMediaItemKeysCheckingDependencies(
 					_processorMMS, mediaItemKeyOrPhysicalPathKeyToBeRemoved, maxMediaItemKeysNumber
 				);
 
-				if (mediaItemKeyOrPhysicalPathKeyToBeRemoved.size() == 0)
+				if (mediaItemKeyOrPhysicalPathKeyToBeRemoved.empty())
 					moreRemoveToBeDone = false;
-			}
-			catch (runtime_error &e)
-			{
-				LOG_ERROR(
-					string() + "getExpiredMediaItemKeysCheckingDependencies failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
-				);
-
-				// no throw since it is running in a detached thread
-				// throw e;
-				break;
 			}
 			catch (exception &e)
 			{
-				LOG_ERROR(
-					string() + "getExpiredMediaItemKeysCheckingDependencies failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", exception: " + e.what()
+				LOG_ERROR("getExpiredMediaItemKeysCheckingDependencies failed"
+					", _processorIdentifier: {}"
+					", exception: {}", _processorIdentifier, e.what()
 				);
 
 				// no throw since it is running in a detached thread
@@ -61,18 +50,16 @@ void MMSEngineProcessor::handleContentRetentionEventThread(const shared_ptr<long
 				break;
 			}
 
-			for (tuple<shared_ptr<Workspace>, int64_t, int64_t> workspaceMediaItemKeyOrPhysicalPathKey : mediaItemKeyOrPhysicalPathKeyToBeRemoved)
+			for (const auto& [workspace, mediaItemKey, physicalPathKey] :
+				mediaItemKeyOrPhysicalPathKeyToBeRemoved)
 			{
-				shared_ptr<Workspace> workspace;
-				int64_t mediaItemKey;
-				int64_t physicalPathKey;
-
-				tie(workspace, mediaItemKey, physicalPathKey) = workspaceMediaItemKeyOrPhysicalPathKey;
-
-				LOG_INFO(
-					string() + "Removing because of ContentRetention" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", workspace->_name: " + workspace->_name +
-					", mediaItemKey: " + to_string(mediaItemKey) + ", physicalPathKey: " + to_string(physicalPathKey)
+				LOG_INFO("Removing because of ContentRetention"
+					", mediaItemKey: {}"
+					", physicalPathKey: {}"
+					", _processorIdentifier: {}"
+					", workspaceKey: {}"
+					", workspace->_name: {}", mediaItemKey, physicalPathKey, _processorIdentifier, workspace->_workspaceKey,
+					workspace->_name
 				);
 
 				try
@@ -82,71 +69,32 @@ void MMSEngineProcessor::handleContentRetentionEventThread(const shared_ptr<long
 					else
 						_mmsStorage->removePhysicalPath(physicalPathKey);
 				}
-				catch (runtime_error &e)
-				{
-					LOG_ERROR(
-						string() + "_mmsStorage->removeMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-						", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", workspace->_name: " + workspace->_name +
-						", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
-						", exception: " + e.what()
-					);
-
-					try
-					{
-						string processorMMSForRetention = "";
-						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, processorMMSForRetention);
-					}
-					catch (runtime_error &e)
-					{
-						LOG_ERROR(
-							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
-							", exception: " + e.what()
-						);
-					}
-					catch (exception &e)
-					{
-						LOG_ERROR(
-							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
-							", exception: " + e.what()
-						);
-					}
-
-					// one remove failed, procedure has to go ahead to try all
-					// the other removes moreRemoveToBeDone = false; break;
-
-					continue;
-					// no throw since it is running in a detached thread
-					// throw e;
-				}
 				catch (exception &e)
 				{
-					LOG_ERROR(
-						string() + "_mmsStorage->removeMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-						", workspace->_workspaceKey: " + to_string(workspace->_workspaceKey) + ", workspace->_name: " + workspace->_name +
-						", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey)
+					LOG_ERROR("_mmsStorage->removeMediaItem failed"
+						", mediaItemKey: {}"
+						", physicalPathKey: {}"
+						", _processorIdentifier: {}"
+						", workspaceKey: {}"
+						", workspace->_name: {}"
+						", mediaItemKeyToBeRemoved: {}"
+						", physicalPathKeyToBeRemoved: {}", mediaItemKey, physicalPathKey, _processorIdentifier, workspace->_workspaceKey,
+						workspace->_name, mediaItemKey, physicalPathKey
 					);
 
 					try
 					{
-						string processorMMSForRetention = "";
-						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, processorMMSForRetention);
-					}
-					catch (runtime_error &e)
-					{
-						LOG_ERROR(
-							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
-							", exception: " + e.what()
-						);
+						_mmsEngineDBFacade->updateMediaItem(mediaItemKey, "");
 					}
 					catch (exception &e)
 					{
-						LOG_ERROR(
-							string() + "updateMediaItem failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-							", mediaItemKeyToBeRemoved: " + to_string(mediaItemKey) + ", physicalPathKeyToBeRemoved: " + to_string(physicalPathKey) +
-							", exception: " + e.what()
+						LOG_ERROR("updateMediaItem failed"
+							", mediaItemKey: {}"
+							", physicalPathKey: {}"
+							", _processorIdentifier: {}"
+							", mediaItemKeyToBeRemoved: {}"
+							", physicalPathKeyToBeRemoved: {}"
+							", exception: {}", mediaItemKey, physicalPathKey, _processorIdentifier, mediaItemKey, physicalPathKey, e.what()
 						);
 					}
 
@@ -161,178 +109,19 @@ void MMSEngineProcessor::handleContentRetentionEventThread(const shared_ptr<long
 		}
 
 		chrono::system_clock::time_point end = chrono::system_clock::now();
-		LOG_INFO(
-			string() + "Content retention finished" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", @MMS statistics@ - duration (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(end - start).count()) + "@"
+		LOG_INFO("Content retention finished"
+			", _processorIdentifier: {}"
+			", @MMS statistics@ - duration (secs): @{}@",
+			_processorIdentifier, chrono::duration_cast<chrono::seconds>(end - start).count()
 		);
 	}
-
-	/* Already done by the crontab script
-	{
-		LOG_INFO(string() + "Staging Retention started"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			+ ", _mmsStorage->getStagingRootRepository(): " +
-_mmsStorage->getStagingRootRepository()
-		);
-
-		try
-		{
-			chrono::system_clock::time_point tpNow =
-chrono::system_clock::now();
-
-			FileIO::DirectoryEntryType_t detDirectoryEntryType;
-			shared_ptr<FileIO::Directory> directory = FileIO::openDirectory
-(_mmsStorage->getStagingRootRepository());
-
-			bool scanDirectoryFinished = false;
-			while (!scanDirectoryFinished)
-			{
-				string directoryEntry;
-				try
-				{
-					string directoryEntry = FileIO::readDirectory (directory,
-						&detDirectoryEntryType);
-
-//                    if (detDirectoryEntryType !=
-FileIO::TOOLS_FILEIO_REGULARFILE)
-//                        continue;
-
-					string pathName = _mmsStorage->getStagingRootRepository()
-							+ directoryEntry;
-					chrono::system_clock::time_point tpLastModification =
-							FileIO:: getFileTime (pathName);
-
-					int elapsedInHours =
-chrono::duration_cast<chrono::hours>(tpNow - tpLastModification).count(); double
-elapsedInDays =  elapsedInHours / 24; if (elapsedInDays >=
-_stagingRetentionInDays)
-					{
-						if (detDirectoryEntryType == FileIO::
-TOOLS_FILEIO_DIRECTORY)
-						{
-							LOG_INFO(string() + "Removing staging
-directory because of Retention"
-								+ ", _processorIdentifier: " +
-to_string(_processorIdentifier)
-								+ ", pathName: " + pathName
-								+ ", elapsedInDays: " + to_string(elapsedInDays)
-								+ ", _stagingRetentionInDays: " +
-to_string(_stagingRetentionInDays)
-							);
-
-							try
-							{
-								bool removeRecursively = true;
-
-								FileIO::removeDirectory(pathName,
-removeRecursively);
-							}
-							catch(runtime_error& e)
-							{
-								_logger->warn(string() + "Error removing
-staging directory because of Retention"
-									+ ", _processorIdentifier: " +
-to_string(_processorIdentifier)
-									+ ", pathName: " + pathName
-									+ ", elapsedInDays: " +
-to_string(elapsedInDays)
-									+ ", _stagingRetentionInDays: " +
-to_string(_stagingRetentionInDays)
-									+ ", e.what(): " + e.what()
-								);
-							}
-							catch(exception& e)
-							{
-								_logger->warn(string() + "Error removing
-staging directory because of Retention"
-									+ ", _processorIdentifier: " +
-to_string(_processorIdentifier)
-									+ ", pathName: " + pathName
-									+ ", elapsedInDays: " +
-to_string(elapsedInDays)
-									+ ", _stagingRetentionInDays: " +
-to_string(_stagingRetentionInDays)
-									+ ", e.what(): " + e.what()
-								);
-							}
-						}
-						else
-						{
-							LOG_INFO(string() + "Removing staging file
-because of Retention"
-								+ ", _processorIdentifier: " +
-to_string(_processorIdentifier)
-								+ ", pathName: " + pathName
-								+ ", elapsedInDays: " + to_string(elapsedInDays)
-								+ ", _stagingRetentionInDays: " +
-to_string(_stagingRetentionInDays)
-							);
-
-							bool exceptionInCaseOfError = false;
-
-							FileIO::remove(pathName, exceptionInCaseOfError);
-						}
-					}
-				}
-				catch(DirectoryListFinished& e)
-				{
-					scanDirectoryFinished = true;
-				}
-				catch(runtime_error& e)
-				{
-					string errorMessage = string() + "listing directory
-failed"
-						+ ", _processorIdentifier: " +
-to_string(_processorIdentifier)
-						   + ", e.what(): " + e.what()
-					;
-					LOG_ERROR(errorMessage);
-
-					throw e;
-				}
-				catch(exception& e)
-				{
-					string errorMessage = string() + "listing directory
-failed"
-						+ ", _processorIdentifier: " +
-to_string(_processorIdentifier)
-						   + ", e.what(): " + e.what()
-					;
-					LOG_ERROR(errorMessage);
-
-					throw e;
-				}
-			}
-
-			FileIO::closeDirectory (directory);
-		}
-		catch(runtime_error& e)
-		{
-			LOG_ERROR(string() + "removeHavingPrefixFileName failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-				+ ", e.what(): " + e.what()
-			);
-		}
-		catch(exception& e)
-		{
-			LOG_ERROR(string() + "removeHavingPrefixFileName failed"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-			);
-		}
-
-		LOG_INFO(string() + "Staging Retention finished"
-				+ ", _processorIdentifier: " + to_string(_processorIdentifier)
-		);
-	}
-	*/
 }
 
 void MMSEngineProcessor::handleDBDataRetentionEventThread()
 {
-
 	ThreadsStatistic::ThreadStatistic threadStatistic(
-		_mmsThreadsStatistic, "handleDBDataRetentionEventThread", _processorIdentifier, _processorsThreadsNumber.use_count(),
-		-1 // ingestionJobKey,
+		_mmsThreadsStatistic, "handleDBDataRetentionEventThread", _processorIdentifier,
+		_processorsThreadsNumber.use_count(), -1 // ingestionJobKey,
 	);
 
 	bool alreadyExecuted = true;
@@ -341,25 +130,12 @@ void MMSEngineProcessor::handleDBDataRetentionEventThread()
 
 	try
 	{
-		LOG_INFO(
-			"DBDataRetention: onceExecution"
+		LOG_INFO("DBDataRetention: onceExecution"
 			", _processorIdentifier: {}",
 			_processorIdentifier
 		);
 
 		alreadyExecuted = _mmsEngineDBFacade->onceExecution(MMSEngineDBFacade::OnceType::DBDataRetention);
-	}
-	catch (runtime_error &e)
-	{
-		LOG_ERROR(
-			"DBDataRetention: onceExecution failed"
-			", _processorIdentifier: {}"
-			", exception: {}",
-			_processorIdentifier, e.what()
-		);
-
-		// no throw since it is running in a detached thread
-		// throw e;
 	}
 	catch (exception &e)
 	{

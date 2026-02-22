@@ -974,7 +974,7 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 		}
 
 		LOG_INFO(
-			"getStorageDetailsByPhysicalPathKey ..."
+			"getStorageDetailsByPhysicalPathKey"
 			", physicalPathKey: {}",
 			physicalPathKey
 		);
@@ -997,14 +997,23 @@ void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 
 		if (!externalReadOnlyStorage)
 		{
+			LOG_INFO(
+				"removePhysicalPathFile"
+				", physicalPathKey: {}"
+				", fileName: {}"
+				", mmsPartitionNumber: {}"
+				", directoryName: {}"
+				", relativePath: {}",
+				physicalPathKey, fileName, mmsPartitionNumber, workspace->_directoryName, relativePath
+			);
 			removePhysicalPathFile(
-				-1, physicalPathKey, deliveryTechnology, fileName, externalReadOnlyStorage, mmsPartitionNumber, workspace->_directoryName,
-				relativePath, sizeInBytes
+				-1, physicalPathKey, deliveryTechnology, fileName, externalReadOnlyStorage, mmsPartitionNumber,
+				workspace->_directoryName, relativePath, sizeInBytes
 			);
 		}
 
 		LOG_INFO(
-			"removePhysicalPathKey ..."
+			"removePhysicalPathKey"
 			", physicalPathKey: {}",
 			physicalPathKey
 		);
@@ -1041,7 +1050,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 		}
 
 		LOG_INFO(
-			"getAllStorageDetails ..."
+			"getAllStorageDetails"
 			", mediaItemKey: {}",
 			mediaItemKey
 		);
@@ -1049,30 +1058,27 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 		vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
 		_mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, false /*fromMaster*/, allStorageDetails);
 
-		for (tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool> &storageDetails : allStorageDetails)
+		for (const auto&[deliveryTechnology, mmsPartitionNumber, workspaceDirectoryName, relativePath,
+			fileName, sizeInBytes, externalReadOnlyStorage] : allStorageDetails)
 		{
-			MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-			int mmsPartitionNumber;
-			string workspaceDirectoryName;
-			string relativePath;
-			string fileName;
-			bool externalReadOnlyStorage;
-			uint64_t sizeInBytes;
-
-			tie(deliveryTechnology, mmsPartitionNumber, workspaceDirectoryName, relativePath, fileName, sizeInBytes, externalReadOnlyStorage) =
-				storageDetails;
-
 			if (!externalReadOnlyStorage)
 			{
-				removePhysicalPathFile(
-					mediaItemKey, -1, deliveryTechnology, fileName, externalReadOnlyStorage, mmsPartitionNumber, workspaceDirectoryName, relativePath,
-					sizeInBytes
+				LOG_INFO(
+					"removePhysicalPathFile"
+					", mediaItemKey: {}"
+					", fileName: {}"
+					", mmsPartitionNumber: {}"
+					", workspaceDirectoryName: {}"
+					", relativePath: {}",
+					mediaItemKey, fileName, mmsPartitionNumber, workspaceDirectoryName, relativePath
 				);
+				removePhysicalPathFile(mediaItemKey, -1, deliveryTechnology, fileName, externalReadOnlyStorage,
+					mmsPartitionNumber, workspaceDirectoryName, relativePath, sizeInBytes);
 			}
 		}
 
 		LOG_INFO(
-			"removeMediaItem ..."
+			"removeMediaItem"
 			", mediaItemKey: {}",
 			mediaItemKey
 		);
@@ -1080,7 +1086,7 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 	}
 	catch (exception &e)
 	{
-		string errorMessage = std::format(
+		const string errorMessage = std::format(
 			"removeMediaItem failed"
 			", mediaItemKey: {}"
 			", exception: {}",
@@ -1092,9 +1098,9 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 	}
 }
 
-void MMSStorage::removePhysicalPathFile(
-	int64_t mediaItemKey, int64_t physicalPathKey, MMSEngineDBFacade::DeliveryTechnology deliveryTechnology, string fileName,
-	bool externalReadOnlyStorage, int partitionKey, string workspaceDirectoryName, string relativePath, uint64_t sizeInBytes
+void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPathKey,
+	MMSEngineDBFacade::DeliveryTechnology deliveryTechnology, string fileName, bool externalReadOnlyStorage,
+	int partitionKey, string workspaceDirectoryName, string relativePath, uint64_t sizeInBytes
 )
 {
 	try
@@ -1121,26 +1127,22 @@ void MMSStorage::removePhysicalPathFile(
 		{
 			// string m3u8Suffix(".m3u8");
 
-			if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming || fileName.ends_with(".m3u8")
-				// fileName.size() >= m3u8Suffix.size()	// end with .m3u8
-				// 		&& 0 == fileName.compare(fileName.size()-m3u8Suffix.size(), m3u8Suffix.size(),
-				// 	m3u8Suffix)
-			)
-			{
-				// in this case we have to removed the directory and not just the m3u8/mpd file
-				fileName = "";
-			}
+			if (deliveryTechnology == MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming || fileName.ends_with(".m3u8"))
+				fileName = ""; // in this case we have to removed the directory and not just the m3u8/mpd file
 
 			LOG_INFO(
-				"getMMSAssetPathName ..."
+				"getMMSAssetPathName"
+				", mediaItemKey: {}"
+				", physicalPathKey: {}"
 				", externalReadOnlyStorage: {}"
 				", partitionKey: {}"
 				", workspaceDirectoryName: {}"
 				", relativePath: {}"
 				", fileName: {}",
-				externalReadOnlyStorage, partitionKey, workspaceDirectoryName, relativePath, fileName
+				mediaItemKey, physicalPathKey, externalReadOnlyStorage, partitionKey, workspaceDirectoryName, relativePath, fileName
 			);
-			fs::path mmsAssetPathName = getMMSAssetPathName(externalReadOnlyStorage, partitionKey, workspaceDirectoryName, relativePath, fileName);
+			fs::path mmsAssetPathName = getMMSAssetPathName(externalReadOnlyStorage, partitionKey, workspaceDirectoryName,
+				relativePath, fileName);
 
 			if (fs::exists(mmsAssetPathName))
 			{
@@ -1150,8 +1152,10 @@ void MMSStorage::removePhysicalPathFile(
 					{
 						LOG_INFO(
 							"Remove directory"
+							", mediaItemKey: {}"
+							", physicalPathKey: {}"
 							", mmsAssetPathName: {}",
-							mmsAssetPathName.string()
+							mediaItemKey, physicalPathKey, mmsAssetPathName.string()
 						);
 						fs::remove_all(mmsAssetPathName);
 					}
@@ -1172,9 +1176,11 @@ void MMSStorage::removePhysicalPathFile(
 					uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, sizeInBytes);
 					LOG_INFO(
 						"updatePartitionBecauseOfDeletion"
+						", mediaItemKey: {}"
+						", physicalPathKey: {}"
 						", partitionKey: {}"
 						", newCurrentFreeSizeInBytes: {}",
-						partitionKey, newCurrentFreeSizeInBytes
+						mediaItemKey, physicalPathKey, partitionKey, newCurrentFreeSizeInBytes
 					);
 				}
 				else if (fs::is_regular_file(mmsAssetPathName))
@@ -1183,8 +1189,10 @@ void MMSStorage::removePhysicalPathFile(
 					{
 						LOG_INFO(
 							"Remove file"
+							", mediaItemKey: {}"
+							", physicalPathKey: {}"
 							", mmsAssetPathName: {}",
-							mmsAssetPathName.string()
+							mediaItemKey, physicalPathKey, mmsAssetPathName.string()
 						);
 						fs::remove_all(mmsAssetPathName);
 					}
@@ -1205,9 +1213,11 @@ void MMSStorage::removePhysicalPathFile(
 					uint64_t newCurrentFreeSizeInBytes = _mmsEngineDBFacade->updatePartitionBecauseOfDeletion(partitionKey, sizeInBytes);
 					LOG_INFO(
 						"updatePartitionBecauseOfDeletion"
+						", mediaItemKey: {}"
+						", physicalPathKey: {}"
 						", partitionKey: {}"
 						", newCurrentFreeSizeInBytes: {}",
-						partitionKey, newCurrentFreeSizeInBytes
+						mediaItemKey, physicalPathKey, partitionKey, newCurrentFreeSizeInBytes
 					);
 				}
 				else

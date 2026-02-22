@@ -247,6 +247,14 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=5.78.145.85
 
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=us-hil-delivery-2
+prodServers[$((serverIndex*6+1))]=5.78.144.41
+prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=5.78.144.41
+
 
 
 serverIndex=$((serverIndex+1))

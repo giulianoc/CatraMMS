@@ -109,7 +109,8 @@ void MMSEngineDBFacade::getExpiredMediaItemKeysCheckingDependencies(
 
 					shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
-					tuple<shared_ptr<Workspace>, int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey = make_tuple(workspace, mediaItemKey, -1);
+					tuple<shared_ptr<Workspace>, int64_t, int64_t> workspaceMediaItemKeyAndPhysicalPathKey =
+						make_tuple(workspace, mediaItemKey, -1);
 
 					mediaItemKeyOrPhysicalPathKeyToBeRemoved.push_back(workspaceMediaItemKeyAndPhysicalPathKey);
 				}
