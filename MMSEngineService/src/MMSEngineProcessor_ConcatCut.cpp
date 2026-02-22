@@ -602,12 +602,13 @@ void MMSEngineProcessor::manageConcatThread(
 }
 
 void MMSEngineProcessor::manageCutMediaThread(
-	shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, shared_ptr<Workspace> workspace, json parametersRoot,
+	const shared_ptr<long>& processorsThreadsNumber, int64_t ingestionJobKey, const shared_ptr<Workspace>& workspace,
+	const json& parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 )
 {
-	ThreadsStatistic::ThreadStatistic threadStatistic(
-		_mmsThreadsStatistic, "manageCutMediaThread", _processorIdentifier, _processorsThreadsNumber.use_count(), ingestionJobKey
+	ThreadsStatistic::ThreadStatistic threadStatistic(_mmsThreadsStatistic, "manageCutMediaThread", _processorIdentifier,
+		_processorsThreadsNumber.use_count(), ingestionJobKey
 	);
 
 	try
@@ -634,10 +635,10 @@ void MMSEngineProcessor::manageCutMediaThread(
 			throw runtime_error(errorMessage);
 		}
 
-		auto
-			[sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType, sourceAssetPathName, sourceRelativePath, sourceFileName,
-			 sourceFileExtension, sourceDurationInMilliSecs, sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName,
-			 stopIfReferenceProcessingError] = processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
+		auto [sourceMediaItemKey, sourcePhysicalPathKey, referenceContentType, sourceAssetPathName,
+			sourceRelativePath, sourceFileName, sourceFileExtension, sourceDurationInMilliSecs,
+			sourcePhysicalDeliveryURL, sourceTranscoderStagingAssetPathName, stopIfReferenceProcessingError] =
+				processDependencyInfo(workspace, ingestionJobKey, dependencies[0]);
 
 		json sourceUserDataRoot = _mmsEngineDBFacade->mediaItem_columnAsJson("userdata", sourceMediaItemKey);
 
@@ -670,7 +671,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
 					true, videoTracks, audioTracks
 				);
-				if (videoTracks.size() == 0)
+				if (videoTracks.empty())
 				{
 					string errorMessage = std::format(
 						"No video track are present"
@@ -687,10 +688,10 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 				tie(ignore, ignore, ignore, ignore, ignore, forcedAvgFrameRate, ignore, ignore, ignore) = videoTrack;
 
-				if (forcedAvgFrameRate != "")
+				if (!forcedAvgFrameRate.empty())
 				{
 					// es: 25/1
-					size_t index = forcedAvgFrameRate.find("/");
+					size_t index = forcedAvgFrameRate.find('/');
 					if (index == string::npos)
 						framesPerSecond = stoi(forcedAvgFrameRate);
 					else
@@ -737,7 +738,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string startTime;
 		string endTime = "0.0";
 		{
+			LOG_ERROR("parametersRoot: {}", JSONUtils::toString(parametersRoot));
 			startTime = JSONUtils::as<string>(parametersRoot, "startTime", "");
+			LOG_ERROR("startTime: ", startTime);
 
 			if (!JSONUtils::isPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{
@@ -770,9 +773,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 			// gestiti da FFMpeg::timeToSeconds) Per cui qui riconduciamo il formato HH:MM:SS:FF a quello gestito da ffmpeg HH:MM:SS.<decimi di
 			// secondo>.
 			{
-				if (count_if(startTime.begin(), startTime.end(), [](char c) { return c == ':'; }) == 3)
+				if (ranges::count_if(startTime, [](char c) { return c == ':'; }) == 3)
 				{
-					int framesIndex = startTime.find_last_of(":");
+					int framesIndex = startTime.find_last_of(':');
 					double frames = stoi(startTime.substr(framesIndex + 1));
 
 					// se ad esempio sono 4 frames su 25 frames al secondo
@@ -791,9 +794,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 					);
 					startTime = newStartTime;
 				}
-				if (count_if(endTime.begin(), endTime.end(), [](char c) { return c == ':'; }) == 3)
+				if (ranges::count_if(endTime, [](char c) { return c == ':'; }) == 3)
 				{
-					int framesIndex = endTime.find_last_of(":");
+					int framesIndex = endTime.find_last_of(':');
 					double frames = stoi(endTime.substr(framesIndex + 1));
 
 					// se ad esempio sono 4 frames su 25 frames al secondo la parte decimale del secondo richiesta dal formato ffmpeg sarà 16, 	cioè:
@@ -817,12 +820,12 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 			string timesRelativeToMetaDataField = JSONUtils::as<string>(parametersRoot, "timesRelativeToMetaDataField", "");
 			string timeCode;
-			if (timesRelativeToMetaDataField != "")
+			if (!timesRelativeToMetaDataField.empty())
 			{
 				json metaDataRoot = _mmsEngineDBFacade->physicalPath_columnAsJson("metadata", sourcePhysicalPathKey);
 
 				timeCode = JSONUtils::as<string>(metaDataRoot, timesRelativeToMetaDataField, "");
-				if (timeCode == "")
+				if (timeCode.empty())
 				{
 					string errorMessage = std::format(
 						"timesRelativeToMetaDataField cannot be applied because source media has metaData but does not have the timecode"
@@ -836,9 +839,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 
 					throw runtime_error(errorMessage);
 				}
-				if (count_if(timeCode.begin(), timeCode.end(), [](char c) { return c == ':'; }) == 3)
+				if (ranges::count_if(timeCode, [](char c) { return c == ':'; }) == 3)
 				{
-					int framesIndex = timeCode.find_last_of(":");
+					int framesIndex = timeCode.find_last_of(':');
 					double frames = stoi(timeCode.substr(framesIndex + 1));
 
 					// se ad esempio sono 4 frames su 25 frames al secondo la parte decimale del secondo richiesta dal formato ffmpeg sarà 16, 	cioè:
@@ -1066,9 +1069,9 @@ void MMSEngineProcessor::manageCutMediaThread(
 			// this is a cut so destination file name shall have the same
 			// extension as the source file name
 			string fileFormat;
-			if (outputFileFormat == "")
+			if (outputFileFormat.empty())
 			{
-				string sourceFileExtensionWithoutDot = sourceFileExtension.size() > 0 ? sourceFileExtension.substr(1) : sourceFileExtension;
+				string sourceFileExtensionWithoutDot = !sourceFileExtension.empty() ? sourceFileExtension.substr(1) : sourceFileExtension;
 
 				if (sourceFileExtensionWithoutDot == "m3u8")
 					fileFormat = "ts";
@@ -1198,7 +1201,7 @@ void MMSEngineProcessor::manageCutMediaThread(
 				// to manage a ffmpeg bug generating a corrupted/wrong
 				// avgFrameRate, we will force the concat file to have the same
 				// avgFrameRate of the source media
-				if (forcedAvgFrameRate != "" && referenceContentType == MMSEngineDBFacade::ContentType::Video)
+				if (!forcedAvgFrameRate.empty() && referenceContentType == MMSEngineDBFacade::ContentType::Video)
 					localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);
 
 				localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
