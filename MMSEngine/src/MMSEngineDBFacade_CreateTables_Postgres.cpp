@@ -714,7 +714,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			string sqlStatement = "create table if not exists MMS_PartitionInfo ("
 								  "partitionKey			bigint NOT NULL,"
-								  "partitionPathName		text NOT NULL,"
+								  "name					text NOT NULL,"
 								  "currentFreeSizeInBytes	bigint NOT NULL,"
 								  "freeSpaceToLeaveInMB	bigint NOT NULL,"
 								  "lastUpdateFreeSize		timestamp without time zone default (now() at time zone 'utc'),"

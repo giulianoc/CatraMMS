@@ -8,33 +8,21 @@ using json = nlohmann::json;
 using namespace pqxx;
 
 void MMSEngineDBFacade::addUpdatePartitionInfo(
-	int partitionKey, string partitionPathName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB
+	int partitionKey, const string& partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
 		LOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 		{
 			string sqlStatement = std::format(
-				"select partitionPathName, currentFreeSizeInBytes from MMS_PartitionInfo "
+				"select name, currentFreeSizeInBytes from MMS_PartitionInfo "
 				"where partitionKey = {} for update",
 				partitionKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -44,24 +32,25 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			if (!empty(res))
+			if (!sqlResultSet->empty())
 			{
-				string partitionPathName = res[0]["partitionPathName"].as<string>();
-				uint64_t savedCurrentFreeSizeInBytes = res[0]["currentFreeSizeInBytes"].as<uint64_t>();
+				auto localPartitionName = (*sqlResultSet)[0]["name"].as<string>();
+				auto savedCurrentFreeSizeInBytes = (*sqlResultSet)[0]["currentFreeSizeInBytes"].as<uint64_t>();
 				LOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, savedCurrentFreeSizeInBytes: {}", savedCurrentFreeSizeInBytes);
 
 				LOG_INFO(
 					"Difference between estimate and calculate CurrentFreeSizeInBytes"
 					", partitionKey: {}"
-					", partitionPathName: {}"
+					", inputPartitionName: {}"
+					", localPartitionName: {}"
 					", savedCurrentFreeSizeInBytes: {}"
 					", calculated currentFreeSizeInBytes: {}"
 					", difference (saved - calculated): {}",
-					partitionKey, partitionPathName, savedCurrentFreeSizeInBytes, currentFreeSizeInBytes,
+					partitionKey, partitionName, localPartitionName, savedCurrentFreeSizeInBytes, currentFreeSizeInBytes,
 					// la differenza potrebbe dare un valore negativo,
 					// per cui -94124 come uint64_t darebbe 18446744073709457492
 					// Per questo motivo ho fatto il cast a int64_t
-					(int64_t)(savedCurrentFreeSizeInBytes - currentFreeSizeInBytes)
+					savedCurrentFreeSizeInBytes - currentFreeSizeInBytes
 				);
 
 				string sqlStatement = std::format(
@@ -87,10 +76,10 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 			{
 				string sqlStatement = std::format(
 					"insert into MMS_PartitionInfo ("
-					"partitionKey, partitionPathName, currentFreeSizeInBytes, "
+					"partitionKey, name, currentFreeSizeInBytes, "
 					"freeSpaceToLeaveInMB, lastUpdateFreeSize, enabled) values ("
 					"{}, {}, {}, {}, NOW() at time zone 'utc', true)",
-					partitionKey, trans.transaction->quote(partitionPathName), currentFreeSizeInBytes, freeSpaceToLeaveInMB
+					partitionKey, trans.transaction->quote(partitionName), currentFreeSizeInBytes, freeSpaceToLeaveInMB
 				);
 				LOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, currentFreeSizeInBytes: {}", currentFreeSizeInBytes);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -109,7 +98,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"
@@ -376,20 +365,20 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(int partitionKey, u
 	}
 }
 
-fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
+string MMSEngineDBFacade::getPartitionName(int partitionKey)
 {
-	fs::path partitionPathName;
+	fs::path partitionName;
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{
 		{
 			string sqlStatement = std::format(
-				"select partitionPathName from MMS_PartitionInfo "
+				"select name from MMS_PartitionInfo "
 				"where partitionKey = {} ",
 				partitionKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -399,15 +388,16 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			if (!empty(res))
-				partitionPathName = res[0]["partitionPathName"].as<string>();
-			else
+			if (sqlResultSet->empty())
 			{
-				string errorMessage = string("No partitionInfo found") + ", partitionKey: " + to_string(partitionKey);
-				_logger->error(__FILEREF__ + errorMessage);
+				const string errorMessage = std::format("No partitionInfo found"
+					", partitionKey: {}", partitionKey);
+				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
+
+			partitionName = (*sqlResultSet)[0]["name"].as<string>();
 		}
 	}
 	catch (exception const &e)
@@ -434,23 +424,11 @@ fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 		throw;
 	}
 
-	return partitionPathName;
+	return partitionName;
 }
 
 void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>> &partitionsInfo)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{

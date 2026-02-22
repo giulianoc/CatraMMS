@@ -405,7 +405,7 @@ fs::path MMSStorage::getMMSAssetPathName(
 			(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath)
 		/ fileName;
 	else
-		assetPathName = getMMSRootRepository() / _mmsEngineDBFacade->getPartitionPathName(partitionKey) / workspaceDirectoryName
+		assetPathName = getMMSRootRepository() / _mmsEngineDBFacade->getPartitionName(partitionKey)/ workspaceDirectoryName
 		/ (!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath)
 		/ fileName;
 
@@ -1458,15 +1458,11 @@ void MMSStorage::refreshPartitionsFreeSizes()
 	while (mmsAvailablePartitions)
 	{
 		fs::path partitionPathName;
+		string mmsPartitionName;
 		{
-			// char pMMSPartitionName[64];
-			string pMMSPartitionName;
-
-			// sprintf(pMMSPartitionName, "MMS_%04d", partitionKey);
-			pMMSPartitionName = std::format("MMS_{:0>4}", partitionKey);
-
-			partitionPathName = MMSStorage::getMMSRootRepository(_storage);
-			partitionPathName /= pMMSPartitionName;
+			mmsPartitionName = std::format("MMS_{:0>4}", partitionKey);
+			partitionPathName = getMMSRootRepository(_storage);
+			partitionPathName /= mmsPartitionName;
 		}
 
 		if (!fs::exists(partitionPathName))
@@ -1478,10 +1474,6 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 		uint64_t currentFreeSizeInBytes;
 		{
-			uint64_t usedInBytes;
-			uint64_t availableInBytes;
-			long lPercentUsed;
-
 			chrono::system_clock::time_point startPoint = chrono::system_clock::now();
 
 			fs::space_info si = fs::space(partitionPathName);
@@ -1502,46 +1494,22 @@ void MMSStorage::refreshPartitionsFreeSizes()
 
 		int localFreeSpaceToLeaveInMB;
 		{
-			// char pMMSPartitionName[64];
-			string pMMSPartitionName;
-			// sprintf(pMMSPartitionName, "%04d", partitionKey);
-			pMMSPartitionName = std::format("{:0>4}", partitionKey);
-			string freeSpaceConfField = string("freeSpaceToLeaveInEachPartitionInMB_") + pMMSPartitionName;
-
-			localFreeSpaceToLeaveInMB = JSONUtils::as<int32_t>(_configuration["storage"], freeSpaceConfField, _freeSpaceToLeaveInEachPartitionInMB);
+			string freeSpaceConfField = std::format("freeSpaceToLeaveInEachPartitionInMB_{}", mmsPartitionName);
+			localFreeSpaceToLeaveInMB = JsonPath(&_configuration)["storage"][freeSpaceConfField].as<int32_t>(_freeSpaceToLeaveInEachPartitionInMB);
 		}
 
 		LOG_INFO(
 			"addUpdatePartitionInfo"
 			", partitionKey: {}"
-			", partitionPathName: {}"
+			", mmsPartitionName: {}"
 			", currentFreeSizeInBytes: {}"
 			", localFreeSpaceToLeaveInMB: {}",
-			partitionKey, partitionPathName.string(), currentFreeSizeInBytes, localFreeSpaceToLeaveInMB
+			partitionKey, mmsPartitionName, currentFreeSizeInBytes, localFreeSpaceToLeaveInMB
 		);
-		_mmsEngineDBFacade->addUpdatePartitionInfo(partitionKey, partitionPathName, currentFreeSizeInBytes, localFreeSpaceToLeaveInMB);
+		_mmsEngineDBFacade->addUpdatePartitionInfo(partitionKey, mmsPartitionName, currentFreeSizeInBytes, localFreeSpaceToLeaveInMB);
 
 		partitionKey++;
 	}
-
-	/*
-	{
-		string infoMessage = string("refreshPartitionsFreeSizes. MMS Partitions info")
-			+ ", _mmsPartitionsInfo.size: " + to_string(_mmsPartitionsInfo.size())
-		;
-		for (int ulMMSPartitionIndex = 0;
-			ulMMSPartitionIndex < _mmsPartitionsInfo.size();
-			ulMMSPartitionIndex++)
-		{
-			infoMessage +=
-				(", _mmsPartitionsInfo [" + to_string(ulMMSPartitionIndex) + "]: "
-					+ to_string((_mmsPartitionsInfo[ulMMSPartitionIndex])._currentFreeSizeInBytes))
-			;
-		}
-
-		info(__FILEREF__ + infoMessage);
-	}
-	*/
 }
 
 // this method is in this class just because it is called

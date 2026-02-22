@@ -1256,7 +1256,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryAuthorizatio
 
 			throw runtime_error(errorMessage);
 		}
-		else if ((startIndex != -1 || rows != -1) && orderBy == "")
+		if ((startIndex != -1 || rows != -1) && orderBy == "")
 		{
 			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
 			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different

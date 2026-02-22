@@ -2465,7 +2465,7 @@ class MMSEngineDBFacade
 
 	void removeEncodersPool(int64_t encodersPoolKey);
 
-	void addUpdatePartitionInfo(int partitionKey, std::string partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB);
+	void addUpdatePartitionInfo(int partitionKey, const std::string& partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB);
 
 	int64_t addDeliveryServer(
 		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
@@ -2516,7 +2516,7 @@ class MMSEngineDBFacade
 	std::pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(uint64_t ullFSEntrySizeInBytes);
 #endif
 
-	fs::path getPartitionPathName(int partitionKey);
+	string getPartitionName(int partitionKey);
 
 	uint64_t updatePartitionBecauseOfDeletion(int partitionKey, uint64_t ullFSEntrySizeInBytes);
 
