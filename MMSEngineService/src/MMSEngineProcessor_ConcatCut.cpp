@@ -603,7 +603,7 @@ void MMSEngineProcessor::manageConcatThread(
 
 void MMSEngineProcessor::manageCutMediaThread(
 	const shared_ptr<long>& processorsThreadsNumber, int64_t ingestionJobKey, const shared_ptr<Workspace>& workspace,
-	const json& parametersRoot,
+	json parametersRoot,
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 )
 {
@@ -738,9 +738,11 @@ void MMSEngineProcessor::manageCutMediaThread(
 		string startTime;
 		string endTime = "0.0";
 		{
-			LOG_ERROR("parametersRoot: {}", JSONUtils::toString(parametersRoot));
+			LOG_ERROR("ingestionJobKey: {}"
+				"parametersRoot: {}", ingestionJobKey, JSONUtils::toString(parametersRoot));
 			startTime = JSONUtils::as<string>(parametersRoot, "startTime", "");
-			LOG_ERROR("startTime: ", startTime);
+			LOG_ERROR("ingestionJobKey: {}"
+				", startTime: ", ingestionJobKey, startTime);
 
 			if (!JSONUtils::isPresent(parametersRoot, "endTime") && referenceContentType == MMSEngineDBFacade::ContentType::Audio)
 			{

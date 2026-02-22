@@ -355,7 +355,7 @@ class MMSEngineProcessor
 
 	void manageCutMediaThread(
 		const std::shared_ptr<long>& processorsThreadsNumber, int64_t ingestionJobKey, const std::shared_ptr<Workspace>& workspace,
-		const nlohmann::json& parametersRoot,
+		nlohmann::json parametersRoot,
 		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies
 	);
 
