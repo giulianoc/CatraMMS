@@ -35,7 +35,7 @@ void MMSEngineDBFacade::addUpdatePartitionInfo(
 			if (!sqlResultSet->empty())
 			{
 				auto localPartitionName = (*sqlResultSet)[0]["name"].as<string>();
-				auto savedCurrentFreeSizeInBytes = (*sqlResultSet)[0]["currentFreeSizeInBytes"].as<uint64_t>();
+				auto savedCurrentFreeSizeInBytes = (*sqlResultSet)[0]["currentFreeSizeInBytes"].as<int64_t>();
 				LOG_INFO("mon currentFreeSizeInBytes. addUpdatePartitionInfo, savedCurrentFreeSizeInBytes: {}", savedCurrentFreeSizeInBytes);
 
 				LOG_INFO(
