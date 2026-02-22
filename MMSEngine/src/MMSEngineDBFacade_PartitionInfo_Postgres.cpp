@@ -379,18 +379,6 @@ uint64_t MMSEngineDBFacade::updatePartitionBecauseOfDeletion(int partitionKey, u
 fs::path MMSEngineDBFacade::getPartitionPathName(int partitionKey)
 {
 	fs::path partitionPathName;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
 	{

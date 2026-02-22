@@ -292,7 +292,7 @@ void MMSStorage::createDirectories(json configuration, shared_ptr<spdlog::logger
 
 fs::path MMSStorage::getMMSRootRepository(fs::path storage) { return storage / "MMSRepository"; }
 
-fs::path MMSStorage::getMMSRootRepository() { return MMSStorage::getMMSRootRepository(_storage); }
+fs::path MMSStorage::getMMSRootRepository() { return getMMSRootRepository(_storage); }
 
 fs::path MMSStorage::getIngestionRootRepository(fs::path storage) { return storage / "IngestionRepository" / "users"; }
 
@@ -661,7 +661,7 @@ fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> works
 		throw runtime_error(errorMessage);
 	}
 
-	fs::path workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
+	fs::path workspaceIngestionDirectory = getIngestionRootRepository(_storage);
 	workspaceIngestionDirectory /= workspace->_directoryName;
 
 	if (!fs::exists(workspaceIngestionDirectory))
@@ -700,37 +700,6 @@ fs::path MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(fs::path storage)
 
 fs::path MMSStorage::getNginxArea(fs::path storage) { return storage / "MMSWorkingAreaRepository/nginx"; }
 
-/*
-fs::path MMSStorage::getRepository(RepositoryType rtRepositoryType)
-{
-
-	switch (rtRepositoryType)
-	{
-		case RepositoryType::MMSREP_REPOSITORYTYPE_MMSCUSTOMER:
-		{
-			return MMSStorage::getMMSRootRepository(_storage);
-		}
-		case RepositoryType::MMSREP_REPOSITORYTYPE_STAGING:
-		{
-			return MMSStorage::getStagingRootRepository(_storage);
-		}
-		case RepositoryType::MMSREP_REPOSITORYTYPE_INGESTION:
-		{
-			return MMSStorage::getIngestionRootRepository(_storage);
-		}
-		default:
-		{
-			string errorMessage = string("Wrong argument")
-					+ ", rtRepositoryType: " + to_string(static_cast<int>(rtRepositoryType));
-
-			_logger->error(__FILEREF__ + errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-	}
-}
-*/
-
 fs::path MMSStorage::getMMSAssetPathName(
 	bool externalReadOnlyStorage, int partitionKey, string workspaceDirectoryName,
 	string relativePath, // using '/'
@@ -746,7 +715,7 @@ fs::path MMSStorage::getMMSAssetPathName(
 	}
 	else
 	{
-		fs::path partitionPathName = _mmsEngineDBFacade->getPartitionPathName(partitionKey);
+		fs::path partitionPathName = getMMSRootRepository() / _mmsEngineDBFacade->getPartitionPathName(partitionKey);
 		assetPathName = partitionPathName / workspaceDirectoryName /
 						(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
 	}
