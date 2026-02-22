@@ -94,10 +94,11 @@ class MMSStorage
 	// to give to the encoder a clean place where to write
 	fs::path getStagingAssetPathName(
 		// neededForTranscoder=true uses a faster file system i.e. for recording
-		bool neededForTranscoder, const std::string& workspaceDirectoryName, const std::string& directoryNamePrefix, const std::string& relativePath,
+		bool neededForTranscoder, const std::string& workspaceDirectoryName, const std::string& directoryNamePrefix,
+		const std::string& relativePath,
 		const std::string& fileName,			 // may be empty ("")
-		long long mediaItemKey,	 // used only if fileName is ""
-		long long physicalPathKey, // used only if fileName is ""
+		int64_t mediaItemKey,	 // used only if fileName is ""
+		int64_t physicalPathKey, // used only if fileName is ""
 		bool removeLinuxPathIfExist
 	);
 
