@@ -695,16 +695,10 @@ void EncoderProxy::processEncodedImage()
 
 				encodedFileName = stagingEncodedAssetPathName.substr(fileNameIndex + 1);
 
-				bool deliveryRepositoriesToo = true;
-
 				mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 					_encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, _encodingItem->_workspace->_directoryName, encodedFileName,
 					sourceRelativePath,
-
-					&mmsPartitionIndexUsed, // OUT
-					// &sourceFileType,
-
-					deliveryRepositoriesToo, _encodingItem->_workspace->_territories
+					&mmsPartitionIndexUsed // OUT
 				);
 			}
 			catch (runtime_error &e)

@@ -274,15 +274,9 @@ void MMSEngineProcessor::changeFileFormatThread(
 					unsigned long mmsPartitionIndexUsed;
 					try
 					{
-						bool deliveryRepositoriesToo = true;
-
 						mmsChangeFileFormatAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 							ingestionJobKey, stagingChangeFileFormatAssetPathName, workspace->_directoryName, changeFormatFileName, relativePath,
-
-							&mmsPartitionIndexUsed, // OUT
-							// &sourceFileType,
-
-							deliveryRepositoriesToo, workspace->_territories
+							&mmsPartitionIndexUsed // OUT
 						);
 					}
 					catch (runtime_error &e)

@@ -1817,10 +1817,8 @@ class MMSEngineDBFacade
 	std::tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, std::shared_ptr<Workspace>, std::string, std::string, std::string, std::string, uint64_t, bool>
 	getStorageDetails(int64_t mediaItemKey, int64_t encodingProfileKey, bool fromMaster);
 
-	void getAllStorageDetails(
-		int64_t mediaItemKey, bool fromMaster,
-		std::vector<std::tuple<MMSEngineDBFacade::DeliveryTechnology, int, std::string, std::string, std::string, int64_t, bool>> &allStorageDetails
-	);
+	std::vector<std::tuple<DeliveryTechnology, int, std::string, std::string, std::string, int64_t, bool>>
+		getAllStorageDetails(int64_t mediaItemKey, bool fromMaster);
 
 	int64_t createDeliveryAuthorization(
 		int64_t userKey, const std::string &clientIPAddress, int64_t physicalPathKey, int64_t liveDeliveryKey, const std::string &deliveryURI,

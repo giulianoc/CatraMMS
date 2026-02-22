@@ -2,9 +2,9 @@
 #include "MMSStorage.h"
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "ProcessUtility.h"
 #include "SafeFileSystem.h"
-#include "StringUtils.h"
 #include "System.h"
 #include "spdlog/spdlog.h"
 #include <exception>
@@ -14,8 +14,8 @@ using namespace std;
 using json = nlohmann::json;
 
 MMSStorage::MMSStorage(
-	bool noFileSystemAccess, bool noDatabaseAccess, shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, json configuration,
-	shared_ptr<spdlog::logger> logger
+	const bool noFileSystemAccess, const bool noDatabaseAccess, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
+	const json& configuration
 )
 {
 
@@ -23,26 +23,27 @@ MMSStorage::MMSStorage(
 	{
 		_noFileSystemAccess = noFileSystemAccess;
 		_mmsEngineDBFacade = mmsEngineDBFacade;
-		_logger = logger;
 		_configuration = configuration;
 
 		_hostName = System::hostName();
 
-		_waitingNFSSync_maxMillisecondsToWait = JSONUtils::as<int32_t>(configuration["storage"], "waitingNFSSync_maxMillisecondsToWait", 60000);
+		_waitingNFSSync_maxMillisecondsToWait = JsonPath(&configuration)["storage"]
+			["waitingNFSSync_maxMillisecondsToWait"].as<int32_t>(60000);
 		LOG_INFO(
 			"Configuration item"
 			", storage->_waitingNFSSync_maxMillisecondsToWait: {}",
 			_waitingNFSSync_maxMillisecondsToWait
 		);
 
-		_storage = JSONUtils::as<string>(configuration["storage"], "path", "");
+		_storage = JsonPath(&configuration)["storage"]["path"].as<string>();
 		LOG_INFO(
 			"Configuration item"
 			", storage->path: {}",
 			_storage.string()
 		);
 
-		_freeSpaceToLeaveInEachPartitionInMB = JSONUtils::as<int32_t>(configuration["storage"], "freeSpaceToLeaveInEachPartitionInMB", 100);
+		_freeSpaceToLeaveInEachPartitionInMB = JsonPath(&configuration)["storage"]
+			["freeSpaceToLeaveInEachPartitionInMB"].as<int32_t>(100);
 		LOG_INFO(
 			"Configuration item"
 			", storage->freeSpaceToLeaveInEachPartitionInMB: {}",
@@ -69,253 +70,23 @@ MMSStorage::~MMSStorage(void) = default;
  * dove non servono directory ma questo metodo le creava inutilmente creando confusione
 void MMSStorage::createDirectories(json configuration, shared_ptr<spdlog::logger> logger)
 {
-
-	// 2022-12-22: controllo non aggiunto perchè è un metodo static
-	//   E' il chiamante che si deve assicurare che ci sia accesso al file system
-	// if (noFileSystemAccess)
-	// {
-	// 	string errorMessage = string("no rights to execute this method")
-	// 		+ ", noFileSystemAccess: " + to_string(noFileSystemAccess)
-	// 	;
-	// 	logger->error(__FILEREF__ + errorMessage);
-
-	// 	throw runtime_error(errorMessage);
-	// }
-
-	fs::path storage = JSONUtils::as<string>(configuration["storage"], "path", "");
-	logger->info(__FILEREF__ + "Configuration item" + ", storage->path: " + storage.string());
-
-	// 2023-02-13: scenario: fs::permissions è fallito, genera un eccezione e la creazione delle
-	//	successive directory è fallita.
-	//	Per evitare questo si aggiungono i try/catch in modo che tutte le directory siano create
-	try
-	{
-		logger->info(
-			__FILEREF__ + "Creating directory (if needed)" + ", ingestionRootRepository: " + MMSStorage::getIngestionRootRepository(storage).string()
-		);
-		fs::create_directories(MMSStorage::getIngestionRootRepository(storage));
-		fs::permissions(
-			MMSStorage::getIngestionRootRepository(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(__FILEREF__ + "Creating directory (if needed)" + ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string());
-		fs::create_directories(MMSStorage::getMMSRootRepository(storage));
-		fs::permissions(
-			MMSStorage::getMMSRootRepository(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(
-			__FILEREF__ + "MMSStorage::MMSStorage failed" + ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string() +
-			", e.what(): " + e.what()
-		);
-	}
-	catch (exception &e)
-	{
-		logger->error(
-			__FILEREF__ + "MMSStorage::MMSStorage failed" + ", mmsRootRepository: " + MMSStorage::getMMSRootRepository(storage).string() +
-			", e.what(): " + e.what()
-		);
-	}
-
-	fs::path MMS_0000Path = MMSStorage::getMMSRootRepository(storage) / "MMS_0000";
-	try
-	{
-		// create MMS_0000 in case it does not exist (first running of MMS)
-		{
-			logger->info(__FILEREF__ + "Creating directory (if needed)" + ", MMS_0000 Path: " + MMS_0000Path.string());
-			fs::create_directories(MMS_0000Path);
-			fs::permissions(
-				MMS_0000Path,
-				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-					fs::perms::group_exec | fs::perms::others_exec,
-				fs::perm_options::replace
-			);
-		}
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", MMS_0000 Path: " + MMS_0000Path.string() + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", MMS_0000 Path: " + MMS_0000Path.string() + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(
-			__FILEREF__ + "Creating directory (if needed)" + ", stagingRootRepository: " + MMSStorage::getStagingRootRepository(storage).string()
-		);
-		fs::create_directories(MMSStorage::getStagingRootRepository(storage));
-		fs::permissions(
-			MMSStorage::getStagingRootRepository(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(
-			__FILEREF__ + "Creating directory (if needed)" +
-			", transcoderStagingRootRepository: " + MMSStorage::getTranscoderStagingRootRepository(storage).string()
-		);
-		fs::create_directories(MMSStorage::getTranscoderStagingRootRepository(storage));
-		fs::permissions(
-			MMSStorage::getTranscoderStagingRootRepository(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(__FILEREF__ + "Creating directory (if needed)" + ", liveRootRepository: " + MMSStorage::getLiveRootRepository(storage).string());
-		fs::create_directories(MMSStorage::getLiveRootRepository(storage));
-		fs::permissions(
-			MMSStorage::getLiveRootRepository(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(__FILEREF__ + "Creating directory (if needed)" + ", ffmpegArea: " + getFFMPEGArea(storage).string());
-		fs::create_directories(MMSStorage::getFFMPEGArea(storage));
-		fs::permissions(
-			MMSStorage::getFFMPEGArea(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(
-			__FILEREF__ + "Creating directory (if needed)" +
-			", ffmpegEndlessRecursivePlaylistArea: " + getFFMPEGEndlessRecursivePlaylistArea(storage).string()
-		);
-		fs::create_directories(MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(storage));
-		fs::permissions(
-			MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-
-	try
-	{
-		logger->info(__FILEREF__ + "Creating directory (if needed)" + ", nginxArea: " + getNginxArea(storage).string());
-		fs::create_directories(MMSStorage::getNginxArea(storage));
-		fs::permissions(
-			MMSStorage::getNginxArea(storage),
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_write |
-				fs::perms::group_exec | fs::perms::others_read | fs::perms::others_write | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-	catch (runtime_error &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
-	catch (exception &e)
-	{
-		logger->error(__FILEREF__ + "MMSStorage::MMSStorage failed" + ", e.what(): " + e.what());
-	}
 }
 */
 
-fs::path MMSStorage::getMMSRootRepository(fs::path storage) { return storage / "MMSRepository"; }
+fs::path MMSStorage::getMMSRootRepository(const fs::path& storage) { return storage / "MMSRepository"; }
 
 fs::path MMSStorage::getMMSRootRepository() { return getMMSRootRepository(_storage); }
 
-fs::path MMSStorage::getIngestionRootRepository(fs::path storage) { return storage / "IngestionRepository" / "users"; }
+fs::path MMSStorage::getIngestionRootRepository(const fs::path& storage) { return storage / "IngestionRepository" / "users"; }
 
-tuple<int64_t, fs::path, int, string, string, int64_t, string>
-MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster)
+tuple<int64_t, fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey,
+	int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster)
 {
 	try
 	{
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, fromMaster);
-
-		int64_t physicalPathKey;
-		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-		int mmsPartitionNumber;
-		shared_ptr<Workspace> workspace;
-		string relativePath;
-		string fileName;
-		int64_t sizeInBytes;
-		string deliveryFileName;
-		string title;
-		bool externalReadOnlyStorage;
-		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
-			externalReadOnlyStorage) = storageDetails;
+		auto[physicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath,
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage] =
+				_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, fromMaster);
 
 		LOG_INFO(
 			"getMMSAssetPathName ..."
@@ -329,54 +100,36 @@ MMSStorage::getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfile
 
 		return make_tuple(physicalPathKey, physicalPath, mmsPartitionNumber, relativePath, fileName, sizeInBytes, deliveryFileName);
 	}
-	catch (MediaItemKeyNotFound &e)
-	{
-		string errorMessage = std::format(
-			"getPhysicalPathDetails failed"
-			", mediaItemKey: {}"
-			", encodingProfileKey: {}"
-			", e.what(): {}",
-			mediaItemKey, encodingProfileKey, e.what()
-		);
-		if (warningIfMissing)
-			LOG_WARN(errorMessage);
-		else
-			LOG_ERROR(errorMessage);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		LOG_ERROR(
-			"getPhysicalPathDetails failed"
-			", mediaItemKey: {}"
-			", encodingProfileKey: {}"
-			", e.what(): {}",
-			mediaItemKey, encodingProfileKey, e.what()
-		);
+		if (dynamic_cast<MediaItemKeyNotFound const *>(&e) != nullptr && warningIfMissing)
+			LOG_WARN(
+				"getPhysicalPathDetails failed"
+				", mediaItemKey: {}"
+				", encodingProfileKey: {}"
+				", e.what(): {}",
+				mediaItemKey, encodingProfileKey, e.what()
+			);
+		else
+			LOG_ERROR(
+				"getPhysicalPathDetails failed"
+				", mediaItemKey: {}"
+				", encodingProfileKey: {}"
+				", e.what(): {}",
+				mediaItemKey, encodingProfileKey, e.what()
+			);
 
 		throw;
 	}
 }
 
-tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(int64_t physicalPathKey, bool fromMaster)
+tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPathDetails(int64_t physicalPathKey, const bool fromMaster)
 {
 	try
 	{
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey, fromMaster);
-
-		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-		int mmsPartitionNumber;
-		shared_ptr<Workspace> workspace;
-		string relativePath;
-		string fileName;
-		string deliveryFileName;
-		string title;
-		int64_t sizeInBytes;
-		bool externalReadOnlyStorage;
-		tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
-			externalReadOnlyStorage) = storageDetails;
+		auto[localPhysicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath,
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage] =
+				_mmsEngineDBFacade->getStorageDetails(physicalPathKey, fromMaster);
 
 		LOG_INFO(
 			"getMMSAssetPathName ..."
@@ -404,34 +157,24 @@ tuple<fs::path, int, string, string, int64_t, string> MMSStorage::getPhysicalPat
 	}
 }
 
-tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physicalPathKey, bool save, shared_ptr<Workspace> requestWorkspace)
+tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physicalPathKey, bool save,
+	const shared_ptr<Workspace>& requestWorkspace) const
 {
 	try
 	{
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey, false /* fromMaster */);
-
-		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-		int mmsPartitionNumber;
-		shared_ptr<Workspace> contentWorkspace;
-		string relativePath;
-		string fileName;
-		string deliveryFileName;
-		string title;
-		bool externalReadOnlyStorage;
-		tie(ignore, deliveryTechnology, mmsPartitionNumber, contentWorkspace, relativePath, fileName, deliveryFileName, title, ignore,
-			externalReadOnlyStorage) = storageDetails;
+		auto[localPhysicalPathKey, deliveryTechnology, mmsPartitionNumber, contentWorkspace,
+			relativePath, fileName, deliveryFileName, title, sizeInBytes,
+			externalReadOnlyStorage] = _mmsEngineDBFacade->getStorageDetails(physicalPathKey, false);
 
 		if (save)
 		{
-			if (deliveryFileName == "")
+			if (deliveryFileName.empty())
 				deliveryFileName = title;
 
-			if (deliveryFileName != "")
+			if (!deliveryFileName.empty())
 			{
 				// use the extension of fileName
-				size_t extensionIndex = fileName.find_last_of(".");
-				if (extensionIndex != string::npos)
+				if (size_t extensionIndex = fileName.find_last_of('.'); extensionIndex != string::npos)
 					deliveryFileName.append(fileName.substr(extensionIndex));
 			}
 		}
@@ -451,20 +194,11 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 
 		string deliveryURI;
 		if (externalReadOnlyStorage)
-		{
-			deliveryURI = string("/ExternalStorage_") + contentWorkspace->_directoryName + relativePath + fileName;
-		}
+			deliveryURI = std::format("/ExternalStorage_{}{}{}",
+				contentWorkspace->_directoryName, relativePath, fileName);
 		else
-		{
-			/*
-			char pMMSPartitionName[64];
-
-			sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
-
-			deliveryURI = pMMSPartitionName + contentWorkspace->_directoryName + relativePath + fileName;
-			*/
-			deliveryURI = std::format("/MMS_{:0>4}/", mmsPartitionNumber) + contentWorkspace->_directoryName + relativePath + fileName;
-		}
+			deliveryURI = std::format("/MMS_{:0>4}/{}{}{}", mmsPartitionNumber,
+				contentWorkspace->_directoryName, relativePath, fileName);
 
 		return make_tuple(title, mmsPartitionNumber, deliveryFileName, deliveryURI);
 	}
@@ -481,37 +215,25 @@ tuple<string, int, string, string> MMSStorage::getVODDeliveryURI(int64_t physica
 	}
 }
 
-tuple<string, int, int64_t, string, string>
-MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save, shared_ptr<Workspace> requestWorkspace)
+tuple<string, int, int64_t, string, string> MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save,
+	const shared_ptr<Workspace>& requestWorkspace) const
 {
 	try
 	{
-		bool warningIfMissing = false;
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, int64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, false /* fromMaster */);
-
-		int64_t physicalPathKey;
-		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-		int mmsPartitionNumber;
-		shared_ptr<Workspace> contentWorkspace;
-		string relativePath;
-		string fileName;
-		string deliveryFileName;
-		string title;
-		bool externalReadOnlyStorage;
-		tie(physicalPathKey, deliveryTechnology, mmsPartitionNumber, contentWorkspace, relativePath, fileName, deliveryFileName, title, ignore,
-			externalReadOnlyStorage) = storageDetails;
+		// bool warningIfMissing = false;
+		auto[physicalPathKey, deliveryTechnology, mmsPartitionNumber, contentWorkspace, relativePath,
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage] =
+				_mmsEngineDBFacade->getStorageDetails(mediaItemKey, encodingProfileKey, false);
 
 		if (save)
 		{
-			if (deliveryFileName == "")
+			if (deliveryFileName.empty())
 				deliveryFileName = title;
 
-			if (deliveryFileName != "")
+			if (!deliveryFileName.empty())
 			{
 				// use the extension of fileName
-				size_t extensionIndex = fileName.find_last_of(".");
-				if (extensionIndex != string::npos)
+				if (size_t extensionIndex = fileName.find_last_of('.'); extensionIndex != string::npos)
 					deliveryFileName.append(fileName.substr(extensionIndex));
 			}
 		}
@@ -529,86 +251,56 @@ MMSStorage::getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, 
 			throw runtime_error(errorMessage);
 		}
 
-		string deliveryURI;
-		{
-			/*
-			char pMMSPartitionName[64];
-
-			sprintf(pMMSPartitionName, "/MMS_%04d/", mmsPartitionNumber);
-
-			deliveryURI = pMMSPartitionName + contentWorkspace->_directoryName + relativePath + fileName;
-			*/
-			deliveryURI = std::format("/MMS_{:0>4}/", mmsPartitionNumber) + contentWorkspace->_directoryName + relativePath + fileName;
-		}
+		string deliveryURI = std::format("/MMS_{:0>4}/{}{}{}", mmsPartitionNumber,
+			contentWorkspace->_directoryName, relativePath, fileName);
 
 		return make_tuple(title, mmsPartitionNumber, physicalPathKey, deliveryFileName, deliveryURI);
 	}
-	catch (MediaItemKeyNotFound &e)
-	{
-		// warn perchè già loggato come error in MMSEngineDBFacade_Postgres.cpp
-		LOG_WARN(
-			"getDeliveryURI failed"
-			", mediaItemKey: {}"
-			", encodingProfileKey: {}"
-			", e.what(): {}",
-			mediaItemKey, encodingProfileKey, e.what()
-		);
-
-		throw e;
-	}
 	catch (exception &e)
 	{
-		LOG_ERROR(
-			"getDeliveryURI failed"
-			", mediaItemKey: {}"
-			", encodingProfileKey: {}"
-			", e.what(): {}",
-			mediaItemKey, encodingProfileKey, e.what()
-		);
+		// warn perchè già loggato come error in MMSEngineDBFacade_Postgres.cpp
+		if (dynamic_cast<MediaItemKeyNotFound const *>(&e) != nullptr)
+			LOG_WARN(
+				"getDeliveryURI failed"
+				", mediaItemKey: {}"
+				", encodingProfileKey: {}"
+				", e.what(): {}",
+				mediaItemKey, encodingProfileKey, e.what()
+			);
+		else
+			LOG_ERROR(
+				"getDeliveryURI failed"
+				", mediaItemKey: {}"
+				", encodingProfileKey: {}"
+				", e.what(): {}",
+				mediaItemKey, encodingProfileKey, e.what()
+			);
 
 		throw;
 	}
 }
 
-fs::path MMSStorage::getLiveDeliveryAssetPathName(string directoryId, string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
+fs::path MMSStorage::getLiveDeliveryAssetPathName(const string& directoryId, const string& liveFileExtension,
+	const shared_ptr<Workspace>& requestWorkspace)
 {
-	tuple<fs::path, fs::path, string> liveDeliveryDetails = getLiveDeliveryDetails(directoryId, liveFileExtension, requestWorkspace);
+	auto[deliveryPathName, deliveryPath, deliveryFileName] = getLiveDeliveryDetails(directoryId, liveFileExtension, requestWorkspace);
 
-	fs::path deliveryPath;
-	fs::path deliveryPathName;
-	string deliveryFileName;
-
-	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
-
-	fs::path deliveryAssetPathName =
-		MMSStorage::getMMSRootRepository(_storage) / (deliveryPathName.string().size() > 0 && deliveryPathName.string().front() == '/'
-														  ? deliveryPathName.string().substr(1)
-														  : deliveryPathName.string());
-
-	return deliveryAssetPathName;
+	return getMMSRootRepository(_storage) / (!deliveryPathName.string().empty() && deliveryPathName.string().front() == '/'
+		? deliveryPathName.string().substr(1) : deliveryPathName.string());
 }
 
-fs::path MMSStorage::getLiveDeliveryAssetPath(string directoryId, shared_ptr<Workspace> requestWorkspace)
+fs::path MMSStorage::getLiveDeliveryAssetPath(const string& directoryId, const shared_ptr<Workspace>& requestWorkspace)
 {
-	string liveFileExtension = "xxx";
+	const string liveFileExtension = "xxx";
 
-	tuple<fs::path, fs::path, string> liveDeliveryDetails = getLiveDeliveryDetails(directoryId, liveFileExtension, requestWorkspace);
+	auto[deliveryPathName, deliveryPath, deliveryFileName] = getLiveDeliveryDetails(directoryId, liveFileExtension, requestWorkspace);
 
-	fs::path deliveryPath;
-	fs::path deliveryPathName;
-	string deliveryFileName;
-
-	tie(deliveryPathName, deliveryPath, deliveryFileName) = liveDeliveryDetails;
-
-	fs::path deliveryAssetPath =
-		MMSStorage::getMMSRootRepository(_storage) /
-		(deliveryPath.string().size() > 0 && deliveryPath.string().front() == '/' ? deliveryPath.string().substr(1) : deliveryPath.string());
-
-	return deliveryAssetPath;
+	return getMMSRootRepository(_storage) / (!deliveryPath.string().empty() && deliveryPath.string().front() == '/'
+		? deliveryPath.string().substr(1) : deliveryPath.string());
 }
 
-tuple<fs::path, fs::path, string>
-MMSStorage::getLiveDeliveryDetails(string directoryId, string liveFileExtension, shared_ptr<Workspace> requestWorkspace)
+tuple<fs::path, fs::path, string> MMSStorage::getLiveDeliveryDetails(const string& directoryId, const string& liveFileExtension,
+	const shared_ptr<Workspace>& requestWorkspace)
 {
 	fs::path deliveryPath;
 	fs::path deliveryPathName;
@@ -618,10 +310,10 @@ MMSStorage::getLiveDeliveryDetails(string directoryId, string liveFileExtension,
 	{
 		// if (liveURLType == "LiveProxy")
 		{
-			deliveryFileName = directoryId + "." + liveFileExtension;
+			deliveryFileName = std::format("{}.{}", directoryId, liveFileExtension);
 
 			deliveryPath = "/";
-			deliveryPath /= MMSStorage::getDirectoryForLiveContents();
+			deliveryPath /= getDirectoryForLiveContents();
 			deliveryPath /= requestWorkspace->_directoryName;
 			deliveryPath /= directoryId;
 
@@ -643,7 +335,7 @@ MMSStorage::getLiveDeliveryDetails(string directoryId, string liveFileExtension,
 	return make_tuple(deliveryPathName, deliveryPath, deliveryFileName);
 }
 
-fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> workspace)
+fs::path MMSStorage::getWorkspaceIngestionRepository(const shared_ptr<Workspace>& workspace)
 {
 	// 2022-12-22: ho dovuto aggiungere questo controllo (noFileSystemAccess) perchè sotto, se la directory non esiste,
 	//	viene creata. Probabilmente questa directory deve essere creata quando viene creato il workspace
@@ -683,42 +375,39 @@ fs::path MMSStorage::getWorkspaceIngestionRepository(shared_ptr<Workspace> works
 	return workspaceIngestionDirectory;
 }
 
-fs::path MMSStorage::getStagingRootRepository(fs::path storage) { return storage / "MMSWorkingAreaRepository/Staging"; }
+fs::path MMSStorage::getStagingRootRepository(const fs::path& storage) { return storage / "MMSWorkingAreaRepository/Staging"; }
 
-fs::path MMSStorage::getTranscoderStagingRootRepository(fs::path storage) { return storage / "MMSTranscoderWorkingAreaRepository/Staging"; }
+fs::path MMSStorage::getTranscoderStagingRootRepository(const fs::path& storage) { return storage / "MMSTranscoderWorkingAreaRepository/Staging"; }
 
 string MMSStorage::getDirectoryForLiveContents() { return "MMSLive"; }
 
-fs::path MMSStorage::getLiveRootRepository(fs::path storage) { return storage / "MMSRepository" / MMSStorage::getDirectoryForLiveContents(); }
+fs::path MMSStorage::getLiveRootRepository(const fs::path& storage) { return storage / "MMSRepository" / MMSStorage::getDirectoryForLiveContents(); }
 
-fs::path MMSStorage::getFFMPEGArea(fs::path storage) { return storage / "MMSTranscoderWorkingAreaRepository/ffmpeg"; }
+fs::path MMSStorage::getFFMPEGArea(const fs::path& storage) { return storage / "MMSTranscoderWorkingAreaRepository/ffmpeg"; }
 
-fs::path MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(fs::path storage)
+fs::path MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(const fs::path& storage)
 {
 	return storage / "MMSTranscoderWorkingAreaRepository/ffmpegEndlessRecursivePlaylist";
 }
 
-fs::path MMSStorage::getNginxArea(fs::path storage) { return storage / "MMSWorkingAreaRepository/nginx"; }
+fs::path MMSStorage::getNginxArea(const fs::path& storage) { return storage / "MMSWorkingAreaRepository/nginx"; }
 
 fs::path MMSStorage::getMMSAssetPathName(
-	bool externalReadOnlyStorage, int partitionKey, string workspaceDirectoryName,
-	string relativePath, // using '/'
-	string fileName
+	const bool externalReadOnlyStorage, const int partitionKey, const string& workspaceDirectoryName,
+	const string& relativePath, // using '/'
+	const string& fileName
 )
 {
 	fs::path assetPathName;
 
 	if (externalReadOnlyStorage)
-	{
 		assetPathName = getMMSRootRepository(_storage) / ("ExternalStorage_" + workspaceDirectoryName) /
-						(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
-	}
+			(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath)
+		/ fileName;
 	else
-	{
-		fs::path partitionPathName = getMMSRootRepository() / _mmsEngineDBFacade->getPartitionPathName(partitionKey);
-		assetPathName = partitionPathName / workspaceDirectoryName /
-						(!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath) / fileName;
-	}
+		assetPathName = getMMSRootRepository() / _mmsEngineDBFacade->getPartitionPathName(partitionKey) / workspaceDirectoryName
+		/ (!relativePath.empty() && relativePath.front() == '/' ? relativePath.substr(1) : relativePath)
+		/ fileName;
 
 	return assetPathName;
 }
@@ -727,26 +416,19 @@ fs::path MMSStorage::getStagingAssetPathName(
 	// neededForTranscoder=true uses a faster file system i.e. for recording
 	bool neededForTranscoder,
 
-	string workspaceDirectoryName,
+	const string& workspaceDirectoryName,
 
 	// it is a prefix of the directory name because I saw two different threads got the same dir name,
 	// even if the directory name generated here contains the datetime including millisecs.
 	// Same dir name created a problem when the directory was removed by one thread because
 	// it was still used by the other thread
-	string directoryNamePrefix, string relativePath,
-	string fileName,			 // may be empty ("")
-	long long llMediaItemKey,	 // used only if fileName is ""
-	long long llPhysicalPathKey, // used only if fileName is ""
+	const string& directoryNamePrefix, const string& relativePath,
+	const string& fileName,			 // may be empty ("")
+	int64_t mediaItemKey,	 // used only if fileName is ""
+	int64_t physicalPathKey, // used only if fileName is ""
 	bool removeLinuxPathIfExist
 )
 {
-	// char pUniqueFileName[256];
-	string pUniqueFileName;
-	string localFileName;
-	tm tmDateTime;
-	unsigned long ulMilliSecs;
-	// char pDateTime[64];
-	string pDateTime;
 	fs::path assetPathName;
 
 	if (_noFileSystemAccess)
@@ -761,46 +443,19 @@ fs::path MMSStorage::getStagingAssetPathName(
 		throw runtime_error(errorMessage);
 	}
 
-	Datetime::get_tm_LocalTime(&tmDateTime, &ulMilliSecs);
+	string dateTime = Datetime::nowLocalTime("%Y_%m_%d_%H_%M_%S_", true);
 
-	if (fileName == "")
-	{
-		// sprintf(
-		// 	pUniqueFileName, "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu_%lld_%lld_%s", (unsigned long)(tmDateTime.tm_year + 1900),
-		// 	(unsigned long)(tmDateTime.tm_mon + 1), (unsigned long)(tmDateTime.tm_mday), (unsigned long)(tmDateTime.tm_hour),
-		// 	(unsigned long)(tmDateTime.tm_min), (unsigned long)(tmDateTime.tm_sec), ulMilliSecs, llMediaItemKey, llPhysicalPathKey, _hostName.c_str()
-		// );
-		pUniqueFileName = std::format(
-			"{:0>4}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>4}_{}_{}_{}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday,
-			tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec, ulMilliSecs, llMediaItemKey, llPhysicalPathKey, _hostName
-		);
-
-		localFileName = pUniqueFileName;
-	}
-	else
-	{
-		localFileName = fileName;
-	}
-
-	/*
-	sprintf(
-		pDateTime, "%04lu_%02lu_%02lu_%02lu_%02lu_%02lu_%04lu", (unsigned long)(tmDateTime.tm_year + 1900), (unsigned long)(tmDateTime.tm_mon + 1),
-		(unsigned long)(tmDateTime.tm_mday), (unsigned long)(tmDateTime.tm_hour), (unsigned long)(tmDateTime.tm_min),
-		(unsigned long)(tmDateTime.tm_sec), ulMilliSecs
-	);
-	*/
-	pDateTime = std::format(
-		"{:0>4}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>2}_{:0>4}", tmDateTime.tm_year + 1900, tmDateTime.tm_mon + 1, tmDateTime.tm_mday, tmDateTime.tm_hour,
-		tmDateTime.tm_min, tmDateTime.tm_sec, ulMilliSecs
-	);
+	string localFileName = fileName;
+	if (fileName.empty())
+		localFileName = std::format("{}_{}_{}_{}", dateTime, mediaItemKey, physicalPathKey, _hostName);
 
 	// create the 'date' directory in staging if not exist
 	{
 		if (neededForTranscoder)
-			assetPathName = MMSStorage::getTranscoderStagingRootRepository(_storage);
+			assetPathName = getTranscoderStagingRootRepository(_storage);
 		else
-			assetPathName = MMSStorage::getStagingRootRepository(_storage);
-		assetPathName /= (workspaceDirectoryName + "_" + directoryNamePrefix + "_" + pDateTime + relativePath);
+			assetPathName = getStagingRootRepository(_storage);
+		assetPathName /= std::format("{}_{}_{}{}", workspaceDirectoryName, directoryNamePrefix, dateTime, relativePath);
 
 		// 2023-06-02: questo metodo viene chiamato dall'engine (non dal transcoder),
 		//	nel caso di directory 'locale' per il transcoder, non bisogna creare qui la directory
@@ -860,20 +515,12 @@ fs::path MMSStorage::getStagingAssetPathName(
 					throw runtime_error(errorMessage);
 				}
 			}
-			catch (...)
+			catch (exception& e)
 			{
-				//				 * the entry does not exist
-				//				 *
-				//				_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-				//					(const char *) errFileIO, __FILE__, __LINE__);
-				//
-				//				Error err = ToolsErrors (__FILE__, __LINE__,
-				//					TOOLS_FILEIO_GETDIRECTORYENTRYTYPE_FAILED,
-				//					1, (const char *) bContentPathName);
-				//				_ptSystemTracer -> trace (Tracer:: TRACER_LERRR,
-				//					(const char *) err, __FILE__, __LINE__);
-				//
-				//				return err;
+				LOG_ERROR("remove failed"
+					", assetPathName: {}"
+					", exception: {}", assetPathName.string(), e.what()
+					);
 			}
 		}
 	}
@@ -881,52 +528,7 @@ fs::path MMSStorage::getStagingAssetPathName(
 	return assetPathName;
 }
 
-fs::path MMSStorage::creatingDirsUsingTerritories(
-	unsigned long ulCurrentMMSPartitionIndex, string relativePath, string workspaceDirectoryName, bool deliveryRepositoriesToo,
-	Workspace::TerritoriesHashMap &phmTerritories
-)
-{
-	// char pMMSPartitionName[64];
-	string pMMSPartitionName;
-
-	if (_noFileSystemAccess)
-	{
-		string errorMessage = std::format(
-			"no rights to execute this method"
-			", _noFileSystemAccess: {}",
-			_noFileSystemAccess
-		);
-		LOG_ERROR(errorMessage);
-
-		throw runtime_error(errorMessage);
-	}
-
-	// sprintf(pMMSPartitionName, "MMS_%04lu", ulCurrentMMSPartitionIndex);
-	pMMSPartitionName = std::format("MMS_{:0>4}", ulCurrentMMSPartitionIndex);
-
-	fs::path mmsAssetPathName =
-		MMSStorage::getMMSRootRepository(_storage) / string(pMMSPartitionName) / workspaceDirectoryName / relativePath.substr(1);
-
-	if (!fs::exists(mmsAssetPathName))
-	{
-		LOG_INFO(
-			"Create directory"
-			", mmsAssetPathName: {}",
-			mmsAssetPathName.string()
-		);
-		fs::create_directories(mmsAssetPathName);
-		fs::permissions(
-			mmsAssetPathName,
-			fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec |
-				fs::perms::others_read | fs::perms::others_exec,
-			fs::perm_options::replace
-		);
-	}
-
-	return mmsAssetPathName;
-}
-
-void MMSStorage::	removePhysicalPath(int64_t physicalPathKey)
+void MMSStorage::removePhysicalPath(int64_t physicalPathKey)
 {
 	try
 	{
@@ -948,21 +550,9 @@ void MMSStorage::	removePhysicalPath(int64_t physicalPathKey)
 			physicalPathKey
 		);
 
-		tuple<int64_t, MMSEngineDBFacade::DeliveryTechnology, int, shared_ptr<Workspace>, string, string, string, string, uint64_t, bool>
-			storageDetails = _mmsEngineDBFacade->getStorageDetails(physicalPathKey, true /*fromMaster*/);
-
-		MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
-		int mmsPartitionNumber;
-		shared_ptr<Workspace> workspace;
-		string relativePath;
-		string fileName;
-		string deliveryFileName;
-		string title;
-		uint64_t sizeInBytes;
-		bool externalReadOnlyStorage;
-
-		tie(ignore, deliveryTechnology, mmsPartitionNumber, workspace, relativePath, fileName, deliveryFileName, title, sizeInBytes,
-			externalReadOnlyStorage) = storageDetails;
+		auto[localPhysicalPathKey, deliveryTechnology, mmsPartitionNumber, workspace, relativePath,
+			fileName, deliveryFileName, title, sizeInBytes, externalReadOnlyStorage] =
+				_mmsEngineDBFacade->getStorageDetails(physicalPathKey, true);
 
 		if (!externalReadOnlyStorage)
 		{
@@ -1024,11 +614,9 @@ void MMSStorage::removeMediaItem(int64_t mediaItemKey)
 			mediaItemKey
 		);
 
-		vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
-		_mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, false /*fromMaster*/, allStorageDetails);
-
 		for (const auto&[deliveryTechnology, mmsPartitionNumber, workspaceDirectoryName, relativePath,
-			fileName, sizeInBytes, externalReadOnlyStorage] : allStorageDetails)
+			fileName, sizeInBytes, externalReadOnlyStorage] :
+			_mmsEngineDBFacade->getAllStorageDetails(mediaItemKey, false))
 		{
 			if (!externalReadOnlyStorage)
 			{
@@ -1193,11 +781,23 @@ void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPa
 				}
 				else
 				{
-					string errorMessage = "Unexpected directory entry";
+					const string errorMessage = std::format("Unexpected directory entry"
+						", mmsAssetPathName: {}",
+						mmsAssetPathName.string());
 					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
+			}
+			else
+			{
+				LOG_WARN(
+					"File not existing"
+					", mediaItemKey: {}"
+					", physicalPathKey: {}"
+					", mmsAssetPathName: {}",
+					mediaItemKey, physicalPathKey, mmsAssetPathName.string()
+				);
 			}
 		}
 	}
@@ -1217,12 +817,9 @@ void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPa
 }
 
 fs::path MMSStorage::moveAssetInMMSRepository(
-	int64_t ingestionJobKey, fs::path sourceAssetPathName, string workspaceDirectoryName, string destinationAssetFileName, string relativePath,
-
-	unsigned long *pulMMSPartitionIndexUsed, // OUT
-	// FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
-
-	bool deliveryRepositoriesToo, Workspace::TerritoriesHashMap &phmTerritories
+	int64_t ingestionJobKey, const fs::path& sourceAssetPathName, const string& workspaceDirectoryName,
+	const string& destinationAssetFileName, const string& relativePath,
+	unsigned long *pulMMSPartitionIndexUsed // OUT
 )
 {
 	if (_noFileSystemAccess)
@@ -1237,7 +834,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		throw runtime_error(errorMessage);
 	}
 
-	if ((relativePath.size() > 0 && relativePath.front() != '/') || pulMMSPartitionIndexUsed == (unsigned long *)NULL)
+	if ((!relativePath.empty() && relativePath.front() != '/') || pulMMSPartitionIndexUsed == nullptr)
 	{
 		string errorMessage = std::format(
 			"Wrong argument"
@@ -1323,13 +920,29 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		*pulMMSPartitionIndexUsed = partitionKey;
 	}
 
-	// creating directories and build the bMMSAssetPathName
+	// creating directories and build the mmsAssetPathName
 	fs::path mmsAssetPathName;
 	{
-		// to create the content provider directory and the
-		// territories directories (if not already existing)
-		mmsAssetPathName =
-			creatingDirsUsingTerritories(*pulMMSPartitionIndexUsed, relativePath, workspaceDirectoryName, deliveryRepositoriesToo, phmTerritories);
+		const string mmsPartitionName = std::format("MMS_{:0>4}", *pulMMSPartitionIndexUsed);
+
+		mmsAssetPathName = getMMSRootRepository(_storage) / mmsPartitionName
+		/ workspaceDirectoryName / relativePath.substr(1);
+
+		if (!fs::exists(mmsAssetPathName))
+		{
+			LOG_INFO(
+				"Create directory"
+				", mmsAssetPathName: {}",
+				mmsAssetPathName.string()
+			);
+			fs::create_directories(mmsAssetPathName);
+			fs::permissions(
+				mmsAssetPathName,
+				fs::perms::owner_read | fs::perms::owner_write | fs::perms::owner_exec | fs::perms::group_read | fs::perms::group_exec |
+					fs::perms::others_read | fs::perms::others_exec,
+				fs::perm_options::replace
+			);
+		}
 
 		mmsAssetPathName /= destinationAssetFileName;
 	}
@@ -1438,7 +1051,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			int64_t moveElapsedInSeconds;
 			try
 			{
-				moveElapsedInSeconds = MMSStorage::move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
+				moveElapsedInSeconds = move(ingestionJobKey, sourceAssetPathName, mmsAssetPathName);
 			}
 			catch (exception &e)
 			{
@@ -1545,7 +1158,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 	return mmsAssetPathName;
 }
 
-int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest)
+int64_t MMSStorage::move(int64_t ingestionJobKey, const fs::path& source, const fs::path& dest)
 {
 	chrono::system_clock::time_point startPoint;
 	chrono::system_clock::time_point endPoint;
@@ -1589,31 +1202,32 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 				fs::remove_all(source);
 				endPoint = chrono::system_clock::now();
 			}
-			catch (fs::filesystem_error &e)
+			catch (fs::filesystem_error &ex)
 			{
 				LOG_ERROR(
 					"move (copy and remove) failed"
 					", ingestionJobKey: {}"
 					", source: {}"
 					", dest: {}"
-					", e.what: {}"
+					", exception: {}"
 					", code value: {}"
 					", code message: {}"
 					", code category: {}",
-					ingestionJobKey, source.string(), dest.string(), e.what(), e.code().value(), e.code().message(), e.code().category().name()
+					ingestionJobKey, source.string(), dest.string(), ex.what(), ex.code().value(), ex.code().message(),
+					ex.code().category().name()
 				);
 
 				throw;
 			}
-			catch (exception &e)
+			catch (exception &ex)
 			{
 				LOG_ERROR(
 					"move (copy and remove) failed"
 					", ingestionJobKey: {}"
 					", source: {}"
 					", dest: {}"
-					", e.what: {}",
-					ingestionJobKey, source.string(), dest.string(), e.what()
+					", exception: {}",
+					ingestionJobKey, source.string(), dest.string(), ex.what()
 				);
 
 				throw;
@@ -1626,7 +1240,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 				", ingestionJobKey: {}"
 				", source: {}"
 				", dest: {}"
-				", e.what: {}"
+				", exception: {}"
 				", code value: {}"
 				", code message: {}"
 				", code category: {}",
@@ -1641,14 +1255,14 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 				", ingestionJobKey: {}"
 				", source: {}"
 				", dest: {}"
-				", e.what: {}"
+				", exception: {}"
 				", code value: {}"
 				", code message: {}"
 				", code category: {}",
 				ingestionJobKey, source.string(), dest.string(), e.what(), e.code().value(), e.code().message(), e.code().category().name()
 			);
 
-			throw e;
+			throw;
 		}
 	}
 	catch (exception &e)
@@ -1658,7 +1272,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 			", ingestionJobKey: {}"
 			", source: {}"
 			", dest: {}"
-			", e.what: {}",
+			", exception: {}",
 			ingestionJobKey, source.string(), dest.string(), e.what()
 		);
 
@@ -1668,7 +1282,7 @@ int64_t MMSStorage::move(int64_t ingestionJobKey, fs::path source, fs::path dest
 	return chrono::duration_cast<chrono::seconds>(endPoint - startPoint).count();
 }
 
-void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
+void MMSStorage::deleteWorkspace(const shared_ptr<Workspace>& workspace)
 {
 	if (_noFileSystemAccess)
 	{
@@ -1683,7 +1297,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 	}
 
 	{
-		fs::path workspaceIngestionDirectory = MMSStorage::getIngestionRootRepository(_storage);
+		fs::path workspaceIngestionDirectory = getIngestionRootRepository(_storage);
 		workspaceIngestionDirectory /= workspace->_directoryName;
 
 		if (fs::exists(workspaceIngestionDirectory))
@@ -1698,7 +1312,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 	}
 
 	{
-		fs::path liveRootDirectory = MMSStorage::getLiveRootRepository(_storage);
+		fs::path liveRootDirectory = getLiveRootRepository(_storage);
 		liveRootDirectory /= workspace->_directoryName;
 
 		if (fs::is_directory(liveRootDirectory))
@@ -1717,18 +1331,13 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 
 		_mmsEngineDBFacade->getPartitionsInfo(partitionsInfo);
 
-		for (pair<int, uint64_t> partitionInfo : partitionsInfo)
+		for (const auto &partitionKey : partitionsInfo | views::keys)
 		{
-			int partitionKey;
-			uint64_t currentFreeSizeInBytes;
-
-			tie(partitionKey, currentFreeSizeInBytes) = partitionInfo;
-
 			fs::path workspacePathName = getMMSAssetPathName(
 				false, // externalReadOnlyStorage
 				partitionKey, workspace->_directoryName,
-				string(""), // relativePath
-				string("")	// fileName
+				"", // relativePath
+				""	// fileName
 			);
 
 			if (fs::is_directory(workspacePathName))
@@ -1761,7 +1370,7 @@ void MMSStorage::deleteWorkspace(shared_ptr<Workspace> workspace)
 	}
 }
 
-unsigned long MMSStorage::getWorkspaceStorageUsage(string workspaceDirectoryName)
+unsigned long MMSStorage::getWorkspaceStorageUsage(const string& workspaceDirectoryName)
 {
 
 	unsigned long ulStorageUsageInMB;
@@ -1788,13 +1397,8 @@ unsigned long MMSStorage::getWorkspaceStorageUsage(string workspaceDirectoryName
 
 	_mmsEngineDBFacade->getPartitionsInfo(partitionsInfo);
 
-	for (pair<int, uint64_t> partitionInfo : partitionsInfo)
+	for (auto &partitionKey : partitionsInfo | views::keys)
 	{
-		int partitionKey;
-		uint64_t currentFreeSizeInBytes;
-
-		tie(partitionKey, currentFreeSizeInBytes) = partitionInfo;
-
 		fs::path workspacePathName = getMMSAssetPathName(
 			false, // externalReadOnlyStorage
 			partitionKey, workspaceDirectoryName,

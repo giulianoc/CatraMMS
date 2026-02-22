@@ -316,7 +316,7 @@ int main(int iArgc, char *pArgv[])
 	bool noFileSystemAccess = false;
 	bool noDatabaseAccess = false;
 	logger->info(__FILEREF__ + "Creating MMSStorage" + ", noFileSystemAccess: " + to_string(noFileSystemAccess));
-	shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configurationRoot, logger);
+	shared_ptr<MMSStorage> mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configurationRoot);
 
 	logger->info(__FILEREF__ + "Creating MultiEventsSet" + ", addDestination: " + MMSENGINEPROCESSORNAME);
 	shared_ptr<MultiEventsSet> multiEventsSet = make_shared<MultiEventsSet>();

@@ -388,7 +388,7 @@ int main(int argc, char **argv)
 			", noFileSystemAccess: {}",
 			noFileSystemAccess
 		);
-		auto mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configurationRoot, logger);
+		auto mmsStorage = make_shared<MMSStorage>(noFileSystemAccess, noDatabaseAccess, mmsEngineDBFacade, configurationRoot);
 
 		auto mmsDeliveryAuthorization =
 			make_shared<MMSDeliveryAuthorization>(configurationRoot, mmsStorage, mmsEngineDBFacade);

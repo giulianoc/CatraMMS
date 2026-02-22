@@ -1029,9 +1029,8 @@ MMSEngineDBFacade::getStorageDetails(
 	}
 }
 
-void MMSEngineDBFacade::getAllStorageDetails(
-	int64_t mediaItemKey, bool fromMaster,
-	vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> &allStorageDetails
+vector<tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool>> MMSEngineDBFacade::getAllStorageDetails(
+	int64_t mediaItemKey, bool fromMaster
 )
 {
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
@@ -1045,6 +1044,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 		string relativePath;
 		string fileName;
 		ContentType contentType;
+		vector<tuple<DeliveryTechnology, int, string, string, string, int64_t, bool>> allStorageDetails;
 		{
 			string sqlStatement = std::format(
 				"select mi.workspaceKey, mi.contentType, pp.externalReadOnlyStorage, pp.encodingProfileKey, "
@@ -1072,7 +1072,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 				shared_ptr<Workspace> workspace = getWorkspace(workspaceKey);
 
 				// default
-				MMSEngineDBFacade::DeliveryTechnology deliveryTechnology;
+				DeliveryTechnology deliveryTechnology;
 				if (contentType == ContentType::Video || contentType == ContentType::Audio)
 					deliveryTechnology = DeliveryTechnology::DownloadAndStreaming;
 				else
@@ -1108,7 +1108,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 					}
 				}
 
-				tuple<MMSEngineDBFacade::DeliveryTechnology, int, string, string, string, int64_t, bool> storageDetails = make_tuple(
+				tuple<DeliveryTechnology, int, string, string, string, int64_t, bool> storageDetails = make_tuple(
 					deliveryTechnology, mmsPartitionNumber, workspace->_directoryName, relativePath, fileName, sizeInBytes, externalReadOnlyStorage
 				);
 
@@ -1124,6 +1124,7 @@ void MMSEngineDBFacade::getAllStorageDetails(
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		return allStorageDetails;
 	}
 	catch (exception const &e)
 	{

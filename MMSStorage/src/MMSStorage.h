@@ -1,5 +1,4 @@
 
-
 #pragma once
 
 #include <mutex>
@@ -22,60 +21,53 @@ class MMSStorage
 		MMSREP_REPOSITORYTYPE_NUMBER
 	};
 
-  public:
 	MMSStorage(
-		bool noFileSystemAccess, bool noDatabaseAccess, std::shared_ptr<MMSEngineDBFacade> mmsEngineDBFacade, nlohmann::json configuration,
-		std::shared_ptr<spdlog::logger> logger
+		bool noFileSystemAccess, bool noDatabaseAccess, const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
+		const nlohmann::json& configuration
 	);
 
-	~MMSStorage(void);
+	~MMSStorage();
 
-	/*
-	static void createDirectories(
-		json configuration,
-		std::shared_ptr<spdlog::logger> logger);
-	*/
+	fs::path getWorkspaceIngestionRepository(const std::shared_ptr<Workspace>& workspace);
 
-	fs::path getWorkspaceIngestionRepository(std::shared_ptr<Workspace> workspace);
-
-	static fs::path getMMSRootRepository(fs::path storage);
+	static fs::path getMMSRootRepository(const fs::path& storage);
 	fs::path getMMSRootRepository();
 
-	static fs::path getIngestionRootRepository(fs::path storage);
+	static fs::path getIngestionRootRepository(const fs::path& storage);
 
-	static fs::path getStagingRootRepository(fs::path storage);
+	static fs::path getStagingRootRepository(const fs::path& storage);
 
-	static fs::path getTranscoderStagingRootRepository(fs::path storage);
+	static fs::path getTranscoderStagingRootRepository(const fs::path& storage);
 
 	static std::string getDirectoryForLiveContents();
 
-	static fs::path getLiveRootRepository(fs::path storage);
+	static fs::path getLiveRootRepository(const fs::path& storage);
 
-	static fs::path getFFMPEGArea(fs::path storage);
+	static fs::path getFFMPEGArea(const fs::path& storage);
 
-	static fs::path getFFMPEGEndlessRecursivePlaylistArea(fs::path storage);
+	static fs::path getFFMPEGEndlessRecursivePlaylistArea(const fs::path& storage);
 
-	static fs::path getNginxArea(fs::path storage);
+	static fs::path getNginxArea(const fs::path& storage);
 
-	fs::path getErrorRootRepository(void);
-
-	fs::path getDoneRootRepository(void);
-
-	std::tuple<int64_t, fs::path, int, std::string, std::string, int64_t, std::string>
-	getPhysicalPathDetails(int64_t mediaItemKey, int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
+	std::tuple<int64_t, fs::path, int, std::string, std::string, int64_t, std::string> getPhysicalPathDetails(int64_t mediaItemKey,
+		int64_t encodingProfileKey, bool warningIfMissing, bool fromMaster);
 
 	std::tuple<fs::path, int, std::string, std::string, int64_t, std::string> getPhysicalPathDetails(int64_t physicalPathKey, bool fromMaster);
 
-	std::tuple<std::string, int, std::string, std::string> getVODDeliveryURI(int64_t physicalPathKey, bool save, std::shared_ptr<Workspace> requestWorkspace);
+	std::tuple<std::string, int, std::string, std::string> getVODDeliveryURI(int64_t physicalPathKey, bool save,
+		const std::shared_ptr<Workspace>& requestWorkspace) const;
 
-	std::tuple<std::string, int, int64_t, std::string, std::string>
-	getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey, bool save, std::shared_ptr<Workspace> requestWorkspace);
+	std::tuple<std::string, int, int64_t, std::string, std::string> getVODDeliveryURI(int64_t mediaItemKey, int64_t encodingProfileKey,
+		bool save, const std::shared_ptr<Workspace>& requestWorkspace) const;
 
-	fs::path getLiveDeliveryAssetPath(std::string directoryId, std::shared_ptr<Workspace> requestWorkspace);
+	fs::path getLiveDeliveryAssetPath(const std::string &directoryId, const std::shared_ptr<Workspace> &requestWorkspace);
 
-	fs::path getLiveDeliveryAssetPathName(std::string directoryId, std::string liveFileExtension, std::shared_ptr<Workspace> requestWorkspace);
+	fs::path getLiveDeliveryAssetPathName(
+		const std::string &directoryId, const std::string &liveFileExtension, const std::shared_ptr<Workspace> &requestWorkspace
+	);
 
-	std::tuple<fs::path, fs::path, std::string> getLiveDeliveryDetails(std::string directoryId, std::string liveFileExtension, std::shared_ptr<Workspace> requestWorkspace);
+	static std::tuple<fs::path, fs::path, std::string> getLiveDeliveryDetails(const std::string &directoryId,
+		const std::string &liveFileExtension, const std::shared_ptr<Workspace> &requestWorkspace);
 
 	void removePhysicalPath(int64_t physicalPathKey);
 
@@ -83,23 +75,16 @@ class MMSStorage
 
 	void refreshPartitionsFreeSizes();
 
-	void moveContentInRepository(std::string filePathName, RepositoryType rtRepositoryType, std::string workspaceDirectoryName, bool addDateTimeToFileName);
-
-	void copyFileInRepository(std::string filePathName, RepositoryType rtRepositoryType, std::string workspaceDirectoryName, bool addDateTimeToFileName);
-
 	fs::path moveAssetInMMSRepository(
-		int64_t ingestionJobKey, fs::path sourceAssetPathName, std::string workspaceDirectoryName, std::string destinationFileName, std::string relativePath,
-
-		unsigned long *pulMMSPartitionIndexUsed, // OUT
-		// FileIO::DirectoryEntryType_p pSourceFileType,	// OUT: TOOLS_FILEIO_DIRECTORY or TOOLS_FILEIO_REGULARFILE
-
-		bool deliveryRepositoriesToo, Workspace::TerritoriesHashMap &phmTerritories
+		int64_t ingestionJobKey, const fs::path &sourceAssetPathName, const std::string &workspaceDirectoryName,
+		const std::string &destinationAssetFileName,
+		const std::string &relativePath, unsigned long *pulMMSPartitionIndexUsed // OUT
 	);
 
 	fs::path getMMSAssetPathName(
-		bool externalReadOnlyStorage, int partitionKey, std::string workspaceDirectoryName,
-		std::string relativePath, // using '/'
-		std::string fileName
+		bool externalReadOnlyStorage, int partitionKey, const std::string &workspaceDirectoryName, const std::string &relativePath,
+		// using '/'
+		const std::string &fileName
 	);
 
 	// bRemoveLinuxPathIfExist: often this method is called
@@ -109,49 +94,34 @@ class MMSStorage
 	// to give to the encoder a clean place where to write
 	fs::path getStagingAssetPathName(
 		// neededForTranscoder=true uses a faster file system i.e. for recording
-		bool neededForTranscoder, std::string workspaceDirectoryName, std::string directoryNamePrefix, std::string relativePath,
-		std::string fileName,			 // may be empty ("")
-		long long llMediaItemKey,	 // used only if fileName is ""
-		long long llPhysicalPathKey, // used only if fileName is ""
+		bool neededForTranscoder, const std::string& workspaceDirectoryName, const std::string& directoryNamePrefix, const std::string& relativePath,
+		const std::string& fileName,			 // may be empty ("")
+		long long mediaItemKey,	 // used only if fileName is ""
+		long long physicalPathKey, // used only if fileName is ""
 		bool removeLinuxPathIfExist
 	);
 
-	unsigned long getWorkspaceStorageUsage(std::string workspaceDirectoryName);
+	unsigned long getWorkspaceStorageUsage(const std::string& workspaceDirectoryName);
 
-	void deleteWorkspace(std::shared_ptr<Workspace> workspace);
+	void deleteWorkspace(const std::shared_ptr<Workspace>& workspace);
 
 	void manageTarFileInCaseOfIngestionOfSegments(
 		int64_t ingestionJobKey, std::string tarBinaryPathName, std::string workspaceIngestionRepository, std::string sourcePathName
 	);
 
-	static int64_t move(int64_t ingestionJobKey, fs::path source, fs::path dest);
+	static int64_t move(int64_t ingestionJobKey, const fs::path& source, const fs::path& dest);
 
   private:
 	bool _noFileSystemAccess;
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-	std::shared_ptr<spdlog::logger> _logger;
 	nlohmann::json _configuration;
 
 	std::string _hostName;
 
 	fs::path _storage;
 
-	int _waitingNFSSync_maxMillisecondsToWait;
-	int _freeSpaceToLeaveInEachPartitionInMB;
-
-	void contentInRepository(
-		unsigned long ulIsCopyOrMove, std::string contentPathName, RepositoryType rtRepositoryType, std::string workspaceDirectoryName,
-		bool addDateTimeToFileName
-	);
-
-	// std::string getRepository(RepositoryType rtRepositoryType);
-
-	fs::path creatingDirsUsingTerritories(
-		unsigned long ulCurrentMMSPartitionIndex, std::string relativePath, std::string workspaceDirectoryName, bool deliveryRepositoriesToo,
-		Workspace::TerritoriesHashMap &phmTerritories
-	);
-
-	// void refreshPartitionFreeSizes(PartitionInfo& partitionInfo);
+	int32_t _waitingNFSSync_maxMillisecondsToWait;
+	int32_t _freeSpaceToLeaveInEachPartitionInMB;
 
 	void removePhysicalPathFile(
 		int64_t mediaItemKey, int64_t physicalPathKey, MMSEngineDBFacade::DeliveryTechnology deliveryTechnology, std::string fileName,
