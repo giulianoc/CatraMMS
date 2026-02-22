@@ -1143,7 +1143,7 @@ void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPa
 				", fileName: {}"
 				", mmsAssetPathName: {}",
 				mediaItemKey, physicalPathKey, externalReadOnlyStorage, partitionKey, workspaceDirectoryName,
-				relativePath, fileName, mmsAssetPathName
+				relativePath, fileName, mmsAssetPathName.string()
 			);
 
 			if (fs::exists(mmsAssetPathName))
