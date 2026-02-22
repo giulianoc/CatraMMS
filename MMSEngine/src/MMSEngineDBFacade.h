@@ -2516,7 +2516,7 @@ class MMSEngineDBFacade
 	std::pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(uint64_t ullFSEntrySizeInBytes);
 #endif
 
-	string getPartitionName(int partitionKey);
+	std::string getPartitionName(int partitionKey);
 
 	uint64_t updatePartitionBecauseOfDeletion(int partitionKey, uint64_t ullFSEntrySizeInBytes);
 
