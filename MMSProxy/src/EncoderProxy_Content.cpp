@@ -573,7 +573,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 	int64_t encodedPhysicalPathKey;
 	string encodedFileName;
 	string mmsAssetPathName;
-	unsigned long mmsPartitionIndexUsed;
+	int16_t mmsPartitionIndexUsed;
 	try
 	{
 		size_t fileNameIndex = encodedNFSStagingAssetPathName.find_last_of("/");
@@ -597,7 +597,7 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 			_encodingItem->_ingestionJobKey, encodedNFSStagingAssetPathName, _encodingItem->_workspace->_directoryName, encodedFileName,
 			sourceRelativePath,
-			&mmsPartitionIndexUsed // OUT
+			mmsPartitionIndexUsed // OUT
 		);
 	}
 	catch (runtime_error &e)
@@ -791,8 +791,9 @@ void EncoderProxy::processEncodedContentVideoAudio()
 		string externalDeliveryURL;
 		int64_t liveRecordingIngestionJobKey = -1;
 		encodedPhysicalPathKey = _mmsEngineDBFacade->saveVariantContentMetadata(
-			_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, liveRecordingIngestionJobKey, sourceMediaItemKey,
-			externalReadOnlyStorage, externalDeliveryTechnology, externalDeliveryURL, encodedFileName, newSourceRelativePath, mmsPartitionIndexUsed,
+			_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, liveRecordingIngestionJobKey,
+			sourceMediaItemKey, externalReadOnlyStorage, externalDeliveryTechnology, externalDeliveryURL,
+			encodedFileName, newSourceRelativePath, mmsPartitionIndexUsed,
 			mmsAssetSizeInBytes, encodingProfileKey, physicalItemRetentionInMinutes,
 
 			mediaInfoDetails, videoTracks, audioTracks,

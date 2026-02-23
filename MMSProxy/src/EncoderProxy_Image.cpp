@@ -677,7 +677,7 @@ void EncoderProxy::processEncodedImage()
 
 			string encodedFileName;
 			string mmsAssetPathName;
-			unsigned long mmsPartitionIndexUsed;
+			int16_t mmsPartitionIndexUsed;
 			try
 			{
 				size_t fileNameIndex = stagingEncodedAssetPathName.find_last_of("/");
@@ -698,7 +698,7 @@ void EncoderProxy::processEncodedImage()
 				mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 					_encodingItem->_ingestionJobKey, stagingEncodedAssetPathName, _encodingItem->_workspace->_directoryName, encodedFileName,
 					sourceRelativePath,
-					&mmsPartitionIndexUsed // OUT
+					mmsPartitionIndexUsed // OUT
 				);
 			}
 			catch (runtime_error &e)

@@ -869,10 +869,10 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 
 			bool isDirectory = fs::is_directory(binaryPathName);
 
-			unsigned long mmsPartitionIndexUsed;
+			int16_t mmsPartitionIndexUsed;
 			mmsAssetPathName = _mmsStorage->moveAssetInMMSRepository(
 				localAssetIngestionEvent.getIngestionJobKey(), binaryPathName, localAssetIngestionEvent.getWorkspace()->_directoryName,
-				mediaSourceFileName, relativePathToBeUsed, &mmsPartitionIndexUsed
+				mediaSourceFileName, relativePathToBeUsed, mmsPartitionIndexUsed
 			);
 			mmsPartitionUsed = mmsPartitionIndexUsed;
 

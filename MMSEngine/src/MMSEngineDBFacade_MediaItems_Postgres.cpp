@@ -4138,7 +4138,7 @@ tuple<int, int, string, int> MMSEngineDBFacade::getImageDetails(int64_t mediaIte
 pair<int64_t, int64_t> MMSEngineDBFacade::saveSourceContentMetadata(
 	shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool ingestionRowToBeUpdatedAsSuccess, MMSEngineDBFacade::ContentType contentType,
 	int64_t encodingProfileKey, json parametersRoot, bool externalReadOnlyStorage, string relativePath, string mediaSourceFileName,
-	int mmsPartitionIndexUsed, unsigned long sizeInBytes,
+	int16_t mmsPartitionIndexUsed, unsigned long sizeInBytes,
 
 	// video-audio
 	tuple<int64_t, long, json> &mediaInfoDetails, vector<tuple<int, int64_t, string, string, int, int, string, long>> &videoTracks,
@@ -4861,7 +4861,8 @@ void MMSEngineDBFacade::manageExternalUniqueName(
 
 int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 	int64_t workspaceKey, int64_t ingestionJobKey, int64_t sourceIngestionJobKey, int64_t mediaItemKey, bool externalReadOnlyStorage,
-	string externalDeliveryTechnology, string externalDeliveryURL, string encodedFileName, string relativePath, int mmsPartitionIndexUsed,
+	string externalDeliveryTechnology, string externalDeliveryURL, string encodedFileName, string relativePath,
+	int16_t mmsPartitionIndexUsed,
 	unsigned long long sizeInBytes, int64_t encodingProfileKey, int64_t physicalItemRetentionPeriodInMinutes,
 
 	// video-audio
@@ -4933,7 +4934,7 @@ int64_t MMSEngineDBFacade::saveVariantContentMetadata(
 	PostgresConnTrans &trans,
 
 	int64_t workspaceKey, int64_t ingestionJobKey, int64_t sourceIngestionJobKey, int64_t mediaItemKey, bool externalReadOnlyStorage,
-	string externalDeliveryTechnology, string externalDeliveryURL, string encodedFileName, string relativePath, int mmsPartitionIndexUsed,
+	string externalDeliveryTechnology, string externalDeliveryURL, string encodedFileName, string relativePath, int16_t mmsPartitionIndexUsed,
 	unsigned long long sizeInBytes, int64_t encodingProfileKey, int64_t physicalItemRetentionPeriodInMinutes,
 
 	// video-audio

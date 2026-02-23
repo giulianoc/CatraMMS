@@ -78,11 +78,11 @@ class MMSStorage
 	fs::path moveAssetInMMSRepository(
 		int64_t ingestionJobKey, const fs::path &sourceAssetPathName, const std::string &workspaceDirectoryName,
 		const std::string &destinationAssetFileName,
-		const std::string &relativePath, unsigned long *pulMMSPartitionIndexUsed // OUT
+		const std::string &relativePath, int16_t& mmsPartitionIndexUsed // OUT
 	);
 
 	fs::path getMMSAssetPathName(
-		bool externalReadOnlyStorage, int partitionKey, const std::string &workspaceDirectoryName, const std::string &relativePath,
+		bool externalReadOnlyStorage, int64_t partitionKey, const std::string &workspaceDirectoryName, const std::string &relativePath,
 		// using '/'
 		const std::string &fileName
 	);

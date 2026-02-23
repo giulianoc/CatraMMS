@@ -393,7 +393,7 @@ fs::path MMSStorage::getFFMPEGEndlessRecursivePlaylistArea(const fs::path& stora
 fs::path MMSStorage::getNginxArea(const fs::path& storage) { return storage / "MMSWorkingAreaRepository/nginx"; }
 
 fs::path MMSStorage::getMMSAssetPathName(
-	const bool externalReadOnlyStorage, const int partitionKey, const string& workspaceDirectoryName,
+	const bool externalReadOnlyStorage, const int64_t partitionKey, const string& workspaceDirectoryName,
 	const string& relativePath, // using '/'
 	const string& fileName
 )
@@ -819,7 +819,7 @@ void MMSStorage::removePhysicalPathFile(int64_t mediaItemKey, int64_t physicalPa
 fs::path MMSStorage::moveAssetInMMSRepository(
 	int64_t ingestionJobKey, const fs::path& sourceAssetPathName, const string& workspaceDirectoryName,
 	const string& destinationAssetFileName, const string& relativePath,
-	unsigned long *pulMMSPartitionIndexUsed // OUT
+	int16_t& mmsPartitionIndexUsed // OUT
 )
 {
 	if (_noFileSystemAccess)
@@ -834,7 +834,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		throw runtime_error(errorMessage);
 	}
 
-	if ((!relativePath.empty() && relativePath.front() != '/') || pulMMSPartitionIndexUsed == nullptr)
+	if (!relativePath.empty() && relativePath.front() != '/')
 	{
 		string errorMessage = std::format(
 			"Wrong argument"
@@ -871,13 +871,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 	}
 
 	{
-		int partitionKey;
+		int64_t partitionKey;
 		uint64_t newCurrentFreeSizeInBytes;
 
 		try
 		{
 #ifdef __POSTGRES__
-			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade->getPartitionToBeUsedAndUpdateFreeSpace(ingestionJobKey, ullFSEntrySizeInBytes);
+			pair<int64_t, uint64_t> partitionDetails = _mmsEngineDBFacade->getPartitionToBeUsedAndUpdateFreeSpace(ingestionJobKey, ullFSEntrySizeInBytes);
 #else
 			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade->getPartitionToBeUsedAndUpdateFreeSpace(ullFSEntrySizeInBytes);
 #endif
@@ -901,7 +901,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			refreshPartitionsFreeSizes();
 
 #ifdef __POSTGRES__
-			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade->getPartitionToBeUsedAndUpdateFreeSpace(ingestionJobKey, ullFSEntrySizeInBytes);
+			pair<int64_t, uint64_t> partitionDetails = _mmsEngineDBFacade->getPartitionToBeUsedAndUpdateFreeSpace(ingestionJobKey, ullFSEntrySizeInBytes);
 #else
 			pair<int, uint64_t> partitionDetails = _mmsEngineDBFacade->getPartitionToBeUsedAndUpdateFreeSpace(ullFSEntrySizeInBytes);
 #endif
@@ -917,13 +917,13 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 			ingestionJobKey, ullFSEntrySizeInBytes, partitionKey, newCurrentFreeSizeInBytes
 		);
 
-		*pulMMSPartitionIndexUsed = partitionKey;
+		mmsPartitionIndexUsed = partitionKey;
 	}
 
 	// creating directories and build the mmsAssetPathName
 	fs::path mmsAssetPathName;
 	{
-		const string mmsPartitionName = std::format("MMS_{:0>4}", *pulMMSPartitionIndexUsed);
+		const string mmsPartitionName = std::format("MMS_{:0>4}", mmsPartitionIndexUsed);
 
 		mmsAssetPathName = getMMSRootRepository(_storage) / mmsPartitionName
 		/ workspaceDirectoryName / relativePath.substr(1);
@@ -954,7 +954,7 @@ fs::path MMSStorage::moveAssetInMMSRepository(
 		", *pulMMSPartitionIndexUsed: {}"
 		", mmsAssetPathName: {}"
 		", ullFSEntrySizeInBytes: {}",
-		ingestionJobKey, workspaceDirectoryName, *pulMMSPartitionIndexUsed, mmsAssetPathName.string(), ullFSEntrySizeInBytes
+		ingestionJobKey, workspaceDirectoryName, mmsPartitionIndexUsed, mmsAssetPathName.string(), ullFSEntrySizeInBytes
 	);
 
 	// move the file in case of .3gp content OR

@@ -2055,7 +2055,7 @@ class MMSEngineDBFacade
 	std::pair<int64_t, int64_t> saveSourceContentMetadata(
 		std::shared_ptr<Workspace> workspace, int64_t ingestionJobKey, bool ingestionRowToBeUpdatedAsSuccess, MMSEngineDBFacade::ContentType contentType,
 		int64_t encodingProfileKey, nlohmann::json parametersRoot, bool externalReadOnlyStorage, std::string relativePath, std::string mediaSourceFileName,
-		int mmsPartitionIndexUsed, unsigned long sizeInBytes,
+		int16_t mmsPartitionIndexUsed, unsigned long sizeInBytes,
 
 		// video-audio
 		std::tuple<int64_t, long, nlohmann::json> &mediaInfoDetails, std::vector<std::tuple<int, int64_t, std::string, std::string, int, int, std::string, long>> &videoTracks,
@@ -2067,7 +2067,8 @@ class MMSEngineDBFacade
 
 	int64_t saveVariantContentMetadata(
 		int64_t workspaceKey, int64_t ingestionJobKey, int64_t liveRecordingIngestionJobKey, int64_t mediaItemKey, bool externalReadOnlyStorage,
-		std::string externalDeliveryTechnology, std::string externalDeliveryURL, std::string encodedFileName, std::string relativePath, int mmsPartitionIndexUsed,
+		std::string externalDeliveryTechnology, std::string externalDeliveryURL, std::string encodedFileName, std::string relativePath,
+		int16_t mmsPartitionIndexUsed,
 		unsigned long long sizeInBytes, int64_t encodingProfileKey, int64_t physicalItemRetentionPeriodInMinutes,
 
 		// video-audio
@@ -2511,14 +2512,14 @@ class MMSEngineDBFacade
 
 
 #ifdef __POSTGRES__
-	std::pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(int64_t ingestionJobKey, uint64_t ullFSEntrySizeInBytes);
+	std::pair<int64_t, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(int64_t ingestionJobKey, uint64_t ullFSEntrySizeInBytes);
 #else
 	std::pair<int, uint64_t> getPartitionToBeUsedAndUpdateFreeSpace(uint64_t ullFSEntrySizeInBytes);
 #endif
 
 	std::string getPartitionName(int partitionKey);
 
-	uint64_t updatePartitionBecauseOfDeletion(int partitionKey, uint64_t ullFSEntrySizeInBytes);
+	uint64_t updatePartitionBecauseOfDeletion(int64_t partitionKey, uint64_t ullFSEntrySizeInBytes);
 
 	void getPartitionsInfo(std::vector<std::pair<int, uint64_t>> &partitionsInfo);
 
@@ -2786,7 +2787,8 @@ class MMSEngineDBFacade
 		PostgresConnTrans &trans,
 
 		int64_t workspaceKey, int64_t ingestionJobKey, int64_t liveRecordingIngestionJobKey, int64_t mediaItemKey, bool externalReadOnlyStorage,
-		std::string externalDeliveryTechnology, std::string externalDeliveryURL, std::string encodedFileName, std::string relativePath, int mmsPartitionIndexUsed,
+		std::string externalDeliveryTechnology, std::string externalDeliveryURL, std::string encodedFileName, std::string relativePath,
+		int16_t mmsPartitionIndexUsed,
 		unsigned long long sizeInBytes, int64_t encodingProfileKey, int64_t physicalItemRetentionPeriodInMinutes,
 
 		// video-audio
