@@ -835,9 +835,13 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 					SELECT hostname, txAvgBandwidthUsage, cpuUsage,
 						CASE
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 2000000 THEN 0.1
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 3000000 THEN 0.2
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 4000000 THEN 0.3
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 5000000 THEN 0.4
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 6000000 THEN 0.5
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 8000000 THEN 0.7
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
 							ELSE 1.0   -- far
 						END AS geoClass
@@ -927,9 +931,13 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 					ORDER BY
 						CASE
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 2000000 THEN 0.1
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 3000000 THEN 0.2
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 4000000 THEN 0.3
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 5000000 THEN 0.4
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 6000000 THEN 0.5
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 8000000 THEN 0.7
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
 							ELSE 1.0   -- far
 						END,
