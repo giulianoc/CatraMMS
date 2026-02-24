@@ -5712,13 +5712,20 @@ void API::changeLiveProxyPlaylist(
 				// case broadcastEncoderKey will be -1
 				if (broadcastEncoderKey > 0)
 				{
-					pair<string, bool> encoderDetails = _mmsEngineDBFacade->getEncoderURL(broadcastEncoderKey);
 					string transcoderHost;
-					tie(transcoderHost, ignore) = encoderDetails;
+					tie(transcoderHost, ignore) = _mmsEngineDBFacade->getEncoderURL(broadcastEncoderKey);
 
-					ffmpegEncoderURL = transcoderHost + _ffmpegEncoderChangeLiveProxyPlaylistURI + "/" + to_string(broadcastEncodingJobKey) +
-									   "?interruptPlaylist=" + to_string(interruptPlaylist);
+					ffmpegEncoderURL = std::format("{}{}/{}?interruptPlaylist={}", transcoderHost,
+						_ffmpegEncoderChangeLiveProxyPlaylistURI, broadcastEncodingJobKey, interruptPlaylist);
 
+					LOG_INFO(
+						"Calling the encoder changeLiveProxy"
+						", broadcasterIngestionJobKey: {}"
+						", broadcastIngestionJobKey: {}"
+						", broadcastEncodingJobKey: {}"
+						", ffmpegEncoderURL: {}",
+						broadcasterIngestionJobKey, broadcastIngestionJobKey, broadcastEncodingJobKey, ffmpegEncoderURL
+					);
 					vector<string> otherHeaders;
 					json encoderResponse = CurlWrapper::httpPutStringAndGetJson(
 						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
@@ -5727,7 +5734,16 @@ void API::changeLiveProxyPlaylist(
 						otherHeaders, std::format(", ingestionJobKey: {}", broadcasterIngestionJobKey)
 					);
 				}
-			}
+				else
+					LOG_INFO(
+						"broadcastEncoderKey was not found, the IngestionJob is updated"
+						", broadcasterIngestionJobKey: {}"
+						", broadcastIngestionJobKey: {}"
+						", broadcastEncodingJobKey: {}"
+						", broadcastEncoderKey: {}",
+						broadcasterIngestionJobKey, broadcastIngestionJobKey, broadcastEncodingJobKey, broadcastEncoderKey
+					);
+				}
 			else
 			{
 				LOG_INFO(
