@@ -408,7 +408,7 @@ void MMSEngineDBFacade::getPartitionsInfo(vector<pair<int, uint64_t>> &partition
 
 		{
 			string sqlStatement = std::format("select partitionKey, currentFreeSizeInBytes from MMS_PartitionInfo ");
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			const chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
