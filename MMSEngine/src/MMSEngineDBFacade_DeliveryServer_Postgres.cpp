@@ -843,6 +843,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 8000000 THEN 0.7
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 10000000 THEN 0.9
 							ELSE 1.0   -- far
 						END AS geoClass
 					FROM MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping a
@@ -939,6 +940,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 8000000 THEN 0.7
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
+							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 10000000 THEN 0.9
 							ELSE 1.0   -- far
 						END,
 						d.selectedLastTime

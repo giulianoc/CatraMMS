@@ -119,7 +119,7 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateCPUStatsURI,
 			cpuUsage);
 
-		constexpr int32_t mmsAPITimeoutInSeconds = 3;
+		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateCPUStats"
 			", cpuUsage: {}",
 			cpuUsage

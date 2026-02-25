@@ -122,7 +122,7 @@ void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& tx
 			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateBandwidthStatsURI,
 			txAvgBandwidthUsage, rxAvgBandwidthUsage);
 
-		constexpr int32_t mmsAPITimeoutInSeconds = 3;
+		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateBandwidthStats"
 			", txAvgBandwidthUsage: {}"
 			", rxAvgBandwidthUsage: {}",
