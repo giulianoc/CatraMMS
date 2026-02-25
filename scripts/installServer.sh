@@ -1667,6 +1667,7 @@ configure-mms-rsync-daemon-package()
 	echo "NoNewPrivileges=off"
 	echo ""
 	read -n 1 -s -r -p "premi un tasto per continuare"
+	echo ""
 
 	systemctl daemon-reload
 	systemctl enable --now rsync
@@ -1689,7 +1690,7 @@ configure-mms-sysctl()
 		echo ""
 		echo ""
 		read -n 1 -s -r -p "premi un tasto per continuare"
-	elif [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "delivery" ]; then
+	elif [ "$moduleType" == "encoder" -o "$moduleType" == "externalEncoder" -o "$moduleType" == "delivery" -o "$moduleType" == "externalDelivery" ]; then
 		echo "" >> /etc/sysctl.conf
 		echo "#because of $moduleType (rsyncd)" >> /etc/sysctl.conf
 		echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
@@ -1738,7 +1739,7 @@ install-mms-MMS-package()
 
 	packageName=MMS
 	echo ""
-	mmsVersion=1.0.6932
+	mmsVersion=1.0.6953
 	echo -n "$packageName version (i.e.: $mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -2058,7 +2059,7 @@ if [ "$moduleType" == "storage" ]; then
 	echo "Se alta concorrenza, aumenta thread NFS con"
 	echo "EDITOR=vi systemctl edit nfs-server"
 	echo "Elimina tutto il contenuto del file altrimenti il setting non viene applicato"
-	echo "Nel file ci deve essere solamnete"
+	echo "Nel file ci deve essere solamente"
 	echo "[Service]"
 	# 128 threads per essere molto performante (altre opzioni possono essere 16, 64)
 	echo "ExecStart="

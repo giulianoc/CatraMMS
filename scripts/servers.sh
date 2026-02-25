@@ -168,6 +168,31 @@ prodServers[$((serverIndex*6+5))]=68.233.32.8
 
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-sf-delivery-1
+prodServers[$((serverIndex*6+1))]=68.233.45.31
+prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=68.233.45.31
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-sf-delivery-2
+prodServers[$((serverIndex*6+1))]=68.233.45.32
+prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=68.233.45.32
+
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=usa-sf-delivery-3
+prodServers[$((serverIndex*6+1))]=68.233.45.33
+prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=delivery
+prodServers[$((serverIndex*6+5))]=68.233.45.33
+
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=eu-delivery-1
 prodServers[$((serverIndex*6+1))]=195.160.222.54
 prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
@@ -239,22 +264,21 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=31.42.176.74
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=us-hil-delivery-1
-prodServers[$((serverIndex*6+1))]=5.78.145.85
-prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=delivery
-prodServers[$((serverIndex*6+5))]=5.78.145.85
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=us-hil-delivery-1
+#prodServers[$((serverIndex*6+1))]=5.78.145.85
+#prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=delivery
+#prodServers[$((serverIndex*6+5))]=5.78.145.85
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=us-hil-delivery-2
-prodServers[$((serverIndex*6+1))]=5.78.144.41
-prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=delivery
-prodServers[$((serverIndex*6+5))]=5.78.144.41
-
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=us-hil-delivery-2
+#prodServers[$((serverIndex*6+1))]=5.78.144.41
+#prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=delivery
+#prodServers[$((serverIndex*6+5))]=5.78.144.41
 
 
 serverIndex=$((serverIndex+1))
