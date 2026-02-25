@@ -98,6 +98,13 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
 	);
+	_deliveryServerLoadBalancerStrategy = JsonPath(&_configuration)["deliveryServer"]["loadBalancerStrategy"].as<string>(
+		"geoProximityWithoutMetrics");
+	LOG_INFO(
+		"Configuration item"
+		", deliveryServer->loadBalancerStrategy: {}",
+		_deliveryServerLoadBalancerStrategy
+	);
 }
 
 pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
@@ -930,8 +937,12 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 	{
 		try
 		{
-			deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(requestWorkspace->_workspaceKey,
-				*playerLatitude, *playerLongitude);
+			if (_deliveryServerLoadBalancerStrategy == "geoProximityAndMetrics")
+				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(requestWorkspace->_workspaceKey,
+					*playerLatitude, *playerLongitude);
+			else
+				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(requestWorkspace->_workspaceKey,
+					*playerLatitude, *playerLongitude);
 		}
 		catch (exception& e)
 		{

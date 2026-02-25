@@ -88,6 +88,8 @@ private:
 	bool _updateExternalDeliveriesGroupsBandwidthUsageThreadStop;
 	std::thread _updateExternalDeliveriesGroupsBandwidthUsageThread;
 
+	std::string _deliveryServerLoadBalancerStrategy;
+
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
 	static time_t getExpirationTime(int ttlInSeconds, bool reusable);
 	std::string getDeliveryHost(
