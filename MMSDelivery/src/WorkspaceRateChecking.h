@@ -22,8 +22,8 @@ public:
 	// - Un solo sportello → coda lunga
 	// - 32 sportelli → le persone si distribuiscono
 	// Lo shard è uno sportello.
-	explicit WorkspaceRateChecking(const size_t shards = 16, const size_t maxRequests = 10,
-		const std::chrono::seconds window = std::chrono::seconds(15))
+	explicit WorkspaceRateChecking(const size_t maxRequests = 10,
+		const std::chrono::seconds window = std::chrono::seconds(15), const size_t shards = 16)
 		: _shards(shards), _maxRequests(maxRequests), _window(window), _maps(shards), _mutexes(shards)
 	{
 	}

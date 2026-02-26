@@ -103,7 +103,7 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 		const auto windowInSeconds = JsonPath(&_configuration)["deliveryServer"]["usageOfMetricsIf"]["windowInSeconds"].as<int16_t>(15);
 		const auto maxRequests = JsonPath(&_configuration)["deliveryServer"]["usageOfMetricsIf"]["maxRequests"].as<int16_t>(10);
 
-		_workspaceRateChecking = make_shared<WorkspaceRateChecking>(16, maxRequests, std::chrono::seconds(windowInSeconds));
+		_workspaceRateChecking = make_shared<WorkspaceRateChecking>(maxRequests, std::chrono::seconds(windowInSeconds));
 	}
 }
 
