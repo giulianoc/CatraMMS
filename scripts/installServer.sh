@@ -1739,7 +1739,7 @@ install-mms-MMS-package()
 
 	packageName=MMS
 	echo ""
-	mmsVersion=1.0.6953
+	mmsVersion=1.0.6961
 	echo -n "$packageName version (i.e.: $mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
