@@ -21,7 +21,8 @@ set(SOURCES
   MMSDeliveryAuthorization.cpp
 )
 set(HEADERS
-  MMSDeliveryAuthorization.h
+        MMSDeliveryAuthorization.h
+        WorkspaceRateChecking.h
 )
 
 find_program(LSB_RELEASE_EXEC lsb_release)

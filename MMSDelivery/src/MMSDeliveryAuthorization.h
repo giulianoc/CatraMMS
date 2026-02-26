@@ -13,12 +13,11 @@
 
 #pragma once
 
-#include "../../CatraLibraries/BandwidthUsageThread/src/HostsBandwidthTracker.h"
+#include "HostsBandwidthTracker.h"
 #include "MMSStorage.h"
+#include "WorkspaceRateChecking.h"
 #include "spdlog/spdlog.h"
-// #include <fstream>
 
-// using namespace std;
 
 class MMSDeliveryAuthorization
 {
@@ -88,13 +87,13 @@ private:
 	bool _updateExternalDeliveriesGroupsBandwidthUsageThreadStop;
 	std::thread _updateExternalDeliveriesGroupsBandwidthUsageThread;
 
-	std::string _deliveryServerLoadBalancerStrategy;
+	WorkspaceRateChecking _workspaceRateChecking;
 
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
 	static time_t getExpirationTime(int ttlInSeconds, bool reusable);
 	std::string getDeliveryHost(
 		const std::shared_ptr<Workspace> &requestWorkspace,
-		const std::string &playerCountry, const std::string &playerRegion,
+		// const std::string &playerCountry, const std::string &playerRegion,
 		const std::optional<double> playerLatitude, const std::optional<double> playerLongitude,
 		const std::string &defaultDeliveryHost
 	);

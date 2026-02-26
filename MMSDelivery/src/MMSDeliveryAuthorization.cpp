@@ -98,13 +98,6 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
 	);
-	_deliveryServerLoadBalancerStrategy = JsonPath(&_configuration)["deliveryServer"]["loadBalancerStrategy"].as<string>(
-		"geoProximityWithoutMetrics");
-	LOG_INFO(
-		"Configuration item"
-		", deliveryServer->loadBalancerStrategy: {}",
-		_deliveryServerLoadBalancerStrategy
-	);
 }
 
 pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
@@ -654,7 +647,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol,
-							deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace, playerCountry, playerRegion,
+							deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace, /* playerCountry, playerRegion, */
 								playerLatitude, playerLongitude, _deliveryHost_authorizationThroughParameter),
 								deliveryURI,
 							CurlWrapper::escape(md5Base64), expirationTime
@@ -687,7 +680,7 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 					deliveryURL = _deliveryProtocol + "://" +
 						(deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace,
-							playerCountry, playerRegion, playerLatitude, playerLongitude, _deliveryHost_authorizationThroughPath))
+							/* playerCountry, playerRegion, */ playerLatitude, playerLongitude, _deliveryHost_authorizationThroughPath))
 						+ "/token_" + md5Base64 + "," + to_string(expirationTime) + deliveryURI;
 				}
 				/*
@@ -925,23 +918,26 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 string MMSDeliveryAuthorization::getDeliveryHost(
 	const shared_ptr<Workspace>& requestWorkspace,
-	const string& playerCountry, const string& playerRegion, const optional<double> playerLatitude, const optional<double> playerLongitude,
+	/* const string& playerCountry, const string& playerRegion, */ const optional<double> playerLatitude, const optional<double> playerLongitude,
 	const string& defaultDeliveryHost
 )
 {
-	/*
-
-	 */
 	string deliveryHost = defaultDeliveryHost;
+	bool burstOfRequests = false;
 	if (playerLatitude && playerLongitude)
 	{
 		try
 		{
-			if (_deliveryServerLoadBalancerStrategy == "geoProximityAndMetrics")
-				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(requestWorkspace->_workspaceKey,
+			// se NON abbiamo un picco di richieste, la selezione del server in base alle metriche (banda erogata e cpu usage) funziona benissimo
+			// In caso invece di picco, poichè le metriche vengono aggiornate ogni 15 secondi, la selezione del server in base alle metriche
+			// porterebbe a selezionare sempre lo stesso server. In questo scenario (di picco) quindi è meglio NON utilizzare le metriche
+			// ed usare un semplice roundrobin
+			burstOfRequests = _workspaceRateChecking.burstOfRequests(requestWorkspace->_workspaceKey);
+			if (burstOfRequests)
+				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(requestWorkspace->_workspaceKey,
 					*playerLatitude, *playerLongitude);
 			else
-				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(requestWorkspace->_workspaceKey,
+				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(requestWorkspace->_workspaceKey,
 					*playerLatitude, *playerLongitude);
 		}
 		catch (exception& e)
@@ -951,34 +947,33 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 				);
 		}
 	}
-	else if (!playerCountry.empty())
-	{
-		// verifica se abbiamo externalDeliveries per questo specifico playerCountry-playerRegion
-		/*
-		{"HLS-live": {
-		"hostGroups": {
-			"group-1": [
-				{ "host": "srv-1.cibortvlive.com", "running": true },
-				{ "host": "srv-2.cibortvlive.com", "running": true }
-			],
-			"group-1": [
-				{ "host": "srv-1.cibortvlive.com", "running": true },
-				{ "host": "srv-2.cibortvlive.com", "running": true }
-			],
-			"default": [
-				{ "host": "srv-3.cibortvlive.com", "running": true },
-				{ "host": "srv-4.cibortvlive.com", "running": false }
-			]
-		},
-		"countryMap": {	// each location could be: country["-region"]
-			"US-PA": "group-1",
-			"CA": "group-1",
-			"BR": "group-2",
-			"AR": "group-2",
-			"IT": "group-1"
-		}
-		}}
-		*/
+	/*
+	// else if (!playerCountry.empty())
+	// {
+	// 	// verifica se abbiamo externalDeliveries per questo specifico playerCountry-playerRegion
+	// 	{"HLS-live": {
+	// 	"hostGroups": {
+	// 		"group-1": [
+	// 			{ "host": "srv-1.cibortvlive.com", "running": true },
+	// 			{ "host": "srv-2.cibortvlive.com", "running": true }
+	// 		],
+	// 		"group-1": [
+	// 			{ "host": "srv-1.cibortvlive.com", "running": true },
+	// 			{ "host": "srv-2.cibortvlive.com", "running": true }
+	// 		],
+	// 		"default": [
+	// 			{ "host": "srv-3.cibortvlive.com", "running": true },
+	// 			{ "host": "srv-4.cibortvlive.com", "running": false }
+	// 		]
+	// 	},
+	// 	"countryMap": {	// each location could be: country["-region"]
+	// 		"US-PA": "group-1",
+	// 		"CA": "group-1",
+	// 		"BR": "group-2",
+	// 		"AR": "group-2",
+	// 		"IT": "group-1"
+	// 	}
+	// 	}}
 
 		json hlsLiveRoot = JSONUtils::as<json>(requestWorkspace->_externalDeliveriesRoot, "HLS-live", json());
 
@@ -1009,20 +1004,21 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 			}
 		}
 	}
+	*/
 
 	LOG_INFO(
 		"getDeliveryHost"
-		", playerCountry: {}"
-		", playerRegion: {}"
+		// ", playerCountry: {}"
+		// ", playerRegion: {}"
 		", playerLatitude: {}"
 		", playerLongitude: {}"
+		", burstOfRequests: {}"
 		", deliveryHost: {}",
-		// ", externalDeliveries: {}",
-		playerCountry, playerRegion,
+		// playerCountry, playerRegion,
 		playerLatitude ? to_string(*playerLatitude) : "nullopt",
 		playerLongitude ? to_string(*playerLongitude) : "nullopt",
+		burstOfRequests,
 		deliveryHost
-		// JSONUtils::toString(requestWorkspace->_externalDeliveriesRoot),
 	);
 
 	return deliveryHost;

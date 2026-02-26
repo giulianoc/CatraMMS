@@ -10,7 +10,7 @@ struct Workspace
 {
 	using TerritoriesHashMap = std::unordered_map<long, std::string>;
 
-	long long _workspaceKey;
+	int64_t _workspaceKey;
 	std::string _name;
 	std::string _directoryName;
 	int _maxEncodingPriority;
