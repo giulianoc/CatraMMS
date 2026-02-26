@@ -98,6 +98,13 @@ MMSDeliveryAuthorization::MMSDeliveryAuthorization(
 		", api->delivery->deliveryHost_authorizationThroughPath: {}",
 		_deliveryHost_authorizationThroughPath
 	);
+
+	{
+		const auto windowInSeconds = JsonPath(&_configuration)["deliveryServer"]["usageOfMetricsIf"]["windowInSeconds"].as<int16_t>(15);
+		const auto maxRequests = JsonPath(&_configuration)["deliveryServer"]["usageOfMetricsIf"]["maxRequests"].as<int16_t>(10);
+
+		_workspaceRateChecking = make_shared<WorkspaceRateChecking>(16, maxRequests, std::chrono::seconds(windowInSeconds));
+	}
 }
 
 pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
@@ -932,7 +939,7 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 			// In caso invece di picco, poichè le metriche vengono aggiornate ogni 15 secondi, la selezione del server in base alle metriche
 			// porterebbe a selezionare sempre lo stesso server. In questo scenario (di picco) quindi è meglio NON utilizzare le metriche
 			// ed usare un semplice roundrobin
-			burstOfRequests = _workspaceRateChecking.burstOfRequests(requestWorkspace->_workspaceKey);
+			burstOfRequests = _workspaceRateChecking->burstOfRequests(requestWorkspace->_workspaceKey);
 			if (burstOfRequests)
 				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(requestWorkspace->_workspaceKey,
 					*playerLatitude, *playerLongitude);

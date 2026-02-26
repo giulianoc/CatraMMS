@@ -87,7 +87,7 @@ private:
 	bool _updateExternalDeliveriesGroupsBandwidthUsageThreadStop;
 	std::thread _updateExternalDeliveriesGroupsBandwidthUsageThread;
 
-	WorkspaceRateChecking _workspaceRateChecking;
+	std::shared_ptr<WorkspaceRateChecking> _workspaceRateChecking;
 
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
 	static time_t getExpirationTime(int ttlInSeconds, bool reusable);
