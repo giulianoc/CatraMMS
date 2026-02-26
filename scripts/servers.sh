@@ -380,14 +380,6 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-4
-prodServers[$((serverIndex*6+1))]=ru002553.arubabiz.net
-prodServers[$((serverIndex*6+2))]=cibortv/cibortv-aruba
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=externalEncoder
-prodServers[$((serverIndex*6+5))]=
-
-serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=aruba-mms-encoder-5
 prodServers[$((serverIndex*6+1))]=ru002554.arubabiz.net
 prodServers[$((serverIndex*6+2))]=cibortv/cibortv-aruba
