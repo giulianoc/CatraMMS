@@ -732,12 +732,18 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						try
 						{
 							// Second health check, rtmp(Proxy)/SRT(Grid), looks if the frame is increasing
-							tuple<int32_t, chrono::milliseconds, size_t, double, double> newRealTimeInfo = make_tuple(
+							// 2026-02-28: ho notato un caso di "proxy non funzionante" dove solo ProcessedSizeKBps cambiava mentre gli altri campi
+							// rimanevano fermi.
+							// I campi importanti da monitorare per essere sicuri che lo stream sia "vivo" sono:
+							//	- OutputTimestampMilliSecs (out_time)
+							//	- processedFrames (frame)
+							// Gli altri campi NON sono indicatori di stream "vivo":
+							//	- bitrate, può restare stabile anche con freeze breve
+							//	- fps, può diventare 0 temporaneamente
+							//	- muxer ancora attivo oppure playlist che viene aggiornata ma contenuto fermo
+							pair<int32_t, chrono::milliseconds> newRealTimeInfo = make_pair(
 								copiedLiveProxy->_callbackData->getProcessedFrames(),
-								copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs(),
-								copiedLiveProxy->_callbackData->getProcessedSizeKBps(),
-								copiedLiveProxy->_callbackData->getBitRateKbps(),
-								copiedLiveProxy->_callbackData->getFramePerSeconds()
+								copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
 							);
 
 							sourceLiveProxy->_lastRealTimeInfo = newRealTimeInfo;
@@ -1914,12 +1920,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						try
 						{
 							// Second health check, rtmp(Proxy), looks if the frame is increasing
-							tuple<int32_t, chrono::milliseconds, size_t, double, double> newRealTimeInfo = make_tuple(
+							// 2026-02-28: vedi commento per il proxy
+							pair<int32_t, chrono::milliseconds> newRealTimeInfo = make_pair(
 								copiedLiveRecording->_callbackData->getProcessedFrames(),
-								copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs(),
-								copiedLiveRecording->_callbackData->getProcessedSizeKBps(),
-								copiedLiveRecording->_callbackData->getBitRateKbps(),
-								copiedLiveRecording->_callbackData->getFramePerSeconds()
+								copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()
 							);
 
 							sourceLiveRecording->_lastRealTimeInfo = newRealTimeInfo;
