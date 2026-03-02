@@ -1472,7 +1472,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create index if not exists MMS_DeliveryServer_idx2 on MMS_DeliveryServer (workspaceKey, deliveryServerKey)";
+			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServer_idx2 ON MMS_DeliveryServer ("
+				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -1502,14 +1503,16 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create table if not exists MMS_DeliveryServerWorkspaceMapping ("
-								  "deliveryServerKey		bigint NOT NULL,"
-								  "workspaceKey				bigint NOT NULL,"
-								  "constraint MMS_DeliveryServerWorkspaceMapping_PK PRIMARY KEY (deliveryServerKey, workspaceKey), "
-								  "constraint MMS_DeliveryServerWorkspaceMapping_FK1 foreign key (deliveryServerKey) "
-								  "references MMS_DeliveryServer (deliveryServerKey) on delete cascade, "
-								  "constraint MMS_DeliveryServerWorkspaceMapping_FK2 foreign key (workspaceKey) "
-								  "references MMS_Workspace (workspaceKey) on delete cascade) ";
+			string sqlStatement = R"(
+				create table if not exists MMS_DeliveryServerWorkspaceMapping (
+				deliveryServerKey bigint NOT NULL,
+				workspaceKey bigint NOT NULL,
+				constraint MMS_DeliveryServerWorkspaceMapping_PK PRIMARY KEY (deliveryServerKey, workspaceKey),
+				constraint MMS_DeliveryServerWorkspaceMapping_FK1 foreign key (deliveryServerKey)
+				references MMS_DeliveryServer (deliveryServerKey) on delete cascade,
+				constraint MMS_DeliveryServerWorkspaceMapping_FK2 foreign key (workspaceKey)
+				references MMS_Workspace (workspaceKey) on delete cascade)
+			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
