@@ -1472,8 +1472,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServer_idx2 ON MMS_DeliveryServer ("
-				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
+			string sqlStatement = "create index if not exists MMS_DeliveryServer_idx2 on MMS_DeliveryServer (workspaceKey, deliveryServerKey)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

@@ -8,6 +8,7 @@
 #include "spdlog/spdlog.h"
 #include <algorithm>
 #include <chrono>
+#include <random>
 #include <spdlog/fmt/bundled/ranges.h>
 
 using namespace std;
@@ -830,6 +831,8 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(40.712784, -74.005941)) tra roma e new york:              6898673 metri
 			// earth_distance(ll_to_earth(41.89, 12.50), ll_to_earth(47.606209, -122.332071)) tra roma e seattle:              9127714 metri
 			// earth_distance(ll_to_earth(40.712784, -74.005941), ll_to_earth(47.606209, -122.332071)) tra new york e seattle: 3869880 metri
+			// LIMIT 5: se ne prendiamo solo 1 abbiamo un rischio reale di "sticky server". Invece ne prendiamo 5 e ne selezioniamo uno
+			// random lato applicativo. Questo riduce moltissimo l’effetto "tutti sullo stesso".
 			string sqlStatement = fmt::format(R"(
 				WITH rankedServers AS (
 					SELECT hostname, txAvgBandwidthUsage, cpuUsage,
@@ -860,7 +863,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				)
 				SELECT hostname FROM rankedServers
 				ORDER BY geoClass, txAvgBandwidthUsage, cpuUsage
-				LIMIT 1
+				LIMIT 5
 					)",
 				fmt::arg("workspaceKey", workspaceKey),
 				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude),
@@ -879,8 +882,23 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				", elapsed (millisecs): @{}@",
 				StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 			);
-			if (!sqlResultSet->empty())
-				return (*sqlResultSet)[0]["hostname"].as<string>();
+			{
+				if (!sqlResultSet->empty())
+				{
+					if (sqlResultSet->size() == 1)
+						return (*sqlResultSet)[0]["hostname"].as<string>();
+
+					// selezione di un indice casuale con std::uniform_int_distribution
+
+					// RNG per-thread: evita contese tra thread e non re-seeda ad ogni chiamata
+					thread_local std::mt19937 rng{std::random_device{}()};
+
+					std::uniform_int_distribution<std::size_t> dist(0, sqlResultSet->size() - 1);
+					const int randomIndex = static_cast<int>(dist(rng));
+					LOG_INFO("uniform_int_distribution {}/{}", randomIndex, sqlResultSet->size() - 1);
+					return (*sqlResultSet)[randomIndex]["hostname"].as<string>();
+				}
+			}
 		}
 
 		LOG_WARN("Ideal deliveryServer not selected, trying without considering cpu/bandwidth usage");
@@ -921,6 +939,10 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 		// se cpu/banda smettono di aggiornarsi è importante ritornare un deliveryServer ed evitare che il sistema si blocchi
 		// selectedLastTime viene usato per fare round-robin tra i server con metriche stale, in modo da non sovraccaricare
 		// sempre lo stesso server quando le metriche sono stale
+		// usiamo FOR UPDATE SKIP LOCKED perchè sotto altissima concorrenza rischi:
+		// - thundering herd: molte transazioni cercano la stessa riga “più vecchia”;
+		// - a seconda dell’isolamento e del piano, alcune transazioni possono aspettare lock e aumentare la latenza
+		// Con FOR UPDATE SKIP LOCKED dentro una CTE, ogni transazione "prende" un server diverso senza aspettare.
 		{
 			string sqlStatement = fmt::format(R"(
 				WITH rankedServers AS (
@@ -944,7 +966,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 							ELSE 1.0   -- far
 						END,
 						d.selectedLastTime
-					LIMIT 1
+					LIMIT 1 FOR UPDATE SKIP LOCKED
 				)
 				-- Aggiorna le righe della tabella MMS_DeliveryServer usando dati provenienti da rankedServers
 				-- ma solo dove la condizione del WHERE è vera
