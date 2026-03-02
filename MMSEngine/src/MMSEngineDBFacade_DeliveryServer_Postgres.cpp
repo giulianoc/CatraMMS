@@ -895,7 +895,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 
 					std::uniform_int_distribution<std::size_t> dist(0, sqlResultSet->size() - 1);
 					const int randomIndex = static_cast<int>(dist(rng));
-					LOG_INFO("uniform_int_distribution {}/{}", randomIndex, sqlResultSet->size() - 1);
+					// LOG_INFO("uniform_int_distribution {}/{}", randomIndex, sqlResultSet->size() - 1);
 					return (*sqlResultSet)[randomIndex]["hostname"].as<string>();
 				}
 			}
