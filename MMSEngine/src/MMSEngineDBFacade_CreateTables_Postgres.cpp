@@ -1471,6 +1471,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/*
 		{
 			string sqlStatement = "CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServer_idx2 ON MMS_DeliveryServer ("
 				"selectedlasttime, cpuusage, (txavgbandwidthusage + rxavgbandwidthusage)) WHERE enabled = true";
@@ -1486,6 +1487,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			string sqlStatement = "CREATE INDEX IF NOT EXISTS MMS_DeliveryServer_idx3 ON MMS_DeliveryServer USING GIST (earthCoord) ";
@@ -1512,6 +1514,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				references MMS_DeliveryServer (deliveryServerKey) on delete cascade,
 				constraint MMS_DeliveryServerWorkspaceMapping_FK2 foreign key (workspaceKey)
 				references MMS_Workspace (workspaceKey) on delete cascade)
+			)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			string sqlStatement = R"(
+				CREATE INDEX CONCURRENTLY IF NOT EXISTS MMS_DeliveryServerWorkspaceMapping_idx
+				ON MMS_DeliveryServerWorkspaceMapping (workspaceKey, deliveryServerKey)
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
