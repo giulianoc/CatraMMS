@@ -877,7 +877,7 @@ json MMSEngineDBFacade::getStreamList(
 				streamRoot[field] = localSourceType;
 
 				field = "encodersPoolKey";
-				if (row["encodersPoolKey"].is_null())
+				if (row["encodersPoolKey"].isNull())
 					streamRoot[field] = nullptr;
 				else
 				{
@@ -910,7 +910,7 @@ json MMSEngineDBFacade::getStreamList(
 				// if (localSourceType == "IP_PULL")
 				{
 					field = "url";
-					if (row["url"].is_null())
+					if (row["url"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["url"].as<string>();
@@ -918,17 +918,17 @@ json MMSEngineDBFacade::getStreamList(
 				// else if (localSourceType == "IP_PUSH")
 				{
 					field = "pushProtocol";
-					if (row["pushProtocol"].is_null())
+					if (row["pushProtocol"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushProtocol"].as<string>();
 
 					bool pushPublicEncoderName = false;
-					if (!row["pushPublicEncoderName"].is_null())
+					if (!row["pushPublicEncoderName"].isNull())
 						pushPublicEncoderName = row["pushPublicEncoderName"].as<bool>();
 
 					field = "pushEncoderKey";
-					if (row["pushEncoderKey"].is_null())
+					if (row["pushEncoderKey"].isNull())
 					{
 						streamRoot[field] = nullptr;
 
@@ -983,19 +983,19 @@ json MMSEngineDBFacade::getStreamList(
 					}
 
 					field = "pushServerPort";
-					if (row["pushServerPort"].is_null())
+					if (row["pushServerPort"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushServerPort"].as<int>();
 
 					field = "pushUri";
-					if (row["pushUri"].is_null())
+					if (row["pushUri"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushUri"].as<string>();
 
 					field = "pushListenTimeout";
-					if (row["pushListenTimeout"].is_null())
+					if (row["pushListenTimeout"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["pushListenTimeout"].as<int>();
@@ -1003,43 +1003,43 @@ json MMSEngineDBFacade::getStreamList(
 				// else if (localSourceType == "CaptureLive")
 				{
 					field = "captureLiveVideoDeviceNumber";
-					if (row["captureLiveVideoDeviceNumber"].is_null())
+					if (row["captureLiveVideoDeviceNumber"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveVideoDeviceNumber"].as<int>();
 
 					field = "captureLiveVideoInputFormat";
-					if (row["captureLiveVideoInputFormat"].is_null())
+					if (row["captureLiveVideoInputFormat"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveVideoInputFormat"].as<string>();
 
 					field = "captureLiveFrameRate";
-					if (row["captureLiveFrameRate"].is_null())
+					if (row["captureLiveFrameRate"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveFrameRate"].as<int>();
 
 					field = "captureLiveWidth";
-					if (row["captureLiveWidth"].is_null())
+					if (row["captureLiveWidth"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveWidth"].as<int>();
 
 					field = "captureLiveHeight";
-					if (row["captureLiveHeight"].is_null())
+					if (row["captureLiveHeight"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveHeight"].as<int>();
 
 					field = "captureLiveAudioDeviceNumber";
-					if (row["captureLiveAudioDeviceNumber"].is_null())
+					if (row["captureLiveAudioDeviceNumber"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveAudioDeviceNumber"].as<int>();
 
 					field = "captureLiveChannelsNumber";
-					if (row["captureLiveChannelsNumber"].is_null())
+					if (row["captureLiveChannelsNumber"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["captureLiveChannelsNumber"].as<int>();
@@ -1047,62 +1047,62 @@ json MMSEngineDBFacade::getStreamList(
 				// else if (localSourceType == "TV")
 				{
 					field = "tvSourceTVConfKey";
-					if (row["tvSourceTVConfKey"].is_null())
+					if (row["tvSourceTVConfKey"].isNull())
 						streamRoot[field] = nullptr;
 					else
 						streamRoot[field] = row["tvSourceTVConfKey"].as<int64_t>();
 				}
 
 				field = "type";
-				if (row["type"].is_null())
+				if (row["type"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["type"].as<string>();
 
 				field = "description";
-				if (row["description"].is_null())
+				if (row["description"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["description"].as<string>();
 
 				field = "name";
-				if (row["name"].is_null())
+				if (row["name"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["name"].as<string>();
 
 				field = "region";
-				if (row["region"].is_null())
+				if (row["region"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["region"].as<string>();
 
 				field = "country";
-				if (row["country"].is_null())
+				if (row["country"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["country"].as<string>();
 
 				field = "imageMediaItemKey";
-				if (row["imageMediaItemKey"].is_null())
+				if (row["imageMediaItemKey"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["imageMediaItemKey"].as<int64_t>();
 
 				field = "imageUniqueName";
-				if (row["imageUniqueName"].is_null())
+				if (row["imageUniqueName"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["imageUniqueName"].as<string>();
 
 				field = "position";
-				if (row["position"].is_null())
+				if (row["position"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["position"].as<int>();
 
 				field = "userData";
-				if (row["userData"].is_null())
+				if (row["userData"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["userData"].as<string>();
