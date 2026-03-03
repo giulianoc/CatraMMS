@@ -974,9 +974,10 @@ json MMSEngineDBFacade::getStreamList(
 							{
 								LOG_ERROR(
 									"getStreamList. getEncoderDetails failed"
+									", confKey: {}"
 									", pushEncoderKey: {}"
 									", exception: {}",
-									pushEncoderKey, e.what()
+									JsonPath(&streamRoot)["confKey"].as<int64_t>(), pushEncoderKey, e.what()
 								);
 							}
 						}
