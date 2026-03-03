@@ -570,7 +570,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude, d.maxTXBandwidthInGbps,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
-					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
+					d.rxAvgBandwidthUsage, d.txAvgBandwidthUsage, d.rxPeakBandwidthUsage, d.txPeakBandwidthUsage,
 					to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 					from MMS_DeliveryServer d {} {} limit {} offset {}
 					)",
@@ -582,7 +582,7 @@ json MMSEngineDBFacade::getDeliveryServerList(
 					d.publicIP, d.internalIP, d.hostname, d.latitude, d.longitude, d.maxTXBandwidthInGbps,
 					to_char(d.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
 					d.cpuUsage, to_char(d.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
-					d.txAvgBandwidthUsage, d.rxAvgBandwidthUsage,
+					d.rxAvgBandwidthUsage, d.txAvgBandwidthUsage, d.rxPeakBandwidthUsage, d.txPeakBandwidthUsage,
 					to_char(d.bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 					from MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping dwm {} {} limit {} offset {}
 					)",
@@ -1086,11 +1086,25 @@ json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::
 			deliveryServerRoot["cpuUsageUpdateTime"] = nullptr;
 		else
 			deliveryServerRoot["cpuUsageUpdateTime"] = row["cpuUsageUpdateTime"].as<string>();
+
+		if (row["rxAvgBandwidthUsage"].isNull())
+			deliveryServerRoot["rxAvgBandwidthUsage"] = nullptr;
+		else
+			deliveryServerRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
 		if (row["txAvgBandwidthUsage"].isNull())
 			deliveryServerRoot["txAvgBandwidthUsage"] = nullptr;
 		else
 			deliveryServerRoot["txAvgBandwidthUsage"] = row["txAvgBandwidthUsage"].as<int64_t>();
-		deliveryServerRoot["rxAvgBandwidthUsage"] = row["rxAvgBandwidthUsage"].as<int64_t>();
+
+		if (row["rxPeakBandwidthUsage"].isNull())
+			deliveryServerRoot["rxPeakBandwidthUsage"] = nullptr;
+		else
+			deliveryServerRoot["rxPeakBandwidthUsage"] = row["rxPeakBandwidthUsage"].as<int64_t>();
+		if (row["txPeakBandwidthUsage"].isNull())
+			deliveryServerRoot["txPeakBandwidthUsage"] = nullptr;
+		else
+			deliveryServerRoot["txPeakBandwidthUsage"] = row["txPeakBandwidthUsage"].as<int64_t>();
+
 		if (row["bandwidthUsageUpdateTime"].isNull())
 			deliveryServerRoot["bandwidthUsageUpdateTime"] = nullptr;
 		else
