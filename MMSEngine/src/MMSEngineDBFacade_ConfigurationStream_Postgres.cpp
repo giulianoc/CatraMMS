@@ -866,20 +866,16 @@ json MMSEngineDBFacade::getStreamList(
 			{
 				json streamRoot;
 
-				LOG_ERROR("aaa");
 				field = "confKey";
 				streamRoot[field] = row["confKey"].as<int64_t>();
 
-				LOG_ERROR("aaa");
 				field = "label";
 				streamRoot[field] = row["label"].as<string>();
 
-				LOG_ERROR("aaa");
 				auto localSourceType = row["sourceType"].as<string>();
 				field = "sourceType";
 				streamRoot[field] = localSourceType;
 
-				LOG_ERROR("aaa");
 				field = "encodersPoolKey";
 				if (row["encodersPoolKey"].isNull())
 					streamRoot[field] = nullptr;
@@ -911,7 +907,6 @@ json MMSEngineDBFacade::getStreamList(
 					}
 				}
 
-				LOG_ERROR("aaa");
 				// if (localSourceType == "IP_PULL")
 				{
 					field = "url";
@@ -920,7 +915,6 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["url"].as<string>();
 				}
-				LOG_ERROR("aaa");
 				// else if (localSourceType == "IP_PUSH")
 				{
 					field = "pushProtocol";
@@ -988,7 +982,6 @@ json MMSEngineDBFacade::getStreamList(
 						}
 					}
 
-				LOG_ERROR("aaa");
 					field = "pushServerPort";
 					if (row["pushServerPort"].isNull())
 						streamRoot[field] = nullptr;
@@ -1007,7 +1000,6 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["pushListenTimeout"].as<int16_t>();
 				}
-				LOG_ERROR("aaa");
 				// else if (localSourceType == "CaptureLive")
 				{
 					field = "captureLiveVideoDeviceNumber";
@@ -1052,7 +1044,6 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["captureLiveChannelsNumber"].as<int16_t>();
 				}
-				LOG_ERROR("aaa");
 				// else if (localSourceType == "TV")
 				{
 					field = "tvSourceTVConfKey";
@@ -1062,70 +1053,60 @@ json MMSEngineDBFacade::getStreamList(
 						streamRoot[field] = row["tvSourceTVConfKey"].as<int64_t>();
 				}
 
-				LOG_ERROR("aaa");
 				field = "type";
 				if (row["type"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["type"].as<string>();
 
-				LOG_ERROR("aaa");
 				field = "description";
 				if (row["description"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["description"].as<string>();
 
-				LOG_ERROR("aaa");
 				field = "name";
 				if (row["name"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["name"].as<string>();
 
-				LOG_ERROR("aaa");
 				field = "region";
 				if (row["region"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["region"].as<string>();
 
-				LOG_ERROR("aaa");
 				field = "country";
 				if (row["country"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["country"].as<string>();
 
-				LOG_ERROR("aaa");
 				field = "imageMediaItemKey";
 				if (row["imageMediaItemKey"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["imageMediaItemKey"].as<int64_t>();
 
-				LOG_ERROR("aaa");
 				field = "imageUniqueName";
 				if (row["imageUniqueName"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["imageUniqueName"].as<string>();
 
-				LOG_ERROR("aaa");
 				field = "position";
 				if (row["position"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = row["position"].as<int32_t>();
 
-				LOG_ERROR("aaa");
 				field = "userData";
 				if (row["userData"].isNull())
 					streamRoot[field] = nullptr;
 				else
 					streamRoot[field] = JSONUtils::toString(row["userData"].as<json>());
 
-				LOG_ERROR("aaa");
 				streamsRoot.push_back(streamRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
