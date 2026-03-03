@@ -986,7 +986,7 @@ json MMSEngineDBFacade::getStreamList(
 					if (row["pushServerPort"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["pushServerPort"].as<int>();
+						streamRoot[field] = row["pushServerPort"].as<int32_t>();
 
 					field = "pushUri";
 					if (row["pushUri"].isNull())
@@ -998,7 +998,7 @@ json MMSEngineDBFacade::getStreamList(
 					if (row["pushListenTimeout"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["pushListenTimeout"].as<int>();
+						streamRoot[field] = row["pushListenTimeout"].as<int16_t>();
 				}
 				// else if (localSourceType == "CaptureLive")
 				{
@@ -1006,7 +1006,7 @@ json MMSEngineDBFacade::getStreamList(
 					if (row["captureLiveVideoDeviceNumber"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveVideoDeviceNumber"].as<int>();
+						streamRoot[field] = row["captureLiveVideoDeviceNumber"].as<int16_t>();
 
 					field = "captureLiveVideoInputFormat";
 					if (row["captureLiveVideoInputFormat"].isNull())
@@ -1018,31 +1018,31 @@ json MMSEngineDBFacade::getStreamList(
 					if (row["captureLiveFrameRate"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveFrameRate"].as<int>();
+						streamRoot[field] = row["captureLiveFrameRate"].as<int16_t>();
 
 					field = "captureLiveWidth";
 					if (row["captureLiveWidth"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveWidth"].as<int>();
+						streamRoot[field] = row["captureLiveWidth"].as<int16_t>();
 
 					field = "captureLiveHeight";
 					if (row["captureLiveHeight"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveHeight"].as<int>();
+						streamRoot[field] = row["captureLiveHeight"].as<int16_t>();
 
 					field = "captureLiveAudioDeviceNumber";
 					if (row["captureLiveAudioDeviceNumber"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveAudioDeviceNumber"].as<int>();
+						streamRoot[field] = row["captureLiveAudioDeviceNumber"].as<int16_t>();
 
 					field = "captureLiveChannelsNumber";
 					if (row["captureLiveChannelsNumber"].isNull())
 						streamRoot[field] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveChannelsNumber"].as<int>();
+						streamRoot[field] = row["captureLiveChannelsNumber"].as<int16_t>();
 				}
 				// else if (localSourceType == "TV")
 				{
@@ -1099,7 +1099,7 @@ json MMSEngineDBFacade::getStreamList(
 				if (row["position"].isNull())
 					streamRoot[field] = nullptr;
 				else
-					streamRoot[field] = row["position"].as<int>();
+					streamRoot[field] = row["position"].as<int32_t>();
 
 				field = "userData";
 				if (row["userData"].isNull())
