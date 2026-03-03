@@ -84,7 +84,8 @@ EncoderBandwidthUsageThread::EncoderBandwidthUsageThread(const json & configurat
 	}
 }
 
-void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const
+void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
+	uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage) const
 {
 	if (_encoderKey < 0)
 	{
@@ -99,15 +100,17 @@ void EncoderBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBand
 		return;
 	}
 
-	const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/encoder/{}{}/{}/{}",
+	const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/encoder/{}{}/{}/{}/{}/{}",
 		_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _encoderKey, _mmsAPIUpdateBandwidthStatsURI,
-		txAvgBandwidthUsage, rxAvgBandwidthUsage);
+		rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage);
 
 	constexpr int32_t mmsAPITimeoutInSeconds = 3;
 	LOG_INFO("UpdateBandwidthStats"
+		", rxAvgBandwidthUsage: {}"
 		", txAvgBandwidthUsage: {}"
-		", rxAvgBandwidthUsage: {}",
-		txAvgBandwidthUsage, rxAvgBandwidthUsage
+		", rxPeakBandwidthUsage: {}"
+		", txPeakBandwidthUsage: {}",
+		rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
 		);
 	constexpr std::vector<std::string> otherHeaders;
 	nlohmann::json encoderResponse = CurlWrapper::httpPutStringAndGetJson(

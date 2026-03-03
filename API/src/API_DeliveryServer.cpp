@@ -274,10 +274,13 @@ void API::updateDeliveryServerBandwidthStats(
 		try
 		{
 			deliveryServerKey = requestData.getQueryParameter<int64_t>("deliveryServerKey", -1, true);
-			auto txAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("txAvgBandwidthUsage", 0, true);
 			auto rxAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("rxAvgBandwidthUsage", 0, true);
+			auto txAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("txAvgBandwidthUsage", 0, true);
+			auto rxPeakBandwidthUsage = requestData.getQueryParameter<uint64_t>("rxPeakBandwidthUsage", 0, true);
+			auto txPeakBandwidthUsage = requestData.getQueryParameter<uint64_t>("txPeakBandwidthUsage", 0, true);
 
-			_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(deliveryServerKey, txAvgBandwidthUsage, rxAvgBandwidthUsage);
+			_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(deliveryServerKey, rxAvgBandwidthUsage, txAvgBandwidthUsage,
+				rxPeakBandwidthUsage, txPeakBandwidthUsage);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}

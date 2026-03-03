@@ -91,14 +91,18 @@ DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const jso
 	}
 }
 
-void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const
+void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
+		uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage) const
 {
 	LOG_INFO("Sending bandwidth usage stats to MMS API Server"
 		", _deliveryServerKey: {}"
 		", _isDeliveryAndAPIServerTogether: {}"
+		", rxAvgBandwidthUsage: {}"
 		", txAvgBandwidthUsage: {}"
-		", rxAvgBandwidthUsage: {}", _deliveryServerKey, _isDeliveryAndAPIServerTogether,
-		txAvgBandwidthUsage, rxAvgBandwidthUsage
+		", rxPeakBandwidthUsage: {}"
+		", txPeakBandwidthUsage: {}",
+		_deliveryServerKey, _isDeliveryAndAPIServerTogether,
+		rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
 	);
 
 	if (_deliveryServerKey < 0)
@@ -115,18 +119,21 @@ void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& tx
 	}
 
 	if (_isDeliveryAndAPIServerTogether)
-		_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(_deliveryServerKey, txAvgBandwidthUsage, rxAvgBandwidthUsage);
+		_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(_deliveryServerKey, rxAvgBandwidthUsage, txAvgBandwidthUsage,
+			rxPeakBandwidthUsage, txPeakBandwidthUsage);
 	else
 	{
-		const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}/{}",
+		const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}/{}/{}/{}",
 			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateBandwidthStatsURI,
-			txAvgBandwidthUsage, rxAvgBandwidthUsage);
+			rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage);
 
 		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateBandwidthStats"
+			", rxAvgBandwidthUsage: {}"
 			", txAvgBandwidthUsage: {}"
-			", rxAvgBandwidthUsage: {}",
-			txAvgBandwidthUsage, rxAvgBandwidthUsage
+			", rxPeakBandwidthUsage: {}"
+			", txPeakBandwidthUsage: {}",
+			rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
 			);
 		constexpr std::vector<std::string> otherHeaders;
 		nlohmann::json apiResponseRoot = CurlWrapper::httpPutStringAndGetJson(

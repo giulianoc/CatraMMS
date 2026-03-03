@@ -1282,8 +1282,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				"publicServerName		text NOT NULL,"
 				"internalServerName		text NOT NULL,"
 				"port					integer NOT NULL,"
-				"txAvgBandwidthUsage	bigint,"
 				"rxAvgBandwidthUsage	bigint,"
+				"txAvgBandwidthUsage	bigint,"
+				"rxPeakBandwidthUsage	bigint,"
+				"txPeakBandwidthUsage	bigint,"
 				"bandwidthUsageUpdateTime	timestamp without time zone,"
 				"cpuUsage				integer,"
 				"cpuUsageUpdateTime		timestamp without time zone,"
@@ -1431,8 +1433,10 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					latitude DOUBLE PRECISION NOT NULL,
 					longitude DOUBLE PRECISION NOT NULL,
 					earthCoord earth GENERATED ALWAYS AS (ll_to_earth(latitude, longitude)) STORED,
-					txAvgBandwidthUsage	bigint,
 					rxAvgBandwidthUsage	bigint,
+					txAvgBandwidthUsage	bigint,
+					rxPeakBandwidthUsage bigint,
+					txPeakBandwidthUsage bigint,
 					bandwidthUsageUpdateTime timestamp without time zone,
 					maxTXBandwidthInGbps bigint,
 					cpuUsage integer,

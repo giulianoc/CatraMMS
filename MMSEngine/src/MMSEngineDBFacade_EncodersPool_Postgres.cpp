@@ -210,19 +210,22 @@ void MMSEngineDBFacade::modifyEncoder(
 	}
 }
 
-void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(
-	int64_t encoderKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
+void MMSEngineDBFacade::updateEncoderAvgBandwidthUsage(int64_t encoderKey, uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
+	uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"update MMS_Encoder set txAvgBandwidthUsage = {}, rxAvgBandwidthUsage = {}, "
-				"bandwidthUsageUpdateTime = NOW() at time zone 'utc' "
-				"where encoderKey = {} ",
-				txAvgBandwidthUsage, rxAvgBandwidthUsage, encoderKey
+			string sqlStatement = std::format( R"(
+				update MMS_Encoder
+				set rxAvgBandwidthUsage = {}, txAvgBandwidthUsage = {},
+				rxPeakBandwidthUsage = {}, txPeakBandwidthUsage = {},
+				bandwidthUsageUpdateTime = NOW() at time zone 'utc'
+				where encoderKey = {}
+			)",
+			rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage, encoderKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec0(sqlStatement);

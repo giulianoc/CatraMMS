@@ -37,7 +37,8 @@ public:
 		const std::optional<std::string> &interfaceNameToMonitor = std::nullopt,
 		const std::shared_ptr<spdlog::logger>& logger = nullptr);
 
-	void newBandwidthUsageAvailable(uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage) const override;
+	void newBandwidthUsageAvailable(uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
+		uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage) const override;
 
 private:
 	std::string _mmsAPIProtocol;

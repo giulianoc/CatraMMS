@@ -250,18 +250,22 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 }
 
 void MMSEngineDBFacade::updateDeliveryServerAvgBandwidthUsage(
-	int64_t deliveryServerKey, uint64_t& txAvgBandwidthUsage, uint64_t& rxAvgBandwidthUsage
+	int64_t deliveryServerKey, uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
+	uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		{
-			string sqlStatement = std::format(
-				"update MMS_DeliveryServer set txAvgBandwidthUsage = {}, rxAvgBandwidthUsage = {}, "
-				"bandwidthUsageUpdateTime = NOW() at time zone 'utc' "
-				"where deliveryServerKey = {} ",
-				txAvgBandwidthUsage, rxAvgBandwidthUsage, deliveryServerKey
+			string sqlStatement = std::format( R"(
+				update MMS_DeliveryServer
+				set rxAvgBandwidthUsage = {}, txAvgBandwidthUsage = {},
+				rxPeakBandwidthUsage = {}, txPeakBandwidthUsage = {},
+				bandwidthUsageUpdateTime = NOW() at time zone 'utc'
+				where deliveryServerKey = {}
+				)",
+				rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage, deliveryServerKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec0(sqlStatement);

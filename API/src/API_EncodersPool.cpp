@@ -387,10 +387,13 @@ void API::updateEncoderBandwidthStats(
 		try
 		{
 			encoderKey = requestData.getQueryParameter<int64_t>("encoderKey", -1, true);
-			auto txAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("txAvgBandwidthUsage", 0, true);
 			auto rxAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("rxAvgBandwidthUsage", 0, true);
+			auto txAvgBandwidthUsage = requestData.getQueryParameter<uint64_t>("txAvgBandwidthUsage", 0, true);
+			auto rxPeakBandwidthUsage = requestData.getQueryParameter<uint64_t>("rxPeakBandwidthUsage", 0, true);
+			auto txPeakBandwidthUsage = requestData.getQueryParameter<uint64_t>("txPeakBandwidthUsage", 0, true);
 
-			_mmsEngineDBFacade->updateEncoderAvgBandwidthUsage(encoderKey, txAvgBandwidthUsage, rxAvgBandwidthUsage);
+			_mmsEngineDBFacade->updateEncoderAvgBandwidthUsage(encoderKey,
+				rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage);
 
 			response["encoderKey"] = encoderKey;
 		}
