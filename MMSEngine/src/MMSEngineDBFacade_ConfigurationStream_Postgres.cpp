@@ -1,6 +1,7 @@
 
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -859,22 +860,21 @@ json MMSEngineDBFacade::getStreamList(
 				sqlWhere, orderByCondition, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
-			for (auto row : res)
+			for (auto row : *sqlResultSet)
 			{
 				json streamRoot;
 
-				auto confKey = row["confKey"].as<int64_t>();
 				field = "confKey";
-				streamRoot[field] = confKey;
+				streamRoot[field] = row["confKey"].as<int64_t>();
 
 				field = "label";
 				streamRoot[field] = row["label"].as<string>();
 
-				auto sourceType = row["sourceType"].as<string>();
+				auto localSourceType = row["sourceType"].as<string>();
 				field = "sourceType";
-				streamRoot[field] = sourceType;
+				streamRoot[field] = localSourceType;
 
 				field = "encodersPoolKey";
 				if (row["encodersPoolKey"].is_null())
@@ -901,13 +901,13 @@ json MMSEngineDBFacade::getStreamList(
 								"getStreamList. getEncodersPoolDetails failed"
 								", confKey: {}"
 								", encodersPoolKey: {}",
-								confKey, encodersPoolKey
+								JsonPath(&streamRoot)["confKey"].as<int64_t>(), encodersPoolKey
 							);
 						}
 					}
 				}
 
-				// if (sourceType == "IP_PULL")
+				// if (localSourceType == "IP_PULL")
 				{
 					field = "url";
 					if (row["url"].is_null())
@@ -915,7 +915,7 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["url"].as<string>();
 				}
-				// else if (sourceType == "IP_PUSH")
+				// else if (localSourceType == "IP_PUSH")
 				{
 					field = "pushProtocol";
 					if (row["pushProtocol"].is_null())
@@ -946,7 +946,10 @@ json MMSEngineDBFacade::getStreamList(
 						auto pushEncoderKey = row["pushEncoderKey"].as<int64_t>();
 						streamRoot[field] = pushEncoderKey;
 
-						if (pushEncoderKey >= 0)
+						// 2026-03-03: l'idea è di inizializzare tutti i campi indipendentemente dal sourceType. In questo caso
+						// è stata aggiunta anche la condizione di IP_PUSH perchè molto spesso pushEncoderKey, quando non è IP_PUSH,
+						// ha un valore obsoleto che causa il fallimento della chiamata encoder_LabelPublicServerNameInternalServerName
+						if (localSourceType == "IP_PUSH" && pushEncoderKey >= 0)
 						{
 							try
 							{
@@ -997,7 +1000,7 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["pushListenTimeout"].as<int>();
 				}
-				// else if (sourceType == "CaptureLive")
+				// else if (localSourceType == "CaptureLive")
 				{
 					field = "captureLiveVideoDeviceNumber";
 					if (row["captureLiveVideoDeviceNumber"].is_null())
@@ -1041,7 +1044,7 @@ json MMSEngineDBFacade::getStreamList(
 					else
 						streamRoot[field] = row["captureLiveChannelsNumber"].as<int>();
 				}
-				// else if (sourceType == "TV")
+				// else if (localSourceType == "TV")
 				{
 					field = "tvSourceTVConfKey";
 					if (row["tvSourceTVConfKey"].is_null())
@@ -1126,7 +1129,7 @@ json MMSEngineDBFacade::getStreamList(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"
