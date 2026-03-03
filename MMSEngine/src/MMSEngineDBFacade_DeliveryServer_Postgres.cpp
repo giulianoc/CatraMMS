@@ -943,6 +943,8 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 		// - thundering herd: molte transazioni cercano la stessa riga “più vecchia”;
 		// - a seconda dell’isolamento e del piano, alcune transazioni possono aspettare lock e aumentare la latenza
 		// Con FOR UPDATE SKIP LOCKED dentro una CTE, ogni transazione "prende" un server diverso senza aspettare.
+		// Anche in questa select sono state aggiunte le condizioni su bandwidthUsageUpdateTime e cpuUsageUpdateTime perchè
+		// in questo caso indicano che il servizio è running (health check per il server)
 		{
 			string sqlStatement = fmt::format(R"(
 				WITH rankedServers AS (
@@ -951,6 +953,10 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 					WHERE d.deliveryServerKey = a.deliveryServerKey
 					AND a.workspaceKey = {workspaceKey}
 					AND enabled = true
+					AND cpuUsageUpdateTime IS NOT NULL
+					AND bandwidthUsageUpdateTime IS NOT NULL
+					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					AND (NOW() at time zone 'utc' - cpuUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
 					ORDER BY
 						CASE
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
@@ -977,7 +983,8 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 				RETURNING d.hostname
 					)",
 				fmt::arg("workspaceKey", workspaceKey),
-				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude)
+				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude),
+				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));

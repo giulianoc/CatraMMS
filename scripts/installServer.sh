@@ -1526,6 +1526,9 @@ install-mms-nginx-package()
 	architecture=$1
 	moduleType=$2
 
+	#assicurarsi che non ci sia il servizio nginx attivo al boot
+	systemctl disable nginx
+
 	packageName=nginx
 	echo ""
 	nginxVersion=1.27.2
