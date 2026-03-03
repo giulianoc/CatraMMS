@@ -1123,7 +1123,7 @@ json MMSEngineDBFacade::getStreamList(
 				if (row["userData"].isNull())
 					streamRoot[field] = nullptr;
 				else
-					streamRoot[field] = row["userData"].as<string>();
+					streamRoot[field] = JSONUtils::toString(row["userData"].as<json>());
 
 				LOG_ERROR("aaa");
 				streamsRoot.push_back(streamRoot);
