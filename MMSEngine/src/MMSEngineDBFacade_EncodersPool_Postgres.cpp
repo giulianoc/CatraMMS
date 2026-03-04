@@ -1075,10 +1075,10 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format( R"(
 					select e.encoderKey, e.label, e.external, e.enabled, e.protocol,
 					e.publicServerName, e.internalServerName, e.port,
-					to_char(e.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
-					e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
+					to_char(e.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
+					e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					e.rxAvgBandwidthUsage, e.txAvgBandwidthUsage, e.rxPeakBandwidthUsage, e.txPeakBandwidthUsage,
-					to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+					to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 					from MMS_Encoder e {} {} limit {} offset {}
 					)",
 					sqlWhere, orderByCondition, rows, start
@@ -1087,17 +1087,16 @@ json MMSEngineDBFacade::getEncoderList(
 				sqlStatement = std::format( R"(
 					select e.encoderKey, e.label, e.external, e.enabled, e.protocol,
 					e.publicServerName, e.internalServerName, e.port,
-					to_char(e.selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
-					e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
+					to_char(e.selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
+					e.cpuUsage, to_char(e.cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 					e.rxAvgBandwidthUsage, e.txAvgBandwidthUsage, e.rxPeakBandwidthUsage, e.txPeakBandwidthUsage,
-					to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+					to_char(e.bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 					from MMS_Encoder e, MMS_EncoderWorkspaceMapping ewm {} {} limit {} offset {}
 					)",
 					sqlWhere, orderByCondition, rows, start
 				);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			chrono::milliseconds internalSqlDuration(0);
 			for (auto& sqlRow : *sqlResultSet)
 			{
@@ -1582,18 +1581,18 @@ json MMSEngineDBFacade::getEncodersPoolList(
 							string sqlStatement = std::format( R"(
 								select encoderKey, label, external, enabled, protocol,
 								publicServerName, internalServerName, port,
-								to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime,
-								cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime,
+								to_char(selectedLastTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as selectedLastTime,
+								cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as cpuUsageUpdateTime,
 								rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage,
-								to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime
+								to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as bandwidthUsageUpdateTime
 								from MMS_Encoder
 								where encoderKey = {}
 								)",
 								encoderKey
 							);
 							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							result res = trans.transaction->exec(sqlStatement);
-							shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+							shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(
+								trans.transaction->exec(sqlStatement));
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
 								"default", elapsed,
