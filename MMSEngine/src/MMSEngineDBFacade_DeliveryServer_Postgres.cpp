@@ -949,6 +949,12 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 		// Con FOR UPDATE SKIP LOCKED dentro una CTE, ogni transazione "prende" un server diverso senza aspettare.
 		// Anche in questa select sono state aggiunte le condizioni su bandwidthUsageUpdateTime e cpuUsageUpdateTime perchè
 		// in questo caso indicano che il servizio è running (health check per il server)
+		/*
+		AND cpuUsageUpdateTime IS NOT NULL
+					AND bandwidthUsageUpdateTime IS NOT NULL
+					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					AND (NOW() at time zone 'utc' - cpuUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+		 */
 		{
 			string sqlStatement = fmt::format(R"(
 				WITH rankedServers AS (
@@ -957,10 +963,6 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 					WHERE d.deliveryServerKey = a.deliveryServerKey
 					AND a.workspaceKey = {workspaceKey}
 					AND enabled = true
-					AND cpuUsageUpdateTime IS NOT NULL
-					AND bandwidthUsageUpdateTime IS NOT NULL
-					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
-					AND (NOW() at time zone 'utc' - cpuUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
 					ORDER BY
 						CASE
 							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
