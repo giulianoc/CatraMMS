@@ -387,13 +387,13 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=serverplan-mms-encoder-3
-prodServers[$((serverIndex*6+1))]=d02c0q-hdea3.sphostserver.com
-prodServers[$((serverIndex*6+2))]=cibortv/cibortv-serverplan
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=externalEncoder
-prodServers[$((serverIndex*6+5))]=
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=serverplan-mms-encoder-3
+#prodServers[$((serverIndex*6+1))]=d02c0q-hdea3.sphostserver.com
+#prodServers[$((serverIndex*6+2))]=cibortv/cibortv-serverplan
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=externalEncoder
+#prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=serverplan-mms-encoder-4

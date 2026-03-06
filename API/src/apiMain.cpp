@@ -14,6 +14,7 @@
 #include "spdlog/sinks/stdout_color_sinks.h"
 
 #include "API.h"
+#include "BandwidthPercentileThread.h"
 #include "BandwidthUsageThread.h"
 #include "CPUUsageThread.h"
 #include "DeliveryServerBandwidthUsageThread.h"
@@ -407,17 +408,27 @@ int main(int argc, char **argv)
 		API::FileUploadProgressData fileUploadProgressData;
 
 		shared_ptr<BandwidthUsageThread> bandwidthUsageThread;
+		shared_ptr<BandwidthPercentileThread> bandwidthPercentileThread;
 		{
 			auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["api"]["bandwithUsageInterfaceName"].as<string>();
 			std::optional<std::string> optInterfaceNameToMonitor = nullopt;
 			if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
 				optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
 			if (isDeliveryServer)
+			{
 				bandwidthUsageThread = make_shared<DeliveryServerBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor,
 					isDeliveryAndAPIServerTogether, mmsEngineDBFacade, spdlog::get("stats-log"));
+				bandwidthPercentileThread = make_shared<BandwidthPercentileThread>(optInterfaceNameToMonitor,
+					30, 0.95, spdlog::get("stats-log"));
+			}
 			else // only API server
+			{
 				bandwidthUsageThread = make_shared<BandwidthUsageThread>(optInterfaceNameToMonitor, spdlog::get("stats-log"));
+				bandwidthPercentileThread = make_shared<BandwidthPercentileThread>(optInterfaceNameToMonitor,
+					30, 0.95, spdlog::get("stats-log"));
+			}
 			bandwidthUsageThread->start();
+			bandwidthPercentileThread->start();
 		}
 
 		shared_ptr<CPUUsageThread> cpuUsageThread;
@@ -457,6 +468,7 @@ int main(int argc, char **argv)
 		}
 
 		cpuUsageThread->stop();
+		bandwidthPercentileThread->stop();
 		bandwidthUsageThread->stop();
 		mmsDeliveryAuthorization->stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 

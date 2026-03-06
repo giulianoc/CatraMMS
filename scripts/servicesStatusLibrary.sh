@@ -934,7 +934,8 @@ mms_incrontab_check_locks()
 	incrontab -l | cut -f1 | while read path; do
 		#/var/mms/storage/MMSRepository/MMSLive/6/5240
     channel=$(basename "$path")
-    maxAllowedConsecutiveLocks=3
+    #dimunuito il periodo dei segmenti a 4 secs ed aumentato il numero dei files, quindi abbiamo molto piu traffico e molto piu locks
+    maxAllowedConsecutiveLocks=6
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
     alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk -v maxAllowedConsecutiveLocks=$maxAllowedConsecutiveLocks ' \
     	BEGIN \

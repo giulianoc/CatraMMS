@@ -1114,7 +1114,7 @@ json MMSEngineDBFacade::getEncoderList(
 				", getConnectionId: @{}@"
 				", internalSqlDuration: @{}@"
 				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
+				StringUtils::normalizeWhitespace(sqlStatement), trans.connection->getConnectionId(), internalSqlDuration.count(), elapsed
 			);
 		}
 
