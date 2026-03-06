@@ -34,8 +34,9 @@ using namespace std;
 DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const json & configurationRoot,
 	const std::optional<std::string> &interfaceNameToMonitor,
 	const bool isDeliveryAndAPIServerTogether, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
-	const int16_t windowInSeconds, const double percentile, const std::shared_ptr<spdlog::logger>& logger):
-	BandwidthPercentileThread(interfaceNameToMonitor, windowInSeconds, percentile, logger),
+	const int16_t windowInSeconds, const double percentile, const int16_t percentilePeriodInSeconds,
+	const std::shared_ptr<spdlog::logger>& logger):
+	BandwidthPercentileThread(interfaceNameToMonitor, windowInSeconds, percentile, percentilePeriodInSeconds, logger),
 	_isDeliveryAndAPIServerTogether(isDeliveryAndAPIServerTogether), _mmsEngineDBFacade(mmsEngineDBFacade)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();

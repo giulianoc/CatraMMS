@@ -36,7 +36,8 @@ public:
 	explicit DeliveryServerBandwidthUsageThread(const json & configurationRoot,
 		const std::optional<std::string> &interfaceNameToMonitor = std::nullopt,
 		bool isDeliveryAndAPIServer = false, const std::shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade = nullptr,
-		const int16_t windowInSeconds = 30, const double percentile = 0.95, const std::shared_ptr<spdlog::logger>& logger = nullptr);
+		const int16_t windowInSeconds = 30, const double percentile = 0.95, const int16_t percentilePeriodInSeconds = 60,
+		const std::shared_ptr<spdlog::logger>& logger = nullptr);
 
 	void newBandwidthStatsAvailable(double& rxPercentileBandwidthUsage, double& txPercentileBandwidthUsage,
 		double& rxPeakBandwidthUsage, double& txPeakBandwidthUsage) override;
