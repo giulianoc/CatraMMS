@@ -250,8 +250,9 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 }
 
 void MMSEngineDBFacade::updateDeliveryServerAvgBandwidthUsage(
-	int64_t deliveryServerKey, uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
-	uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage
+	const int64_t deliveryServerKey,
+	const uint64_t& rxAvgBandwidthUsage, const uint64_t& txAvgBandwidthUsage,
+	const uint64_t& rxPeakBandwidthUsage, const uint64_t& txPeakBandwidthUsage
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);

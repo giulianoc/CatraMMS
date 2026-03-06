@@ -41,13 +41,13 @@ using json = nlohmann::json;
 API::API(
 	const bool noFileSystemAccess, const json &configurationRoot, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
 	const shared_ptr<MMSStorage> &mmsStorage, const shared_ptr<MMSDeliveryAuthorization> &mmsDeliveryAuthorization, mutex *fcgiAcceptMutex,
-	FileUploadProgressData *fileUploadProgressData, const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread
+	FileUploadProgressData *fileUploadProgressData, const std::shared_ptr<BandwidthPercentileThread>& bandwidthPercentileThread
 )
 	: FastCGIAPI(configurationRoot, fcgiAcceptMutex), _mmsEngineDBFacade(mmsEngineDBFacade), _noFileSystemAccess(noFileSystemAccess),
 	  _mmsStorage(mmsStorage), _mmsDeliveryAuthorization(mmsDeliveryAuthorization)
 {
 	_configurationRoot = configurationRoot;
-	_bandwidthUsageThread = bandwidthUsageThread;
+	_bandwidthPercentileThread = bandwidthPercentileThread;
 
 	loadConfiguration(configurationRoot, fileUploadProgressData);
 
@@ -831,10 +831,10 @@ void API::avgBandwidthUsage(
 	{
 		json statusRoot;
 
-		auto [txAvgBandwidthUsage, rxAvgBandwidthUsage] = _bandwidthUsageThread->getAvgBandwidthUsage();
+		auto [rxAvgBandwidthUsage, txAvgBandwidthUsage] = _bandwidthPercentileThread->getPercentileBandwidthUsage();
 
-		statusRoot["txAvgBandwidthUsage"] = txAvgBandwidthUsage;
 		statusRoot["rxAvgBandwidthUsage"] = rxAvgBandwidthUsage;
+		statusRoot["txAvgBandwidthUsage"] = txAvgBandwidthUsage;
 
 		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, requestData.requestURI, requestData.requestMethod, 200, JSONUtils::toString(statusRoot));
 	}

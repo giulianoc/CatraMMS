@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "BandwidthPercentileThread.h"
 #include "BandwidthUsageThread.h"
 #include "Datetime.h"
 #include "FastCGIAPI.h"
@@ -93,7 +94,7 @@ class API final : public FastCGIAPI
 
 	API(bool noFileSystemAccess, const nlohmann::json& configurationRoot, const std::shared_ptr<MMSEngineDBFacade>& mmsEngineDBFacade, const std::shared_ptr<MMSStorage>& mmsStorage,
 		const std::shared_ptr<MMSDeliveryAuthorization>& mmsDeliveryAuthorization, std::mutex *fcgiAcceptMutex, FileUploadProgressData *fileUploadProgressData,
-		const std::shared_ptr<BandwidthUsageThread>& bandwidthUsageThread);
+		const std::shared_ptr<BandwidthPercentileThread>& bandwidthPercentileThread);
 
 	~API() override;
 
@@ -135,7 +136,7 @@ class API final : public FastCGIAPI
 	int _maxProgressCallFailures{};
 	std::string _progressURI;
 
-	std::shared_ptr<BandwidthUsageThread> _bandwidthUsageThread;
+	std::shared_ptr<BandwidthPercentileThread> _bandwidthPercentileThread;
 
 	int _maxPageSize{};
 

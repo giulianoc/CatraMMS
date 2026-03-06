@@ -33,10 +33,9 @@ using namespace std;
 
 DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const json & configurationRoot,
 	const std::optional<std::string> &interfaceNameToMonitor,
-	const bool isDeliveryAndAPIServerTogether,
-	const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
-	const std::shared_ptr<spdlog::logger>& logger):
-	BandwidthUsageThread(interfaceNameToMonitor, logger),
+	const bool isDeliveryAndAPIServerTogether, const shared_ptr<MMSEngineDBFacade> &mmsEngineDBFacade,
+	const int16_t windowInSeconds, const double percentile, const std::shared_ptr<spdlog::logger>& logger):
+	BandwidthPercentileThread(interfaceNameToMonitor, windowInSeconds, percentile, logger),
 	_isDeliveryAndAPIServerTogether(isDeliveryAndAPIServerTogether), _mmsEngineDBFacade(mmsEngineDBFacade)
 {
 	_mmsAPIProtocol = JsonPath(&configurationRoot)["api"]["protocol"].as<std::string>();
@@ -91,8 +90,8 @@ DeliveryServerBandwidthUsageThread::DeliveryServerBandwidthUsageThread(const jso
 	}
 }
 
-void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& rxAvgBandwidthUsage, uint64_t& txAvgBandwidthUsage,
-		uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage) const
+void DeliveryServerBandwidthUsageThread::newBandwidthStatsAvailable(double& rxPercentileBandwidthUsage, double& txPercentileBandwidthUsage,
+	double& rxPeakBandwidthUsage, double& txPeakBandwidthUsage)
 {
 	LOG_INFO("Sending bandwidth usage stats to MMS API Server"
 		", _deliveryServerKey: {}"
@@ -102,7 +101,7 @@ void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& rx
 		", rxPeakBandwidthUsage: {}"
 		", txPeakBandwidthUsage: {}",
 		_deliveryServerKey, _isDeliveryAndAPIServerTogether,
-		rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
+		rxPercentileBandwidthUsage, txPercentileBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
 	);
 
 	if (_deliveryServerKey < 0)
@@ -119,21 +118,23 @@ void DeliveryServerBandwidthUsageThread::newBandwidthUsageAvailable(uint64_t& rx
 	}
 
 	if (_isDeliveryAndAPIServerTogether)
-		_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(_deliveryServerKey, rxAvgBandwidthUsage, txAvgBandwidthUsage,
-			rxPeakBandwidthUsage, txPeakBandwidthUsage);
+		_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(_deliveryServerKey,
+			static_cast<uint64_t>(rxPercentileBandwidthUsage), static_cast<uint64_t>(txPercentileBandwidthUsage),
+			static_cast<uint64_t>(rxPeakBandwidthUsage), static_cast<uint64_t>(txPeakBandwidthUsage));
 	else
 	{
 		const std::string mmsAPIUpdateBandwidthStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}/{}/{}/{}",
 			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateBandwidthStatsURI,
-			rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage);
+			static_cast<uint64_t>(rxPercentileBandwidthUsage), static_cast<uint64_t>(txPercentileBandwidthUsage),
+			static_cast<uint64_t>(rxPeakBandwidthUsage), static_cast<uint64_t>(txPeakBandwidthUsage));
 
 		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateBandwidthStats"
-			", rxAvgBandwidthUsage: {}"
-			", txAvgBandwidthUsage: {}"
+			", rxPercentileBandwidthUsage: {}"
+			", txPercentileBandwidthUsage: {}"
 			", rxPeakBandwidthUsage: {}"
 			", txPeakBandwidthUsage: {}",
-			rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
+			rxPercentileBandwidthUsage, txPercentileBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
 			);
 		constexpr std::vector<std::string> otherHeaders;
 		nlohmann::json apiResponseRoot = CurlWrapper::httpPutStringAndGetJson(

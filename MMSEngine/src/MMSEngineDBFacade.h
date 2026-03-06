@@ -2480,8 +2480,9 @@ class MMSEngineDBFacade
 		const std::optional<std::string> &hostname, const std::optional<double>& latitude, const std::optional<double>& longitude,
 		const std::optional<int64_t>& maxTXBandwidthInGbps
 	);
-	void updateDeliveryServerAvgBandwidthUsage(int64_t deliveryServerKey, uint64_t& rxAvgBandwidthUsage,
-		uint64_t& txAvgBandwidthUsage, uint64_t& rxPeakBandwidthUsage, uint64_t& txPeakBandwidthUsage
+	void updateDeliveryServerAvgBandwidthUsage(
+		int64_t deliveryServerKey, const uint64_t &rxAvgBandwidthUsage, const uint64_t &txAvgBandwidthUsage, const uint64_t &rxPeakBandwidthUsage,
+		const uint64_t &txPeakBandwidthUsage
 	);
 	void updateDeliveryServerCPUUsage(int64_t deliveryServerKey, uint16_t &cpuUsage);
 	void removeDeliveryServer(int64_t deliveryServerKey);

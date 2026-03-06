@@ -407,7 +407,6 @@ int main(int argc, char **argv)
 		mutex fcgiAcceptMutex;
 		API::FileUploadProgressData fileUploadProgressData;
 
-		shared_ptr<BandwidthUsageThread> bandwidthUsageThread;
 		shared_ptr<BandwidthPercentileThread> bandwidthPercentileThread;
 		{
 			auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["api"]["bandwithUsageInterfaceName"].as<string>();
@@ -415,19 +414,11 @@ int main(int argc, char **argv)
 			if (!bandwidthUsageInterfaceNameToMonitor.empty() && !bandwidthUsageInterfaceNameToMonitor.starts_with("${"))
 				optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
 			if (isDeliveryServer)
-			{
-				bandwidthUsageThread = make_shared<DeliveryServerBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor,
-					isDeliveryAndAPIServerTogether, mmsEngineDBFacade, spdlog::get("stats-log"));
-				bandwidthPercentileThread = make_shared<BandwidthPercentileThread>(optInterfaceNameToMonitor,
-					30, 0.95, spdlog::get("stats-log"));
-			}
+				bandwidthPercentileThread = make_shared<DeliveryServerBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor,
+					isDeliveryAndAPIServerTogether, mmsEngineDBFacade, 30, 0.95, spdlog::get("stats-log"));
 			else // only API server
-			{
-				bandwidthUsageThread = make_shared<BandwidthUsageThread>(optInterfaceNameToMonitor, spdlog::get("stats-log"));
-				bandwidthPercentileThread = make_shared<BandwidthPercentileThread>(optInterfaceNameToMonitor,
-					30, 0.95, spdlog::get("stats-log"));
-			}
-			bandwidthUsageThread->start();
+				bandwidthPercentileThread = make_shared<BandwidthPercentileThread>(optInterfaceNameToMonitor, 30, 0.95,
+					spdlog::get("stats-log"));
 			bandwidthPercentileThread->start();
 		}
 
@@ -449,7 +440,7 @@ int main(int argc, char **argv)
 		for (int threadIndex = 0; threadIndex < threadsNumber; threadIndex++)
 		{
 			auto api = make_shared<API>(noFileSystemAccess, configurationRoot, mmsEngineDBFacade, mmsStorage, mmsDeliveryAuthorization,
-				&fcgiAcceptMutex, &fileUploadProgressData, bandwidthUsageThread);
+				&fcgiAcceptMutex, &fileUploadProgressData, bandwidthPercentileThread);
 
 			apis.push_back(api);
 			apiThreads.emplace_back(&API::operator(), api);
@@ -469,7 +460,6 @@ int main(int argc, char **argv)
 
 		cpuUsageThread->stop();
 		bandwidthPercentileThread->stop();
-		bandwidthUsageThread->stop();
 		mmsDeliveryAuthorization->stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
 		LOG_INFO("API shutdown");

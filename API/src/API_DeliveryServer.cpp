@@ -279,8 +279,9 @@ void API::updateDeliveryServerBandwidthStats(
 			auto rxPeakBandwidthUsage = requestData.getQueryParameter<uint64_t>("rxPeakBandwidthUsage", 0, true);
 			auto txPeakBandwidthUsage = requestData.getQueryParameter<uint64_t>("txPeakBandwidthUsage", 0, true);
 
-			_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(deliveryServerKey, rxAvgBandwidthUsage, txAvgBandwidthUsage,
-				rxPeakBandwidthUsage, txPeakBandwidthUsage);
+			_mmsEngineDBFacade->updateDeliveryServerAvgBandwidthUsage(
+				deliveryServerKey, rxAvgBandwidthUsage, txAvgBandwidthUsage, rxPeakBandwidthUsage, txPeakBandwidthUsage
+			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}
