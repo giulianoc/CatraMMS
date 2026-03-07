@@ -410,7 +410,8 @@ int main(int argc, char **argv)
 		shared_ptr<BandwidthPercentileThread> bandwidthPercentileThread;
 		{
 			auto bandwidthUsageInterfaceNameToMonitor = JsonPath(&configurationRoot)["api"]["bandwithUsageInterfaceName"].as<string>();
-			auto percentilePeriodInSeconds = JsonPath(&configurationRoot)["deliveryServer"]["percentilePeriodInSeconds"].as<int16_t>(60);
+			auto percentileShortPeriodInSeconds = JsonPath(&configurationRoot)["deliveryServer"]["percentileShortPeriodInSeconds"].as<int16_t>(60);
+			auto percentileLongPeriodInMinutes = JsonPath(&configurationRoot)["deliveryServer"]["percentileLongPeriodInMinutes"].as<int16_t>(60);
 			auto windowInSeconds = JsonPath(&configurationRoot)["deliveryServer"]["windowInSeconds"].as<int16_t>(30);
 			auto percentile = JsonPath(&configurationRoot)["deliveryServer"]["percentile"].as<double>(0.95);
 			std::optional<std::string> optInterfaceNameToMonitor = nullopt;
@@ -418,11 +419,12 @@ int main(int argc, char **argv)
 				optInterfaceNameToMonitor = bandwidthUsageInterfaceNameToMonitor;
 			if (isDeliveryServer)
 				bandwidthPercentileThread = make_shared<DeliveryServerBandwidthUsageThread>(configurationRoot, optInterfaceNameToMonitor,
-					isDeliveryAndAPIServerTogether, mmsEngineDBFacade, windowInSeconds, percentile, percentilePeriodInSeconds,
+					isDeliveryAndAPIServerTogether, mmsEngineDBFacade, windowInSeconds, percentile,
+					percentileShortPeriodInSeconds, percentileLongPeriodInMinutes,
 					spdlog::get("stats-log"));
 			else // only API server
 				bandwidthPercentileThread = make_shared<BandwidthPercentileThread>(optInterfaceNameToMonitor,
-					windowInSeconds, percentile, percentilePeriodInSeconds,
+					windowInSeconds, percentile, percentileShortPeriodInSeconds, percentileLongPeriodInMinutes,
 					spdlog::get("stats-log"));
 			bandwidthPercentileThread->start();
 		}
