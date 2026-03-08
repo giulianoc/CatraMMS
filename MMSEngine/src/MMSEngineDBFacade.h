@@ -2448,11 +2448,12 @@ class MMSEngineDBFacade
 		std::string labelOrder // "" or "asc" or "desc"
 	);
 
-	std::tuple<int64_t, bool, std::string, std::string, std::string, int> getEncoderUsingRoundRobin(int64_t workspaceKey,
-		std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
+	std::tuple<int64_t, bool, std::string, std::string, std::string, int> getEncoderUsingRoundRobin(int64_t ingestionJobKey,
+		int64_t workspaceKey, std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
 
-	std::tuple<int64_t, bool, std::string, std::string, std::string, int> getEncoderUsingLeastResources(int64_t workspaceKey,
-		std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed);
+	std::tuple<int64_t, bool, std::string, std::string, std::string, int> getEncoderUsingLeastResources(
+		int64_t ingestionJobKey, int64_t workspaceKey, std::string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+	);
 
 	std::string getEncodersKeyListByEncodersPool(int64_t workspaceKey, std::string encodersPoolLabel,
 		int64_t encoderKeyToBeSkipped);

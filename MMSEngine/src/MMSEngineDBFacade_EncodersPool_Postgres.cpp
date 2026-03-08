@@ -2076,7 +2076,7 @@ void MMSEngineDBFacade::removeEncodersPool(int64_t encodersPoolKey)
 	}
 }
 
-tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderUsingRoundRobin(
+tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderUsingRoundRobin(int64_t ingestionJobKey,
 	int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 )
 {
@@ -2395,7 +2395,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 }
 
 tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderUsingLeastResources(
-	int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
+	int64_t ingestionJobKey, int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 )
 {
 	// Questo metodo puo ritornare:
@@ -2407,11 +2407,12 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	{
 		LOG_INFO(
 			"Received getEncoderUsingLeastResources"
+			", ingestionJobKey: {}"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
 			", encoderKeyToBeSkipped: {}"
 			", externalEncoderAllowed: {}",
-			workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
+			ingestionJobKey, workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
 		);
 
 		string encodersKeyList = getEncodersKeyListByEncodersPool(workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped);
@@ -2419,9 +2420,10 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 		{
 			string errorMessage = std::format(
 				"Encoder not found"
+				", ingestionJobKey: {}"
 				", workspaceKey: {}"
 				", encodersPoolLabel: {}",
-				workspaceKey, encodersPoolLabel
+				ingestionJobKey, workspaceKey, encodersPoolLabel
 			);
 			LOG_ERROR(errorMessage);
 
@@ -2539,10 +2541,11 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					// E' inutile continuare a fare la prossima select
 					string errorMessage = std::format(
 						"No Encoder available without cooldown, let's wait for the cooldown to end and try again"
+						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}"
 						", availableWithoutCooldown: {}",
-						workspaceKey, encodersPoolLabel, availableWithoutCooldown
+						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown
 					);
 					LOG_ERROR(errorMessage);
 
@@ -2554,11 +2557,12 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					// per cui aspettiamo che il cooldown finisca.
 					string errorMessage = std::format(
 						"The best selected Encoder is not available (not cooldown), let's wait for the cooldown to end and try again"
+						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}"
 						", availableWithoutCooldown: {}"
 						", respectedCooldown: {}",
-						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
+						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
 					);
 					LOG_ERROR(errorMessage);
 
@@ -2571,12 +2575,13 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					// per cui aspettiamo.
 					string errorMessage = std::format(
 						"The best selected Encoder has a CPU usage too huge, let's wait for the cooldown to end and try again"
+						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}"
 						", availableWithoutCooldown: {}"
 						", respectedCooldown: {}"
 						", cpuUsage: {}",
-						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown, cpuUsage
+						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown, cpuUsage
 					);
 					LOG_ERROR(errorMessage);
 
@@ -2657,9 +2662,10 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				{
 					string errorMessage = std::format(
 						"Encoder not found"
+						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}",
-						workspaceKey, encodersPoolLabel
+						ingestionJobKey, workspaceKey, encodersPoolLabel
 					);
 					LOG_ERROR(errorMessage);
 
@@ -2680,10 +2686,11 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca
 					string errorMessage = std::format(
 						"No Encoder available without cooldown, let's wait for the cooldown to end and try again"
+						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}"
 						", availableWithoutCooldown: {}",
-						workspaceKey, encodersPoolLabel, availableWithoutCooldown
+						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown
 					);
 					LOG_ERROR(errorMessage);
 
@@ -2695,11 +2702,12 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					// per cui aspettiamo che il cooldown finisca.
 					string errorMessage = std::format(
 						"The best selected Encoder is not available (not cooldown), let's wait for the cooldown to end and try again"
+						", ingestionJobKey: {}"
 						", workspaceKey: {}"
 						", encodersPoolLabel: {}"
 						", availableWithoutCooldown: {}"
 						", respectedCooldown: {}",
-						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
+						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
 					);
 					LOG_ERROR(errorMessage);
 

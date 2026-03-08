@@ -52,12 +52,13 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 		int port;
 		if (_encoderLoadBalancer == "roundRobin")
 			tie (encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port) =
-				_mmsEngineDBFacade->getEncoderUsingRoundRobin(workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped,
-					externalEncoderAllowed);
+				_mmsEngineDBFacade->getEncoderUsingRoundRobin(ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel,
+					encoderKeyToBeSkipped, externalEncoderAllowed);
 		else // if (_encoderLoadBalancer == "leastResources")
 			tie (encoderKey, externalEncoder, protocol, publicServerName, internalServerName, port) =
-				_mmsEngineDBFacade->getEncoderUsingLeastResources(workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped,
-					externalEncoderAllowed);
+				_mmsEngineDBFacade->getEncoderUsingLeastResources(ingestionJobKey,
+					workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, externalEncoderAllowed
+				);
 
 		string encoderURL = std::format("{}://{}:{}", protocol,
 			externalEncoder ? publicServerName : internalServerName, port);
