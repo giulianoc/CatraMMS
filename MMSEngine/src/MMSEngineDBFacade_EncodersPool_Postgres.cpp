@@ -2539,7 +2539,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				{
 					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca.
 					// E' inutile continuare a fare la prossima select
-					string errorMessage = std::format(
+					LOG_ERROR(
 						"No Encoder available without cooldown, let's wait for the cooldown to end and try again"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -2547,7 +2547,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						", availableWithoutCooldown: {}",
 						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown
 					);
-					LOG_ERROR(errorMessage);
 
 					throw MaxConcurrentJobsReached();
 				}
@@ -2555,7 +2554,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				{
 					// abbiamo encoders cooldown (altrimenti entrevamo nell'if precedente) ma quello selezionato non è cooldown,
 					// per cui aspettiamo che il cooldown finisca.
-					string errorMessage = std::format(
+					LOG_ERROR(
 						"The best selected Encoder is not available (not cooldown), let's wait for the cooldown to end and try again"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -2564,7 +2563,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						", respectedCooldown: {}",
 						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
 					);
-					LOG_ERROR(errorMessage);
 
 					throw MaxConcurrentJobsReached();
 				}
@@ -2573,7 +2571,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				{
 					// l'encoder selezionato, quello con cpuusage minore, ha una cpuusage maggiore del massimo consentito,
 					// per cui aspettiamo.
-					string errorMessage = std::format(
+					LOG_ERROR(
 						"The best selected Encoder has a CPU usage too huge, let's wait for the cooldown to end and try again"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -2583,7 +2581,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						", cpuUsage: {}",
 						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown, cpuUsage
 					);
-					LOG_ERROR(errorMessage);
 
 					throw MaxConcurrentJobsReached();
 				}
@@ -2684,7 +2681,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				if (availableWithoutCooldown == 0)
 				{
 					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca
-					string errorMessage = std::format(
+					LOG_ERROR(
 						"No Encoder available without cooldown, let's wait for the cooldown to end and try again"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -2692,7 +2689,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						", availableWithoutCooldown: {}",
 						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown
 					);
-					LOG_ERROR(errorMessage);
 
 					throw MaxConcurrentJobsReached();
 				}
@@ -2700,7 +2696,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				{
 					// abbiamo encoders cooldown (altrimenti entrevamo nell'if precedente) ma quello selezionato non è cooldown,
 					// per cui aspettiamo che il cooldown finisca.
-					string errorMessage = std::format(
+					LOG_ERROR(
 						"The best selected Encoder is not available (not cooldown), let's wait for the cooldown to end and try again"
 						", ingestionJobKey: {}"
 						", workspaceKey: {}"
@@ -2709,7 +2705,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						", respectedCooldown: {}",
 						ingestionJobKey, workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
 					);
-					LOG_ERROR(errorMessage);
 
 					throw MaxConcurrentJobsReached();
 				}
