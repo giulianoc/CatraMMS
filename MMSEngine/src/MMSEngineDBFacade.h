@@ -2569,6 +2569,7 @@ class MMSEngineDBFacade
 	long maxQueryElapsed(const std::string queryLabel);
 
 	int16_t _cpuStatsUpdateIntervalInSeconds;
+	int32_t _maxEncoderCPUPerCent;
 
 #ifdef __POSTGRES__
 #else

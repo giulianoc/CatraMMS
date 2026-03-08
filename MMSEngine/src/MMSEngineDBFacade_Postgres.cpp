@@ -134,6 +134,10 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 	LOG_TRACE("Configuration item"
 		", scheduler->cpuStatsUpdateIntervalInSeconds: {}", _cpuStatsUpdateIntervalInSeconds
 	);
+	_maxEncoderCPUPerCent = JsonPath(&configurationRoot)["ffmpeg"]["maxEncoderCPUPerCent"].as<int32_t>(70);
+	LOG_TRACE("Configuration item"
+		", ffmpeg->maxEncoderCPUPerCent: {}", _maxEncoderCPUPerCent
+	);
 
 	_logger->info(__FILEREF__ + "Looking for adminEmailAddresses");
 	for (auto& adminEmailAddressesRoot : JsonPath(&configurationRoot)["api"]["adminEmailAddresses"].as<json>(json::array()))

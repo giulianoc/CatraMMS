@@ -2445,8 +2445,6 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			// Viene in questo modo anche implementato una sorta di roundrobin nel caso in cui un encoder fallisce
 			// e viene rieseguita immediatamente la select
 			int32_t encodersUnavailableAfterSelectedInSeconds = _cpuStatsUpdateIntervalInSeconds * 2 + 5;
-			// commentato perchè non dobbiamo rischiare che nessun encoder sia ritornato
-			// int16_t maxCPUUsage = 70;
 
 			// un encoder non viene considerato se non ha ricevuto aggiornamenti delle statistiche da almeno XX seconds
 			// Il controllo su bandwidthUsageUpdateTime e cpuUsageUpdateTime indicano anche che l'encoder è running
@@ -2499,6 +2497,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						e.encoderKey,
 						s.selectable AS respectedCooldown,
 						s.availableWithoutCooldown,
+						e.cpuUsage,
 						e.external,
 						e.protocol,
 						e.publicServerName,
@@ -2527,6 +2526,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				encoderKey = (*sqlResultSet)[0]["encoderKey"].as<int64_t>();
 				respectedCooldown = (*sqlResultSet)[0]["respectedCooldown"].as<bool>();
 				availableWithoutCooldown = (*sqlResultSet)[0]["availableWithoutCooldown"].as<int64_t>();
+				auto cpuUsage = (*sqlResultSet)[0]["cpuUsage"].as<int32_t>();
 				external = (*sqlResultSet)[0]["external"].as<bool>();
 				protocol = (*sqlResultSet)[0]["protocol"].as<string>();
 				publicServerName = (*sqlResultSet)[0]["publicServerName"].as<string>();
@@ -2559,6 +2559,24 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 						", availableWithoutCooldown: {}"
 						", respectedCooldown: {}",
 						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
+					);
+					LOG_ERROR(errorMessage);
+
+					throw MaxConcurrentJobsReached();
+				}
+
+				if (cpuUsage > _maxEncoderCPUPerCent)
+				{
+					// l'encoder selezionato, quello con cpuusage minore, ha una cpuusage maggiore del massimo consentito,
+					// per cui aspettiamo.
+					string errorMessage = std::format(
+						"The best selected Encoder has a CPU usage too huge, let's wait for the cooldown to end and try again"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}"
+						", availableWithoutCooldown: {}"
+						", respectedCooldown: {}"
+						", cpuUsage: {}",
+						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown, cpuUsage
 					);
 					LOG_ERROR(errorMessage);
 
