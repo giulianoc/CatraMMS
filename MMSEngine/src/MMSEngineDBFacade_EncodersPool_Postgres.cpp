@@ -2492,7 +2492,14 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					    FOR UPDATE SKIP LOCKED
 					)
 					UPDATE MMS_Encoder e
-					SET selectedLastTime = p.ts
+					SET selectedLastTime =
+					    CASE
+					        WHEN s.availableWithoutCooldown > 0
+					         AND s.selectable
+					         AND e.cpuUsage <= {maxEncoderCPUPerCent}
+					        THEN p.ts
+					        ELSE e.selectedLastTime
+					    END
 					FROM selectedEncoder s CROSS JOIN params p
 					WHERE e.encoderKey = s.encoderKey
 					RETURNING
@@ -2509,7 +2516,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					fmt::arg("encodersUnavailableAfterSelectedInSeconds", encodersUnavailableAfterSelectedInSeconds),
 					fmt::arg("externalEncoderCondition", externalEncoderCondition),
 					fmt::arg("encodersKeyList", encodersKeyList),
-					fmt::arg("encodersUnavailableIfNotReceivedStatsUpdatesInSeconds", encodersUnavailableIfNotReceivedStatsUpdatesInSeconds)
+					fmt::arg("encodersUnavailableIfNotReceivedStatsUpdatesInSeconds", encodersUnavailableIfNotReceivedStatsUpdatesInSeconds),
+					fmt::arg("maxEncoderCPUPerCent", _maxEncoderCPUPerCent)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
@@ -2535,6 +2543,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				internalServerName = (*sqlResultSet)[0]["internalServerName"].as<string>();
 				port = (*sqlResultSet)[0]["port"].as<int>();
 
+				// questa condizione è anche nel comando SQL (SET selectedLastTime)
 				if (availableWithoutCooldown == 0)
 				{
 					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca.
@@ -2550,6 +2559,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 
 					throw MaxConcurrentJobsReached();
 				}
+
+				// questa condizione è anche nel comando SQL (SET selectedLastTime)
 				if (!respectedCooldown)
 				{
 					// abbiamo encoders cooldown (altrimenti entrevamo nell'if precedente) ma quello selezionato non è cooldown,
@@ -2567,6 +2578,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					throw MaxConcurrentJobsReached();
 				}
 
+				// questa condizione è anche nel comando SQL (SET selectedLastTime)
 				if (cpuUsage > _maxEncoderCPUPerCent)
 				{
 					// l'encoder selezionato, quello con cpuusage minore, ha una cpuusage maggiore del massimo consentito,
@@ -2627,7 +2639,13 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					    FOR UPDATE SKIP LOCKED
 					)
 					UPDATE MMS_Encoder e
-					SET selectedLastTime = p.ts
+					SET selectedLastTime =
+					    CASE
+					        WHEN s.availableWithoutCooldown > 0
+					         AND s.selectable
+					        THEN p.ts
+					        ELSE e.selectedLastTime
+					    END
 					FROM selectedEncoder s CROSS JOIN params p
 					WHERE e.encoderKey = s.encoderKey
 					RETURNING
@@ -2678,6 +2696,7 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 				internalServerName = (*sqlResultSet)[0]["internalServerName"].as<string>();
 				port = (*sqlResultSet)[0]["port"].as<int>();
 
+				// questa condizione è anche nel comando SQL (SET selectedLastTime)
 				if (availableWithoutCooldown == 0)
 				{
 					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca
@@ -2692,6 +2711,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 
 					throw MaxConcurrentJobsReached();
 				}
+
+				// questa condizione è anche nel comando SQL (SET selectedLastTime)
 				if (!respectedCooldown)
 				{
 					// abbiamo encoders cooldown (altrimenti entrevamo nell'if precedente) ma quello selezionato non è cooldown,
