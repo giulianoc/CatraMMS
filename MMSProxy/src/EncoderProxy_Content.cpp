@@ -52,10 +52,9 @@ void EncoderProxy::encodeContentVideoAudio(string ffmpegURI, int maxConsecutiveE
 
 bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int maxConsecutiveEncodingStatusFailures)
 {
-	string encodersPool = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
+	auto encodersPool = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
 
 	string ffmpegEncoderURL;
-	// string ffmpegURI = _ffmpegEncodeURI;
 	try
 	{
 		_currentUsedFFMpegExternalEncoder = false;
@@ -64,10 +63,10 @@ bool EncoderProxy::encodeContent_VideoAudio_through_ffmpeg(string ffmpegURI, int
 		{
 			int64_t encoderKeyToBeSkipped = -1;
 			bool externalEncoderAllowed = true;
-			tuple<int64_t, string, bool> encoderDetails = _encodersLoadBalancer->getEncoderURL(
-				_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace, encoderKeyToBeSkipped, externalEncoderAllowed
+			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) =
+				_encodersLoadBalancer->getEncoderURL(_encodingItem->_ingestionJobKey, encodersPool, _encodingItem->_workspace,
+				encoderKeyToBeSkipped, externalEncoderAllowed
 			);
-			tie(_currentUsedFFMpegEncoderKey, _currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = encoderDetails;
 
 			LOG_INFO(
 				"getEncoderHost"

@@ -41,6 +41,16 @@ if [ "$continueFromIndex" = "" ]; then
 
 	#echo "./helper/ingestionWorkflow.sh $mmsUserKey \"$mmsAPIKey\" \"$title\" \"$tag\" \"$ingester\" $retention $fileFormat"
 	ingestionJobKey=$($scriptDirectory/helper/ingestionWorkflow.sh $mmsUserKey "$mmsAPIKey" "$title" "$tag" "$uniqueName" "$ingester" $retention $fileFormat)
+	ingestionWorkflowStatus=$?
+	if [ $ingestionWorkflowStatus -ne 0 ]; then
+		if [ $ingestionWorkflowStatus -eq 2 ]; then
+    			echo "ingestionWorkflow.sh failed, the 'jq' command could not be found, please install it"
+    			exit 1
+		else
+    			echo "ingestionWorkflow.sh failed"
+    			exit 1
+		fi
+	fi
 
 	if [ "$ingestionJobKey" = "" ]; then
 		echo "ingestionWorkflow.sh failed"

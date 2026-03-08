@@ -34,11 +34,12 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 	LOG_INFO(
 		"Received getEncoderURL"
 		", ingestionJobKey: {}"
+		", encoderLoadBalancer: {}"
 		", workspaceKey: {}"
 		", encodersPoolLabel: {}"
 		", encoderKeyToBeSkipped: {}"
 		", _encoderLoadBalancer: {}",
-		ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, _encoderLoadBalancer
+		ingestionJobKey, _encoderLoadBalancer, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, _encoderLoadBalancer
 	);
 
 	try
@@ -76,16 +77,16 @@ tuple<int64_t, string, bool> EncodersLoadBalancer::getEncoderURL(
 	}
 	catch (exception &e)
 	{
-		string errorMessage = std::format(
+		LOG_ERROR(
 			"getEncoderURL failed"
 			", ingestionJobKey: {}"
+			", _encoderLoadBalancer: {}"
 			", workspaceKey: {}"
 			", encodersPoolLabel: {}"
 			", encoderKeyToBeSkipped: {}"
-			", e.what(): {}",
-			ingestionJobKey, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, e.what()
+			", exception: {}",
+			ingestionJobKey, _encoderLoadBalancer, workspace->_workspaceKey, encodersPoolLabel, encoderKeyToBeSkipped, e.what()
 		);
-		LOG_ERROR(errorMessage);
 
 		throw;
 	}

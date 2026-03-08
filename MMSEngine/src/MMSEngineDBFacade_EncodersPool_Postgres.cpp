@@ -1,5 +1,6 @@
 
 #include "CurlWrapper.h"
+#include "FFMpegWrapper.h"
 #include "JSONUtils.h"
 #include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
@@ -2397,6 +2398,10 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 	int64_t workspaceKey, string encodersPoolLabel, int64_t encoderKeyToBeSkipped, bool externalEncoderAllowed
 )
 {
+	// Questo metodo puo ritornare:
+	// - EncoderNotFound: il job termina con errore
+	// - MaxConcurrentJobsReached: il job rimane "vivo" e l'engine continua a chiamare questo metodo per avere un encoder
+	// - encoderKey, external, protocol, publicServerName, internalServerName, port: il job continua con l'encoder ritornato
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -2424,6 +2429,8 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 		}
 
 		int64_t encoderKey;
+		bool respectedCooldown;
+		int64_t availableWithoutCooldown;
 		bool external = false;
 		string protocol;
 		string publicServerName;
@@ -2445,40 +2452,63 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 			// Il controllo su bandwidthUsageUpdateTime e cpuUsageUpdateTime indicano anche che l'encoder è running
 			// FROM MMS_Encoder e CROSS JOIN params p (prodotto cartesiano) indica che ogni riga di MMS_Encoder/selectedEncoder
 			//		contiene anche il timestamp ts
+
 			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 			{
 				int16_t encodersUnavailableIfNotReceivedStatsUpdatesInSeconds = 60;
 
 				// Query 1 – tentativo “ideale” (metriche fresche)
-				string sqlStatement = std::format(R"(
+				string sqlStatement = fmt::format(R"(
 					WITH params AS (
 						SELECT NOW() at time zone 'utc' AS ts),
+					rankedEncoders AS (
+					    SELECT
+					        e.encoderKey,
+					        (p.ts - e.selectedLastTime) >= INTERVAL '{encodersUnavailableAfterSelectedInSeconds} seconds' AS selectable,
+					        e.cpuUsage,
+					        (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) AS bandwidthUsage,
+							-- OVER: Trasforma la funzione in window function, significa che il conteggio è calcolato su tutto il result set,
+							-- ma restituito su ogni riga.
+							COUNT(*) FILTER (
+							            WHERE (p.ts - e.selectedLastTime) >= INTERVAL '{encodersUnavailableAfterSelectedInSeconds} seconds'
+							        ) OVER () AS availableWithoutCooldown
+					    FROM MMS_Encoder e CROSS JOIN params p
+					    WHERE e.enabled = true {externalEncoderCondition}
+					        AND e.encoderKey in ({encodersKeyList})
+					        AND e.cpuUsageUpdateTime IS NOT NULL
+					        AND e.bandwidthUsageUpdateTime IS NOT NULL
+					        AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{encodersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					        AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{encodersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					),
 					selectedEncoder AS (
-						SELECT e.encoderKey
-						FROM MMS_Encoder e CROSS JOIN params p
-						WHERE e.enabled = true {}
-							AND e.encoderKey in ({})
-							AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds'
-							AND e.cpuUsageUpdateTime IS NOT NULL
-							AND e.bandwidthUsageUpdateTime IS NOT NULL
-							AND (p.ts - e.bandwidthUsageUpdateTime) <= INTERVAL '{} seconds'
-							AND (p.ts - e.cpuUsageUpdateTime) <= INTERVAL '{} seconds'
-						ORDER BY
-							e.cpuUsage ASC NULLS LAST,
-							(e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST
-						LIMIT 1
-						FOR UPDATE SKIP LOCKED
+					    SELECT *
+					    FROM rankedEncoders
+					    ORDER BY
+							-- preferisci encoder non usati recentemente
+					        selectable DESC,
+					        cpuUsage ASC NULLS LAST,
+					        bandwidthUsage ASC NULLS LAST
+					    LIMIT 1
+					    FOR UPDATE SKIP LOCKED
 					)
 					UPDATE MMS_Encoder e
 					SET selectedLastTime = p.ts
 					FROM selectedEncoder s CROSS JOIN params p
 					WHERE e.encoderKey = s.encoderKey
 					RETURNING
-						e.encoderKey, e.external, e.protocol,
-						e.publicServerName, e.internalServerName, e.port
+						e.encoderKey,
+						s.selectable AS respectedCooldown,
+						s.availableWithoutCooldown,
+						e.external,
+						e.protocol,
+						e.publicServerName,
+						e.internalServerName,
+						e.port
 					)",
-					externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds,
-					encodersUnavailableIfNotReceivedStatsUpdatesInSeconds, encodersUnavailableIfNotReceivedStatsUpdatesInSeconds
+					fmt::arg("encodersUnavailableAfterSelectedInSeconds", encodersUnavailableAfterSelectedInSeconds),
+					fmt::arg("externalEncoderCondition", externalEncoderCondition),
+					fmt::arg("encodersKeyList", encodersKeyList),
+					fmt::arg("encodersUnavailableIfNotReceivedStatsUpdatesInSeconds", encodersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
@@ -2492,38 +2522,107 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 					StringUtils::normalizeWhitespace(sqlStatement, true), trans.connection->getConnectionId(), elapsed
 				);
 			}
-			if (sqlResultSet->empty())
+			if (!sqlResultSet->empty())
+			{
+				encoderKey = (*sqlResultSet)[0]["encoderKey"].as<int64_t>();
+				respectedCooldown = (*sqlResultSet)[0]["respectedCooldown"].as<bool>();
+				availableWithoutCooldown = (*sqlResultSet)[0]["availableWithoutCooldown"].as<int64_t>();
+				external = (*sqlResultSet)[0]["external"].as<bool>();
+				protocol = (*sqlResultSet)[0]["protocol"].as<string>();
+				publicServerName = (*sqlResultSet)[0]["publicServerName"].as<string>();
+				internalServerName = (*sqlResultSet)[0]["internalServerName"].as<string>();
+				port = (*sqlResultSet)[0]["port"].as<int>();
+
+				if (availableWithoutCooldown == 0)
+				{
+					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca.
+					// E' inutile continuare a fare la prossima select
+					string errorMessage = std::format(
+						"No Encoder available without cooldown, let's wait for the cooldown to end and try again"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}"
+						", availableWithoutCooldown: {}",
+						workspaceKey, encodersPoolLabel, availableWithoutCooldown
+					);
+					LOG_ERROR(errorMessage);
+
+					throw MaxConcurrentJobsReached();
+				}
+				if (!respectedCooldown)
+				{
+					// abbiamo encoders cooldown (altrimenti entrevamo nell'if precedente) ma quello selezionato non è cooldown,
+					// per cui aspettiamo che il cooldown finisca.
+					string errorMessage = std::format(
+						"The best selected Encoder is not available (not cooldown), let's wait for the cooldown to end and try again"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}"
+						", availableWithoutCooldown: {}"
+						", respectedCooldown: {}",
+						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
+					);
+					LOG_ERROR(errorMessage);
+
+					throw MaxConcurrentJobsReached();
+				}
+
+				return make_tuple(encoderKey, external, protocol, publicServerName, internalServerName, port);
+			}
+
 			{
 				LOG_WARN("getEncoderUsingLeastResources. Ideal encoder not selected, trying without considering cpu/bandwidth usage");
 
 				// Query 2 – fallback (metriche stale ammesse)
 				// se cpu/banda smettono di aggiornarsi è importante ritornare un encoder ed evitare che il sistema si blocchi
-				string sqlStatement = std::format(R"(
+				string sqlStatement = fmt::format(R"(
 					WITH params AS (
 						SELECT NOW() AT TIME ZONE 'utc' AS ts
 					),
+					rankedEncoders AS (
+					    SELECT
+					        e.encoderKey,
+					        (p.ts - e.selectedLastTime) >= INTERVAL '{encodersUnavailableAfterSelectedInSeconds} seconds' AS selectable,
+					        e.cpuUsage,
+					        (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) AS bandwidthUsage,
+							e.selectedLastTime,
+							-- OVER: Trasforma la funzione in window function, significa che il conteggio è calcolato su tutto il result set,
+							-- ma restituito su ogni riga.
+							COUNT(*) FILTER (
+							            WHERE (p.ts - e.selectedLastTime) >= INTERVAL '{encodersUnavailableAfterSelectedInSeconds} seconds'
+							        ) OVER () AS availableWithoutCooldown
+					    FROM MMS_Encoder e CROSS JOIN params p
+					    WHERE e.enabled = true {externalEncoderCondition}
+					        AND e.encoderKey in ({encodersKeyList})
+					),
 					selectedEncoder AS (
-						SELECT e.encoderKey
-						FROM MMS_Encoder e CROSS JOIN params p
-						WHERE e.enabled = true {}
-						  AND e.encoderKey IN ({})
-						  AND (p.ts - e.selectedLastTime) >= INTERVAL '{} seconds'
-						ORDER BY
-						  (p.ts - e.selectedLastTime) DESC,  -- rotazione degli encoder
-						  e.cpuUsage ASC NULLS LAST,
-						  (e.txAvgBandwidthUsage + e.rxAvgBandwidthUsage) ASC NULLS LAST
-						LIMIT 1
-						FOR UPDATE SKIP LOCKED
+					    SELECT *
+					    FROM rankedEncoders CROSS JOIN params p
+					    ORDER BY
+							-- rotazione degli encoder
+							(p.ts - selectedLastTime) DESC,
+							-- preferisci encoder non usati recentemente
+					        selectable DESC,
+					        cpuUsage ASC NULLS LAST,
+					        bandwidthUsage ASC NULLS LAST
+					    LIMIT 1
+					    FOR UPDATE SKIP LOCKED
 					)
 					UPDATE MMS_Encoder e
 					SET selectedLastTime = p.ts
 					FROM selectedEncoder s CROSS JOIN params p
 					WHERE e.encoderKey = s.encoderKey
 					RETURNING
-					  e.encoderKey, e.external, e.protocol,
-					  e.publicServerName, e.internalServerName, e.port
+						e.encoderKey,
+						s.selectable AS respectedCooldown,
+						s.availableWithoutCooldown,
+						e.external,
+						e.protocol,
+						e.publicServerName,
+						e.internalServerName,
+						e.port
 					)",
-				externalEncoderCondition, encodersKeyList, encodersUnavailableAfterSelectedInSeconds
+					fmt::arg("externalEncoderCondition", externalEncoderCondition),
+					fmt::arg("encodersKeyList", encodersKeyList),
+					fmt::arg("encodersUnavailableAfterSelectedInSeconds", encodersUnavailableAfterSelectedInSeconds)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
 				sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
@@ -2548,17 +2647,50 @@ tuple<int64_t, bool, string, string, string, int> MMSEngineDBFacade::getEncoderU
 
 					throw EncoderNotFound(errorMessage);
 				}
+
+				encoderKey = (*sqlResultSet)[0]["encoderKey"].as<int64_t>();
+				respectedCooldown = (*sqlResultSet)[0]["respectedCooldown"].as<bool>();
+				availableWithoutCooldown = (*sqlResultSet)[0]["availableWithoutCooldown"].as<int64_t>();
+				external = (*sqlResultSet)[0]["external"].as<bool>();
+				protocol = (*sqlResultSet)[0]["protocol"].as<string>();
+				publicServerName = (*sqlResultSet)[0]["publicServerName"].as<string>();
+				internalServerName = (*sqlResultSet)[0]["internalServerName"].as<string>();
+				port = (*sqlResultSet)[0]["port"].as<int>();
+
+				if (availableWithoutCooldown == 0)
+				{
+					// non abbiamo encoder disponibili senza cooldown, per cui aspettiamo che il cooldown finisca
+					string errorMessage = std::format(
+						"No Encoder available without cooldown, let's wait for the cooldown to end and try again"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}"
+						", availableWithoutCooldown: {}",
+						workspaceKey, encodersPoolLabel, availableWithoutCooldown
+					);
+					LOG_ERROR(errorMessage);
+
+					throw MaxConcurrentJobsReached();
+				}
+				if (!respectedCooldown)
+				{
+					// abbiamo encoders cooldown (altrimenti entrevamo nell'if precedente) ma quello selezionato non è cooldown,
+					// per cui aspettiamo che il cooldown finisca.
+					string errorMessage = std::format(
+						"The best selected Encoder is not available (not cooldown), let's wait for the cooldown to end and try again"
+						", workspaceKey: {}"
+						", encodersPoolLabel: {}"
+						", availableWithoutCooldown: {}"
+						", respectedCooldown: {}",
+						workspaceKey, encodersPoolLabel, availableWithoutCooldown, respectedCooldown
+					);
+					LOG_ERROR(errorMessage);
+
+					throw MaxConcurrentJobsReached();
+				}
+
+				return make_tuple(encoderKey, external, protocol, publicServerName, internalServerName, port);
 			}
-
-			encoderKey = (*sqlResultSet)[0]["encoderKey"].as<int64_t>();
-			external = (*sqlResultSet)[0]["external"].as<bool>();
-			protocol = (*sqlResultSet)[0]["protocol"].as<string>();
-			publicServerName = (*sqlResultSet)[0]["publicServerName"].as<string>();
-			internalServerName = (*sqlResultSet)[0]["internalServerName"].as<string>();
-			port = (*sqlResultSet)[0]["port"].as<int>();
 		}
-
-		return make_tuple(encoderKey, external, protocol, publicServerName, internalServerName, port);
 	}
 	catch (exception const &e)
 	{
