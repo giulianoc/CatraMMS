@@ -1081,17 +1081,6 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 tuple<string, string, string> MMSEngineDBFacade::confirmRegistration(string confirmationCode, int expirationInDaysWorkspaceDefaultValue)
 {
 	string apiKey;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
@@ -1453,18 +1442,6 @@ void MMSEngineDBFacade::addWorkspaceForAdminUsers(PostgresConnTrans &trans, int6
 
 vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_t userKey, int64_t workspaceKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -1633,18 +1610,6 @@ vector<tuple<int64_t, string, string>> MMSEngineDBFacade::deleteWorkspace(int64_
 
 tuple<bool, string, string> MMSEngineDBFacade::unshareWorkspace(int64_t userKey, int64_t workspaceKey)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
 	{
@@ -1924,7 +1889,7 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 		{
 			{
 				string sqlStatement = std::format(
-					"select userKey, name, country, timezone, insolvent, "
+					"select userKey, name, country, timezone, preferences, insolvent, "
 					"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 					"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate "
 					"from MMS_User where eMailAddress = {} and password = {} "
@@ -1932,7 +1897,7 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 					trans.transaction->quote(eMailAddress), trans.transaction->quote(password)
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				result res = trans.transaction->exec(sqlStatement);
+				shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
 					"default", elapsed,
@@ -1942,73 +1907,26 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 					", elapsed (millisecs): @{}@",
 					sqlStatement, trans.connection->getConnectionId(), elapsed
 				);
-				if (!empty(res))
+				if (!sqlResultSet->empty())
 				{
-					userKey = res[0]["userKey"].as<int64_t>();
+					userKey = (*sqlResultSet)[0]["userKey"].as<int64_t>();
 
-					string field = "userKey";
-					loginDetailsRoot[field] = userKey;
-
-					field = "name";
-					loginDetailsRoot[field] = res[0]["name"].as<string>();
-
-					field = "email";
-					loginDetailsRoot[field] = eMailAddress;
-
-					field = "country";
-					loginDetailsRoot[field] = res[0]["country"].as<string>();
-
-					field = "timezone";
-					loginDetailsRoot[field] = res[0]["timezone"].as<string>();
-
-					field = "creationDate";
-					loginDetailsRoot[field] = res[0]["creationDate"].as<string>();
-
-					field = "insolvent";
-					loginDetailsRoot[field] = res[0]["insolvent"].as<bool>();
-
-					field = "expirationDate";
-					loginDetailsRoot[field] = res[0]["expirationDate"].as<string>();
-
-					/*
-					{
-						sqlStatement =
-							"update MMS_User set lastSuccessfulLogin = NOW() "
-							"where userKey = ?";
-
-						shared_ptr<sql::PreparedStatement> preparedStatement (
-							conn->_sqlConnection->prepareStatement(sqlStatement));
-						int queryParameterIndex = 1;
-						preparedStatement->setInt64(queryParameterIndex++, userKey);
-
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						int rowsUpdated = preparedStatement->executeUpdate();
-						_logger->info(__FILEREF__ + "@SQL statistics@"
-							+ ", sqlStatement: " + sqlStatement
-							+ ", userKey: " + to_string(userKey)
-							+ ", rowsUpdated: " + to_string(rowsUpdated)
-							+ ", elapsed (secs): @" + to_string(chrono::duration_cast<chrono::seconds>(
-								chrono::system_clock::now() - startSql).count()) + "@"
-						);
-						if (rowsUpdated != 1)
-						{
-							string errorMessage = __FILEREF__ + "no update was done"
-									+ ", userKey: " + to_string(userKey)
-									+ ", rowsUpdated: " + to_string(rowsUpdated)
-									+ ", sqlStatement: " + sqlStatement
-							;
-							_logger->warn(errorMessage);
-
-							// throw runtime_error(errorMessage);
-						}
-					}
-					*/
+					loginDetailsRoot["userKey"] = userKey;
+					loginDetailsRoot["name"] = (*sqlResultSet)[0]["name"].as<string>();
+					loginDetailsRoot["email"] = eMailAddress;
+					loginDetailsRoot["country"] = (*sqlResultSet)[0]["country"].as<string>();
+					loginDetailsRoot["timezone"] = (*sqlResultSet)[0]["timezone"].as<string>();
+					loginDetailsRoot["preferences"] = (*sqlResultSet)[0]["preferences"].as<json>(nullptr);
+					loginDetailsRoot["creationDate"] = (*sqlResultSet)[0]["creationDate"].as<string>();
+					loginDetailsRoot["insolvent"] = (*sqlResultSet)[0]["insolvent"].as<bool>();
+					loginDetailsRoot["expirationDate"] = (*sqlResultSet)[0]["expirationDate"].as<string>();
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "email and/or password are wrong or user expired" + ", eMailAddress: " + eMailAddress +
-										  ", sqlStatement: " + sqlStatement;
-					_logger->error(errorMessage);
+					LOG_ERROR("email and/or password are wrong or user expired"
+						", eMailAddress: {}"
+						", sqlStatement: {}",
+						eMailAddress, sqlStatement);
 
 					throw LoginFailed();
 				}
@@ -2016,7 +1934,7 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 		}
 		catch (exception const &e)
 		{
-			sql_error const *se = dynamic_cast<sql_error const *>(&e);
+			auto const *se = dynamic_cast<sql_error const *>(&e);
 			if (se != nullptr)
 				LOG_ERROR(
 					"query failed"
@@ -2040,18 +1958,6 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 	}
 
 	{
-		/*
-		shared_ptr<PostgresConnection> conn = nullptr;
-
-		shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-		conn = connectionPool->borrow();
-		// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-		// Se questo non dovesse essere vero, unborrow non sarà chiamata
-		// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-		nontransaction trans{*(conn->_sqlConnection)};
-		*/
-
 		PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 		try
 		{
@@ -2086,7 +1992,7 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 		}
 		catch (exception const &e)
 		{
-			sql_error const *se = dynamic_cast<sql_error const *>(&e);
+			auto const *se = dynamic_cast<sql_error const *>(&e);
 			if (se != nullptr)
 				LOG_ERROR(
 					"query failed"
@@ -3496,23 +3402,13 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail(string email, boo
 }
 
 json MMSEngineDBFacade::updateUser(
-	bool admin, bool ldapEnabled, int64_t userKey, bool nameChanged, string name, bool emailChanged, string email, bool countryChanged,
-	string country, bool timezoneChanged, string timezone, bool insolventChanged, bool insolvent, bool expirationDateChanged,
-	string expirationUtcDate, bool passwordChanged, string newPassword, string oldPassword
+	bool admin, bool ldapEnabled, int64_t userKey, const optional<string>& name, const optional<string>& email,
+	const optional<string>& country, const optional<string>& timezone_, const optional<json>& preferencesRoot,
+	optional<bool> insolvent, const optional<string>& expirationUtcDate, const optional<string>& newPassword,
+	const optional<string>& oldPassword
 )
 {
 	json loginDetailsRoot;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -3521,7 +3417,7 @@ json MMSEngineDBFacade::updateUser(
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
 
-			if (passwordChanged)
+			if (newPassword && oldPassword)
 			{
 				string savedPassword;
 				{
@@ -3541,17 +3437,20 @@ json MMSEngineDBFacade::updateUser(
 						savedPassword = res[0]["password"].as<string>();
 					else
 					{
-						string errorMessage =
-							__FILEREF__ + "User is not present" + ", userKey: " + to_string(userKey) + ", sqlStatement: " + sqlStatement;
-						_logger->error(errorMessage);
+						string errorMessage = std::format(
+							"User is not present"
+							", userKey: {}"
+							", sqlStatement: {}", userKey, sqlStatement);
+						LOG_ERROR(errorMessage);
 
 						throw runtime_error(errorMessage);
 					}
 				}
 
-				if (savedPassword != oldPassword || newPassword == "")
+				if (savedPassword != *oldPassword || newPassword->empty())
 				{
-					string errorMessage = __FILEREF__ + "old password is wrong or newPassword is not valid" + ", userKey: " + to_string(userKey);
+					string errorMessage = std::format("old password is wrong or newPassword is not valid"
+						", userKey: {}", userKey);
 					_logger->warn(errorMessage);
 
 					throw runtime_error(errorMessage);
@@ -3559,58 +3458,67 @@ json MMSEngineDBFacade::updateUser(
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("password = {}", trans.transaction->quote(newPassword));
+				setSQL += std::format("password = {}", trans.transaction->quote(*newPassword));
 				oneParameterPresent = true;
 			}
 
-			if (nameChanged)
+			if (name)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("name = {}", trans.transaction->quote(name));
+				setSQL += std::format("name = {}", trans.transaction->quote(*name));
 				oneParameterPresent = true;
 			}
 
-			if (emailChanged)
+			if (email)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("eMailAddress = {}", trans.transaction->quote(email));
+				setSQL += std::format("eMailAddress = {}", trans.transaction->quote(*email));
 				oneParameterPresent = true;
 			}
 
-			if (countryChanged)
+			if (country)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("country = {}", trans.transaction->quote(country));
+				setSQL += std::format("country = {}", trans.transaction->quote(*country));
 				oneParameterPresent = true;
 			}
 
-			if (timezoneChanged)
+			if (timezone_)
 			{
-				if (!isTimezoneValid(timezone))
-					timezone = "CET";
+				string localTimezone = *timezone_;
+				if (!isTimezoneValid(localTimezone))
+					localTimezone = "CET";
 
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("timezone = {}", trans.transaction->quote(timezone));
+				setSQL += std::format("timezone = {}", trans.transaction->quote(localTimezone));
 				oneParameterPresent = true;
 			}
 
-			if (admin && insolventChanged)
+			if (preferencesRoot)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("insolvent = {}", insolvent);
+				setSQL += std::format("preferences = {}", trans.transaction->quote(JSONUtils::toString(*preferencesRoot)));
 				oneParameterPresent = true;
 			}
 
-			if (admin && expirationDateChanged)
+			if (admin && insolvent)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += std::format("expirationDate = {}", trans.transaction->quote(expirationUtcDate));
+				setSQL += std::format("insolvent = {}", *insolvent);
+				oneParameterPresent = true;
+			}
+
+			if (admin && expirationUtcDate)
+			{
+				if (oneParameterPresent)
+					setSQL += (", ");
+				setSQL += std::format("expirationDate = {}", trans.transaction->quote(*expirationUtcDate));
 				oneParameterPresent = true;
 			}
 
@@ -3650,12 +3558,12 @@ json MMSEngineDBFacade::updateUser(
 				"select "
 				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
-				"userKey, name, eMailAddress, country, timezone, insolvent "
+				"userKey, name, eMailAddress, country, timezone, preferences, insolvent "
 				"from MMS_User where userKey = {}",
 				userKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3665,38 +3573,24 @@ json MMSEngineDBFacade::updateUser(
 				", elapsed (millisecs): @{}@",
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
-			if (!empty(res))
+			if (!sqlResultSet->empty())
 			{
-				string field = "creationDate";
-				loginDetailsRoot[field] = res[0]["creationDate"].as<string>();
-
-				field = "expirationDate";
-				loginDetailsRoot[field] = res[0]["expirationDate"].as<string>();
-
-				field = "userKey";
-				loginDetailsRoot[field] = res[0]["userKey"].as<int64_t>();
-
-				field = "name";
-				loginDetailsRoot[field] = res[0]["name"].as<string>();
-
-				field = "email";
-				loginDetailsRoot[field] = res[0]["eMailAddress"].as<string>();
-
-				field = "country";
-				loginDetailsRoot[field] = res[0]["country"].as<string>();
-
-				field = "timezone";
-				loginDetailsRoot[field] = res[0]["timezone"].as<string>();
-
-				field = "insolvent";
-				loginDetailsRoot[field] = res[0]["insolvent"].as<bool>();
-
-				field = "ldapEnabled";
-				loginDetailsRoot[field] = ldapEnabled;
+				loginDetailsRoot["userKey"] = (*sqlResultSet)[0]["userKey"].as<int64_t>();
+				loginDetailsRoot["name"] = (*sqlResultSet)[0]["name"].as<string>();
+				loginDetailsRoot["email"] = (*sqlResultSet)[0]["eMailAddress"].as<string>();
+				loginDetailsRoot["country"] = (*sqlResultSet)[0]["country"].as<string>();
+				loginDetailsRoot["timezone"] = (*sqlResultSet)[0]["timezone"].as<string>();
+				loginDetailsRoot["preferences"] = (*sqlResultSet)[0]["preferences"].as<json>(nullptr);
+				loginDetailsRoot["creationDate"] = (*sqlResultSet)[0]["creationDate"].as<string>();
+				loginDetailsRoot["insolvent"] = (*sqlResultSet)[0]["insolvent"].as<bool>();
+				loginDetailsRoot["expirationDate"] = (*sqlResultSet)[0]["expirationDate"].as<string>();
+				loginDetailsRoot["ldapEnabled"] = ldapEnabled;
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "userKey is wrong" + ", userKey: " + to_string(userKey) + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format("userKey is wrong"
+					", userKey: {}"
+					", sqlStatement: {}", userKey, sqlStatement);
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -3705,7 +3599,7 @@ json MMSEngineDBFacade::updateUser(
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"
@@ -3803,24 +3697,12 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 	string name;
 	string email;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
 		int resetPasswordRetentionInHours = 24;
 
-		int userKey;
+		int64_t userKey;
 		{
 			string sqlStatement = std::format(
 				"select u.name, u.eMailAddress, u.userKey "
@@ -3848,8 +3730,9 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 			}
 			else
 			{
-				string errorMessage = __FILEREF__ + "reset password token is not present or is expired" +
-									  ", resetPasswordToken: " + resetPasswordToken + ", sqlStatement: " + sqlStatement;
+				string errorMessage = std::format("reset password token is not present or is expired"
+					", resetPasswordToken: {}"
+					", sqlStatement: {}", resetPasswordToken, sqlStatement);
 				_logger->error(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -3889,7 +3772,7 @@ pair<string, string> MMSEngineDBFacade::resetPassword(string resetPasswordToken,
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"

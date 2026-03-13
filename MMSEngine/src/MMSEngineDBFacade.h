@@ -16,7 +16,6 @@
 #include "Workspace.h"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
-#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -1446,9 +1445,11 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	nlohmann::json updateUser(
-		bool admin, bool ldapEnabled, int64_t userKey, bool nameChanged, std::string name, bool emailChanged, std::string email, bool countryChanged,
-		std::string country, bool timezoneChanged, std::string timezone, bool insolventChanged, bool insolvent, bool expirationDateChanged,
-		std::string expirationDate, bool passwordChanged, std::string newPassword, std::string oldPassword
+		bool admin, bool ldapEnabled, int64_t userKey, const std::optional<std::string> &name, const std::optional<std::string> &email,
+		const std::optional<std::string> &country, const std::optional<std::string> &timezone_,
+		const std::optional<nlohmann::json> &preferencesRoot, std::optional<bool> insolvent,
+		const std::optional<std::string> &expirationUtcDate, const std::optional<std::string> &newPassword,
+		const std::optional<std::string> &oldPassword
 	);
 #else
 	nlohmann::json updateUser(

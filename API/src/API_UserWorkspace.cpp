@@ -1445,21 +1445,15 @@ void API::updateUser(
 
 	try
 	{
-		string name;
-		bool nameChanged;
-		string email;
-		bool emailChanged;
-		string country;
-		bool countryChanged;
-		string timezone;
-		bool timezoneChanged;
-		bool insolvent;
-		bool insolventChanged;
-		string expirationUtcDate;
-		bool expirationDateChanged;
-		bool passwordChanged;
-		string newPassword;
-		string oldPassword;
+		optional<string> name;
+		optional<string> email;
+		optional<string> country;
+		optional<string> timezone_;
+		optional<json> preferencesRoot;
+		optional<bool> insolvent;
+		optional<string> expirationUtcDate;
+		optional<string> newPassword;
+		optional<string> oldPassword;
 
 		json metadataRoot;
 		try
@@ -1478,29 +1472,15 @@ void API::updateUser(
 			throw runtime_error(errorMessage);
 		}
 
-		nameChanged = false;
-		emailChanged = false;
-		countryChanged = false;
-		timezoneChanged = false;
-		insolventChanged = false;
-		expirationDateChanged = false;
-		passwordChanged = false;
 		if (!_ldapEnabled)
 		{
-			string field = "name";
-			if (JSONUtils::isPresent(metadataRoot, field))
+			name = JsonPath(&metadataRoot)["name"].asOpt<string>();
+			email = JsonPath(&metadataRoot)["email"].asOpt<string>();
+			if (email)
 			{
-				name = JSONUtils::as<string>(metadataRoot, field, "");
-				nameChanged = true;
-			}
-
-			field = "email";
-			if (JSONUtils::isPresent(metadataRoot, field))
-			{
-				email = JSONUtils::as<string>(metadataRoot, field, "");
 				try
 				{
-					emailFormatCheck(email);
+					emailFormatCheck(*email);
 				}
 				catch (runtime_error &e)
 				{
@@ -1508,72 +1488,35 @@ void API::updateUser(
 						"Wrong email format"
 						", email: {}"
 						", exception: {}",
-						email, e.what()
+						*email, e.what()
 					);
 					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);
 				}
-
-				emailChanged = true;
 			}
+			country = JsonPath(&metadataRoot)["country"].asOpt<string>();
+			timezone_ = JsonPath(&metadataRoot)["timezone"].asOpt<string>();
+			if (!timezone_)
+				timezone_ = "CET";
 
-			field = "country";
-			if (JSONUtils::isPresent(metadataRoot, field))
-			{
-				country = JSONUtils::as<string>(metadataRoot, field, "");
-				countryChanged = true;
-			}
-
-			field = "timezone";
-			if (JSONUtils::isPresent(metadataRoot, field))
-			{
-				timezone = JSONUtils::as<string>(metadataRoot, field, "CET");
-				timezoneChanged = true;
-			}
+			preferencesRoot = JsonPath(&metadataRoot)["preferences"].asOpt<json>();
 
 			if (apiAuthorizationDetails->admin)
-			{
-				field = "insolvent";
-				if (JSONUtils::isPresent(metadataRoot, field))
-				{
-					insolvent = JSONUtils::as<bool>(metadataRoot, field, false);
-					insolventChanged = true;
-				}
-			}
+				insolvent = JsonPath(&metadataRoot)["insolvent"].asOpt<bool>();
 
 			if (apiAuthorizationDetails->admin)
-			{
-				field = "expirationDate";
-				if (JSONUtils::isPresent(metadataRoot, field))
-				{
-					expirationUtcDate = JSONUtils::as<string>(metadataRoot, field, "");
-					expirationDateChanged = true;
-				}
-			}
+				expirationUtcDate = JsonPath(&metadataRoot)["expirationDate"].asOpt<string>();
 
-			if (JSONUtils::isPresent(metadataRoot, "newPassword") && JSONUtils::isPresent(metadataRoot, "oldPassword"))
-			{
-				passwordChanged = true;
-				newPassword = JSONUtils::as<string>(metadataRoot, "newPassword", "");
-				oldPassword = JSONUtils::as<string>(metadataRoot, "oldPassword", "");
-			}
+			newPassword = JsonPath(&metadataRoot)["newPassword"].asOpt<string>();
+			oldPassword = JsonPath(&metadataRoot)["oldPassword"].asOpt<string>();
 		}
 		else
 		{
-			string field = "country";
-			if (JSONUtils::isPresent(metadataRoot, field))
-			{
-				country = JSONUtils::as<string>(metadataRoot, field, "");
-				countryChanged = true;
-			}
-
-			field = "timezone";
-			if (JSONUtils::isPresent(metadataRoot, field))
-			{
-				timezone = JSONUtils::as<string>(metadataRoot, field, "CET");
-				timezoneChanged = true;
-			}
+			country = JsonPath(&metadataRoot)["country"].asOpt<string>();
+			timezone_ = JsonPath(&metadataRoot)["timezone"].asOpt<string>();
+			if (!timezone_)
+				timezone_ = "CET";
 		}
 
 		try
@@ -1583,13 +1526,12 @@ void API::updateUser(
 				", userKey: {}"
 				", name: {}"
 				", email: {}",
-				apiAuthorizationDetails->userKey, name, email
+				apiAuthorizationDetails->userKey, name ? *name : "", email ? *email : ""
 			);
 
 			json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
-				apiAuthorizationDetails->admin, _ldapEnabled, apiAuthorizationDetails->userKey, nameChanged, name, emailChanged, email,
-				countryChanged, country, timezoneChanged, timezone, insolventChanged, insolvent, expirationDateChanged,
-				expirationUtcDate, passwordChanged, newPassword, oldPassword
+				apiAuthorizationDetails->admin, _ldapEnabled, apiAuthorizationDetails->userKey, name, email, country, timezone_,
+				preferencesRoot, insolvent, expirationUtcDate, newPassword, oldPassword
 			);
 
 			LOG_INFO(
@@ -1597,7 +1539,7 @@ void API::updateUser(
 				", userKey: {}"
 				", name: {}"
 				", email: {}",
-				apiAuthorizationDetails->userKey, name, email
+				apiAuthorizationDetails->userKey, name ? *name : "", email ? *email : ""
 			);
 
 			string responseBody = JSONUtils::toString(loginDetailsRoot);
