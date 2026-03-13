@@ -21,7 +21,7 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 	try
 	{
 		string sqlStatement = std::format(
-			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, w.notes, w.externalDeliveries, "
+			"select w.workspaceKey, w.name, w.directoryName, w.maxEncodingPriority, w.notes, "
 			"w.preferences, wc.maxStorageInGB, wc.currentCostForStorage, "
 			"wc.dedicatedEncoder_power_1, wc.currentCostForDedicatedEncoder_power_1, "
 			"wc.dedicatedEncoder_power_2, wc.currentCostForDedicatedEncoder_power_2, "
@@ -74,23 +74,6 @@ shared_ptr<Workspace> MMSEngineDBFacade::getWorkspace(int64_t workspaceKey)
 				", json: {}"
 				", exception: {}",
 				res[0]["preferences"].as<string>(), e.what()
-			);
-		}
-		try
-		{
-			workspace->_externalDeliveriesRoot =
-				res[0]["externalDeliveries"].is_null() ? nullptr
-				: JSONUtils::toJson<json>(res[0]["externalDeliveries"].as<string>());
-		}
-		catch (exception &e)
-		{
-			workspace->_externalDeliveriesRoot = nullptr;
-
-			LOG_ERROR(
-				"JSONUtils::toJson externalDeliveriesRoot failed"
-				", json: {}"
-				", exception: {}",
-				res[0]["externalDeliveries"].as<string>(), e.what()
 			);
 		}
 
@@ -1936,18 +1919,6 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 	// se quest'ultima fallisce, comunque non viene bloccato il login
 	int64_t userKey = -1;
 	{
-		/*
-		shared_ptr<PostgresConnection> conn = nullptr;
-
-		shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _slavePostgresConnectionPool;
-
-		conn = connectionPool->borrow();
-		// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-		// Se questo non dovesse essere vero, unborrow non sarà chiamata
-		// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-		nontransaction trans{*(conn->_sqlConnection)};
-		*/
-
 		PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 		try
 		{
@@ -2206,7 +2177,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -2220,7 +2191,7 @@ json MMSEngineDBFacade::getWorkspaceList(int64_t userKey, bool admin, bool costD
 				sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 					"w.encodingPeriod, w.maxIngestionsNumber, "
-					"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, a.apiKey, a.isOwner, a.isDefault, "
+					"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
 					"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
@@ -2297,7 +2268,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, "
+				"w.languageCode, w.timezone, w.preferences, "
 				"a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
@@ -2334,7 +2305,7 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 			{
 				string sqlStatement = std::format(
 					"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
-					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, w.preferences, w.externalDeliveries, "
+					"w.encodingPeriod, w.maxIngestionsNumber, w.languageCode, w.timezone, w.preferences, "
 					"a.apiKey, a.isOwner, a.isDefault, "
 					"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 					"a.permissions, "
@@ -2463,11 +2434,6 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 		else
 			workspaceDetailRoot["preferences"] = row["preferences"].as<string>();
 
-		if (row["externalDeliveries"].is_null())
-			workspaceDetailRoot["externalDeliveries"] = nullptr;
-		else
-			workspaceDetailRoot["externalDeliveries"] = row["externalDeliveries"].as<string>();
-
 		if (userAPIKeyInfo)
 		{
 			json userAPIKeyRoot;
@@ -2570,7 +2536,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 	bool nameChanged, const string& newName,
 	bool maxEncodingPriorityChanged, const string& newMaxEncodingPriority, bool encodingPeriodChanged, const std::string& newEncodingPeriod,
 	bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, const string& newLanguageCode, bool timezoneChanged,
-	const string& newTimezone, bool preferencesChanged, const string& newPreferences, bool externalDeliveriesChanged, const string& newExternalDeliveries,
+	const string& newTimezone, bool preferencesChanged, const string& newPreferences,
 	bool expirationDateChanged, const string& newExpirationUtcDate,
 
 	bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,
@@ -2786,15 +2752,6 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL += std::format("preferences = {}", newPreferences.empty() ? "null" : trans.transaction->quote(newPreferences));
-				oneParameterPresent = true;
-			}
-
-			if (externalDeliveriesChanged)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL +=
-					std::format("externalDeliveries = {}", newExternalDeliveries.empty() ? "null" : trans.transaction->quote(newExternalDeliveries));
 				oneParameterPresent = true;
 			}
 
@@ -3016,7 +2973,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			string sqlStatement = std::format(
 				"select w.workspaceKey, w.enabled, w.name, w.notes, w.maxEncodingPriority, "
 				"w.encodingPeriod, w.maxIngestionsNumber, "
-				"w.languageCode, w.timezone, w.preferences, w.externalDeliveries, a.apiKey, a.isOwner, a.isDefault, "
+				"w.languageCode, w.timezone, w.preferences, a.apiKey, a.isOwner, a.isDefault, "
 				"to_char(a.expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
 				"a.permissions, "
 				"to_char(w.creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "

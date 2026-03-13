@@ -393,7 +393,6 @@ int main(int argc, char **argv)
 
 		auto mmsDeliveryAuthorization =
 			make_shared<MMSDeliveryAuthorization>(configurationRoot, mmsStorage, mmsEngineDBFacade);
-		mmsDeliveryAuthorization->startUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
 		FCGX_Init();
 
@@ -467,7 +466,6 @@ int main(int argc, char **argv)
 
 		cpuUsageThread->stop();
 		bandwidthPercentileThread->stop();
-		mmsDeliveryAuthorization->stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
 
 		LOG_INFO("API shutdown");
 

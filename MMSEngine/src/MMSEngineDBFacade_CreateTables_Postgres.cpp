@@ -152,23 +152,24 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		retentionOfStatisticData();
 
 		{
-			string sqlStatement = "create table if not exists MMS_Workspace ("
-								  "workspaceKey					bigint GENERATED ALWAYS AS IDENTITY,"
-								  "creationDate					timestamp without time zone default (now() at time zone 'utc'),"
-								  "name									text NOT NULL,"
-								  "directoryName				text NOT NULL,"
-								  "workspaceType				smallint NOT NULL,"
-								  "deliveryURL					text NULL,"
-								  "enabled							boolean NOT NULL,"
-								  "maxEncodingPriority	text NOT NULL,"
-								  "encodingPeriod				text NOT NULL,"
-								  "maxIngestionsNumber	integer NOT NULL,"
-								  "languageCode					text NOT NULL,"
-								  "timezone							text NOT NULL default 'CET',"
-								  "notes								text NULL,"
-								  "preferences					jsonb,"
-								  "externalDeliveries		jsonb,"
-								  "constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey)) ";
+			string sqlStatement = R"(
+				create table if not exists MMS_Workspace (
+					workspaceKey bigint GENERATED ALWAYS AS IDENTITY,
+					creationDate timestamp without time zone default (now() at time zone 'utc'),
+					name text NOT NULL,
+					directoryName text NOT NULL,
+					workspaceType smallint NOT NULL,
+					deliveryURL text NULL,
+					enabled boolean NOT NULL,
+					maxEncodingPriority	text NOT NULL,
+					encodingPeriod text NOT NULL,
+					maxIngestionsNumber	integer NOT NULL,
+					languageCode text NOT NULL,
+					timezone text NOT NULL default 'CET',
+					notes text NULL,
+					preferences jsonb,
+					constraint MMS_Workspace_PK PRIMARY KEY (workspaceKey))
+			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -735,19 +736,22 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create table if not exists MMS_User ("
-								  "userKey				bigint GENERATED ALWAYS AS IDENTITY,"
-								  "name					text NULL,"
-								  "eMailAddress			text NULL,"
-								  "password				text NOT NULL,"
-								  "country				text NULL,"
-								  "timezone				text NOT NULL default 'CET',"
-								  "creationDate			timestamp without time zone default (now() at time zone 'utc'),"
-								  "insolvent				boolean NOT NULL default false,"
-								  "expirationDate			timestamp without time zone NOT NULL,"
-								  "lastSuccessfulLogin	timestamp without time zone NULL,"
-								  "constraint MMS_User_PK PRIMARY KEY (userKey), "
-								  "UNIQUE (eMailAddress))";
+			string sqlStatement = R"(
+				create table if not exists MMS_User (
+					userKey bigint GENERATED ALWAYS AS IDENTITY,
+					name text NULL,
+					eMailAddress text NULL,
+					password text NOT NULL,
+					country text NULL,
+					timezone text NOT NULL default 'CET',
+					preferences jsonb,
+					creationDate timestamp without time zone default (now() at time zone 'utc'),
+					insolvent boolean NOT NULL default false,
+					expirationDate timestamp without time zone NOT NULL,
+					lastSuccessfulLogin	timestamp without time zone NULL,
+					constraint MMS_User_PK PRIMARY KEY (userKey),
+					UNIQUE (eMailAddress))
+			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();

@@ -1415,8 +1415,7 @@ class MMSEngineDBFacade
 		const std::string& newEncodingPeriod,
 		bool maxIngestionsNumberChanged, int64_t newMaxIngestionsNumber, bool languageCodeChanged, const std::string& newLanguageCode,
 		bool timezoneChanged,
-		const std::string& newTimezone, bool preferencesChanged, const std::string& newPreferences, bool externalDeliveriesChanged,
-		const std::string& newExternalDeliveries,
+		const std::string& newTimezone, bool preferencesChanged, const std::string& newPreferences,
 		bool expirationDateChanged, const std::string& newExpirationDate,
 
 		bool maxStorageInGBChanged, int64_t maxStorageInGB, bool currentCostForStorageChanged, int64_t currentCostForStorage,

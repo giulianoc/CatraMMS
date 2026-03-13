@@ -1099,30 +1099,9 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 		{
 			if (!_ldapEnabled)
 			{
-				vector<string> mandatoryFields = {"email", "password"};
-				for (string field : mandatoryFields)
-				{
-					if (!JSONUtils::isPresent(metadataRoot, field))
-					{
-						string errorMessage = std::format(
-							"Json field is not present or it is null"
-							", Json field: {}",
-							field
-						);
-						LOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-
-				string field = "email";
-				string email = JSONUtils::as<string>(metadataRoot, field, "");
-
-				field = "password";
-				string password = JSONUtils::as<string>(metadataRoot, field, "");
-
-				field = "remoteClientIPAddress";
-				remoteClientIPAddress = JSONUtils::as<string>(metadataRoot, field, "");
+				auto email = JsonPath(&metadataRoot).required()["email"].as<string>();
+				auto password = JsonPath(&metadataRoot).required()["password"].as<string>();
+				remoteClientIPAddress = JsonPath(&metadataRoot)["remoteClientIPAddress"].as<string>();
 
 				try
 				{
@@ -1134,14 +1113,10 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 
 					loginDetailsRoot = _mmsEngineDBFacade->login(email, password);
 
-					field = "ldapEnabled";
-					loginDetailsRoot[field] = _ldapEnabled;
+					loginDetailsRoot["ldapEnabled"] = _ldapEnabled;
+					loginDetailsRoot["mmsVersion"] = _mmsVersion;
 
-					field = "mmsVersion";
-					loginDetailsRoot[field] = _mmsVersion;
-
-					field = "userKey";
-					userKey = JSONUtils::as<int64_t>(loginDetailsRoot, field, 0);
+					userKey = JsonPath(&loginDetailsRoot)["userKey"].as<int64_t>(0);
 
 					LOG_INFO(
 						"Login User"
@@ -1925,8 +1900,6 @@ void API::updateWorkspace(
 		bool timezoneChanged = false;
 		string newPreferences;
 		bool preferencesChanged = false;
-		string newExternalDeliveries;
-		bool externalDeliveriesChanged = false;
 		string newExpirationUtcDate;
 		bool expirationDateChanged = false;
 
@@ -2047,12 +2020,6 @@ void API::updateWorkspace(
 		{
 			preferencesChanged = true;
 			newPreferences = JSONUtils::as<string>(metadataRoot, "preferences", "");
-		}
-
-		if (JSONUtils::isPresent(metadataRoot, "externalDeliveries"))
-		{
-			externalDeliveriesChanged = true;
-			newExternalDeliveries = JSONUtils::as<string>(metadataRoot, "externalDeliveries", "");
 		}
 
 		field = "maxStorageInGB";
@@ -2227,7 +2194,7 @@ void API::updateWorkspace(
 				apiAuthorizationDetails->userKey, apiAuthorizationDetails->workspace->_workspaceKey, notesChanged, newNotes, enabledChanged, newEnabled, nameChanged, newName,
 				maxEncodingPriorityChanged, newMaxEncodingPriority, encodingPeriodChanged, newEncodingPeriod, maxIngestionsNumberChanged,
 				newMaxIngestionsNumber, languageCodeChanged, newLanguageCode, timezoneChanged, newTimezone, preferencesChanged, newPreferences,
-				externalDeliveriesChanged, newExternalDeliveries, expirationDateChanged, newExpirationUtcDate,
+				expirationDateChanged, newExpirationUtcDate,
 
 				maxStorageInGBChanged, maxStorageInGB, currentCostForStorageChanged, currentCostForStorage, dedicatedEncoder_power_1Changed,
 				dedicatedEncoder_power_1, currentCostForDedicatedEncoder_power_1Changed, currentCostForDedicatedEncoder_power_1,

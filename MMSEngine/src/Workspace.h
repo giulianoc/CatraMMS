@@ -15,7 +15,6 @@ struct Workspace
 	std::string _directoryName;
 	int _maxEncodingPriority;
 	std::string _notes;
-	nlohmann::json _externalDeliveriesRoot = nullptr;
 	nlohmann::json _preferences = nullptr;
 
 	unsigned long _maxStorageInGB;

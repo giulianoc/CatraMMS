@@ -57,19 +57,10 @@ class MMSDeliveryAuthorization
 		long expirationInSeconds, const std::string& playerIP, bool uriEnabled, bool playerIPEnabled = false
 );
 
-	std::unordered_map<std::string, uint64_t> getExternalDeliveriesRunningHosts();
-	void updateExternalDeliveriesBandwidthHosts(const std::unordered_map<std::string, uint64_t> &hostsBandwidth);
-
-	void startUpdateExternalDeliveriesGroupsBandwidthUsageThread();
-	void stopUpdateExternalDeliveriesGroupsBandwidthUsageThread();
-
 private:
 	nlohmann::json _configuration;
 	std::shared_ptr<MMSStorage> _mmsStorage;
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
-
-	std::mutex _externalDeliveriesMutex;
-	std::map<std::string, std::shared_ptr<HostsBandwidthTracker>> _externalDeliveriesGroups;
 
 	std::string _keyPairId;
 	std::string _privateKeyPEMPathName;
@@ -84,8 +75,6 @@ private:
 	std::string _apiProtocol;
 	int32_t _apiPort;
 	std::string _apiVersion;
-	bool _updateExternalDeliveriesGroupsBandwidthUsageThreadStop;
-	std::thread _updateExternalDeliveriesGroupsBandwidthUsageThread;
 
 	std::shared_ptr<WorkspaceRateChecking> _workspaceRateChecking;
 
@@ -97,7 +86,4 @@ private:
 		const std::optional<double> playerLatitude, const std::optional<double> playerLongitude,
 		const std::string &defaultDeliveryHost
 	);
-	std::shared_ptr<HostsBandwidthTracker> getHostBandwidthTracker(int64_t workspaceKey, const std::string &groupName, const nlohmann::json &hostGroupRoot);
-
-	void updateExternalDeliveriesGroupsBandwidthUsageThread();
 };
