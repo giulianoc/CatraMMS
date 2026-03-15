@@ -744,7 +744,6 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					password text NOT NULL,
 					country text NULL,
 					timezone text NOT NULL default 'CET',
-					preferences jsonb,
 					creationDate timestamp without time zone default (now() at time zone 'utc'),
 					insolvent boolean NOT NULL default false,
 					expirationDate timestamp without time zone NOT NULL,

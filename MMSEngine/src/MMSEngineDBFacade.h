@@ -1447,7 +1447,7 @@ class MMSEngineDBFacade
 	nlohmann::json updateUser(
 		bool admin, bool ldapEnabled, int64_t userKey, const std::optional<std::string> &name, const std::optional<std::string> &email,
 		const std::optional<std::string> &country, const std::optional<std::string> &timezone_,
-		const std::optional<nlohmann::json> &preferencesRoot, std::optional<bool> insolvent,
+		std::optional<bool> insolvent,
 		const std::optional<std::string> &expirationUtcDate, const std::optional<std::string> &newPassword,
 		const std::optional<std::string> &oldPassword
 	);

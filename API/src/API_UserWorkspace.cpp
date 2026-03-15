@@ -1449,7 +1449,6 @@ void API::updateUser(
 		optional<string> email;
 		optional<string> country;
 		optional<string> timezone_;
-		optional<json> preferencesRoot;
 		optional<bool> insolvent;
 		optional<string> expirationUtcDate;
 		optional<string> newPassword;
@@ -1500,8 +1499,6 @@ void API::updateUser(
 			if (!timezone_)
 				timezone_ = "CET";
 
-			preferencesRoot = JsonPath(&metadataRoot)["preferences"].asOpt<json>();
-
 			if (apiAuthorizationDetails->admin)
 				insolvent = JsonPath(&metadataRoot)["insolvent"].asOpt<bool>();
 
@@ -1531,7 +1528,7 @@ void API::updateUser(
 
 			json loginDetailsRoot = _mmsEngineDBFacade->updateUser(
 				apiAuthorizationDetails->admin, _ldapEnabled, apiAuthorizationDetails->userKey, name, email, country, timezone_,
-				preferencesRoot, insolvent, expirationUtcDate, newPassword, oldPassword
+				insolvent, expirationUtcDate, newPassword, oldPassword
 			);
 
 			LOG_INFO(

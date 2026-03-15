@@ -1889,7 +1889,7 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 		{
 			{
 				string sqlStatement = std::format(
-					"select userKey, name, country, timezone, preferences, insolvent, "
+					"select userKey, name, country, timezone, insolvent, "
 					"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 					"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate "
 					"from MMS_User where eMailAddress = {} and password = {} "
@@ -1916,7 +1916,6 @@ json MMSEngineDBFacade::login(const string& eMailAddress, const string& password
 					loginDetailsRoot["email"] = eMailAddress;
 					loginDetailsRoot["country"] = (*sqlResultSet)[0]["country"].as<string>();
 					loginDetailsRoot["timezone"] = (*sqlResultSet)[0]["timezone"].as<string>();
-					loginDetailsRoot["preferences"] = (*sqlResultSet)[0]["preferences"].as<json>(nullptr);
 					loginDetailsRoot["creationDate"] = (*sqlResultSet)[0]["creationDate"].as<string>();
 					loginDetailsRoot["insolvent"] = (*sqlResultSet)[0]["insolvent"].as<bool>();
 					loginDetailsRoot["expirationDate"] = (*sqlResultSet)[0]["expirationDate"].as<string>();
@@ -3403,7 +3402,7 @@ pair<int64_t, string> MMSEngineDBFacade::getUserDetailsByEmail(string email, boo
 
 json MMSEngineDBFacade::updateUser(
 	bool admin, bool ldapEnabled, int64_t userKey, const optional<string>& name, const optional<string>& email,
-	const optional<string>& country, const optional<string>& timezone_, const optional<json>& preferencesRoot,
+	const optional<string>& country, const optional<string>& timezone_,
 	optional<bool> insolvent, const optional<string>& expirationUtcDate, const optional<string>& newPassword,
 	const optional<string>& oldPassword
 )
@@ -3498,14 +3497,6 @@ json MMSEngineDBFacade::updateUser(
 				oneParameterPresent = true;
 			}
 
-			if (preferencesRoot)
-			{
-				if (oneParameterPresent)
-					setSQL += (", ");
-				setSQL += std::format("preferences = {}", trans.transaction->quote(JSONUtils::toString(*preferencesRoot)));
-				oneParameterPresent = true;
-			}
-
 			if (admin && insolvent)
 			{
 				if (oneParameterPresent)
@@ -3558,7 +3549,7 @@ json MMSEngineDBFacade::updateUser(
 				"select "
 				"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate, "
 				"to_char(expirationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as expirationDate, "
-				"userKey, name, eMailAddress, country, timezone, preferences, insolvent "
+				"userKey, name, eMailAddress, country, timezone, insolvent "
 				"from MMS_User where userKey = {}",
 				userKey
 			);
@@ -3580,7 +3571,6 @@ json MMSEngineDBFacade::updateUser(
 				loginDetailsRoot["email"] = (*sqlResultSet)[0]["eMailAddress"].as<string>();
 				loginDetailsRoot["country"] = (*sqlResultSet)[0]["country"].as<string>();
 				loginDetailsRoot["timezone"] = (*sqlResultSet)[0]["timezone"].as<string>();
-				loginDetailsRoot["preferences"] = (*sqlResultSet)[0]["preferences"].as<json>(nullptr);
 				loginDetailsRoot["creationDate"] = (*sqlResultSet)[0]["creationDate"].as<string>();
 				loginDetailsRoot["insolvent"] = (*sqlResultSet)[0]["insolvent"].as<bool>();
 				loginDetailsRoot["expirationDate"] = (*sqlResultSet)[0]["expirationDate"].as<string>();
