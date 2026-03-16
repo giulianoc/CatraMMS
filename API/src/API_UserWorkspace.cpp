@@ -109,9 +109,9 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 		password = JSONUtils::as<string>(metadataRoot, "password", "");
 		shareWorkspaceCode = JSONUtils::as<string>(metadataRoot, "shareWorkspaceCode", "");
 
-		string name = JSONUtils::as<string>(metadataRoot, "name", "");
-		string country = JSONUtils::as<string>(metadataRoot, "country", "");
-		string timezone = JSONUtils::as<string>(metadataRoot, "timezone", "CET");
+		auto name = JSONUtils::as<string>(metadataRoot, "name", "");
+		auto country = JSONUtils::as<string>(metadataRoot, "country", "");
+		auto timezone_ = JSONUtils::as<string>(metadataRoot, "timezone", "CET");
 
 		if (shareWorkspaceCode.empty())
 		{
@@ -120,7 +120,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			int maxIngestionsNumber;
 			int maxStorageInMB;
 
-			string workspaceName = JSONUtils::as<string>(metadataRoot, "workspaceName", "");
+			auto workspaceName = JSONUtils::as<string>(metadataRoot, "workspaceName", "");
 			if (workspaceName.empty())
 			{
 				if (!name.empty())
@@ -148,7 +148,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 
 #ifdef __POSTGRES__
 				tuple<int64_t, int64_t, string> workspaceKeyUserKeyAndConfirmationCode = _mmsEngineDBFacade->registerUserAndAddWorkspace(
-					name, email, password, country, timezone, workspaceName, "" /* notes */,
+					name, email, password, country, timezone_, workspaceName, "" /* notes */,
 					MMSEngineDBFacade::WorkspaceType::IngestionAndDelivery,	   // MMSEngineDBFacade::WorkspaceType workspaceType
 					"",														   // string deliveryURL,
 					encodingPriority,										   //  MMSEngineDBFacade::EncodingPriority maxEncodingPriority,
@@ -156,7 +156,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 					maxIngestionsNumber,									   // long maxIngestionsNumber,
 					maxStorageInMB,											   // long maxStorageInMB,
 					"",														   // string languageCode,
-					timezone,												   // by default, timezone del workspace coincide con quello dell'utente
+					timezone_,												   // by default, timezone del workspace coincide con quello dell'utente
 					chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // chrono::system_clock::time_point userExpirationDate
 				);
 #else
@@ -277,7 +277,7 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 				);
 
 				tuple<int64_t, int64_t, string> registerUserDetails = _mmsEngineDBFacade->registerUserAndShareWorkspace(
-					name, email, password, country, timezone, shareWorkspaceCode,
+					name, email, password, country, timezone_, shareWorkspaceCode,
 					chrono::system_clock::now() + chrono::hours(24 * 365 * 10) // chrono::system_clock::time_point userExpirationDate
 				);
 
@@ -317,7 +317,8 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 
 			string responseBody = JSONUtils::toString(registrationRoot);
 
-			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201, responseBody);
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201,
+				responseBody);
 
 			string confirmationURL = _guiProtocol + "://" + _guiHostname;
 			if (_guiProtocol == "https" && _guiPort != 443)
@@ -351,7 +352,8 @@ void API::registerUser(const string_view& sThreadId, FCGX_Request &request,
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	   // i.e.: info@catramms-cloud.com
-				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
+				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject,
+				emailBody, "text/html; charset=\"UTF-8\""
 			);
 			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
@@ -581,18 +583,19 @@ void API::createWorkspace(
 
 			vector<string> emailBody;
 			emailBody.push_back(string("<p>Dear ") + emailAddressAndName.second + ",</p>");
-			emailBody.push_back(string("<p>the Workspace has been created successfully</p>"));
+			emailBody.emplace_back("<p>the Workspace has been created successfully</p>");
 			emailBody.push_back(string("<p>here follows the confirmation code ") + confirmationCode + " to be used to confirm the registration</p>");
 			// string confirmURL = _apiProtocol + "://" + _apiHostname + ":" + to_string(_apiPort) + "/catramms/" + _apiVersion + "/user/"
 			// 	+ to_string(userKey) + "/" + confirmationCode;
 			emailBody.push_back(string("<p>Click <a href=\"") + confirmationURL + "\">here</a> to confirm the registration</p>");
-			emailBody.push_back("<p>Have a nice day, best regards</p>");
-			emailBody.push_back("<p>MMS technical support</p>");
+			emailBody.emplace_back("<p>Have a nice day, best regards</p>");
+			emailBody.emplace_back("<p>MMS technical support</p>");
 
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	   // i.e.: info@catramms-cloud.com
-				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
+				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject,
+				emailBody, "text/html; charset=\"UTF-8\""
 			);
 			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
@@ -690,7 +693,7 @@ void API::shareWorkspace_(
 		string name;
 		bool userAlreadyPresent;
 
-		string email = JSONUtils::as<string>(metadataRoot, "email", "");
+		auto email = JSONUtils::as<string>(metadataRoot, "email", "");
 		try
 		{
 			emailFormatCheck(email);
@@ -755,6 +758,9 @@ void API::shareWorkspace_(
 		bool applicationRecorder = JsonPath(&metadataRoot)["applicationRecorder"].as<bool>(false);
 		bool createRemoveLiveChannel = JsonPath(&metadataRoot)["createRemoveLiveChannel"].as<bool>(false);
 		bool updateEncoderAndDeliveryStats = JsonPath(&metadataRoot)["updateEncoderAndDeliveryStats"].as<bool>(false);
+		bool appUploadMediaContent = JsonPath(&metadataRoot)["appUploadMediaContent"].as<bool>(false);
+		bool appCaptureScreenAndProxy = JsonPath(&metadataRoot)["appCaptureScreenAndProxy"].as<bool>(false);
+		bool appStreamAndProxy = JsonPath(&metadataRoot)["appStreamAndProxy"].as<bool>(false);
 
 		try
 		{
@@ -784,7 +790,8 @@ void API::shareWorkspace_(
 					MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
-					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
+					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
+					appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
@@ -832,7 +839,8 @@ void API::shareWorkspace_(
 				CurlWrapper::sendEmail(
 					_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 					_emailUserName,	   // i.e.: info@catramms-cloud.com
-					_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
+					_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject,
+					emailBody, "text/html; charset=\"UTF-8\""
 				);
 				// EMailSender emailSender(_logger, _configuration);
 				// bool useMMSCCToo = true;
@@ -856,7 +864,8 @@ void API::shareWorkspace_(
 					MMSEngineDBFacade::CodeType::ShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
-					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats
+					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
+					appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
@@ -1292,6 +1301,9 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						bool applicationRecorder = true;
 						bool createRemoveLiveChannel = true;
 						bool updateEncoderAndDeliveryStats = false;
+						bool appUploadMediaContent = false;
+						bool appCaptureScreenAndProxy = false;
+						bool appStreamAndProxy = false;
 						pair<int64_t, string> userKeyAndEmail = _mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName, email,
 							"", // userCountry,
@@ -1299,7 +1311,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							shareWorkspace, editMedia,
 							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
 							applicationRecorder, createRemoveLiveChannel,
-							updateEncoderAndDeliveryStats,
+							updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy,
 							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 							// chrono::system_clock::time_point userExpirationDate
@@ -1639,7 +1651,8 @@ void API::createTokenToResetPassword(const string_view& sThreadId, FCGX_Request 
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	   // i.e.: info@catramms-cloud.com
-				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
+				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject,
+				emailBody, "text/html; charset=\"UTF-8\""
 			);
 			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
@@ -1754,7 +1767,8 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 
 		try
 		{
-			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 200, "");
+			sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api,
+				200, "");
 
 			string tosCommaSeparated = email;
 			string subject = "Reset password";
@@ -1769,7 +1783,8 @@ void API::resetPassword(const string_view& sThreadId, FCGX_Request &request,
 			CurlWrapper::sendEmail(
 				_emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
 				_emailUserName,	   // i.e.: info@catramms-cloud.com
-				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject, emailBody, "text/html; charset=\"UTF-8\""
+				_emailPassword, _emailUserName, tosCommaSeparated, _emailCcsCommaSeparated, subject,
+				emailBody, "text/html; charset=\"UTF-8\""
 			);
 			// EMailSender emailSender(_logger, _configuration);
 			// bool useMMSCCToo = true;
@@ -1867,20 +1882,24 @@ void API::updateWorkspace(
 		bool currentCostForSupport_type_1Changed = false;
 		int64_t currentCostForSupport_type_1;
 
-		bool newCreateRemoveWorkspace;
-		bool newIngestWorkflow;
-		bool newCreateProfiles;
-		bool newDeliveryAuthorization;
-		bool newShareWorkspace;
-		bool newEditMedia;
-		bool newEditConfiguration;
-		bool newKillEncoding;
-		bool newCancelIngestionJob;
-		bool newEditEncodersPool;
-		bool newEditDeliveryServersPool;
-		bool newApplicationRecorder;
-		bool newCreateRemoveLiveChannel;
-		bool newUpdateEncoderAndDeliveryStats;
+		bool newCreateRemoveWorkspace = false;
+		bool newIngestWorkflow = false;
+		bool newCreateProfiles = false;
+		bool newDeliveryAuthorization = false;
+		bool newShareWorkspace = false;
+		bool newEditMedia = false;
+		bool newEditConfiguration = false;
+		bool newKillEncoding = false;
+		bool newCancelIngestionJob = false;
+		bool newEditEncodersPool = false;
+		bool newEditDeliveryServersPool = false;
+		bool newApplicationRecorder = false;
+		bool newCreateRemoveLiveChannel = false;
+		bool newUpdateEncoderAndDeliveryStats = false;
+		bool newAppUploadMediaContent = false;
+		bool newAppCaptureScreenAndProxy = false;
+		bool newAppStreamAndProxy = false;
+
 
 		json metadataRoot;
 		try
@@ -2056,7 +2075,8 @@ void API::updateWorkspace(
 					"shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
 					"cancelIngestionJob",	   "editEncodersPool", "editDeliveryServersPool", "applicationRecorder",
 					"createRemoveLiveChannel",
-					"updateEncoderAndDeliveryStats"};
+					"updateEncoderAndDeliveryStats", "appUploadMediaContent", "appCaptureScreenAndProxy", "appStreamAndProxy"
+				};
 				for (const string& field : mandatoryFields)
 				{
 					if (!JSONUtils::isPresent(userAPIKeyRoot, field))
@@ -2117,6 +2137,9 @@ void API::updateWorkspace(
 
 			newCreateRemoveLiveChannel = JSONUtils::as<bool>(userAPIKeyRoot, "createRemoveLiveChannel", false);
 			newUpdateEncoderAndDeliveryStats = JSONUtils::as<bool>(userAPIKeyRoot, "updateEncoderAndDeliveryStats", false);
+			newAppUploadMediaContent = JSONUtils::as<bool>(userAPIKeyRoot, "appUploadMediaContent", false);
+			newAppCaptureScreenAndProxy = JSONUtils::as<bool>(userAPIKeyRoot, "appCaptureScreenAndProxy", false);
+			newAppStreamAndProxy = JSONUtils::as<bool>(userAPIKeyRoot, "appStreamAndProxy", false);
 		}
 
 		try
@@ -2146,7 +2169,8 @@ void API::updateWorkspace(
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
 				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newEditDeliveryServersPool,
 				newApplicationRecorder,
-				newCreateRemoveLiveChannel, newUpdateEncoderAndDeliveryStats
+				newCreateRemoveLiveChannel, newUpdateEncoderAndDeliveryStats,
+				newAppUploadMediaContent, newAppCaptureScreenAndProxy, newAppStreamAndProxy
 			);
 #else
 			bool maxStorageInMBChanged = false;

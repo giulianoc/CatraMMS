@@ -1402,7 +1402,9 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 			apiAuthorizationDetails->canCancelIngestionJob,
 			apiAuthorizationDetails->canEditEncodersPool, apiAuthorizationDetails->canEditDeliveryServersPool,
 			apiAuthorizationDetails->canApplicationRecorder, apiAuthorizationDetails->canCreateRemoveLiveChannel,
-			apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats) = _mmsEngineDBFacade->checkAPIKey(password,
+			apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats, apiAuthorizationDetails->canAppUploadMediaContent,
+			apiAuthorizationDetails->canAppCaptureScreenAndProxy, apiAuthorizationDetails->canAppStreamAndProxy)
+		= _mmsEngineDBFacade->checkAPIKey(password,
 				// 2022-12-18: controllo della apikey, non vedo motivi per mettere true
 				false
 			);
