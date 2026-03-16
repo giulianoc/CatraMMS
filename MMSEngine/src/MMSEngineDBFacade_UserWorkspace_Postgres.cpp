@@ -2878,6 +2878,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 				"where workspaceKey = {} and userKey = {} ",
 				trans.transaction->quote(permissions), workspaceKey, userKey
 			);
+			LOG_INFO("sqlStatement: {}", sqlStatement);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
