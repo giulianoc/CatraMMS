@@ -21,10 +21,10 @@
 # with the authors.
 
 SET (HOWTOS
-#	"Record a Live Streaming - Create VOD from a Recording Live Streaming.pdf"
-#   "Record a Live Streaming - Using a MMS Workflow.pdf"
-#   "Record a Live Streaming - Using an URL for the live feed and the Recorder APP.pdf"
-#   "Register a new MMS account - Using the MMS WEB APP.pdf"
+	"Record a Live Streaming - Create VOD from a Recording Live Streaming.pdf"
+   "Record a Live Streaming - Using a MMS Workflow.pdf"
+   "Record a Live Streaming - Using an URL for the live feed and the Recorder APP.pdf"
+   "Register a new MMS account - Using the MMS WEB APP.pdf"
 )
 
 install (FILES ${HOWTOS} DESTINATION docs/howTo)

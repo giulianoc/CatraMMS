@@ -67,4 +67,4 @@ if(APPLE)
 endif()
 
 install(TARGETS MMSDelivery DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include)
+#install(FILES ${HEADERS} DESTINATION include)

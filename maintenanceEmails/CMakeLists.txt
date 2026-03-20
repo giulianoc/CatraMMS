@@ -18,11 +18,11 @@
 # allowed only after express negotiation of conditions with the authors.
 
 set(
-#        MAINTENANCE maintenanceAnnuncio-2023-10-12.html
-#        maintenanceCompleted-2023-10-12.html
-#        maintenanceAnnuncio-2024-11-22.html
-#        maintenanceAnnuncio-2025-01-22.html
-#        maintenanceAnnuncio-2025-01-22-2.html
+        MAINTENANCE maintenanceAnnuncio-2023-10-12.html
+        maintenanceCompleted-2023-10-12.html
+        maintenanceAnnuncio-2024-11-22.html
+        maintenanceAnnuncio-2025-01-22.html
+        maintenanceAnnuncio-2025-01-22-2.html
 )
 
 install(FILES ${MAINTENANCE} DESTINATION maintenanceEmails)

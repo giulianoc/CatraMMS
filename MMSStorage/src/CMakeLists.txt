@@ -66,4 +66,4 @@ if(APPLE)
 endif()
 
 install(TARGETS MMSStorage DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include)
+#install(FILES ${HEADERS} DESTINATION include)

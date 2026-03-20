@@ -143,4 +143,4 @@ endif()
 #endif()
 
 install(TARGETS MMSProxy DESTINATION lib)
-install(FILES ${HEADERS} DESTINATION include)
+#install(FILES ${HEADERS} DESTINATION include)
