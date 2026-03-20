@@ -21,7 +21,7 @@
 # with the authors.
 
 SET (DOCs
-	#	MediaManagementSystem.pdf
+#	MediaManagementSystem.pdf
 )
 
 install (FILES ${DOCs} DESTINATION docs)
