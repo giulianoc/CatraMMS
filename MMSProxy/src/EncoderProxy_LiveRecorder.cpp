@@ -6,7 +6,6 @@
 
 /*
  * File:   EnodingsManager.cpp
- * Author: giuliano
  *
  * Created on February 4, 2018, 7:18 PM
  */

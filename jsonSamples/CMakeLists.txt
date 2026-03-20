@@ -21,14 +21,14 @@
 # with the authors.
 
 SET (SAMPLEs
-	demo_1.json
-	demo_2.json
-	demo_3.json
-	demo_4.json
-	demo_5.json
-	demo_6.json
-	demo_7.json
-	free-logo.jpg
+#	demo_1.json
+#	demo_2.json
+#	demo_3.json
+#	demo_4.json
+#	demo_5.json
+#	demo_6.json
+#	demo_7.json
+#	free-logo.jpg
 )
 
 install (FILES ${SAMPLEs} DESTINATION jsonSamples)

@@ -49,7 +49,6 @@ int main(int iArgc, char *pArgv[])
 		emailProviderURL = JSONUtils::as<string>(configuration["EmailNotification"], "providerURL", "");
 		auto cryptedEmailUserName = JSONUtils::as<string>(configuration["EmailNotification"], "userName", "");
 		emailUserName = Encrypt::opensslDecrypt(cryptedEmailUserName);
-		emailUserName = "support@catramms-cloud.com";
 
 		{
 			string encryptedPassword = JSONUtils::as<string>(configuration["EmailNotification"], "password", "");
@@ -68,7 +67,7 @@ int main(int iArgc, char *pArgv[])
 
 		CurlWrapper::sendEmail(
 			emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
-			emailUserName,	  // i.e.: support@catramms-cloud.com
+			emailUserName,
 			emailPassword, emailUserName, tosCommaSeparated,
 			emailUserName, // cc
 			subject, emailBody, "text/html; charset=\"UTF-8\""

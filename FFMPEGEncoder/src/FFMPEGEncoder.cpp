@@ -6,7 +6,6 @@
 
 /*
  * File:   FFMPEGEncoder.cpp
- * Author: giuliano
  *
  * Created on February 18, 2018, 1:27 AM
  */

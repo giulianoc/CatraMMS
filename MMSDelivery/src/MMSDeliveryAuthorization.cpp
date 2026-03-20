@@ -6,7 +6,6 @@
 
 /*
  * File:   CURL.cpp
- * Author: giuliano
  *
  * Created on March 29, 2018, 6:27 AM
  */

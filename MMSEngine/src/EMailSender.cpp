@@ -6,7 +6,6 @@
 
 /*
  * File:   Validator.cpp
- * Author: giuliano
  *
  * Created on March 29, 2018, 6:27 AM
  */
@@ -29,7 +28,7 @@ EMailSender::~EMailSender() = default;
 void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<string> &emailBody, bool useMMSCCToo)
 {
 	// see: https://everything.curl.dev/usingcurl/smtp
-	// curl --ssl-reqd --url 'smtps://smtppro.zoho.eu:465' --mail-from 'info@catramms-cloud.com' --mail-rcpt 'giulianocatrambone@gmail.com'
+	// curl --ssl-reqd --url 'smtps://smtppro.zoho.eu:465' --mail-from 'info@zzz-cloud.com' --mail-rcpt 'xxx@yyy.com'
 	// --upload-file ./email.txt --user 'info@catramms-cloud.com:<write here the password>'
 
 	// string emailServerURL = "smtp://smtp.gmail.com:587";
@@ -45,7 +44,6 @@ void EMailSender::sendEmail(string tosCommaSeparated, string subject, vector<str
 	}
 	auto cryptedFrom = JSONUtils::as<string>(_configuration["EmailNotification"], "from", "");
 	string from = Encrypt::opensslDecrypt(cryptedFrom);
-	// string to = "giulianoc@catrasoftware.it";
 	string cc;
 
 	if (useMMSCCToo)

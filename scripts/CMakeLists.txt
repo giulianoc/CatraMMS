@@ -30,35 +30,36 @@ set(SCRIPTs
     nginx.sh
     #tomcat.sh commentato perchè non piu usato
     tomee.sh
-    setupALL.sh
+#    setupALL.sh
     micro-service-deploy.sh
     micro-service.sh
     mmsStatusALL.sh
     mmsStartALL.sh
     mmsStopALL.sh
-    mmsTail.sh
-    printLogFileName.sh
+#    mmsTail.sh
+#    printLogFileName.sh
     crontab.sh
     incrontab.sh
     incronServiceCheck.sh
     genIncrontabForMMSLive.sh
-    sqlQueries.txt
-    checkStatistics.sh
+#    sqlQueries.txt
+#    checkStatistics.sh
     checkConsistencyFileSystem-Database.sh
     tvController.sh
     tvControllerLoop.sh
-    tvController.sh.1
+#    tvController.sh.1
     deploy.sh
     #installServer.sh commentato per evitare che venga copiato nei server
-    getIngestionsToBeManaged.sh
+#    getIngestionsToBeManaged.sh
     servicesStatusAgent.sh
     servicesStatusLibrary.sh
     loopServicesStatus.sh
     startRecorder.sh
     switchTranscoderInternalExternal.sh
     backupStorage.sh
-    cibortvStartChannelsManualLoop.sh
-    cibortvStartChannelsAutoLoop.sh)
+#    cibortvStartChannelsManualLoop.sh
+#    cibortvStartChannelsAutoLoop.sh
+)
 
 install(
   FILES ${SCRIPTs}

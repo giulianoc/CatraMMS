@@ -6,7 +6,6 @@
 
 /*
  * File:   EncodersLoadBalancer.h
- * Author: giuliano
  *
  * Created on April 28, 2018, 2:33 PM
  */

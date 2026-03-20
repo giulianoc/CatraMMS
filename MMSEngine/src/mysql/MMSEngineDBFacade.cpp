@@ -6,7 +6,6 @@
 
 /*
  * File:   MMSEngineDBFacade.cpp
- * Author: giuliano
  *
  * Created on January 27, 2018, 9:38 AM
  */

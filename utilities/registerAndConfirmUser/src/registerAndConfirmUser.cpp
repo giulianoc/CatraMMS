@@ -143,7 +143,7 @@ int main(const int iArgc, char *pArgv[])
 
 			CurlWrapper::sendEmail(
 				emailProviderURL, // i.e.: smtps://smtppro.zoho.eu:465
-				emailUserName,	   // i.e.: info@catramms-cloud.com
+				emailUserName,
 				emailPassword, emailUserName, to, "",
 				subject, emailBody, "text/html; charset=\"UTF-8\""
 			);

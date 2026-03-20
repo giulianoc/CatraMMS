@@ -1846,7 +1846,7 @@ string LiveRecorderDaemons::buildChunkIngestionWorkflow(
 				"type": "Add-Content"
 				"parameters": {
 						"fileFormat": "ts",
-						"ingester": "Giuliano",
+						"ingester": "XXX",
 						"sourceURL": "move:///abc...."
 				},
 			}
@@ -3099,7 +3099,7 @@ string LiveRecorderDaemons::buildVirtualVODIngestionWorkflow(
 		//        "type": "Add-Content"
 		//        "parameters": {
 		//                "fileFormat": "m3u8",
-		//                "ingester": "Giuliano",
+		//                "ingester": "XXX",
 		//                "sourceURL": "move:///abc...."
 		//        },
 		//	}

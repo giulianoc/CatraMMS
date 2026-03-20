@@ -1780,7 +1780,7 @@ install-mms-FFMpeg-package()
 
 	packageName=ffmpeg
 	echo ""
-	ffmpegVersion=7.0.2
+	ffmpegVersion=8.1
 	echo -n "$packageName version (i.e.: $ffmpegVersion)? "
 	read version
 	if [ "$version" == "" ]; then
