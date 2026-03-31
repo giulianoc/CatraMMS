@@ -19,8 +19,17 @@
 		return 200;
 	}
 
+	# Per negare le richieste di un cliente,
+	# imposto un flag se l'URI originale è token_.../MMSLive/47/...
+	# Viene impostata al livello server, non è una implementazione pulita,
+	# faccio cosi solo perchè è temporanea per soli pochi giorni
+	#set $deny_mmslive47 0;
+	#if ($request_uri ~* ^/token_[^/]+/MMSLive/47(/|$)) {
+	#	set $deny_mmslive47 1;
+	#}
+
 	#authorization through path
-	#next location manage any request: .mp4, .m3ud, .ts
+	#next location manage any request: .mp4, .m3u8, .ts
 	location ~ ^/token_ {
 
 		#rewrite ^(.*)/token_([a-fA-F0-9]+)/(.*) $1/$3 last;
@@ -29,6 +38,10 @@
 
 	#1 e poi #5
 	location ~ ^/(MMS_|ExternalStorage_|MMSLive) {
+		#if ($deny_mmslive47) {
+		#	return 401;
+		#}
+
 		#Uso una coda abbondante per gestire le richieste contemporanee.
 		#Consideriamo che solo la pagina mediaItems.xhtml genera 50 richieste contemporanee
 		#per il download delle picture (vedi commento in nginx.conf)
