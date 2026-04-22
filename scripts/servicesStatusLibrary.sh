@@ -875,6 +875,7 @@ mms_delivery_check_bandwidth_usage()
 		previousBandwidth=0
 	fi
 
+	#grep "BandwidthPercentileThread, percentileBandwidthInMbps" /var/mms/logs/mmsAPI/mmsAPI-stats.log | awk 'BEGIN { FS="@" } { lastBandwidth=$4; if (lastBandwidth > 950) printf ("%s\n", $0); else printf("%s\n", lastBandwidth); }'
 	maxBandwidth=950
 	warningMessage=$(grep "BandwidthPercentileThread, percentileBandwidthInMbps" /var/mms/logs/mmsAPI/mmsAPI-stats.log | awk -v lastLogTimestampChecked=$lastLogTimestampChecked -v previousBandwidth=$previousBandwidth -v lastLogTimestampCheckedAndLastBandwidthFile=$lastLogTimestampCheckedAndLastBandwidthFile -v maxBandwidth=$maxBandwidth 'BEGIN { FS="@"; newLastLogTimestampChecked=-1; lastBandwidth=previousBandwidth }	\
 	{	\

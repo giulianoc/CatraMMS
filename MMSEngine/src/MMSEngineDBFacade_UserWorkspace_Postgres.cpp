@@ -2262,10 +2262,8 @@ json MMSEngineDBFacade::getLoginWorkspace(int64_t userKey, bool fromMaster)
 				}
 				else
 				{
-					string errorMessage = __FILEREF__ + "No workspace found" + ", userKey: " + to_string(userKey)
-						// + ", sqlStatement: " + sqlStatement
-						;
-					_logger->error(errorMessage);
+					SPDLOG_ERROR("No workspace found"
+						", userKey: {}", userKey);
 
 					// no exception, just return an empty loginWorkspaceRoot
 					// throw runtime_error(errorMessage);
