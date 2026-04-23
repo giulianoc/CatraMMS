@@ -829,7 +829,7 @@ string FFMPEGEncoderTask::downloadMediaFromMMS(
 		progressData._lastTimeProgressUpdate = chrono::system_clock::now();
 		progressData._lastPercentageUpdated = -1.0;
 
-		constexpr long timeoutInSeconds = 960;
+		constexpr long timeoutInSeconds = 3600; // 1h!!!
 		CurlWrapper::downloadFile(
 			sourcePhysicalDeliveryURL, localDestAssetPathName, progressDownloadCallback2, &progressData, 500,
 			std::format(", ingestionJobKey: {}", ingestionJobKey), timeoutInSeconds, 3

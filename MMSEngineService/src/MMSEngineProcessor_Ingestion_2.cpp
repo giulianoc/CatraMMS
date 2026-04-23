@@ -3078,8 +3078,8 @@ int progressDownloadCallback(void *clientp, curl_off_t dltotal, curl_off_t dlnow
 }
 
 void MMSEngineProcessor::downloadMediaSourceFileThread(
-	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrStreaming, int64_t ingestionJobKey,
-	shared_ptr<Workspace> workspace
+	shared_ptr<long> processorsThreadsNumber, string sourceReferenceURL, bool regenerateTimestamps, int m3u8TarGzOrStreaming,
+	int64_t ingestionJobKey, shared_ptr<Workspace> workspace
 )
 {
 	ThreadsStatistic::ThreadStatistic threadStatistic(
@@ -3264,7 +3264,9 @@ void MMSEngineProcessor::downloadMediaSourceFileThread(
 		{
 			CurlWrapper::downloadFile(
 				localSourceReferenceURL, destBinaryPathName, progressDownloadCallback, &progressData, _downloadChunkSizeInMegaBytes,
-				std::format(", ingestionJobKey: {}", ingestionJobKey), 240, _maxDownloadAttemptNumber, true
+				std::format(", ingestionJobKey: {}", ingestionJobKey),
+				nullopt, // nel caso di file mxf potrebbe essere anche di diverse ore
+				_maxDownloadAttemptNumber, true
 			);
 
 			if (localM3u8TarGzOrStreaming == 1)
