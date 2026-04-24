@@ -26,6 +26,8 @@
 #include "Encrypt.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
+#include <stacktrace>
+
 
 using namespace std;
 
@@ -108,6 +110,8 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 			", _updateStatsPassword: {}", _updateStatsPassword);
 		return;
 	}
+
+	LOG_INFO("aaaa: {}", std::stacktrace::current(1));
 
 	if (_isDeliveryAndAPIServerTogether)
 		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);
