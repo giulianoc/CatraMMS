@@ -26,8 +26,12 @@
 #include "Encrypt.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
-#include <stacktrace>
-
+#if __has_include(<stacktrace>) && defined(__cpp_lib_stacktrace)
+  #include <stacktrace>
+  #define HAS_STD_STACKTRACE 1
+#else
+  #define HAS_STD_STACKTRACE 0
+#endif
 
 using namespace std;
 
@@ -111,8 +115,9 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		return;
 	}
 
-	std::cout << std::stacktrace::current() << "\n";
-	// LOG_INFO("aaaa: {}", std::format("{}", std::stacktrace::current(1)));
+#if HAS_STD_STACKTRACE
+	auto st = std::stacktrace::current();
+#endif
 
 	if (_isDeliveryAndAPIServerTogether)
 		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);

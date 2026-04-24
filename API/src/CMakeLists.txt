@@ -96,6 +96,7 @@ link_directories("${LIBPQXX_LIB_DIR}")
 
 add_executable(api.fcgi ${SOURCES} ${HEADERS})
 
+target_link_libraries(api.fcgi backtrace)
 target_link_libraries(api.fcgi StringUtils)
 target_link_libraries(api.fcgi Encrypt)
 target_link_libraries(api.fcgi Datetime)
