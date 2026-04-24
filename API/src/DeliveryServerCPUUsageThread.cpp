@@ -119,7 +119,7 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 			cpuUsage);
 
 		auto trace = std::stacktrace();
-		LOG_ERROR("\n{}", to_string(trace));
+		LOG_ERROR("TRACE: \n{}", to_string(trace));
 
 		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateCPUStats"
