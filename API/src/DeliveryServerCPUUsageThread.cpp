@@ -26,6 +26,7 @@
 #include "Encrypt.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
+#include <stacktrace>
 
 using namespace std;
 
@@ -116,6 +117,9 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		const std::string mmsAPIUpdateCPUStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}",
 			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateCPUStatsURI,
 			cpuUsage);
+
+		auto trace = std::stacktrace();
+		LOG_ERROR("\n{}", to_string(trace));
 
 		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateCPUStats"

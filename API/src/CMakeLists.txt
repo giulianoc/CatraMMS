@@ -136,6 +136,8 @@ elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
   target_link_libraries(api.fcgi x264)
   target_link_libraries(api.fcgi x265)
   target_link_libraries(api.fcgi srt)
+  target_link_libraries(api.fcgi stdc++_libbacktrace)
+
 endif()
 if(APPLE)
 
