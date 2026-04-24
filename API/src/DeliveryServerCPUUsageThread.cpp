@@ -111,7 +111,7 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		return;
 	}
 
-	LOG_INFO("aaaa: {}", std::stacktrace::current(1));
+	LOG_INFO("aaaa: {}", std::format("{}", std::stacktrace::current(1)));
 
 	if (_isDeliveryAndAPIServerTogether)
 		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);
