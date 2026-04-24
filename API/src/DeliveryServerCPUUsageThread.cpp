@@ -112,7 +112,7 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 
 	std::ostringstream oss;
 	oss << boost::stacktrace::stacktrace();
-	LOG_ERROR(oss.str());
+	LOG_ERROR("\n{}", oss.str());
 
 	if (_isDeliveryAndAPIServerTogether)
 		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);

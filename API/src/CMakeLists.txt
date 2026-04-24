@@ -25,7 +25,8 @@ set(SOURCES
         API_DeliveryAuthorization.cpp
         API_DeliveryServer.cpp
         API_Encoding.cpp
-        API_Ingestion.cpp
+        API_Ingestion_1.cpp
+        API_Ingestion_2.cpp
         API_MediaItem.cpp
         API_WorkflowLibrary.cpp
         API_UserWorkspace.cpp
