@@ -26,12 +26,7 @@
 #include "Encrypt.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
-#if __has_include(<stacktrace>) && defined(__cpp_lib_stacktrace)
-  #include <stacktrace>
-  #define HAS_STD_STACKTRACE 1
-#else
-  #define HAS_STD_STACKTRACE 0
-#endif
+#include <boost/stacktrace.hpp>
 
 using namespace std;
 
@@ -115,9 +110,9 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		return;
 	}
 
-#if HAS_STD_STACKTRACE
-	auto st = std::stacktrace::current();
-#endif
+	std::ostringstream oss;
+	oss << boost::stacktrace::stacktrace();
+	LOG_ERROR(oss.str());
 
 	if (_isDeliveryAndAPIServerTogether)
 		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);
