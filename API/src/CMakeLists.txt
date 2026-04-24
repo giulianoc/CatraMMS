@@ -96,7 +96,6 @@ link_directories("${LIBPQXX_LIB_DIR}")
 
 add_executable(api.fcgi ${SOURCES} ${HEADERS})
 
-target_link_libraries(api.fcgi backtrace)
 target_link_libraries(api.fcgi StringUtils)
 target_link_libraries(api.fcgi Encrypt)
 target_link_libraries(api.fcgi Datetime)
@@ -136,6 +135,7 @@ elseif(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
   target_link_libraries(api.fcgi x264)
   target_link_libraries(api.fcgi x265)
   target_link_libraries(api.fcgi srt)
+  target_link_libraries(api.fcgi backtrace)
 endif()
 if(APPLE)
 
