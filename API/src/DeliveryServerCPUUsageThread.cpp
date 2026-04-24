@@ -110,6 +110,10 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		return;
 	}
 
+	LOG_ERROR("TRACEAAAAAA");
+	auto trace = std::stacktrace();
+	LOG_ERROR("TRACE: \n{}", to_string(trace));
+
 	if (_isDeliveryAndAPIServerTogether)
 		_mmsEngineDBFacade->updateDeliveryServerCPUUsage(_deliveryServerKey, cpuUsage);
 	else
@@ -117,9 +121,6 @@ void DeliveryServerCPUUsageThread::newCPUUsageAvailable(uint16_t& cpuUsage) cons
 		const std::string mmsAPIUpdateCPUStatsURL = std::format("{}://{}:{}/catramms/{}/deliveryServer/{}{}/{}",
 			_mmsAPIProtocol, _mmsAPIHostname, _mmsAPIPort, _mmsAPIVersion, _deliveryServerKey, _mmsAPIUpdateCPUStatsURI,
 			cpuUsage);
-
-		auto trace = std::stacktrace();
-		LOG_ERROR("TRACE: \n{}", to_string(trace));
 
 		constexpr int32_t mmsAPITimeoutInSeconds = 2;
 		LOG_INFO("UpdateCPUStats"
