@@ -156,7 +156,7 @@ string AWSSigner::sign(string pemPathName, string message)
 		OpenSSL_add_all_digests();
 
 		//  These function calls initialize openssl for correct work
-		ERR_load_BIO_strings();
+		// ERR_load_BIO_strings(); non serve piu a partire da OpenSSL 3.0
 		ERR_load_crypto_strings();
 	}
 
@@ -259,40 +259,6 @@ string AWSSigner::sign(string pemPathName, string message)
 		signedMessageLength
 	);
 	string signature = Encrypt::binaryToBase64(signedMessage.data(), signedMessageLength);
-	/*
-	{
-		BIO *bio, *b64;
-		BUF_MEM *bufferPtr;
-
-		LOG_DEBUG("BIO_new...");
-		b64 = BIO_new(BIO_f_base64());
-		bio = BIO_new(BIO_s_mem());
-
-		LOG_DEBUG("BIO_push...");
-		bio = BIO_push(b64, bio);
-
-		LOG_DEBUG("BIO_write...");
-		BIO_write(bio, signedMessage, signedMessageLength);
-		BIO_flush(bio);
-		BIO_get_mem_ptr(bio, &bufferPtr);
-
-		LOG_DEBUG("BIO_set_close...");
-		BIO_set_close(bio, BIO_NOCLOSE);
-		LOG_DEBUG("BIO_free_all...");
-		BIO_free_all(bio);
-		// info(__FILEREF__ + "BIO_free...");
-		// BIO_free(b64);	// useless because of BIO_free_all
-
-		LOG_DEBUG("base64Text set...");
-		char *base64Text = (*bufferPtr).data;
-
-		signature = base64Text;
-
-		BUF_MEM_free(bufferPtr);
-
-		LOG_DEBUG("signature: {}", signature);
-	}
-	*/
 
 	LOG_DEBUG("signature before replace: {}", signature);
 
@@ -305,131 +271,6 @@ string AWSSigner::sign(string pemPathName, string message)
 	LOG_DEBUG("signature after replace: {}", signature);
 
 	return signature;
-	/*
-	cert = PEM_read_bio_X509(certbio, NULL, 0, NULL);
-	if (NULL == cert)
-	{
-		error(__FILEREF__ + "BIO_read_filename failed");
-
-		return;
-	}
-
-	// Extract the certificate's public key data
-	evpkey = X509_get_pubkey(cert);
-	if (NULL == evpkey)
-	{
-		error(__FILEREF__ + "X509_get_pubkey failed");
-
-		return;
-	}
-	*/
-
-	/*
-	// checks file
-	ssize_t pemFileLength;
-	{
-		struct stat			sb;
-		if ((stat(pemPathName.c_str(), &sb)) == -1)
-		{
-			error(__FILEREF__ + "stat failed");
-
-			return;
-		};
-		pemFileLength = (sb.st_size * 2);
-	}
-
-	// allocates memory
-	unsigned char*		pemBuffer;
-	{
-		if (!(pemBuffer = malloc(pemFileLength)))
-		{
-			error(__FILEREF__ + "stat failed");
-
-			return;
-		};
-
-		// opens file for reading
-		int			fd;
-		if ((fd = open(pemPathName.c_str(), O_RDONLY)) == -1)
-		{
-			error(__FILEREF__ + "open failed");
-
-			free(pemBuffer);
-
-			return;
-		};
-
-		// reads file
-		if ((pemFileLength = read(fd, pemBuffer, pemFileLength)) == -1)
-		{
-			error(__FILEREF__ + "read failed");
-
-			free(pemBuffer);
-			return;
-		};
-
-		// closes file
-		close(fd);
-	}
-
-	// creates BIO buffer
-	BIO*	bio;
-	bio = BIO_new_mem_buf(pemBuffer, pemFileLength);
-
-	// decodes buffer
-	X509*	x509;
-	if (!(x509 = PEM_read_bio_X509(bio, NULL, 0L, NULL)))
-	{
-		unsigned			err;
-		char				errmsg[1024];
-
-		while((err = ERR_get_error()))
-		{
-			errmsg[1023] = '\0';
-			ERR_error_string_n(err, errmsg, 1023);
-			error(__FILEREF__ + "PEM_read_bio_X509 failed"
-				", errmsg: " + errmsg
-			);
-		};
-
-		BIO_free(bio);
-		free(pemBuffer);
-
-		return;
-	};
-
-	// prints x509 info
-	error(__FILEREF__ + "X509 info"
-		", name: " + x509->name
-	);
-	*/
-	/*
-	printf("serial:    ");
-	printf("%02X", x509->cert_info->serialNumber->data[0]);
-	for(int pos = 1; pos < x509->cert_info->serialNumber->length; pos++)
-		printf(":%02X", x509->cert_info->serialNumber->data[pos]);
-	printf("\n");
-	*/
-
-	/*
-	const EVP_MD*		digest;
-	unsigned char		md[EVP_MAX_MD_SIZE];
-	unsigned int		n;
-
-
-
-	// calculate & print fingerprint
-	digest = EVP_get_digestbyname("sha1");
-	X509_digest(x509, digest, md, &n);
-	printf("Fingerprint: ");
-	for(pos = 0; pos < 19; pos++)
-		printf("%02x:", md[pos]);
-	printf("%02x\n", md[19]);
-
-	// frees memory
-	BIO_free(bio);
-	free(pemBuffer);
-	*/
 }
 
 /*
