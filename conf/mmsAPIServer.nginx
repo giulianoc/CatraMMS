@@ -313,6 +313,7 @@
 		}
 		if ($request_method = GET) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/?$ /api?x-api-version=$1&x-api-method=rtmpChannelConfList last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/conf/cdn/rtmp/channel/signedURL/?$ /api?x-api-version=$1&x-api-method=getSignedURL last;
 		}
 
 #SRT

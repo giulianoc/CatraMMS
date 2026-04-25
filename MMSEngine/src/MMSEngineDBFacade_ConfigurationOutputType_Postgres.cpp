@@ -388,7 +388,7 @@ json MMSEngineDBFacade::getRTMPChannelConfList(
 	return rtmpChannelConfListRoot;
 }
 
-int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing)
+std::pair<int64_t, nlohmann::json> MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string label, bool warningIfMissing)
 {
 	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
 	try
@@ -404,14 +404,13 @@ int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string la
 		int64_t confKey;
 		{
 			string sqlStatement = std::format(
-				"select confKey "
+				"select confKey, playURLDetails "
 				"from MMS_Conf_RTMPChannel "
 				"where workspaceKey = {} and label = {}",
 				workspaceKey, trans.transaction->quote(label)
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
+			const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -437,10 +436,9 @@ int64_t MMSEngineDBFacade::getRTMPChannelDetails(int64_t workspaceKey, string la
 				throw DBRecordNotFound(errorMessage);
 			}
 
-			confKey = (*sqlResultSet)[0][0].as<int64_t>(static_cast<int64_t>(-1));
+			return make_pair ((*sqlResultSet)[0]["confKey"].as<int64_t>(static_cast<int64_t>(-1)),
+				(*sqlResultSet)[0]["playURLDetails"].as<json>(json(nullptr)));
 		}
-
-		return confKey;
 	}
 	catch (exception const &e)
 	{

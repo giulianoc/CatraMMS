@@ -1391,7 +1391,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							int64_t confKey = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+							auto [confKey, _] = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
 								youTubeConfigurationLabel, warningIfMissing);
 
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
@@ -1481,7 +1481,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							int64_t confKey = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+							auto [confKey, _] = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
 								youTubeConfigurationLabel, warningIfMissing);
 
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
@@ -1987,7 +1987,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							int64_t confKey = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+							auto [confKey, _] = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
 								facebookConfigurationLabel, warningIfMissing);
 
 							_mmsEngineDBFacade->modifyRTMPChannelConf(
@@ -2083,7 +2083,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 						try
 						{
 							bool warningIfMissing = true;
-							int64_t confKey = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
+							auto [confKey, _] = _mmsEngineDBFacade->getRTMPChannelDetails(workspace->_workspaceKey,
 								facebookConfigurationLabel, warningIfMissing);
 
 							_mmsEngineDBFacade->modifyRTMPChannelConf(

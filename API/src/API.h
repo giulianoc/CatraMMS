@@ -521,6 +521,11 @@ class API final : public FastCGIAPI
 		const FCGIRequestData& requestData
 	);
 
+	void getSignedURL(
+		const std::string_view& sThreadId, FCGX_Request &request,
+		const FCGIRequestData& requestData
+	);
+
 	void addYouTubeConf(
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData

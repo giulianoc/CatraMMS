@@ -1,5 +1,6 @@
 
 #include "API.h"
+#include "AWSSigner.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
 #include <format>
@@ -776,6 +777,102 @@ void API::deliveryAuthorizationThroughPath(
 		);
 
 		throw FastCGIError::HTTPError(403);
+	}
+}
+
+void API::getSignedURL(const string_view& sThreadId, FCGX_Request &request,
+	const FCGIRequestData& requestData
+)
+{
+	string api = "getSignedURL";
+
+	shared_ptr<APIAuthorizationDetails> apiAuthorizationDetails = static_pointer_cast<APIAuthorizationDetails>(requestData.authorizationDetails);
+
+	LOG_INFO("Received {}", api);
+
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canDeliveryAuthorization)
+	{
+		string errorMessage = std::format(
+			"APIKey does not have the permission"
+			", deliveryAuthorization: {}",
+			apiAuthorizationDetails->canDeliveryAuthorization
+		);
+		LOG_ERROR(errorMessage);
+		throw FastCGIError::HTTPError(403);
+	}
+
+	try
+	{
+		string playURL;
+
+		auto rtmpChannelLabel = requestData.getQueryParameter("rtmpChannelLabel", "", true);
+		int32_t ttlInSeconds = requestData.getQueryParameter("ttlInSeconds", _defaultTTLInSeconds);
+		string playerIP = requestData.getQueryParameter("remoteIPAddress", requestData.clientIPAddress);
+		if (playerIP == requestData.clientIPAddress)
+			playerIP = requestData.getQueryParameter("playerIP", requestData.clientIPAddress);
+		bool playerIPToBeAuthorized = requestData.getQueryParameter("playerIPToBeAuthorized", false);
+
+		auto [_, playURLDetailsRoot] =_mmsEngineDBFacade->getRTMPChannelDetails(
+			apiAuthorizationDetails->workspace->_workspaceKey, rtmpChannelLabel, false);
+
+		auto securityType = JSONUtils::as<string>(playURLDetailsRoot, "securityType", "none");
+		auto cdnName = JSONUtils::as<string>(playURLDetailsRoot, "cdnName", "");
+		auto playURLProtocol = JSONUtils::as<string>(playURLDetailsRoot, "playURLProtocol", "https");
+		auto playURLHostName = JSONUtils::as<string>(playURLDetailsRoot, "playURLHostName", "");
+		auto uri = JSONUtils::as<string>(playURLDetailsRoot, "uri", "");
+		if (securityType == "token")
+		{
+			auto secureToken = JSONUtils::as<string>(playURLDetailsRoot, "token", "");
+			if (cdnName == "medianova")
+			{
+				json medianovaRoot = JSONUtils::as<json>(playURLDetailsRoot, "medianova", json(nullptr));
+				// uriEnabled deve essere consistente con la conf. in Medianova (security->Security Token->URI)
+				bool uriEnabled = JSONUtils::as<bool>(medianovaRoot, "uriEnabled", false);
+				// playerIPEnabled deve essere consistente con la conf. in Medianova (se ho capito bene dobbiamo
+				// chiedere Medianova di abilitare/disattivare questa opzione)
+				bool playerIPEnabled = JSONUtils::as<bool>(medianovaRoot, "playerIPEnabled", false);
+
+				playURL = _mmsDeliveryAuthorization->getMedianovaSignedTokenURL(
+					playURLProtocol, playURLHostName, uri, secureToken, ttlInSeconds, playerIP,
+					uriEnabled, playerIPToBeAuthorized && playerIPEnabled
+				);
+			}
+			else if (cdnName == "aws")
+			{
+				AWSSigner awsSigner;
+				playURL = awsSigner.calculateSignedURL(playURLHostName, uri, _keyPairId, _privateKeyPEMPathName, ttlInSeconds);
+			}
+			else if (cdnName == "cdn77")
+				playURL = _mmsDeliveryAuthorization->getSignedCDN77URL(playURLHostName, uri, secureToken, ttlInSeconds, playerIPToBeAuthorized ? playerIP : "");
+			else
+				LOG_ERROR(
+					"cdnName unknown"
+					", cdnName: {}",
+					cdnName
+				);
+		}
+		else
+			playURL = std::format("{}://{}{}", playURLProtocol, playURLHostName, uri);
+
+		json responseRoot;
+
+		responseRoot["playURL"] = playURL;
+		responseRoot["ttlInSeconds"] = ttlInSeconds;
+		responseRoot["playerIP"] = playerIP;
+		responseRoot["playerIPToBeAuthorized"] = playerIPToBeAuthorized;
+
+		sendSuccess(sThreadId, requestData.responseBodyCompressed, request, "", api, 201,
+			JSONUtils::toString(responseRoot));
+	}
+	catch (exception &e)
+	{
+		LOG_ERROR(
+			"API failed"
+			", API: {}"
+			", e.what(): {}",
+			api, e.what()
+		);
+		throw;
 	}
 }
 

@@ -2279,7 +2279,7 @@ class MMSEngineDBFacade
 	nlohmann::json getRTMPChannelConfList(int64_t workspaceKey, int64_t confKey, std::string label, bool labelLike,
 								int type); // 0: all, 1: SHARED, 2: DEDICATED
 
-	int64_t getRTMPChannelDetails(int64_t workspaceKey, std::string label, bool warningIfMissing);
+	std::pair<int64_t, nlohmann::json> getRTMPChannelDetails(int64_t workspaceKey, std::string label, bool warningIfMissing);
 
 	std::tuple<std::string, std::string, std::string, std::string, std::string, bool, nlohmann::json>
 		reserveRTMPChannel(int64_t workspaceKey, std::string label, int outputIndex, int64_t ingestionJobKey);

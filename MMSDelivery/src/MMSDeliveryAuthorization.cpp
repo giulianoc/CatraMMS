@@ -1833,8 +1833,8 @@ string MMSDeliveryAuthorization::getMedianovaSignedTokenURL(
 	const bool playerIPEnabled
 )
 {
+	// "https://test-cibortv-live.lg.mncdn.com/mn-m1/cnl52/index.m3u8?st=UKs6348dQptKUc8ShW-qdA&e=1829660036"
 	LOG_INFO(
-		"https://test-cibortv-live.lg.mncdn.com/mn-m1/cnl52/index.m3u8?st=UKs6348dQptKUc8ShW-qdA&e=1829660036"
 		", playURLProtocol: {}"
 		", playURLHostname: {}"
 		", uri: {}"

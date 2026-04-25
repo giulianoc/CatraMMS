@@ -263,6 +263,11 @@ API::API(
 		{ createBulkOfDeliveryAuthorization(sThreadId, request, requestData); }
 	);
 	registerHandler(
+		"getSignedURL",
+		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ getSignedURL(sThreadId, request, requestData); }
+	);
+	registerHandler(
 		"ingestion", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ ingestion(sThreadId, request, requestData); }
 	);
