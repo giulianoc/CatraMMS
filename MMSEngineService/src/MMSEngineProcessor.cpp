@@ -1258,10 +1258,8 @@ static int progressUploadCallback(void *clientp, curl_off_t dltotal, curl_off_t 
 
 	if (dltotal != 0 && (dltotal == dlnow || now - progressData->_lastTimeProgressUpdate >= chrono::seconds(progressUpdatePeriodInSeconds)))
 	{
-		double progress = dltotal == 0 ? 0 : (dlnow / dltotal) * 100;
-		// int downloadingPercentage = floorf(progress * 100) / 100;
-		// this is to have one decimal in the percentage
-		double uploadingPercentage = ((double)((int)(progress * 10))) / 10;
+		double progress = (static_cast<double>(dlnow) * 100.0) / static_cast<double>(dltotal);
+		double uploadingPercentage = std::round(progress * 10.0) / 10.0;   // 1 decimale
 
 		LOG_INFO(
 			"progressUploadCallback. Upload still running"
