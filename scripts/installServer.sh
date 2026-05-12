@@ -281,7 +281,7 @@ install-packages()
 	#restart automatico al boot e partenza del servizio
 	systemctl enable --now vnstat
 
-	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "api" -o "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "integration" -o "$moduleType" == "integration-aws" ]; then
 
 		#non possiamo far decidere a ubuntu la versione java da istallare, bisogna istallare la versione java
 		#supportata dal nostro applicativo
@@ -545,6 +545,10 @@ create-directory()
 
 			;;
 		"integration")
+			create-directory-integration
+
+			;;
+		"integration-aws")
 			create-directory-integration
 
 			;;
@@ -1107,6 +1111,13 @@ install-mms-packages()
 			configure-mms-sysctl $moduleType
 			;;
 		"integration")
+			install-mms-FFMpeg-package $architecture
+			install-mms-nginx-package $architecture $moduleType
+			install-mms-MMS-package $architecture
+			install-mms-aws-sdk-cpp-package $architecture $moduleType
+			install-mms-integration-conf $architecture
+			;;
+		"integration-aws")
 			install-mms-FFMpeg-package $architecture
 			install-mms-nginx-package $architecture $moduleType
 			install-mms-MMS-package $architecture
@@ -1797,7 +1808,7 @@ firewall-rules()
 {
 	moduleType=$1
 
-	if [ "$moduleType" == "integration" ]; then
+	if [ "$moduleType" == "integration-aws" ]; then
 		return
 	fi
 
@@ -1941,6 +1952,15 @@ firewall-rules()
 
 		ufw allow from $internalNetwork_10 to any port 32765:32767 proto tcp
 		ufw allow from $internalNetwork_10 to any port 32765:32767 proto udp
+	elif [ "$moduleType" == "integration" ]; then
+		ufw allow from $internalNetwork_10 to any port 8088		#cibortv
+		ufw allow from $internalNetwork_10 to any port 8884		#icml
+		ufw allow from $internalNetwork_10 to any port 3306		#mysql
+		ufw allow from $internalNetwork_10 to any port 8090		#epg
+		ufw allow from $internalNetwork_10 to any port 8091		#apk
+		ufw allow from $internalNetwork_10 to any port 8886		#groupitaliantelevision
+		ufw allow from $internalNetwork_10 to any port 2049		#NFS
+
 	fi
 
 	ufw enable
@@ -1988,15 +2008,15 @@ firewall-rules()
 
 if [ $# -ne 1 ]
 then
-	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or externalDelivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or externalDelivery or api-and-delivery or encoder or externalEncoder or storage or integration or integration-aws)>"
 
 	exit
 fi
 
 moduleType=$1
 
-if [ "$moduleType" != "load-balancer" -a "$moduleType" != "engine" -a "$moduleType" != "api" -a "$moduleType" != "delivery" -a "$moduleType" != "externalDelivery" -a "$moduleType" != "api-and-delivery" -a "$moduleType" != "encoder" -a "$moduleType" != "externalEncoder" -a "$moduleType" != "storage" -a "$moduleType" != "integration" ]; then
-	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api-and-delivery or encoder or externalEncoder or storage or integration)>"
+if [ "$moduleType" != "load-balancer" -a "$moduleType" != "engine" -a "$moduleType" != "api" -a "$moduleType" != "delivery" -a "$moduleType" != "externalDelivery" -a "$moduleType" != "api-and-delivery" -a "$moduleType" != "encoder" -a "$moduleType" != "externalEncoder" -a "$moduleType" != "storage" -a "$moduleType" != "integration" -a "$moduleType" != "integration-aws" ]; then
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or api-and-delivery or encoder or externalEncoder or storage or integration or integration-aws)>"
 
 	exit
 fi
@@ -2049,7 +2069,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-if [ "$moduleType" != "integration" ]; then
+if [ "$moduleType" != "integration-aws" ]; then
 	ssh-port
 fi
 mms-account-creation $moduleType
@@ -2141,6 +2161,7 @@ echo ""
 
 #htpasswd: curl -u asdkljc0:iMCjYNGTTUYu8YQikBSC1UUA1wr2
 read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (serve per il download di EPG e APK)"
+read -n 1 -s -r -p "in caso di integration, aggiungere il file cibortv.env in /etc (serve per la scelta del dominio da parte dell'app)"
 echo ""
 echo ""
 

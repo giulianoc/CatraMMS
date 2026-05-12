@@ -459,6 +459,14 @@ prodServers[$((serverIndex*6+3))]=22
 prodServers[$((serverIndex*6+4))]=integration
 prodServers[$((serverIndex*6+5))]=
 
+serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=do-integration-1
+prodServers[$((serverIndex*6+1))]=157.245.247.112
+prodServers[$((serverIndex*6+2))]=cibortv/cibortv-digitalocean
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=integration
+prodServers[$((serverIndex*6+5))]=
+
 prodServersNumber=$((serverIndex+1))
 
 

@@ -1286,10 +1286,13 @@ bool MMSEngineDBFacade::isEncoderRunning(bool external, const string& protocol, 
 
 		ffmpegEncoderURL = std::format("{}://{}:{}{}",
 			protocol, (external ? publicServerName : internalServerName), port, _ffmpegEncoderStatusURI);
-		constexpr vector<string> otherHeaders;
-		json infoResponseRoot = CurlWrapper::httpGetJson(
-			ffmpegEncoderURL, _ffmpegEncoderInfoTimeout, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword), otherHeaders
-		);
+		CurlWrapper::GetInputParameters inputParameters {
+			.url = ffmpegEncoderURL,
+			.timeoutInSeconds = _ffmpegEncoderInfoTimeout,
+			.authorization = CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword)
+		};
+		CurlWrapper::OutputParameters outputParameters;
+		json infoResponseRoot = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 		if (duration != nullptr)
 			*duration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - start);

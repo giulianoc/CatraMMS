@@ -708,10 +708,14 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 			// https://pro.ip-api.com/json/24.48.0.1?key=GvoGDQ05j7fyQmj
 			string geoServiceURL = std::format("{}/json/{}?fields={}&key={}", _geoServiceURL, ips[0], fields, _geoServiceKey);
 
-			vector<string> otherHeaders;
-			json geoServiceResponseIp = CurlWrapper::httpGetJson(geoServiceURL, _geoServiceTimeoutInSeconds, "", otherHeaders);
+			CurlWrapper::GetInputParameters inputParameters {
+				.url = geoServiceURL,
+				.timeoutInSeconds = _geoServiceTimeoutInSeconds
+			};
+			CurlWrapper::OutputParameters outputParameters;
+			json geoServiceResponseIp = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
-			string status = JSONUtils::as<string>(geoServiceResponseIp, "status", "");
+			auto status = JSONUtils::as<string>(geoServiceResponseIp, "status", "");
 			if (status != "success")
 			{
 				LOG_ERROR(
@@ -765,8 +769,12 @@ vector<tuple<string, string, string, string, string, string, string, string, str
 		{
 			string geoServiceURL = _geoServiceURL + ip;
 
-			vector<string> otherHeaders;
-			json geoServiceResponse = CurlWrapper::httpGetJson(geoServiceURL, _geoServiceTimeoutInSeconds, "", otherHeaders);
+			CurlWrapper::GetInputParameters inputParameters {
+				.url = geoServiceURL,
+				.timeoutInSeconds = _geoServiceTimeoutInSeconds
+			};
+			CurlWrapper::OutputParameters outputParameters;
+			json geoServiceResponse = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 			bool geoSuccess;
 			string field = "success";

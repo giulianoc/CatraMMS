@@ -22,6 +22,9 @@ PIDFILE=/var/mms/pids/$serviceName.pid
 
 if [ "$command" == "start" ]
 then
+	if [ -f /etc/$serviceName.env ]; then
+		source /etc/$serviceName.env
+	fi
 	/opt/mms/$serviceName-0.1/bin/$serviceName &
 	pid=$!
 	echo "$pid" > $PIDFILE

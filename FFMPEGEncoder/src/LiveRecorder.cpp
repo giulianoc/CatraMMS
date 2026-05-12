@@ -426,7 +426,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 			otherInputOptions,
 
-			liveRecording->_streamSourceType, StringUtils::trimTabToo(liveURL), pushListenTimeout, captureLive_videoDeviceNumber,
+			liveRecording->_streamSourceType, StringUtils::trim(liveURL), pushListenTimeout, captureLive_videoDeviceNumber,
 			captureLive_videoInputFormat, captureLive_frameRate, captureLive_width, captureLive_height, captureLive_audioDeviceNumber,
 			captureLive_channelsNumber,
 

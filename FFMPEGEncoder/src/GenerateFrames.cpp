@@ -398,12 +398,15 @@ void GenerateFrames::encodeContent(json metadataRoot)
 
 					string mmsIngestionJobURL = std::format("{}/{}?ingestionJobOutputs=false", _mmsIngestionURL, addContentIngestionJobKey);
 
-					vector<string> otherHeaders;
-					json ingestionRoot = CurlWrapper::httpGetJson(
-						mmsIngestionJobURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), otherHeaders,
-						std::format(", ingestionJobKey: {}", _encoding->_ingestionJobKey),
-						3 // maxRetryNumber
-					);
+					CurlWrapper::GetInputParameters inputParameters {
+						.url = mmsIngestionJobURL,
+						.timeoutInSeconds = _mmsAPITimeoutInSeconds,
+						.maxRetryNumber = 3,
+						.authorization = CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
+						.referenceToLog = std::format(", ingestionJobKey: {}", _encoding->_ingestionJobKey)
+					};
+					CurlWrapper::OutputParameters outputParameters;
+					json ingestionRoot = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 					string field = "response";
 					if (!JSONUtils::isPresent(ingestionRoot, field))

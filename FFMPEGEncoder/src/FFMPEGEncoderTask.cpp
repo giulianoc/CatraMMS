@@ -284,12 +284,15 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 		{
 			string mmsIngestionJobURL = std::format("{}/{}?ingestionJobOutputs=false", _mmsIngestionURL, addContentIngestionJobKey);
 
-			vector<string> otherHeaders;
-			json ingestionRoot = CurlWrapper::httpGetJson(
-				mmsIngestionJobURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), otherHeaders,
-				std::format(", ingestionJobKey: {}", ingestionJobKey),
-				3 // maxRetryNumber
-			);
+			CurlWrapper::GetInputParameters inputParameters {
+				.url = mmsIngestionJobURL,
+				.timeoutInSeconds = _mmsAPITimeoutInSeconds,
+				.maxRetryNumber = 3,
+				.authorization = CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
+				.referenceToLog = std::format(", ingestionJobKey: {}", ingestionJobKey)
+			};
+			CurlWrapper::OutputParameters outputParameters;
+			json ingestionRoot = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 			string field = "response";
 			if (!JSONUtils::isPresent(ingestionRoot, field))
@@ -1029,7 +1032,7 @@ void FFMPEGEncoderTask::createOrUpdateTVDvbLastConfigurationFile(
 			string configuration;
 			while (getline(ifConfigurationFile, configuration))
 			{
-				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
+				string trimmedConfiguration = StringUtils::trim(configuration);
 
 				if (trimmedConfiguration.size() > 10)
 					vConfiguration.push_back(trimmedConfiguration);
@@ -1200,7 +1203,7 @@ pair<string, string> FFMPEGEncoderTask::getTVMulticastFromDvblastConfigurationFi
 			string configuration;
 			while (getline(configurationFile, configuration))
 			{
-				string trimmedConfiguration = StringUtils::trimNewLineAndTabToo(configuration);
+				string trimmedConfiguration = StringUtils::trim(configuration);
 
 				// configuration is like: 239.255.1.1:8008 1 3401 501,601
 				istringstream iss(trimmedConfiguration);

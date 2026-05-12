@@ -628,11 +628,11 @@ void MMSEngineProcessor::userHttpCallback(
 					{
 						json formFieldRoot = formDataParametersRoot[formFieldIndex];
 
-						string name = JSONUtils::as<string>(formFieldRoot, "name", "");
-						string value = JSONUtils::as<string>(formFieldRoot, "value", "");
+						auto name = JSONUtils::as<string>(formFieldRoot, "name", "");
+						auto value = JSONUtils::as<string>(formFieldRoot, "value", "");
 
-						if (name != "")
-							formData.push_back(make_pair(name, value));
+						if (!name.empty())
+							formData.emplace_back(name, value);
 					}
 				}
 
@@ -643,7 +643,7 @@ void MMSEngineProcessor::userHttpCallback(
 			else
 			{
 				string contentType;
-				if (httpBody != "")
+				if (!httpBody.empty())
 					contentType = "application/json";
 
 				CurlWrapper::httpPutString(
@@ -663,11 +663,11 @@ void MMSEngineProcessor::userHttpCallback(
 					{
 						json formFieldRoot = formDataParametersRoot[formFieldIndex];
 
-						string name = JSONUtils::as<string>(formFieldRoot, "name", "");
-						string value = JSONUtils::as<string>(formFieldRoot, "value", "");
+						auto name = JSONUtils::as<string>(formFieldRoot, "name", "");
+						auto value = JSONUtils::as<string>(formFieldRoot, "value", "");
 
-						if (name != "")
-							formData.push_back(make_pair(name, value));
+						if (!name.empty())
+							formData.emplace_back(name, value);
 					}
 				}
 
@@ -678,7 +678,7 @@ void MMSEngineProcessor::userHttpCallback(
 			else
 			{
 				string contentType;
-				if (httpBody != "")
+				if (!httpBody.empty())
 					contentType = "application/json";
 
 				CurlWrapper::httpPostString(
@@ -690,7 +690,7 @@ void MMSEngineProcessor::userHttpCallback(
 		else if (httpMethod == "DELETE")
 		{
 			string contentType;
-			if (httpBody != "")
+			if (!httpBody.empty())
 				contentType = "application/json";
 
 			CurlWrapper::httpDelete(
@@ -700,14 +700,18 @@ void MMSEngineProcessor::userHttpCallback(
 		}
 		else // if (httpMethod == "GET")
 		{
-			vector<string> otherHeaders;
-			CurlWrapper::httpGet(
-				userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), otherHeaders,
-				std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
-			);
+			CurlWrapper::GetInputParameters inputParameters {
+				.url = userURL,
+				.timeoutInSeconds = callbackTimeoutInSeconds,
+				.authorization = CurlWrapper::basicAuthorization(userName, password),
+				.referenceToLog = std::format(", ingestionJobKey: {}", ingestionJobKey),
+				.maxRetryNumber = maxRetries
+			};
+			CurlWrapper::OutputParameters outputParameters;
+			CurlWrapper::httpGet(inputParameters, outputParameters);
 		}
 	}
-	catch (exception e)
+	catch (const exception& e)
 	{
 		string errorMessage = std::format(
 			"User Callback URL failed (exception)"

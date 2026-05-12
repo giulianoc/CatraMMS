@@ -993,11 +993,14 @@ tuple<bool, bool, FFMpegWrapper::KillType, bool, json, bool, bool, optional<doub
 		ffmpegEncoderURL = std::format("{}{}/{}/{}", _currentUsedFFMpegEncoderHost, _ffmpegEncoderStatusURI,
 			_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey);
 
-		constexpr vector<string> otherHeaders;
-		const json encodeStatusResponse = CurlWrapper::httpGetJson(
-			ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
-			otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
-		);
+		CurlWrapper::GetInputParameters inputParameters {
+			.url = ffmpegEncoderURL,
+			.timeoutInSeconds = _ffmpegEncoderTimeoutInSeconds,
+			.authorization = CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+			.referenceToLog = std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+		};
+		CurlWrapper::OutputParameters outputParameters;
+		const json encodeStatusResponse = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 		LOG_INFO(
 			"getEncodingStatus"

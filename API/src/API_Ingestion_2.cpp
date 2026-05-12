@@ -517,10 +517,14 @@ void API::fileUploadProgressCheckThread()
 				vector<string> otherHeaders;
 				otherHeaders.push_back(progressIdHeader);
 				otherHeaders.push_back(hostHeader); // important for the nginx virtual host
-				int curlTimeoutInSeconds = 120;
-				json uploadProgressResponse = CurlWrapper::httpGetJson(
-					progressURL, curlTimeoutInSeconds, "", otherHeaders, std::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
-				);
+				CurlWrapper::GetInputParameters inputParameters {
+					.url = progressURL,
+					.timeoutInSeconds = 120,
+					.otherHeaders = otherHeaders,
+					.referenceToLog = std::format(", ingestionJobKey: {}", itr->_ingestionJobKey)
+				};
+				CurlWrapper::OutputParameters outputParameters;
+				json uploadProgressResponse = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 				try
 				{

@@ -3276,9 +3276,13 @@ string MMSEngineProcessor::getFacebookPageToken(
 
 		LOG_INFO(string() + "Retrieve page token" + ", facebookURL: " + facebookURL);
 
-		vector<string> otherHeaders;
-		json responseRoot =
-			CurlWrapper::httpGetJson(facebookURL, _mmsAPITimeoutInSeconds, "", otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey));
+		CurlWrapper::GetInputParameters inputParameters {
+			.url = facebookURL,
+			.timeoutInSeconds = _mmsAPITimeoutInSeconds,
+			.referenceToLog = std::format(", ingestionJobKey: {}", ingestionJobKey)
+		};
+		CurlWrapper::OutputParameters outputParameters;
+		json responseRoot = CurlWrapper::httpGetJson(inputParameters, outputParameters);
 
 		/*
 		{
