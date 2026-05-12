@@ -401,9 +401,9 @@ void GenerateFrames::encodeContent(json metadataRoot)
 					CurlWrapper::GetInputParameters inputParameters {
 						.url = mmsIngestionJobURL,
 						.timeoutInSeconds = _mmsAPITimeoutInSeconds,
-						.maxRetryNumber = 3,
 						.authorization = CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
-						.referenceToLog = std::format(", ingestionJobKey: {}", _encoding->_ingestionJobKey)
+						.referenceToLog = std::format(", ingestionJobKey: {}", _encoding->_ingestionJobKey),
+						.maxRetryNumber = 3
 					};
 					CurlWrapper::OutputParameters outputParameters;
 					json ingestionRoot = CurlWrapper::httpGetJson(inputParameters, outputParameters);
