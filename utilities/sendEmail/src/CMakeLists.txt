@@ -58,6 +58,7 @@ link_directories ("${THREADLOGGER_LIB_DIR}")
 add_executable(sendEmail ${SOURCES} ${HEADERS})
 
 target_link_libraries (sendEmail CurlWrapper)
+target_link_libraries (sendEmail StringUtils)
 target_link_libraries (sendEmail Convert)
 target_link_libraries (sendEmail JSONUtils)
 target_link_libraries (sendEmail Datetime)
