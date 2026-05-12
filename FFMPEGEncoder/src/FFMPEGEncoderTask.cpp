@@ -287,9 +287,9 @@ void FFMPEGEncoderTask::uploadLocalMediaToMMS(
 			CurlWrapper::GetInputParameters inputParameters {
 				.url = mmsIngestionJobURL,
 				.timeoutInSeconds = _mmsAPITimeoutInSeconds,
-				.maxRetryNumber = 3,
 				.authorization = CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
-				.referenceToLog = std::format(", ingestionJobKey: {}", ingestionJobKey)
+				.referenceToLog = std::format(", ingestionJobKey: {}", ingestionJobKey),
+				.maxRetryNumber = 3
 			};
 			CurlWrapper::OutputParameters outputParameters;
 			json ingestionRoot = CurlWrapper::httpGetJson(inputParameters, outputParameters);
