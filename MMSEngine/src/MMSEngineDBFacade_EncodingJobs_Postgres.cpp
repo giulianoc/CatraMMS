@@ -478,13 +478,6 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			LOG_INFO("AAA"
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
