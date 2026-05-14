@@ -3462,13 +3462,13 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				to_char(ij.processingStartingFrom, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as processingStartingFrom,
 				to_char(ij.startProcessing, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as startProcessing,
 				to_char(ij.endProcessing, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as endProcessing,
-				case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing,
-				case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing,
+				COALESCE(ij.startProcessing, ir.ingestionDate) as newStartProcessing,
+				COALESCE(ij.endProcessing, ir.ingestionDate) as newEndProcessing,
 				ij.downloadingProgress, ij.uploadingProgress,
 				ij.status, ij.errorMessages
 				{}
 				{}
-				order by newStartProcessing {}, newEndProcessing
+				order by ij.startProcessing {} nulls first, ij.endProcessing
 				limit {} offset {}
 				)",
 				sqlJoin, sqlWhere, asc ? "asc" : "desc", rows, start

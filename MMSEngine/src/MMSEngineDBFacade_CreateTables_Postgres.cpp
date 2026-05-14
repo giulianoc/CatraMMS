@@ -1835,14 +1835,20 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			// usato da getIngestionJobsStatus
 			string sqlStatement = R"(
-				create index if not exists MMS_IngestionJob_idx3 on MMS_IngestionJob
-				(status, ingestionRootKey) where status in (
-					'Start_TaskQueued',
-					'SourceDownloadingInProgress',
-					'SourceMovingInProgress',
-					'SourceCopingInProgress',
-					'SourceUploadingInProgress',
-					'EncodingQueued')
+				CREATE INDEX MMS_IngestionJob_idx3
+				ON MMS_IngestionJob (
+				    startProcessing DESC,
+				    endProcessing DESC,
+				    ingestionRootKey
+				)
+				WHERE status IN (
+				    'Start_TaskQueued',
+				    'SourceDownloadingInProgress',
+				    'SourceMovingInProgress',
+				    'SourceCopingInProgress',
+				    'SourceUploadingInProgress',
+				    'EncodingQueued'
+				)
 			)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
