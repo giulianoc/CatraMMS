@@ -3374,57 +3374,70 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			statusListRoot["requestParameters"] = requestParametersRoot;
 		}
 
-		string sqlWhere = "where ir.ingestionRootKey = ij.ingestionRootKey ";
-		sqlWhere += std::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
+		string sqlJoin = R"(
+			FROM MMS_IngestionRoot ir
+			join MMS_IngestionJob ij
+				on ij.ingestionRootKey = ir.ingestionRootKey
+		)";
+
+		string sqlWhere;
+		sqlWhere += std::format("{} ir.workspaceKey = {} ", sqlWhere.empty() ? "where " : "and ",
+			workspace->_workspaceKey);
 		if (ingestionJobKey != -1)
-			sqlWhere += std::format("and ij.ingestionJobKey = {} ", ingestionJobKey);
+			sqlWhere += std::format("{} ij.ingestionJobKey = {} ", sqlWhere.empty() ? "where " : "and ",
+				ingestionJobKey);
 		if (!label.empty())
 		{
 			// LOWER was used because the column is using utf8_bin that is case sensitive
 			if (labelLike)
-				sqlWhere += std::format("and LOWER(ij.label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
+				sqlWhere += std::format("{} LOWER(ij.label) like LOWER({}) ", sqlWhere.empty() ? "where " : "and ",
+					trans.transaction->quote("%" + label + "%"));
 			else
-				sqlWhere += std::format("and LOWER(ij.label) = LOWER({}) ", trans.transaction->quote(label));
+				sqlWhere += std::format("{} LOWER(ij.label) = LOWER({}) ", sqlWhere.empty() ? "where " : "and ",
+					trans.transaction->quote(label));
 		}
-		/*
-		if (startAndEndIngestionDatePresent)
-			sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and ir.ingestionDate
-		<= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
-		*/
 		if (!startIngestionDate.empty())
 			sqlWhere += std::format(
-				R"(and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(startIngestionDate)
+				R"({} ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", sqlWhere.empty() ? "where " : "and ",
+				trans.transaction->quote(startIngestionDate)
 			);
 		if (!endIngestionDate.empty())
 			sqlWhere += std::format(
-				R"(and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(endIngestionDate)
+				R"({} ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", sqlWhere.empty() ? "where " : "and ",
+				trans.transaction->quote(endIngestionDate)
 			);
 		if (!startScheduleDate.empty())
 			sqlWhere += std::format(
-				R"(and ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(startScheduleDate)
+				R"({} ij.scheduleStart_virtual >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", sqlWhere.empty() ? "where " : "and ",
+				trans.transaction->quote(startScheduleDate)
 			);
 		if (!ingestionType.empty())
-			sqlWhere += std::format("and ij.ingestionType = {} ", trans.transaction->quote(ingestionType));
+			sqlWhere += std::format("{} ij.ingestionType = {} ", sqlWhere.empty() ? "where " : "and ",
+				trans.transaction->quote(ingestionType));
 		if (!configurationLabel.empty())
-			sqlWhere += std::format("and ij.configurationLabel_virtual = {} ", trans.transaction->quote(configurationLabel));
+			sqlWhere += std::format("{} ij.configurationLabel_virtual = {} ", sqlWhere.empty() ? "where " : "and ",
+				trans.transaction->quote(configurationLabel));
 		if (!outputChannelLabel.empty())
-			sqlWhere += std::format("and ij.outputChannelLabel_virtual = {} ", trans.transaction->quote(outputChannelLabel));
+			sqlWhere += std::format("{} ij.outputChannelLabel_virtual = {} ", sqlWhere.empty() ? "where " : "and ",
+				trans.transaction->quote(outputChannelLabel));
 		if (recordingCode != -1)
-			sqlWhere += std::format("and ij.recordingCode_virtual = {} ", recordingCode);
+			sqlWhere += std::format("{} ij.recordingCode_virtual = {} ",  sqlWhere.empty() ? "where " : "and ",
+				recordingCode);
 		if (broadcastIngestionJobKeyNotNull)
-			sqlWhere += ("and ij.broadcastIngestionJobKey_virtual is not null ");
+			sqlWhere += std::format("{} ij.broadcastIngestionJobKey_virtual is not null ", sqlWhere.empty() ? "where " : "and ");
 		if (!jsonParametersCondition.empty())
-			sqlWhere += std::format("and {} ", jsonParametersCondition);
+			sqlWhere += std::format("{} {} ", sqlWhere.empty() ? "where " : "and ", jsonParametersCondition);
 		if (status == "completed")
-			sqlWhere += ("and ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
-						 "'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') "); // like 'End_%' "
+			sqlWhere += std::format("{} ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
+						 "'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') ",
+						 sqlWhere.empty() ? "where " : "and "); // like 'End_%' "
 		else if (status == "notCompleted")
-			sqlWhere += ("and ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
-						 "'SourceUploadingInProgress', 'EncodingQueued') "); // not like 'End_%' "
+			sqlWhere += std::format("{} ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
+						 "'SourceUploadingInProgress', 'EncodingQueued') ", sqlWhere.empty() ? "where " : "and "); // not like 'End_%' "
 
 		json responseRoot;
 		{
-			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) {} {}", sqlJoin, sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -3464,17 +3477,17 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing,
 				case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing,
 				ij.downloadingProgress, ij.uploadingProgress,
-				ij.status, ij.errorMessages from MMS_IngestionRoot ir, MMS_IngestionJob ij
+				ij.status, ij.errorMessages
+				{}
 				{}
 				order by newStartProcessing {}, newEndProcessing
 				limit {} offset {}
 				)",
-				sqlWhere, asc ? "asc" : "desc", rows, start
+				sqlJoin, sqlWhere, asc ? "asc" : "desc", rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			chrono::milliseconds internalSqlDuration(0);
-			result res = trans.transaction->exec(sqlStatement);
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _postgresHelper.buildResult(res);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _postgresHelper.buildResult(trans.transaction->exec(sqlStatement));
 			for (auto& row : *sqlResultSet)
 			{
 				chrono::system_clock::time_point startGetIngestionJobRoot = chrono::system_clock::now();
@@ -3484,6 +3497,14 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				ingestionJobsRoot.push_back(ingestionJobRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			LOG_INFO("AAA"
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(),
+				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+			);
 			SQLQUERYLOG(
 				"getIngestionJobs", elapsed,
 				"SQL statement"
