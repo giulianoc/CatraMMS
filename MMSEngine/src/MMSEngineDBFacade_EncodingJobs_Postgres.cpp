@@ -64,7 +64,7 @@ void MMSEngineDBFacade::getToBeProcessedEncodingJobs(
 				"where ej.processorMMS is null "
 				"and ej.status = {} and ej.encodingJobStart <= NOW() at time zone 'utc' "
 				"and (ej.utcScheduleStart_virtual is null or "
-				"ej.utcScheduleStart_virtual - (extract(epoch from (NOW() at time zone 'utc'))) < {} * 60) "
+				"ej.utcScheduleStart_virtual < (extract(epoch from (NOW() at time zone 'utc'))) + {} * 60) "
 				"order by ej.typePriority asc, ej.utcScheduleStart_virtual asc, "
 				"ej.encodingPriority desc, ej.creationDate asc, ej.failuresNumber asc "
 				"limit {} offset {} for update skip locked",
