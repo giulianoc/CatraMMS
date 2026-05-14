@@ -3152,19 +3152,6 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 
 		json encodingJobsRoot = json::array();
 		{
-			/*
--                               "select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
--                               "ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
--                               "ej.realTimeInfo, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
--                               "to_char(ej.encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
--                               "to_char(ej.encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
--                               "case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
--                               "case when ij.endProcessing IS NULL then NOW() at time zone 'utc' else ij.endProcessing end as newEndProcessing "
--                               "from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {} "
--                               "order by newStartProcessing {}, newEndProcessing {} "
--                               "limit {} offset {}",
-*/
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters,
@@ -3176,7 +3163,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				coalesce(ij.endProcessing, now() at time zone 'utc') as newEndProcessing
 				{}
 				{}
-				order by ij.startProcessing {}, newEndProcessing {}
+				order by ij.startProcessing {}, endProcessing {}
 				limit {} offset {}
 				)",
 				sqlJoin, sqlWhere,
@@ -3270,13 +3257,6 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				encodingJobsRoot.push_back(encodingJobRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			LOG_INFO("AAAAA"
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
