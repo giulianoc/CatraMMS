@@ -3237,7 +3237,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				if (row["encodingPid"].isNull())
 					encodingJobRoot["encodingPid"] = -1;
 				else
-					encodingJobRoot["encodingPid"] = row["encodingPid"].as<int64_t>();
+					encodingJobRoot["encodingPid"] = row["encodingPid"].as<int32_t>();
 
 				if (row["realTimeInfo"].isNull())
 					encodingJobRoot["realTimeInfo"] = nullptr;
@@ -3247,7 +3247,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				if (row["numberOfRestartBecauseOfFailure"].isNull())
 					encodingJobRoot["numberOfRestartBecauseOfFailure"] = -1;
 				else
-					encodingJobRoot["numberOfRestartBecauseOfFailure"] = row["numberOfRestartBecauseOfFailure"].as<int64_t>();
+					encodingJobRoot["numberOfRestartBecauseOfFailure"] = row["numberOfRestartBecauseOfFailure"].as<int32_t>();
 
 				encodingJobRoot["failuresNumber"] = row["failuresNumber"].as<int16_t>();
 
