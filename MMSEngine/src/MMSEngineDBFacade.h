@@ -1684,12 +1684,12 @@ class MMSEngineDBFacade
 	);
 
 	nlohmann::json getEncodingJobsStatus(
-		std::shared_ptr<Workspace> workspace, int64_t encodingJobKey, int start, int rows,
+		std::shared_ptr<Workspace> workspace, std::optional<long long> encodingJobKey, int start, int rows,
 		// bool startAndEndIngestionDatePresent,
 		std::string startIngestionDate, std::string endIngestionDate,
 		// bool startAndEndEncodingDatePresent,
-		std::string startEncodingDate, std::string endEncodingDate, int64_t encoderKey, bool alsoEncodingJobsFromOtherWorkspaces, bool asc, std::string status,
-		std::string types, bool fromMaster
+		std::string startEncodingDate, std::string endEncodingDate, std::optional<long long> encoderKey, bool alsoEncodingJobsFromOtherWorkspaces,
+		bool asc, std::string status, std::string types, bool fromMaster
 	);
 
 #ifdef __POSTGRES__

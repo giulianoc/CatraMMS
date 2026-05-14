@@ -3017,17 +3017,17 @@ nontransaction trans{*(conn->_sqlConnection)};
 }
 
 json MMSEngineDBFacade::getEncodingJobsStatus(
-	shared_ptr<Workspace> workspace, int64_t encodingJobKey, int start, int rows,
+	shared_ptr<Workspace> workspace, optional<int64_t> encodingJobKey, int start, int rows,
 	// bool startAndEndIngestionDatePresent,
 	string startIngestionDate, string endIngestionDate,
 	// bool startAndEndEncodingDatePresent,
-	string startEncodingDate, string endEncodingDate, int64_t encoderKey,
+	string startEncodingDate, string endEncodingDate, optional<int64_t> encoderKey,
 
-	// 2021-01-29: next parameter is used ONLY if encoderKey != -1
-	// The goal is the, if the user from a GUI asks for the encoding jobs of a specific encoder,
+	// 2021-01-29: next parameter is used ONLY if encoderKey viene fornito
+	// The goal is that, if the user from a GUI asks for the encoding jobs of a specific encoder,
 	// wants to know how the encoder is loaded and, to know that, he need to know also the encoding jobs
 	// running on that encoder from other workflows.
-	// So, if alsoEncodingJobsFromOtherWorkspaces is true and encoderKey != -1, we will send all the encodingJobs
+	// So, if alsoEncodingJobsFromOtherWorkspaces is true and encoderKey viene passato, we will send all the encodingJobs
 	// running on that encoder.
 	// In this case, for the one not belonging to the current workspace, we will not fill
 	// the ingestionJobKey, so it is not possible to retrieve information by GUI like 'title media, ...'
@@ -3041,65 +3041,28 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
-		string field;
-
 		{
 			json requestParametersRoot;
 
-			field = "start";
-			requestParametersRoot[field] = start;
-
-			field = "rows";
-			requestParametersRoot[field] = rows;
-
-			if (encodingJobKey != -1)
-			{
-				field = "encodingJobKey";
-				requestParametersRoot[field] = encodingJobKey;
-			}
-
+			requestParametersRoot["start"] = start;
+			requestParametersRoot["rows"] = rows;
+			if (encodingJobKey)
+				requestParametersRoot["encodingJobKey"] = *encodingJobKey;
 			if (!startIngestionDate.empty())
-			{
-				field = "startIngestionDate";
-				requestParametersRoot[field] = startIngestionDate;
-			}
+				requestParametersRoot["startIngestionDate"] = startIngestionDate;
 			if (!endIngestionDate.empty())
-			{
-				field = "endIngestionDate";
-				requestParametersRoot[field] = endIngestionDate;
-			}
-
+				requestParametersRoot["endIngestionDate"] = endIngestionDate;
 			if (!startEncodingDate.empty())
-			{
-				field = "startEncodingDate";
-				requestParametersRoot[field] = startEncodingDate;
-			}
+				requestParametersRoot["startEncodingDate"] = startEncodingDate;
 			if (!endEncodingDate.empty())
-			{
-				field = "endEncodingDate";
-				requestParametersRoot[field] = endEncodingDate;
-			}
-
-			if (encoderKey != -1)
-			{
-				field = "encoderKey";
-				requestParametersRoot[field] = encoderKey;
-			}
-
-			field = "alsoEncodingJobsFromOtherWorkspaces";
-			requestParametersRoot[field] = alsoEncodingJobsFromOtherWorkspaces;
-
-			field = "status";
-			requestParametersRoot[field] = status;
-
+				requestParametersRoot["endEncodingDate"] = endEncodingDate;
+			if (encoderKey)
+				requestParametersRoot["encoderKey"] = *encoderKey;
+			requestParametersRoot["alsoEncodingJobsFromOtherWorkspaces"] = alsoEncodingJobsFromOtherWorkspaces;
+			requestParametersRoot["status"] = status;
 			if (!types.empty())
-			{
-				field = "types";
-				requestParametersRoot[field] = types;
-			}
-
-			field = "requestParameters";
-			statusListRoot[field] = requestParametersRoot;
+				requestParametersRoot["types"] = types;
+			statusListRoot["requestParameters"] = requestParametersRoot;
 		}
 
 		// manage types
@@ -3123,37 +3086,31 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			}
 		}
 
-		string sqlWhere = string("where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey ");
-		if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+		auto sqlWhere = string("where ir.ingestionRootKey = ij.ingestionRootKey and ij.ingestionJobKey = ej.ingestionJobKey ");
+		if (alsoEncodingJobsFromOtherWorkspaces && encoderKey)
 			;
 		else
 			sqlWhere += std::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
-		if (encodingJobKey != -1)
-			sqlWhere += std::format("and ej.encodingJobKey = {} ", encodingJobKey);
-		// if (startAndEndIngestionDatePresent)
-		//     sqlWhere += ("and ir.ingestionDate >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and
-		//     ir.ingestionDate <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
+		if (encodingJobKey)
+			sqlWhere += std::format("and ej.encodingJobKey = {} ", *encodingJobKey);
 		if (!startIngestionDate.empty())
-			sqlWhere += std::format(
-				"and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate)
+			sqlWhere += std::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				trans.transaction->quote(startIngestionDate)
 			);
 		if (!endIngestionDate.empty())
-			sqlWhere += std::format(
-				"and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate)
+			sqlWhere += std::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				trans.transaction->quote(endIngestionDate)
 			);
-		// if (startAndEndEncodingDatePresent)
-		//     sqlWhere += ("and ej.encodingJobStart >= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) and
-		//     ej.encodingJobStart <= convert_tz(STR_TO_DATE(?, '%Y-%m-%dT%H:%i:%sZ'), '+00:00', @@session.time_zone) ");
 		if (!startEncodingDate.empty())
-			sqlWhere += std::format(
-				"and ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startEncodingDate)
+			sqlWhere += std::format("and ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				trans.transaction->quote(startEncodingDate)
 			);
 		if (!endEncodingDate.empty())
-			sqlWhere += std::format(
-				"and ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endEncodingDate)
+			sqlWhere += std::format("and ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				trans.transaction->quote(endEncodingDate)
 			);
-		if (encoderKey != -1)
-			sqlWhere += std::format("and ej.encoderKey = {} ", encoderKey);
+		if (encoderKey)
+			sqlWhere += std::format("and ej.encoderKey = {} ", *encoderKey);
 		if (status == "All")
 			;
 		else if (status == "Completed")											   // like non va bene per motivi di performance
@@ -3174,8 +3131,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 		{
 			string sqlStatement = std::format("select count(*) from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -3219,15 +3175,15 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				sqlWhere, asc ? "asc" : "desc", asc ? "asc " : "desc", rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
-			for (auto row : res)
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
+			for (auto row : *sqlResultSet)
 			{
 				json encodingJobRoot;
 
 				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
 
 				bool ownedByCurrentWorkspace;
-				if (alsoEncodingJobsFromOtherWorkspaces && encoderKey != -1)
+				if (alsoEncodingJobsFromOtherWorkspaces && encoderKey)
 				{
 					if (workspaceKey == workspace->_workspaceKey)
 						ownedByCurrentWorkspace = true;
@@ -3237,123 +3193,80 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				else
 					ownedByCurrentWorkspace = true;
 
-				field = "ownedByCurrentWorkspace";
-				encodingJobRoot[field] = ownedByCurrentWorkspace;
+				encodingJobRoot["ownedByCurrentWorkspace"] = ownedByCurrentWorkspace;
 
-				int64_t encodingJobKey = row["encodingJobKey"].as<int64_t>();
+				encodingJobRoot["encodingJobKey"] = row["encodingJobKey"].as<int64_t>();
 
-				field = "encodingJobKey";
-				encodingJobRoot[field] = encodingJobKey;
+				encodingJobRoot["ingestionJobKey"] = row["ingestionJobKey"].as<int64_t>();
+				encodingJobRoot["type"] = row["type"].as<string>();
+				encodingJobRoot["parameters"] = JSONUtils::toJson<json>(row["parameters"].as<string>());
 
-				// if (ownedByCurrentWorkspace)
-				{
-					field = "ingestionJobKey";
-					encodingJobRoot[field] = row["ingestionJobKey"].as<int64_t>();
-				}
-				/*
+				encodingJobRoot["status"] = row["status"].as<string>();
+				EncodingStatus encodingStatus = toEncodingStatus(row["status"].as<string>());
+
+				if (row["encodingProgress"].isNull())
+					encodingJobRoot["progress"] = nullptr;
 				else
-				{
-					// see comment above (2021-01-29)
+					encodingJobRoot["progress"] = row["encodingProgress"].as<double>();
 
-					field = "ingestionJobKey";
-					encodingJobRoot[field] = nullptr;
-				}
-				*/
-
-				field = "type";
-				encodingJobRoot[field] = row["type"].as<string>();
-
-				// if (ownedByCurrentWorkspace)
-				{
-					string parameters = row["parameters"].as<string>();
-
-					json parametersRoot;
-					if (parameters != "")
-						parametersRoot = JSONUtils::toJson<json>(parameters);
-
-					field = "parameters";
-					encodingJobRoot[field] = parametersRoot;
-				}
-				/*
-				else
-				{
-					field = "parameters";
-					encodingJobRoot[field] = nullptr;
-				}
-				*/
-
-				field = "status";
-				encodingJobRoot[field] = row["status"].as<string>();
-				EncodingStatus encodingStatus = MMSEngineDBFacade::toEncodingStatus(row["status"].as<string>());
-
-				field = "progress";
-				if (row["encodingProgress"].is_null())
-					encodingJobRoot[field] = nullptr;
-				else
-					encodingJobRoot[field] = row["encodingProgress"].as<float>();
-
-				field = "start";
 				if (encodingStatus == EncodingStatus::ToBeProcessed)
-					encodingJobRoot[field] = nullptr;
+					encodingJobRoot["start"] = nullptr;
 				else
 				{
-					if (row["encodingJobStart"].is_null())
-						encodingJobRoot[field] = nullptr;
+					if (row["encodingJobStart"].isNull())
+						encodingJobRoot["start"] = nullptr;
 					else
-						encodingJobRoot[field] = row["encodingJobStart"].as<string>();
+						encodingJobRoot["start"] = row["encodingJobStart"].as<string>();
 				}
 
-				field = "end";
-				if (row["encodingJobEnd"].is_null())
-					encodingJobRoot[field] = nullptr;
+				if (row["encodingJobEnd"].isNull())
+					encodingJobRoot["end"] = nullptr;
 				else
-					encodingJobRoot[field] = row["encodingJobEnd"].as<string>();
+					encodingJobRoot["end"] = row["encodingJobEnd"].as<string>();
 
-				field = "processorMMS";
-				if (row["processorMMS"].is_null())
-					encodingJobRoot[field] = nullptr;
+				if (row["processorMMS"].isNull())
+					encodingJobRoot["processorMMS"] = nullptr;
 				else
-					encodingJobRoot[field] = row["processorMMS"].as<string>();
+					encodingJobRoot["processorMMS"] = row["processorMMS"].as<string>();
 
-				field = "encoderKey";
-				if (row["encoderKey"].is_null())
-					encodingJobRoot[field] = -1;
+				if (row["encoderKey"].isNull())
+					encodingJobRoot["encoderKey"] = -1;
 				else
-					encodingJobRoot[field] = row["encoderKey"].as<int64_t>();
+					encodingJobRoot["encoderKey"] = row["encoderKey"].as<int64_t>();
 
-				field = "encodingPid";
-				if (row["encodingPid"].is_null())
-					encodingJobRoot[field] = -1;
+				if (row["encodingPid"].isNull())
+					encodingJobRoot["encodingPid"] = -1;
 				else
-					encodingJobRoot[field] = row["encodingPid"].as<int64_t>();
+					encodingJobRoot["encodingPid"] = row["encodingPid"].as<int64_t>();
 
-				field = "realTimeInfo";
-				if (row["realTimeInfo"].is_null())
-					encodingJobRoot[field] = nullptr;
+				if (row["realTimeInfo"].isNull())
+					encodingJobRoot["realTimeInfo"] = nullptr;
 				else
-					encodingJobRoot[field] = JSONUtils::toJson<json>(row["realTimeInfo"].as<string>());
+					encodingJobRoot["realTimeInfo"] = JSONUtils::toJson<json>(row["realTimeInfo"].as<string>());
 
-				field = "numberOfRestartBecauseOfFailure";
-				if (row["numberOfRestartBecauseOfFailure"].is_null())
-					encodingJobRoot[field] = -1;
+				if (row["numberOfRestartBecauseOfFailure"].isNull())
+					encodingJobRoot["numberOfRestartBecauseOfFailure"] = -1;
 				else
-					encodingJobRoot[field] = row["numberOfRestartBecauseOfFailure"].as<int64_t>();
+					encodingJobRoot["numberOfRestartBecauseOfFailure"] = row["numberOfRestartBecauseOfFailure"].as<int64_t>();
 
-				field = "failuresNumber";
-				encodingJobRoot[field] = row["failuresNumber"].as<int>();
+				encodingJobRoot["failuresNumber"] = row["failuresNumber"].as<int16_t>();
 
-				field = "encodingPriority";
-				encodingJobRoot[field] = toString(static_cast<EncodingPriority>(row["encodingPriority"].as<int>()));
+				encodingJobRoot["encodingPriority"] = toString(static_cast<EncodingPriority>(row["encodingPriority"].as<int16_t>()));
 
-				field = "encodingPriorityCode";
-				encodingJobRoot[field] = row["encodingPriority"].as<int>();
+				encodingJobRoot["encodingPriorityCode"] = row["encodingPriority"].as<int16_t>();
 
-				field = "maxEncodingPriorityCode";
-				encodingJobRoot[field] = workspace->_maxEncodingPriority;
+				encodingJobRoot["maxEncodingPriorityCode"] = workspace->_maxEncodingPriority;
 
 				encodingJobsRoot.push_back(encodingJobRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			LOG_INFO("AAAAA"
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -3364,11 +3277,8 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			);
 		}
 
-		field = "encodingJobs";
-		responseRoot[field] = encodingJobsRoot;
-
-		field = "response";
-		statusListRoot[field] = responseRoot;
+		responseRoot["encodingJobs"] = encodingJobsRoot;
+		statusListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
 	{
