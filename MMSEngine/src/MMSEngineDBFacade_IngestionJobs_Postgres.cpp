@@ -3468,10 +3468,11 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				ij.status, ij.errorMessages
 				{}
 				{}
-				order by ij.startProcessing {} nulls first, ij.endProcessing
+				-- viene forzato DESC per usare l'indice MMS_IngestionJob_idx3
+				order by ij.startProcessing DESC nulls first, ij.endProcessing DESC
 				limit {} offset {}
 				)",
-				sqlJoin, sqlWhere, asc ? "asc" : "desc", rows, start
+				sqlJoin, sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			chrono::milliseconds internalSqlDuration(0);
