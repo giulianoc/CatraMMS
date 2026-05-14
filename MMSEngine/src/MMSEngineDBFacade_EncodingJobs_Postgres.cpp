@@ -3180,8 +3180,10 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			{
 				json encodingJobRoot;
 
+				LOG_INFO("BBB");
 				int64_t workspaceKey = row["workspaceKey"].as<int64_t>();
 
+				LOG_INFO("BBB");
 				bool ownedByCurrentWorkspace;
 				if (alsoEncodingJobsFromOtherWorkspaces && encoderKey)
 				{
@@ -3193,22 +3195,30 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				else
 					ownedByCurrentWorkspace = true;
 
+				LOG_INFO("BBB");
 				encodingJobRoot["ownedByCurrentWorkspace"] = ownedByCurrentWorkspace;
 
+				LOG_INFO("BBB");
 				encodingJobRoot["encodingJobKey"] = row["encodingJobKey"].as<int64_t>();
 
+				LOG_INFO("BBB");
 				encodingJobRoot["ingestionJobKey"] = row["ingestionJobKey"].as<int64_t>();
+				LOG_INFO("BBB");
 				encodingJobRoot["type"] = row["type"].as<string>();
+				LOG_INFO("BBB");
 				encodingJobRoot["parameters"] = JSONUtils::toJson<json>(row["parameters"].as<string>());
 
+				LOG_INFO("BBB");
 				encodingJobRoot["status"] = row["status"].as<string>();
 				EncodingStatus encodingStatus = toEncodingStatus(row["status"].as<string>());
 
+				LOG_INFO("BBB");
 				if (row["encodingProgress"].isNull())
 					encodingJobRoot["progress"] = nullptr;
 				else
 					encodingJobRoot["progress"] = row["encodingProgress"].as<double>();
 
+				LOG_INFO("BBB");
 				if (encodingStatus == EncodingStatus::ToBeProcessed)
 					encodingJobRoot["start"] = nullptr;
 				else
@@ -3219,44 +3229,55 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 						encodingJobRoot["start"] = row["encodingJobStart"].as<string>();
 				}
 
+				LOG_INFO("BBB");
 				if (row["encodingJobEnd"].isNull())
 					encodingJobRoot["end"] = nullptr;
 				else
 					encodingJobRoot["end"] = row["encodingJobEnd"].as<string>();
 
+				LOG_INFO("BBB");
 				if (row["processorMMS"].isNull())
 					encodingJobRoot["processorMMS"] = nullptr;
 				else
 					encodingJobRoot["processorMMS"] = row["processorMMS"].as<string>();
 
+				LOG_INFO("BBB");
 				if (row["encoderKey"].isNull())
 					encodingJobRoot["encoderKey"] = -1;
 				else
 					encodingJobRoot["encoderKey"] = row["encoderKey"].as<int64_t>();
 
+				LOG_INFO("BBB");
 				if (row["encodingPid"].isNull())
 					encodingJobRoot["encodingPid"] = -1;
 				else
 					encodingJobRoot["encodingPid"] = row["encodingPid"].as<int32_t>();
 
+				LOG_INFO("BBB");
 				if (row["realTimeInfo"].isNull())
 					encodingJobRoot["realTimeInfo"] = nullptr;
 				else
 					encodingJobRoot["realTimeInfo"] = JSONUtils::toJson<json>(row["realTimeInfo"].as<string>());
 
+				LOG_INFO("BBB");
 				if (row["numberOfRestartBecauseOfFailure"].isNull())
 					encodingJobRoot["numberOfRestartBecauseOfFailure"] = -1;
 				else
 					encodingJobRoot["numberOfRestartBecauseOfFailure"] = row["numberOfRestartBecauseOfFailure"].as<int32_t>();
 
+				LOG_INFO("BBB");
 				encodingJobRoot["failuresNumber"] = row["failuresNumber"].as<int16_t>();
 
+				LOG_INFO("BBB");
 				encodingJobRoot["encodingPriority"] = toString(static_cast<EncodingPriority>(row["encodingPriority"].as<int16_t>()));
 
+				LOG_INFO("BBB");
 				encodingJobRoot["encodingPriorityCode"] = row["encodingPriority"].as<int16_t>();
 
+				LOG_INFO("BBB");
 				encodingJobRoot["maxEncodingPriorityCode"] = workspace->_maxEncodingPriority;
 
+				LOG_INFO("BBB");
 				encodingJobsRoot.push_back(encodingJobRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
