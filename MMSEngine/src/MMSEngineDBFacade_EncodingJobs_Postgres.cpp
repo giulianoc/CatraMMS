@@ -3093,45 +3093,45 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 			join MMS_EncodingJob ej
 				on ej.ingestionJobKey = ij.ingestionJobKey
 		)";
-		string sqlWhere = "where ";
+		string sqlWhere;
 		if (alsoEncodingJobsFromOtherWorkspaces && encoderKey)
 			;
 		else
-			sqlWhere += std::format("and ir.workspaceKey = {} ", workspace->_workspaceKey);
+			sqlWhere += std::format("{} ir.workspaceKey = {} ", sqlWhere.empty() ? "where " : "and ", workspace->_workspaceKey);
 		if (encodingJobKey)
-			sqlWhere += std::format("and ej.encodingJobKey = {} ", *encodingJobKey);
+			sqlWhere += std::format("{} ej.encodingJobKey = {} ", sqlWhere.empty() ? "where " : "and ", *encodingJobKey);
 		if (!startIngestionDate.empty())
-			sqlWhere += std::format("and ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
-				trans.transaction->quote(startIngestionDate)
+			sqlWhere += std::format("{} ir.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				sqlWhere.empty() ? "where " : "and ", trans.transaction->quote(startIngestionDate)
 			);
 		if (!endIngestionDate.empty())
-			sqlWhere += std::format("and ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
-				trans.transaction->quote(endIngestionDate)
+			sqlWhere += std::format("{} ir.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				sqlWhere.empty() ? "where " : "and ", trans.transaction->quote(endIngestionDate)
 			);
 		if (!startEncodingDate.empty())
-			sqlWhere += std::format("and ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
-				trans.transaction->quote(startEncodingDate)
+			sqlWhere += std::format("{} ej.encodingJobStart >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				sqlWhere.empty() ? "where " : "and ", trans.transaction->quote(startEncodingDate)
 			);
 		if (!endEncodingDate.empty())
-			sqlWhere += std::format("and ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
-				trans.transaction->quote(endEncodingDate)
+			sqlWhere += std::format("{} ej.encodingJobStart <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ",
+				sqlWhere.empty() ? "where " : "and ", trans.transaction->quote(endEncodingDate)
 			);
 		if (encoderKey)
-			sqlWhere += std::format("and ej.encoderKey = {} ", *encoderKey);
+			sqlWhere += std::format("{} ej.encoderKey = {} ", sqlWhere.empty() ? "where " : "and ", *encoderKey);
 		if (status == "All")
 			;
 		else if (status == "Completed")											   // like non va bene per motivi di performance
-			sqlWhere += ("and ej.status not in ('ToBeProcessed', 'Processing') "); // like 'End_%' ");
+			sqlWhere += std::format("{} ej.status not in ('ToBeProcessed', 'Processing') ", sqlWhere.empty() ? "where " : "and "); // like 'End_%' ");
 		else if (status == "Processing")
-			sqlWhere += ("and ej.status = 'Processing' ");
+			sqlWhere += std::format("{} ej.status = 'Processing' ", sqlWhere.empty() ? "where " : "and ");
 		else if (status == "ToBeProcessed")
-			sqlWhere += ("and ej.status = 'ToBeProcessed' ");
+			sqlWhere += std::format("{} ej.status = 'ToBeProcessed' ", sqlWhere.empty() ? "where " : "and ");
 		if (!types.empty())
 		{
 			if (vTypes.size() == 1)
-				sqlWhere += std::format("and ej.type = {} ", trans.transaction->quote(types));
+				sqlWhere += std::format("{} ej.type = {} ", sqlWhere.empty() ? "where " : "and ", trans.transaction->quote(types));
 			else
-				sqlWhere += ("and ej.type in (" + typesArgument + ")");
+				sqlWhere += std::format("{} ej.type in ({})", sqlWhere.empty() ? "where " : "and ", typesArgument);
 		}
 
 		json responseRoot;
