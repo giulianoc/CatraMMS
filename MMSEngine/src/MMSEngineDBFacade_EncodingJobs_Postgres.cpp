@@ -3206,7 +3206,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				LOG_INFO("BBB");
 				encodingJobRoot["type"] = row["type"].as<string>();
 				LOG_INFO("BBB");
-				encodingJobRoot["parameters"] = JSONUtils::toJson<json>(row["parameters"].as<string>());
+				encodingJobRoot["parameters"] = row["parameters"].as<json>();
 
 				LOG_INFO("BBB");
 				encodingJobRoot["status"] = row["status"].as<string>();
