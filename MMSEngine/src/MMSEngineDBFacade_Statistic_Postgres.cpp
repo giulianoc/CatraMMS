@@ -1166,7 +1166,6 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 
 		json statisticsRoot = json::array();
 		{
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select title, count(*) as count from MMS_RequestStatistic
@@ -1369,7 +1368,6 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 
 		json statisticsRoot = json::array();
 		{
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select userId, count(*) as count from MMS_RequestStatistic
@@ -1573,7 +1571,6 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 
 		json statisticsRoot = json::array();
 		{
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count
@@ -1778,13 +1775,6 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 
 		json statisticsRoot = json::array();
 		{
-			/*
--                               "select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
--                               "from MMS_RequestStatistic {}"
--                               "group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc " // order by count(*) desc "
--                               "limit {} offset {}",
-			 */
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count
@@ -1989,7 +1979,6 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 
 		json statisticsRoot = json::array();
 		{
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count
@@ -2195,7 +2184,6 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 
 		json statisticsRoot = json::array();
 		{
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select g.country, count(*) as count

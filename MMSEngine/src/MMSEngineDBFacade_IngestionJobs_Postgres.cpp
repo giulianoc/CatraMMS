@@ -3454,7 +3454,6 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 
 		json ingestionJobsRoot = json::array();
 		{
-			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(
 				select ij.ingestionRootKey, ij.ingestionJobKey, ij.label,
@@ -3468,11 +3467,14 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				ij.status, ij.errorMessages
 				{}
 				{}
-				-- viene forzato DESC per usare l'indice MMS_IngestionJob_idx3
-				order by ij.startProcessing DESC nulls first, ij.endProcessing DESC
+				-- con ASC i nulls vanno di default alla fine, con DESC all'inizio.
+				-- E' importante lasciare i default perche cosi viene usato l'indice MMS_IngestionJob_idx3
+				order by ij.startProcessing {}, ij.endProcessing {}
 				limit {} offset {}
 				)",
-				sqlJoin, sqlWhere, rows, start
+				sqlJoin, sqlWhere,
+				asc ? "ASC" : "DESC", asc ? "ASC" : "DESC",
+				rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			chrono::milliseconds internalSqlDuration(0);
@@ -3486,14 +3488,6 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				ingestionJobsRoot.push_back(ingestionJobRoot);
 			}
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			LOG_INFO("AAA"
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(),
-				chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
-			);
 			SQLQUERYLOG(
 				"getIngestionJobs", elapsed,
 				"SQL statement"
