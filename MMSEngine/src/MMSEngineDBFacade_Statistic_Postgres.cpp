@@ -1166,10 +1166,14 @@ json MMSEngineDBFacade::getRequestStatisticPerContentList(
 
 		json statisticsRoot = json::array();
 		{
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select title, count(*) as count from MMS_RequestStatistic {}"
-				"group by title order by count(*) desc "
-				"limit {} offset {}",
+				R"(
+				select title, count(*) as count from MMS_RequestStatistic
+				{}
+				group by title order by count(*) desc
+				limit {} offset {}
+				)",
 				sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1365,10 +1369,14 @@ json MMSEngineDBFacade::getRequestStatisticPerUserList(
 
 		json statisticsRoot = json::array();
 		{
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select userId, count(*) as count from MMS_RequestStatistic {}"
-				"group by userId order by count(*) desc "
-				"limit {} offset {}",
+				R"(
+				select userId, count(*) as count from MMS_RequestStatistic
+				{}
+				group by userId order by count(*) desc
+				limit {} offset {}
+				)",
 				sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1565,11 +1573,15 @@ json MMSEngineDBFacade::getRequestStatisticPerMonthList(
 
 		json statisticsRoot = json::array();
 		{
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count "
-				"from MMS_RequestStatistic {} "
-				"group by to_char(requestTimestamp, 'YYYY-MM') order by date asc "
-				"limit {} offset {}",
+				R"(
+				select to_char(requestTimestamp, 'YYYY-MM') as date, count(*) as count
+				from MMS_RequestStatistic
+				{}
+				group by to_char(requestTimestamp, 'YYYY-MM') order by date asc
+				limit {} offset {}
+				)",
 				sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1766,11 +1778,21 @@ json MMSEngineDBFacade::getRequestStatisticPerDayList(
 
 		json statisticsRoot = json::array();
 		{
+			/*
+-                               "select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
+-                               "from MMS_RequestStatistic {}"
+-                               "group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc " // order by count(*) desc "
+-                               "limit {} offset {}",
+			 */
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count "
-				"from MMS_RequestStatistic {}"
-				"group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc " // order by count(*) desc "
-				"limit {} offset {}",
+				R"(
+				select to_char(requestTimestamp, 'YYYY-MM-DD') as date, count(*) as count
+				from MMS_RequestStatistic
+				{}
+				group by to_char(requestTimestamp, 'YYYY-MM-DD') order by date asc
+				limit {} offset {}
+				)",
 				sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1967,11 +1989,15 @@ json MMSEngineDBFacade::getRequestStatisticPerHourList(
 
 		json statisticsRoot = json::array();
 		{
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count "
-				"from MMS_RequestStatistic {}"
-				"group by to_char(requestTimestamp, 'YYYY-MM-DD HH24') order by date asc "
-				"limit {} offset {}",
+				R"(
+				select to_char(requestTimestamp, 'YYYY-MM-DD HH24') as date, count(*) as count
+				from MMS_RequestStatistic
+				{}
+				group by to_char(requestTimestamp, 'YYYY-MM-DD HH24') order by date asc
+				limit {} offset {}
+				)",
 				sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2169,11 +2195,15 @@ json MMSEngineDBFacade::getRequestStatisticPerCountryList(
 
 		json statisticsRoot = json::array();
 		{
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select g.country, count(*) as count "
-				"from MMS_RequestStatistic r, MMS_GeoInfo g {}"
-				"group by g.country order by count(*) desc "
-				"limit {} offset {}",
+				R"(
+				select g.country, count(*) as count
+				from MMS_RequestStatistic r, MMS_GeoInfo g
+				{}
+				group by g.country order by count(*) desc
+				limit {} offset {}
+				)",
 				sqlWhere, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

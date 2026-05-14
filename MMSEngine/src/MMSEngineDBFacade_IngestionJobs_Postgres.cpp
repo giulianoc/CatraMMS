@@ -3440,18 +3440,35 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 
 		json ingestionJobsRoot = json::array();
 		{
+			/*
+-                               "select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
+-                               "ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
+-                               "to_char(ij.processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
+-                               "to_char(ij.startProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startProcessing, "
+-                               "to_char(ij.endProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endProcessing, "
+-                               "case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing, "
+-                               "case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing, "
+-                               "ij.downloadingProgress, ij.uploadingProgress, "
+-                               "ij.status, ij.errorMessages from MMS_IngestionRoot ir, MMS_IngestionJob ij {} "
+-                               "order by newStartProcessing {}, newEndProcessing "
+-                               "limit {} offset {}",
+			 */
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
-				"ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
-				"to_char(ij.processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
-				"to_char(ij.startProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startProcessing, "
-				"to_char(ij.endProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endProcessing, "
-				"case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing, "
-				"case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing, "
-				"ij.downloadingProgress, ij.uploadingProgress, "
-				"ij.status, ij.errorMessages from MMS_IngestionRoot ir, MMS_IngestionJob ij {} "
-				"order by newStartProcessing {}, newEndProcessing "
-				"limit {} offset {}",
+				R"(
+				select ij.ingestionRootKey, ij.ingestionJobKey, ij.label,
+				ij.ingestionType, ij.metaDataContent, ij.processorMMS,
+				to_char(ij.processingStartingFrom, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as processingStartingFrom,
+				to_char(ij.startProcessing, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as startProcessing,
+				to_char(ij.endProcessing, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as endProcessing,
+				case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing,
+				case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing,
+				ij.downloadingProgress, ij.uploadingProgress,
+				ij.status, ij.errorMessages from MMS_IngestionRoot ir, MMS_IngestionJob ij
+				{}
+				order by newStartProcessing {}, newEndProcessing
+				limit {} offset {}
+				)",
 				sqlWhere, asc ? "asc" : "desc", rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

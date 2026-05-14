@@ -3038,22 +3038,6 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 {
 	json statusListRoot;
 
-	/*
-shared_ptr<PostgresConnection> conn = nullptr;
-
-shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-if (fromMaster)
-	connectionPool = _masterPostgresConnectionPool;
-else
-	connectionPool = _slavePostgresConnectionPool;
-
-conn = connectionPool->borrow();
-// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-// Se questo non dovesse essere vero, unborrow non sarà chiamata
-// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-nontransaction trans{*(conn->_sqlConnection)};
-*/
-
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
@@ -3205,17 +3189,33 @@ nontransaction trans{*(conn->_sqlConnection)};
 
 		json encodingJobsRoot = json::array();
 		{
+			/*
+-                               "select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
+-                               "ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
+-                               "ej.realTimeInfo, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
+-                               "to_char(ej.encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
+-                               "to_char(ej.encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
+-                               "case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
+-                               "case when ij.endProcessing IS NULL then NOW() at time zone 'utc' else ij.endProcessing end as newEndProcessing "
+-                               "from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {} "
+-                               "order by newStartProcessing {}, newEndProcessing {} "
+-                               "limit {} offset {}",
+*/
+			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
-				"select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters, "
-				"ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid, "
-				"ej.realTimeInfo, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority, "
-				"to_char(ej.encodingJobStart, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobStart, "
-				"to_char(ej.encodingJobEnd, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as encodingJobEnd, "
-				"case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing, "
-				"case when ij.endProcessing IS NULL then NOW() at time zone 'utc' else ij.endProcessing end as newEndProcessing "
-				"from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej {} "
-				"order by newStartProcessing {}, newEndProcessing {} "
-				"limit {} offset {}",
+				R"(
+				select ir.workspaceKey, ej.encodingJobKey, ij.ingestionJobKey, ej.type, ej.parameters,
+				ej.status, ej.encodingProgress, ej.processorMMS, ej.encoderKey, ej.encodingPid,
+				ej.realTimeInfo, ej.numberOfRestartBecauseOfFailure, ej.failuresNumber, ej.encodingPriority,
+				to_char(ej.encodingJobStart, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as encodingJobStart,
+				to_char(ej.encodingJobEnd, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as encodingJobEnd,
+				case when ij.startProcessing IS NULL then NOW() at time zone 'utc' else ij.startProcessing end as newStartProcessing,
+				case when ij.endProcessing IS NULL then NOW() at time zone 'utc' else ij.endProcessing end as newEndProcessing
+				from MMS_IngestionRoot ir, MMS_IngestionJob ij, MMS_EncodingJob ej
+				{}
+				order by newStartProcessing {}, newEndProcessing {}
+				limit {} offset {}
+				)",
 				sqlWhere, asc ? "asc" : "desc", asc ? "asc " : "desc", rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
