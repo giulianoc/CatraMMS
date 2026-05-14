@@ -1831,6 +1831,49 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+
+		{
+			// usato da getIngestionJobsStatus
+			string sqlStatement = R"(
+				create index if not exists MMS_IngestionJob_idx3 on MMS_IngestionJob
+				(status, ingestionRootKey) where status in (
+					'Start_TaskQueued',
+					'SourceDownloadingInProgress',
+					'SourceMovingInProgress',
+					'SourceCopingInProgress',
+					'SourceUploadingInProgress',
+					'EncodingQueued')
+			)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			// usato da getIngestionJobsStatus
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx4 on MMS_IngestionJob "
+				"(ingestionRootKey, status)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx6 on MMS_IngestionJob (processingStartingFrom)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();

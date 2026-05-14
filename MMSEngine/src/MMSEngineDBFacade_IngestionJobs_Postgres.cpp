@@ -3429,11 +3429,12 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 			sqlWhere += std::format("{} {} ", sqlWhere.empty() ? "where " : "and ", jsonParametersCondition);
 		if (status == "completed")
 			sqlWhere += std::format("{} ij.status not in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
-						 "'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') ",
-						 sqlWhere.empty() ? "where " : "and "); // like 'End_%' "
+				"'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') ",
+				sqlWhere.empty() ? "where " : "and "); // like 'End_%' "
 		else if (status == "notCompleted")
-			sqlWhere += std::format("{} ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', 'SourceCopingInProgress', "
-						 "'SourceUploadingInProgress', 'EncodingQueued') ", sqlWhere.empty() ? "where " : "and "); // not like 'End_%' "
+			sqlWhere += std::format("{} ij.status in ('Start_TaskQueued', 'SourceDownloadingInProgress', 'SourceMovingInProgress', "
+				"'SourceCopingInProgress', 'SourceUploadingInProgress', 'EncodingQueued') ",
+				sqlWhere.empty() ? "where " : "and "); // not like 'End_%' "
 
 		json responseRoot;
 		{
@@ -3453,19 +3454,6 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 
 		json ingestionJobsRoot = json::array();
 		{
-			/*
--                               "select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
--                               "ij.ingestionType, ij.metaDataContent, ij.processorMMS, "
--                               "to_char(ij.processingStartingFrom, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as processingStartingFrom, "
--                               "to_char(ij.startProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as startProcessing, "
--                               "to_char(ij.endProcessing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as endProcessing, "
--                               "case when ij.startProcessing IS NULL then ir.ingestionDate else ij.startProcessing end as newStartProcessing, "
--                               "case when ij.endProcessing IS NULL then ir.ingestionDate else ij.endProcessing end as newEndProcessing, "
--                               "ij.downloadingProgress, ij.uploadingProgress, "
--                               "ij.status, ij.errorMessages from MMS_IngestionRoot ir, MMS_IngestionJob ij {} "
--                               "order by newStartProcessing {}, newEndProcessing "
--                               "limit {} offset {}",
-			 */
 			// QUERY-DA-RIVEDERE
 			string sqlStatement = std::format(
 				R"(

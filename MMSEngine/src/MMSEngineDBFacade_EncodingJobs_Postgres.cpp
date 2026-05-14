@@ -3163,12 +3163,12 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				coalesce(ij.endProcessing, now() at time zone 'utc') as newEndProcessing
 				{}
 				{}
-				order by ij.startProcessing {}, endProcessing {}
+				order by ij.startProcessing {}, ij.endProcessing {}
 				limit {} offset {}
 				)",
 				sqlJoin, sqlWhere,
-				asc ? "asc nulls first" : "desc nulls last",
-				asc ? "asc nulls first" : "desc nulls last",
+				asc ? "asc nulls first" : "desc nulls first", // mettiamo i nulls sempre all'inizio
+				asc ? "asc nulls first" : "desc nulls first",
 				rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
