@@ -1835,7 +1835,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		{
 			// usato da getIngestionJobsStatus
 			string sqlStatement = R"(
-				CREATE INDEX MMS_IngestionJob_idx3
+				CREATE INDEX if not exists MMS_IngestionJob_idx3
 				ON MMS_IngestionJob (
 				    startProcessing DESC,
 				    endProcessing DESC,
