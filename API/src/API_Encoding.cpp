@@ -43,7 +43,7 @@ void API::encodingJobsStatus(
 
 	try
 	{
-		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1));
+		auto encodingJobKey = requestData.getOptQueryParameter<int64_t>("encodingJobKey");
 
 		int start = requestData.getQueryParameter("start", static_cast<int32_t>(0));
 
@@ -72,7 +72,7 @@ void API::encodingJobsStatus(
 		string startEncodingDate = requestData.getQueryParameter("startEncodingDate", "");
 		string endEncodingDate = requestData.getQueryParameter("endEncodingDate", "");
 
-		int64_t encoderKey = requestData.getQueryParameter("encoderKey", static_cast<int64_t>(-1));
+		auto encoderKey = requestData.getOptQueryParameter<int64_t>("encoderKey");
 
 		bool alsoEncodingJobsFromOtherWorkspaces = requestData.getQueryParameter("alsoEncodingJobsFromOtherWorkspaces", false);
 
@@ -90,7 +90,8 @@ void API::encodingJobsStatus(
 				// startAndEndIngestionDatePresent,
 				startIngestionDate, endIngestionDate,
 				// startAndEndEncodingDatePresent,
-				startEncodingDate, endEncodingDate, encoderKey, alsoEncodingJobsFromOtherWorkspaces, asc, status, types, fromMaster
+				startEncodingDate, endEncodingDate, encoderKey, alsoEncodingJobsFromOtherWorkspaces,
+				asc, status, types, fromMaster
 			);
 
 			string responseBody = JSONUtils::toString(encodingStatusRoot);
