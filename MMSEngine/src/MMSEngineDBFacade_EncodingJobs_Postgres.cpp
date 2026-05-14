@@ -3257,7 +3257,7 @@ json MMSEngineDBFacade::getEncodingJobsStatus(
 				if (row["realTimeInfo"].isNull())
 					encodingJobRoot["realTimeInfo"] = nullptr;
 				else
-					encodingJobRoot["realTimeInfo"] = JSONUtils::toJson<json>(row["realTimeInfo"].as<string>());
+					encodingJobRoot["realTimeInfo"] = row["realTimeInfo"].as<json>();
 
 				LOG_INFO("BBB");
 				if (row["numberOfRestartBecauseOfFailure"].isNull())
