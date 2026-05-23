@@ -58,7 +58,7 @@ mms-account-creation()
 		#Inoltre bisogna aggiungere /usr/bin/certbot per il comando del rinnovo del certificato (da quando abbiamo il rinnovo automatico
 		#probabilmente non serve piu)
 
-		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill, /usr/bin/certbot" > "/etc/sudoers.d/mms-nginx-commands"
+		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill, /bin/pkill, /usr/bin/certbot" > "/etc/sudoers.d/mms-nginx-commands"
 		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
 	fi
 }

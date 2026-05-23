@@ -45,17 +45,28 @@ elif [ "$command" == "stop" ]
 then
 	if [ "$sudoToBeUsed" == "sudo" ]
 	then
-		sudo bash -c "
-		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
-		$MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx -s stop
-		"
-		#sudo LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -s stop
+		#sudo bash -c "
+		#export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
+		#$MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx -s stop
+		#echo "AAA: $?"
+		#"
+		err=$(sudo bash -c "
+			export LD_LIBRARY_PATH=\"$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64\"
+			\"$MMS_PATH/nginx/sbin/nginx\" -p \"$MMS_PATH/nginx\" -s stop
+		" 2>&1 >/dev/null)
+		status=$?
+		#err potrebbe essere open() "/var/mms/pids/nginx.pid" failed
+		if [ $status -ne 0 ]; then
+			echo "stop failed, using pkill"
+			sudo pkill nginx
+		fi
 	else
 		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
 		timeout 15 $MMS_PATH/nginx/sbin/nginx -p $MMS_PATH/nginx -s stop
-		if [ $? -eq 124 ]
+		if [ $? -ne 0 ]
 		then
-			#timeout expired, let's try a kill
+			#timeout expired (124) oppure errore del comando di stop, let's try a kill
+			echo "stop failed, using pkill"
 			pkill nginx
 		fi
 	fi
