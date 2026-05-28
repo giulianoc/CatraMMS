@@ -1,7 +1,5 @@
 
-#include "Convert.h"
 #include "CurlWrapper.h"
-#include "JSONUtils.h"
 #include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
@@ -9,7 +7,6 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
-#include <spdlog/fmt/bundled/ranges.h>
 
 using namespace std;
 using json = nlohmann::json;
@@ -18,7 +15,7 @@ using namespace pqxx;
 int64_t MMSEngineDBFacade::addDeliveryServer(
 	const string& label, const string& type, const optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
 	const string& publicIP, const string& internalIP, const string& hostname, double latitude, double longitude,
-	int64_t maxTXBandwidthInGbps
+	double maxTXBandwidthInGbps
 )
 {
 	int64_t deliveryServerKey;
@@ -80,7 +77,7 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 	int64_t deliveryServerKey, const optional<string>& label, const optional<string>& type, const optional<int64_t>& originDeliveryServerKey,
 	optional<bool> external, optional<bool> enabled, const optional<string>& publicIP, const optional<string>& internalIP,
 	const optional<string>& hostname, const optional<double>& latitude, const optional<double>& longitude,
-	const optional<int64_t>& maxTXBandwidthInGbps
+	const optional<double>& maxTXBandwidthInGbps
 )
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
@@ -1077,7 +1074,7 @@ json MMSEngineDBFacade::getDeliveryServerRoot(const bool admin, PostgresHelper::
 		deliveryServerRoot["hostname"] = row["hostname"].as<string>();
 		deliveryServerRoot["latitude"] = row["latitude"].as<double>();
 		deliveryServerRoot["longitude"] = row["longitude"].as<double>();
-		deliveryServerRoot["maxTXBandwidthInGbps"] = row["maxTXBandwidthInGbps"].as<int64_t>();
+		deliveryServerRoot["maxTXBandwidthInGbps"] = row["maxTXBandwidthInGbps"].as<double>();
 		deliveryServerRoot["selectedLastTime"] = row["selectedLastTime"].as<string>();
 		if (row["cpuUsage"].isNull())
 			deliveryServerRoot["cpuUsage"] = nullptr;

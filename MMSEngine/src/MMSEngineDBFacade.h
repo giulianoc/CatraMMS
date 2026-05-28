@@ -2476,14 +2476,14 @@ class MMSEngineDBFacade
 	int64_t addDeliveryServer(
 		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
 		const std::string &publicIP, const std::string &internalIP, const std::string &hostname,
-		double latitude, double longitude, int64_t maxTXBandwidthInGbps
+		double latitude, double longitude, double maxTXBandwidthInGbps
 	);
 	void modifyDeliveryServer(
 		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string>& type,
 		const std::optional<int64_t> &originDeliveryServerKey, std::optional<bool> external, std::optional<bool> enabled,
 		const std::optional<std::string> &publicIP, const std::optional<std::string> &internalIP,
 		const std::optional<std::string> &hostname, const std::optional<double>& latitude, const std::optional<double>& longitude,
-		const std::optional<int64_t>& maxTXBandwidthInGbps
+		const std::optional<double>& maxTXBandwidthInGbps
 	);
 	void updateDeliveryServerAvgBandwidthUsage(
 		int64_t deliveryServerKey, const uint64_t &rxAvgBandwidthUsage, const uint64_t &txAvgBandwidthUsage, const uint64_t &rxPeakBandwidthUsage,

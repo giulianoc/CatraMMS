@@ -1441,7 +1441,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					rxPeakBandwidthUsage bigint,
 					txPeakBandwidthUsage bigint,
 					bandwidthUsageUpdateTime timestamp without time zone,
-					maxTXBandwidthInGbps bigint,
+					maxTXBandwidthInGbps DOUBLE PRECISION NOT NULL,
 					cpuUsage integer,
 					cpuUsageUpdateTime timestamp without time zone,
 					selectedLastTime timestamp without time zone not null default (NOW() at time zone 'utc'),
@@ -1800,8 +1800,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
-			string sqlStatement = "create index if not exists MMS_IngestionJob_idx1 on MMS_IngestionJob (scheduleStart_virtual) WHERE processorMMS "
-								  "IS NULL AND toBeManaged_virtual";
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx1 on MMS_IngestionJob (scheduleStart_virtual) "
+				"WHERE processorMMS IS NULL AND toBeManaged_virtual";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			trans.transaction->exec0(sqlStatement);
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
