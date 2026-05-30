@@ -54,6 +54,7 @@ rsyncBySSH()
 
 	MAX_PARALLEL=5				# Max sincronizzazioni in parallelo
 	BW_LIMIT=50000  			# Banda limite per ogni rsync (KB/s), opzionale
+	timeoutRsyncCommand=25s
 
 	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
 	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
@@ -91,22 +92,22 @@ rsyncBySSH()
 		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
 		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
 		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
-		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export timeoutRsyncCommand rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
+		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 		'{
 			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 			echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
 			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
-			timeout 15s rsync -e "ssh $SSH_OPTS" \
+			timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
 				--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
     				"$rsyncSource" mms@{}:$rsyncDest
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
-				timeout 15s rsync -e "ssh $SSH_OPTS" \
+				timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
 					--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
 			  		--include "*/" --include "*.m3u8" --exclude "*" \
     					"$rsyncSource" mms@{}:$rsyncDest
@@ -122,21 +123,21 @@ rsyncBySSH()
 		::: $serversToBeSynched
 	else
 		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
-		parallel --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export timeoutRsyncCommand rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
+		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 		'{
 			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
 			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
-			timeout 15s rsync -e "ssh $SSH_OPTS" \
+			timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
 				--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
 				$rsyncSource mms@{}:$rsyncDest
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
-				timeout 15s rsync -e "ssh $SSH_OPTS" \
+				timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
 					--partial --archive --omit-dir-times --timeout=15 --inplace --bwlimit=$BW_LIMIT \
 				  	--include "*/" --include "*.m3u8" --exclude "*" \
 					$rsyncSource mms@{}:$rsyncDest
@@ -160,6 +161,7 @@ rsyncByRSYNCD()
 	local serversToBeSynched=$3
 
 	MAX_PARALLEL=5				# Max sincronizzazioni in parallelo
+	timeoutRsyncCommand=25s
 
 	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
 	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
@@ -170,21 +172,21 @@ rsyncByRSYNCD()
 	if [ $debug_rsync -eq 1 ]
 	then
 		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate
-		parallel --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export timeoutRsyncCommand rsyncSource rsyncDest debugFileName pid fileName sDate
+		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 		'{
 			echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
 			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
-			timeout 15s rsync \
+			timeout $timeoutRsyncCommand rsync \
 				--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace \
     				--include "*/" --include "*.ts" --exclude "*" \
     				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
-				timeout 15s rsync \
+				timeout $timeoutRsyncCommand rsync \
 					--partial --archive --progress --verbose --omit-dir-times --timeout=15 --inplace \
 			  		--include "*/" --include "*.m3u8" --exclude "*" \
     					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
@@ -200,20 +202,20 @@ rsyncByRSYNCD()
 		::: $serversToBeSynched
 	else
 		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export rsyncSource rsyncDest debugFileName pid fileName sDate
-		parallel --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export timeoutRsyncCommand rsyncSource rsyncDest debugFileName pid fileName sDate
+		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env debugFileName --env pid --env fileName --env sDate --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 		'{
 			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
-			timeout 15s rsync \
+			timeout $timeoutRsyncCommand rsync \
 				--partial --archive --omit-dir-times --timeout=15 --inplace \
     				--include "*/" --include "*.ts" --exclude "*" \
 				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
-				timeout 15s rsync \
+				timeout $timeoutRsyncCommand rsync \
 					--partial --archive --omit-dir-times --timeout=15 --inplace \
 				  	--include "*/" --include "*.m3u8" --exclude "*" \
 					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
