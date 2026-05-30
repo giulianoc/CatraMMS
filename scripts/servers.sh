@@ -412,6 +412,14 @@ prodServers[$((serverIndex*6+4))]=externalEncoder
 prodServers[$((serverIndex*6+5))]=
 
 serverIndex=$((serverIndex+1))
+prodServers[$((serverIndex*6+0))]=netsons-encoder-1
+prodServers[$((serverIndex*6+1))]=185.31.65.137
+prodServers[$((serverIndex*6+2))]=cibortv/cibortv-serverplan
+prodServers[$((serverIndex*6+3))]=9255
+prodServers[$((serverIndex*6+4))]=externalEncoder
+prodServers[$((serverIndex*6+5))]=
+
+serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=aws-integration-5
 prodServers[$((serverIndex*6+1))]=ec2-18-200-160-66.eu-west-1.compute.amazonaws.com
 prodServers[$((serverIndex*6+2))]=cibortv/aws-cibortv1-key-ireland

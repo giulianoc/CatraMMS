@@ -1753,7 +1753,7 @@ install-mms-MMS-package()
 
 	packageName=MMS
 	echo ""
-	mmsVersion=1.0.7045
+	mmsVersion=1.0.7070
 	echo -n "$packageName version (i.e.: $mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
@@ -1834,9 +1834,9 @@ firewall-rules()
 		ufw allow from $internalNetwork_192_168 to any port 8088	#encoder internal
 
 		#connection rtmp from public
-		ufw allow 30000:31000/tcp
+		ufw allow 30000:40000/tcp
 		#connection srt from public
-		ufw allow 30000:31000/udp
+		ufw allow 30000:40000/udp
 
 		#rsyncd
 		ufw allow from $internalNetwork_10 to any port 873 proto tcp
@@ -1861,9 +1861,9 @@ firewall-rules()
 		#ufw allow in proto udp to ff00::/8
 
 		#connection rtmp from public
-		ufw allow 30000:31000/tcp
+		ufw allow 30000:40000/tcp
 		#connection srt from public
-		ufw allow 30000:31000/udp
+		ufw allow 30000:40000/udp
 
 		#rsyncd
 		ufw allow from $internalNetwork_10 to any port 873 proto tcp
