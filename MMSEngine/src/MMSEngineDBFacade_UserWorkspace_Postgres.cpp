@@ -196,14 +196,14 @@ tuple<int64_t, int64_t, string> MMSEngineDBFacade::registerUserAndAddWorkspace(
 			bool createRemoveLiveChannel = true;
 			bool updateEncoderAndDeliveryStats = false;
 			bool appUploadMediaContent = true;
-			bool appCaptureScreenAndProxy = true;
+			bool appCaptureAndProxy = true;
 			bool appStreamAndProxy = true;
 
 			tie (workspaceKey, userRegistrationCode) = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool, applicationRecorder,
 				createRemoveLiveChannel,
-				updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy,
+				updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy,
 				trimWorkspaceName, notes, workspaceType, deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				languageCode, workspaceTimezone, userExpirationLocalDate
 			);
@@ -448,14 +448,14 @@ pair<int64_t, string> MMSEngineDBFacade::createWorkspace(
 			bool createRemoveLiveChannel = true;
 			bool updateEncoderAndDeliveryStats = false;
 			bool appUploadMediaContent = true;
-			bool appCaptureScreenAndProxy = true;
+			bool appCaptureAndProxy = true;
 			bool appStreamAndProxy = true;
 
 			tie (workspaceKey, confirmationCode) = addWorkspace(
 				trans, userKey, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 				editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool, applicationRecorder,
 				createRemoveLiveChannel,
-				updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy,
+				updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy,
 				trimWorkspaceName, notes, workspaceType, deliveryURL, maxEncodingPriority, encodingPeriod, maxIngestionsNumber, maxStorageInMB,
 				languageCode, workspaceTimezone, userExpirationLocalDate
 			);
@@ -495,7 +495,7 @@ string MMSEngineDBFacade::createCode(
 	bool ingestWorkflow,
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
 	bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy
+	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy
 )
 {
 	string code;
@@ -507,7 +507,7 @@ string MMSEngineDBFacade::createCode(
 			trans, workspaceKey, userKey, userEmail, codeType, admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 			shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
 			applicationRecorder,
-			createRemoveLiveChannel, updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy
+			createRemoveLiveChannel, updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy
 		);
 	}
 	catch (exception const &e)
@@ -542,7 +542,7 @@ string MMSEngineDBFacade::createCode(
 	bool createRemoveWorkspace,
 	bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
 	bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy
+	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy
 )
 {
 	string code;
@@ -573,7 +573,7 @@ string MMSEngineDBFacade::createCode(
 				permissionsRoot["createRemoveLiveChannel"] = createRemoveLiveChannel;
 				permissionsRoot["updateEncoderAndDeliveryStats"] = updateEncoderAndDeliveryStats;
 				permissionsRoot["appUploadMediaContent"] = appUploadMediaContent;
-				permissionsRoot["appCaptureScreenAndProxy"] = appCaptureScreenAndProxy;
+				permissionsRoot["appCaptureAndProxy"] = appCaptureAndProxy;
 				permissionsRoot["appStreamAndProxy"] = appStreamAndProxy;
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
@@ -629,7 +629,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 	bool ingestWorkflow,
 	bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding,
 	bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 	const string& defaultWorkspaceKeys,
 	int expirationInDaysWorkspaceDefaultValue, chrono::system_clock::time_point userExpirationLocalDate
 )
@@ -699,7 +699,7 @@ pair<int64_t, string> MMSEngineDBFacade::registerActiveDirectoryUser(
 						trans, userKey, userEmailAddress, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 						shareWorkspace, editMedia, editConfiguration, killEncoding, cancelIngestionJob,
 						editEncodersPool, editDeliveryServersPool, applicationRecorder,
-						createRemoveLiveChannel, updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy,
+						createRemoveLiveChannel, updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy,
 						llDefaultWorkspaceKey, expirationInDaysWorkspaceDefaultValue
 					);
 					if (apiKey.empty())
@@ -741,7 +741,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 	bool editEncodersPool, bool editDeliveryServersPool,
 	bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
-	bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+	bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 	int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 )
 {
@@ -755,7 +755,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 			createProfiles, deliveryAuthorization, shareWorkspace, editMedia,
 			editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
 			applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
-			appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy,
+			appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy,
 			workspaceKey, expirationInDaysWorkspaceDefaultValue
 		);
 	}
@@ -791,7 +791,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 	bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 	bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 	int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 )
 {
@@ -822,7 +822,7 @@ string MMSEngineDBFacade::createAPIKeyForActiveDirectoryUser(
 				permissionsRoot["createRemoveLiveChannel"] = createRemoveLiveChannel;
 				permissionsRoot["updateEncoderAndDeliveryStats"] = updateEncoderAndDeliveryStats;
 				permissionsRoot["appUploadMediaContent"] = appUploadMediaContent;
-				permissionsRoot["appCaptureScreenAndProxy"] = appCaptureScreenAndProxy;
+				permissionsRoot["appCaptureAndProxy"] = appCaptureAndProxy;
 				permissionsRoot["appStreamAndProxy"] = appStreamAndProxy;
 			}
 			string permissions = JSONUtils::toString(permissionsRoot);
@@ -904,7 +904,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 	PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 	bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 	bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+	bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 	const string& workspaceName, const string& notes,
 	WorkspaceType workspaceType, const string& deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 	long maxIngestionsNumber, long maxStorageInMB,
@@ -1016,7 +1016,7 @@ pair<int64_t, string> MMSEngineDBFacade::addWorkspace(
 			admin, createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 			killEncoding, cancelIngestionJob,
 			editEncodersPool, editDeliveryServersPool, applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
-			appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy
+			appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy
 		);
 
 		{
@@ -1888,7 +1888,7 @@ MMSEngineDBFacade::checkAPIKey(const string_view &apiKey, const bool fromMaster)
 		JsonPath(&permissionsRoot)["createRemoveLiveChannel"].as<bool>(false),
 		JsonPath(&permissionsRoot)["updateEncoderAndDeliveryStats"].as<bool>(false),
 		JsonPath(&permissionsRoot)["appUploadMediaContent"].as<bool>(false),
-		JsonPath(&permissionsRoot)["appCaptureScreenAndProxy"].as<bool>(false),
+		JsonPath(&permissionsRoot)["appCaptureAndProxy"].as<bool>(false),
 		JsonPath(&permissionsRoot)["appStreamAndProxy"].as<bool>(false)
 	);
 }
@@ -2395,7 +2395,7 @@ json MMSEngineDBFacade::getWorkspaceDetailsRoot(PostgresConnTrans &trans, row &r
 			userAPIKeyRoot["createRemoveLiveChannel"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "createRemoveLiveChannel", false);
 			userAPIKeyRoot["updateEncoderAndDeliveryStats"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "updateEncoderAndDeliveryStats", false);
 			userAPIKeyRoot["appUploadMediaContent"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "appUploadMediaContent", false);
-			userAPIKeyRoot["appCaptureScreenAndProxy"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "appCaptureScreenAndProxy", false);
+			userAPIKeyRoot["appCaptureAndProxy"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "appCaptureAndProxy", false);
 			userAPIKeyRoot["appStreamAndProxy"] = admin ? true : JSONUtils::as<bool>(permissionsRoot, "appStreamAndProxy", false);
 
 			workspaceDetailRoot["userAPIKey"] = userAPIKeyRoot;
@@ -2478,7 +2478,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 	bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
 	bool newEditEncodersPool, bool newEditDeliveryServersPool,
 	bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderAndDeliveryStats,
-	bool newAppUploadMediaContent, bool newAppCaptureScreenAndProxy, bool newAppStreamAndProxy
+	bool newAppUploadMediaContent, bool newAppCaptureAndProxy, bool newAppStreamAndProxy
 )
 {
 	json workspaceDetailRoot;
@@ -2866,7 +2866,7 @@ json MMSEngineDBFacade::updateWorkspaceDetails(
 			permissionsRoot["createRemoveLiveChannel"] = newCreateRemoveLiveChannel;
 			permissionsRoot["updateEncoderAndDeliveryStats"] = newUpdateEncoderAndDeliveryStats;
 			permissionsRoot["appUploadMediaContent"] = newAppUploadMediaContent;
-			permissionsRoot["appCaptureScreenAndProxy"] = newAppCaptureScreenAndProxy;
+			permissionsRoot["appCaptureAndProxy"] = newAppCaptureAndProxy;
 			permissionsRoot["appStreamAndProxy"] = newAppStreamAndProxy;
 
 			string permissions = JSONUtils::toString(permissionsRoot);

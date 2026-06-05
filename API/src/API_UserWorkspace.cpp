@@ -758,7 +758,7 @@ void API::shareWorkspace_(
 		bool createRemoveLiveChannel = JsonPath(&metadataRoot)["createRemoveLiveChannel"].as<bool>(false);
 		bool updateEncoderAndDeliveryStats = JsonPath(&metadataRoot)["updateEncoderAndDeliveryStats"].as<bool>(false);
 		bool appUploadMediaContent = JsonPath(&metadataRoot)["appUploadMediaContent"].as<bool>(false);
-		bool appCaptureScreenAndProxy = JsonPath(&metadataRoot)["appCaptureScreenAndProxy"].as<bool>(false);
+		bool appCaptureAndProxy = JsonPath(&metadataRoot)["appCaptureAndProxy"].as<bool>(false);
 		bool appStreamAndProxy = JsonPath(&metadataRoot)["appStreamAndProxy"].as<bool>(false);
 
 		try
@@ -790,7 +790,7 @@ void API::shareWorkspace_(
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
 					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
-					appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy
+					appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy
 				);
 
 				string confirmationURL = _guiProtocol + "://" + _guiHostname;
@@ -864,7 +864,7 @@ void API::shareWorkspace_(
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
 					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
 					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
-					appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy
+					appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy
 				);
 
 				string shareWorkspaceURL = _guiProtocol + "://" + _guiHostname;
@@ -1301,7 +1301,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						bool createRemoveLiveChannel = true;
 						bool updateEncoderAndDeliveryStats = false;
 						bool appUploadMediaContent = false;
-						bool appCaptureScreenAndProxy = false;
+						bool appCaptureAndProxy = false;
 						bool appStreamAndProxy = false;
 						pair<int64_t, string> userKeyAndEmail = _mmsEngineDBFacade->registerActiveDirectoryUser(
 							userName, email,
@@ -1310,7 +1310,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							shareWorkspace, editMedia,
 							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
 							applicationRecorder, createRemoveLiveChannel,
-							updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureScreenAndProxy, appStreamAndProxy,
+							updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy,
 							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
 							chrono::system_clock::now() + chrono::hours(24 * 365 * 10)
 							// chrono::system_clock::time_point userExpirationDate
@@ -1896,7 +1896,7 @@ void API::updateWorkspace(
 		bool newCreateRemoveLiveChannel = false;
 		bool newUpdateEncoderAndDeliveryStats = false;
 		bool newAppUploadMediaContent = false;
-		bool newAppCaptureScreenAndProxy = false;
+		bool newAppCaptureAndProxy = false;
 		bool newAppStreamAndProxy = false;
 
 
@@ -2074,7 +2074,7 @@ void API::updateWorkspace(
 					"shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
 					"cancelIngestionJob",	   "editEncodersPool", "editDeliveryServersPool", "applicationRecorder",
 					"createRemoveLiveChannel",
-					"updateEncoderAndDeliveryStats", "appUploadMediaContent", "appCaptureScreenAndProxy", "appStreamAndProxy"
+					"updateEncoderAndDeliveryStats", "appUploadMediaContent", "appCaptureAndProxy", "appStreamAndProxy"
 				};
 				for (const string& field : mandatoryFields)
 				{
@@ -2137,7 +2137,7 @@ void API::updateWorkspace(
 			newCreateRemoveLiveChannel = JSONUtils::as<bool>(userAPIKeyRoot, "createRemoveLiveChannel", false);
 			newUpdateEncoderAndDeliveryStats = JSONUtils::as<bool>(userAPIKeyRoot, "updateEncoderAndDeliveryStats", false);
 			newAppUploadMediaContent = JSONUtils::as<bool>(userAPIKeyRoot, "appUploadMediaContent", false);
-			newAppCaptureScreenAndProxy = JSONUtils::as<bool>(userAPIKeyRoot, "appCaptureScreenAndProxy", false);
+			newAppCaptureAndProxy = JSONUtils::as<bool>(userAPIKeyRoot, "appCaptureAndProxy", false);
 			newAppStreamAndProxy = JSONUtils::as<bool>(userAPIKeyRoot, "appStreamAndProxy", false);
 		}
 
@@ -2169,7 +2169,7 @@ void API::updateWorkspace(
 				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newEditDeliveryServersPool,
 				newApplicationRecorder,
 				newCreateRemoveLiveChannel, newUpdateEncoderAndDeliveryStats,
-				newAppUploadMediaContent, newAppCaptureScreenAndProxy, newAppStreamAndProxy
+				newAppUploadMediaContent, newAppCaptureAndProxy, newAppStreamAndProxy
 			);
 #else
 			bool maxStorageInMBChanged = false;

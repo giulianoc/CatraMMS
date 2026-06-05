@@ -45,7 +45,7 @@ class API final : public FastCGIAPI
 		bool canCreateRemoveLiveChannel{};
 		bool canUpdateEncoderAndDeliveryStats{};
 		bool canAppUploadMediaContent{};
-		bool canAppCaptureScreenAndProxy{};
+		bool canAppCaptureAndProxy{};
 		bool canAppStreamAndProxy{};
 
 		std::string toString()
@@ -67,13 +67,13 @@ class API final : public FastCGIAPI
 				", canCreateRemoveLiveChannel: {}"
 				", canUpdateEncoderAndDeliveryStats: {}"
 				", canAppUploadMediaContent: {}"
-				", canAppCaptureScreenAndProxy: {}"
+				", canAppCaptureAndProxy: {}"
 				", canAppStreamAndProxy: {}",
 				userKey, admin, canCreateRemoveWorkspace, canIngestWorkflow, canCreateProfiles, canDeliveryAuthorization,
 				canShareWorkspace, canEditMedia, canEditConfiguration, canKillEncoding, canCancelIngestionJob,
 				canEditEncodersPool, canEditDeliveryServersPool,
 				canApplicationRecorder, canCreateRemoveLiveChannel, canUpdateEncoderAndDeliveryStats,
-				canAppUploadMediaContent, canAppCaptureScreenAndProxy, canAppStreamAndProxy
+				canAppUploadMediaContent, canAppCaptureAndProxy, canAppStreamAndProxy
 				);
 		}
 	};

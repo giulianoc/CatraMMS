@@ -1305,7 +1305,7 @@ class MMSEngineDBFacade
 		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder,
 		bool createRemoveLiveChannel,
 		bool updateEncoderAndDeliveryStats,
-		bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy
+		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy
 	);
 
 #ifdef __POSTGRES__
@@ -1356,7 +1356,7 @@ class MMSEngineDBFacade
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool,
 		bool applicationRecorder,
 		bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
-		bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		const std::string &defaultWorkspaceKeys, int expirationInDaysWorkspaceDefaultValue,
 		std::chrono::system_clock::time_point userExpirationLocalDate
 	);
@@ -1375,7 +1375,7 @@ class MMSEngineDBFacade
 		bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 		bool editEncodersPool, bool editDeliveryServersPool,
 		bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
-		bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 	);
 
@@ -1432,7 +1432,7 @@ class MMSEngineDBFacade
 		bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
 		bool newEditEncodersPool, bool newEditDeliveryServersPool,
 		bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderAndDeliveryStats,
-		bool newAppUploadMediaContent, bool newAppCaptureScreenAndProxy, bool newAppStreamAndProxy
+		bool newAppUploadMediaContent, bool newAppCaptureAndProxy, bool newAppStreamAndProxy
 	);
 #else
 	nlohmann::json updateWorkspaceDetails(
@@ -2668,7 +2668,7 @@ class MMSEngineDBFacade
 		bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 		bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-		bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+		bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 	);
 #else
@@ -2692,7 +2692,7 @@ class MMSEngineDBFacade
 		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool,
 		bool applicationRecorder,
 		bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
-		bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy
+		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy
 	);
 #else
 	std::string createCode(
@@ -2765,7 +2765,7 @@ class MMSEngineDBFacade
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
 		bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
-		bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureScreenAndProxy, bool appStreamAndProxy,
+		bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		const std::string &workspaceName, const std::string &notes,
 		WorkspaceType workspaceType, const std::string &deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,
 		long maxIngestionsNumber, long maxStorageInMB, const std::string &languageCode, std::string workspaceTimezone,

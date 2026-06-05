@@ -1614,7 +1614,7 @@ install-mms-nginx-package()
 		certbot certonly --webroot -w /var/www/html -d $servername
 		#Il comando sotto server a dire a certbot di ricaricare la conf di nginx una volta che il certificato viene rinnovato
 		#in modo che nginx usi il nuovo certificato
-		echo "deploy-hook = sudo -u mms /home/mms/nginx.sh reload sudo" >> /etc/letsencrypt/cli.ini
+		echo "deploy-hook = /home/mms/nginx.sh reload sudo" >> /etc/letsencrypt/cli.ini
 		
 		#per avere la lista dei certificati
 		#certbot certificates
