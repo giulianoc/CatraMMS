@@ -717,6 +717,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled && liveProxyLiveTimeInSeconds > 1 * 60)
 				{
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
+					// getFinished ritorna std::optional<bool>
 					if (copiedLiveProxy->_callbackData->getFinished())
 					{
 						LOG_INFO(

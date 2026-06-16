@@ -79,7 +79,11 @@ elif [ "$command" == "reload" ]
 then
 	if [ "$sudoToBeUsed" == "sudo" ]
 	then
-		sudo LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -p '$MMS_PATH/nginx' -s reload
+		sudo bash -c "
+		export LD_LIBRARY_PATH='$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64'
+		'$MMS_PATH/nginx/sbin/nginx' -p '$MMS_PATH/nginx' -s reload
+		"
+		#sudo LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64 $MMS_PATH/nginx/sbin/nginx -p '$MMS_PATH/nginx' -s reload
 	else
 		export LD_LIBRARY_PATH=$MMS_PATH/ffmpeg/lib:$MMS_PATH/ffmpeg/lib64
 		$MMS_PATH/nginx/sbin/nginx -p '$MMS_PATH/nginx' -s reload
