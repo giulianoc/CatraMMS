@@ -1443,7 +1443,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 	int64_t tokenComingFromURL = -1;
 	try
 	{
-		LOG_INFO(
+		LOG_DEBUG(
 			"checkSignedMMSPath, received"
 			", tokenSigned: {}"
 			", contentURIToBeVerified: {}",
@@ -1480,7 +1480,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 			string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			LOG_INFO(
+			LOG_DEBUG(
 				"Authorization through path (m3u8)"
 				", contentURIToBeVerified: {}"
 				", expirationTime: {}"
@@ -1501,7 +1501,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 				string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				LOG_INFO(
+				LOG_DEBUG(
 					"Authorization through path (m3u8 2)"
 					", contentURIToBeVerified: {}"
 					", expirationTime: {}"
@@ -1535,7 +1535,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 				// check caso 1.
 				string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-				LOG_INFO(
+				LOG_DEBUG(
 					"Authorization through path"
 					", contentURIToBeVerified: {}"
 					", expirationTime: {}"
@@ -1557,7 +1557,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 					// check caso 2.
 					md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-					LOG_INFO(
+					LOG_DEBUG(
 						"Authorization through path (ts 1)"
 						", contentURIToBeVerified: {}"
 						", expirationTime: {}"
@@ -1581,7 +1581,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 						// check caso 3.
 						string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-						LOG_INFO(
+						LOG_DEBUG(
 							"Authorization through path (ts 2)"
 							", contentURIToBeVerified: {}"
 							", expirationTime: {}"
@@ -1612,7 +1612,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 		{
 			string md5Base64 = getSignedMMSPath(contentURIToBeVerified, expirationTime);
 
-			LOG_INFO(
+			LOG_DEBUG(
 				"Authorization through path"
 				", contentURIToBeVerified: {}"
 				", expirationTime: {}"
@@ -1649,7 +1649,7 @@ int64_t MMSDeliveryAuthorization::checkSignedMMSPath(string tokenSigned, string 
 
 			throw runtime_error(errorMessage);
 		}
-		LOG_INFO("Token not expired"
+		LOG_DEBUG("Token not expired"
 			", expirationTime: {}"
 			", utcNow: {}"
 			", to expire misses {} seconds",
@@ -1711,7 +1711,7 @@ string MMSDeliveryAuthorization::getSignedMMSPath(const string& contentURI, time
 		);
 	}
 
-	LOG_INFO(
+	LOG_DEBUG(
 		"Authorization through path"
 		", contentURI: {}"
 		", expirationTime: {}"
