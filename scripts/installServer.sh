@@ -1887,6 +1887,7 @@ firewall-rules()
 		ufw allow from $internalNetwork_10 to any port 8091		#mms-delivery
 		ufw allow from $internalNetwork_10 to any port 8092		#mms-delivery-path
 		ufw allow from $internalNetwork_10 to any port 8093		#mms-delivery-f
+		ufw allow from $internalNetwork_10 to any port 8094		#catramms-site
 
 		#rsyncd
 		ufw allow from $internalNetwork_10 to any port 873 proto tcp
@@ -1912,6 +1913,7 @@ firewall-rules()
 		ufw allow from $internalNetwork_10 to any port 8091		#mms-delivery
 		ufw allow from $internalNetwork_10 to any port 8092		#mms-delivery-path
 		ufw allow from $internalNetwork_10 to any port 8093		#mms-delivery-f
+		ufw allow from $internalNetwork_10 to any port 8094		#catramms-site
 
 		echo "remember to add the API/ENGINE IP address to the firewall rules of any external transcoders (i.e.: aruba, serverplan, ...). THIS IS VERY IMPORTANT otherwise all those encoder, when called by API/ENGINE appear as 'not running' and the channels are not allocated to the encoder"
 		echo "Per lo stesso motivo, modificare la funzione firewall-rules (sezione externalEncoder) di questo script per aggiungere the rule with API/ENGINE IP address"
