@@ -147,6 +147,28 @@ install-packages()
 		return
 	fi
 
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" ]; then
+		#php serve per catramms-site (per mandare email)
+		#php8.3-fpm è un servizio (systemctl status php8.3-fpm)
+		echo ""
+		read -n 1 -s -r -p "install php8.3-fpm php8.3-mbstring php8.3-curl..."
+		echo ""
+		apt-get -y install php8.3-fpm php8.3-mbstring php8.3-curl
+		#dovrebbe partire in automatico al boot di default, per sicurezza:
+		systemctl enable php8.3-fpm
+		#Composer serve per installare le dipendenze PHPMailer/phpdotenv
+		apt -y install composer
+
+		return
+	fi
+
+	#serve a nginx per usare il modulo ngx_http_geoip2
+	#Non serve
+	#echo ""
+	#read -n 1 -s -r -p "install libmaxminddb-dev..."
+	#echo ""
+	#apt-get -y install libmaxminddb-dev
+
 	echo ""
 	read -n 1 -s -r -p "install build-essential git..."
 	echo ""

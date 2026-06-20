@@ -78,6 +78,9 @@ class FFMPEGEncoderBase
 		// long _lastRealTimeFrameRate{};
 		std::chrono::system_clock::time_point _realTimeLastChange;
 
+		// quando speed < soglia && fps < soglia, registriamo il momento in cui la condizione è iniziata
+		std::optional<std::chrono::system_clock::time_point> _lowSpeedAndFpsStart;
+
 		long _numberOfRestartBecauseOfFailure{};
 
 		nlohmann::json _encodingParametersRoot;
@@ -132,6 +135,7 @@ class FFMPEGEncoderBase
 			_encodingParametersRoot = nullptr;
 			_killedBecauseOfNotWorking = false;
 			_lastRealTimeInfo = {};
+			_lowSpeedAndFpsStart = std::nullopt;
 
 			Encoding::reset();
 		}

@@ -76,6 +76,8 @@ then
 			hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-path-prod
 			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-f-prod"
 			hcloud load-balancer add-target --ip $privateIPAddress mms-delivery-f-prod
+			echo "Add server to the load balancer: hcloud load-balancer add-target --ip $privateIPAddress catramms-site-prod"
+			hcloud load-balancer add-target --ip $privateIPAddress catramms-site-prod
 			#nota che il load balancer si accorgera che il servizio è su quando nginx sarà fatto nuovamente ripartire
 			echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
 			sleep $sleepWaitingLoadBalancer
@@ -97,6 +99,8 @@ then
 				hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-path-prod
 				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-f-prod"
 				hcloud load-balancer remove-target --ip $privateIPAddress mms-delivery-f-prod
+				echo "Remove server from the load balancer: hcloud load-balancer remove-target --ip $privateIPAddress catramms-site-prod"
+				hcloud load-balancer remove-target --ip $privateIPAddress catramms-site-prod
 				echo "Waiting load balancer command ($sleepWaitingLoadBalancer secs) ..."
 				sleep $sleepWaitingLoadBalancer
 		fi

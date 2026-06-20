@@ -37,6 +37,10 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 
 		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
 		_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = 1000; // ne ho contati 1300 in 30 secondi in un caso
+
+		_lowSpeedThreshold = 0.8;
+		_lowFpsThreshold = 24.0;
+		_maxLowSpeedAndFpsToleranceInSeconds = 60;
 	}
 	catch (exception &e)
 	{
@@ -920,6 +924,132 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							", e.what(): {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
+					}
+				}
+
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
+				{
+					LOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childProcessId: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						sourceLiveProxy->_childProcessId.toString()
+					);
+
+					continue;
+				}
+
+				// 2026-06-20: speed < soglia && fps < soglia sostenuti per più di questa durata → restart
+				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled && liveProxyLiveTimeInSeconds > 1 * 60)
+				{
+					if (copiedLiveProxy->_callbackData->getFinished())
+					{
+						LOG_INFO(
+							"liveProxyMonitor low speed and fps check"
+							", ingestionJobKey: {}"
+							", encodingJobKey: {}"
+							", configurationLabel: {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+						);
+
+						try
+						{
+							double currentSpeed = copiedLiveProxy->_callbackData->getSpeed();
+							double currentFps = copiedLiveProxy->_callbackData->getFramePerSeconds();
+
+							if (currentSpeed > 0.0 && currentSpeed < _lowSpeedThreshold && currentFps > 0.0 && currentFps < _lowFpsThreshold)
+							{
+								if (!sourceLiveProxy->_lowSpeedAndFpsStart.has_value())
+								{
+									sourceLiveProxy->_lowSpeedAndFpsStart = chrono::system_clock::now();
+									LOG_WARN(
+										"liveProxyMonitor. Low speed and fps detected, starting tolerance timer"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", configurationLabel: {}"
+										", currentSpeed: {}"
+										", currentFps: {}"
+										", _lowSpeedThreshold: {}"
+										", _lowFpsThreshold: {}",
+										copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+										currentSpeed, currentFps, _lowSpeedThreshold, _lowFpsThreshold
+									);
+								}
+								else
+								{
+									int64_t elapsedSinceStart = chrono::duration_cast<chrono::seconds>(
+										chrono::system_clock::now() - sourceLiveProxy->_lowSpeedAndFpsStart.value()
+									).count();
+
+									if (elapsedSinceStart > _maxLowSpeedAndFpsToleranceInSeconds)
+									{
+										LOG_ERROR(
+											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. "
+											"Low speed and fps sustained too long. LiveProxy (ffmpeg) is killed in order to be started again"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", configurationLabel: {}"
+											", copiedLiveProxy->_childProcessId: {}"
+											", currentSpeed: {}"
+											", currentFps: {}"
+											", elapsedSinceStart: {}"
+											", _maxLowSpeedAndFpsToleranceInSeconds: {}",
+											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+											copiedLiveProxy->_childProcessId.toString(),
+											currentSpeed, currentFps, elapsedSinceStart, _maxLowSpeedAndFpsToleranceInSeconds
+										);
+
+										liveProxyWorking = false;
+										localErrorMessage = " restarted because of 'low speed and fps'";
+									}
+									else
+									{
+										LOG_WARN(
+											"liveProxyMonitor. Low speed and fps within tolerance"
+											", ingestionJobKey: {}"
+											", encodingJobKey: {}"
+											", configurationLabel: {}"
+											", currentSpeed: {}"
+											", currentFps: {}"
+											", elapsedSinceStart: {}"
+											", _maxLowSpeedAndFpsToleranceInSeconds: {}",
+											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+											currentSpeed, currentFps, elapsedSinceStart, _maxLowSpeedAndFpsToleranceInSeconds
+										);
+									}
+								}
+							}
+							else
+							{
+								if (sourceLiveProxy->_lowSpeedAndFpsStart.has_value())
+								{
+									LOG_INFO(
+										"liveProxyMonitor. Low speed and fps condition resolved"
+										", ingestionJobKey: {}"
+										", encodingJobKey: {}"
+										", configurationLabel: {}"
+										", currentSpeed: {}"
+										", currentFps: {}",
+										copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+										currentSpeed, currentFps
+									);
+									sourceLiveProxy->_lowSpeedAndFpsStart = std::nullopt;
+								}
+							}
+						}
+						catch (exception &e)
+						{
+							LOG_ERROR(
+								"liveProxyMonitor low speed and fps check failed"
+								", copiedLiveProxy->_ingestionJobKey: {}"
+								", copiedLiveProxy->_encodingJobKey: {}"
+								", e.what(): {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+							);
+						}
 					}
 				}
 
