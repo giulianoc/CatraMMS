@@ -224,13 +224,13 @@ prodServers[$((serverIndex*6+3))]=9255
 prodServers[$((serverIndex*6+4))]=delivery
 prodServers[$((serverIndex*6+5))]=68.233.45.32
 
-serverIndex=$((serverIndex+1))
-prodServers[$((serverIndex*6+0))]=usa-sf-delivery-3
-prodServers[$((serverIndex*6+1))]=68.233.45.26
-prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
-prodServers[$((serverIndex*6+3))]=9255
-prodServers[$((serverIndex*6+4))]=delivery
-prodServers[$((serverIndex*6+5))]=10.10.50.6
+#serverIndex=$((serverIndex+1))
+#prodServers[$((serverIndex*6+0))]=usa-sf-delivery-3
+#prodServers[$((serverIndex*6+1))]=68.233.45.26
+#prodServers[$((serverIndex*6+2))]=mms/hetzner-mms-key
+#prodServers[$((serverIndex*6+3))]=9255
+#prodServers[$((serverIndex*6+4))]=delivery
+#prodServers[$((serverIndex*6+5))]=10.10.50.6
 
 serverIndex=$((serverIndex+1))
 prodServers[$((serverIndex*6+0))]=usa-sf-delivery-4
