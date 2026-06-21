@@ -742,7 +742,7 @@ void API::deliveryAuthorizationThroughPath(
 {
 	string api = "deliveryAuthorizationThroughPath";
 
-	LOG_INFO(
+	LOG_DEBUG(
 		"Received {}"
 		", requestData.requestBody: {}",
 		api, requestData.requestBody

@@ -1208,7 +1208,7 @@ int64_t MMSDeliveryAuthorization::checkDeliveryAuthorizationThroughPath(const st
 	int64_t tokenComingFromURL = -1;
 	try
 	{
-		LOG_INFO(
+		LOG_DEBUG(
 			"checkDeliveryAuthorizationThroughPath, received"
 			", contentURI: {}",
 			contentURI
