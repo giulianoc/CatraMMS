@@ -990,10 +990,23 @@ mms_incrontab_check_rsync()
 	#aggiungo la data / ora come filtro altrimenti ritornerebbe sempre l'errore per tutto il giorno
 	dateFilter=$(date +'%Y-%m-%d %H:%M' -d "- 1 min")
 	incrontab -l | cut -f1 | while read path; do
-		#/var/mms/storage/MMSRepository/MMSLive/6/5240
-    channel=$(basename "$path")
+		#path: /var/mms/storage/MMSRepository/MMSLive/6/5240
+    channel=$(basename "$path") #channel: 5240
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
-    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 2 && prevprev ~ /rsync failed/ && prev ~ /rsync failed/ && $0 ~ /rsync failed/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')
+    #alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 2 && prevprev ~ /rsync failed/ && prev ~ /rsync failed/ && $0 ~ /rsync failed/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')
+    threshold=4
+    alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk -v threshold="$threshold" '
+    BEGIN { alarm=0; count=0; }
+    {
+        if ($0 ~ /rsync failed/) {
+            count++
+            if (count >= threshold) { alarm=1; exit }
+        } else {
+            count=0
+        }
+    }
+    END { printf("%d", alarm) }
+    ')
 		if [ $alarm -eq 0 ]; then
 			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_rsync, incrontab rsync for channel $channel (filter ${dateFilter}) is fine" >> $debugFilename
 
@@ -1007,7 +1020,7 @@ mms_incrontab_check_rsync()
 			echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_incrontab_check_rsync, incrontab rsync for channel $channel (filter ${dateFilter}) failed" >> $debugFilename
 
 			alarmNotificationPeriod=$((5 * 60))		#5 minuti
-			notify "$(hostname)" "alarm_incrontab_check_rsync" "alarm_incrontab_check_rsync_$channel" $alarmNotificationPeriod "3 consecutive rsync for channel $channel (filter ${dateFilter})"
+			notify "$(hostname)" "alarm_incrontab_check_rsync" "alarm_incrontab_check_rsync_$channel" $alarmNotificationPeriod "$threshold consecutive rsync for channel $channel (filter ${dateFilter})"
 			#return 1
 		fi
 	done

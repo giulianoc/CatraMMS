@@ -43,8 +43,6 @@ private:
 	int _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow;
 
 	// speed < soglia && fps < soglia sostenuti per più di questa durata → restart
-	double _lowSpeedThreshold;
-	double _lowFpsThreshold;
 	int _maxLowSpeedAndFpsToleranceInSeconds;
 
 	std::mutex *_liveRecordingMutex;

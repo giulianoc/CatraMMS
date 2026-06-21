@@ -3,6 +3,7 @@
 
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -50,7 +51,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		long maxStreamingDurationInMinutes = JSONUtils::as<int64_t>(liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInMinutes", -1);
 
 		liveProxyData->_monitoringRealTimeInfoEnabled =
-			JSONUtils::as<bool>(liveProxyData->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+			JsonPath(&(liveProxyData->_ingestedParametersRoot))["monitoring"]["frameIncreasingEnabled"].as<bool>(true);
 		liveProxyData->_lastRealTimeInfo = {};
 		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 

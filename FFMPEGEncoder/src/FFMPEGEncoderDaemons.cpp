@@ -38,8 +38,6 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
 		_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = 1000; // ne ho contati 1300 in 30 secondi in un caso
 
-		_lowSpeedThreshold = 0.8;
-		_lowFpsThreshold = 24.0;
 		_maxLowSpeedAndFpsToleranceInSeconds = 60;
 	}
 	catch (exception &e)
@@ -960,7 +958,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							double currentSpeed = copiedLiveProxy->_callbackData->getSpeed();
 							double currentFps = copiedLiveProxy->_callbackData->getFramePerSeconds();
 
-							if (currentSpeed > 0.0 && currentSpeed < _lowSpeedThreshold && currentFps > 0.0 && currentFps < _lowFpsThreshold)
+							auto lowSpeedThreshold = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+								["monitoring"]["lowSpeedThreshold"].as<double>(0.8);
+							auto lowFpsThreshold = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+								["monitoring"]["lowFpsThreshold"].as<double>(23.0);
+
+							if (currentSpeed > 0.0 && currentSpeed < lowSpeedThreshold && currentFps > 0.0 && currentFps < lowFpsThreshold)
 							{
 								if (!sourceLiveProxy->_lowSpeedAndFpsStart.has_value())
 								{
@@ -972,10 +975,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										", configurationLabel: {}"
 										", currentSpeed: {}"
 										", currentFps: {}"
-										", _lowSpeedThreshold: {}"
-										", _lowFpsThreshold: {}",
+										", lowSpeedThreshold: {}"
+										", lowFpsThreshold: {}",
 										copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-										currentSpeed, currentFps, _lowSpeedThreshold, _lowFpsThreshold
+										currentSpeed, currentFps, lowSpeedThreshold, lowFpsThreshold
 									);
 								}
 								else

@@ -3,6 +3,7 @@
 
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "StringUtils.h"
 #include "spdlog/spdlog.h"
@@ -177,9 +178,10 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 			outputFileFormat = JSONUtils::as<string>(liveRecording->_ingestedParametersRoot, field, "ts");
 		}
 
-		liveRecording->_monitoringEnabled = JSONUtils::as<bool>(liveRecording->_ingestedParametersRoot, "monitoringEnabled", true);
+		liveRecording->_monitoringEnabled =
+			JsonPath(&(liveRecording->_ingestedParametersRoot))["monitoring"]["enabled"].as<bool>(true);
 		liveRecording->_monitoringRealTimeInfoEnabled =
-			JSONUtils::as<bool>(liveRecording->_ingestedParametersRoot, "monitoringFrameIncreasingEnabled", true);
+			JsonPath(&(liveRecording->_ingestedParametersRoot))["monitoring"]["frameIncreasingEnabled"].as<bool>(true);
 		liveRecording->_lastOutputFfmpegFileSize = 0;
 		liveRecording->_lastRealTimeInfo = {};
 		liveRecording->_realTimeLastChange = chrono::system_clock::now();
