@@ -998,11 +998,14 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", copiedLiveProxy->_childProcessId: {}"
 											", currentSpeed: {}"
 											", currentFps: {}"
+											", lowSpeedThreshold: {}"
+											", lowFpsThreshold: {}"
 											", elapsedSinceStart: {}"
 											", _maxLowSpeedAndFpsToleranceInSeconds: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childProcessId.toString(),
-											currentSpeed, currentFps, elapsedSinceStart, _maxLowSpeedAndFpsToleranceInSeconds
+											currentSpeed, currentFps, lowSpeedThreshold, lowFpsThreshold,
+											elapsedSinceStart, _maxLowSpeedAndFpsToleranceInSeconds
 										);
 
 										liveProxyWorking = false;
