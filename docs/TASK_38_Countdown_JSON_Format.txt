@@ -43,11 +43,11 @@
 		"encodersPool": "",
 
         "monitoring": {
-            // The system, during the countdown, checks if the frames number is always increasing and,
+            // The system, during the countdown, checks if the real time info are always increasing and,
             //	in case of issue, it might restart the countdown.
             // This check can be disabled setting this flag to false.
             // Default is true
-            "frameIncreasingEnabled": true,
+            "realTimeInfoEnabled": true,
 
             // The system, during the live proxy, checks the speed and the frame rate and if they are under the below
             // thresholds for 60 seconds, the proxy is restarted

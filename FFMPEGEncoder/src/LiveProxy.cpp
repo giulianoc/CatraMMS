@@ -51,7 +51,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 		long maxStreamingDurationInMinutes = JSONUtils::as<int64_t>(liveProxyData->_ingestedParametersRoot, "maxStreamingDurationInMinutes", -1);
 
 		liveProxyData->_monitoringRealTimeInfoEnabled =
-			JsonPath(&(liveProxyData->_ingestedParametersRoot))["monitoring"]["frameIncreasingEnabled"].as<bool>(true);
+			JsonPath(&(liveProxyData->_ingestedParametersRoot))["monitoring"]["realTimeInfoEnabled"].as<bool>(true);
 		liveProxyData->_lastRealTimeInfo = {};
 		liveProxyData->_realTimeLastChange = chrono::system_clock::now();
 
