@@ -61,6 +61,12 @@ mms-account-creation()
 		echo "mms ALL=(ALL) NOPASSWD: /bin/bash, /bin/kill, /bin/pkill, /usr/bin/certbot" > "/etc/sudoers.d/mms-nginx-commands"
 		chmod 440 "/etc/sudoers.d/mms-nginx-commands"
 	fi
+
+	echo "Ora viene creato l'utente 'testuser' nel caso in cui un provider avesse bisogno di loggarsi"
+	adduser testuser
+	usermod -aG sudo testuser
+	#per disabilitarlo, commentato perchè noi vogliamo che sia attivo in caso di bisogno
+	#usermod -L testuser
 }
 
 time-zone()
