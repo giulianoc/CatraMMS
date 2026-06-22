@@ -68,7 +68,6 @@ class FFMPEGEncoderBase
 		// std::string					_liveGridOutputType;	// only for LiveGrid
 		nlohmann::json _outputsRoot;
 
-		bool _monitoringRealTimeInfoEnabled{};
 		// frames, time, size, bitrate, framerate
 		std::pair<int32_t, std::chrono::milliseconds> _lastRealTimeInfo{};
 		// int32_t _lastRealTimeFrame{};
@@ -98,7 +97,6 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_available = _available;
 			liveProxyAndGrid->_childProcessId = _childProcessId;
 			liveProxyAndGrid->_killTypeReceived = _killTypeReceived;
-			liveProxyAndGrid->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveProxyAndGrid->_lastRealTimeInfo = _lastRealTimeInfo;
 			// liveProxyAndGrid->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
 			// liveProxyAndGrid->_lastRealTimeFrame = _lastRealTimeFrame;
@@ -147,7 +145,6 @@ class FFMPEGEncoderBase
 
 		bool _monitoringEnabled{};
 
-		bool _monitoringRealTimeInfoEnabled{};
 		// frames, time, size, bitrate, framerate
 		std::pair<int32_t, std::chrono::milliseconds> _lastRealTimeInfo{};
 		// int32_t _lastRealTimeFrame{};
@@ -199,7 +196,6 @@ class FFMPEGEncoderBase
 			liveRecording->_childProcessId = _childProcessId;
 			liveRecording->_killTypeReceived = _killTypeReceived;
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
-			liveRecording->_monitoringRealTimeInfoEnabled = _monitoringRealTimeInfoEnabled;
 			liveRecording->_lastRealTimeInfo = _lastRealTimeInfo;
 			liveRecording->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
 			// liveRecording->_lastRealTimeFrame = _lastRealTimeFrame;

@@ -43,20 +43,22 @@
 		"encodersPool": "",
 
         "monitoring": {
+            "realTimeInfo": {
+                // The system, during the countdown, checks if the real time info are always increasing and,
+                //	in case of issue, it might restart the countdown.
+                // This check can be disabled setting this flag to false.
+                // Default is true
+                "enabled": true,
+                "notChangedToleranceInSeconds": 60
+            },
             "lowSpeedAndFps": {
                 // The system, during the live proxy, checks the speed and frame rate and, if they are under the below
                 // thresholds for XXX seconds, the proxy is restarted
                 "enabled": true,
                 "lowSpeedThreshold": 0.8,
                 "lowFpsThreshold": 23.0,
-                "durationInSeconds": 60
-            },
-
-            // The system, during the countdown, checks if the real time info are always increasing and,
-            //	in case of issue, it might restart the countdown.
-            // This check can be disabled setting this flag to false.
-            // Default is true
-            "realTimeInfoEnabled": true
+                "toleranceInSeconds": 60
+            }
         }
 
 		// This json array lists all the Outputs the Live-Proxy task has to generate.

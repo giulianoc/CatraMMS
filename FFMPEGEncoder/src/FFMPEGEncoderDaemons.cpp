@@ -35,7 +35,6 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 			_monitorCheckInSeconds
 		);
 
-		_maxRealTimeInfoNotChangedToleranceInSeconds = 60;
 		_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = 1000; // ne ho contati 1300 in 30 secondi in un caso
 	}
 	catch (exception &e)
@@ -714,8 +713,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				//	ProxyStart viene aggiornata ad ogni tentativo di partenza.
 				//	Ad un certo punto si è attivato anche questo controllo che, non vedendo i dati real time cambiare, killava il processo.
 				//	Per questo motivo ho aggiunto il check: liveProxyLiveTimeInSeconds > 1 * 60
-				if (liveProxyWorking && copiedLiveProxy->_monitoringRealTimeInfoEnabled && liveProxyLiveTimeInSeconds > 1 * 60)
+				if (liveProxyWorking
+					&& JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))["monitoring"]["realTimeInfo"]["enabled"].as<bool>(true)
+					&& liveProxyLiveTimeInSeconds > 1 * 60)
 				{
+					auto notChangedToleranceInSeconds = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+						["monitoring"]["realTimeInfo"]["notChangedToleranceInSeconds"].as<int16_t>(60);
+
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					// getFinished ritorna std::optional<bool>
 					if (copiedLiveProxy->_callbackData->getFinished())
@@ -763,7 +767,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
 								{
 									// real time info non sono cambiate
-									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+									if (elapsedInSecondsSinceLastChange > notChangedToleranceInSeconds)
 									{
 										LOG_ERROR(
 											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). Live Proxy real time "
@@ -777,7 +781,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childProcessId.toString(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
+											elapsedInSecondsSinceLastChange, notChangedToleranceInSeconds
 										);
 
 										liveProxyWorking = false;
@@ -795,7 +799,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childProcessId.toString(), elapsedInSecondsSinceLastChange,
-											_maxRealTimeInfoNotChangedToleranceInSeconds
+											notChangedToleranceInSeconds
 										);
 									}
 								}
@@ -963,8 +967,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								["monitoring"]["lowSpeedAndFps"]["lowSpeedThreshold"].as<double>(0.8);
 							auto lowFpsThreshold = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
 								["monitoring"]["lowSpeedAndFps"]["lowFpsThreshold"].as<double>(23.0);
-							auto durationInSeconds = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
-								["monitoring"]["lowSpeedAndFps"]["durationInSeconds"].as<int16_t>(60);
+							auto toleranceInSeconds = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+								["monitoring"]["lowSpeedAndFps"]["toleranceInSeconds"].as<int16_t>(60);
 
 							if (currentSpeed > 0.0 && currentSpeed < lowSpeedThreshold && currentFps > 0.0 && currentFps < lowFpsThreshold)
 							{
@@ -990,7 +994,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										chrono::system_clock::now() - sourceLiveProxy->_lowSpeedAndFpsStart.value()
 									).count();
 
-									if (elapsedSinceStart > durationInSeconds)
+									if (elapsedSinceStart > toleranceInSeconds)
 									{
 										LOG_ERROR(
 											"liveProxyMonitor. ProcessUtility::kill/quit/term Process. "
@@ -1008,7 +1012,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
 											copiedLiveProxy->_childProcessId.toString(),
 											currentSpeed, currentFps, lowSpeedThreshold, lowFpsThreshold,
-											elapsedSinceStart, durationInSeconds
+											elapsedSinceStart, toleranceInSeconds
 										);
 
 										liveProxyWorking = false;
@@ -1026,7 +1030,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", elapsedSinceStart: {}"
 											", _maxLowSpeedAndFpsToleranceInSeconds: {}",
 											copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
-											currentSpeed, currentFps, elapsedSinceStart, durationInSeconds
+											currentSpeed, currentFps, elapsedSinceStart, toleranceInSeconds
 										);
 									}
 								}
@@ -2044,8 +2048,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				//	ProxyStart viene aggiornata ad ogni tentativo di partenza.
 				//	Ad un certo punto si è attivato anche questo controllo che, non vedendo i dati real time cambiare, killava il processo.
 				//	Per questo motivo ho aggiunto il check: liveRecordingLiveTimeInSeconds > 1 * 60
-				if (liveRecorderWorking && copiedLiveRecording->_monitoringRealTimeInfoEnabled && liveRecordingLiveTimeInSeconds > 1 * 60)
+				if (liveRecorderWorking
+					&& JsonPath(&(copiedLiveRecording->_ingestedParametersRoot))["monitoring"]["realTimeInfo"]["enabled"].as<bool>(true)
+					&& liveRecordingLiveTimeInSeconds > 1 * 60)
 				{
+					auto notChangedToleranceInSeconds = JsonPath(&(copiedLiveRecording->_ingestedParametersRoot))
+						["monitoring"]["realTimeInfo"]["notChangedToleranceInSeconds"].as<int16_t>(60);
+
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					if (copiedLiveRecording->_callbackData->getFinished())
 					{
@@ -2079,7 +2088,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
 								{
 									// real time info not changed
-									if (elapsedInSecondsSinceLastChange > _maxRealTimeInfoNotChangedToleranceInSeconds)
+									if (elapsedInSecondsSinceLastChange > notChangedToleranceInSeconds)
 									{
 										LOG_ERROR(
 											"liveRecordingMonitor. ProcessUtility::kill/quit/term Process. liveRecordingMonitor (rtmp). Live "
@@ -2093,7 +2102,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
 											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
 											elapsedInSecondsSinceLastChange,
-											_maxRealTimeInfoNotChangedToleranceInSeconds
+											notChangedToleranceInSeconds
 										);
 
 										liveRecorderWorking = false;
@@ -2111,7 +2120,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 											", _maxRealTimeInfoNotChangedToleranceInSeconds: {}",
 											copiedLiveRecording->_ingestionJobKey, copiedLiveRecording->_encodingJobKey,
 											copiedLiveRecording->_channelLabel, copiedLiveRecording->_childProcessId.toString(),
-											elapsedInSecondsSinceLastChange, _maxRealTimeInfoNotChangedToleranceInSeconds
+											elapsedInSecondsSinceLastChange, notChangedToleranceInSeconds
 										);
 									}
 								}

@@ -180,8 +180,6 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 
 		liveRecording->_monitoringEnabled =
 			JsonPath(&(liveRecording->_ingestedParametersRoot))["monitoring"]["enabled"].as<bool>(true);
-		liveRecording->_monitoringRealTimeInfoEnabled =
-			JsonPath(&(liveRecording->_ingestedParametersRoot))["monitoring"]["realTimeInfoEnabled"].as<bool>(true);
 		liveRecording->_lastOutputFfmpegFileSize = 0;
 		liveRecording->_lastRealTimeInfo = {};
 		liveRecording->_realTimeLastChange = chrono::system_clock::now();

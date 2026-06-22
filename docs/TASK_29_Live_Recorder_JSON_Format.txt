@@ -250,11 +250,14 @@
             // Default is true
             "enabled": true,
 
-            // The system, during the live recording, checks if the real time info are always increasing and,
-            //	in case of issue, it might restart the recording.
-            // This check can be disabled setting this flag to false.
-            // Default is true
-            "realTimeInfoEnabled": true
+            "realTimeInfo": {
+                // The system, during the live recording, checks if the real time info are always increasing and,
+                //	in case of issue, it might restart the recording.
+                // This check can be disabled setting this flag to false.
+                // Default is true
+                "enabled": true,
+                "notChangedToleranceInSeconds": 60
+            }
         }
 
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
