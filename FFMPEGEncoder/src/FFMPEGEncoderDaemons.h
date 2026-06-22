@@ -42,9 +42,6 @@ private:
 	int _maxRealTimeInfoNotChangedToleranceInSeconds;
 	int _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow;
 
-	// speed < soglia && fps < soglia sostenuti per più di questa durata → restart
-	int _maxLowSpeedAndFpsToleranceInSeconds;
-
 	std::mutex *_liveRecordingMutex;
 	std::vector<std::shared_ptr<LiveRecording>> *_liveRecordingsCapability;
 	std::mutex *_liveProxyMutex;
