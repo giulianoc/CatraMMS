@@ -659,7 +659,7 @@ void API::manageRequestAndResponse(const string_view &sThreadId, /* int64_t requ
 
 	if (!basicAuthenticationPresent)
 	{
-		LOG_INFO(
+		LOG_DEBUG(
 			"Received manageRequestAndResponse"
 			", requestData.requestURI: {}"
 			", requestData.requestMethod: {}"
