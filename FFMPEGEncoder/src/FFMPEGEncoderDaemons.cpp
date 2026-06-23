@@ -1017,6 +1017,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										liveProxyWorking = false;
 										localErrorMessage = " restarted because of 'low speed and fps'";
+
+										// resetto lo start
+										sourceLiveProxy->_lowSpeedAndFpsStart = nullopt;
 									}
 									else
 									{
