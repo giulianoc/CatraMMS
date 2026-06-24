@@ -717,9 +717,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					&& JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))["monitoring"]["realTimeInfo"]["enabled"].as<bool>(true)
 					&& liveProxyLiveTimeInSeconds > 1 * 60)
 				{
-					auto notChangedToleranceInSeconds = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
-						["monitoring"]["realTimeInfo"]["notChangedToleranceInSeconds"].as<int16_t>(60);
-
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					// getFinished ritorna std::optional<bool>
 					if (copiedLiveProxy->_callbackData->getFinished())
@@ -750,8 +747,10 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								copiedLiveProxy->_callbackData->getProcessedFrames(),
 								copiedLiveProxy->_callbackData->getProcessedOutputTimestampMilliSecs()
 							);
-
 							sourceLiveProxy->_lastRealTimeInfo = newRealTimeInfo;
+
+							auto notChangedToleranceInSeconds = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+								["monitoring"]["realTimeInfo"]["notChangedToleranceInSeconds"].as<int16_t>(60);
 
 							// 2026-01-22: _lastRealTimeInfo è inizialmente inizializzato a 0 per tutti i campi.
 							// Poichè questo controllo inizia dopo 1 minuto dall'inizio del live proxy, è ragionevole pensare
@@ -761,11 +760,12 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							// senza produrre dati real time. Questo scenario era invece non gestito in precedenza.
 							// if (copiedLiveProxy->_lastRealTimeInfo)
 							{
-								int64_t elapsedInSecondsSinceLastChange =
-									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
-
 								if (copiedLiveProxy->_lastRealTimeInfo == newRealTimeInfo)
 								{
+									// _realTimeLastChange viene inizializzato quando l'encoding parte in LiveRecorder/LiveProxy::encodeContent
+									int64_t elapsedInSecondsSinceLastChange =
+										chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveProxy->_realTimeLastChange).count();
+
 									// real time info non sono cambiate
 									if (elapsedInSecondsSinceLastChange > notChangedToleranceInSeconds)
 									{
@@ -786,6 +786,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										liveProxyWorking = false;
 										localErrorMessage = " restarted because of 'real time info not changing'";
+
+										// resetto _realTimeLastChange
+										sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 									}
 									else
 									{
@@ -806,8 +809,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								else
 									sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 							}
-							// else
-							//	sourceLiveProxy->_realTimeLastChange = chrono::system_clock::now();
 						}
 						catch (exception &e)
 						{
@@ -2055,9 +2056,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					&& JsonPath(&(copiedLiveRecording->_ingestedParametersRoot))["monitoring"]["realTimeInfo"]["enabled"].as<bool>(true)
 					&& liveRecordingLiveTimeInSeconds > 1 * 60)
 				{
-					auto notChangedToleranceInSeconds = JsonPath(&(copiedLiveRecording->_ingestedParametersRoot))
-						["monitoring"]["realTimeInfo"]["notChangedToleranceInSeconds"].as<int16_t>(60);
-
 					// 2025-11-25: E' importante che callbackData stia raccogliendo i dati, altrimenti il controllo non è possibile farlo
 					if (copiedLiveRecording->_callbackData->getFinished())
 					{
@@ -2077,19 +2075,21 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								copiedLiveRecording->_callbackData->getProcessedFrames(),
 								copiedLiveRecording->_callbackData->getProcessedOutputTimestampMilliSecs()
 							);
-
 							sourceLiveRecording->_lastRealTimeInfo = newRealTimeInfo;
+
+							auto notChangedToleranceInSeconds = JsonPath(&(copiedLiveRecording->_ingestedParametersRoot))
+								["monitoring"]["realTimeInfo"]["notChangedToleranceInSeconds"].as<int16_t>(60);
 
 							// 2026-01-22: _lastRealTimeInfo: vedi commento scritto per il Live proxy
 							// if (copiedLiveRecording->_lastRealTimeInfo)
 							{
-								int64_t elapsedInSecondsSinceLastChange =
-									chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
-										.count();
-
 								// getTimestampDiscontinuityCount: vedi commento scritto per il Live proxy
 								if (copiedLiveRecording->_lastRealTimeInfo == newRealTimeInfo)
 								{
+									int64_t elapsedInSecondsSinceLastChange =
+										chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - copiedLiveRecording->_realTimeLastChange)
+											.count();
+
 									// real time info not changed
 									if (elapsedInSecondsSinceLastChange > notChangedToleranceInSeconds)
 									{
@@ -2110,6 +2110,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										liveRecorderWorking = false;
 										localErrorMessage = " restarted because of 'real time info not changing'";
+
+										// resetto _realTimeLastChange
+										sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 									}
 									else
 									{
@@ -2130,8 +2133,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								else
 									sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 							}
-							// else
-							//	sourceLiveRecording->_realTimeLastChange = chrono::system_clock::now();
 						}
 						catch (exception &e)
 						{
