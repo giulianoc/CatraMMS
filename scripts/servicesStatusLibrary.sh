@@ -994,7 +994,7 @@ mms_incrontab_check_rsync()
     channel=$(basename "$path") #channel: 5240
     #Se trovo tre 'Lock attivo' consecutivi su quel canale bisogna emettere un allarme
     #alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk 'BEGIN { alarm=0; } { if (NR > 2 && prevprev ~ /rsync failed/ && prev ~ /rsync failed/ && $0 ~ /rsync failed/) {alarm=1; exit}; prevprev = prev; prev=$0; } END {printf("%d", alarm) } ')
-    threshold=4
+    threshold=5
     alarm=$(grep "${dateFilter}" /home/mms/incrontab.log | grep "@$channel.m3u8@" | awk -v threshold="$threshold" '
     BEGIN { alarm=0; count=0; }
     {
