@@ -270,7 +270,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 					{
 						json outputRoot = copiedLiveProxy->_outputsRoot[outputIndex];
 
-						string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
+						auto outputType = JsonPath(&outputRoot)["outputType"].as<string>();
 
 						if (!liveProxyWorking)
 							break;
@@ -278,8 +278,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						// if (outputType == "HLS" || outputType == "DASH")
 						if (outputType == "HLS_Channel")
 						{
-							string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
-							string manifestFileName = JSONUtils::as<string>(outputRoot, "manifestFileName", "");
+							auto manifestDirectoryPath = JsonPath(&outputRoot)["manifestDirectoryPath"].as<string>();
+							auto manifestFileName = JsonPath(&outputRoot)["manifestFileName"].as<string>();
 
 							try
 							{
@@ -306,14 +306,19 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 										int64_t lastManifestFileUpdateInSeconds;
 										{
+											// conversione tra clock diversi:
+											// system_time = file_time - file_clock::now() + system_clock::now()
+											// Questo è necessario perché fs::file_time_type::clock non è system_clock (hanno epoch diversi).
+
+											auto localNow = chrono::system_clock::now();
+
 											chrono::system_clock::time_point fileLastModification =
 												chrono::time_point_cast<chrono::system_clock::duration>(
-													fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() +
-													chrono::system_clock::now()
+													fs::last_write_time(manifestFilePathName) - fs::file_time_type::clock::now() + localNow
 												);
 
-											lastManifestFileUpdateInSeconds =
-												chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - fileLastModification).count();
+											lastManifestFileUpdateInSeconds = chrono::duration_cast<chrono::seconds>(
+												localNow - fileLastModification).count();
 										}
 
 										long maxLastManifestFileUpdateInSeconds = 30;
