@@ -1024,7 +1024,6 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 										liveProxyWorking = false;
 										localErrorMessage = " restarted because of 'low speed and fps'";
 
-										// resetto lo start
 										sourceLiveProxy->_lowSpeedAndFpsStart = nullopt;
 									}
 									else
@@ -1072,6 +1071,75 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 							);
 						}
+					}
+				}
+
+				if (!sourceLiveProxy->_childProcessId.isInitialized() || copiedLiveProxy->_encodingStart != sourceLiveProxy->_encodingStart)
+				{
+					LOG_INFO(
+						"liveProxyMonitor. LiveProxy changed"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}"
+						", sourceLiveProxy->_childProcessId: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+						sourceLiveProxy->_childProcessId.toString()
+					);
+
+					continue;
+				}
+
+				// 2026-06-25: ≥ N occorrenze di 'IO error: End of file' in M secondi → restart
+				// La connessione TLS è caduta e il reconnect automatico di ffmpeg non rinegozia il token.
+				if (liveProxyWorking
+					&& JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))["monitoring"]["ioEndOfFile"]
+						["enabled"].as<bool>(true)
+					&& liveProxyLiveTimeInSeconds > 1 * 60)
+				{
+					LOG_INFO(
+						"liveProxyMonitor ioEndOfFile check"
+						", ingestionJobKey: {}"
+						", encodingJobKey: {}"
+						", configurationLabel: {}",
+						copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel
+					);
+
+					try
+					{
+						auto maxCountInTimeWindow = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+							["monitoring"]["ioEndOfFile"]["maxCountInTimeWindow"].as<size_t>(3);
+
+						size_t ioEndOfFileCountInTimeWindow = copiedLiveProxy->_callbackData->getIoEndOfFileCountInTimeWindow();
+
+						if (ioEndOfFileCountInTimeWindow >= maxCountInTimeWindow)
+						{
+							LOG_ERROR(
+								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. "
+								"Too many 'IO error: End of file' in time window. LiveProxy (ffmpeg) is killed in order to be started again"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", configurationLabel: {}"
+								", copiedLiveProxy->_childProcessId: {}"
+								", ioEndOfFileCountInTimeWindow: {}"
+								", maxCountInTimeWindow: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+								copiedLiveProxy->_childProcessId.toString(),
+								ioEndOfFileCountInTimeWindow, maxCountInTimeWindow
+							);
+
+							liveProxyWorking = false;
+							localErrorMessage = " restarted because of 'IO error: End of file'";
+						}
+					}
+					catch (exception &e)
+					{
+						LOG_ERROR(
+							"liveProxyMonitor ioEndOfFile check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
 					}
 				}
 
