@@ -117,7 +117,7 @@ public:
 	void stopUploadFileProgressThread();
 
 protected:
-	void sendError(FCGX_Request &request, int htmlResponseCode, const std::string_view& errorMessage) override;
+	void sendError(FCGX_Request &request, int16_t htmlResponseCode, const std::string_view& errorMessage) override;
 
 private:
 	nlohmann::json _configurationRoot;

@@ -2931,7 +2931,7 @@ string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestion
 	}
 }
 
-void FFMPEGEncoder::sendError(FCGX_Request &request, int htmlResponseCode, const string_view& errorMessage)
+void FFMPEGEncoder::sendError(FCGX_Request &request, int16_t htmlResponseCode, const string_view& errorMessage)
 {
 	json responseBodyRoot;
 	responseBodyRoot["status"] = to_string(htmlResponseCode);

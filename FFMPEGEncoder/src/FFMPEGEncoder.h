@@ -64,7 +64,8 @@ class FFMPEGEncoder final : public FastCGIAPI
 
 	bool basicAuthenticationRequired(const FCGIRequestData& requestData) override;
 
-	void sendError(FCGX_Request &request, int htmlResponseCode, const std::string_view& errorMessage) override;
+protected:
+	void sendError(FCGX_Request &request, int16_t htmlResponseCode, const std::string_view& errorMessage) override;
 
   private:
 	nlohmann::json _configurationRoot;
