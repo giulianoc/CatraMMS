@@ -23,7 +23,7 @@
 
 class API final : public FastCGIAPI
 {
-  public:
+public:
 	class APIAuthorizationDetails final : public FCGIRequestData::AuthorizationDetails
 	{
 	public:
@@ -112,12 +112,14 @@ class API final : public FastCGIAPI
 
 	bool basicAuthenticationRequired(const FCGIRequestData& requestData) override;
 
-	void sendError(FCGX_Request &request, int htmlResponseCode, const std::string_view& errorMessage) override;
 
 	void fileUploadProgressCheckThread();
 	void stopUploadFileProgressThread();
 
-  private:
+protected:
+	void sendError(FCGX_Request &request, int htmlResponseCode, const std::string_view& errorMessage) override;
+
+private:
 	nlohmann::json _configurationRoot;
 
 	std::shared_ptr<MMSEngineDBFacade> _mmsEngineDBFacade;
