@@ -18,14 +18,14 @@ class AWSSigner
 	const string AWS4_REQUEST{"aws4_request"};
 	*/
 
-	std::string sign(std::string pemPathName, std::string message);
+	static std::string sign(std::string pemPathName, std::string message);
 
   public:
-	AWSSigner(void);
+	AWSSigner() = default;
 
-	~AWSSigner(void);
+	~AWSSigner() = default;
 
-	std::string calculateSignedURL(std::string hostName, std::string uriPath, std::string keyPairId, std::string privateKeyPEMPathName, int expirationInSeconds);
+	static std::string calculateSignedURL(std::string hostName, std::string uriPath, std::string keyPairId, std::string privateKeyPEMPathName, int expirationInSeconds);
 
 	/*
 	int awsV4Signature(std::string hostName,

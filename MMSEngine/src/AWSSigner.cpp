@@ -16,10 +16,6 @@
 using namespace std;
 using json = nlohmann::json;
 
-AWSSigner::AWSSigner(void) = default;
-
-AWSSigner::~AWSSigner(void) = default;
-
 string AWSSigner::calculateSignedURL(string hostName, string uriPath, string keyPairId, string privateKeyPEMPathName, int expirationInSeconds)
 {
 
@@ -148,51 +144,39 @@ string AWSSigner::sign(string pemPathName, string message)
 		pemPathName, message
 	);
 
-	LOG_DEBUG("OpenSSL initialization");
-
-	{
-		OpenSSL_add_all_algorithms();
-		OpenSSL_add_all_ciphers();
-		OpenSSL_add_all_digests();
-
-		//  These function calls initialize openssl for correct work
-		// ERR_load_BIO_strings(); non serve piu a partire da OpenSSL 3.0
-		ERR_load_crypto_strings();
-	}
-
 	LOG_DEBUG("createPrivateRSA...");
-	RSA *rsa = NULL;
-	BIO *certbio = NULL;
+	EVP_PKEY *priKey = nullptr;
 	{
 		LOG_DEBUG("Creating BIO");
-		//  Create the Input/Output BIO's
-		certbio = BIO_new(BIO_s_file());
+		BIO *certbio = BIO_new(BIO_s_file());
 
 		LOG_DEBUG("Loading certificate");
-		// Loading the certificate from file (PEM)
-		int ret = BIO_read_filename(certbio, pemPathName.c_str());
+		BIO_read_filename(certbio, pemPathName.c_str());
 
-		LOG_DEBUG("PEM_read_bio_RSAPrivateKey...");
-		rsa = PEM_read_bio_RSAPrivateKey(certbio, &rsa, NULL, NULL);
+		LOG_DEBUG("PEM_read_bio_PrivateKey...");
+		priKey = PEM_read_bio_PrivateKey(certbio, nullptr, nullptr, nullptr);
+		BIO_free(certbio);
+	}
+
+	if (priKey == nullptr)
+	{
+		LOG_ERROR("PEM_read_bio_PrivateKey failed");
+		return "";
 	}
 
 	LOG_DEBUG("RSASign...");
 	size_t signedMessageLength;
 	vector<unsigned char> signedMessage;
 	{
-		EVP_MD_CTX *m_RSASignCtx = EVP_MD_CTX_create();
-		EVP_PKEY *priKey = EVP_PKEY_new();
-		EVP_PKEY_assign_RSA(priKey, rsa);
+		EVP_MD_CTX *m_RSASignCtx = EVP_MD_CTX_new();
 
 		LOG_DEBUG("EVP_DigestSignInit...");
-		if (EVP_DigestSignInit(m_RSASignCtx, NULL, EVP_sha1(), NULL, priKey) <= 0)
+		if (EVP_DigestSignInit(m_RSASignCtx, nullptr, EVP_sha1(), nullptr, priKey) <= 0)
 		{
 			LOG_ERROR("EVP_DigestSignInit failed");
 
 			EVP_PKEY_free(priKey);
-			EVP_MD_CTX_destroy(m_RSASignCtx);
-			RSA_free(rsa);
-			BIO_free(certbio);
+			EVP_MD_CTX_free(m_RSASignCtx);
 
 			return "";
 		}
@@ -202,22 +186,18 @@ string AWSSigner::sign(string pemPathName, string message)
 			LOG_ERROR("EVP_DigestSignUpdate failed");
 
 			EVP_PKEY_free(priKey);
-			EVP_MD_CTX_destroy(m_RSASignCtx);
-			RSA_free(rsa);
-			BIO_free(certbio);
+			EVP_MD_CTX_free(m_RSASignCtx);
 
 			return "";
 		}
 
 		LOG_DEBUG("EVP_DigestSignFinal...");
-		if (EVP_DigestSignFinal(m_RSASignCtx, NULL, &signedMessageLength) <= 0)
+		if (EVP_DigestSignFinal(m_RSASignCtx, nullptr, &signedMessageLength) <= 0)
 		{
 			LOG_ERROR("EVP_DigestSignFinal failed");
 
 			EVP_PKEY_free(priKey);
-			EVP_MD_CTX_destroy(m_RSASignCtx);
-			RSA_free(rsa);
-			BIO_free(certbio);
+			EVP_MD_CTX_free(m_RSASignCtx);
 
 			return "";
 		}
@@ -229,9 +209,7 @@ string AWSSigner::sign(string pemPathName, string message)
 			LOG_ERROR("EVP_DigestSignFinal failed");
 
 			EVP_PKEY_free(priKey);
-			EVP_MD_CTX_destroy(m_RSASignCtx);
-			RSA_free(rsa);
-			BIO_free(certbio);
+			EVP_MD_CTX_free(m_RSASignCtx);
 
 			return "";
 		}
@@ -239,19 +217,9 @@ string AWSSigner::sign(string pemPathName, string message)
 
 		LOG_DEBUG("EVP_PKEY_free...");
 		EVP_PKEY_free(priKey);
-		LOG_DEBUG("EVP_MD_CTX_destroy...");
-		EVP_MD_CTX_destroy(m_RSASignCtx);
-		// EVP_MD_CTX_cleanup(m_RSASignCtx);
+		LOG_DEBUG("EVP_MD_CTX_free...");
+		EVP_MD_CTX_free(m_RSASignCtx);
 	}
-
-	// ... So in other words ownership of the key assigned via the EVP_PKEY_assign_RSA()
-	// call is transferred to the EVP_PKEY. When you free the EVP_PKEY it also frees
-	// the underlying RSA key. So, once you've successfully called EVP_PKEY_assign_RSA()
-	// you must not call RSA_free() on the underlying key or a double-free may result
-	// info(__FILEREF__ + "RSA_free...");
-	// RSA_free(rsa);
-	LOG_DEBUG("BIO_free...");
-	BIO_free(certbio);
 
 	LOG_DEBUG(
 		"base64Text..."
@@ -262,11 +230,11 @@ string AWSSigner::sign(string pemPathName, string message)
 
 	LOG_DEBUG("signature before replace: {}", signature);
 
-	::replace(signature.begin(), signature.end(), '+', '-');
-	::replace(signature.begin(), signature.end(), '=', '_');
-	::replace(signature.begin(), signature.end(), '/', '~');
+	ranges::replace(signature, '+', '-');
+	ranges::replace(signature, '=', '_');
+	ranges::replace(signature, '/', '~');
 
-	signature.erase(remove_if(signature.begin(), signature.end(), ::isspace), signature.end());
+	signature.erase(ranges::remove_if(signature, ::isspace).begin(), signature.end());
 
 	LOG_DEBUG("signature after replace: {}", signature);
 
