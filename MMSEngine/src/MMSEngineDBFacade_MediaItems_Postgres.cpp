@@ -401,23 +401,12 @@ int MMSEngineDBFacade::getNotFinishedIngestionDependenciesNumberByIngestionJobKe
 }
 
 json MMSEngineDBFacade::updateMediaItem(
-	int64_t workspaceKey, int64_t mediaItemKey, bool titleModified, string newTitle, bool userDataModified, string newUserData,
-	bool retentionInMinutesModified, int64_t newRetentionInMinutes, bool tagsModified, json tagsRoot, bool uniqueNameModified, string newUniqueName,
-	json crossReferencesRoot, bool admin
+	int64_t workspaceKey, int64_t mediaItemKey, bool titleModified, const string& newTitle, bool userDataModified, const string& newUserData,
+	bool retentionInMinutesModified, int64_t newRetentionInMinutes, bool tagsModified, const json& tagsRoot, bool uniqueNameModified,
+	string newUniqueName, const json& crossReferencesRoot, bool admin
 )
 {
 	json mediaItemRoot;
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	work trans{*(conn->_sqlConnection)};
-	*/
 
 	PostgresConnTrans trans(_masterPostgresConnectionPool, true);
 	try
@@ -428,16 +417,16 @@ json MMSEngineDBFacade::updateMediaItem(
 
 			if (titleModified)
 			{
-				if (setSQL != "")
+				if (!setSQL.empty())
 					setSQL += ", ";
 				setSQL += std::format("title = {}", trans.transaction->quote(newTitle));
 			}
 
 			if (userDataModified)
 			{
-				if (setSQL != "")
+				if (!setSQL.empty())
 					setSQL += ", ";
-				if (newUserData == "")
+				if (newUserData.empty())
 					setSQL += ("userData = null");
 				else
 					setSQL += std::format("userData = {}", trans.transaction->quote(newUserData));
@@ -445,7 +434,7 @@ json MMSEngineDBFacade::updateMediaItem(
 
 			if (retentionInMinutesModified)
 			{
-				if (setSQL != "")
+				if (!setSQL.empty())
 					setSQL += ", ";
 				setSQL += std::format("retentionInMinutes = {}", newRetentionInMinutes);
 			}
@@ -3410,22 +3399,6 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 {
 	pair<int64_t, MMSEngineDBFacade::ContentType> mediaItemKeyAndContentType;
 
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool;
-	if (fromMaster)
-		connectionPool = _masterPostgresConnectionPool;
-	else
-		connectionPool = _slavePostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
@@ -3472,8 +3445,8 @@ MMSEngineDBFacade::getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, stri
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
-		MediaItemKeyNotFound const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *me = dynamic_cast<MediaItemKeyNotFound const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"
@@ -5760,18 +5733,6 @@ json MMSEngineDBFacade::getTagsList(
 
 void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMMSForRetention)
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	LOG_INFO(
 		"updateMediaItem"
@@ -5785,7 +5746,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 			string sqlStatement = std::format(
 				"update MMS_MediaItem set processorMMSForRetention = {} "
 				"where mediaItemKey = {} ",
-				processorMMSForRetention == "" ? "null" : trans.transaction->quote(processorMMSForRetention), mediaItemKey
+				processorMMSForRetention.empty() ? "null" : trans.transaction->quote(processorMMSForRetention), mediaItemKey
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
 			result res = trans.transaction->exec(sqlStatement);
@@ -5817,7 +5778,7 @@ void MMSEngineDBFacade::updateMediaItem(int64_t mediaItemKey, string processorMM
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"

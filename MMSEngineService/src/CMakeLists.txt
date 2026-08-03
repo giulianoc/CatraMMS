@@ -18,44 +18,45 @@
 # allowed only after express negotiation of conditions with the authors.
 
 set(SOURCES
-    mmsEngineService.cpp
-    MMSEngineProcessor.cpp
-    MMSEngineProcessor_ChangeFileFormat.cpp
-    MMSEngineProcessor_CheckStreaming.cpp
-    MMSEngineProcessor_ConcatCut.cpp
-    MMSEngineProcessor_CopyMove.cpp
-    MMSEngineProcessor_Countdown.cpp
-    MMSEngineProcessor_CrossReference.cpp
-    MMSEngineProcessor_Email.cpp
-    MMSEngineProcessor_Encode.cpp
-    MMSEngineProcessor_ExtractTracks.cpp
-    MMSEngineProcessor_FaceRecognitionAndIdentification.cpp
-    MMSEngineProcessor_Frames.cpp
-    MMSEngineProcessor_Ftp.cpp
-    MMSEngineProcessor_GroupOfTasks.cpp
-    MMSEngineProcessor_HttpCallback.cpp
-    MMSEngineProcessor_Ingestion_1.cpp
-    MMSEngineProcessor_Ingestion_2.cpp
-    MMSEngineProcessor_LiveCut.cpp
-    MMSEngineProcessor_LiveGrid.cpp
-    MMSEngineProcessor_LiveRecorder.cpp
-    MMSEngineProcessor_LiveProxy.cpp
-    MMSEngineProcessor_Overlay.cpp
-    MMSEngineProcessor_PictureInPicture.cpp
-    MMSEngineProcessor_RemoveContent.cpp
-    MMSEngineProcessor_Retention.cpp
-    MMSEngineProcessor_SilentTrack.cpp
-    MMSEngineProcessor_SlideShow.cpp
-    MMSEngineProcessor_Social.cpp
-    MMSEngineProcessor_VideoSpeed.cpp
-    MMSEngineProcessor_VODProxy.cpp
-    CheckIngestionTimes.cpp
-    CheckEncodingTimes.cpp
-    CheckRefreshPartitionFreeSizeTimes.cpp
-    ContentRetentionTimes.cpp
-    DBDataRetentionTimes.cpp
-    GEOInfoTimes.cpp
-    ThreadsStatisticTimes.cpp)
+        mmsEngineService.cpp
+        MMSEngineProcessor.cpp
+        MMSEngineProcessor_ChangeFileFormat.cpp
+        MMSEngineProcessor_CheckStreaming.cpp
+        MMSEngineProcessor_ConcatCut.cpp
+        MMSEngineProcessor_CopyMove.cpp
+        MMSEngineProcessor_Countdown.cpp
+        MMSEngineProcessor_CrossReference.cpp
+        MMSEngineProcessor_Email.cpp
+        MMSEngineProcessor_Encode.cpp
+        MMSEngineProcessor_ExtractTracks.cpp
+        MMSEngineProcessor_FaceRecognitionAndIdentification.cpp
+        MMSEngineProcessor_Frames.cpp
+        MMSEngineProcessor_Ftp.cpp
+        MMSEngineProcessor_GroupOfTasks.cpp
+        MMSEngineProcessor_HttpCallback.cpp
+        MMSEngineProcessor_Ingestion_1.cpp
+        MMSEngineProcessor_Ingestion_2.cpp
+        MMSEngineProcessor_LiveCut.cpp
+        MMSEngineProcessor_LiveGrid.cpp
+        MMSEngineProcessor_LiveRecorder.cpp
+        MMSEngineProcessor_LiveProxy.cpp
+        MMSEngineProcessor_Overlay.cpp
+        MMSEngineProcessor_PictureInPicture.cpp
+        MMSEngineProcessor_RemoveContent.cpp
+        MMSEngineProcessor_Retention.cpp
+        MMSEngineProcessor_RSSAddContents.cpp
+        MMSEngineProcessor_SilentTrack.cpp
+        MMSEngineProcessor_SlideShow.cpp
+        MMSEngineProcessor_Social.cpp
+        MMSEngineProcessor_VideoSpeed.cpp
+        MMSEngineProcessor_VODProxy.cpp
+        CheckIngestionTimes.cpp
+        CheckEncodingTimes.cpp
+        CheckRefreshPartitionFreeSizeTimes.cpp
+        ContentRetentionTimes.cpp
+        DBDataRetentionTimes.cpp
+        GEOInfoTimes.cpp
+        ThreadsStatisticTimes.cpp)
 
 set(HEADERS
     MMSEngineProcessor.h
@@ -74,6 +75,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 include_directories("${STRINGUTILS_INCLUDE_DIR}")
+include_directories("${XMLWRAPPER_INCLUDE_DIR}")
 include_directories("${SYSTEM_INCLUDE_DIR}")
 include_directories("${GETCPUUSAGE_INCLUDE_DIR}")
 include_directories("${DATETIME_INCLUDE_DIR}")
@@ -132,6 +134,7 @@ link_directories("${OPENCV_LIB_DIR}")
 link_directories("${LIBPQXX_LIB_DIR}")
 link_directories("${FFMPEG_LIB_DIR}")
 link_directories("${THREADLOGGER_LIB_DIR}")
+link_directories("${XMLWRAPPER_LIB_DIR}")
 if(APPLE)
   link_directories("${LIBPQ_LIB_DIR}")
   link_directories("${OPENSSL_LIB_DIR}")
@@ -151,6 +154,8 @@ target_link_libraries(mmsEngineService ProcessUtility)
 target_link_libraries(mmsEngineService Error)
 target_link_libraries(mmsEngineService JSONUtils)
 target_link_libraries(mmsEngineService CurlWrapper)
+target_link_libraries(mmsEngineService XMLWrapper)
+target_link_libraries(mmsEngineService xml2)
 target_link_libraries(mmsEngineService Convert)
 target_link_libraries(mmsEngineService FFMpegWrapper)
 target_link_libraries(mmsEngineService FFMpegEngine)

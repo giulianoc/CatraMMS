@@ -1,0 +1,38 @@
+"task": {
+	// optional
+	label="...",
+
+	// mandatory
+	"type": "RSS-Add-Contents",
+
+	"parameters": {
+		// mandatory: URL of the RSS feed
+		"rssFeedURL": "http://myhost/example.xml",
+		// optional: If present, it specifies the timeout when the rss feed is loaded
+		"timeoutInSeconds": 30,
+
+		// optional: If present, it specifies when the Task has to be executed. The processing of the task
+		//		can be delayed respect to the specified date based on his dependencies with other tasks.
+		//		The date format is:
+		//       - Zulu/UTC Date-time having the following format: YYYY-MM-DDTHH:MI:SSZ
+		//	If it is not present, by default it will be initialized with the ingesion time
+		"processingStartingFrom": "2019-01-21T12:30:00Z",
+
+		// optional: It is used in case this Task has to wait a Task of another Workflow
+		"waitFor": [
+			{
+				"globalIngestionLabel": "XXXX"
+			}
+		],
+
+		// optional: it specifies the retention of the contents (MediaItems retention). Once the retention expires,
+		//		content including all his profiles (PhysicalItem) will be removed.
+		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
+		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
+		// By default it is 60m
+		"retention": "60m",
+
+		// optional
+		"ingester": "aaaa"
+	}
+}

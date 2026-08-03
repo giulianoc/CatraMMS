@@ -13,6 +13,7 @@
 #include "Validator.h"
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
@@ -377,7 +378,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> dependencies;
 
 	string field = "type";
-	if (!JSONUtils::isPresent(taskRoot, field))
+	if (!JsonPath(&taskRoot)[field].exists())
 	{
 		string sTaskRoot = JSONUtils::toString(taskRoot);
 
@@ -1202,6 +1203,29 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		const json& parametersRoot = taskRoot[field];
 		validateCountdownMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
+	else if (type == "Rss-Add-Contents")
+	{
+		ingestionType = MMSEngineDBFacade::IngestionType::RssAddContents;
+
+		field = "parameters";
+		if (!JsonPath(&taskRoot)[field].exists())
+		{
+			string sTaskRoot = JSONUtils::toString(taskRoot);
+
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sTaskRoot: {}",
+				field, sTaskRoot
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+
+		const json& parametersRoot = taskRoot[field];
+		validateRssAddContentsMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+	}
 	else if (type == "Live-Grid")
 	{
 		ingestionType = MMSEngineDBFacade::IngestionType::LiveGrid;
@@ -1462,6 +1486,11 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const MMSEngineDBFac
 	case MMSEngineDBFacade::IngestionType::Countdown:
 	{
 		validateCountdownMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
+		break;
+	}
+	case MMSEngineDBFacade::IngestionType::RssAddContents:
+	{
+		validateRssAddContentsMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 		break;
 	}
 	case MMSEngineDBFacade::IngestionType::LiveGrid:
@@ -4943,7 +4972,7 @@ void Validator::validateVODProxyMetadata(
 	field = "processingStartingFrom";
 	if (JSONUtils::isPresent(parametersRoot, field))
 	{
-		string processingStartingFrom = JSONUtils::as<string>(parametersRoot, field, "");
+		auto processingStartingFrom = JSONUtils::as<string>(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value
@@ -5117,6 +5146,48 @@ void Validator::validateCountdownMetadata(
 	if (JSONUtils::isPresent(parametersRoot, field))
 	{
 		string processingStartingFrom = JSONUtils::as<string>(parametersRoot, field, "");
+		// scenario:
+		//	- this is an optional date field
+		//	- it is associated to a variable having "" as default value
+		//	- the variable is not passed
+		//	The result is that the field remain empty.
+		//	Since it is optional we do not need to raise any error
+		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		if (!processingStartingFrom.empty())
+			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+	}
+}
+
+void Validator::validateRssAddContentsMetadata(
+	int64_t workspaceKey, const string& label, const json& parametersRoot, bool validateDependenciesToo,
+	vector<tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+)
+{
+	vector<string> mandatoryFields = {"rssFeedURL"
+	};
+	for (string mandatoryField : mandatoryFields)
+	{
+		if (!JSONUtils::isPresent(parametersRoot, mandatoryField))
+		{
+			string sParametersRoot = JSONUtils::toString(parametersRoot);
+
+			string errorMessage = std::format(
+				"Field is not present or it is null"
+				", Field: {}"
+				", sParametersRoot: {}"
+				", label: {}",
+				mandatoryField, sParametersRoot, label
+			);
+			LOG_ERROR(errorMessage);
+
+			throw runtime_error(errorMessage);
+		}
+	}
+
+	string field = "processingStartingFrom";
+	if (JsonPath(&parametersRoot)[field].exists())
+	{
+		auto processingStartingFrom = JSONUtils::as<string>(parametersRoot, field, "");
 		// scenario:
 		//	- this is an optional date field
 		//	- it is associated to a variable having "" as default value

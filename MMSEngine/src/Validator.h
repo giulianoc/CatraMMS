@@ -260,7 +260,12 @@ class Validator final
 
 	void validateCountdownMetadata(
 		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
-		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, Validator::DependencyType, bool>> &dependencies
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, DependencyType, bool>> &dependencies
+	);
+
+	static void validateRssAddContentsMetadata(
+		int64_t workspaceKey, const std::string &label, const nlohmann::json &parametersRoot, bool validateDependenciesToo,
+		std::vector<std::tuple<int64_t, MMSEngineDBFacade::ContentType, DependencyType, bool>> &dependencies
 	);
 
 	void validateLiveGridMetadata(

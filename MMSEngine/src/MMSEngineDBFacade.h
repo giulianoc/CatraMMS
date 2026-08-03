@@ -786,6 +786,7 @@ class MMSEngineDBFacade
 		YouTubeLiveBroadcast = 32,
 		FacebookLiveBroadcast = 33,
 		AddSilentAudio = 34,
+		RssAddContents = 35,
 
 		EmailNotification = 60,
 		MediaCrossReference = 61,
@@ -1694,9 +1695,9 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	nlohmann::json updateMediaItem(
-		int64_t workspaceKey, int64_t mediaItemKey, bool titleModified, std::string newTitle, bool userDataModified, std::string newUserData,
-		bool retentionInMinutesModified, int64_t newRetentionInMinutes, bool tagsModified, nlohmann::json tagsRoot, bool uniqueNameModified,
-		std::string newUniqueName, nlohmann::json crossReferencesRoot, bool admin
+		int64_t workspaceKey, int64_t mediaItemKey, bool titleModified, const std::string& newTitle, bool userDataModified, const std::string& newUserData,
+		bool retentionInMinutesModified, int64_t newRetentionInMinutes, bool tagsModified, const nlohmann::json& tagsRoot, bool uniqueNameModified,
+		std::string newUniqueName, const nlohmann::json& crossReferencesRoot, bool admin
 	);
 #else
 	nlohmann::json updateMediaItem(
@@ -1780,7 +1781,7 @@ class MMSEngineDBFacade
 	);
 
 	std::pair<int64_t, MMSEngineDBFacade::ContentType>
-	getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, std::string referenceUniqueName, bool warningIfMissing, bool fromMaster);
+	getMediaItemKeyDetailsByUniqueName(int64_t workspaceKey, std::string referenceUniqueName, bool warningIfMissing = true, bool fromMaster = false);
 
 	int64_t getMediaDurationInMilliseconds(int64_t mediaItemKey, int64_t physicalPathKey, bool fromMaster);
 
