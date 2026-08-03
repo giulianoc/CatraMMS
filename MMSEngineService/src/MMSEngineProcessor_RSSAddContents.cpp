@@ -14,7 +14,7 @@
 using namespace std;
 using json = nlohmann::json;
 
-void MMSEngineProcessor::manageRSSAddContents(int64_t ingestionJobKey, const shared_ptr<Workspace>& workspace, const json& parametersRoot)
+void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const shared_ptr<Workspace>& workspace, const json& parametersRoot)
 {
 	try
 	{

@@ -247,7 +247,7 @@ class MMSEngineProcessor
 	void manageLiveGrid(int64_t ingestionJobKey, MMSEngineDBFacade::IngestionStatus ingestionStatus, std::shared_ptr<Workspace> workspace,
 		nlohmann::json parametersRoot);
 
-	void manageRSSAddContents(int64_t ingestionJobKey, const std::shared_ptr<Workspace> &workspace, const nlohmann::json &parametersRoot);
+	void manageRSSAddContentsTask(int64_t ingestionJobKey, const std::shared_ptr<Workspace> &workspace, const nlohmann::json &parametersRoot);
 
 	void manageLiveCutThread_streamSegmenter(
 		std::shared_ptr<long> processorsThreadsNumber, int64_t ingestionJobKey, std::shared_ptr<Workspace> workspace, nlohmann::json parametersRoot

@@ -97,6 +97,7 @@ include_directories("${BANDWIDTHUSAGETHREAD_INCLUDE_DIR}")
 include_directories("${LIBPQXX_INCLUDE_DIR}")
 include_directories("${NLOHMANN_INCLUDE_DIR}")
 include_directories("${SAFEFILESYSTEM_INCLUDE_DIR}")
+include_directories("${XML2_INCLUDE_DIR}")
 
 include_directories("${PROJECT_SOURCE_DIR}/MMSStorage/src")
 include_directories("${PROJECT_SOURCE_DIR}/MMSDelivery/src")

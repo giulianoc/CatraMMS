@@ -1273,6 +1273,50 @@ void MMSEngineProcessor::handleCheckIngestionEvent()
 							}
 							break;
 						}
+						case MMSEngineDBFacade::IngestionType::RssAddContents:
+						{
+							try
+							{
+								manageRSSAddContentsTask(ingestionJobKey, workspace, parametersRoot);
+							}
+							catch (exception &e)
+							{
+								LOG_ERROR("manageRSSAddContentsTask failed"
+									", _processorIdentifier: {}"
+									", ingestionJobKey: {}"
+									", exception: {}", _processorIdentifier, ingestionJobKey, e.what()
+								);
+
+								string errorMessage = e.what();
+
+								LOG_INFO(
+									"Update IngestionJob"
+									", _processorIdentifier: {}"
+									", ingestionJobKey: {}"
+									", IngestionStatus: End_IngestionFailure"
+									", errorMessage: {}",
+									_processorIdentifier, ingestionJobKey, errorMessage
+								);
+								try
+								{
+									_mmsEngineDBFacade->updateIngestionJob(
+										ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, errorMessage
+									);
+								}
+								catch (exception &ex)
+								{
+									LOG_INFO("Update IngestionJob failed"
+										", _processorIdentifier: {}"
+										", ingestionJobKey: {}"
+										", IngestionStatus: End_IngestionFailure"
+										", errorMessage: {}", _processorIdentifier, ingestionJobKey, ex.what()
+									);
+								}
+
+								throw runtime_error(errorMessage);
+							}
+							break;
+						}
 						case MMSEngineDBFacade::IngestionType::Slideshow:
 						{
 							// mediaItemKeysDependency is present because checked by _mmsEngineDBFacade->getIngestionsToBeManaged
