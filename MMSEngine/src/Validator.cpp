@@ -393,11 +393,9 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		throw runtime_error(errorMessage);
 	}
 
-	string label;
-	field = "label";
-	label = JSONUtils::as<string>(taskRoot, field, "");
+	auto label = JsonPath(&taskRoot)["label"].as<string>();
 
-	string type = JSONUtils::as<string>(taskRoot, "type", "");
+	auto type = JsonPath(&taskRoot)["type"].as<string>();
 	if (type == "Add-Content")
 	{
 		ingestionType = MMSEngineDBFacade::IngestionType::AddContent;
@@ -1203,7 +1201,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 		const json& parametersRoot = taskRoot[field];
 		validateCountdownMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
-	else if (type == "Rss-Add-Contents")
+	else if (type == "RSS-Add-Contents")
 	{
 		ingestionType = MMSEngineDBFacade::IngestionType::RssAddContents;
 
@@ -1223,7 +1221,7 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 			throw runtime_error(errorMessage);
 		}
 
-		const json& parametersRoot = taskRoot[field];
+		const json& parametersRoot = JsonPath(&taskRoot)[field].as<json>();
 		validateRssAddContentsMetadata(workspaceKey, label, parametersRoot, validateDependenciesToo, dependencies);
 	}
 	else if (type == "Live-Grid")
@@ -1297,7 +1295,8 @@ Validator::validateSingleTaskMetadata(int64_t workspaceKey, const json& taskRoot
 	}
 	else
 	{
-		string errorMessage = __FILEREF__ + "Field 'Type' is wrong" + ", Type: " + type;
+		string errorMessage = std::format("Field 'Type' is wrong"
+			", Type: {}", type);
 		LOG_ERROR(errorMessage);
 
 		throw runtime_error(errorMessage);
