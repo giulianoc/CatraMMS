@@ -78,7 +78,8 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 				*/
 				string title = rss.asText("title/text()", itemNode, emptyOnError);
 
-				string videoURL = rss.asAttribute("enclosure[@type='video/mp4']", "url", itemNode, emptyOnError);
+				// CurlWrapper::escape (encode) is done
+				string videoURL = CurlWrapper::escape(rss.asAttribute("enclosure[@type='video/mp4']", "url", itemNode, emptyOnError));
 				if (videoURL.empty())
 					continue;
 
