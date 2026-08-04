@@ -6,6 +6,7 @@
 #include "XMLWrapper.h"
 #include "JsonPath.h"
 #include "MMSEngineProcessor.h"
+#include "StringUtils.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
 
@@ -78,8 +79,10 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 				*/
 				string title = rss.asText("title/text()", itemNode, emptyOnError);
 
-				// CurlWrapper::escape (encode) is done
-				string videoURL = CurlWrapper::escape(rss.asAttribute("enclosure[@type='video/mp4']", "url", itemNode, emptyOnError));
+				// CurlWrapper::escape percent-encodes the whole URL (including '/' and ':'), breaking it.
+				// Here we only need to encode the space possibly present in the file name.
+				string videoURL = StringUtils::replaceAll(rss.asAttribute("enclosure[@type='video/mp4']",
+					"url", itemNode, emptyOnError), " ", "%20");
 				if (videoURL.empty())
 					continue;
 

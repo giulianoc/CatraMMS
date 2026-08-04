@@ -846,7 +846,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 		if (!localAssetIngestionEvent.getExternalReadOnlyStorage())
 		{
 			mediaSourceFileName = localAssetIngestionEvent.getMMSSourceFileName();
-			if (mediaSourceFileName == "")
+			if (mediaSourceFileName.empty())
 			{
 				mediaSourceFileName = localAssetIngestionEvent.getIngestionSourceFileName();
 				// .mp4 is used in
@@ -1066,7 +1066,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 				}
 			}
 
-			if (m3u8FileName == "")
+			if (m3u8FileName.empty())
 			{
 				string errorMessage = string() + "m3u8 file not found" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 									  ", ingestionJobKey: " + to_string(localAssetIngestionEvent.getIngestionJobKey()) +
@@ -1214,7 +1214,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 	int imageHeight = -1;
 	string imageFormat;
 	int imageQuality = -1;
-	if (validator.isVideoAudioFileFormat(mediaFileFormat))
+	if (Validator::isVideoAudioFileFormat(mediaFileFormat))
 	{
 		try
 		{
@@ -1269,7 +1269,7 @@ void MMSEngineProcessor::handleLocalAssetIngestionEvent(shared_ptr<long> process
 			}
 			*/
 
-			if (videoTracks.size() == 0)
+			if (videoTracks.empty())
 				contentType = MMSEngineDBFacade::ContentType::Audio;
 			else
 				contentType = MMSEngineDBFacade::ContentType::Video;
