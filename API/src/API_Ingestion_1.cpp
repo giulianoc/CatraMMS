@@ -16,6 +16,7 @@
 #include "Datetime.h"
 #include "Encrypt.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSStorage.h"
 #include "ProcessUtility.h"
@@ -102,15 +103,16 @@ void API::ingestion(
 			if (!JSONUtils::isPresent(requestBodyRoot, "type"))
 			{
 				string errorMessage = std::format("Field is not present or it is null"
-												  ", Field: type");
+					", Field: type"
+					", requestBodyRoot: {}", JSONUtils::toString(requestBodyRoot));
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string rootType = JSONUtils::as<string>(requestBodyRoot, "type", "");
+			auto rootType = JsonPath(&requestBodyRoot)["type"].as<string>();
 
-			string rootLabel = JSONUtils::as<string>(requestBodyRoot, "label", "");
-			bool rootHidden = JSONUtils::as<bool>(requestBodyRoot, "hidden", false);
+			auto rootLabel = JsonPath(&requestBodyRoot)["label"].as<string>();
+			auto rootHidden = JsonPath(&requestBodyRoot)["hidden"].as<bool>(false);
 
 #ifdef __POSTGRES__
 			int64_t ingestionRootKey =
@@ -125,7 +127,8 @@ void API::ingestion(
 			if (!JSONUtils::isPresent(requestBodyRoot, "task"))
 			{
 				string errorMessage = std::format("Field is not present or it is null"
-												  ", Field: task");
+					", Field: task"
+					", requestBodyRoot: {}", JSONUtils::toString(requestBodyRoot));
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
@@ -135,12 +138,13 @@ void API::ingestion(
 			if (!JSONUtils::isPresent(taskRoot, "type"))
 			{
 				string errorMessage = std::format("Field is not present or it is null"
-												  ", Field: type");
+					", Field: type"
+					", taskRoot: {}", JSONUtils::toString(taskRoot));
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string taskType = JSONUtils::as<string>(taskRoot, "type", "");
+			auto taskType = JSONUtils::as<string>(taskRoot, "type", "");
 
 			if (taskType == "GroupOfTasks")
 			{

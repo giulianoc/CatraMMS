@@ -154,21 +154,20 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 			for (auto &[title, videoURL, imageURL, uuid]: rssContents)
 			{
 				json addContentRoot;
-				{
-					addContentRoot["label"] = std::format("From RSS feed: {}", title);
+				addContentRoot["type"] = "Add-Content";
+				addContentRoot["label"] = std::format("From RSS feed: {}", title);
 
-					// aggiungere l'immagine
+				// aggiungere l'immagine
 
-					json addContentParametersRoot;
-					addContentParametersRoot["title"] = title;
-					addContentParametersRoot["sourceURL"] = videoURL;
-					addContentParametersRoot["fileFormat"] = "mp4";
-					addContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
-					addContentParametersRoot["uniqueName"] = uuid;
-					addContentRoot["parameters"] = addContentParametersRoot;
+				json addContentParametersRoot;
+				addContentParametersRoot["title"] = title;
+				addContentParametersRoot["sourceURL"] = videoURL;
+				addContentParametersRoot["fileFormat"] = "mp4";
+				addContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
+				addContentParametersRoot["uniqueName"] = uuid;
+				addContentRoot["parameters"] = addContentParametersRoot;
 
-					tasksRoot.push_back(addContentRoot);
-				}
+				tasksRoot.push_back(addContentRoot);
 			}
 			addContentTasksGroupParametersRoot["tasks"] = tasksRoot;
 		}

@@ -159,10 +159,8 @@ void Validator::validateGroupOfTasksMetadata(int64_t workspaceKey, const json& g
 	}
 	*/
 
-	for (int taskIndex = 0; taskIndex < tasksRoot.size(); ++taskIndex)
+	for (const auto & taskRoot : tasksRoot)
 	{
-		const json& taskRoot = tasksRoot[taskIndex];
-
 		field = "type";
 		if (!JSONUtils::isPresent(taskRoot, field))
 		{
