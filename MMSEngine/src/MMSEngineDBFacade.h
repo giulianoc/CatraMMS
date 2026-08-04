@@ -871,6 +871,8 @@ class MMSEngineDBFacade
 			return "Facebook-Live-Broadcast";
 		case IngestionType::AddSilentAudio:
 			return "Add-Silent-Audio";
+		case IngestionType::RssAddContents:
+			return "RSS-Add-Contents";
 
 		case IngestionType::EmailNotification:
 			return "Email-Notification";
@@ -971,6 +973,8 @@ class MMSEngineDBFacade
 			return IngestionType::FacebookLiveBroadcast;
 		if (lowerCase == "add-silent-audio")
 			return IngestionType::AddSilentAudio;
+		if (lowerCase == "rss-add-contents")
+			return IngestionType::RssAddContents;
 
 		if (lowerCase == "email-notification")
 			return IngestionType::EmailNotification;
