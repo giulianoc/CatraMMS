@@ -843,8 +843,33 @@ systemctlServiceUpAndRunning()
 {
 	serviceName=$1
 
-	if systemctl is-active --quiet $serviceName; then
-		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName is active" >> $debugFilename
+	#systemctl is-active da solo puo' dare falsi positivi quando il servizio si trova in uno stato
+	#transitorio (es. "activating"/"reloading" durante un auto-restart appena avvenuto), che dura
+	#solo qualche secondo. Per questo motivo, prima di dichiararlo down, riproviamo piu' volte.
+	maxAttempts=3
+	secondsBetweenAttempts=3
+
+	attempt=1
+	activeState=""
+	subState=""
+	while [ $attempt -le $maxAttempts ]; do
+		activeState=$(systemctl show -p ActiveState --value "$serviceName" 2>>$debugFilename)
+		subState=$(systemctl show -p SubState --value "$serviceName" 2>>$debugFilename)
+
+		if [ "$activeState" == "active" ]; then
+			break
+		fi
+
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, attempt $attempt/$maxAttempts, $serviceName not active yet. activeState: $activeState, subState: $subState" >> $debugFilename
+
+		attempt=$((attempt+1))
+		if [ $attempt -le $maxAttempts ]; then
+			sleep $secondsBetweenAttempts
+		fi
+	done
+
+	if [ "$activeState" == "active" ]; then
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName is active (subState: $subState, attempt: $attempt/$maxAttempts)" >> $debugFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_${serviceName}_working"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -853,10 +878,16 @@ systemctlServiceUpAndRunning()
 
 		return 0
 	else
-		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName IS NOT active" >> $debugFilename
+		#diagnostica aggiuntiva per capire il motivo del down: Result/NRestarts/ExecMainStatus e le ultime righe di journalctl
+		result=$(systemctl show -p Result --value "$serviceName" 2>>$debugFilename)
+		nRestarts=$(systemctl show -p NRestarts --value "$serviceName" 2>>$debugFilename)
+		execMainStatus=$(systemctl show -p ExecMainStatus --value "$serviceName" 2>>$debugFilename)
+		lastJournalLines=$(journalctl -u "$serviceName" -n 10 --no-pager 2>>$debugFilename | tr '\n' '|')
 
-		alarmNotificationPeriod=$((60 * 1))		#1 minut0
-		alarmDetails="$serviceName IS NOT active even with systemd auto restart"
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName IS NOT active after $maxAttempts attempts. activeState: $activeState, subState: $subState, result: $result, nRestarts: $nRestarts, execMainStatus: $execMainStatus, lastJournalLines: $lastJournalLines" >> $debugFilename
+
+		alarmNotificationPeriod=$((60 * 1))		#1 minuto
+		alarmDetails="$serviceName IS NOT active even with systemd auto restart (state: $activeState/$subState, result: $result, nRestarts: $nRestarts, execMainStatus: $execMainStatus)"
 		notify "$(hostname)" "alarm_mms_${serviceName}_working" "alarm_mms_${serviceName}_working" $alarmNotificationPeriod "$alarmDetails"
 		return 1
 	fi
