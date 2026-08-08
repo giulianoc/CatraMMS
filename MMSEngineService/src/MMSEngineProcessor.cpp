@@ -46,6 +46,8 @@ MMSEngineProcessor::MMSEngineProcessor(
 	_processorThreads = JSONUtils::as<int32_t>(configurationRoot["mms"], "processorThreads", 1);
 	_cpuUsageThreshold = JSONUtils::as<int32_t>(configurationRoot["mms"], "cpuUsageThreshold", 10);
 
+	_mmsGUIThumbnailProfileLabel = JsonPath(&configurationRoot)["mms"]["mmsGUIThumbnailProfileLabel"].as<string>();
+
 	_maxDownloadAttemptNumber = JSONUtils::as<int32_t>(configurationRoot["download"], "maxDownloadAttemptNumber", 5);
 	LOG_TRACE(
 		"Configuration item"

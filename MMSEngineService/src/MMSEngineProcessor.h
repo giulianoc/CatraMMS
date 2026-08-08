@@ -68,6 +68,7 @@ class MMSEngineProcessor
 	int _processorIdentifier;
 	int _processorThreads;
 	int _cpuUsageThreshold;
+	std::string _mmsGUIThumbnailProfileLabel;
 	std::shared_ptr<spdlog::logger> _logger;
 	nlohmann::json _configurationRoot;
 	std::shared_ptr<MultiEventsSet> _multiEventsSet;

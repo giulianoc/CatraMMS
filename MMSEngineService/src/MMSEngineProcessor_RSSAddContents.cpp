@@ -209,6 +209,26 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 					imageAddContentParametersRoot["crossReferences"] = crossReferencesRoot;
 
 					imageAddContentRoot["parameters"] = imageAddContentParametersRoot;
+
+					// aggiungo il profilo di encoding MMS_JPG_W150_H-120 in modo che la GUI possa mostrare la thumbnail
+					{
+						json encodeRoot;
+						{
+							encodeRoot["type"] = "Encode";
+							encodeRoot["label"] = std::format("MMS GUI thumbnail: {}", title);
+
+							json encodeParametersRoot;
+							encodeParametersRoot["encodingProfileLabel"] = _mmsGUIThumbnailProfileLabel;
+							encodeRoot["parameters"] = encodeParametersRoot;
+						}
+
+						// configuro l'encoding come onSuccess di Add-Content dell'immagine
+						{
+							json imageOnSuccessRoot;
+							imageOnSuccessRoot["task"] = encodeRoot;
+							imageAddContentRoot["onSuccess"] = imageOnSuccessRoot;
+						}
+					}
 				}
 
 				// configuro l'immagine come onSuccess del video
