@@ -55,6 +55,11 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 						xmlXPathFreeObject(_resultToBeFreed);
 				}
 			} guard{resultToBeFreed};
+			LOG_INFO("manageRSSAddContents, items"
+				", ingestionJobKey: {}"
+				", resultToBeFreed->nodesetval->nodeNr(): {}",
+				ingestionJobKey, resultToBeFreed->nodesetval->nodeNr
+			);
 			for (int nodeIndex = 0; nodeIndex < resultToBeFreed->nodesetval->nodeNr; nodeIndex++)
 			{
 				xmlNodePtr itemNode = resultToBeFreed->nodesetval->nodeTab[nodeIndex];
@@ -111,8 +116,9 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 		LOG_INFO(
 			"Preparing workflow to ingest..."
 			", _processorIdentifier: {}"
-			", ingestionJobKey: {}",
-			_processorIdentifier, ingestionJobKey
+			", ingestionJobKey: {}"
+			", rssContents.size: {}",
+			_processorIdentifier, ingestionJobKey, rssContents.size()
 		);
 
 		json onSuccessRoot = nullptr;
@@ -211,7 +217,6 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 					imageAddContentRoot["parameters"] = imageAddContentParametersRoot;
 
 					// aggiungo il profilo di encoding MMS_JPG_W150_H-120 in modo che la GUI possa mostrare la thumbnail
-					/*
 					{
 						json encodeRoot;
 						{
@@ -230,7 +235,6 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 							imageAddContentRoot["onSuccess"] = imageOnSuccessRoot;
 						}
 					}
-					*/
 				}
 
 				// configuro l'immagine come onSuccess del video
