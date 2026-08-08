@@ -30,7 +30,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 		constexpr int retentionInMinutes = 60 * 24 * 5; // 5 days
 
 		// recupero le info dal feed rss
-		vector<tuple<string, string, string, string>> rssContents;
+		vector<tuple<string, time_t, string, string, string>> rssContents;
 		string rssTitle;
 		{
 			vector<pair<string, string>> nameServices;
@@ -92,19 +92,18 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 
 				string uuid = rss.asText("uuid/text()", itemNode, emptyOnError);
 
+				string pubDate = rss.asText("pubDate/text()", itemNode, emptyOnError);
+				time_t utcPubDate = Datetime::parseDateStringToUtcInSecs(pubDate, "%a, %d %b %Y %H:%M:%S");
+
 				try
 				{
 					auto [mediaItemKey, _] = _mmsEngineDBFacade->getMediaItemKeyDetailsByUniqueName(
 						workspace->_workspaceKey, uuid);
-					// se il mediaItem è presente viene aggiornato il suo retention
-					_mmsEngineDBFacade->updateMediaItem(workspace->_workspaceKey, mediaItemKey, false, "", false,
-						"", true, retentionInMinutes,
-						false, nullptr, false, "",
-						nullptr, false);
+					// if we are here, it means the content is already present
 				}
 				catch (MediaItemKeyNotFound &e)
 				{
-					rssContents.emplace_back(title, videoURL, imageURL, uuid);
+					rssContents.emplace_back(title, utcPubDate, videoURL, imageURL, uuid);
 				}
 			}
 		}
@@ -155,23 +154,72 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 		json addContentTasksGroupParametersRoot;
 		{
 			json tasksRoot = json::array();
-			for (auto &[title, videoURL, imageURL, uuid]: rssContents)
+			for (auto &[title, utcPubDate, videoURL, imageURL, uuid]: rssContents)
 			{
-				json addContentRoot;
-				addContentRoot["type"] = "Add-Content";
-				addContentRoot["label"] = std::format("From RSS feed: {}", title);
+				// aggiungo il video
+				json videoAddContentRoot;
+				{
+					videoAddContentRoot["type"] = "Add-Content";
+					videoAddContentRoot["label"] = std::format("From RSS feed (video): {}", title);
 
-				// aggiungere l'immagine
+					json videoAddContentParametersRoot;
+					videoAddContentParametersRoot["title"] = title;
+					videoAddContentParametersRoot["sourceURL"] = videoURL;
+					videoAddContentParametersRoot["fileFormat"] = "mp4";
+					videoAddContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
+					videoAddContentParametersRoot["uniqueName"] = uuid;
 
-				json addContentParametersRoot;
-				addContentParametersRoot["title"] = title;
-				addContentParametersRoot["sourceURL"] = videoURL;
-				addContentParametersRoot["fileFormat"] = "mp4";
-				addContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
-				addContentParametersRoot["uniqueName"] = uuid;
-				addContentRoot["parameters"] = addContentParametersRoot;
+					json tags = json::array();
+					tags.push_back("RSS");
+					videoAddContentParametersRoot["tags"] = tags;
 
-				tasksRoot.push_back(addContentRoot);
+					json userDataRoot;
+					userDataRoot["pubDate"] = utcPubDate;
+					videoAddContentParametersRoot["userData"] = userDataRoot;
+
+					videoAddContentRoot["parameters"] = videoAddContentParametersRoot;
+				}
+
+				// aggiungo l'immagine
+				json imageAddContentRoot;
+				{
+					imageAddContentRoot["type"] = "Add-Content";
+					imageAddContentRoot["label"] = std::format("From RSS feed (image): {}", title);
+
+					json imageAddContentParametersRoot;
+					imageAddContentParametersRoot["title"] = title;
+					imageAddContentParametersRoot["sourceURL"] = imageURL;
+					imageAddContentParametersRoot["fileFormat"] = "jpeg";
+					imageAddContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
+					imageAddContentParametersRoot["uniqueName"] = std::format("{}-image", uuid);
+
+					json tags = json::array();
+					tags.push_back("RSS");
+					imageAddContentParametersRoot["tags"] = tags;
+
+					json userDataRoot;
+					userDataRoot["pubDate"] = utcPubDate;
+					imageAddContentParametersRoot["userData"] = userDataRoot;
+
+					json crossReferencesRoot = json::array();
+					json crossReferenceRoot;
+					crossReferenceRoot["type"] = "ImageOfVideo";
+					crossReferenceRoot["uniqueName"] = uuid;
+					crossReferencesRoot.push_back(crossReferenceRoot);
+					imageAddContentParametersRoot["crossReferences"] = crossReferencesRoot;
+
+					imageAddContentRoot["parameters"] = imageAddContentParametersRoot;
+				}
+
+				// configuro l'immagine come onSuccess del video
+				{
+					json imageOnSuccessRoot;
+					imageOnSuccessRoot["task"] = imageAddContentRoot;
+					videoAddContentRoot["onSuccess"] = imageOnSuccessRoot;
+				}
+
+				// aggiungo il video tra i tasks del gruppo
+				tasksRoot.push_back(videoAddContentRoot);
 			}
 			addContentTasksGroupParametersRoot["tasks"] = tasksRoot;
 		}

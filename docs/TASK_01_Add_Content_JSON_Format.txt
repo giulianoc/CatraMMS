@@ -68,8 +68,9 @@
 				// SlideShowOfImage (or ImageForSlideShow), SlideShowOfAudio (or AudioForSlideShow), CutOfVideo, CutOfAudio
 				"type": "ImageOfVideo",
 
-				// mandatory
+				// mandatory: mediaItemKey or uniqueName has to exist
 				"mediaItemKey": 222,
+        		"uniqueName": "XXX",
 
 				// mandatory only for CutOfVideo and CutOfAudio
 				"parameters": {

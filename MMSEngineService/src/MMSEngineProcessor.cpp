@@ -1060,7 +1060,7 @@ string MMSEngineProcessor::generateMediaMetadataToIngest(
 	}
 
 	field = "title";
-	if (title != "")
+	if (!title.empty())
 		parametersRoot[field] = title;
 
 	// this scenario is for example for the Cut or Concat-Demux or

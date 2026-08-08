@@ -2848,7 +2848,7 @@ class MMSEngineDBFacade
 #ifdef __POSTGRES__
 	void addCrossReference(
 		PostgresConnTrans &trans, int64_t ingestionJobKey, int64_t sourceMediaItemKey, CrossReferenceType crossReferenceType,
-		int64_t targetMediaItemKey, nlohmann::json crossReferenceParametersRoot
+		int64_t targetMediaItemKey, const nlohmann::json& crossReferenceParametersRoot
 	);
 #else
 	void addCrossReference(

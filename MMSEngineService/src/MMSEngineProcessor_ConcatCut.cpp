@@ -28,7 +28,7 @@ void MMSEngineProcessor::manageConcatThread(
 			_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 		);
 
-		if (dependencies.size() < 1)
+		if (dependencies.empty())
 		{
 			string errorMessage = std::format(
 				"No enough media to be concatenated"
@@ -138,7 +138,7 @@ void MMSEngineProcessor::manageConcatThread(
 			{
 				firstMedia = false;
 
-				if (lastUserData != "")
+				if (!lastUserData.empty())
 				{
 					// try to retrieve time codes
 					json sourceUserDataRoot = JSONUtils::toJson<json>(lastUserData);
@@ -199,7 +199,7 @@ void MMSEngineProcessor::manageConcatThread(
 			// to manage a ffmpeg bug generating a corrupted/wrong avgFrameRate,
 			// we will force the concat file to have the same avgFrameRate of
 			// the source media
-			if (concatContentType == MMSEngineDBFacade::ContentType::Video && forcedAvgFrameRate == "")
+			if (concatContentType == MMSEngineDBFacade::ContentType::Video && forcedAvgFrameRate.empty())
 			{
 				/*
 				tuple<int64_t,long,string,string,int,int,string,long,string,long,int,long>
@@ -220,7 +220,7 @@ void MMSEngineProcessor::manageConcatThread(
 					// 2022-12-18: MIK potrebbe essere stato appena aggiunto
 					true, videoTracks, audioTracks
 				);
-				if (videoTracks.size() == 0)
+				if (videoTracks.empty())
 				{
 					string errorMessage = string() + "No video track are present" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 										  ", ingestionJobKey: " + to_string(ingestionJobKey);
@@ -244,7 +244,7 @@ void MMSEngineProcessor::manageConcatThread(
 
 		if (utcStartTimeInMilliSecs != -1)
 		{
-			if (lastUserData != "")
+			if (!lastUserData.empty())
 			{
 				// try to retrieve time codes
 				json sourceUserDataRoot = JSONUtils::toJson<json>(lastUserData);
@@ -350,7 +350,7 @@ void MMSEngineProcessor::manageConcatThread(
 
 		if (sourcePhysicalPaths.size() == 1)
 		{
-			string sourcePhysicalPath = sourcePhysicalPaths.at(0);
+			const string& sourcePhysicalPath = sourcePhysicalPaths.at(0);
 			LOG_INFO(
 				string() + "Coping" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
 				", ingestionJobKey: " + to_string(ingestionJobKey) + ", sourcePhysicalPath: " + sourcePhysicalPath +
@@ -515,7 +515,7 @@ void MMSEngineProcessor::manageConcatThread(
 				// to manage a ffmpeg bug generating a corrupted/wrong
 				// avgFrameRate, we will force the concat file to have the same
 				// avgFrameRate of the source media
-				if (forcedAvgFrameRate != "" && concatContentType == MMSEngineDBFacade::ContentType::Video)
+				if (!forcedAvgFrameRate.empty() && concatContentType == MMSEngineDBFacade::ContentType::Video)
 					localAssetIngestionEvent->setForcedAvgFrameRate(forcedAvgFrameRate);
 
 				localAssetIngestionEvent->setMetadataContent(mediaMetaDataContent);
