@@ -273,6 +273,10 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 
 		string workflowMetadata = JSONUtils::toString(workflowRoot);
 
+		LOG_INFO("Ingest workflow"
+			", ingestionJobKey: {}"
+			", WorkflowMetadata: {}", ingestionJobKey, workflowMetadata);
+
 		vector<string> otherHeaders;
 		json workflowResponseRoot = CurlWrapper::httpPostStringAndGetJson(
 			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
