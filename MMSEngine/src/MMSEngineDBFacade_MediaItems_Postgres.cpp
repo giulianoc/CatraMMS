@@ -885,7 +885,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		else // if (orderBy != "" && jsonOrderBy != "")
 			orderByCondition = std::format("order by {}, {} ", mediaItemsListParams.jsonOrderBy, mediaItemsListParams.orderBy);
 
-		LOG_INFO("aaaaa");
 		string sqlStatement = std::format(
 		R"(
 			select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData,
@@ -906,24 +905,23 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		json responseRoot;
 		responseRoot["numFound"] = numFound;
 
-		LOG_INFO("aaaaa");
 		json mediaItemsRoot = json::array();
 		{
 			chrono::system_clock::time_point startSqlResultSet = chrono::system_clock::now();
 			for (auto sqlRow : *sqlResultSet)
 			{
-		LOG_INFO("aaaaa");
 				json mediaItemRoot;
 
 				auto localMediaItemKey = sqlRow["mediaItemKey"].as<int64_t>();
 
-		LOG_INFO("aaaaa");
 				mediaItemRoot["mediaItemKey"] = localMediaItemKey;
 
 		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("title"))
 				{
+					LOG_INFO("aaaaa: {}", JSONUtils::toString(mediaItemRoot));
 					auto localTitle = sqlRow["title"].as<string>();
+					LOG_INFO("aaaaa: {}", localTitle);
 
 					// a printf is used to pring into the output, so % has to be changed to %%
 					for (size_t titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
@@ -931,6 +929,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						if (localTitle[titleIndex] == '%')
 							localTitle.replace(titleIndex, 1, "%%");
 					}
+					LOG_INFO("aaaaa: {}", localTitle);
 
 					mediaItemRoot["title"] = localTitle;
 				}
