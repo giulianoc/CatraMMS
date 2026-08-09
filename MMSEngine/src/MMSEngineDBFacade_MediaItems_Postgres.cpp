@@ -919,19 +919,19 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("title"))
 				{
-					LOG_INFO("aaaaa: {}", JSONUtils::toString(mediaItemRoot));
 					auto localTitle = sqlRow["title"].as<string>();
-					LOG_INFO("aaaaa: {}", localTitle);
 
 					// a printf is used to pring into the output, so % has to be changed to %%
-					for (size_t titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
+					string escapedTitle;
+					escapedTitle.reserve(localTitle.size());
+					for (char c : localTitle)
 					{
-						if (localTitle[titleIndex] == '%')
-							localTitle.replace(titleIndex, 1, "%%");
+						escapedTitle += c;
+						if (c == '%')
+							escapedTitle += '%';
 					}
-					LOG_INFO("aaaaa: {}", localTitle);
 
-					mediaItemRoot["title"] = localTitle;
+					mediaItemRoot["title"] = escapedTitle;
 				}
 
 		LOG_INFO("aaaaa");
@@ -943,7 +943,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						mediaItemRoot["deliveryFileName"] = sqlRow["deliveryFileName"].as<string>();
 				}
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("ingester"))
 				{
 					if (sqlRow["ingester"].isNull())
@@ -952,7 +951,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						mediaItemRoot["ingester"] = sqlRow["ingester"].as<string>();
 				}
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("userData"))
 				{
 					if (sqlRow["userData"].isNull())
@@ -961,7 +959,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						mediaItemRoot["userData"] = sqlRow["userData"].as<json>();
 				}
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("ingestionDate"))
 					mediaItemRoot["ingestionDate"] = sqlRow["formattedIngestionDate"].as<string>();
 
@@ -977,11 +974,9 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("contentType"))
 					mediaItemRoot["contentType"] = sqlRow["contentType"].as<string>();
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("retentionInMinutes"))
 					mediaItemRoot["retentionInMinutes"] = sqlRow["retentionInMinutes"].as<int64_t>();
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("tags"))
 				{
 					json mediaItemTagsRoot = json::array();
@@ -1006,7 +1001,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 					mediaItemRoot["tags"] = mediaItemTagsRoot;
 				}
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("uniqueName"))
 				{
 					chrono::milliseconds localSqlDuration(0);
@@ -1022,7 +1016,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 					internalSqlDuration += localSqlDuration;
 				}
 
-		LOG_INFO("aaaaa");
 				// CrossReferences
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("crossReferences"))
 				{
@@ -1074,7 +1067,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 							);
 						}
 
-		LOG_INFO("aaaaa");
 						{
 							string sqlStatement = std::format(
 								"select type, targetMediaItemKey, parameters "
@@ -1121,7 +1113,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 
 						mediaItemRoot["crossReferences"] = mediaItemReferencesRoot;
 					}
-		LOG_INFO("aaaaa");
 					/*
 					else if (contentType == ContentType::Audio)
 					{
@@ -1129,7 +1120,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 					*/
 				}
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("physicalPaths"))
 				{
 					json mediaItemProfilesRoot = json::array();
@@ -1149,7 +1139,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 					result res = trans.transaction->exec(sqlStatement);
 					for (auto row : res)
 					{
-		LOG_INFO("aaaaa");
 						json profileRoot;
 
 						auto physicalPathKey = row["physicalPathKey"].as<int64_t>();
@@ -1185,7 +1174,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						else
 							profileRoot["metaData"] = row["metaData"].as<string>();
 
-		LOG_INFO("aaaaa");
 						if (mediaItemsListParams.admin)
 						{
 							profileRoot["partitionNumber"] = row["partitionNumber"].as<int>();
@@ -1246,7 +1234,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 							profileRoot["encodingProfileLabel"] = label;
 						}
 
-		LOG_INFO("aaaaa");
 						profileRoot["sizeInBytes"] = row["sizeInBytes"].as<int64_t>();
 
 						profileRoot["creationDate"] = row["creationDate"].as<string>();
@@ -1273,7 +1260,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 								localMediaItemKey, physicalPathKey, videoTracks.size(), audioTracks.size()
 							);
 
-		LOG_INFO("aaaaa");
 							{
 								json videoTracksRoot = json::array();
 
@@ -1423,7 +1409,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 
 						mediaItemProfilesRoot.push_back(profileRoot);
 					}
-		LOG_INFO("aaaaa");
 					auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 					internalSqlDuration += sqlDuration;
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
@@ -1441,7 +1426,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 
 				mediaItemsRoot.push_back(mediaItemRoot);
 			}
-		LOG_INFO("aaaaa");
 			long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
 			SQLQUERYLOG(
 				"getMediaItemsList", elapsed,
