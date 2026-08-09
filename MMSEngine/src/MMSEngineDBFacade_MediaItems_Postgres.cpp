@@ -916,7 +916,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 
 				mediaItemRoot["mediaItemKey"] = localMediaItemKey;
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("title"))
 				{
 					auto localTitle = sqlRow["title"].as<string>();
@@ -934,7 +933,6 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 					mediaItemRoot["title"] = escapedTitle;
 				}
 
-		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("deliveryFileName"))
 				{
 					if (sqlRow["deliveryFileName"].isNull())
