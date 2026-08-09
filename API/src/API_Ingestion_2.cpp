@@ -1746,7 +1746,8 @@ void API::changeLiveProxyPlaylist(
 				apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey
 			);
 
-			auto [ingestionType, ingestionStatus, metadataContentRoot] = _mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
+			auto [ingestionType, ingestionStatus, metadataContentRoot] =
+				_mmsEngineDBFacade->ingestionJob_IngestionTypeStatusMetadataContent(
 				apiAuthorizationDetails->workspace->_workspaceKey, broadcasterIngestionJobKey,
 				// 2022-12-18: meglio avere una informazione sicura
 				true
