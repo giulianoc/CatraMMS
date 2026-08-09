@@ -5004,7 +5004,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					sourceMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					sourceMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 			}
@@ -5015,7 +5018,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					sourceMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					sourceMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 			}
@@ -5026,7 +5032,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					sourceMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					sourceMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 			}
@@ -5037,7 +5046,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					sourceMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					sourceMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 			}
@@ -5048,7 +5060,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					sourceMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					sourceMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 			}
@@ -5059,7 +5074,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 				targetMediaItemKey = mediaItemKey;
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					sourceMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					sourceMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 			}
@@ -5067,7 +5085,10 @@ void MMSEngineDBFacade::manageCrossReferences(
 			{
 				if (JsonPath(&crossReferenceRoot)["uniqueName"].exists())
 					targetMediaItemKey = getMediaItemKeyDetailsByUniqueName(workspaceKey,
-						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(), false).first;
+						JsonPath(&crossReferenceRoot)["uniqueName"].as<string>(),
+						false,
+						true // è stato cambiato a true perchè era stato inserito dallo stesso workflow e non veniva trovato
+						).first;
 				else
 					targetMediaItemKey = JsonPath(&crossReferenceRoot).required()["mediaItemKey"].as<int64_t>(0);
 				sourceMediaItemKey = mediaItemKey;
