@@ -179,22 +179,8 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 		while (!lastRequestedChunk && (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startLookingForChunks).count() <
 									   maxWaitingForLastChunkInSeconds))
 		{
-			int64_t mediaItemKey = -1;
-			int64_t physicalPathKey = -1;
-			string uniqueName;
-			vector<int64_t> otherMediaItemsKey;
-			int start = 0;
-			int rows = 60 * 1; // assuming every MediaItem is one minute, let's take 1 hour
-			bool contentTypePresent = true;
-			MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Video;
-			// bool startAndEndIngestionDatePresent = false;
-			string startIngestionDate;
-			string endIngestionDate;
-			string title;
-			int liveRecordingChunk = 1;
-			vector<string> tagsIn;
-			vector<string> tagsNotIn;
-			string orderBy = "";
+			int32_t start = 0;
+			int32_t rows = 60 * 1; // assuming every MediaItem is one minute, let's take 1 hour
 			bool admin = false;
 
 			firstRequestedChunk = false;
@@ -253,19 +239,19 @@ void MMSEngineProcessor::manageLiveCutThread_streamSegmenter(
 			json mediaItemsRoot;
 			do
 			{
-				int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
-				int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-				set<string> responseFields;
-				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
-					workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent,
-					contentType,
-					// startAndEndIngestionDatePresent,
-					startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
-					utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, admin,
-					// 2022-12-18: MIKs potrebbero essere stati appena
-					// aggiunti
-					true
-				);
+				MMSEngineDBFacade::MediaItemsListParams mediaItemsListParams {
+					.workspaceKey = workspace->_workspaceKey,
+					.start = start,
+					.rows = rows,
+					.contentType = MMSEngineDBFacade::ContentType::Video,
+					.liveRecordingChunk = true,
+					.recordingCode = recordingCode,
+					.jsonCondition = jsonCondition,
+					.jsonOrderBy = jsonOrderBy,
+					.admin = admin,
+					.fromMaster = true // 2022-12-18: MIKs potrebbero essere stati appena aggiunti
+				};
+				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(mediaItemsListParams);
 
 				string field = "response";
 				json responseRoot = mediaItemsListRoot[field];
@@ -969,12 +955,8 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 		while (!lastRequestedChunk && (chrono::duration_cast<chrono::seconds>(chrono::system_clock::now() - startLookingForChunks).count() <
 									   maxWaitingForLastChunkInSeconds))
 		{
-			vector<int64_t> otherMediaItemsKey;
 			int start = 0;
 			int rows = 60 * 1; // assuming every MediaItem is one minute, let's take 1 hour
-			// bool startAndEndIngestionDatePresent = false;
-			vector<string> tagsIn;
-			vector<string> tagsNotIn;
 
 			firstRequestedChunk = false;
 			lastRequestedChunk = false;
@@ -998,14 +980,20 @@ void MMSEngineProcessor::manageLiveCutThread_hlsSegmenter(
 			json mediaItemsRoot;
 			do
 			{
-				set<string> responseFields;
-				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
-					workspace->_workspaceKey, -1, "", -1, otherMediaItemsKey, start, rows, true, MMSEngineDBFacade::ContentType::Video, "", "", "", 1,
-					recordingCode, utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, "", tagsIn, tagsNotIn,
-					"utcStartTimeInMilliSecs_virtual asc", "", responseFields, false,
-					// 2022-12-18: MIKs potrebbero essere stati appena aggiunti
-					true
-				);
+				MMSEngineDBFacade::MediaItemsListParams mediaItemsListParams {
+					.workspaceKey = workspace->_workspaceKey,
+					.start = start,
+					.rows = rows,
+					.contentType = MMSEngineDBFacade::ContentType::Video,
+					.liveRecordingChunk = true,
+					.recordingCode = recordingCode,
+					.utcCutPeriodStartTimeInMilliSeconds = utcCutPeriodStartTimeInMilliSeconds,
+					.utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+					.orderBy = "utcStartTimeInMilliSecs_virtual asc",
+					.admin = false,
+					.fromMaster = true // 2022-12-18: MIKs potrebbero essere stati appena aggiunti
+				};
+				json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(mediaItemsListParams);
 
 				json responseRoot = mediaItemsListRoot["response"];
 

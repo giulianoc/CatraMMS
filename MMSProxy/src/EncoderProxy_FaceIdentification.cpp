@@ -51,26 +51,6 @@ string EncoderProxy::faceIdentification()
 			deepLearnedModelTags.push_back(tag);
 		}
 
-		int64_t mediaItemKey = -1;
-		vector<int64_t> otherMediaItemsKey;
-		string uniqueName;
-		int64_t physicalPathKey = -1;
-		bool contentTypePresent = true;
-		MMSEngineDBFacade::ContentType contentType = MMSEngineDBFacade::ContentType::Image;
-		// bool startAndEndIngestionDatePresent = false;
-		string startIngestionDate;
-		string endIngestionDate;
-		string title;
-		int liveRecordingChunk = -1;
-		int64 deliveryCode = -1;
-		int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
-		int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-		string jsonCondition;
-		string orderBy;
-		string jsonOrderBy;
-		set<string> responseFields;
-		bool admin = true;
-
 		int start = 0;
 		int rows = 200;
 		int totalImagesNumber = -1;
@@ -78,20 +58,19 @@ string EncoderProxy::faceIdentification()
 
 		int idImageCounter = 0;
 		unordered_map<string, int> tagIdMap;
-		vector<string> tagsNotIn;
 
 		while (!imagesFinished)
 		{
-			json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(
-				_encodingItem->_workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows,
-				contentTypePresent, contentType,
-				// startAndEndIngestionDatePresent,
-				startIngestionDate, endIngestionDate, title, liveRecordingChunk, deliveryCode, utcCutPeriodStartTimeInMilliSeconds,
-				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, deepLearnedModelTags, tagsNotIn, orderBy, jsonOrderBy, responseFields,
-				admin,
-				// 2022-12-18: MIKs dovrebbero essere stati aggiunti da un po
-				false
-			);
+			MMSEngineDBFacade::MediaItemsListParams mediaItemsListParams {
+				.workspaceKey = _encodingItem->_workspace->_workspaceKey,
+				.start = start,
+				.rows = rows,
+				.contentType = MMSEngineDBFacade::ContentType::Image,
+				.tagsIn = deepLearnedModelTags,
+				.admin = true,
+				.fromMaster = false // 2022-12-18: MIKs dovrebbero essere stati aggiunti da un po
+			};
+			json mediaItemsListRoot = _mmsEngineDBFacade->getMediaItemsList(mediaItemsListParams);
 
 			field = "response";
 			json responseRoot = mediaItemsListRoot[field];

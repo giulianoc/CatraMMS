@@ -1713,15 +1713,40 @@ class MMSEngineDBFacade
 
 	nlohmann::json updatePhysicalPath(int64_t workspaceKey, int64_t mediaItemKey, int64_t physicalPathKey, int64_t newRetentionInMinutes, bool admin);
 
-	nlohmann::json getMediaItemsList(
-		int64_t workspaceKey, int64_t mediaItemKey, std::string uniqueName, int64_t physicalPathKey, std::vector<int64_t> &otherMediaItemsKey, int start,
-		int rows, bool contentTypePresent, ContentType contentType,
-		// bool startAndEndIngestionDatePresent,
-		std::string startIngestionDate, std::string endIngestionDate, std::string title, int liveRecordingChunk, int64_t recordingCode,
-		int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, std::string jsonCondition,
-		std::vector<std::string> &tagsIn, std::vector<std::string> &tagsNotIn, std::string orderBy, std::string jsonOrderBy, std::set<std::string> &responseFields, bool admin,
-		bool fromMaster
-	);
+	struct MediaItemsListParams
+	{
+		int64_t workspaceKey;
+		std::optional<int64_t> mediaItemKey;
+		std::string uniqueName;
+		std::optional<int64_t> physicalPathKey;
+		std::vector<int64_t> otherMediaItemsKey;
+		int32_t start = 0;
+		int32_t rows = 1;
+		std::optional<ContentType> contentType;
+		std::string startIngestionDate;
+		std::string endIngestionDate;
+		std::string title;
+		/*
+			liveRecordingChunk:
+			nullopt: no condition in select (default)
+			false: look for NO liveRecordingChunk
+			true: look for liveRecordingChunk
+		*/
+		std::optional<bool> liveRecordingChunk;
+		std::optional<int64_t> recordingCode;
+		std::optional<int64_t> utcCutPeriodStartTimeInMilliSeconds;
+		std::optional<int64_t> utcCutPeriodEndTimeInMilliSecondsPlusOneSecond;
+		std::string jsonCondition;
+		std::vector<std::string> tagsIn;
+		std::vector<std::string> tagsNotIn;
+		std::string orderBy; // i.e.: "", mi.ingestionDate desc, mi.title asc
+		std::string jsonOrderBy; // i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
+		std::set<std::string> responseFields;
+		bool admin = false;
+		bool fromMaster = false;
+	};
+
+	nlohmann::json getMediaItemsList(MediaItemsListParams& mediaItemsListParams);
 
 	nlohmann::json getTagsList(
 		int64_t workspaceKey, int start, int rows, int liveRecordingChunk, std::optional<ContentType> contentType, std::string tagNameFilter, bool fromMaster

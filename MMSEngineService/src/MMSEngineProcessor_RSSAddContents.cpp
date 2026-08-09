@@ -91,7 +91,8 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 				if (videoURL.empty())
 					continue;
 
-				string imageURL = rss.asAttribute("enclosure[@type='image/jpeg']", "url", itemNode, emptyOnError);
+				string imageURL = StringUtils::replaceAll(rss.asAttribute("enclosure[@type='image/jpeg']",
+					"url", itemNode, emptyOnError), " ", "%20");
 
 				// string htmlDescription = rss.asText("description/text()", itemNode, emptyOnError);
 
@@ -279,7 +280,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 
 		string workflowMetadata = JSONUtils::toString(workflowRoot);
 
-		LOG_INFO("Ingest workflow"
+		LOG_DEBUG("Ingest workflow"
 			", ingestionJobKey: {}"
 			", WorkflowMetadata: {}", ingestionJobKey, workflowMetadata);
 

@@ -285,22 +285,52 @@ void API::mediaItemsList(
 	{
 		chrono::system_clock::time_point startAPI = chrono::system_clock::now();
 
-		int64_t mediaItemKey = requestData.getQueryParameter("mediaItemKey", static_cast<int64_t>(-1), false);
+		std::optional<int64_t> mediaItemKey = requestData.getOptQueryParameter<int64_t>("mediaItemKey");
 		// client could send 0 (see CatraMMSAPI::getMEdiaItem) in case it does not have mediaItemKey
 		// but other parameters
-		if (mediaItemKey == 0)
-			mediaItemKey = -1;
+		if (mediaItemKey && *mediaItemKey == 0)
+			mediaItemKey = nullopt;
 
-		string uniqueName = requestData.getQueryParameter("uniqueName", string(), false);
+		std::optional<int64_t> physicalPathKey = requestData.getOptQueryParameter<int64_t>("physicalPathKey");
+		if (physicalPathKey && *physicalPathKey == 0)
+			physicalPathKey = nullopt;
 
-		int64_t physicalPathKey = requestData.getQueryParameter("physicalPathKey", static_cast<int64_t>(-1), false);
-		if (physicalPathKey == 0)
-			physicalPathKey = -1;
+		string sContentType = requestData.getQueryParameter("contentType", string(), false);
+		std::optional<MMSEngineDBFacade::ContentType> contentType;
+		if (!sContentType.empty())
+			contentType = MMSEngineDBFacade::toContentType(sContentType);
 
-		int32_t start = requestData.getQueryParameter("start", static_cast<int32_t>(0), false);
+		MMSEngineDBFacade::MediaItemsListParams mediaItemsListParams {
+			.workspaceKey = apiAuthorizationDetails->workspace->_workspaceKey,
+			.mediaItemKey = mediaItemKey,
+			.uniqueName = requestData.getQueryParameter<string>("uniqueName", string(), false),
+			.physicalPathKey = physicalPathKey,
+			.otherMediaItemsKey = requestData.getQueryParameter("otherMIKs", ',', vector<int64_t>(),
+				false),
+			.start = requestData.getQueryParameter("start", 0, false),
+			.rows = requestData.getQueryParameter("rows", 10, false),
+			.contentType = contentType,
+			.startIngestionDate = requestData.getQueryParameter("startIngestionDate", string(), false),
+			.endIngestionDate = requestData.getQueryParameter("endIngestionDate", string(), false),
+			.title = requestData.getQueryParameter("title", string(), false),
+			/*
+			 * liveRecordingChunk:
+			 * -1 (nullopt): no condition in select
+			 *  0 (false): look for NO liveRecordingChunk (default of the API)
+			 *  1 (true): look for liveRecordingChunk
+			 */
+			.liveRecordingChunk = requestData.getQueryParameter("liveRecordingChunk", false),
+			.recordingCode = requestData.getOptQueryParameter<int64_t>("recordingCode"),
+			.jsonCondition = requestData.getQueryParameter("jsonCondition", string(), false),
+			.tagsIn = requestData.getQueryParameter("tagsIn", ',', vector<string>(), false),
+			.tagsNotIn = requestData.getQueryParameter("tagsNotIn", ',', vector<string>(), false),
+			.orderBy = requestData.getQueryParameter("orderBy", string(), false),
+			.jsonOrderBy = requestData.getQueryParameter("jsonOrderBy", string(), false),
+			.responseFields = requestData.getQueryParameter("responseFields", ',', set<string>(), false),
+			.admin = apiAuthorizationDetails->admin
+		};
 
-		int32_t rows = requestData.getQueryParameter("rows", static_cast<int32_t>(10), false);
-		if (rows > _maxPageSize)
+		if (mediaItemsListParams.rows > _maxPageSize)
 		{
 			// 2022-02-13: changed to return an error otherwise the user
 			//	think to ask for a huge number of items while the return is much less
@@ -311,61 +341,15 @@ void API::mediaItemsList(
 				"rows parameter too big"
 				", rows: {}"
 				", _maxPageSize: {}",
-				rows, _maxPageSize
+				mediaItemsListParams.rows, _maxPageSize
 			);
 			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
 
-		string sContentType = requestData.getQueryParameter("contentType", string(), false);
-		bool contentTypePresent = false;
-		MMSEngineDBFacade::ContentType contentType;
-		if (!sContentType.empty())
 		{
-			contentType = MMSEngineDBFacade::toContentType(sContentType);
-			contentTypePresent = true;
-		}
-
-		/*
-		 * liveRecordingChunk:
-		 * -1: no condition in select
-		 *  0: look for NO liveRecordingChunk (default)
-		 *  1: look for liveRecordingChunk
-		 */
-		int32_t liveRecordingChunk = requestData.getQueryParameter("liveRecordingChunk", false) == false ? 0 : 1;
-
-		string startIngestionDate = requestData.getQueryParameter("startIngestionDate", string(), false);
-
-		string endIngestionDate = requestData.getQueryParameter("endIngestionDate", string(), false);
-
-		string title = requestData.getQueryParameter("title", string(), false);
-
-		vector<string> tagsIn = requestData.getQueryParameter("tagsIn", ',', vector<string>(), false);
-		vector<string> tagsNotIn = requestData.getQueryParameter("tagsNotIn", ',', vector<string>(), false);
-		vector<int64_t> otherMediaItemsKey = requestData.getQueryParameter("otherMIKs", ',', vector<int64_t>(), false);
-		set<string> responseFields = requestData.getQueryParameter("responseFields", ',', set<string>(), false);
-
-		int64_t recordingCode = requestData.getQueryParameter("recordingCode", static_cast<int64_t>(-1), false);
-
-		string jsonCondition = requestData.getQueryParameter("jsonCondition", string(), false);
-
-		string orderBy = requestData.getQueryParameter("orderBy", string(), false);
-
-		string jsonOrderBy = requestData.getQueryParameter("jsonOrderBy", string(), false);
-
-		{
-			int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
-			int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-
-			json ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(
-				apiAuthorizationDetails->workspace->_workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
-				// startAndEndIngestionDatePresent,
-				startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
-				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, apiAuthorizationDetails->admin,
-				// 2022-12-18: false because from API(get)
-				false
-			);
+			json ingestionStatusRoot = _mmsEngineDBFacade->getMediaItemsList(mediaItemsListParams);
 
 			string responseBody = JSONUtils::toString(ingestionStatusRoot);
 

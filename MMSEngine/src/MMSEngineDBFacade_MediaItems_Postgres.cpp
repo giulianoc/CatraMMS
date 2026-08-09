@@ -527,36 +527,13 @@ json MMSEngineDBFacade::updateMediaItem(
 		throw;
 	}
 
-	string uniqueName;
-	int64_t physicalPathKey = -1;
-	vector<int64_t> otherMediaItemsKey;
-	int start = 0;
-	int rows = 1;
-	bool contentTypePresent = false;
-	ContentType contentType;
-	// bool startAndEndIngestionDatePresent = false;
-	string startIngestionDate;
-	string endIngestionDate;
-	string title;
-	int liveRecordingChunk = -1;
-	int64_t recordingCode = -1;
-	int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
-	int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-	string jsonCondition;
-	vector<string> tagsIn;
-	vector<string> tagsNotIn;
-	string orderBy;
-	string jsonOrderBy;
-	set<string> responseFields;
-
-	json mediaItemsListRoot = getMediaItemsList(
-		workspaceKey, mediaItemKey, uniqueName, physicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
-		// startAndEndIngestionDatePresent,
-		startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
-		utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, admin,
-		// 2022-12-18: MIK is just updated, let's take from master
-		true
-	);
+	MediaItemsListParams mediaItemsListParams {
+		.workspaceKey = workspaceKey,
+		.mediaItemKey = mediaItemKey,
+		.admin = admin,
+		.fromMaster = true
+	};
+	json mediaItemsListRoot = getMediaItemsList(mediaItemsListParams);
 
 	return mediaItemsListRoot;
 }
@@ -627,59 +604,24 @@ json MMSEngineDBFacade::updatePhysicalPath(
 		throw;
 	}
 
-	string uniqueName;
-	int64_t localPhysicalPathKey = -1;
-	vector<int64_t> otherMediaItemsKey;
-	int start = 0;
-	int rows = 1;
-	bool contentTypePresent = false;
-	ContentType contentType;
-	// bool startAndEndIngestionDatePresent = false;
-	string startIngestionDate;
-	string endIngestionDate;
-	string title;
-	int liveRecordingChunk = -1;
-	int64_t recordingCode = -1;
-	int64_t utcCutPeriodStartTimeInMilliSeconds = -1;
-	int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond = -1;
-	string jsonCondition;
-	vector<string> tagsIn;
-	vector<string> tagsNotIn;
-	string orderBy;
-	string jsonOrderBy;
-	set<string> responseFields;
-
-	json mediaItemsListRoot = getMediaItemsList(
-		workspaceKey, mediaItemKey, uniqueName, localPhysicalPathKey, otherMediaItemsKey, start, rows, contentTypePresent, contentType,
-		// startAndEndIngestionDatePresent,
-		startIngestionDate, endIngestionDate, title, liveRecordingChunk, recordingCode, utcCutPeriodStartTimeInMilliSeconds,
-		utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, jsonCondition, tagsIn, tagsNotIn, orderBy, jsonOrderBy, responseFields, admin,
-		// 2022-12-18: MIK is just updated, let's take from master
-		true
-	);
+	MediaItemsListParams mediaItemsListParams {
+		.workspaceKey = workspaceKey,
+		.mediaItemKey = mediaItemKey,
+		.admin = admin,
+		.fromMaster = true
+	};
+	json mediaItemsListRoot = getMediaItemsList(mediaItemsListParams);
 
 	return mediaItemsListRoot;
 }
 
-json MMSEngineDBFacade::getMediaItemsList(
-	int64_t workspaceKey, int64_t mediaItemKey, string uniqueName, int64_t physicalPathKey, vector<int64_t> &otherMediaItemsKey, int start, int rows,
-	bool contentTypePresent, ContentType contentType,
-	// bool startAndEndIngestionDatePresent,
-	string startIngestionDate, string endIngestionDate, string title, int liveRecordingChunk, int64_t recordingCode,
-	int64_t utcCutPeriodStartTimeInMilliSeconds, int64_t utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, string jsonCondition, vector<string> &tagsIn,
-	vector<string> &tagsNotIn,
-	string orderBy,		// i.e.: "", mi.ingestionDate desc, mi.title asc
-	string jsonOrderBy, // i.e.: "", JSON_EXTRACT(userData, '$.mmsData.utcChunkStartTime') asc
-	set<string> &responseFields, bool admin, bool fromMaster
-)
+json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListParams)
 {
 	json mediaItemsListRoot;
 
-	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
+	PostgresConnTrans trans(mediaItemsListParams.fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
-		string field;
-
 		LOG_INFO(
 			"getMediaItemsList"
 			", workspaceKey: {}"
@@ -688,7 +630,6 @@ json MMSEngineDBFacade::getMediaItemsList(
 			", physicalPathKey: {}"
 			", start: {}"
 			", rows: {}"
-			", contentTypePresent: {}"
 			", contentType: {}"
 			", startIngestionDate: {}"
 			", endIngestionDate: {}"
@@ -701,136 +642,89 @@ json MMSEngineDBFacade::getMediaItemsList(
 			", jsonCondition: {}"
 			", orderBy: {}"
 			", jsonOrderBy: {}",
-			workspaceKey, mediaItemKey, uniqueName, physicalPathKey, start, rows, contentTypePresent,
-			(contentTypePresent ? toString(contentType) : ""), startIngestionDate, endIngestionDate, title, tagsIn.size(), tagsNotIn.size(),
-			otherMediaItemsKey.size(), liveRecordingChunk, recordingCode, jsonCondition, orderBy, jsonOrderBy
+			mediaItemsListParams.workspaceKey,
+			mediaItemsListParams.mediaItemKey ? *mediaItemsListParams.mediaItemKey : -1,
+			mediaItemsListParams.uniqueName,
+			mediaItemsListParams.physicalPathKey ? *mediaItemsListParams.physicalPathKey : -1,
+			mediaItemsListParams.start, mediaItemsListParams.rows,
+			(mediaItemsListParams.contentType ? toString(*mediaItemsListParams.contentType) : ""),
+			mediaItemsListParams.startIngestionDate, mediaItemsListParams.endIngestionDate, mediaItemsListParams.title,
+			mediaItemsListParams.tagsIn.size(), mediaItemsListParams.tagsNotIn.size(),
+			mediaItemsListParams.otherMediaItemsKey.size(),
+			mediaItemsListParams.liveRecordingChunk ? *mediaItemsListParams.liveRecordingChunk : false,
+			mediaItemsListParams.recordingCode ? *mediaItemsListParams.recordingCode : -1,
+			mediaItemsListParams.jsonCondition, mediaItemsListParams.orderBy, mediaItemsListParams.jsonOrderBy
 		);
 
 		{
 			json requestParametersRoot;
 
-			field = "start";
-			requestParametersRoot[field] = start;
-
-			field = "rows";
-			requestParametersRoot[field] = rows;
-
-			if (mediaItemKey != -1)
-			{
-				field = "mediaItemKey";
-				requestParametersRoot[field] = mediaItemKey;
-			}
-
-			if (!uniqueName.empty())
-			{
-				field = "uniqueName";
-				requestParametersRoot[field] = uniqueName;
-			}
-
-			if (physicalPathKey != -1)
-			{
-				field = "physicalPathKey";
-				requestParametersRoot[field] = physicalPathKey;
-			}
-
-			if (contentTypePresent)
-			{
-				field = "contentType";
-				requestParametersRoot[field] = toString(contentType);
-			}
-
-			if (startIngestionDate != "")
-			{
-				field = "startIngestionDate";
-				requestParametersRoot[field] = startIngestionDate;
-			}
-			if (endIngestionDate != "")
-			{
-				field = "endIngestionDate";
-				requestParametersRoot[field] = endIngestionDate;
-			}
-
-			if (title != "")
-			{
-				field = "title";
-				requestParametersRoot[field] = title;
-			}
-
-			if (tagsIn.size() > 0)
+			requestParametersRoot["start"] = mediaItemsListParams.start;
+			requestParametersRoot["rows"] = mediaItemsListParams.rows;
+			if (mediaItemsListParams.mediaItemKey)
+				requestParametersRoot["mediaItemKey"] = *mediaItemsListParams.mediaItemKey;
+			if (!mediaItemsListParams.uniqueName.empty())
+				requestParametersRoot["uniqueName"] = mediaItemsListParams.uniqueName;
+			if (mediaItemsListParams.physicalPathKey)
+				requestParametersRoot["physicalPathKey"] = *mediaItemsListParams.physicalPathKey;
+			if (mediaItemsListParams.contentType)
+				requestParametersRoot["contentType"] = toString(*mediaItemsListParams.contentType);
+			if (!mediaItemsListParams.startIngestionDate.empty())
+				requestParametersRoot["startIngestionDate"] = mediaItemsListParams.startIngestionDate;
+			if (!mediaItemsListParams.endIngestionDate.empty())
+				requestParametersRoot["endIngestionDate"] = mediaItemsListParams.endIngestionDate;
+			if (!mediaItemsListParams.title.empty())
+				requestParametersRoot["title"] = mediaItemsListParams.title;
+			if (!mediaItemsListParams.tagsIn.empty())
 			{
 				json tagsRoot = json::array();
 
-				for (int tagIndex = 0; tagIndex < tagsIn.size(); tagIndex++)
-					tagsRoot.push_back(tagsIn[tagIndex]);
+				for (auto & tagIndex : mediaItemsListParams.tagsIn)
+					tagsRoot.push_back(tagIndex);
 
-				field = "tagsIn";
-				requestParametersRoot[field] = tagsRoot;
+				requestParametersRoot["tagsIn"] = tagsRoot;
 			}
-
-			if (tagsNotIn.size() > 0)
+			if (!mediaItemsListParams.tagsNotIn.empty())
 			{
 				json tagsRoot = json::array();
 
-				for (int tagIndex = 0; tagIndex < tagsNotIn.size(); tagIndex++)
-					tagsRoot.push_back(tagsNotIn[tagIndex]);
+				for (auto & tagIndex : mediaItemsListParams.tagsNotIn)
+					tagsRoot.push_back(tagIndex);
 
-				field = "tagsNotIn";
-				requestParametersRoot[field] = tagsRoot;
+				requestParametersRoot["tagsNotIn"] = tagsRoot;
 			}
-
-			if (otherMediaItemsKey.size() > 0)
+			if (!mediaItemsListParams.otherMediaItemsKey.empty())
 			{
 				json otherMediaItemsKeyRoot = json::array();
 
-				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
-					otherMediaItemsKeyRoot.push_back(otherMediaItemsKey[mediaItemIndex]);
+				for (int64_t & mediaItemIndex : mediaItemsListParams.otherMediaItemsKey)
+					otherMediaItemsKeyRoot.push_back(mediaItemIndex);
 
-				field = "otherMediaItemsKey";
-				requestParametersRoot[field] = otherMediaItemsKeyRoot;
+				requestParametersRoot["otherMediaItemsKey"] = otherMediaItemsKeyRoot;
 			}
+			if (mediaItemsListParams.liveRecordingChunk)
+				requestParametersRoot["liveRecordingChunk"] = *mediaItemsListParams.liveRecordingChunk;
+			if (!mediaItemsListParams.jsonCondition.empty())
+				requestParametersRoot["jsonCondition"] = mediaItemsListParams.jsonCondition;
+			if (mediaItemsListParams.recordingCode)
+				requestParametersRoot["recordingCode"] = *mediaItemsListParams.recordingCode;
+			if (!mediaItemsListParams.orderBy.empty())
+				requestParametersRoot["orderBy"] = mediaItemsListParams.orderBy;
+			if (!mediaItemsListParams.jsonOrderBy.empty())
+				requestParametersRoot["jsonOrderBy"] = mediaItemsListParams.jsonOrderBy;
 
-			if (liveRecordingChunk != -1)
-			{
-				field = "liveRecordingChunk";
-				requestParametersRoot[field] = liveRecordingChunk;
-			}
-
-			if (jsonCondition != "")
-			{
-				field = "jsonCondition";
-				requestParametersRoot[field] = jsonCondition;
-			}
-
-			if (recordingCode != -1)
-			{
-				field = "recordingCode";
-				requestParametersRoot[field] = recordingCode;
-			}
-
-			if (orderBy != "")
-			{
-				field = "orderBy";
-				requestParametersRoot[field] = orderBy;
-			}
-
-			if (jsonOrderBy != "")
-			{
-				field = "jsonOrderBy";
-				requestParametersRoot[field] = jsonOrderBy;
-			}
-
-			field = "requestParameters";
-			mediaItemsListRoot[field] = requestParametersRoot;
+			mediaItemsListRoot["requestParameters"] = requestParametersRoot;
 		}
 
-		int64_t newMediaItemKey = mediaItemKey;
-		if (mediaItemKey == -1)
+		std::optional<int64_t> newMediaItemKey = mediaItemsListParams.mediaItemKey;
+		if (mediaItemsListParams.mediaItemKey)
 		{
-			if (physicalPathKey != -1)
+			if (mediaItemsListParams.physicalPathKey)
 			{
 				try
 				{
-					newMediaItemKey = physicalPath_columnAsInt64("mediaitemkey", physicalPathKey, nullptr, fromMaster);
+					newMediaItemKey = physicalPath_columnAsInt64("mediaitemkey", *mediaItemsListParams.physicalPathKey,
+						nullptr, mediaItemsListParams.fromMaster);
 				}
 				catch (DBRecordNotFound &e)
 				{
@@ -838,18 +732,20 @@ json MMSEngineDBFacade::getMediaItemsList(
 						"physicalPathKey does not exist"
 						", physicalPathKey: {}"
 						", exception: {}",
-						physicalPathKey, e.what()
+						*mediaItemsListParams.physicalPathKey, e.what()
 					);
 
 					// throw runtime_error(errorMessage);
 					newMediaItemKey = 0; // let's force a MIK that does not exist
 				}
 			}
-			else if (uniqueName != "")
+			else if (!mediaItemsListParams.uniqueName.empty())
 			{
 				try
 				{
-					newMediaItemKey = externalUniqueName_columnAsInt64(workspaceKey, "mediaitemkey", uniqueName, -1, nullptr, fromMaster);
+					newMediaItemKey = externalUniqueName_columnAsInt64(mediaItemsListParams.workspaceKey,
+						"mediaitemkey", mediaItemsListParams.uniqueName, -1,
+						nullptr, mediaItemsListParams.fromMaster);
 				}
 				catch (DBRecordNotFound &e)
 				{
@@ -858,7 +754,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						", workspaceKey: {}"
 						", uniqueName: {}"
 						", exception: {}",
-						workspaceKey, uniqueName, e.what()
+						mediaItemsListParams.workspaceKey, mediaItemsListParams.uniqueName, e.what()
 					);
 
 					// throw runtime_error(errorMessage);
@@ -868,33 +764,33 @@ json MMSEngineDBFacade::getMediaItemsList(
 		}
 
 		string sqlWhere;
-		sqlWhere = std::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", workspaceKey);
-		if (newMediaItemKey != -1)
+		sqlWhere = std::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", mediaItemsListParams.workspaceKey);
+		if (newMediaItemKey)
 		{
-			if (otherMediaItemsKey.size() > 0)
+			if (!mediaItemsListParams.otherMediaItemsKey.empty())
 			{
-				sqlWhere += ("and mi.mediaItemKey in (");
-				sqlWhere += to_string(newMediaItemKey);
-				for (int mediaItemIndex = 0; mediaItemIndex < otherMediaItemsKey.size(); mediaItemIndex++)
-					sqlWhere += (", " + to_string(otherMediaItemsKey[mediaItemIndex]));
+				sqlWhere += std::format("and mi.mediaItemKey in ({}", *newMediaItemKey);
+				for (int64_t mediaItemIndex : mediaItemsListParams.otherMediaItemsKey)
+					sqlWhere += std::format(", {}", mediaItemIndex);
 				sqlWhere += ") ";
 			}
 			else
-				sqlWhere += std::format("and mi.mediaItemKey = {} ", newMediaItemKey);
+				sqlWhere += std::format("and mi.mediaItemKey = {} ", *newMediaItemKey);
 		}
-		if (contentTypePresent)
-			sqlWhere += std::format("and mi.contentType = {} ", trans.transaction->quote(toString(contentType)));
-		if (startIngestionDate != "")
+		if (mediaItemsListParams.contentType)
+			sqlWhere += std::format("and mi.contentType = {} ", trans.transaction->quote(toString(*mediaItemsListParams.contentType)));
+		if (!mediaItemsListParams.startIngestionDate.empty())
 			sqlWhere += std::format(
-				"and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(startIngestionDate)
+				R"(and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(mediaItemsListParams.startIngestionDate)
 			);
-		if (endIngestionDate != "")
+		if (!mediaItemsListParams.endIngestionDate.empty())
 			sqlWhere += std::format(
-				"and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') ", trans.transaction->quote(endIngestionDate)
+				R"(and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )",
+				trans.transaction->quote(mediaItemsListParams.endIngestionDate)
 			);
-		if (title != "")
+		if (!mediaItemsListParams.title.empty())
 			sqlWhere += std::format(
-				"and LOWER(mi.title) like LOWER({}) ", trans.transaction->quote("%" + title + "%")
+				"and LOWER(mi.title) like LOWER({}) ", trans.transaction->quote("%" + mediaItemsListParams.title + "%")
 			); // LOWER was used because the column is using utf8_bin that is case sensitive
 		/*
 		 * liveRecordingChunk:
@@ -902,18 +798,14 @@ json MMSEngineDBFacade::getMediaItemsList(
 		 *  0: look for NO liveRecordingChunk
 		 *  1: look for liveRecordingChunk
 		 */
-		if (contentTypePresent && contentType == ContentType::Video && liveRecordingChunk != -1)
-		{
-			if (liveRecordingChunk == 0)
-				sqlWhere += ("and liveRecordingChunk_virtual = false ");
-			else if (liveRecordingChunk == 1)
-				sqlWhere += ("and liveRecordingChunk_virtual = true ");
-			// sqlWhere += ("and JSON_UNQUOTE(JSON_EXTRACT(userData, '$.mmsData.dataType')) like 'liveRecordingChunk%' ");
-		}
-		if (recordingCode != -1)
-			sqlWhere += std::format("and mi.recordingCode_virtual = {} ", recordingCode);
+		if (mediaItemsListParams.contentType
+			&& *mediaItemsListParams.contentType == ContentType::Video
+			&& mediaItemsListParams.liveRecordingChunk)
+			sqlWhere += std::format("and liveRecordingChunk_virtual = {} ", *mediaItemsListParams.liveRecordingChunk);
+		if (mediaItemsListParams.recordingCode)
+			sqlWhere += std::format("and mi.recordingCode_virtual = {} ", *mediaItemsListParams.recordingCode);
 
-		if (utcCutPeriodStartTimeInMilliSeconds != -1 && utcCutPeriodEndTimeInMilliSecondsPlusOneSecond != -1)
+		if (mediaItemsListParams.utcCutPeriodStartTimeInMilliSeconds && mediaItemsListParams.utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 		{
 			// SC: Start Chunk
 			// PS: Playout Start, PE: Playout End
@@ -925,8 +817,9 @@ json MMSEngineDBFacade::getMediaItemsList(
 			// first chunk of the cut
 			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodStartTimeInMilliSeconds
 			sqlWhere += std::format(
-				"(mi.utcStartTimeInMilliSecs_virtual <= {} and {} < mi.utcEndTimeInMilliSecs_virtual) ", utcCutPeriodStartTimeInMilliSeconds,
-				utcCutPeriodStartTimeInMilliSeconds
+				"(mi.utcStartTimeInMilliSecs_virtual <= {} and {} < mi.utcEndTimeInMilliSecs_virtual) ",
+				*mediaItemsListParams.utcCutPeriodStartTimeInMilliSeconds,
+				*mediaItemsListParams.utcCutPeriodStartTimeInMilliSeconds
 			);
 
 			sqlWhere += ("or ");
@@ -934,8 +827,9 @@ json MMSEngineDBFacade::getMediaItemsList(
 			// internal chunk of the cut
 			// utcCutPeriodStartTimeInMilliSeconds, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 			sqlWhere += std::format(
-				"({} <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= {}) ", utcCutPeriodStartTimeInMilliSeconds,
-				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+				"({} <= mi.utcStartTimeInMilliSecs_virtual and mi.utcEndTimeInMilliSecs_virtual <= {}) ",
+				*mediaItemsListParams.utcCutPeriodStartTimeInMilliSeconds,
+				*mediaItemsListParams.utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 			);
 
 			sqlWhere += ("or ");
@@ -944,25 +838,26 @@ json MMSEngineDBFacade::getMediaItemsList(
 			// utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 			sqlWhere += std::format(
 				"(mi.utcStartTimeInMilliSecs_virtual < {} and {} <= mi.utcEndTimeInMilliSecs_virtual) ",
-				utcCutPeriodEndTimeInMilliSecondsPlusOneSecond, utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
+				*mediaItemsListParams.utcCutPeriodEndTimeInMilliSecondsPlusOneSecond,
+				*mediaItemsListParams.utcCutPeriodEndTimeInMilliSecondsPlusOneSecond
 			);
 
 			sqlWhere += (") ");
 		}
 
-		if (tagsIn.size() > 0)
+		if (!mediaItemsListParams.tagsIn.empty())
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
-			sqlWhere += std::format("and mi.tags && {} = true ", getPostgresArray(tagsIn, true, trans));
+			sqlWhere += std::format("and mi.tags && {} = true ", getPostgresArray(mediaItemsListParams.tagsIn, true, trans));
 		}
-		if (tagsNotIn.size() > 0)
+		if (!mediaItemsListParams.tagsNotIn.empty())
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
-			sqlWhere += std::format("and mi.tags && {} = false ", getPostgresArray(tagsNotIn, true, trans));
+			sqlWhere += std::format("and mi.tags && {} = false ", getPostgresArray(mediaItemsListParams.tagsNotIn, true, trans));
 		}
 
-		if (jsonCondition != "")
-			sqlWhere += ("and " + jsonCondition + " ");
+		if (!mediaItemsListParams.jsonCondition.empty())
+			sqlWhere += std::format("and {} ", mediaItemsListParams.jsonCondition);
 
 		int64_t numFound;
 		{
@@ -981,24 +876,26 @@ json MMSEngineDBFacade::getMediaItemsList(
 		}
 
 		string orderByCondition;
-		if (orderBy == "" && jsonOrderBy == "")
+		if (mediaItemsListParams.orderBy.empty() && mediaItemsListParams.jsonOrderBy.empty())
 			orderByCondition = " ";
-		else if (orderBy == "" && jsonOrderBy != "")
-			orderByCondition = "order by " + jsonOrderBy + " ";
-		else if (orderBy != "" && jsonOrderBy == "")
-			orderByCondition = "order by " + orderBy + " ";
+		else if (mediaItemsListParams.orderBy.empty() && !mediaItemsListParams.jsonOrderBy.empty())
+			orderByCondition = std::format("order by {} ", mediaItemsListParams.jsonOrderBy);
+		else if (!mediaItemsListParams.orderBy.empty() && mediaItemsListParams.jsonOrderBy.empty())
+			orderByCondition = std::format("order by {} ", mediaItemsListParams.orderBy);
 		else // if (orderBy != "" && jsonOrderBy != "")
-			orderByCondition = "order by " + jsonOrderBy + ", " + orderBy + " ";
+			orderByCondition = std::format("order by {}, {} ", mediaItemsListParams.jsonOrderBy, mediaItemsListParams.orderBy);
 
 		string sqlStatement = std::format(
-			"select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData, "
-			"to_char(mi.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedIngestionDate, "
-			"to_char(mi.startPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedStartPublishing, "
-			"to_char(mi.endPublishing, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedEndPublishing, "
-			"to_char(mi.willBeRemovedAt_virtual, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as formattedWillBeRemovedAt, "
-			"mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {} "
-			"limit {} offset {}",
-			sqlWhere, orderByCondition, rows, start
+		R"(
+			select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData,
+			to_char(mi.ingestionDate, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as formattedIngestionDate,
+			to_char(mi.startPublishing, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as formattedStartPublishing,
+			to_char(mi.endPublishing, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as formattedEndPublishing,
+			to_char(mi.willBeRemovedAt_virtual, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as formattedWillBeRemovedAt,
+			mi.contentType, mi.retentionInMinutes, mi.tags from MMS_MediaItem mi {} {}
+			limit {} offset {}
+			)",
+			sqlWhere, orderByCondition, mediaItemsListParams.rows, mediaItemsListParams.start
 		);
 		chrono::milliseconds internalSqlDuration(0);
 		chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1006,10 +903,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(res);
 
 		json responseRoot;
-		{
-			field = "numFound";
-			responseRoot[field] = numFound;
-		}
+		responseRoot["numFound"] = numFound;
 
 		json mediaItemsRoot = json::array();
 		{
@@ -1020,88 +914,65 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 				auto localMediaItemKey = sqlRow["mediaItemKey"].as<int64_t>();
 
-				field = "mediaItemKey";
-				mediaItemRoot[field] = localMediaItemKey;
+				mediaItemRoot["mediaItemKey"] = localMediaItemKey;
 
-				if (responseFields.empty() || responseFields.contains("title"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("title"))
 				{
 					auto localTitle = sqlRow["title"].as<string>();
 
 					// a printf is used to pring into the output, so % has to be changed to %%
-					for (int titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
+					for (size_t titleIndex = localTitle.length() - 1; titleIndex >= 0; titleIndex--)
 					{
 						if (localTitle[titleIndex] == '%')
 							localTitle.replace(titleIndex, 1, "%%");
 					}
 
-					field = "title";
-					mediaItemRoot[field] = localTitle;
+					mediaItemRoot["title"] = localTitle;
 				}
 
-				if (responseFields.empty() || responseFields.contains("deliveryFileName"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("deliveryFileName"))
 				{
-					field = "deliveryFileName";
 					if (sqlRow["deliveryFileName"].isNull())
-						mediaItemRoot[field] = nullptr;
+						mediaItemRoot["deliveryFileName"] = nullptr;
 					else
-						mediaItemRoot[field] = sqlRow["deliveryFileName"].as<string>();
+						mediaItemRoot["deliveryFileName"] = sqlRow["deliveryFileName"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.contains("ingester"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("ingester"))
 				{
-					field = "ingester";
 					if (sqlRow["ingester"].isNull())
-						mediaItemRoot[field] = nullptr;
+						mediaItemRoot["ingester"] = nullptr;
 					else
-						mediaItemRoot[field] = sqlRow["ingester"].as<string>();
+						mediaItemRoot["ingester"] = sqlRow["ingester"].as<string>();
 				}
 
-				if (responseFields.empty() || responseFields.contains("userData"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("userData"))
 				{
-					field = "userData";
 					if (sqlRow["userData"].isNull())
-						mediaItemRoot[field] = nullptr;
+						mediaItemRoot["userData"] = nullptr;
 					else
-						mediaItemRoot[field] = sqlRow["userData"].as<json>();
+						mediaItemRoot["userData"] = sqlRow["userData"].as<json>();
 				}
 
-				if (responseFields.empty() || responseFields.contains("ingestionDate"))
-				{
-					field = "ingestionDate";
-					mediaItemRoot[field] = sqlRow["formattedIngestionDate"].as<string>();
-				}
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("ingestionDate"))
+					mediaItemRoot["ingestionDate"] = sqlRow["formattedIngestionDate"].as<string>();
 
-				if (responseFields.empty() || responseFields.contains("startPublishing"))
-				{
-					field = "startPublishing";
-					mediaItemRoot[field] = sqlRow["formattedStartPublishing"].as<string>();
-				}
-				if (responseFields.empty() || responseFields.contains("endPublishing"))
-				{
-					field = "endPublishing";
-					mediaItemRoot[field] = sqlRow["formattedEndPublishing"].as<string>();
-				}
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("startPublishing"))
+					mediaItemRoot["startPublishing"] = sqlRow["formattedStartPublishing"].as<string>();
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("endPublishing"))
+					mediaItemRoot["endPublishing"] = sqlRow["formattedEndPublishing"].as<string>();
 
-				if (responseFields.empty() || responseFields.contains("willBeRemovedAt"))
-				{
-					field = "willBeRemovedAt";
-					mediaItemRoot[field] = sqlRow["formattedWillBeRemovedAt"].as<string>();
-				}
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("willBeRemovedAt"))
+					mediaItemRoot["willBeRemovedAt"] = sqlRow["formattedWillBeRemovedAt"].as<string>();
 
 				ContentType contentType = toContentType(sqlRow["contentType"].as<string>());
-				if (responseFields.empty() || responseFields.contains("contentType"))
-				{
-					field = "contentType";
-					mediaItemRoot[field] = sqlRow["contentType"].as<string>();
-				}
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("contentType"))
+					mediaItemRoot["contentType"] = sqlRow["contentType"].as<string>();
 
-				if (responseFields.empty() || responseFields.contains("retentionInMinutes"))
-				{
-					field = "retentionInMinutes";
-					mediaItemRoot[field] = sqlRow["retentionInMinutes"].as<int64_t>();
-				}
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("retentionInMinutes"))
+					mediaItemRoot["retentionInMinutes"] = sqlRow["retentionInMinutes"].as<int64_t>();
 
-				if (responseFields.empty() || responseFields.contains("tags"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("tags"))
 				{
 					json mediaItemTagsRoot = json::array();
 
@@ -1122,28 +993,26 @@ json MMSEngineDBFacade::getMediaItemsList(
 					}
 					*/
 
-					field = "tags";
-					mediaItemRoot[field] = mediaItemTagsRoot;
+					mediaItemRoot["tags"] = mediaItemTagsRoot;
 				}
 
-				if (responseFields.empty() || responseFields.contains("uniqueName"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("uniqueName"))
 				{
 					chrono::milliseconds localSqlDuration(0);
-					field = "uniqueName";
 					try
 					{
-						mediaItemRoot[field] =
-							externalUniqueName_columnAsString(workspaceKey, "uniquename", "", localMediaItemKey, &localSqlDuration, fromMaster);
+						mediaItemRoot["uniqueName"] =
+							externalUniqueName_columnAsString(mediaItemsListParams.workspaceKey, "uniquename", "", localMediaItemKey, &localSqlDuration, mediaItemsListParams.fromMaster);
 					}
 					catch (DBRecordNotFound &)
 					{
-						mediaItemRoot[field] = "";
+						mediaItemRoot["uniqueName"] = "";
 					}
 					internalSqlDuration += localSqlDuration;
 				}
 
 				// CrossReferences
-				if (responseFields.empty() || responseFields.contains("crossReferences"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("crossReferences"))
 				{
 					// if (contentType == ContentType::Video)
 					{
@@ -1163,27 +1032,24 @@ json MMSEngineDBFacade::getMediaItemsList(
 							{
 								json crossReferenceRoot;
 
-								field = "sourceMediaItemKey";
-								crossReferenceRoot[field] = row["sourceMediaItemKey"].as<int64_t>();
+								crossReferenceRoot["sourceMediaItemKey"] = row["sourceMediaItemKey"].as<int64_t>();
 
-								field = "type";
-								crossReferenceRoot[field] = row["type"].as<string>();
+								crossReferenceRoot["type"] = row["type"].as<string>();
 
 								if (!row["parameters"].is_null())
 								{
-									string crossReferenceParameters = row["parameters"].as<string>();
+									auto crossReferenceParameters = row["parameters"].as<string>();
 									if (!crossReferenceParameters.empty())
 									{
 										json crossReferenceParametersRoot = JSONUtils::toJson<json>(crossReferenceParameters);
 
-										field = "parameters";
-										crossReferenceRoot[field] = crossReferenceParametersRoot;
+										crossReferenceRoot["parameters"] = crossReferenceParametersRoot;
 									}
 								}
 
 								mediaItemReferencesRoot.push_back(crossReferenceRoot);
 							}
-							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+							auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 							internalSqlDuration += sqlDuration;
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
@@ -1210,27 +1076,24 @@ json MMSEngineDBFacade::getMediaItemsList(
 							{
 								json crossReferenceRoot;
 
-								field = "type";
-								crossReferenceRoot[field] = row["type"].as<string>();
+								crossReferenceRoot["type"] = row["type"].as<string>();
 
-								field = "targetMediaItemKey";
-								crossReferenceRoot[field] = row["targetMediaItemKey"].as<int64_t>();
+								crossReferenceRoot["targetMediaItemKey"] = row["targetMediaItemKey"].as<int64_t>();
 
 								if (!row["parameters"].is_null())
 								{
-									string crossReferenceParameters = row["parameters"].as<string>();
-									if (crossReferenceParameters != "")
+									auto crossReferenceParameters = row["parameters"].as<string>();
+									if (!crossReferenceParameters.empty())
 									{
 										json crossReferenceParametersRoot = JSONUtils::toJson<json>(crossReferenceParameters);
 
-										field = "parameters";
-										crossReferenceRoot[field] = crossReferenceParametersRoot;
+										crossReferenceRoot["parameters"] = crossReferenceParametersRoot;
 									}
 								}
 
 								mediaItemReferencesRoot.push_back(crossReferenceRoot);
 							}
-							chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+							auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 							internalSqlDuration += sqlDuration;
 							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 							SQLQUERYLOG(
@@ -1243,8 +1106,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 							);
 						}
 
-						field = "crossReferences";
-						mediaItemRoot[field] = mediaItemReferencesRoot;
+						mediaItemRoot["crossReferences"] = mediaItemReferencesRoot;
 					}
 					/*
 					else if (contentType == ContentType::Audio)
@@ -1253,17 +1115,19 @@ json MMSEngineDBFacade::getMediaItemsList(
 					*/
 				}
 
-				if (responseFields.empty() || responseFields.contains("physicalPaths"))
+				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("physicalPaths"))
 				{
 					json mediaItemProfilesRoot = json::array();
 
 					string sqlStatement = std::format(
-						"select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage, "
-						"deliveryInfo ->> 'externalDeliveryTechnology' as externalDeliveryTechnology, "
-						"deliveryInfo ->> 'externalDeliveryURL' as externalDeliveryURL, "
-						"metaData, fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, retentionInMinutes, "
-						"to_char(creationDate, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as creationDate "
-						"from MMS_PhysicalPath where mediaItemKey = {}",
+						R"(
+						select physicalPathKey, durationInMilliSeconds, bitRate, externalReadOnlyStorage,
+						deliveryInfo ->> 'externalDeliveryTechnology' as externalDeliveryTechnology,
+						deliveryInfo ->> 'externalDeliveryURL' as externalDeliveryURL,
+						metaData, fileName, relativePath, partitionNumber, encodingProfileKey, sizeInBytes, retentionInMinutes,
+						to_char(creationDate, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as creationDate
+						from MMS_PhysicalPath where mediaItemKey = {}
+						)",
 						localMediaItemKey
 					);
 					chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1272,100 +1136,82 @@ json MMSEngineDBFacade::getMediaItemsList(
 					{
 						json profileRoot;
 
-						int64_t physicalPathKey = row["physicalPathKey"].as<int64_t>();
+						auto physicalPathKey = row["physicalPathKey"].as<int64_t>();
 
-						field = "physicalPathKey";
-						profileRoot[field] = physicalPathKey;
+						profileRoot["physicalPathKey"] = physicalPathKey;
 
-						field = "durationInMilliSeconds";
 						if (row["durationInMilliSeconds"].is_null())
-							profileRoot[field] = nullptr;
+							profileRoot["durationInMilliSeconds"] = nullptr;
 						else
-							profileRoot[field] = row["durationInMilliSeconds"].as<int64_t>();
+							profileRoot["durationInMilliSeconds"] = row["durationInMilliSeconds"].as<int64_t>();
 
-						field = "bitRate";
 						if (row["bitRate"].is_null())
-							profileRoot[field] = nullptr;
+							profileRoot["bitRate"] = nullptr;
 						else
-							profileRoot[field] = row["bitRate"].as<int64_t>();
+							profileRoot["bitRate"] = row["bitRate"].as<int64_t>();
 
-						field = "fileFormat";
-						string fileName = row["fileName"].as<string>();
+						auto fileName = row["fileName"].as<string>();
 						size_t extensionIndex = fileName.find_last_of(".");
 						string fileExtension;
 						if (extensionIndex == string::npos)
-							profileRoot[field] = nullptr;
+							profileRoot["fileFormat"] = nullptr;
 						else
 						{
 							fileExtension = fileName.substr(extensionIndex + 1);
 							if (fileExtension == "m3u8")
-								profileRoot[field] = "hls";
+								profileRoot["fileFormat"] = "hls";
 							else
-								profileRoot[field] = fileExtension;
+								profileRoot["fileFormat"] = fileExtension;
 						}
 
-						field = "metaData";
 						if (row["metaData"].is_null())
-							profileRoot[field] = nullptr;
+							profileRoot["metaData"] = nullptr;
 						else
-							profileRoot[field] = row["metaData"].as<string>();
+							profileRoot["metaData"] = row["metaData"].as<string>();
 
-						if (admin)
+						if (mediaItemsListParams.admin)
 						{
-							field = "partitionNumber";
-							profileRoot[field] = row["partitionNumber"].as<int>();
-
-							field = "relativePath";
-							profileRoot[field] = row["relativePath"].as<string>();
-
-							field = "fileName";
-							profileRoot[field] = fileName;
+							profileRoot["partitionNumber"] = row["partitionNumber"].as<int>();
+							profileRoot["relativePath"] = row["relativePath"].as<string>();
+							profileRoot["fileName"] = fileName;
 						}
 
-						field = "externalReadOnlyStorage";
-						profileRoot[field] = (row["externalReadOnlyStorage"].as<bool>());
+						profileRoot["externalReadOnlyStorage"] = (row["externalReadOnlyStorage"].as<bool>());
 
-						field = "externalDeliveryTechnology";
 						string externalDeliveryTechnology;
 						if (row["externalDeliveryTechnology"].is_null())
-							profileRoot[field] = nullptr;
+							profileRoot["externalDeliveryTechnology"] = nullptr;
 						else
 						{
 							externalDeliveryTechnology = row["externalDeliveryTechnology"].as<string>();
-							profileRoot[field] = externalDeliveryTechnology;
+							profileRoot["externalDeliveryTechnology"] = externalDeliveryTechnology;
 						}
 
-						field = "externalDeliveryURL";
 						if (row["externalDeliveryURL"].is_null())
-							profileRoot[field] = nullptr;
+							profileRoot["externalDeliveryURL"] = nullptr;
 						else
-							profileRoot[field] = row["externalDeliveryURL"].as<string>();
+							profileRoot["externalDeliveryURL"] = row["externalDeliveryURL"].as<string>();
 
-						field = "encodingProfileKey";
 						if (row["encodingProfileKey"].is_null())
 						{
-							profileRoot[field] = nullptr;
+							profileRoot["encodingProfileKey"] = nullptr;
 
-							field = "deliveryTechnology";
 							if (externalDeliveryTechnology == "hls")
-							{
-								profileRoot[field] = MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
-							}
+								profileRoot["deliveryTechnology"] = MMSEngineDBFacade::toString(MMSEngineDBFacade::DeliveryTechnology::HTTPStreaming);
 							else
 							{
 								MMSEngineDBFacade::DeliveryTechnology deliveryTechnology =
 									MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileExtension);
-								profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
+								profileRoot["deliveryTechnology"] = MMSEngineDBFacade::toString(deliveryTechnology);
 							}
 
-							field = "encodingProfileLabel";
-							profileRoot[field] = nullptr;
+							profileRoot["encodingProfileLabel"] = nullptr;
 						}
 						else
 						{
-							int64_t encodingProfileKey = row["encodingProfileKey"].as<int64_t>();
+							auto encodingProfileKey = row["encodingProfileKey"].as<int64_t>();
 
-							profileRoot[field] = encodingProfileKey;
+							profileRoot["encodingProfileKey"] = encodingProfileKey;
 
 							string label;
 							MMSEngineDBFacade::ContentType contentType;
@@ -1373,29 +1219,24 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
 							tuple<string, MMSEngineDBFacade::ContentType, MMSEngineDBFacade::DeliveryTechnology, string> encodingProfileDetails =
-								getEncodingProfileDetailsByKey(workspaceKey, encodingProfileKey);
+								getEncodingProfileDetailsByKey(mediaItemsListParams.workspaceKey, encodingProfileKey);
 							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 
 							tie(label, contentType, deliveryTechnology, ignore) = encodingProfileDetails;
 
-							field = "deliveryTechnology";
-							profileRoot[field] = MMSEngineDBFacade::toString(deliveryTechnology);
+							profileRoot["deliveryTechnology"] = MMSEngineDBFacade::toString(deliveryTechnology);
 
-							field = "encodingProfileLabel";
-							profileRoot[field] = label;
+							profileRoot["encodingProfileLabel"] = label;
 						}
 
-						field = "sizeInBytes";
-						profileRoot[field] = row["sizeInBytes"].as<int64_t>();
+						profileRoot["sizeInBytes"] = row["sizeInBytes"].as<int64_t>();
 
-						field = "creationDate";
-						profileRoot[field] = row["creationDate"].as<string>();
+						profileRoot["creationDate"] = row["creationDate"].as<string>();
 
-						field = "retentionInMinutes";
 						if (row["retentionInMinutes"].is_null())
-							profileRoot[field] = nullptr;
+							profileRoot["retentionInMinutes"] = nullptr;
 						else
-							profileRoot[field] = row["retentionInMinutes"].as<int64_t>();
+							profileRoot["retentionInMinutes"] = row["retentionInMinutes"].as<int64_t>();
 
 						if (contentType == ContentType::Video)
 						{
@@ -1403,7 +1244,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-							getVideoDetails(localMediaItemKey, physicalPathKey, fromMaster, videoTracks, audioTracks);
+							getVideoDetails(localMediaItemKey, physicalPathKey, mediaItemsListParams.fromMaster, videoTracks, audioTracks);
 							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 							LOG_INFO(
 								"getVideoDetails"
@@ -1434,44 +1275,26 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 									json videoTrackRoot;
 
-									field = "videoTrackKey";
-									videoTrackRoot[field] = videoTrackKey;
-
-									field = "trackIndex";
-									videoTrackRoot[field] = trackIndex;
-
-									field = "durationInMilliSeconds";
-									videoTrackRoot[field] = durationInMilliSeconds;
-
-									field = "width";
-									videoTrackRoot[field] = width;
-
-									field = "height";
-									videoTrackRoot[field] = height;
-
-									field = "avgFrameRate";
-									videoTrackRoot[field] = avgFrameRate;
-
-									field = "codecName";
-									videoTrackRoot[field] = codecName;
-
-									field = "bitRate";
-									videoTrackRoot[field] = (int64_t)bitRate;
-
-									field = "profile";
-									videoTrackRoot[field] = profile;
+									videoTrackRoot["videoTrackKey"] = videoTrackKey;
+									videoTrackRoot["trackIndex"] = trackIndex;
+									videoTrackRoot["durationInMilliSeconds"] = durationInMilliSeconds;
+									videoTrackRoot["width"] = width;
+									videoTrackRoot["height"] = height;
+									videoTrackRoot["avgFrameRate"] = avgFrameRate;
+									videoTrackRoot["codecName"] = codecName;
+									videoTrackRoot["bitRate"] = (int64_t)bitRate;
+									videoTrackRoot["profile"] = profile;
 
 									videoTracksRoot.push_back(videoTrackRoot);
 								}
 
-								field = "videoTracks";
-								profileRoot[field] = videoTracksRoot;
+								profileRoot["videoTracks"] = videoTracksRoot;
 							}
 
 							{
 								json audioTracksRoot = json::array();
 
-								for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack : audioTracks)
+								for (const tuple<int64_t, int, int64_t, long, string, long, int, string>& audioTrack : audioTracks)
 								{
 									int64_t audioTrackKey;
 									int trackIndex;
@@ -1487,35 +1310,19 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 									json audioTrackRoot;
 
-									field = "audioTrackKey";
-									audioTrackRoot[field] = audioTrackKey;
-
-									field = "trackIndex";
-									audioTrackRoot[field] = trackIndex;
-
-									field = "durationInMilliSeconds";
-									audioTrackRoot[field] = durationInMilliSeconds;
-
-									field = "bitRate";
-									audioTrackRoot[field] = (int64_t)bitRate;
-
-									field = "codecName";
-									audioTrackRoot[field] = codecName;
-
-									field = "sampleRate";
-									audioTrackRoot[field] = (int64_t)sampleRate;
-
-									field = "channels";
-									audioTrackRoot[field] = (int64_t)channels;
-
-									field = "language";
-									audioTrackRoot[field] = language;
+									audioTrackRoot["audioTrackKey"] = audioTrackKey;
+									audioTrackRoot["trackIndex"] = trackIndex;
+									audioTrackRoot["durationInMilliSeconds"] = durationInMilliSeconds;
+									audioTrackRoot["bitRate"] = (int64_t)bitRate;
+									audioTrackRoot["codecName"] = codecName;
+									audioTrackRoot["sampleRate"] = (int64_t)sampleRate;
+									audioTrackRoot["channels"] = (int64_t)channels;
+									audioTrackRoot["language"] = language;
 
 									audioTracksRoot.push_back(audioTrackRoot);
 								}
 
-								field = "audioTracks";
-								profileRoot[field] = audioTracksRoot;
+								profileRoot["audioTracks"] = audioTracksRoot;
 							}
 						}
 						else if (contentType == ContentType::Audio)
@@ -1523,13 +1330,13 @@ json MMSEngineDBFacade::getMediaItemsList(
 							vector<tuple<int64_t, int, int64_t, long, string, long, int, string>> audioTracks;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-							getAudioDetails(localMediaItemKey, physicalPathKey, fromMaster, audioTracks);
+							getAudioDetails(localMediaItemKey, physicalPathKey, mediaItemsListParams.fromMaster, audioTracks);
 							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 
 							{
 								json audioTracksRoot = json::array();
 
-								for (tuple<int64_t, int, int64_t, long, string, long, int, string> audioTrack : audioTracks)
+								for (const tuple<int64_t, int, int64_t, long, string, long, int, string>& audioTrack : audioTracks)
 								{
 									int64_t audioTrackKey;
 									int trackIndex;
@@ -1545,35 +1352,19 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 									json audioTrackRoot;
 
-									field = "audioTrackKey";
-									audioTrackRoot[field] = audioTrackKey;
-
-									field = "trackIndex";
-									audioTrackRoot[field] = trackIndex;
-
-									field = "durationInMilliSeconds";
-									audioTrackRoot[field] = durationInMilliSeconds;
-
-									field = "bitRate";
-									audioTrackRoot[field] = (int64_t)bitRate;
-
-									field = "codecName";
-									audioTrackRoot[field] = codecName;
-
-									field = "sampleRate";
-									audioTrackRoot[field] = (int64_t)sampleRate;
-
-									field = "channels";
-									audioTrackRoot[field] = (int64_t)channels;
-
-									field = "language";
-									audioTrackRoot[field] = language;
+									audioTrackRoot["audioTrackKey"] = audioTrackKey;
+									audioTrackRoot["trackIndex"] = trackIndex;
+									audioTrackRoot["durationInMilliSeconds"] = durationInMilliSeconds;
+									audioTrackRoot["bitRate"] = (int64_t)bitRate;
+									audioTrackRoot["codecName"] = codecName;
+									audioTrackRoot["sampleRate"] = (int64_t)sampleRate;
+									audioTrackRoot["channels"] = (int64_t)channels;
+									audioTrackRoot["language"] = language;
 
 									audioTracksRoot.push_back(audioTrackRoot);
 								}
 
-								field = "audioTracks";
-								profileRoot[field] = audioTracksRoot;
+								profileRoot["audioTracks"] = audioTracksRoot;
 							}
 						}
 						else if (contentType == ContentType::Image)
@@ -1584,27 +1375,19 @@ json MMSEngineDBFacade::getMediaItemsList(
 							int quality;
 
 							chrono::system_clock::time_point startMethod = chrono::system_clock::now();
-							tuple<int, int, string, int> imageDetails = getImageDetails(localMediaItemKey, physicalPathKey, fromMaster);
+							tuple<int, int, string, int> imageDetails = getImageDetails(localMediaItemKey, physicalPathKey, mediaItemsListParams.fromMaster);
 							internalSqlDuration += chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startMethod);
 
 							tie(width, height, format, quality) = imageDetails;
 
 							json imageDetailsRoot;
 
-							field = "width";
-							imageDetailsRoot[field] = width;
+							imageDetailsRoot["width"] = width;
+							imageDetailsRoot["height"] = height;
+							imageDetailsRoot["format"] = format;
+							imageDetailsRoot["quality"] = quality;
 
-							field = "height";
-							imageDetailsRoot[field] = height;
-
-							field = "format";
-							imageDetailsRoot[field] = format;
-
-							field = "quality";
-							imageDetailsRoot[field] = quality;
-
-							field = "imageDetails";
-							profileRoot[field] = imageDetailsRoot;
+							profileRoot["imageDetails"] = imageDetailsRoot;
 						}
 						else
 						{
@@ -1621,7 +1404,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 
 						mediaItemProfilesRoot.push_back(profileRoot);
 					}
-					chrono::milliseconds sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
+					auto sqlDuration = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql);
 					internalSqlDuration += sqlDuration;
 					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 					SQLQUERYLOG(
@@ -1633,8 +1416,7 @@ json MMSEngineDBFacade::getMediaItemsList(
 						sqlStatement, trans.connection->getConnectionId(), sqlDuration.count()
 					);
 
-					field = "physicalPaths";
-					mediaItemRoot[field] = mediaItemProfilesRoot;
+					mediaItemRoot["physicalPaths"] = mediaItemProfilesRoot;
 				}
 
 				mediaItemsRoot.push_back(mediaItemRoot);
@@ -1650,15 +1432,13 @@ json MMSEngineDBFacade::getMediaItemsList(
 			);
 		}
 
-		field = "mediaItems";
-		responseRoot[field] = mediaItemsRoot;
+		responseRoot["mediaItems"] = mediaItemsRoot;
 
-		field = "response";
-		mediaItemsListRoot[field] = responseRoot;
+		mediaItemsListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
 	{
-		sql_error const *se = dynamic_cast<sql_error const *>(&e);
+		auto const *se = dynamic_cast<sql_error const *>(&e);
 		if (se != nullptr)
 			LOG_ERROR(
 				"query failed"
@@ -3768,7 +3548,7 @@ void MMSEngineDBFacade::getVideoDetails(
 			result res = trans.transaction->exec(sqlStatement);
 			for (auto row : res)
 			{
-				int64_t audioTrackKey = row["audioTrackKey"].as<int64_t>();
+				auto audioTrackKey = row["audioTrackKey"].as<int64_t>();
 				int trackIndex;
 				if (!row["trackIndex"].is_null())
 					trackIndex = row["trackIndex"].as<int>();
