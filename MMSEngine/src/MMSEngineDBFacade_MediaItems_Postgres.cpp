@@ -716,6 +716,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 			mediaItemsListRoot["requestParameters"] = requestParametersRoot;
 		}
 
+		LOG_INFO("aaaaa");
 		std::optional<int64_t> newMediaItemKey = mediaItemsListParams.mediaItemKey;
 		if (mediaItemsListParams.mediaItemKey)
 		{
@@ -763,6 +764,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 			}
 		}
 
+		LOG_INFO("aaaaa");
 		string sqlWhere;
 		sqlWhere = std::format("where mi.workspaceKey = {} and mi.markedAsRemoved = false ", mediaItemsListParams.workspaceKey);
 		if (newMediaItemKey)
@@ -777,17 +779,21 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 			else
 				sqlWhere += std::format("and mi.mediaItemKey = {} ", *newMediaItemKey);
 		}
+		LOG_INFO("aaaaa");
 		if (mediaItemsListParams.contentType)
 			sqlWhere += std::format("and mi.contentType = {} ", trans.transaction->quote(toString(*mediaItemsListParams.contentType)));
+		LOG_INFO("aaaaa");
 		if (!mediaItemsListParams.startIngestionDate.empty())
 			sqlWhere += std::format(
 				R"(and mi.ingestionDate >= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )", trans.transaction->quote(mediaItemsListParams.startIngestionDate)
 			);
+		LOG_INFO("aaaaa");
 		if (!mediaItemsListParams.endIngestionDate.empty())
 			sqlWhere += std::format(
 				R"(and mi.ingestionDate <= to_timestamp({}, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') )",
 				trans.transaction->quote(mediaItemsListParams.endIngestionDate)
 			);
+		LOG_INFO("aaaaa");
 		if (!mediaItemsListParams.title.empty())
 			sqlWhere += std::format(
 				"and LOWER(mi.title) like LOWER({}) ", trans.transaction->quote("%" + mediaItemsListParams.title + "%")
@@ -798,13 +804,16 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		 *  0: look for NO liveRecordingChunk
 		 *  1: look for liveRecordingChunk
 		 */
+		LOG_INFO("aaaaa");
 		if (mediaItemsListParams.contentType
 			&& *mediaItemsListParams.contentType == ContentType::Video
 			&& mediaItemsListParams.liveRecordingChunk)
 			sqlWhere += std::format("and liveRecordingChunk_virtual = {} ", *mediaItemsListParams.liveRecordingChunk);
+		LOG_INFO("aaaaa");
 		if (mediaItemsListParams.recordingCode)
 			sqlWhere += std::format("and mi.recordingCode_virtual = {} ", *mediaItemsListParams.recordingCode);
 
+		LOG_INFO("aaaaa");
 		if (mediaItemsListParams.utcCutPeriodStartTimeInMilliSeconds && mediaItemsListParams.utcCutPeriodEndTimeInMilliSecondsPlusOneSecond)
 		{
 			// SC: Start Chunk
@@ -845,6 +854,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 			sqlWhere += (") ");
 		}
 
+		LOG_INFO("aaaaa");
 		if (!mediaItemsListParams.tagsIn.empty())
 		{
 			// &&: Gli array si sovrappongono, cioè hanno qualche elemento in comune?
@@ -856,9 +866,11 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 			sqlWhere += std::format("and mi.tags && {} = false ", getPostgresArray(mediaItemsListParams.tagsNotIn, true, trans));
 		}
 
+		LOG_INFO("aaaaa");
 		if (!mediaItemsListParams.jsonCondition.empty())
 			sqlWhere += std::format("and {} ", mediaItemsListParams.jsonCondition);
 
+		LOG_INFO("aaaaa");
 		int64_t numFound;
 		{
 			string sqlStatement = std::format("select count(*) from MMS_MediaItem mi {}", sqlWhere);
@@ -875,6 +887,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 			);
 		}
 
+		LOG_INFO("aaaaa");
 		string orderByCondition;
 		if (mediaItemsListParams.orderBy.empty() && mediaItemsListParams.jsonOrderBy.empty())
 			orderByCondition = " ";
@@ -885,6 +898,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		else // if (orderBy != "" && jsonOrderBy != "")
 			orderByCondition = std::format("order by {}, {} ", mediaItemsListParams.jsonOrderBy, mediaItemsListParams.orderBy);
 
+		LOG_INFO("aaaaa");
 		string sqlStatement = std::format(
 		R"(
 			select mi.mediaItemKey, mi.title, mi.deliveryFileName, mi.ingester, mi.userData,
