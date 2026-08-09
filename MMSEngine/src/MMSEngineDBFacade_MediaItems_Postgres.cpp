@@ -917,8 +917,10 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 
 				auto localMediaItemKey = sqlRow["mediaItemKey"].as<int64_t>();
 
+		LOG_INFO("aaaaa");
 				mediaItemRoot["mediaItemKey"] = localMediaItemKey;
 
+		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("title"))
 				{
 					auto localTitle = sqlRow["title"].as<string>();
@@ -933,6 +935,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 					mediaItemRoot["title"] = localTitle;
 				}
 
+		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("deliveryFileName"))
 				{
 					if (sqlRow["deliveryFileName"].isNull())
@@ -941,6 +944,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						mediaItemRoot["deliveryFileName"] = sqlRow["deliveryFileName"].as<string>();
 				}
 
+		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("ingester"))
 				{
 					if (sqlRow["ingester"].isNull())
@@ -949,6 +953,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 						mediaItemRoot["ingester"] = sqlRow["ingester"].as<string>();
 				}
 
+		LOG_INFO("aaaaa");
 				if (mediaItemsListParams.responseFields.empty() || mediaItemsListParams.responseFields.contains("userData"))
 				{
 					if (sqlRow["userData"].isNull())
