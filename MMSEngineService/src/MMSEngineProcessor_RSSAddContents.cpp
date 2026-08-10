@@ -182,6 +182,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 
 					json userDataRoot;
 					userDataRoot["pubDate"] = utcPubDate;
+					userDataRoot["sPubDate"] = Datetime::dateTimeFormat(utcPubDate * 1000);
 					videoAddContentParametersRoot["userData"] = userDataRoot;
 
 					videoAddContentRoot["parameters"] = videoAddContentParametersRoot;
@@ -198,7 +199,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 					imageAddContentParametersRoot["sourceURL"] = imageURL;
 					imageAddContentParametersRoot["fileFormat"] = "jpeg";
 					imageAddContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
-					imageAddContentParametersRoot["uniqueName"] = std::format("{}-image", uuid);
+					// imageAddContentParametersRoot["uniqueName"] = std::format("{}-image", uuid);
 
 					json tags = json::array();
 					tags.push_back("RSS");
@@ -206,6 +207,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 
 					json userDataRoot;
 					userDataRoot["pubDate"] = utcPubDate;
+					userDataRoot["sPubDate"] = utcPubDate;
 					imageAddContentParametersRoot["userData"] = userDataRoot;
 
 					json crossReferencesRoot = json::array();
