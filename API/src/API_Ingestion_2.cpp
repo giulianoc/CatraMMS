@@ -1308,14 +1308,14 @@ void API::updateIngestionJob(
 					{
 						// Validator validator(_logger, _mmsEngineDBFacade,
 						// _configuration);
-						Datetime::parseStringToUtcInSecs(newRecordingPeriodStart);
+						Datetime::parseDateStringToUtcInSecs(newRecordingPeriodStart);
 					}
 
 					if (recordingPeriodEndModified)
 					{
 						// Validator validator(_logger, _mmsEngineDBFacade,
 						// _configuration);
-						Datetime::parseStringToUtcInSecs(newRecordingPeriodEnd);
+						Datetime::parseDateStringToUtcInSecs(newRecordingPeriodEnd);
 					}
 
 					LOG_INFO(
@@ -1799,11 +1799,11 @@ void API::changeLiveProxyPlaylist(
 
 			field = "start";
 			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcBroadcasterStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+			utcBroadcasterStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 
 			field = "end";
 			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcBroadcasterEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+			utcBroadcasterEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 
 			field = "broadcastDefaultPlaylistItem";
 			if (JSONUtils::isPresent(broadcasterRoot, field))

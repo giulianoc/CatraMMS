@@ -1597,7 +1597,7 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 		//	Since it is optional we do not need to raise any error
 		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 
 	/*
@@ -1697,9 +1697,9 @@ void Validator::validateAddSilentAudioMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -1751,9 +1751,9 @@ void Validator::validateRemoveContentMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -1844,9 +1844,9 @@ void Validator::validateEncodeMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -1927,9 +1927,9 @@ void Validator::validateFrameMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2028,9 +2028,9 @@ void Validator::validatePeriodicalFramesMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2109,9 +2109,9 @@ void Validator::validateIFramesMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2204,9 +2204,9 @@ void Validator::validateSlideshowMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2321,9 +2321,9 @@ void Validator::validateConcatDemuxerMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2472,9 +2472,9 @@ void Validator::validateCutMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2575,9 +2575,9 @@ void Validator::validateOverlayImageOnVideoMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2809,9 +2809,9 @@ void Validator::validateOverlayTextOnVideoMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -2931,9 +2931,9 @@ void Validator::validateEmailNotificationMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3028,9 +3028,9 @@ void Validator::validateCheckStreamingMetadata(int64_t workspaceKey, const strin
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3105,9 +3105,9 @@ void Validator::validateMediaCrossReferenceMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3185,9 +3185,9 @@ void Validator::validateFTPDeliveryMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3313,9 +3313,9 @@ void Validator::validateHTTPCallbackMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3404,9 +3404,9 @@ void Validator::validateLocalCopyMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3560,9 +3560,9 @@ void Validator::validateExtractTracksMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3676,9 +3676,9 @@ void Validator::validatePostOnFacebookMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3794,9 +3794,9 @@ void Validator::validatePostOnYouTubeMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -3925,9 +3925,9 @@ void Validator::validateFaceRecognitionMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -4060,9 +4060,9 @@ void Validator::validateFaceIdentificationMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -4139,7 +4139,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 	// next code is the same in the MMSEngineProcessor class
 	string recordingPeriodStart = JSONUtils::as<string>(recordingPeriodRoot, field, "");
-	time_t utcRecordingPeriodStart = Datetime::parseStringToUtcInSecs(recordingPeriodStart);
+	time_t utcRecordingPeriodStart = Datetime::parseDateStringToUtcInSecs(recordingPeriodStart);
 
 	field = "end";
 	if (!JSONUtils::isPresent(recordingPeriodRoot, field))
@@ -4159,7 +4159,7 @@ void Validator::validateLiveRecorderMetadata(
 	}
 	// next code is the same in the MMSEngineProcessor class
 	string recordingPeriodEnd = JSONUtils::as<string>(recordingPeriodRoot, field, "");
-	time_t utcRecordingPeriodEnd = Datetime::parseStringToUtcInSecs(recordingPeriodEnd);
+	time_t utcRecordingPeriodEnd = Datetime::parseDateStringToUtcInSecs(recordingPeriodEnd);
 
 	if (utcRecordingPeriodStart >= utcRecordingPeriodEnd)
 	{
@@ -4218,9 +4218,9 @@ void Validator::validateLiveRecorderMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -4282,14 +4282,14 @@ void Validator::validateLiveProxyMetadata(
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 		}
 
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1 && utcProxyPeriodStart >= utcProxyPeriodEnd)
@@ -4356,9 +4356,9 @@ void Validator::validateLiveProxyMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -4518,14 +4518,14 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 		}
 
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1 && utcProxyPeriodStart >= utcProxyPeriodEnd)
@@ -4551,9 +4551,9 @@ void Validator::validateYouTubeLiveBroadcastMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -4747,14 +4747,14 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 		}
 
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1 && utcProxyPeriodStart >= utcProxyPeriodEnd)
@@ -4785,9 +4785,9 @@ void Validator::validateFacebookLiveBroadcastMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -4874,14 +4874,14 @@ void Validator::validateVODProxyMetadata(
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 		}
 
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1 && utcProxyPeriodStart >= utcProxyPeriodEnd)
@@ -4976,9 +4976,9 @@ void Validator::validateVODProxyMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5075,14 +5075,14 @@ void Validator::validateCountdownMetadata(
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+			utcProxyPeriodStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 		}
 
 		field = "end";
 		if (JSONUtils::isPresent(proxyPeriodRoot, field))
 		{
 			string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-			utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+			utcProxyPeriodEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 		}
 
 		if (utcProxyPeriodStart != -1 && utcProxyPeriodEnd != -1 && utcProxyPeriodStart >= utcProxyPeriodEnd)
@@ -5149,9 +5149,9 @@ void Validator::validateCountdownMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5191,9 +5191,9 @@ void Validator::validateRssAddContentsMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5243,9 +5243,9 @@ void Validator::validateWorkflowAsLibraryMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5380,9 +5380,9 @@ void Validator::validateChangeFileFormatMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5524,9 +5524,9 @@ void Validator::validateVideoSpeedMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5623,9 +5623,9 @@ void Validator::validatePictureInPictureMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -5907,9 +5907,9 @@ void Validator::validateLiveGridMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -6036,9 +6036,9 @@ void Validator::validateLiveCutMetadata(
 		//	- the variable is not passed
 		//	The result is that the field remain empty.
 		//	Since it is optional we do not need to raise any error
-		//		(Datetime::parseStringToUtcInSecs would generate  'sscanf failed')
+		//		(Datetime::parseDateStringToUtcInSecs would generate  'sscanf failed')
 		if (!processingStartingFrom.empty())
-			Datetime::parseStringToUtcInSecs(processingStartingFrom);
+			Datetime::parseDateStringToUtcInSecs(processingStartingFrom);
 	}
 }
 
@@ -6051,7 +6051,7 @@ void Validator::fillDependencies(
 	string field = "references";
 	const json& referencesRoot = parametersRoot[field];
 
-	for (auto referenceRoot : referencesRoot)
+	for (const auto& referenceRoot : referencesRoot)
 	{
 		field = "stopIfReferenceProcessingError";
 		bool stopIfReferenceProcessingError = JSONUtils::as<bool>(referenceRoot, field, false);

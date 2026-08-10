@@ -88,7 +88,7 @@ void MMSEngineProcessor::manageVODProxy(
 					}
 
 					string proxyPeriodStart = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-					utcProxyPeriodStart = Datetime::parseStringToUtcInSecs(proxyPeriodStart);
+					utcProxyPeriodStart = Datetime::parseDateStringToUtcInSecs(proxyPeriodStart);
 
 					field = "end";
 					if (!JSONUtils::isPresent(proxyPeriodRoot, field))
@@ -101,7 +101,7 @@ void MMSEngineProcessor::manageVODProxy(
 					}
 
 					string proxyPeriodEnd = JSONUtils::as<string>(proxyPeriodRoot, field, "");
-					utcProxyPeriodEnd = Datetime::parseStringToUtcInSecs(proxyPeriodEnd);
+					utcProxyPeriodEnd = Datetime::parseDateStringToUtcInSecs(proxyPeriodEnd);
 				}
 			}
 

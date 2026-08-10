@@ -719,7 +719,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					// scheduledStartTime
 					{
-						int64_t utcScheduleStartTimeInSeconds = Datetime::parseStringToUtcInSecs(scheduleStartTimeInSeconds);
+						int64_t utcScheduleStartTimeInSeconds = Datetime::parseDateStringToUtcInSecs(scheduleStartTimeInSeconds);
 
 						// format: YYYY-MM-DDTHH:MI:SS.000Z
 						string scheduleStartTimeInMilliSeconds = scheduleStartTimeInSeconds;
@@ -731,7 +731,7 @@ void MMSEngineProcessor::youTubeLiveBroadcastThread(
 
 					// scheduledEndTime
 					{
-						int64_t utcScheduleEndTimeInSeconds = Datetime::parseStringToUtcInSecs(scheduleEndTimeInSeconds);
+						int64_t utcScheduleEndTimeInSeconds = Datetime::parseDateStringToUtcInSecs(scheduleEndTimeInSeconds);
 
 						// format: YYYY-MM-DDTHH:MI:SS.000Z
 						string scheduleEndTimeInMilliSeconds = scheduleEndTimeInSeconds;
@@ -1717,7 +1717,7 @@ void MMSEngineProcessor::facebookLiveBroadcastThread(
 				throw runtime_error(errorMessage);
 			}
 			string scheduleStartTimeInSeconds = JSONUtils::as<string>(scheduleRoot, field, "");
-			utcScheduleStartTimeInSeconds = Datetime::parseStringToUtcInSecs(scheduleStartTimeInSeconds);
+			utcScheduleStartTimeInSeconds = Datetime::parseDateStringToUtcInSecs(scheduleStartTimeInSeconds);
 
 			field = "sourceType";
 			if (!JSONUtils::isPresent(parametersRoot, field))
