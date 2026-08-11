@@ -240,8 +240,50 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 					}
 				}
 
-				// configuro l'immagine come onSuccess del video
+				if (JsonPath(&parametersRoot)["encodingProfileKey"].exists() || JsonPath(&parametersRoot)["encodingProfileLabel"].exists())
 				{
+					// onSuccess del video: oltre all'immagine deve eseguire anche un encoding
+
+					json videoEncodingRoot;
+					videoEncodingRoot["type"] = "Encode";
+					videoEncodingRoot["label"] = std::format("RSS Video Encoding: {}", title);
+
+					json encodeParametersRoot;
+					if (JsonPath(&parametersRoot)["encodingProfileKey"].exists())
+						encodeParametersRoot["encodingProfileKey"] = JsonPath(&parametersRoot)["encodingProfileKey"].as<int64_t>();
+					else // if (JsonPath(&parametersRoot)["encodingProfileLabel"].exists())
+						encodeParametersRoot["encodingProfileLabel"] = JsonPath(&parametersRoot)["encodingProfileLabel"].as<string>();
+
+					if (JsonPath(&parametersRoot)["encodingPriority"].exists())
+						encodeParametersRoot["encodingPriority"] = JsonPath(&parametersRoot)["encodingPriority"].as<string>();
+
+					if (JsonPath(&parametersRoot)["encodersPool"].exists())
+						encodeParametersRoot["encodersPool"] = JsonPath(&parametersRoot)["encodersPool"].as<string>();
+					
+					videoEncodingRoot["parameters"] = encodeParametersRoot;
+
+					// creo il groupOfTaks
+					{
+						json videoTasksGroupRoot;
+						videoTasksGroupRoot["label"] = std::format("RSS Video Tasks: {}", title);
+						videoTasksGroupRoot["type"] = "GroupOfTasks";
+
+						json videoGroupParametersRoot;
+						videoGroupParametersRoot["executionType"] = "parallel";
+						{
+							json videoTasksRoot = json::array();
+							videoTasksRoot.push_back(videoEncodingRoot);
+							videoTasksRoot.push_back(imageAddContentRoot);
+							videoGroupParametersRoot["tasks"] = videoTasksRoot;
+						}
+						videoTasksGroupRoot["parameters"] = videoGroupParametersRoot;
+
+						videoAddContentRoot["onSuccess"] = videoTasksGroupRoot;
+					}
+				}
+				else
+				{
+					// onSuccess del video: configuro l'immagine
 					json imageOnSuccessRoot;
 					imageOnSuccessRoot["task"] = imageAddContentRoot;
 					videoAddContentRoot["onSuccess"] = imageOnSuccessRoot;

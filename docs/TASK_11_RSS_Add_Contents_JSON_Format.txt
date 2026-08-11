@@ -11,6 +11,21 @@
 		// optional: If present, it specifies the timeout when the rss feed is loaded
 		"timeoutInSeconds": 30,
 
+        // optional: If encodingProfileKey or encodingProfileLabel is present, each RSS video will be encoded
+        //      according the specified profile
+		"encodingProfileKey": 1,
+		"encodingProfileLabel": "Profile sport",
+
+		// optional. In case the RSS videos have to be encoded, the EncodersPool label specifies which encoders pool has to be used
+		"encodersPool": "",
+
+		// optional. Possible values: Low, Medium, High.
+		// In case the RSS videos have to be encoded, the encodingPriority specifies which encoding priority has to be used
+		// If not present or if it is specifying a priority bigger than
+		// the allowed for this Workspace,
+		// the MaxEncodingPriority of the Workspace will be used.
+		"encodingPriority": "Low",
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:
