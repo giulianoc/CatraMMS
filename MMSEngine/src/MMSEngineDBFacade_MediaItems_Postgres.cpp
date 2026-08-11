@@ -717,7 +717,7 @@ json MMSEngineDBFacade::getMediaItemsList(MediaItemsListParams& mediaItemsListPa
 		}
 
 		std::optional<int64_t> newMediaItemKey = mediaItemsListParams.mediaItemKey;
-		if (mediaItemsListParams.mediaItemKey)
+		if (!mediaItemsListParams.mediaItemKey)
 		{
 			if (mediaItemsListParams.physicalPathKey)
 			{
