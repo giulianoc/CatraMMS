@@ -8,7 +8,7 @@
 	"parameters": {
 		// mandatory: URL of the RSS feed
 		"rssFeedURL": "http://myhost/example.xml",
-		// optional: If present, it specifies the timeout when the rss feed is loaded
+		// optional: If present, it specifies the http call timeout used when the rss feed is loaded
 		"timeoutInSeconds": 30,
 
         // optional: If encodingProfileKey or encodingProfileLabel is present, each RSS video will be encoded
@@ -40,12 +40,12 @@
 			}
 		],
 
-		// optional: it specifies the retention of the contents (MediaItems retention). Once the retention expires,
-		//		content including all his profiles (PhysicalItem) will be removed.
+		// optional: it specifies the retention of the RSS contents (MediaItems retention). Once the retention expires,
+		//	    content including all his profiles (PhysicalItem) will be removed.
 		//     Format: number + s (seconds) or m (minutes) or h (hours) or d (days) or M (month) or Y (year)
 		//     Examples: 10s, 45m, 4h, 7d, 3M, 1y
-		// By default it is 60m
-		"retention": "60m",
+		// By default it is 5d
+		"retention": "5d",
 
 		// optional
 		"ingester": "aaaa"

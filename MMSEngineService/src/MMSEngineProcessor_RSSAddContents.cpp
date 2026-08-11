@@ -27,7 +27,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 			_processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 		);
 
-		constexpr int retentionInMinutes = 60 * 24 * 5; // 5 days
+		const string defaultRetention = std::format("{}d", 5); // 5 days
 
 		// recupero le info dal feed rss
 		vector<tuple<string, time_t, string, string, string>> rssContents;
@@ -173,7 +173,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 					videoAddContentParametersRoot["title"] = title;
 					videoAddContentParametersRoot["sourceURL"] = videoURL;
 					videoAddContentParametersRoot["fileFormat"] = "mp4";
-					videoAddContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
+					videoAddContentParametersRoot["retention"] = JsonPath(&parametersRoot)["retention"].as<string>(defaultRetention);
 					videoAddContentParametersRoot["uniqueName"] = uuid;
 
 					json tags = json::array();
@@ -198,7 +198,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 					imageAddContentParametersRoot["title"] = title;
 					imageAddContentParametersRoot["sourceURL"] = imageURL;
 					imageAddContentParametersRoot["fileFormat"] = "jpeg";
-					imageAddContentParametersRoot["retention"] = std::format("{}m", retentionInMinutes);
+					imageAddContentParametersRoot["retention"] = JsonPath(&parametersRoot)["retention"].as<string>(defaultRetention);
 					// imageAddContentParametersRoot["uniqueName"] = std::format("{}-image", uuid);
 
 					json tags = json::array();
