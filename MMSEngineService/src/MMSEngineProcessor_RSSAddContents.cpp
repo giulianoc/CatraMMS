@@ -259,7 +259,7 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 
 					if (JsonPath(&parametersRoot)["encodersPool"].exists())
 						encodeParametersRoot["encodersPool"] = JsonPath(&parametersRoot)["encodersPool"].as<string>();
-					
+
 					videoEncodingRoot["parameters"] = encodeParametersRoot;
 
 					// creo il groupOfTaks
@@ -278,7 +278,11 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 						}
 						videoTasksGroupRoot["parameters"] = videoGroupParametersRoot;
 
-						videoAddContentRoot["onSuccess"] = videoTasksGroupRoot;
+						{
+							json videoOnSuccessRoot;
+							videoOnSuccessRoot["task"] = videoTasksGroupRoot;
+							videoAddContentRoot["onSuccess"] = videoOnSuccessRoot;
+						}
 					}
 				}
 				else
