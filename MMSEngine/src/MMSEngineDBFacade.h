@@ -2542,8 +2542,8 @@ class MMSEngineDBFacade
 		std::string type;
 		std::optional<bool> enabled = true;
 		std::optional<bool> external;
-		std::optional<int32_t> start = 0;
-		std::optional<int32_t> rows = 1;
+		std::optional<int32_t> start;
+		std::optional<int32_t> rows;
 		std::string orderBy;
 		bool fromMaster = false;
 		bool notFoundAsException = true;
