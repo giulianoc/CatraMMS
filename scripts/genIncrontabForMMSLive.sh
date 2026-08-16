@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#Questo script viene configurato in mms/conf/crontab.txt dei server 'origin' che devono aggiornare server 'mid-origin' tramite rete interna.
+#Per questo motivo si applica solamente quando la variabile d'ambiente MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD è inizializzata
+
 debugFileName=/tmp/genIncrontabForMMSLive.log
 
 source ~/mms/conf/mms-env.sh
@@ -11,14 +14,14 @@ else
 	# 2 GB = 2 * 1024 * 1024 * 1024 = 2147483648 bytes
 	if (( filesize > 2147483648 ))
 	then
+		cp -f $debugFileName $debugFileName.previous
 		echo "" > $debugFileName
 	fi
 fi
 
-if [[ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH:-}" \
-   || -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD:-}" ]]; then
+if [[ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD:-}" ]]; then
 
-	#questo server esegue un rsync, quindi aggiorno se necessario le regole
+	#questo server esegue un rsync verso i mid-origin tramite rete interna, quindi aggiorno se necessario le regole
 
 	# File temporaneo per le nuove regole
 	NEW_RULES=$(mktemp)

@@ -32,11 +32,12 @@ else
 	fi              
 fi
 
-if [ $# -ne 3 ]
+#if [[ $# -ne 3 && $# -ne 4 ]]
+if [[ $# -ne 3 && $# -ne 4 ]]
 then
 	if [ $debug -eq 1 ]
 	then
-		echo "$(date +'%Y-%m-%d %H:%M:%S')-$pid: usage $0 <eventName> <channelDirectory> <fileName>" >> $debugFileName
+		echo "$(date +'%Y-%m-%d %H:%M:%S')-$pid: usage $0 <eventName> <channelDirectory> <fileName> [<servers to be synched by rsync on ssh>]" >> $debugFileName
 	fi
 
 	exit
@@ -45,6 +46,10 @@ fi
 eventName=$1 #i.e.: IN_MOVED_TO
 channelDirectory=$2 #i.e.: /var/mms/storage/MMSRepository/MMSLive/6/5288
 fileName=$3 #i.e.: 5288.m3u8
+if [[ $# -eq 4 ]]
+then
+	serversToBeSynchedByRsyncOnSsh=$4
+fi
 
 elapsedCopyInMilliSecs=0
 
