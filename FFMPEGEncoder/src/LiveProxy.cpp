@@ -62,12 +62,12 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			{
 				json outputRoot = liveProxyData->_outputsRoot[outputIndex];
 
-				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
+				auto outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
 				// if (outputType == "HLS" || outputType == "DASH")
 				if (outputType == "HLS_Channel")
 				{
-					string manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
+					auto manifestDirectoryPath = JSONUtils::as<string>(outputRoot, "manifestDirectoryPath", "");
 
 					if (fs::exists(manifestDirectoryPath))
 					{
@@ -185,7 +185,7 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			{
 				json inputRoot = liveProxyData->_inputsRoot[0];
 
-				int64_t utcProxyPeriodStart = JSONUtils::as<int64_t>(inputRoot, "utcScheduleStart", -1);
+				auto utcProxyPeriodStart = JSONUtils::as<int64_t>(inputRoot, "utcScheduleStart", -1);
 				// if (utcProxyPeriodStart == -1)
 				// 	utcProxyPeriodStart = JSONUtils::as<int64_t>(inputRoot, "utcProxyPeriodStart", -1);
 
@@ -246,9 +246,10 @@ void LiveProxy::encodeContent(const string_view& requestBody)
 			*/
 			liveProxyData->_ffmpeg->liveProxy(
 				liveProxyData->_ingestionJobKey, liveProxyData->_encodingJobKey, externalEncoder, maxStreamingDurationInMinutes,
-				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot), liveProxyData->_outputsRoot,
-				liveProxyData->_encodingStart, liveProxyData->_callbackData,
-				liveProxyData->_numberOfRestartBecauseOfFailure, // IN/OUT
+				&(liveProxyData->_inputsRootMutex), &(liveProxyData->_inputsRoot),
+				liveProxyData->_outputsRoot, liveProxyData->_encodingStart,
+				liveProxyData->_callbackData,
+				liveProxyData->_numberOfRestartBecauseOfFailure,				 // IN/OUT
 				liveProxyData->_killTypeReceived, // IN/OUT
 				liveProxyData->_childProcessId // IN/OUT
 			);

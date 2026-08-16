@@ -1116,8 +1116,8 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 
 						json encodingMedatada = JSONUtils::toJson<json>(jsonProfile);
 
-						string label = JSONUtils::as<string>(encodingMedatada, "label", "");
-						string fileFormat = JSONUtils::as<string>(encodingMedatada, "fileFormat", "");
+						auto label = JSONUtils::as<string>(encodingMedatada, "label", "");
+						auto fileFormat = JSONUtils::as<string>(encodingMedatada, "fileFormat", "");
 
 						MMSEngineDBFacade::DeliveryTechnology deliveryTechnology = MMSEngineDBFacade::fileFormatToDeliveryTechnology(fileFormat);
 

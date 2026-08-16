@@ -643,9 +643,13 @@ string MMSEngineDBFacade::deliveryServer_columnAsString(string columnName, int64
 {
 	try
 	{
-		string requestedColumn = std::format("mms_deliveryserver:.{}", columnName);
-		vector<string> requestedColumns = vector<string>(1, requestedColumn);
-		const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = deliveryServerQuery(requestedColumns, deliveryServerKey, fromMaster);
+		DeliveryServerListParams deliveryServerListParams {
+			.requestedColumns = vector<string>(1, std::format("mms_deliveryserver:.{}", columnName)),
+			.deliveryServerKey = deliveryServerKey,
+			.enabled = nullopt,
+			.fromMaster = fromMaster
+		};
+		const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = deliveryServerQuery(deliveryServerListParams);
 
 		return (*sqlResultSet)[0][0].as<string>();
 	}
@@ -664,28 +668,24 @@ string MMSEngineDBFacade::deliveryServer_columnAsString(string columnName, int64
 	}
 }
 
-shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
-	vector<string> &requestedColumns, int64_t deliveryServerKey, bool fromMaster,
-	int startIndex, int rows, string orderBy, bool notFoundAsException,
-	chrono::milliseconds *sqlDuration
-)
+shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(DeliveryServerListParams& deliveryServerListParams)
 {
-	PostgresConnTrans trans(fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
+	PostgresConnTrans trans(deliveryServerListParams.fromMaster ? _masterPostgresConnectionPool : _slavePostgresConnectionPool, false);
 	try
 	{
-		if (rows > _maxRows)
+		if (deliveryServerListParams.rows && *deliveryServerListParams.rows > _maxRows)
 		{
 			string errorMessage = std::format(
 				"Too many rows requested"
 				", rows: {}"
 				", maxRows: {}",
-				rows, _maxRows
+				*deliveryServerListParams.rows, _maxRows
 			);
 			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		if ((startIndex != -1 || rows != -1) && orderBy.empty())
+		if ((deliveryServerListParams.start || deliveryServerListParams.rows) && deliveryServerListParams.orderBy.empty())
 		{
 			// The query optimizer takes LIMIT into account when generating query plans, so you are very likely to get different plans (yielding
 			// different row orders) depending on what you give for LIMIT and OFFSET. Thus, using different LIMIT/OFFSET values to select different
@@ -694,11 +694,11 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 			// unless ORDER BY is used to constrain the order. The rows skipped by an OFFSET clause still have to be computed inside the server;
 			// therefore a large OFFSET might be inefficient.
 			string errorMessage = std::format(
-				"Using startIndex/row without orderBy will give inconsistent results"
-				", startIndex: {}"
+				"Using start/rows without orderBy will give inconsistent results"
+				", start: {}"
 				", rows: {}"
 				", orderBy: {}",
-				startIndex, rows, orderBy
+				deliveryServerListParams.start.value_or(-1), deliveryServerListParams.rows.value_or(-1), deliveryServerListParams.orderBy
 			);
 			LOG_ERROR(errorMessage);
 
@@ -708,25 +708,48 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 		shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet;
 		{
 			string where;
-			if (deliveryServerKey != -1)
-				where += std::format("{} deliveryServerKey = {} ", !where.empty() ? "and" : "", deliveryServerKey);
+			if (deliveryServerListParams.workspaceKey)
+			{
+				// join with MMS_EncoderWorkspaceMapping
+				where = std::format(
+					"d.deliveryServerKey = dwm.deliveryServerKey "
+					"and dwm.workspaceKey = {} ",
+					*deliveryServerListParams.workspaceKey
+				);
+			}
+
+			if (deliveryServerListParams.deliveryServerKey)
+				where += std::format("{} d.deliveryServerKey = {} ", !where.empty() ? "and" : "",
+					*deliveryServerListParams.deliveryServerKey);
+			if (deliveryServerListParams.enabled)
+				where += std::format("{} d.enabled = {} ", !where.empty() ? "and" : "",
+					*deliveryServerListParams.enabled);
+			if (deliveryServerListParams.external)
+				where += std::format("{} d.external = {} ", !where.empty() ? "and" : "",
+					*deliveryServerListParams.external);
+			if (!deliveryServerListParams.type.empty())
+				where += std::format("{} d.type = {} ", !where.empty() ? "and" : "",
+					trans.transaction->quote(deliveryServerListParams.type));
 
 			string limit;
 			string offset;
 			string orderByCondition;
-			if (rows != -1)
-				limit = std::format("limit {} ", rows);
-			if (startIndex != -1)
-				offset = std::format("offset {} ", startIndex);
-			if (!orderBy.empty())
-				orderByCondition = std::format("order by {} ", orderBy);
+			if (deliveryServerListParams.rows)
+				limit = std::format("limit {} ", *deliveryServerListParams.rows);
+			if (deliveryServerListParams.start)
+				offset = std::format("offset {} ", *deliveryServerListParams.start);
+			if (!deliveryServerListParams.orderBy.empty())
+				orderByCondition = std::format("order by {} ", deliveryServerListParams.orderBy);
 
 			string sqlStatement = std::format(
 				"select {} "
-				"from MMS_DeliveryServer "
+				"from {} "
 				"{} {} "
 				"{} {} {}",
-				_postgresHelper.buildQueryColumns(requestedColumns), !where.empty() ? "where " : "", where,
+				_postgresHelper.buildQueryColumns(deliveryServerListParams.requestedColumns),
+				deliveryServerListParams.workspaceKey ? "MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping dwm "
+					: "MMS_DeliveryServer d ",
+				!where.empty() ? "where " : "", where,
 				limit, offset, orderByCondition
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -734,8 +757,8 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 			sqlResultSet = PostgresHelper::buildResult(res);
 			sqlResultSet->setSqlDuration(chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql));
 			long elapsed = sqlResultSet->getSqlDuration().count();
-			if (sqlDuration != nullptr)
-				*sqlDuration = sqlResultSet->getSqlDuration();
+			if (deliveryServerListParams.sqlDuration != nullptr)
+				*deliveryServerListParams.sqlDuration = sqlResultSet->getSqlDuration();
 			SQLQUERYLOG(
 				"default", elapsed,
 				"SQL statement"
@@ -745,12 +768,12 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 
-			if (empty(res) && deliveryServerKey != -1 && notFoundAsException)
+			if (empty(res) && deliveryServerListParams.deliveryServerKey && deliveryServerListParams.notFoundAsException)
 			{
 				string errorMessage = std::format(
 					"deliveryServer not found"
 					", deliveryServerKey: {}",
-					deliveryServerKey
+					*deliveryServerListParams.deliveryServerKey
 				);
 				// abbiamo il log nel catch
 				// LOG_WARN(errorMessage);
@@ -787,7 +810,7 @@ shared_ptr<PostgresHelper::SqlResultSet> MMSEngineDBFacade::deliveryServerQuery(
 }
 
 string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
-	const int64_t workspaceKey, const double playerLatitude, const double playerLongitude)
+	const int64_t workspaceKey, const optional<bool> external, const double playerLatitude, const double playerLongitude)
 {
 	/*
 	Geo-proximity–based server selection. Limiti di questa soluzione:
@@ -855,6 +878,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 					WHERE d.deliveryServerKey = a.deliveryServerKey
 					AND a.workspaceKey = {workspaceKey}
 					AND enabled = true
+					{externalCondition}
 					-- 0.75: 75% di utilizzo della banda massima, 1/8: conversione da bit a byte
 					AND d.txAvgBandwidthUsage <= d.maxTXBandwidthInGbps * 1000000000 * {maxTXBandwidthPerCent} / 8
 					AND cpuUsage < {maxCPUPerCent} -- escludiamo server con CPU > 80%
@@ -868,6 +892,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 				LIMIT 5
 					)",
 				fmt::arg("workspaceKey", workspaceKey),
+				fmt::arg("externalCondition", external ? std::format("AND external = {}", *external) : ""),
 				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude),
 				fmt::arg("maxTXBandwidthPerCent", _maxTXBandwidthPerCent), fmt::arg("maxCPUPerCent", _maxCPUPerCent),
 				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
@@ -904,7 +929,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 		}
 
 		LOG_WARN("Ideal deliveryServer not selected, trying without considering cpu/bandwidth usage");
-		return getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(workspaceKey, playerLatitude, playerLongitude);
+		return getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(workspaceKey, external, playerLatitude, playerLongitude);
 	}
 	catch (exception const &e)
 	{
@@ -932,7 +957,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 }
 
 string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(
-	const int64_t workspaceKey, const double playerLatitude, const double playerLongitude)
+	const int64_t workspaceKey, const optional<bool> external, const double playerLatitude, const double playerLongitude)
 {
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
@@ -955,6 +980,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 					WHERE d.deliveryServerKey = a.deliveryServerKey
 					AND a.workspaceKey = {workspaceKey}
 					AND enabled = true
+					{externalCondition}
 					AND cpuUsageUpdateTime IS NOT NULL
 					AND bandwidthUsageUpdateTime IS NOT NULL
 					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
@@ -985,6 +1011,7 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 				RETURNING d.hostname
 					)",
 				fmt::arg("workspaceKey", workspaceKey),
+				fmt::arg("externalCondition", external ? std::format("AND external = {}", *external) : ""),
 				fmt::arg("playerLatitude", playerLatitude), fmt::arg("playerLongitude", playerLongitude),
 				fmt::arg("deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds", _deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds)
 			);
@@ -1372,594 +1399,3 @@ json MMSEngineDBFacade::getDeliveryServerWorkspacesAssociation(int64_t deliveryS
 		throw;
 	}
 }
-
-/*
-json MMSEngineDBFacade::getDeliveryServersPoolList(
-	int start, int rows, int64_t workspaceKey, int64_t deliveryServersPoolKey, string label,
-	string labelOrder // "" or "asc" or "desc"
-)
-{
-	json deliveryServersPoolListRoot;
-
-	PostgresConnTrans trans(_slavePostgresConnectionPool, false);
-	try
-	{
-		string field;
-
-		LOG_INFO(
-			"getDeliveryServersPoolList"
-			", start: {}"
-			", rows: {}"
-			", workspaceKey: {}"
-			", deliveryServersPoolKey: {}"
-			", label: {}"
-			", labelOrder: {}",
-			start, rows, workspaceKey, deliveryServersPoolKey, label, labelOrder
-		);
-
-		{
-			json requestParametersRoot;
-
-			if (deliveryServersPoolKey != -1)
-				requestParametersRoot["deliveryServersPoolKey"] = deliveryServersPoolKey;
-
-			requestParametersRoot["start"] = start;
-			requestParametersRoot["rows"] = rows;
-
-			if (!label.empty())
-				requestParametersRoot["label"] = label;
-
-			if (!labelOrder.empty())
-				requestParametersRoot["labelOrder"] = labelOrder;
-
-			deliveryServersPoolListRoot["requestParameters"] = requestParametersRoot;
-		}
-
-		// label == NULL is the "internal" EncodersPool representing the default encoders pool
-		// for a workspace, the one using all the internal encoders associated to the workspace
-		string sqlWhere = std::format("where workspaceKey = {} and label is not NULL ", workspaceKey);
-		if (deliveryServersPoolKey != -1)
-			sqlWhere += std::format("and deliveryServersPoolKey = {} ", deliveryServersPoolKey);
-		if (!label.empty())
-			sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
-
-		json responseRoot;
-		{
-			string sqlStatement = std::format("select count(*) from MMS_DeliveryServersPool {}", sqlWhere);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-		}
-
-		json deliveryServersPoolsRoot = json::array();
-		{
-			string orderByCondition;
-			if (!labelOrder.empty())
-				orderByCondition = "order by label " + labelOrder + " ";
-
-			string sqlStatement =
-				std::format("select deliveryServersPoolKey, label from MMS_DeliveryServersPool {} {} limit {} offset {}",
-					sqlWhere, orderByCondition, rows, start);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			auto sqlResultSet  = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
-			for (auto row : *sqlResultSet)
-			{
-				json deliveryServersPoolRoot;
-
-				auto deliveryServersPoolKey = row["deliveryServersPoolKey"].as<int64_t>();
-
-				deliveryServersPoolRoot["deliveryServersPoolKey"] = deliveryServersPoolKey;
-				deliveryServersPoolRoot["label"] = row["label"].as<string>();
-
-				json deliveryServersRoot = json::array();
-				{
-					string sqlStatement = std::format(
-						"select deliveryServerKey from MMS_DeliveryServerDeliveryServersPoolMapping "
-						"where deliveryServersPoolKey = {}",
-						deliveryServersPoolKey
-					);
-					// chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					auto sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
-					for (auto& sqlRow : *sqlResultSet)
-					{
-						auto deliveryServerKey = sqlRow["deliveryServerKey"].as<int64_t>();
-
-						{
-							string sqlStatement = std::format(
-								"select deliveryServerKey, label, type, originDeliveryServerKey, external, enabled, "
-								"publicIP, internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps, "
-								"to_char(selectedLastTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as selectedLastTime, "
-								"cpuUsage, to_char(cpuUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as cpuUsageUpdateTime, "
-								"txAvgBandwidthUsage, rxAvgBandwidthUsage, to_char(bandwidthUsageUpdateTime, 'YYYY-MM-DD\"T\"HH24:MI:SS\"Z\"') as bandwidthUsageUpdateTime "
-								"from MMS_DeliveryServer "
-								"where deliveryServerKey = {} ",
-								deliveryServerKey
-							);
-							chrono::system_clock::time_point startSql = chrono::system_clock::now();
-							auto sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
-							long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-							SQLQUERYLOG(
-								"default", elapsed,
-								"SQL statement"
-								", sqlStatement: @{}@"
-								", getConnectionId: @{}@"
-								", elapsed (millisecs): @{}@",
-								sqlStatement, trans.connection->getConnectionId(), elapsed
-							);
-							if (!sqlResultSet->empty())
-							{
-								bool admin = false;
-								auto& row1 = (*sqlResultSet)[0];
-
-								deliveryServersRoot.push_back(getDeliveryServerRoot(admin, row1));
-							}
-							else
-							{
-								string errorMessage = std::format(
-									"No deliveryServerKey found"
-									", deliveryServerKey: {}",
-									deliveryServerKey
-								);
-								LOG_ERROR(errorMessage);
-
-								throw runtime_error(errorMessage);
-							}
-						}
-					}
-				}
-
-				deliveryServersPoolRoot["deliveryServers"] = deliveryServersRoot;
-
-				deliveryServersPoolsRoot.push_back(deliveryServersPoolRoot);
-			}
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-		}
-
-		responseRoot["deliveryServersPool"] = deliveryServersPoolsRoot;
-
-		deliveryServersPoolListRoot["response"] = responseRoot;
-	}
-	catch (exception const &e)
-	{
-		auto const *se = dynamic_cast<sql_error const *>(&e);
-		if (se != nullptr)
-			LOG_ERROR(
-				"query failed"
-				", query: {}"
-				", exceptionMessage: {}"
-				", conn: {}",
-				se->query(), se->what(), trans.connection->getConnectionId()
-			);
-		else
-			LOG_ERROR(
-				"query failed"
-				", exception: {}"
-				", conn: {}",
-				e.what(), trans.connection->getConnectionId()
-			);
-
-		trans.setAbort();
-
-		throw;
-	}
-
-	return deliveryServersPoolListRoot;
-}
-
-int64_t MMSEngineDBFacade::addDeliveryServersPool(int64_t workspaceKey, const string& label, vector<int64_t> &deliveryServerKeys)
-{
-	int64_t deliveryServersPoolKey;
-
-	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
-	try
-	{
-		// check: every encoderKey shall be already associated to the workspace
-		for (int64_t deliveryServerKey : deliveryServerKeys)
-		{
-			string sqlStatement = std::format(
-				"select count(*) from MMS_DeliveryServerWorkspaceMapping "
-				"where workspaceKey = {} and deliveryServerKey = {} ",
-				workspaceKey, deliveryServerKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			auto count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-			if (count == 0)
-			{
-				string errorMessage = std::format(
-					"DeliveryServer is not already associated to the workspace"
-					", workspaceKey: {}"
-					", deliveryServerKey: {}",
-					workspaceKey, deliveryServerKey
-				);
-				LOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		{
-			string sqlStatement = std::format(
-				"insert into MMS_DeliveryServersPool(workspaceKey, label) values ( "
-				"{}, {}) returning deliveryServersPoolKey",
-				workspaceKey, trans.transaction->quote(label)
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			deliveryServersPoolKey = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-		}
-
-		for (int64_t deliveryServerKey : deliveryServerKeys)
-		{
-			string sqlStatement = std::format(
-				"insert into MMS_DeliveryServerDeliveryServersPoolMapping(deliveryServersPoolKey, "
-				"deliveryServerKey) values ( "
-				"{}, {})",
-				deliveryServersPoolKey, deliveryServerKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			trans.transaction->exec0(sqlStatement);
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-		}
-	}
-	catch (exception const &e)
-	{
-		auto const *se = dynamic_cast<sql_error const *>(&e);
-		if (se != nullptr)
-			LOG_ERROR(
-				"query failed"
-				", query: {}"
-				", exceptionMessage: {}"
-				", conn: {}",
-				se->query(), se->what(), trans.connection->getConnectionId()
-			);
-		else
-			LOG_ERROR(
-				"query failed"
-				", exception: {}"
-				", conn: {}",
-				e.what(), trans.connection->getConnectionId()
-			);
-
-		trans.setAbort();
-
-		throw;
-	}
-
-	return deliveryServersPoolKey;
-}
-
-int64_t MMSEngineDBFacade::modifyDeliveryServersPool(int64_t deliveryServersPoolKey, int64_t workspaceKey, string newLabel,
-	vector<int64_t> &newDeliveryServerKeys)
-{
-	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
-	try
-	{
-		LOG_INFO(
-			"Received modifyDeliveryServersPool"
-			", deliveryServersPoolKey: {}"
-			", workspaceKey: {}"
-			", newLabel: {}"
-			", newDeliveryServerKeys.size: {}",
-			deliveryServersPoolKey, workspaceKey, newLabel, newDeliveryServerKeys.size()
-		);
-
-		// check: every encoderKey shall be already associated to the workspace
-		for (int64_t deliveryServerKey : newDeliveryServerKeys)
-		{
-			string sqlStatement = std::format(
-				"select count(*) from MMS_DeliveryServerWorkspaceMapping "
-				"where workspaceKey = {} and deliveryServerKey = {} ",
-				workspaceKey, deliveryServerKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			auto count = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-			if (count == 0)
-			{
-				string errorMessage = std::format(
-					"DeliveryServer is not already associated to the workspace"
-					", workspaceKey: {}"
-					", deliveryServerKey: {}",
-					workspaceKey, deliveryServerKey
-				);
-				LOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-
-		{
-			string sqlStatement = std::format(
-				"select label from MMS_DeliveryServersPool "
-				"where deliveryServersPoolKey = {} ",
-				deliveryServersPoolKey
-			);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-			if (!empty(res))
-			{
-				auto savedLabel = res[0]["label"].as<string>();
-				if (savedLabel != newLabel)
-				{
-					string sqlStatement = std::format(
-						"update MMS_DeliveryServersPool "
-						"set label = {} "
-						"where deliveryServersPoolKey = {} ",
-						trans.transaction->quote(newLabel), deliveryServersPoolKey
-					);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.transaction->exec(sqlStatement);
-					int rowsUpdated = res.affected_rows();
-					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-					SQLQUERYLOG(
-						"default", elapsed,
-						"SQL statement"
-						", sqlStatement: @{}@"
-						", getConnectionId: @{}@"
-						", elapsed (millisecs): @{}@",
-						sqlStatement, trans.connection->getConnectionId(), elapsed
-					);
-					if (rowsUpdated != 1)
-					{
-						string errorMessage = std::format(
-							"no update was done"
-							", newLabel: {}"
-							", deliveryServersPoolKey: {}"
-							", rowsUpdated: {}"
-							", sqlStatement: {}",
-							newLabel, deliveryServersPoolKey, rowsUpdated, sqlStatement
-						);
-						LOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-				}
-
-				vector<int64_t> savedDeliveryServerKeys;
-				{
-					string sqlStatement = std::format(
-						"select deliveryServerKey from MMS_DeliveryServerDeliveryServersPoolMapping "
-						"where deliveryServersPoolKey = {}",
-						deliveryServersPoolKey
-					);
-					chrono::system_clock::time_point startSql = chrono::system_clock::now();
-					result res = trans.transaction->exec(sqlStatement);
-					for (auto row : res)
-					{
-						auto deliveryServerKey = row["deliveryServerKey"].as<int64_t>();
-
-						savedDeliveryServerKeys.push_back(deliveryServerKey);
-					}
-					long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-					SQLQUERYLOG(
-						"default", elapsed,
-						"SQL statement"
-						", sqlStatement: @{}@"
-						", getConnectionId: @{}@"
-						", elapsed (millisecs): @{}@",
-						sqlStatement, trans.connection->getConnectionId(), elapsed
-					);
-				}
-
-				// all the new encoderKey that are not present in savedEncoderKeys have to be added
-				for (int64_t newDeliveryServerKey : newDeliveryServerKeys)
-				{
-					if (find(savedDeliveryServerKeys.begin(), savedDeliveryServerKeys.end(), newDeliveryServerKey) == savedDeliveryServerKeys.end())
-					{
-						string sqlStatement = std::format(
-							"insert into MMS_DeliveryServerDeliveryServersPoolMapping("
-							"deliveryServersPoolKey, deliveryServerKey) values ( "
-							"{}, {})",
-							deliveryServersPoolKey, newDeliveryServerKey
-						);
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						trans.transaction->exec0(sqlStatement);
-						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-						SQLQUERYLOG(
-							"default", elapsed,
-							"SQL statement"
-							", sqlStatement: @{}@"
-							", getConnectionId: @{}@"
-							", elapsed (millisecs): @{}@",
-							sqlStatement, trans.connection->getConnectionId(), elapsed
-						);
-					}
-				}
-
-				// all the saved encoderKey that are not present in encoderKeys have to be removed
-				for (int64_t savedDeliveryServerKey : savedDeliveryServerKeys)
-				{
-					if (find(newDeliveryServerKeys.begin(), newDeliveryServerKeys.end(), savedDeliveryServerKey) == newDeliveryServerKeys.end())
-					{
-						string sqlStatement = std::format(
-							"delete from MMS_DeliveryServerDeliveryServersPoolMapping "
-							"where deliveryServersPoolKey = {} and deliveryServerKey = {} ",
-							deliveryServersPoolKey, savedDeliveryServerKey
-						);
-						chrono::system_clock::time_point startSql = chrono::system_clock::now();
-						result res = trans.transaction->exec(sqlStatement);
-						int rowsUpdated = res.affected_rows();
-						long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-						SQLQUERYLOG(
-							"default", elapsed,
-							"SQL statement"
-							", sqlStatement: @{}@"
-							", getConnectionId: @{}@"
-							", elapsed (millisecs): @{}@",
-							sqlStatement, trans.connection->getConnectionId(), elapsed
-						);
-						if (rowsUpdated != 1)
-						{
-							string errorMessage = std::format(
-								"no delete was done"
-								", deliveryServersPoolKey: {}"
-								", savedDeliveryServerKey: {}"
-								", rowsUpdated: {}"
-								", sqlStatement: {}",
-								deliveryServersPoolKey, savedDeliveryServerKey, rowsUpdated, sqlStatement
-							);
-							LOG_WARN(errorMessage);
-
-							throw runtime_error(errorMessage);
-						}
-					}
-				}
-			}
-			else
-			{
-				string errorMessage = std::format(
-					"No deliveryServersPool found"
-					", deliveryServersPoolKey: {}",
-					deliveryServersPoolKey
-				);
-				LOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	catch (exception const &e)
-	{
-		auto const *se = dynamic_cast<sql_error const *>(&e);
-		if (se != nullptr)
-			LOG_ERROR(
-				"query failed"
-				", query: {}"
-				", exceptionMessage: {}"
-				", conn: {}",
-				se->query(), se->what(), trans.connection->getConnectionId()
-			);
-		else
-			LOG_ERROR(
-				"query failed"
-				", exception: {}"
-				", conn: {}",
-				e.what(), trans.connection->getConnectionId()
-			);
-
-		trans.setAbort();
-
-		throw;
-	}
-
-	return deliveryServersPoolKey;
-}
-
-void MMSEngineDBFacade::removeDeliveryServersPool(int64_t deliveryServersPoolKey)
-{
-	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
-	try
-	{
-		{
-			string sqlStatement = std::format("delete from MMS_DeliveryServersPool where deliveryServersPoolKey = {} ", deliveryServersPoolKey);
-			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			result res = trans.transaction->exec(sqlStatement);
-			int rowsUpdated = res.affected_rows();
-			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
-			SQLQUERYLOG(
-				"default", elapsed,
-				"SQL statement"
-				", sqlStatement: @{}@"
-				", getConnectionId: @{}@"
-				", elapsed (millisecs): @{}@",
-				sqlStatement, trans.connection->getConnectionId(), elapsed
-			);
-			if (rowsUpdated != 1)
-			{
-				string errorMessage = std::format(
-					"no delete was done"
-					", deliveryServersPoolKey: {}"
-					", rowsUpdated: {}"
-					", sqlStatement: {}",
-					deliveryServersPoolKey, rowsUpdated, sqlStatement
-				);
-				LOG_WARN(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-		}
-	}
-	catch (exception const &e)
-	{
-		auto const *se = dynamic_cast<sql_error const *>(&e);
-		if (se != nullptr)
-			LOG_ERROR(
-				"query failed"
-				", query: {}"
-				", exceptionMessage: {}"
-				", conn: {}",
-				se->query(), se->what(), trans.connection->getConnectionId()
-			);
-		else
-			LOG_ERROR(
-				"query failed"
-				", exception: {}"
-				", conn: {}",
-				e.what(), trans.connection->getConnectionId()
-			);
-
-		trans.setAbort();
-
-		throw;
-	}
-}
-*/

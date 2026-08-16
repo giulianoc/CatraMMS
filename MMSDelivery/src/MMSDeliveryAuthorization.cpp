@@ -650,12 +650,15 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 						}
 						string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
+						// TODO: nello scenario attuale ho bisogno solamente di selezionare un delivery external
+						//	Mi riservo, in futuro, di capire gli scenari dove servono anche delivery host interni
+						optional<bool> external = true;
 						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol,
-							deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace, /* playerCountry, playerRegion, */
-								playerLatitude, playerLongitude, _deliveryHost_authorizationThroughParameter),
-								deliveryURI,
-							CurlWrapper::escape(md5Base64), expirationTime
+							deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(
+								requestWorkspace, external, playerLatitude, playerLongitude,
+								_deliveryHost_authorizationThroughParameter),
+							deliveryURI, CurlWrapper::escape(md5Base64), expirationTime
 						);
 					}
 				}
@@ -683,10 +686,23 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 					}
 					string md5Base64 = getSignedMMSPath(uriToBeSigned, expirationTime);
 
+					// TODO: nello scenario attuale ho bisogno solamente di selezionare un delivery external
+					//	Mi riservo, in futuro, di capire gli scenari dove servono anche delivery host interni
+					optional<bool> external = true;
+					deliveryURL = std::format(
+						"{}://{}/token_{},{}{}", _deliveryProtocol,
+						deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(
+							requestWorkspace, external, playerLatitude, playerLongitude,
+							_deliveryHost_authorizationThroughPath),
+						md5Base64, expirationTime, deliveryURI
+					);
+					/*
 					deliveryURL = _deliveryProtocol + "://" +
-						(deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(requestWorkspace,
-							/* playerCountry, playerRegion, */ playerLatitude, playerLongitude, _deliveryHost_authorizationThroughPath))
+						(deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(
+							requestWorkspace, external, playerLatitude, playerLongitude,
+							_deliveryHost_authorizationThroughPath))
 						+ "/token_" + md5Base64 + "," + to_string(expirationTime) + deliveryURI;
+					*/
 				}
 				/*
 				else
@@ -922,8 +938,8 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 }
 
 string MMSDeliveryAuthorization::getDeliveryHost(
-	const shared_ptr<Workspace>& requestWorkspace,
-	/* const string& playerCountry, const string& playerRegion, */ const optional<double> playerLatitude, const optional<double> playerLongitude,
+	const shared_ptr<Workspace>& requestWorkspace, const optional<bool> external,
+	const optional<double> playerLatitude, const optional<double> playerLongitude,
 	const string& defaultDeliveryHost
 )
 {
@@ -939,11 +955,13 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 			// ed usare un semplice roundrobin
 			burstOfRequests = _workspaceRateChecking->burstOfRequests(requestWorkspace->_workspaceKey);
 			if (burstOfRequests)
-				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(requestWorkspace->_workspaceKey,
-					*playerLatitude, *playerLongitude);
+				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(
+					requestWorkspace->_workspaceKey, external, *playerLatitude, *playerLongitude
+				);
 			else
-				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(requestWorkspace->_workspaceKey,
-					*playerLatitude, *playerLongitude);
+				deliveryHost = _mmsEngineDBFacade->getBestDeliveryServerBasedOnGeoProximityAndMetrics(
+					requestWorkspace->_workspaceKey, external, *playerLatitude, *playerLongitude
+				);
 		}
 		catch (exception& e)
 		{
@@ -955,13 +973,10 @@ string MMSDeliveryAuthorization::getDeliveryHost(
 
 	LOG_INFO(
 		"getDeliveryHost"
-		// ", playerCountry: {}"
-		// ", playerRegion: {}"
 		", playerLatitude: {}"
 		", playerLongitude: {}"
 		", burstOfRequests: {}"
 		", deliveryHost: {}",
-		// playerCountry, playerRegion,
 		playerLatitude ? to_string(*playerLatitude) : "nullopt",
 		playerLongitude ? to_string(*playerLongitude) : "nullopt",
 		burstOfRequests,

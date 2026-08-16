@@ -220,6 +220,6 @@ class EncoderProxy
 	bool waitingEncoding(int maxConsecutiveEncodingStatusFailures);
 	bool waitingLiveProxyOrLiveRecorder(
 		MMSEngineDBFacade::EncodingType encodingType, std::string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
-		uint32_t maxAttemptsNumberInCaseOfErrors, std::string ipPushStreamConfigurationLabel
+		uint32_t maxAttemptsNumberInCaseOfErrors, const std::string &ipPushStreamConfigurationLabel
 	);
 };

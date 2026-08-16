@@ -33,7 +33,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 	{
 		json inputsRoot = (_encodingItem->_encodingParametersRoot)["inputsRoot"];
 
-		if (inputsRoot == nullptr || inputsRoot.size() == 0)
+		if (inputsRoot == nullptr || inputsRoot.empty())
 		{
 			string errorMessage = std::format(
 				"No inputsRoot are present"
@@ -49,14 +49,14 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 		}
 
 		{
-			json firstInputRoot = inputsRoot[0];
+			const json& firstInputRoot = inputsRoot[0];
 
 			timePeriod = JSONUtils::as<bool>(firstInputRoot, "timePeriod", false);
 
 			if (timePeriod)
 				utcProxyPeriodStart = JSONUtils::as<int64_t>(firstInputRoot, "utcScheduleStart", -1);
 
-			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+			const json& lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
 			timePeriod = JSONUtils::as<bool>(lastInputRoot, "timePeriod", false);
 
@@ -133,14 +133,14 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 							_encodingItem->_workspace->_workspaceKey, rtmpChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 						);
 
-					if (streamName != "")
+					if (!streamName.empty())
 					{
 						if (rtmpURL.back() == '/')
 							rtmpURL += streamName;
 						else
 							rtmpURL += ("/" + streamName);
 					}
-					if (userName != "" && password != "")
+					if (!userName.empty() && !password.empty())
 					{
 						// nel caso di rtmp nativo (basato su libavformat/protocols/rtmp.c) non serve l'escape.
 						// Ad esempio avevo una password con il '.' e, se fosse codificato, non funziona
@@ -215,7 +215,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 						_encodingItem->_workspace->_workspaceKey, srtChannelConfigurationLabel, outputIndex, _encodingItem->_ingestionJobKey
 					);
 
-					if (mode != "")
+					if (!mode.empty())
 					{
 						if (srtURL.find('?') == string::npos)
 							srtURL += "?";
@@ -224,7 +224,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 						srtURL += std::format("mode={}", mode);
 					}
-					if (streamId != "")
+					if (!streamId.empty())
 					{
 						if (srtURL.find('?') == string::npos)
 							srtURL += "?";
@@ -233,7 +233,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 						srtURL += std::format("streamid={}", streamId);
 					}
-					if (passphrase != "")
+					if (!passphrase.empty())
 					{
 						if (srtURL.find('?') == string::npos)
 							srtURL += "?";
@@ -383,7 +383,7 @@ bool EncoderProxy::liveProxy(MMSEngineDBFacade::EncodingType encodingType)
 
 			for (int outputIndex = 0; outputIndex < outputsRoot.size(); outputIndex++)
 			{
-				json outputRoot = outputsRoot[outputIndex];
+				const json& outputRoot = outputsRoot[outputIndex];
 
 				string outputType = JSONUtils::as<string>(outputRoot, "outputType", "");
 
@@ -574,7 +574,7 @@ bool EncoderProxy::liveProxy_through_ffmpeg(MMSEngineDBFacade::EncodingType enco
 			if (timePeriod)
 				utcProxyPeriodStart = JSONUtils::as<int64_t>(firstInputRoot, "utcScheduleStart", -1);
 
-			json lastInputRoot = inputsRoot[inputsRoot.size() - 1];
+			const json& lastInputRoot = inputsRoot[inputsRoot.size() - 1];
 
 			timePeriod = JSONUtils::as<bool>(lastInputRoot, "timePeriod", false);
 

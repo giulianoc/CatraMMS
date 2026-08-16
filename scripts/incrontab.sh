@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#Comando da eseguire sull'encoder per sapere le tempistiche dei trasferimenti dei chunks verso i delivery servers.
+#Controlla i trasferimenti sopra i 10 secs che sono quelli che creano problemi.
+#channelDir=5142
+#grep INFO incrontab.log | grep "/$channelDir@" | cut -d'@' -f2,14 | awk 'BEGIN { FS="@" } { if ($2 > 10000) printf("%s - %s\n", $1, $2); }'
+#Per tutti i channels
+#grep INFO incrontab.log | awk 'BEGIN { FS="@" } { if ($14 > 10000) printf("%s\n", $0); }'
+
 debug=1
 debug_rsync=0
 debug_event=0
@@ -20,6 +27,7 @@ else
 	# 300MB =     300 * 1024 * 1024 =  314572800 bytes
 	if (( filesize > 314572800 ))
 	then
+		cp -f $debugFileName $debugFileName.previous
 		echo "" > $debugFileName
 	fi              
 fi
@@ -34,9 +42,9 @@ then
 	exit
 fi
 
-eventName=$1
-channelDirectory=$2
-fileName=$3
+eventName=$1 #i.e.: IN_MOVED_TO
+channelDirectory=$2 #i.e.: /var/mms/storage/MMSRepository/MMSLive/6/5288
+fileName=$3 #i.e.: 5288.m3u8
 
 elapsedCopyInMilliSecs=0
 

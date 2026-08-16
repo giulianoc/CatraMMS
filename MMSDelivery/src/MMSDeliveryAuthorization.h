@@ -80,9 +80,8 @@ private:
 	static std::string getSignedMMSPath(const std::string &contentURI, time_t expirationTime);
 	static time_t getExpirationTime(int ttlInSeconds, bool reusable);
 	std::string getDeliveryHost(
-		const std::shared_ptr<Workspace> &requestWorkspace,
-		// const std::string &playerCountry, const std::string &playerRegion,
-		const std::optional<double> playerLatitude, const std::optional<double> playerLongitude,
+		const std::shared_ptr<Workspace> &requestWorkspace, std::optional<bool> external,
+		std::optional<double> playerLatitude, std::optional<double> playerLongitude,
 		const std::string &defaultDeliveryHost
 	);
 };

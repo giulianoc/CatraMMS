@@ -3,6 +3,7 @@
 
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "spdlog/spdlog.h"
 
@@ -112,7 +113,8 @@ void LiveGrid::encodeContent(const string_view& requestBody)
 
 			_liveProxyData->_ffmpeg->liveGrid(
 				_liveProxyData->_ingestionJobKey, _encoding->_encodingJobKey, externalEncoder, userAgent, inputChannelsRoot, gridColumns, gridWidth,
-				gridHeight, _liveProxyData->_outputsRoot, _liveProxyData->_childProcessId, _liveProxyData->_callbackData
+				gridHeight, _liveProxyData->_outputsRoot,
+				_liveProxyData->_childProcessId, _liveProxyData->_callbackData
 			);
 		}
 

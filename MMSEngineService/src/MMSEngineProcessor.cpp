@@ -655,92 +655,73 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 	if (outputsRoot == nullptr)
 		return localOutputsRoot;
 
-	for (auto outputRoot : outputsRoot)
+	for (const auto& outputRoot : outputsRoot)
 	{
-		string videoMap;
-		string audioMap;
-		string outputType;
-		string otherOutputOptions;
-		// int videoTrackIndexToBeUsed = -1;
-		// int audioTrackIndexToBeUsed = -1;
-		json filtersRoot = nullptr;
-		int64_t encodingProfileKey = -1;
-		json encodingProfileDetailsRoot = nullptr;
-		MMSEngineDBFacade::ContentType encodingProfileContentType = MMSEngineDBFacade::ContentType::Video;
-		string awsChannelConfigurationLabel;
-		bool awsSignedURL = false;
-		int awsExpirationInMinutes = -1;
-		string cdn77ChannelConfigurationLabel;
-		int cdn77ExpirationInMinutes = -1;
 		string rtmpChannelConfigurationLabel;
 		string srtChannelConfigurationLabel;
 		string hlsChannelConfigurationLabel;
+		string mmsCDNExternalDeliveryServersToBeSynched;
+		string mmsCDNInternalDeliveryServersToBeSynched;
 		string udpUrl;
-		json drawTextDetailsRoot = nullptr;
 
-		string field = "videoMap";
-		videoMap = JSONUtils::as<string>(outputRoot, field, "default");
+		auto outputType = JsonPath(&outputRoot)["outputType"].as<string>("HLS_Channel");
 
-		field = "audioMap";
-		audioMap = JSONUtils::as<string>(outputRoot, field, "default");
-
-		field = "outputType";
-		outputType = JSONUtils::as<string>(outputRoot, field, "HLS_Channel");
-
-		field = "otherOutputOptions";
-		otherOutputOptions = JSONUtils::as<string>(outputRoot, field, "");
-
-		// field = "videoTrackIndexToBeUsed";
-		// videoTrackIndexToBeUsed = JSONUtils::as<int32_t>(outputRoot, field, -1);
-
-		// field = "audioTrackIndexToBeUsed";
-		// audioTrackIndexToBeUsed = JSONUtils::as<int32_t>(outputRoot, field, -1);
-
-		field = "filters";
-		if (JSONUtils::isPresent(outputRoot, field))
-			filtersRoot = outputRoot[field];
-
-		filtersRoot = getReviewedFiltersRoot(filtersRoot, workspace, ingestionJobKey);
-
+		// it could not exist in case of SHARED resource
 		if (outputType == "RTMP_Channel")
-		{
-			// it could not exist in case of SHARED RTMP
-			field = "rtmpChannelConfigurationLabel";
-			rtmpChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, field, "");
-		}
+			rtmpChannelConfigurationLabel = JsonPath(&outputRoot)["rtmpChannelConfigurationLabel"].as<string>();
 		else if (outputType == "SRT_Channel")
-		{
-			// it could not exist in case of SHARED RTMP
-			srtChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, "srtChannelConfigurationLabel", "");
-		}
+			srtChannelConfigurationLabel = JsonPath(&outputRoot)["srtChannelConfigurationLabel"].as<string>();
 		else if (outputType == "HLS_Channel")
 		{
-			// it could not exist in case of SHARED RTMP
-			field = "hlsChannelConfigurationLabel";
-			hlsChannelConfigurationLabel = JSONUtils::as<string>(outputRoot, field, "");
+			hlsChannelConfigurationLabel = JsonPath(&outputRoot)["hlsChannelConfigurationLabel"].as<string>();
+
+			if (JsonPath(&outputRoot)["mmsCDN"].as<bool>(false))
+			{
+				MMSEngineDBFacade::DeliveryServerListParams deliveryServerListParams {
+					.requestedColumns = {
+						"mms_deliveryserver:.external",
+						"mms_deliveryserver:.publicIP"
+					},
+					.workspaceKey = workspace->_workspaceKey,
+					.type = "origin",
+					.enabled = true,
+					.rows = nullopt
+				};
+				const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _mmsEngineDBFacade->deliveryServerQuery(deliveryServerListParams);
+				for (auto row : *sqlResultSet)
+				{
+					// se sarà gestito da un encoder interno, i server di delivery da sincronizzare sono solo quelli esterni
+					// perchè l'interno è gia inizializzato
+					if (row["external"].as<bool>(false))
+						mmsCDNExternalDeliveryServersToBeSynched += std::format("{} ", row["publicIP"].as<string>());
+					else
+						mmsCDNInternalDeliveryServersToBeSynched += std::format("{} ", row["publicIP"].as<string>());
+				}
+				mmsCDNExternalDeliveryServersToBeSynched = StringUtils::trim(mmsCDNExternalDeliveryServersToBeSynched);
+				mmsCDNInternalDeliveryServersToBeSynched = StringUtils::trim(mmsCDNInternalDeliveryServersToBeSynched);
+			}
 		}
 		else // if (outputType == "UDP_Stream")
-		{
-			field = "udpUrl";
-			udpUrl = JSONUtils::as<string>(outputRoot, field, "");
-		}
+			udpUrl = JsonPath(&outputRoot)["udpUrl"].as<string>();
 
 		string keyField = "encodingProfileKey";
 		string labelField = "encodingProfileLabel";
 		string contentTypeField = "contentType";
+		int64_t encodingProfileKey = -1;
 		if (JSONUtils::isPresent(outputRoot, keyField))
 		{
 			encodingProfileKey = JSONUtils::as<int64_t>(outputRoot, keyField, 0);
 
-			LOG_INFO(
-				string() + "outputRoot encodingProfileKey" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingProfileKey: " + to_string(encodingProfileKey)
+			LOG_INFO("outputRoot encodingProfileKey"
+				", _processorIdentifier: {}"
+				", ingestionJobKey: {}"
+				", encodingProfileKey: {}", _processorIdentifier, ingestionJobKey, encodingProfileKey
 			);
 		}
 		else if (JSONUtils::isPresent(outputRoot, labelField))
 		{
 			string encodingProfileLabel = JSONUtils::as<string>(outputRoot, labelField, "");
-			if (encodingProfileLabel != "")
+			if (!encodingProfileLabel.empty())
 			{
 				MMSEngineDBFacade::ContentType contentType;
 				if (JSONUtils::isPresent(outputRoot, contentTypeField))
@@ -758,14 +739,17 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 					);
 				}
 
-				LOG_INFO(
-					string() + "outputRoot encodingProfileLabel" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-					", ingestionJobKey: " + to_string(ingestionJobKey) + ", encodingProfileLabel: " + encodingProfileLabel +
-					", encodingProfileKey: " + to_string(encodingProfileKey)
+				LOG_INFO("outputRoot encodingProfileLabel"
+					", _processorIdentifier: {}"
+					", ingestionJobKey: {}"
+					", encodingProfileLabel: {}"
+					", encodingProfileKey: {}", _processorIdentifier, ingestionJobKey, encodingProfileLabel, encodingProfileKey
 				);
 			}
 		}
 
+		json encodingProfileDetailsRoot = nullptr;
+		MMSEngineDBFacade::ContentType encodingProfileContentType = MMSEngineDBFacade::ContentType::Video;
 		if (encodingProfileKey != -1)
 		{
 			string jsonEncodingProfile;
@@ -780,83 +764,50 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 		{
 			if (encodingProfileMandatory)
 			{
-				string errorMessage = string() + "EncodingProfile is mandatory in case of Image" + ", ingestionJobKey: " + to_string(ingestionJobKey);
+				string errorMessage = std::format("EncodingProfile is mandatory in case of Image"
+					", ingestionJobKey: {}", ingestionJobKey);
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
 		}
 
-		field = "drawTextDetails";
-		if (JSONUtils::isPresent(outputRoot, field))
-			drawTextDetailsRoot = outputRoot[field];
+		json drawTextDetailsRoot = JsonPath(&outputRoot)["drawTextDetails"].as<json>(nullptr);
 
 		json localOutputRoot;
 
-		field = "videoMap";
-		localOutputRoot[field] = videoMap;
+		localOutputRoot["videoMap"] = JsonPath(&outputRoot)["videoMap"].as<string>("default");
+		localOutputRoot["audioMap"] = JsonPath(&outputRoot)["audioMap"].as<string>("default");
+		localOutputRoot["outputType"] = outputType;
+		localOutputRoot["otherOutputOptions"] = JsonPath(&outputRoot)["otherOutputOptions"].as<string>();
 
-		field = "audioMap";
-		localOutputRoot[field] = audioMap;
-
-		field = "outputType";
-		localOutputRoot[field] = outputType;
-
-		field = "otherOutputOptions";
-		localOutputRoot[field] = otherOutputOptions;
-
-		// field = "videoTrackIndexToBeUsed";
-		// localOutputRoot[field] = videoTrackIndexToBeUsed;
-
-		// field = "audioTrackIndexToBeUsed";
-		// localOutputRoot[field] = audioTrackIndexToBeUsed;
-
-		field = "filters";
-		localOutputRoot[field] = filtersRoot;
+		localOutputRoot["filters"] = getReviewedFiltersRoot(JsonPath(&outputRoot)["filters"].as<json>(nullptr),
+			workspace, ingestionJobKey);
 
 		{
-			field = "encodingProfileKey";
-			localOutputRoot[field] = encodingProfileKey;
-
-			field = "encodingProfileDetails";
-			localOutputRoot[field] = encodingProfileDetailsRoot;
-
-			field = "encodingProfileContentType";
-			outputRoot[field] = MMSEngineDBFacade::toString(encodingProfileContentType);
+			localOutputRoot["encodingProfileKey"] = encodingProfileKey;
+			localOutputRoot["encodingProfileDetails"] = encodingProfileDetailsRoot;
+			localOutputRoot["encodingProfileContentType"] = MMSEngineDBFacade::toString(encodingProfileContentType);
 		}
 
-		field = "awsChannelConfigurationLabel";
-		localOutputRoot[field] = awsChannelConfigurationLabel;
+		/*
+		localOutputRoot["awsChannelConfigurationLabel"] = ""; // serve?
+		localOutputRoot["awsSignedURL"] = false; // serve?
+		localOutputRoot["awsExpirationInMinutes"] = -1; // serve?
+		localOutputRoot["cdn77ChannelConfigurationLabel"] = ""; // serve?
+		localOutputRoot["cdn77ExpirationInMinutes"] = -1; // serve?
+		*/
+		localOutputRoot["rtmpChannelConfigurationLabel"] = rtmpChannelConfigurationLabel;
+		localOutputRoot["srtChannelConfigurationLabel"] = srtChannelConfigurationLabel;
+		localOutputRoot["hlsChannelConfigurationLabel"] = hlsChannelConfigurationLabel;
 
-		field = "awsSignedURL";
-		localOutputRoot[field] = awsSignedURL;
+		localOutputRoot["mmsCDNExternalDeliveryServersToBeSynched"] = mmsCDNExternalDeliveryServersToBeSynched;
+		localOutputRoot["mmsCDNInternalDeliveryServersToBeSynched"] = mmsCDNInternalDeliveryServersToBeSynched;
 
-		field = "awsExpirationInMinutes";
-		localOutputRoot[field] = awsExpirationInMinutes;
-
-		field = "cdn77ChannelConfigurationLabel";
-		localOutputRoot[field] = cdn77ChannelConfigurationLabel;
-
-		field = "cdn77ExpirationInMinutes";
-		localOutputRoot[field] = cdn77ExpirationInMinutes;
-
-		field = "rtmpChannelConfigurationLabel";
-		localOutputRoot[field] = rtmpChannelConfigurationLabel;
-
-		field = "srtChannelConfigurationLabel";
-		localOutputRoot[field] = srtChannelConfigurationLabel;
-
-		field = "hlsChannelConfigurationLabel";
-		localOutputRoot[field] = hlsChannelConfigurationLabel;
-
-		field = "udpUrl";
-		localOutputRoot[field] = udpUrl;
+		localOutputRoot["udpUrl"] = udpUrl;
 
 		if (drawTextDetailsRoot != nullptr)
-		{
-			field = "drawTextDetails";
-			localOutputRoot[field] = drawTextDetailsRoot;
-		}
+			localOutputRoot["drawTextDetails"] = drawTextDetailsRoot;
 
 		localOutputsRoot.push_back(localOutputRoot);
 	}

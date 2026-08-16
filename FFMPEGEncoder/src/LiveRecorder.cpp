@@ -69,7 +69,7 @@ void LiveRecorder::encodeContent(const string_view& requestBody)
 		//		this is important because in case of high bitrate,
 		//		nfs would not be enough fast and could create random file system error
 		liveRecording->_chunksTranscoderStagingContentsPath = JSONUtils::as<string>(encodingParametersRoot, "chunksTranscoderStagingContentsPath", "");
-		string userAgent = JSONUtils::as<string>(ingestedParametersRoot, "userAgent", "");
+		auto userAgent = JSONUtils::as<string>(ingestedParametersRoot, "userAgent", "");
 
 		// this is the global shared path where the chunks would be moved for the ingestion
 		// see the comments in EncoderVideoAudioProxy.cpp

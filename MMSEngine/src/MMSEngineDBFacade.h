@@ -1745,7 +1745,6 @@ class MMSEngineDBFacade
 		bool admin = false;
 		bool fromMaster = false;
 	};
-
 	nlohmann::json getMediaItemsList(MediaItemsListParams& mediaItemsListParams);
 
 	nlohmann::json getTagsList(
@@ -2503,6 +2502,7 @@ class MMSEngineDBFacade
 
 	void addUpdatePartitionInfo(int partitionKey, const std::string& partitionName, uint64_t currentFreeSizeInBytes, int64_t freeSpaceToLeaveInMB);
 
+
 	int64_t addDeliveryServer(
 		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
 		const std::string &publicIP, const std::string &internalIP, const std::string &hostname,
@@ -2527,22 +2527,29 @@ class MMSEngineDBFacade
 		std::optional<std::string> type, std::optional<std::string> labelOrder
 	);
 	std::string deliveryServer_columnAsString(std::string columnName, int64_t deliveryServerKey, bool fromMaster = false);
-	std::string getBestDeliveryServerBasedOnGeoProximityAndMetrics(int64_t workspaceKey, double playerLatitude, double playerLongitude);
-	std::string getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(int64_t workspaceKey, double playerLatitude, double playerLongitude);
-	std::shared_ptr<PostgresHelper::SqlResultSet> deliveryServerQuery(
-		std::vector<std::string> &requestedColumns, int64_t deliveryServerKey, bool fromMaster,
-		int startIndex = -1, int rows = -1, std::string orderBy = "",
-		bool notFoundAsException = true, std::chrono::milliseconds *sqlDuration = nullptr
+	std::string getBestDeliveryServerBasedOnGeoProximityAndMetrics(
+		int64_t workspaceKey, std::optional<bool> external, double playerLatitude, double playerLongitude
 	);
-	/*
-	nlohmann::json getDeliveryServersPoolList(int start, int rows, int64_t workspaceKey, int64_t deliveryServersPoolKey,
-		std::string label, std::string labelOrder);
-	int64_t addDeliveryServersPool(int64_t workspaceKey, const std::string &label, std::vector<int64_t> &deliveryServerKeys);
-	int64_t modifyDeliveryServersPool(
-		int64_t deliveryServersPoolKey, int64_t workspaceKey, std::string newLabel, std::vector<int64_t> &newDeliveryServerKeys
+	std::string getBestDeliveryServerBasedOnGeoProximityWithoutMetrics(
+		int64_t workspaceKey, std::optional<bool> external, double playerLatitude, double playerLongitude
 	);
-	void removeDeliveryServersPool(int64_t deliveryServersPoolKey);
-	*/
+	struct DeliveryServerListParams
+	{
+		std::vector<std::string> requestedColumns;
+		// join with MMS_DeliveryServerWorkspaceMapping is done only if workspaceKey is present
+		std::optional<int64_t> workspaceKey;
+		std::optional<int64_t> deliveryServerKey;
+		std::string type;
+		std::optional<bool> enabled = true;
+		std::optional<bool> external;
+		std::optional<int32_t> start = 0;
+		std::optional<int32_t> rows = 1;
+		std::string orderBy;
+		bool fromMaster = false;
+		bool notFoundAsException = true;
+		std::chrono::milliseconds *sqlDuration = nullptr;
+	};
+	std::shared_ptr<PostgresHelper::SqlResultSet> deliveryServerQuery(DeliveryServerListParams& deliveryServerListParams);
 	void addAssociationWorkspaceDeliveryServer(int64_t workspaceKey, int64_t deliveryServerKey);
 	void removeAssociationWorkspaceDeliveryServer(int64_t workspaceKey, int64_t deliveryServerKey);
 

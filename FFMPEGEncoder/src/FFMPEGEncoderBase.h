@@ -70,11 +70,6 @@ class FFMPEGEncoderBase
 
 		// frames, time, size, bitrate, framerate
 		std::pair<int32_t, std::chrono::milliseconds> _lastRealTimeInfo{};
-		// int32_t _lastRealTimeFrame{};
-		// chrono::milliseconds _lastRealTimeTimeInMilliSeconds{};
-		// size_t _lastRealTimeSize{};
-		// double _lastRealTimeBitRate{};
-		// long _lastRealTimeFrameRate{};
 		std::chrono::system_clock::time_point _realTimeLastChange;
 
 		// quando speed < soglia && fps < soglia, registriamo il momento in cui la condizione è iniziata
@@ -98,12 +93,6 @@ class FFMPEGEncoderBase
 			liveProxyAndGrid->_childProcessId = _childProcessId;
 			liveProxyAndGrid->_killTypeReceived = _killTypeReceived;
 			liveProxyAndGrid->_lastRealTimeInfo = _lastRealTimeInfo;
-			// liveProxyAndGrid->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
-			// liveProxyAndGrid->_lastRealTimeFrame = _lastRealTimeFrame;
-			// liveProxyAndGrid->_lastRealTimeSize = _lastRealTimeSize;
-			// liveProxyAndGrid->_lastRealTimeFrameRate = _lastRealTimeFrameRate;
-			// liveProxyAndGrid->_lastRealTimeBitRate = _lastRealTimeBitRate;
-			// liveProxyAndGrid->_lastRealTimeTimeInMilliSeconds = _lastRealTimeTimeInMilliSeconds;
 			liveProxyAndGrid->_realTimeLastChange = _realTimeLastChange;
 			liveProxyAndGrid->_numberOfRestartBecauseOfFailure = _numberOfRestartBecauseOfFailure;
 			liveProxyAndGrid->_encodingJobKey = _encodingJobKey;
@@ -170,7 +159,6 @@ class FFMPEGEncoderBase
 		int64_t _lastRecordedSegmentUtcStartTimeInMillisecs{};
 		std::string _channelLabel;
 		std::string _segmenterType;
-		// chrono::system_clock::time_point _recordingStart;
 
 		bool _virtualVOD{};
 		std::string _monitorVirtualVODManifestDirectoryPath; // used to build virtualVOD
@@ -198,11 +186,6 @@ class FFMPEGEncoderBase
 			liveRecording->_monitoringEnabled = _monitoringEnabled;
 			liveRecording->_lastRealTimeInfo = _lastRealTimeInfo;
 			liveRecording->_lastOutputFfmpegFileSize = _lastOutputFfmpegFileSize;
-			// liveRecording->_lastRealTimeFrame = _lastRealTimeFrame;
-			// liveRecording->_lastRealTimeSize = _lastRealTimeSize;
-			// liveRecording->_lastRealTimeFrameRate = _lastRealTimeFrameRate;
-			// liveRecording->_lastRealTimeBitRate = _lastRealTimeBitRate;
-			// liveRecording->_lastRealTimeTimeInMilliSeconds = _lastRealTimeTimeInMilliSeconds;
 			liveRecording->_realTimeLastChange = _realTimeLastChange;
 			liveRecording->_numberOfRestartBecauseOfFailure = _numberOfRestartBecauseOfFailure;
 			liveRecording->_encodingJobKey = _encodingJobKey;
@@ -223,7 +206,6 @@ class FFMPEGEncoderBase
 			liveRecording->_lastRecordedAssetDurationInSeconds = _lastRecordedAssetDurationInSeconds;
 			liveRecording->_channelLabel = _channelLabel;
 			liveRecording->_segmenterType = _segmenterType;
-			// liveRecording->_recordingStart = _recordingStart;
 			liveRecording->_encodingStart = _encodingStart;
 			liveRecording->_virtualVOD = _virtualVOD;
 			liveRecording->_monitorVirtualVODManifestDirectoryPath = _monitorVirtualVODManifestDirectoryPath;

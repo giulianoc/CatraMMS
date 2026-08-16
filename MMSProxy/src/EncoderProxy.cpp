@@ -15,6 +15,7 @@
 #include "CurlWrapper.h"
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "System.h"
 #include "spdlog/fmt/bundled/format.h"
 #include "spdlog/spdlog.h"
@@ -1445,7 +1446,7 @@ bool EncoderProxy::waitingEncoding(int maxConsecutiveEncodingStatusFailures)
 
 bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 	MMSEngineDBFacade::EncodingType encodingType, string ffmpegURI, bool timePeriod, time_t utcPeriodStart, time_t utcPeriodEnd,
-	uint32_t maxAttemptsNumberInCaseOfErrors, string ipPushStreamConfigurationLabel
+	uint32_t maxAttemptsNumberInCaseOfErrors, const string& ipPushStreamConfigurationLabel
 )
 {
 	FFMpegWrapper::KillType killTypeReceived = FFMpegWrapper::KillType::None;
@@ -1537,53 +1538,51 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 			{
 				// 2021-12-14: we have to read again encodingParametersRoot because, in case the playlist (inputsRoot) is changed, the
 				// updated inputsRoot is into DB
+				try
 				{
-					try
+					MMSEngineDBFacade::IngestionStatus ingestionJobStatus;
+
+					// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated (modifying the playlist)
+					if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType == MMSEngineDBFacade::EncodingType::VODProxy ||
+						encodingType == MMSEngineDBFacade::EncodingType::Countdown)
+						_encodingItem->_encodingParametersRoot =
+							_mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
+
+					// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
+					// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)
+					tie(ingestionJobStatus, _encodingItem->_ingestedParametersRoot) = _mmsEngineDBFacade->ingestionJob_StatusMetadataContent(
+						_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true
+					);
+
+					// viene controllato lo status perchè nello scenario in cui l'IngestionJob sia terminato e all'interno
+					// di questo if viene generata una eccezione (ad es. EncoderNotFound nella call
+					// _encodersLoadBalancer->getEncoderURL), si prosegue nel catch che ci riporta a inizio while
+					// Entriamo quindi in un loop (inizio-while, eccezione EncoderNotFound, inizio-while) quando l'IngestionJob è terminato
+					string sIngestionJobStatus = MMSEngineDBFacade::toString(ingestionJobStatus);
+					if (sIngestionJobStatus.starts_with("End_"))
 					{
-						MMSEngineDBFacade::IngestionStatus ingestionJobStatus;
-
-						// 2022-12-18: fromMaster true because the inputsRoot maybe was just updated (modifying the playlist)
-						if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType == MMSEngineDBFacade::EncodingType::VODProxy ||
-							encodingType == MMSEngineDBFacade::EncodingType::Countdown)
-							_encodingItem->_encodingParametersRoot =
-								_mmsEngineDBFacade->encodingJob_columnAsJson("parameters", _encodingItem->_encodingJobKey, true);
-
-						// 2024-12-01: ricarichiamo ingestedParameters perchè potrebbe essere stato modificato con un nuovo 'encodersDetails' (nello
-						// scenario in cui si vuole eseguire lo switch di un ingestionjob su un nuovo encoder)
-						tie(ingestionJobStatus, _encodingItem->_ingestedParametersRoot) = _mmsEngineDBFacade->ingestionJob_StatusMetadataContent(
-							_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, true
-						);
-
-						// viene controllato lo status perchè nello scenario in cui l'IngestionJob sia terminato e all'interno
-						// di questo if viene generata una eccezione (ad es. EncoderNotFound nella call
-						// _encodersLoadBalancer->getEncoderURL), si prosegue nel catch che ci riporta a inizio while
-						// Entriamo quindi in un loop (inizio-while, eccezione EncoderNotFound, inizio-while) quando l'IngestionJob è terminato
-						string sIngestionJobStatus = MMSEngineDBFacade::toString(ingestionJobStatus);
-						if (sIngestionJobStatus.starts_with("End_"))
-						{
-							LOG_INFO(
-								"IngestionJob is terminated"
-								", _ingestionJobKey: {}"
-								", _encodingJobKey: {}"
-								", ingestionJobStatus: {}",
-								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sIngestionJobStatus
-							);
-							killed = true;
-							continue;
-						}
-					}
-					catch (exception &e)
-					{
-						LOG_ERROR(
-							"encodingJob_Parameters failed"
+						LOG_INFO(
+							"IngestionJob is terminated"
 							", _ingestionJobKey: {}"
 							", _encodingJobKey: {}"
-							", e.what(): {}",
-							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+							", ingestionJobStatus: {}",
+							_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, sIngestionJobStatus
 						);
-
-						throw;
+						killed = true;
+						continue;
 					}
+				}
+				catch (exception &e)
+				{
+					LOG_ERROR(
+						"encodingJob_Parameters failed"
+						", _ingestionJobKey: {}"
+						", _encodingJobKey: {}"
+						", e.what(): {}",
+						_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, e.what()
+					);
+
+					throw;
 				}
 
 				// IN ingestionJob->metadataParameters abbiamo già il campo encodersPool.
@@ -1596,8 +1595,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					// 	- questo encoder ha un fault e va giu
 					// 	- finche questo encode non viene ripristinato (dipende da Hetzner) abbiamo un outage
 					// 	- Per evitare l'outage, posso io cambiare encoder nella configurazione dello Stream
-					// 	- La getStreamInputPushDetails sotto mi serve in questo loop per recuperare avere l'encoder aggiornato configurato nello
-					// Stream 		altrimenti rimarremmo con l'encoder e l'url calcolata all'inizio e non potremmo evitare l'outage
+					// 	- La getStreamInputPushDetails sotto mi serve in questo loop per recuperare l'encoder aggiornato configurato nello
+					//		Stream altrimenti rimarremmo con l'encoder e l'url calcolata all'inizio e non potremmo evitare l'outage
 					// 2024-06-25: In uno scenario di Broadcaster e Broadcast, il cambiamento descritto sopra
 					// 		risolve il problema del broadcaster ma non quello del broadcast. Infatti il broadcast ha il campo udpUrl
 					// 		nell'outputRoot che punta al transcoder iniziale. Questo campo udpUrl è stato inizializzato
@@ -1606,44 +1605,30 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					int64_t updatedPushEncoderKey = -1;
 					string updatedUrl;
 					{
-						json internalMMSRoot = JSONUtils::as<json>(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
-						json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails", json(nullptr));
-						/*
-						if (encodersDetailsRoot == nullptr)
+						json internalMMSRoot = JsonPath(&_encodingItem->_ingestedParametersRoot)["internalMMS"].as<json>(nullptr);
+						json encodersDetailsRoot = JsonPath(&internalMMSRoot)["encodersDetails"].as<json>(nullptr);
+
+						updatedPushEncoderKey = JsonPath(&encodersDetailsRoot)["pushEncoderKey"].as<int64_t>(-1);
+						if (updatedPushEncoderKey == -1)
 						{
-							// quando elimino questo if, verifica se anche la funzione getStreamInputPushDetails possa essere eliminata
-							// per essere sostituita da getStreamPushServerUrl
-							tie(updatedPushEncoderKey, updatedUrl) = _mmsEngineDBFacade->getStreamInputPushDetails(
-								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, streamConfigurationLabel
+							string errorMessage = std::format(
+								"Wrong pushEncoderKey"
+								", _ingestionJobKey: {}"
+								", _encodingJobKey: {}"
+								", encodersDetailsRoot: {}",
+								_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, JSONUtils::toString(encodersDetailsRoot)
 							);
+							LOG_ERROR(errorMessage);
+
+							throw runtime_error(errorMessage);
 						}
-						else
-						*/
-						{
-							// questo quello corretto, l'if sopra dovrebbe essere eliminato
 
-							updatedPushEncoderKey = JSONUtils::as<int64_t>(encodersDetailsRoot, "pushEncoderKey", static_cast<int64_t>(-1));
-							if (updatedPushEncoderKey == -1)
-							{
-								string errorMessage = std::format(
-									"Wrong pushEncoderKey"
-									", _ingestionJobKey: {}"
-									", _encodingJobKey: {}"
-									", encodersDetailsRoot: {}",
-									_encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, JSONUtils::toString(encodersDetailsRoot)
-								);
-								LOG_ERROR(errorMessage);
+						bool pushPublicEncoderName = JsonPath(&encodersDetailsRoot)["pushPublicEncoderName"].as<bool>(false);
 
-								throw runtime_error(errorMessage);
-							}
-
-							bool pushPublicEncoderName = JSONUtils::as<bool>(encodersDetailsRoot, "pushPublicEncoderName", false);
-
-							updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
-								_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, ipPushStreamConfigurationLabel,
-								updatedPushEncoderKey, pushPublicEncoderName, true
-							);
-						}
+						updatedUrl = _mmsEngineDBFacade->getStreamPushServerUrl(
+							_encodingItem->_workspace->_workspaceKey, _encodingItem->_ingestionJobKey, ipPushStreamConfigurationLabel,
+							updatedPushEncoderKey, pushPublicEncoderName, true
+						);
 					}
 
 					if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType == MMSEngineDBFacade::EncodingType::VODProxy ||
@@ -1698,14 +1683,14 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					{
 						// both vodProxy and countdownProxy work with VODs and
 						// the encodersPool is defined by the ingestedParameters field
-						encodersPool = JSONUtils::as<string>(_encodingItem->_ingestedParametersRoot, "encodersPool", "");
+						encodersPool = JsonPath(&_encodingItem->_ingestedParametersRoot)["encodersPool"].as<string>();
 					}
 					else // if (encodingType == MMSEngineDBFacade::EncodingType::LiveProxy || encodingType ==
 						 // MMSEngineDBFacade::EncodingType::LiveRecorder)
 					{
-						json internalMMSRoot = JSONUtils::as<json>(_encodingItem->_ingestedParametersRoot, "internalMMS", json(nullptr));
-						json encodersDetailsRoot = JSONUtils::as<json>(internalMMSRoot, "encodersDetails", json(nullptr));
-						encodersPool = JSONUtils::as<string>(encodersDetailsRoot, "encodersPoolLabel", string());
+						json internalMMSRoot = JsonPath(&_encodingItem->_ingestedParametersRoot)["internalMMS"].as<json>(nullptr);
+						json encodersDetailsRoot = JsonPath(&internalMMSRoot)["encodersDetails"].as<json>(nullptr);
+						encodersPool = JsonPath(&encodersDetailsRoot)["encodersPoolLabel"].as<string>();
 					}
 
 					int64_t encoderKeyToBeSkipped = -1;
@@ -1735,8 +1720,6 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					// trascoder deployed è > 1.0.5315
 					bodyRoot["ingestionJobKey"] = _encodingItem->_ingestionJobKey;
 					bodyRoot["externalEncoder"] = _currentUsedFFMpegExternalEncoder;
-					// non sembra il campo url serva al liveProxy
-					// bodyRoot["liveURL"] = streamUrl;
 					bodyRoot["ingestedParametersRoot"] = _encodingItem->_ingestedParametersRoot;
 					bodyRoot["encodingParametersRoot"] = _encodingItem->_encodingParametersRoot;
 
@@ -1755,15 +1738,16 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					_currentUsedFFMpegEncoderKey, body
 				);
 
-				vector<string> otherHeaders;
-				json liveProxyContentResponse;
 				try
 				{
-					liveProxyContentResponse = CurlWrapper::httpPostStringAndGetJson(
-						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds, CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
+					// json liveProxyContentResponse =
+					CurlWrapper::httpPostStringAndGetJson(
+						ffmpegEncoderURL, _ffmpegEncoderTimeoutInSeconds,
+						CurlWrapper::basicAuthorization(_ffmpegEncoderUser, _ffmpegEncoderPassword),
 						body,
 						"application/json", // contentType
-						otherHeaders, std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
+						vector<string>(),
+						std::format(", ingestionJobKey: {}", _encodingItem->_ingestionJobKey)
 					);
 				}
 				catch (exception &e)
@@ -1806,7 +1790,8 @@ bool EncoderProxy::waitingLiveProxyOrLiveRecorder(
 					_proxyIdentifier, _encodingItem->_ingestionJobKey, _encodingItem->_encodingJobKey, _encodingItem->_encoderKey
 				);
 
-				tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = _mmsEngineDBFacade->getEncoderURL(_encodingItem->_encoderKey);
+				tie(_currentUsedFFMpegEncoderHost, _currentUsedFFMpegExternalEncoder) = _mmsEngineDBFacade->getEncoderURL(
+					_encodingItem->_encoderKey);
 				_currentUsedFFMpegEncoderKey = _encodingItem->_encoderKey;
 
 				// we have to reset _encodingItem->_encoderKey because in case we will come back in the above 'while' loop, we have to
