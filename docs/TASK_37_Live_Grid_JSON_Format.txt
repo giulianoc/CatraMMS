@@ -31,6 +31,11 @@
 				// Default: HLS_Channel
 				"outputType": "HLS_Channel",
 
+                // optional, the 'mmsCDN' parameter is used only in case of 'HLS_Channel' and it enable/disable
+                // the usage of the MMS CDN for the HLS output. The MMS CDN will use the Delivery Servers configuration.
+                // Default is false
+                "mmsCDN": false,
+
 				// optional, used only in case of HLS_Channel
 				// the configuration label of an HLS Channel defined in MMS.
 				// If not present, a SHARED free HLS channel is used

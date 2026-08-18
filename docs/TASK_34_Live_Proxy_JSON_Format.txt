@@ -81,6 +81,43 @@
                 "lowSpeedThreshold": 0.8,
                 "lowFpsThreshold": 23.0,
                 "toleranceInSeconds": 60
+            },
+            "timestampDiscontinuity": {
+ 				// Significa che:
+ 				// - il PTS/DTS in ingresso ha fatto un salto
+ 				// - l'encoder ha ricalcolato un offset per continuare la timeline
+ 				// - il demuxer NON è crashato
+ 				// Non è di per sé un errore, infatti spesso lo streaming funzione bene (dipende da DOVE cade la discontinuità),
+ 				// é tipico di:
+ 				// - SRT / RTMP / UDP
+ 				// - encoder upstream che riparte
+ 				// - cambi di GOP
+ 				// - encoder hardware
+ 				// L'encoder riallinea il tempo
+ 				// - I segmenti successivi hanno timestamp coerenti
+ 				// - Il player non se ne accorge
+ 				// In alcuni casi potrebbe causare problemi quando
+ 				// - Tanti timestamp discontinuity ravvicinati
+ 				// - Salti grandi (decine di secondi)
+ 				// - Segmenti HLS generati ma con:
+ 				// - durata errata
+ 				// - EXT-X-PROGRAM-DATE-TIME instabile
+ 				// La discontinuità diventa fatale quando abbiamo:
+ 				// - Non-monotonous DTS
+ 				// - PTS < DTS
+ 				// - DTS out of order
+ 				// - Invalid NAL unit
+ 				// - PPS id out of range
+ 				// - Error muxing packet
+ 				// - av_interleaved_write_frame(): Invalid argument
+ 				// - tanti discontinuity in pochi secondi Es.: ≥ 5 volte in 30s oppure crescita continua per 60s
+ 				// 	(ho visto 1300 discontinuities in 30 secondi)
+ 				// Oppure:
+ 				// - HLS smette di aggiornarsi
+ 				// - playlist .m3u8 non cresce
+ 				// - segmenti .ts non vengono più creati
+ 				// Default is 1000
+               "maxTimestampDiscontinuitiesInTimeWindow": 1000
             }
         }
 
@@ -92,6 +129,11 @@
 				// HLS_Channel works also in case of an external transcoder
 				// Default: HLS_Channel
 				"outputType": "HLS_Channel",
+
+                // optional, the 'mmsCDN' parameter is used only in case of 'HLS_Channel' and it enable/disable
+                // the usage of the MMS CDN for the HLS output. The MMS CDN will use the Delivery Servers configuration.
+                // Default is false
+                "mmsCDN": false,
 
 				// optional, used only in case of HLS_Channel
 				// the configuration label of an HLS Channel defined in MMS.

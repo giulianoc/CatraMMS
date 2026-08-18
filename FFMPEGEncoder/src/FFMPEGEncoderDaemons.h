@@ -39,8 +39,6 @@ private:
 	bool _monitorThreadShutdown;
 	int _monitorCheckInSeconds;
 
-	int _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow;
-
 	std::mutex *_liveRecordingMutex;
 	std::vector<std::shared_ptr<LiveRecording>> *_liveRecordingsCapability;
 	std::mutex *_liveProxyMutex;

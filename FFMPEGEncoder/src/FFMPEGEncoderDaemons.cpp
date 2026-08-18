@@ -34,8 +34,6 @@ FFMPEGEncoderDaemons::FFMPEGEncoderDaemons(
 			", ffmpeg->monitorCheckInSeconds: {}",
 			_monitorCheckInSeconds
 		);
-
-		_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = 1000; // ne ho contati 1300 in 30 secondi in un caso
 	}
 	catch (exception &e)
 	{
@@ -902,8 +900,13 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 
 					try
 					{
+						// ne ho contati 1300 in 30 secondi in un caso
+						auto maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))
+							["monitoring"]["timestampDiscontinuity"]["maxTimestampDiscontinuitiesInTimeWindow"]
+							.as<int16_t>(1000);
+
 						if (copiedLiveProxy->_callbackData->getTimestampDiscontinuityCountInTimeWindow() >
-							_maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow)
+							maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow)
 						{
 							LOG_ERROR(
 								"liveProxyMonitor. ProcessUtility::kill/quit/term Process. liveProxyMonitor (rtmp). "
@@ -912,9 +915,9 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								", encodingJobKey: {}"
 								", copiedLiveProxy->_childProcessId: {}"
 								", timestampDiscontinuityCountInTimeWindow: {}"
-								", _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow: {}",
+								", maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow: {}",
 								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, copiedLiveProxy->_childProcessId.toString(),
-								copiedLiveProxy->_callbackData->getTimestampDiscontinuityCountInTimeWindow(), _maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow
+								copiedLiveProxy->_callbackData->getTimestampDiscontinuityCountInTimeWindow(), maxRealTimeInfoTimestampDiscontinuitiesInTimeWindow
 							);
 
 							liveProxyWorking = false;

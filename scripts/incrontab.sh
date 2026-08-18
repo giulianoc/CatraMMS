@@ -308,16 +308,19 @@ then
 	elapsedCopyInMilliSecs=$((endCopy-startCopy))
 
 	#indica che la variabile esiste e non è empty
-	if [ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH:-}" ]; then
+	#if [ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH:-}" ]; then
+	if [[ -n "${serversToBeSynchedByRsyncOnSsh:-}" ]]; then
 		#sincronizziamo i server MMS_RSYNC_EXTERNAL_DELIVERY_SERVERS tramite rsync su ssh
 
-		serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH"
+		#serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH"
+		echo "rsync start (on ssh): $serversToBeSynchedByRsyncOnSsh"
 
 		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
 		rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
 		rsyncDest=$channelDirectory/
 
-		rsyncBySSH "$rsyncSource" "$rsyncDest" "$serversToBeSynched"
+		#rsyncBySSH "$rsyncSource" "$rsyncDest" "$serversToBeSynched"
+		rsyncBySSH "$rsyncSource" "$rsyncDest" "$serversToBeSynchedByRsyncOnSsh"
 	fi
 
 	#indica che la variabile esiste e non è empty
@@ -325,6 +328,7 @@ then
 		#sincronizziamo i server tramite rsyncd senza alcuna crittografia (servers su rete interna/protetta)
 
 		serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD"
+		echo "rsync start (daemon): $serversToBeSynched"
 
 		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
                 rsyncSource=$channelDirectory.$channelDirectoryMd5sum/

@@ -70,6 +70,11 @@
 				// Default: HLS
 				"outputType": "HLS",
 
+                // optional, the 'mmsCDN' parameter is used only in case of 'HLS_Channel' and it enable/disable
+                // the usage of the MMS CDN for the HLS output. The MMS CDN will use the Delivery Servers configuration.
+                // Default is false
+                "mmsCDN": false,
+
 				// DeliveryCode is used only in case of HLS and DASH
 				//	It identifies this specific delivery. In case for example
 				//	- we have two HLS Outputs or
