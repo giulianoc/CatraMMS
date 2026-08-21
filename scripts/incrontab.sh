@@ -98,6 +98,12 @@ rsyncBySSH()
 		exit 1
 	fi
 
+	#Directory per i socket di controllo SSH (multiplexing): riusa la stessa connessione SSH già autenticata
+	#tra il pass .ts e il pass .m3u8, e tra eventi consecutivi verso lo stesso server, evitando di rifare
+	#l'handshake TCP/SSH ad ogni chiamata (handshake che, sotto rete congestionata, può da solo esaurire il timeout)
+	CM_DIR="$HOME/.ssh/cm"
+	mkdir -p "$CM_DIR"; chmod 700 "$CM_DIR"
+
 	#e' impoetante questo formato perchè viene usato da servicesStatusLibrary.sh (mms_incrontab_check_rsync)
 	sDate=$(date +'%Y-%m-%d %H:%M:%S')
 	if [ $debug_rsync -eq 1 ]
@@ -105,10 +111,10 @@ rsyncBySSH()
 		#Warning: Permanently added '[116.202.53.105]:9255' (ED25519) to the list of known hosts.
 		#Warning: Permanently added '[194.42.206.8]:9255' (ED25519) to the list of known hosts.
 		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export timeoutRsyncCommand rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
-		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export timeoutRsyncCommand rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile CM_DIR
+		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --env CM_DIR --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 		'{
-			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes -o ControlMaster=auto -o ControlPersist=120s -o ControlPath=$CM_DIR/%h-%p.sock"
 			echo "@$(date)-$pid ({})@: @$fileName@ @INFO@ Inizio sincronizzazione...$rsyncDest" >> $debugFileName
 			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
@@ -136,10 +142,10 @@ rsyncBySSH()
 		::: $serversToBeSynched
 	else
 		#Le variabili esportate vengono ereditate dai processi figli dello script (parallel, rsync)
-		export timeoutRsyncCommand rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile
-		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
+		export timeoutRsyncCommand rsyncSource rsyncDest BW_LIMIT debugFileName pid fileName sDate identityFile CM_DIR
+		parallel --env timeoutRsyncCommand --env rsyncSource --env rsyncDest --env BW_LIMIT --env debugFileName --env pid --env fileName --env sDate --env identityFile --env CM_DIR --jobs "$MAX_PARALLEL" --bar --halt now,fail=1 \
 		'{
-			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes"
+			SSH_OPTS="-p 9255 -i $identityFile -o UserKnownHostsFile=~/.ssh/known_hosts -o StrictHostKeyChecking=yes -o ControlMaster=auto -o ControlPersist=120s -o ControlPath=$CM_DIR/%h-%p.sock"
 			#Il parametro --timeout di rsync indica il tempo massimo (in secondi) di inattività sulla connessione di rete
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
@@ -313,7 +319,7 @@ then
 		#sincronizziamo i server MMS_RSYNC_EXTERNAL_DELIVERY_SERVERS tramite rsync su ssh
 
 		#serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCONSSH"
-		echo "rsync start (on ssh): $serversToBeSynchedByRsyncOnSsh"
+		echo "rsync start (on ssh): $serversToBeSynchedByRsyncOnSsh" >> $debugFileName
 
 		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
 		rsyncSource=$channelDirectory.$channelDirectoryMd5sum/
@@ -328,7 +334,7 @@ then
 		#sincronizziamo i server tramite rsyncd senza alcuna crittografia (servers su rete interna/protetta)
 
 		serversToBeSynched="$MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD"
-		echo "rsync start (daemon): $serversToBeSynched"
+		echo "rsync start (daemon): $serversToBeSynched" >> $debugFileName
 
 		#in questo caso sincronizziamo i contenuti delle due directory e non le directory stesse, per cui serve / alla fine
                 rsyncSource=$channelDirectory.$channelDirectoryMd5sum/

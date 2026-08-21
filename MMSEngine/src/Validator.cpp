@@ -1559,14 +1559,15 @@ void Validator::validateAddContentMetadata(const string& label, const json& para
 			string sourceURL = JSONUtils::as<string>(parametersRoot, field, "");
 
 			string externalStoragePrefix("externalStorage://");
-			if (sourceURL.size() >= externalStoragePrefix.size() && 0 == sourceURL.compare(0, externalStoragePrefix.size(), externalStoragePrefix))
+			if (sourceURL.starts_with(externalStoragePrefix))
 			{
 				string externalStoragePathName = sourceURL.substr(externalStoragePrefix.length());
-				if (externalStoragePathName.size() >= _storagePath.size() &&
-					0 == externalStoragePathName.compare(0, _storagePath.size(), _storagePath))
+				if (externalStoragePathName.starts_with(_storagePath))
 				{
-					string errorMessage = __FILEREF__ + "'SourceURL' cannot be within the dedicated storage managed by MMS" + ", Field: " + field +
-										  ", sourceURL: " + sourceURL + ", label: " + label;
+					string errorMessage = std::format("'SourceURL' cannot be within the dedicated storage managed by MMS"
+						", Field: {}"
+						", sourceURL: {}"
+						", label: {}", field, sourceURL, label);
 					LOG_ERROR(errorMessage);
 
 					throw runtime_error(errorMessage);

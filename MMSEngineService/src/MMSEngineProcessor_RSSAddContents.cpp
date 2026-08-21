@@ -122,222 +122,229 @@ void MMSEngineProcessor::manageRSSAddContentsTask(int64_t ingestionJobKey, const
 			_processorIdentifier, ingestionJobKey, rssContents.size()
 		);
 
-		json onSuccessRoot = nullptr;
-		json onErrorRoot = nullptr;
-		json onCompleteRoot = nullptr;
-		int64_t userKey;
-		string apiKey;
+		if (!rssContents.empty())
 		{
-			if (JsonPath(&parametersRoot)["internalMMS"].exists())
+			json onSuccessRoot = nullptr;
+			json onErrorRoot = nullptr;
+			json onCompleteRoot = nullptr;
+			int64_t userKey;
+			string apiKey;
 			{
-				json internalMMSRoot = JsonPath(&parametersRoot)["internalMMS"].as<json>();
-
-				if (JsonPath(&internalMMSRoot)["credentials"].exists())
+				if (JsonPath(&parametersRoot)["internalMMS"].exists())
 				{
-					json credentialsRoot = JsonPath(&internalMMSRoot)["credentials"].as<json>();
+					json internalMMSRoot = JsonPath(&parametersRoot)["internalMMS"].as<json>();
 
-					userKey = JsonPath(&credentialsRoot)["userKey"].as<int64_t>();
-
-					auto apiKeyEncrypted = JsonPath(&credentialsRoot)["apiKey"].as<string>();
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-				}
-
-				if (JsonPath(&internalMMSRoot)["events"].exists())
-				{
-					json eventsRoot = JsonPath(&internalMMSRoot)["events"].as<json>();
-
-					if (JsonPath(&eventsRoot)["onSuccess"].exists())
-						onSuccessRoot = JsonPath(&eventsRoot)["onSuccess"].as<json>();
-					if (JsonPath(&eventsRoot)["onError"].exists())
-						onErrorRoot = JsonPath(&eventsRoot)["onError"].as<json>();
-					if (JsonPath(&eventsRoot)["onComplete"].exists())
-						onCompleteRoot = JsonPath(&eventsRoot)["onComplete"].as<json>();
-				}
-			}
-		}
-
-		// create workflow to ingest
-		// creo tanti Add-Content tasks e li aggiungo al GroupOfTasks
-		json addContentTasksGroupParametersRoot;
-		{
-			json tasksRoot = json::array();
-			for (auto &[title, utcPubDate, videoURL, imageURL, uuid]: rssContents)
-			{
-				// aggiungo il video
-				json videoAddContentRoot;
-				{
-					videoAddContentRoot["type"] = "Add-Content";
-					videoAddContentRoot["label"] = std::format("From RSS feed (video): {}", title);
-
-					json videoAddContentParametersRoot;
-					videoAddContentParametersRoot["title"] = title;
-					videoAddContentParametersRoot["sourceURL"] = videoURL;
-					videoAddContentParametersRoot["fileFormat"] = "mp4";
-					videoAddContentParametersRoot["retention"] = JsonPath(&parametersRoot)["retention"].as<string>(defaultRetention);
-					videoAddContentParametersRoot["uniqueName"] = uuid;
-
-					json tags = json::array();
-					tags.push_back("RSS");
-					videoAddContentParametersRoot["tags"] = tags;
-
-					json userDataRoot;
-					userDataRoot["pubDate"] = utcPubDate;
-					userDataRoot["sPubDate"] = Datetime::dateTimeFormat(utcPubDate * 1000);
-					videoAddContentParametersRoot["userData"] = userDataRoot;
-
-					videoAddContentRoot["parameters"] = videoAddContentParametersRoot;
-				}
-
-				// aggiungo l'immagine
-				json imageAddContentRoot;
-				{
-					imageAddContentRoot["type"] = "Add-Content";
-					imageAddContentRoot["label"] = std::format("From RSS feed (image): {}", title);
-
-					json imageAddContentParametersRoot;
-					imageAddContentParametersRoot["title"] = title;
-					imageAddContentParametersRoot["sourceURL"] = imageURL;
-					imageAddContentParametersRoot["fileFormat"] = "jpeg";
-					imageAddContentParametersRoot["retention"] = JsonPath(&parametersRoot)["retention"].as<string>(defaultRetention);
-					// imageAddContentParametersRoot["uniqueName"] = std::format("{}-image", uuid);
-
-					json tags = json::array();
-					tags.push_back("RSS");
-					imageAddContentParametersRoot["tags"] = tags;
-
-					json userDataRoot;
-					userDataRoot["pubDate"] = utcPubDate;
-					userDataRoot["sPubDate"] = utcPubDate;
-					imageAddContentParametersRoot["userData"] = userDataRoot;
-
-					json crossReferencesRoot = json::array();
-					json crossReferenceRoot;
-					crossReferenceRoot["type"] = "ImageOfVideo";
-					crossReferenceRoot["uniqueName"] = uuid;
-					crossReferencesRoot.push_back(crossReferenceRoot);
-					imageAddContentParametersRoot["crossReferences"] = crossReferencesRoot;
-
-					imageAddContentRoot["parameters"] = imageAddContentParametersRoot;
-
-					// aggiungo il profilo di encoding MMS_JPG_W150_H-120 in modo che la GUI possa mostrare la thumbnail
+					if (JsonPath(&internalMMSRoot)["credentials"].exists())
 					{
-						json encodeRoot;
-						{
-							encodeRoot["type"] = "Encode";
-							encodeRoot["label"] = std::format("MMS GUI thumbnail: {}", title);
+						json credentialsRoot = JsonPath(&internalMMSRoot)["credentials"].as<json>();
 
-							json encodeParametersRoot;
-							encodeParametersRoot["encodingProfileLabel"] = _mmsGUIThumbnailProfileLabel;
-							encodeRoot["parameters"] = encodeParametersRoot;
-						}
+						userKey = JsonPath(&credentialsRoot)["userKey"].as<int64_t>();
 
-						// configuro l'encoding come onSuccess di Add-Content dell'immagine
-						{
-							json imageOnSuccessRoot;
-							imageOnSuccessRoot["task"] = encodeRoot;
-							imageAddContentRoot["onSuccess"] = imageOnSuccessRoot;
-						}
+						auto apiKeyEncrypted = JsonPath(&credentialsRoot)["apiKey"].as<string>();
+						apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
+					}
+
+					if (JsonPath(&internalMMSRoot)["events"].exists())
+					{
+						json eventsRoot = JsonPath(&internalMMSRoot)["events"].as<json>();
+
+						if (JsonPath(&eventsRoot)["onSuccess"].exists())
+							onSuccessRoot = JsonPath(&eventsRoot)["onSuccess"].as<json>();
+						if (JsonPath(&eventsRoot)["onError"].exists())
+							onErrorRoot = JsonPath(&eventsRoot)["onError"].as<json>();
+						if (JsonPath(&eventsRoot)["onComplete"].exists())
+							onCompleteRoot = JsonPath(&eventsRoot)["onComplete"].as<json>();
 					}
 				}
+			}
 
-				if (JsonPath(&parametersRoot)["encodingProfileKey"].exists() || JsonPath(&parametersRoot)["encodingProfileLabel"].exists())
+			// create workflow to ingest
+			// creo tanti Add-Content tasks e li aggiungo al GroupOfTasks
+			json addContentTasksGroupParametersRoot;
+			{
+				json tasksRoot = json::array();
+				for (auto &[title, utcPubDate, videoURL, imageURL, uuid]: rssContents)
 				{
-					// onSuccess del video: oltre all'immagine deve eseguire anche un encoding
-
-					json videoEncodingRoot;
-					videoEncodingRoot["type"] = "Encode";
-					videoEncodingRoot["label"] = std::format("RSS Video Encoding: {}", title);
-
-					json encodeParametersRoot;
-					if (JsonPath(&parametersRoot)["encodingProfileKey"].exists())
-						encodeParametersRoot["encodingProfileKey"] = JsonPath(&parametersRoot)["encodingProfileKey"].as<int64_t>();
-					else // if (JsonPath(&parametersRoot)["encodingProfileLabel"].exists())
-						encodeParametersRoot["encodingProfileLabel"] = JsonPath(&parametersRoot)["encodingProfileLabel"].as<string>();
-
-					if (JsonPath(&parametersRoot)["encodingPriority"].exists())
-						encodeParametersRoot["encodingPriority"] = JsonPath(&parametersRoot)["encodingPriority"].as<string>();
-
-					if (JsonPath(&parametersRoot)["encodersPool"].exists())
-						encodeParametersRoot["encodersPool"] = JsonPath(&parametersRoot)["encodersPool"].as<string>();
-
-					videoEncodingRoot["parameters"] = encodeParametersRoot;
-
-					// creo il groupOfTaks
+					// aggiungo il video
+					json videoAddContentRoot;
 					{
-						json videoTasksGroupRoot;
-						videoTasksGroupRoot["label"] = std::format("RSS Video Tasks: {}", title);
-						videoTasksGroupRoot["type"] = "GroupOfTasks";
+						videoAddContentRoot["type"] = "Add-Content";
+						videoAddContentRoot["label"] = std::format("From RSS feed (video): {}", title);
 
-						json videoGroupParametersRoot;
-						videoGroupParametersRoot["executionType"] = "parallel";
-						{
-							json videoTasksRoot = json::array();
-							videoTasksRoot.push_back(videoEncodingRoot);
-							videoTasksRoot.push_back(imageAddContentRoot);
-							videoGroupParametersRoot["tasks"] = videoTasksRoot;
-						}
-						videoTasksGroupRoot["parameters"] = videoGroupParametersRoot;
+						json videoAddContentParametersRoot;
+						videoAddContentParametersRoot["title"] = title;
+						videoAddContentParametersRoot["sourceURL"] = videoURL;
+						videoAddContentParametersRoot["fileFormat"] = "mp4";
+						videoAddContentParametersRoot["retention"] = JsonPath(&parametersRoot)["retention"].as<string>(defaultRetention);
+						videoAddContentParametersRoot["uniqueName"] = uuid;
 
+						json tags = json::array();
+						tags.push_back("RSS");
+						videoAddContentParametersRoot["tags"] = tags;
+
+						json userDataRoot;
+						userDataRoot["pubDate"] = utcPubDate;
+						userDataRoot["sPubDate"] = Datetime::dateTimeFormat(utcPubDate * 1000);
+						videoAddContentParametersRoot["userData"] = userDataRoot;
+
+						videoAddContentRoot["parameters"] = videoAddContentParametersRoot;
+					}
+
+					// aggiungo l'immagine
+					json imageAddContentRoot;
+					if (!imageURL.empty())
+					{
 						{
-							json videoOnSuccessRoot;
-							videoOnSuccessRoot["task"] = videoTasksGroupRoot;
-							videoAddContentRoot["onSuccess"] = videoOnSuccessRoot;
+							imageAddContentRoot["type"] = "Add-Content";
+							imageAddContentRoot["label"] = std::format("From RSS feed (image): {}", title);
+
+							json imageAddContentParametersRoot;
+							imageAddContentParametersRoot["title"] = title;
+							imageAddContentParametersRoot["sourceURL"] = imageURL;
+							imageAddContentParametersRoot["fileFormat"] = "jpeg";
+							imageAddContentParametersRoot["retention"] = JsonPath(&parametersRoot)["retention"].as<string>(defaultRetention);
+							// imageAddContentParametersRoot["uniqueName"] = std::format("{}-image", uuid);
+
+							json tags = json::array();
+							tags.push_back("RSS");
+							imageAddContentParametersRoot["tags"] = tags;
+
+							json userDataRoot;
+							userDataRoot["pubDate"] = utcPubDate;
+							userDataRoot["sPubDate"] = utcPubDate;
+							imageAddContentParametersRoot["userData"] = userDataRoot;
+
+							json crossReferencesRoot = json::array();
+							json crossReferenceRoot;
+							crossReferenceRoot["type"] = "ImageOfVideo";
+							crossReferenceRoot["uniqueName"] = uuid;
+							crossReferencesRoot.push_back(crossReferenceRoot);
+							imageAddContentParametersRoot["crossReferences"] = crossReferencesRoot;
+
+							imageAddContentRoot["parameters"] = imageAddContentParametersRoot;
+
+							// aggiungo il profilo di encoding MMS_JPG_W150_H-120 in modo che la GUI possa mostrare la thumbnail
+							{
+								json encodeRoot;
+								{
+									encodeRoot["type"] = "Encode";
+									encodeRoot["label"] = std::format("MMS GUI thumbnail: {}", title);
+
+									json encodeParametersRoot;
+									encodeParametersRoot["encodingProfileLabel"] = _mmsGUIThumbnailProfileLabel;
+									encodeRoot["parameters"] = encodeParametersRoot;
+								}
+
+								// configuro l'encoding come onSuccess di Add-Content dell'immagine
+								{
+									json imageOnSuccessRoot;
+									imageOnSuccessRoot["task"] = encodeRoot;
+									imageAddContentRoot["onSuccess"] = imageOnSuccessRoot;
+								}
+							}
 						}
 					}
-				}
-				else
-				{
-					// onSuccess del video: configuro l'immagine
-					json imageOnSuccessRoot;
-					imageOnSuccessRoot["task"] = imageAddContentRoot;
-					videoAddContentRoot["onSuccess"] = imageOnSuccessRoot;
-				}
 
-				// aggiungo il video tra i tasks del gruppo
-				tasksRoot.push_back(videoAddContentRoot);
+					if (JsonPath(&parametersRoot)["encodingProfileKey"].exists() || JsonPath(&parametersRoot)["encodingProfileLabel"].exists())
+					{
+						// onSuccess del video: oltre all'immagine deve eseguire anche un encoding
+
+						json videoEncodingRoot;
+						videoEncodingRoot["type"] = "Encode";
+						videoEncodingRoot["label"] = std::format("RSS Video Encoding: {}", title);
+
+						json encodeParametersRoot;
+						if (JsonPath(&parametersRoot)["encodingProfileKey"].exists())
+							encodeParametersRoot["encodingProfileKey"] = JsonPath(&parametersRoot)["encodingProfileKey"].as<int64_t>();
+						else // if (JsonPath(&parametersRoot)["encodingProfileLabel"].exists())
+							encodeParametersRoot["encodingProfileLabel"] = JsonPath(&parametersRoot)["encodingProfileLabel"].as<string>();
+
+						if (JsonPath(&parametersRoot)["encodingPriority"].exists())
+							encodeParametersRoot["encodingPriority"] = JsonPath(&parametersRoot)["encodingPriority"].as<string>();
+
+						if (JsonPath(&parametersRoot)["encodersPool"].exists())
+							encodeParametersRoot["encodersPool"] = JsonPath(&parametersRoot)["encodersPool"].as<string>();
+
+						videoEncodingRoot["parameters"] = encodeParametersRoot;
+
+						// creo il groupOfTaks
+						{
+							json videoTasksGroupRoot;
+							videoTasksGroupRoot["label"] = std::format("RSS Video Tasks: {}", title);
+							videoTasksGroupRoot["type"] = "GroupOfTasks";
+
+							json videoGroupParametersRoot;
+							videoGroupParametersRoot["executionType"] = "parallel";
+							{
+								json videoTasksRoot = json::array();
+								videoTasksRoot.push_back(videoEncodingRoot);
+								if (!imageURL.empty())
+									videoTasksRoot.push_back(imageAddContentRoot);
+								videoGroupParametersRoot["tasks"] = videoTasksRoot;
+							}
+							videoTasksGroupRoot["parameters"] = videoGroupParametersRoot;
+
+							{
+								json videoOnSuccessRoot;
+								videoOnSuccessRoot["task"] = videoTasksGroupRoot;
+								videoAddContentRoot["onSuccess"] = videoOnSuccessRoot;
+							}
+						}
+					}
+					else if (!imageURL.empty())
+					{
+						// onSuccess del video: configuro l'immagine
+						json imageOnSuccessRoot;
+						imageOnSuccessRoot["task"] = imageAddContentRoot;
+						videoAddContentRoot["onSuccess"] = imageOnSuccessRoot;
+					}
+
+					// aggiungo il video tra i tasks del gruppo
+					tasksRoot.push_back(videoAddContentRoot);
+				}
+				addContentTasksGroupParametersRoot["tasks"] = tasksRoot;
 			}
-			addContentTasksGroupParametersRoot["tasks"] = tasksRoot;
-		}
 
-		// creo il groupOfTaks
-		json addContentTasksGroupRoot;
-		{
-			addContentTasksGroupRoot["type"] = "GroupOfTasks";
+			// creo il groupOfTaks
+			json addContentTasksGroupRoot;
+			{
+				addContentTasksGroupRoot["type"] = "GroupOfTasks";
 
-			addContentTasksGroupParametersRoot["executionType"] = "parallel";
-			addContentTasksGroupRoot["parameters"] = addContentTasksGroupParametersRoot;
+				addContentTasksGroupParametersRoot["executionType"] = "parallel";
+				addContentTasksGroupRoot["parameters"] = addContentTasksGroupParametersRoot;
 
-			if (onSuccessRoot != nullptr)
-				addContentTasksGroupRoot["onSuccess"] = onSuccessRoot;
-			if (onErrorRoot != nullptr)
-				addContentTasksGroupRoot["onError"] = onErrorRoot;
-			if (onCompleteRoot != nullptr)
-				addContentTasksGroupRoot["onComplete"] = onCompleteRoot;
-		}
+				if (onSuccessRoot != nullptr)
+					addContentTasksGroupRoot["onSuccess"] = onSuccessRoot;
+				if (onErrorRoot != nullptr)
+					addContentTasksGroupRoot["onError"] = onErrorRoot;
+				if (onCompleteRoot != nullptr)
+					addContentTasksGroupRoot["onComplete"] = onCompleteRoot;
+			}
 
-		// creo il workflow root
-		json workflowRoot;
-		{
-			workflowRoot["label"] = std::format(
-				"RSS feed ({}): {}", Datetime::dateTimeFormat(chrono::system_clock::now()), rssTitle
+			// creo il workflow root
+			json workflowRoot;
+			{
+				workflowRoot["label"] = std::format(
+					"RSS feed ({}): {}", Datetime::dateTimeFormat(chrono::system_clock::now()), rssTitle
+				);
+
+				workflowRoot["type"] = "Workflow";
+				workflowRoot["task"] = addContentTasksGroupRoot;
+			}
+
+			string workflowMetadata = JSONUtils::toString(workflowRoot);
+
+			LOG_DEBUG("Ingest workflow"
+				", ingestionJobKey: {}"
+				", WorkflowMetadata: {}", ingestionJobKey, workflowMetadata);
+
+			vector<string> otherHeaders;
+			json workflowResponseRoot = CurlWrapper::httpPostStringAndGetJson(
+				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
+				workflowMetadata, "application/json", // contentType
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
 			);
-
-			workflowRoot["type"] = "Workflow";
-			workflowRoot["task"] = addContentTasksGroupRoot;
 		}
-
-		string workflowMetadata = JSONUtils::toString(workflowRoot);
-
-		LOG_DEBUG("Ingest workflow"
-			", ingestionJobKey: {}"
-			", WorkflowMetadata: {}", ingestionJobKey, workflowMetadata);
-
-		vector<string> otherHeaders;
-		json workflowResponseRoot = CurlWrapper::httpPostStringAndGetJson(
-			_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
-			workflowMetadata, "application/json", // contentType
-			otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey)
-		);
 
 		LOG_INFO(
 			"Update IngestionJob"

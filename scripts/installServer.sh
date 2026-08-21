@@ -5,10 +5,19 @@ MMSOPT="/opt/mms"
 
 ssh-port()
 {
+	moduleType=$1
+
 	read -n 1 -s -r -p "ssh port 9255..."
 	echo ""
 
 	echo "Port 9255" >> /etc/ssh/sshd_config
+	echo "usage $0 <moduleType (load-balancer or engine or api or delivery or externalDelivery or api-and-delivery or encoder or externalEncoder or storage or integration or integration-aws)>"
+	if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "externalDelivery" ]; then
+		#MaxSessions limita quante sessioni (canali multiplexati) possono essere aperte contemporaneamente sulla stessa connessione master,
+		#non il numero totale di connessioni TCP — quindi il valore giusto dipende da quanti canali live possono trovarsi a sincronizzare (rsync)
+		#verso lo stesso server di delivery nello stesso istante
+		echo "MaxSessions 100" >> /etc/ssh/sshd_config
+	fi
 	/etc/init.d/ssh restart
 }
 
@@ -2100,7 +2109,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 if [ "$moduleType" != "integration-aws" ]; then
-	ssh-port
+	ssh-port $moduleType
 fi
 mms-account-creation $moduleType
 time-zone
