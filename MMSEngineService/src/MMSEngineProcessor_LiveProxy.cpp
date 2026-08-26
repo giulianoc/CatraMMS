@@ -1,6 +1,7 @@
 
 #include "Datetime.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "spdlog/fmt/fmt.h"
@@ -239,7 +240,7 @@ void MMSEngineProcessor::manageLiveProxy(
 
 			json streamInputRoot = _mmsEngineDBFacade->getStreamInputRoot(
 				workspace, ingestionJobKey, configurationLabel, useVideoTrackFromPhysicalPathName, useVideoTrackFromPhysicalDeliveryURL, maxWidth,
-				userAgent, otherInputOptions, taskEncodersPoolLabel, filtersRoot
+				userAgent, JsonPath(&parametersRoot)["httpProxy"].as<string>(), otherInputOptions, taskEncodersPoolLabel, filtersRoot
 			);
 
 			json inputRoot;

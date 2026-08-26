@@ -1832,7 +1832,7 @@ void API::changeLiveProxyPlaylist(
 							apiAuthorizationDetails->workspace, broadcasterIngestionJobKey, broadcastDefaultConfigurationLabel, "",
 							"", // useVideoTrackFromPhysicalPathName,
 								// useVideoTrackFromPhysicalDeliveryURL
-							maxWidth, userAgent, otherInputOptions, "", filtersRoot
+							maxWidth, userAgent, TODO, otherInputOptions, "", filtersRoot
 						);
 					}
 					else if (broadcastDefaultMediaType == "Media")

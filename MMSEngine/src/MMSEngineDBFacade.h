@@ -2570,8 +2570,9 @@ class MMSEngineDBFacade
 
 	nlohmann::json getStreamInputRoot(
 		const std::shared_ptr<Workspace> &workspace, int64_t ingestionJobKey, const std::string &configurationLabel,
-		const std::string &useVideoTrackFromPhysicalPathName, const std::string &useVideoTrackFromPhysicalDeliveryURL, int maxWidth, const std::string &userAgent,
-		const std::string &otherInputOptions, const std::string &taskEncodersPoolLabel, const nlohmann::json &filtersRoot
+		const std::string &useVideoTrackFromPhysicalPathName, const std::string &useVideoTrackFromPhysicalDeliveryURL, int maxWidth,
+		const std::string &userAgent, const std::string &httpProxy, const std::string &otherInputOptions, const std::string &taskEncodersPoolLabel,
+		const nlohmann::json &filtersRoot
 	);
 	std::pair<int64_t, std::string> getStreamInputPushDetails(int64_t workspaceKey, int64_t ingestionJobKey, std::string configurationLabel);
 	std::string getStreamPushServerUrl(

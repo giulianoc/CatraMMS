@@ -41,6 +41,9 @@
 		// optional: user agent used only in case actAsServer is false
 		"userAgent": "",
 
+		// optional: http proxy to be used when the URL of the channel is called (i.e.: http://185.81.0.124:3128)
+		"httpProxy": "",
+
 		// optional: If it is present, in case the live streaming provides several tracks,
 		//	this parameter is used to select the track to be proxied having
 		//	the biggest width smaller or equal than maxWidth

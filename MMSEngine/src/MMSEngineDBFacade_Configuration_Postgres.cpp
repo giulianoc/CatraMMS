@@ -888,7 +888,8 @@ tuple<string, string, string> MMSEngineDBFacade::getEMailByConfigurationLabel(in
 json MMSEngineDBFacade::getStreamInputRoot(
 	const shared_ptr<Workspace>& workspace, int64_t ingestionJobKey, const string& configurationLabel,
 	const string& useVideoTrackFromPhysicalPathName,
-	const string& useVideoTrackFromPhysicalDeliveryURL, int maxWidth, const string& userAgent, const string& otherInputOptions,
+	const string& useVideoTrackFromPhysicalDeliveryURL, int maxWidth,
+	const string& userAgent, const string& httpProxy, const string& otherInputOptions,
 	const string& taskEncodersPoolLabel,
 	const json& filtersRoot
 )
@@ -975,6 +976,8 @@ json MMSEngineDBFacade::getStreamInputRoot(
 			streamInputRoot["maxWidth"] = maxWidth;
 		if (!userAgent.empty())
 			streamInputRoot["userAgent"] = userAgent;
+		if (!httpProxy.empty())
+			streamInputRoot["httpProxy"] = httpProxy;
 		if (!otherInputOptions.empty())
 			streamInputRoot["otherInputOptions"] = otherInputOptions;
 		if (streamSourceType == "IP_PUSH")
