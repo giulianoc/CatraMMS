@@ -1820,7 +1820,6 @@ void API::changeLiveProxyPlaylist(
 						field = "streamConfigurationLabel";
 						string broadcastDefaultConfigurationLabel = JSONUtils::as<string>(broadcastDefaultPlaylistItemRoot, field, "");
 						int maxWidth = -1;
-						string userAgent;
 						string otherInputOptions;
 
 						field = "filters";
@@ -1832,7 +1831,7 @@ void API::changeLiveProxyPlaylist(
 							apiAuthorizationDetails->workspace, broadcasterIngestionJobKey, broadcastDefaultConfigurationLabel, "",
 							"", // useVideoTrackFromPhysicalPathName,
 								// useVideoTrackFromPhysicalDeliveryURL
-							maxWidth, userAgent, TODO, otherInputOptions, "", filtersRoot
+							maxWidth, "", "", otherInputOptions, "", filtersRoot
 						);
 					}
 					else if (broadcastDefaultMediaType == "Media")
