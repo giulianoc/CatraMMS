@@ -254,11 +254,13 @@ void API::enableDeliveryServer(
 		api, apiAuthorizationDetails->workspace->_workspaceKey
 	);
 
-	if (!apiAuthorizationDetails->canEnableDeliveryServer)
+	if (!apiAuthorizationDetails->admin && !apiAuthorizationDetails->canEnableDeliveryServer)
 	{
 		string errorMessage = std::format(
 			"APIKey does not have the permission"
+			", admin: {}"
 			", canEnableDeliveryServer: {}",
+			apiAuthorizationDetails->admin,
 			apiAuthorizationDetails->canEnableDeliveryServer
 		);
 		LOG_ERROR(errorMessage);
