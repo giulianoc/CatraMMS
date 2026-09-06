@@ -246,6 +246,71 @@ void MMSEngineDBFacade::modifyDeliveryServer(
 	}
 }
 
+void MMSEngineDBFacade::enableDeliveryServer(
+	const int64_t deliveryServerKey, bool enabled
+)
+{
+	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
+	try
+	{
+		{
+			string sqlStatement = std::format( R"(
+				update MMS_DeliveryServer
+				set enabled = {}
+				where deliveryServerKey = {}
+				)",
+				enabled, deliveryServerKey
+			);
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			result res = trans.transaction->exec0(sqlStatement);
+			const int rowsUpdated = res.affected_rows();
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+			if (rowsUpdated != 1)
+			{
+				const string errorMessage = std::format("no update was done"
+					", deliveryServerKey: {}"
+					", rowsUpdated: {}"
+					", sqlStatement: {}",
+					deliveryServerKey, rowsUpdated, sqlStatement);
+				LOG_WARN(errorMessage);
+
+				throw runtime_error(errorMessage);
+			}
+		}
+	}
+	catch (exception const &e)
+	{
+		auto const *se = dynamic_cast<sql_error const *>(&e);
+		if (se != nullptr)
+			LOG_ERROR(
+				"query failed"
+				", query: {}"
+				", exceptionMessage: {}"
+				", conn: {}",
+				se->query(), se->what(), trans.connection->getConnectionId()
+			);
+		else
+			LOG_ERROR(
+				"query failed"
+				", exception: {}"
+				", conn: {}",
+				e.what(), trans.connection->getConnectionId()
+			);
+
+		trans.setAbort();
+
+		throw;
+	}
+}
+
 void MMSEngineDBFacade::updateDeliveryServerAvgBandwidthUsage(
 	const int64_t deliveryServerKey,
 	const uint64_t& rxAvgBandwidthUsage, const uint64_t& txAvgBandwidthUsage,

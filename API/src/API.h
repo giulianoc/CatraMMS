@@ -40,7 +40,7 @@ public:
 		bool canKillEncoding{};
 		bool canCancelIngestionJob{};
 		bool canEditEncodersPool{};
-		bool canEditDeliveryServersPool{};
+		bool canEnableDeliveryServer{};
 		bool canApplicationRecorder{};
 		bool canCreateRemoveLiveChannel{};
 		bool canUpdateEncoderAndDeliveryStats{};
@@ -62,7 +62,7 @@ public:
 				", canKillEncoding: {}"
 				", canCancelIngestionJob: {}"
 				", canEditEncodersPool: {}"
-				", canEditDeliveryServersPool: {}"
+				", canEnableDeliveryServer: {}"
 				", canApplicationRecorder: {}"
 				", canCreateRemoveLiveChannel: {}"
 				", canUpdateEncoderAndDeliveryStats: {}"
@@ -71,7 +71,7 @@ public:
 				", canAppStreamAndProxy: {}",
 				userKey, admin, canCreateRemoveWorkspace, canIngestWorkflow, canCreateProfiles, canDeliveryAuthorization,
 				canShareWorkspace, canEditMedia, canEditConfiguration, canKillEncoding, canCancelIngestionJob,
-				canEditEncodersPool, canEditDeliveryServersPool,
+				canEditEncodersPool, canEnableDeliveryServer,
 				canApplicationRecorder, canCreateRemoveLiveChannel, canUpdateEncoderAndDeliveryStats,
 				canAppUploadMediaContent, canAppCaptureAndProxy, canAppStreamAndProxy
 				);
@@ -858,12 +858,6 @@ private:
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);
-	/*
-	void deliveryServersPoolList(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
-	void addDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
-	void modifyDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
-	void removeDeliveryServersPool(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
-	*/
 	void addAssociationWorkspaceDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 	void removeAssociationWorkspaceDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 
@@ -876,6 +870,7 @@ private:
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData
 	);
+	void enableDeliveryServer(const std::string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData);
 
 	void updateDeliveryServerBandwidthStats(
 		const std::string_view& sThreadId, FCGX_Request &request,

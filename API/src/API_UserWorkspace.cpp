@@ -753,7 +753,7 @@ void API::shareWorkspace_(
 		bool killEncoding = JsonPath(&metadataRoot)["killEncoding"].as<bool>(false);
 		bool cancelIngestionJob = JsonPath(&metadataRoot)["cancelIngestionJob"].as<bool>(false);
 		bool editEncodersPool = JsonPath(&metadataRoot)["editEncodersPool"].as<bool>(false);
-		bool editDeliveryServersPool = JsonPath(&metadataRoot)["editDeliveryServersPool"].as<bool>(false);
+		bool enableDeliveryServer = JsonPath(&metadataRoot)["enableDeliveryServer"].as<bool>(false);
 		bool applicationRecorder = JsonPath(&metadataRoot)["applicationRecorder"].as<bool>(false);
 		bool createRemoveLiveChannel = JsonPath(&metadataRoot)["createRemoveLiveChannel"].as<bool>(false);
 		bool updateEncoderAndDeliveryStats = JsonPath(&metadataRoot)["updateEncoderAndDeliveryStats"].as<bool>(false);
@@ -788,7 +788,7 @@ void API::shareWorkspace_(
 					apiAuthorizationDetails->workspace->_workspaceKey, userKey, email,
 					MMSEngineDBFacade::CodeType::UserRegistrationComingFromShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
+					killEncoding, cancelIngestionJob, editEncodersPool, enableDeliveryServer,
 					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
 					appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy
 				);
@@ -862,7 +862,7 @@ void API::shareWorkspace_(
 					apiAuthorizationDetails->workspace->_workspaceKey, -1, email,
 					MMSEngineDBFacade::CodeType::ShareWorkspace, admin,
 					createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization, shareWorkspace, editMedia, editConfiguration,
-					killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
+					killEncoding, cancelIngestionJob, editEncodersPool, enableDeliveryServer,
 					applicationRecorder, createRemoveLiveChannel, updateEncoderAndDeliveryStats,
 					appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy
 				);
@@ -1296,7 +1296,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 						bool killEncoding = true;
 						bool cancelIngestionJob = true;
 						bool editEncodersPool = true;
-						bool editDeliveryServersPool = true;
+						bool enableDeliveryServer = true;
 						bool applicationRecorder = true;
 						bool createRemoveLiveChannel = true;
 						bool updateEncoderAndDeliveryStats = false;
@@ -1308,7 +1308,7 @@ void API::login(const string_view& sThreadId, FCGX_Request &request,
 							"", // userCountry,
 							"CET", createRemoveWorkspace, ingestWorkflow, createProfiles, deliveryAuthorization,
 							shareWorkspace, editMedia,
-							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, editDeliveryServersPool,
+							editConfiguration, killEncoding, cancelIngestionJob, editEncodersPool, enableDeliveryServer,
 							applicationRecorder, createRemoveLiveChannel,
 							updateEncoderAndDeliveryStats, appUploadMediaContent, appCaptureAndProxy, appStreamAndProxy,
 							_ldapDefaultWorkspaceKeys, _expirationInDaysWorkspaceDefaultValue,
@@ -1891,7 +1891,7 @@ void API::updateWorkspace(
 		bool newKillEncoding = false;
 		bool newCancelIngestionJob = false;
 		bool newEditEncodersPool = false;
-		bool newEditDeliveryServersPool = false;
+		bool newEnableDeliveryServer = false;
 		bool newApplicationRecorder = false;
 		bool newCreateRemoveLiveChannel = false;
 		bool newUpdateEncoderAndDeliveryStats = false;
@@ -1917,60 +1917,52 @@ void API::updateWorkspace(
 			throw runtime_error(errorMessage);
 		}
 
-		string field = "enabled";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "enabled"))
 		{
 			enabledChanged = true;
-			newEnabled = JSONUtils::as<bool>(metadataRoot, field, false);
+			newEnabled = JSONUtils::as<bool>(metadataRoot, "enabled", false);
 		}
 
-		field = "workspaceName";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "workspaceName"))
 		{
 			nameChanged = true;
-			newName = JSONUtils::as<string>(metadataRoot, field, "");
+			newName = JSONUtils::as<string>(metadataRoot, "workspaceName", "");
 		}
 
-		field = "workspaceNotes";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "workspaceNotes"))
 		{
 			notesChanged = true;
-			newNotes = JSONUtils::as<string>(metadataRoot, field, "");
+			newNotes = JSONUtils::as<string>(metadataRoot, "workspaceNotes", "");
 		}
 
-		field = "maxEncodingPriority";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "maxEncodingPriority"))
 		{
 			maxEncodingPriorityChanged = true;
-			newMaxEncodingPriority = JSONUtils::as<string>(metadataRoot, field, "");
+			newMaxEncodingPriority = JSONUtils::as<string>(metadataRoot, "maxEncodingPriority", "");
 		}
 
-		field = "encodingPeriod";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "encodingPeriod"))
 		{
 			encodingPeriodChanged = true;
-			newEncodingPeriod = JSONUtils::as<string>(metadataRoot, field, "");
+			newEncodingPeriod = JSONUtils::as<string>(metadataRoot, "encodingPeriod", "");
 		}
 
-		field = "maxIngestionsNumber";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "maxIngestionsNumber"))
 		{
 			maxIngestionsNumberChanged = true;
-			newMaxIngestionsNumber = JSONUtils::as<int64_t>(metadataRoot, field, 0);
+			newMaxIngestionsNumber = JSONUtils::as<int64_t>(metadataRoot, "maxIngestionsNumber", 0);
 		}
 
-		field = "languageCode";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "languageCode"))
 		{
 			languageCodeChanged = true;
-			newLanguageCode = JSONUtils::as<string>(metadataRoot, field, "");
+			newLanguageCode = JSONUtils::as<string>(metadataRoot, "languageCode", "");
 		}
 
-		field = "timezone";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "timezone"))
 		{
 			timezoneChanged = true;
-			newTimezone = JSONUtils::as<string>(metadataRoot, field, "CET");
+			newTimezone = JSONUtils::as<string>(metadataRoot, "timezone", "CET");
 		}
 
 		if (JSONUtils::isPresent(metadataRoot, "preferences"))
@@ -1979,100 +1971,87 @@ void API::updateWorkspace(
 			newPreferences = JSONUtils::as<string>(metadataRoot, "preferences", "");
 		}
 
-		field = "maxStorageInGB";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "maxStorageInGB"))
 		{
 			maxStorageInGBChanged = true;
-			maxStorageInGB = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			maxStorageInGB = JSONUtils::as<int64_t>(metadataRoot, "maxStorageInGB", -1);
 		}
 
-		field = "currentCostForStorage";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "currentCostForStorage"))
 		{
 			currentCostForStorageChanged = true;
-			currentCostForStorage = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			currentCostForStorage = JSONUtils::as<int64_t>(metadataRoot, "currentCostForStorage", -1);
 		}
 
-		field = "dedicatedEncoder_power_1";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "dedicatedEncoder_power_1"))
 		{
 			dedicatedEncoder_power_1Changed = true;
-			dedicatedEncoder_power_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			dedicatedEncoder_power_1 = JSONUtils::as<int64_t>(metadataRoot, "dedicatedEncoder_power_1", -1);
 		}
 
-		field = "currentCostForDedicatedEncoder_power_1";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "currentCostForDedicatedEncoder_power_1"))
 		{
 			currentCostForDedicatedEncoder_power_1Changed = true;
-			currentCostForDedicatedEncoder_power_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			currentCostForDedicatedEncoder_power_1 = JSONUtils::as<int64_t>(metadataRoot, "currentCostForDedicatedEncoder_power_1", -1);
 		}
 
-		field = "dedicatedEncoder_power_2";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "dedicatedEncoder_power_2"))
 		{
 			dedicatedEncoder_power_2Changed = true;
-			dedicatedEncoder_power_2 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			dedicatedEncoder_power_2 = JSONUtils::as<int64_t>(metadataRoot, "dedicatedEncoder_power_2", -1);
 		}
 
-		field = "currentCostForDedicatedEncoder_power_2";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "currentCostForDedicatedEncoder_power_2"))
 		{
 			currentCostForDedicatedEncoder_power_2Changed = true;
-			currentCostForDedicatedEncoder_power_2 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			currentCostForDedicatedEncoder_power_2 = JSONUtils::as<int64_t>(metadataRoot, "currentCostForDedicatedEncoder_power_2", -1);
 		}
 
-		field = "dedicatedEncoder_power_3";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "dedicatedEncoder_power_3"))
 		{
 			dedicatedEncoder_power_3Changed = true;
-			dedicatedEncoder_power_3 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			dedicatedEncoder_power_3 = JSONUtils::as<int64_t>(metadataRoot, "dedicatedEncoder_power_3", -1);
 		}
 
-		field = "currentCostForDedicatedEncoder_power_3";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "currentCostForDedicatedEncoder_power_3"))
 		{
 			currentCostForDedicatedEncoder_power_3Changed = true;
-			currentCostForDedicatedEncoder_power_3 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			currentCostForDedicatedEncoder_power_3 = JSONUtils::as<int64_t>(metadataRoot, "currentCostForDedicatedEncoder_power_3", -1);
 		}
 
-		field = "CDN_type_1";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "CDN_type_1"))
 		{
 			CDN_type_1Changed = true;
-			CDN_type_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			CDN_type_1 = JSONUtils::as<int64_t>(metadataRoot, "CDN_type_1", -1);
 		}
 
-		field = "currentCostForCDN_type_1";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "currentCostForCDN_type_1"))
 		{
 			currentCostForCDN_type_1Changed = true;
-			currentCostForCDN_type_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			currentCostForCDN_type_1 = JSONUtils::as<int64_t>(metadataRoot, "currentCostForCDN_type_1", -1);
 		}
 
-		field = "support_type_1";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "support_type_1"))
 		{
 			support_type_1Changed = true;
-			support_type_1 = JSONUtils::as<bool>(metadataRoot, field, false);
+			support_type_1 = JSONUtils::as<bool>(metadataRoot, "support_type_1", false);
 		}
 
-		field = "currentCostForSupport_type_1";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "currentCostForSupport_type_1"))
 		{
 			currentCostForSupport_type_1Changed = true;
-			currentCostForSupport_type_1 = JSONUtils::as<int64_t>(metadataRoot, field, -1);
+			currentCostForSupport_type_1 = JSONUtils::as<int64_t>(metadataRoot, "currentCostForSupport_type_1", -1);
 		}
 
-		field = "userAPIKey";
-		if (JSONUtils::isPresent(metadataRoot, field))
+		if (JSONUtils::isPresent(metadataRoot, "userAPIKey"))
 		{
-			json userAPIKeyRoot = metadataRoot[field];
+			json userAPIKeyRoot = metadataRoot["userAPIKey"];
 
 			{
 				vector<string> mandatoryFields = {"createRemoveWorkspace", "ingestWorkflow",   "createProfiles",
 					"deliveryAuthorization",
 					"shareWorkspace",		   "editMedia",		   "editConfiguration",	  "killEncoding",
-					"cancelIngestionJob",	   "editEncodersPool", "editDeliveryServersPool", "applicationRecorder",
+					"cancelIngestionJob",	   "editEncodersPool", "enableDeliveryServer", "applicationRecorder",
 					"createRemoveLiveChannel",
 					"updateEncoderAndDeliveryStats", "appUploadMediaContent", "appCaptureAndProxy", "appStreamAndProxy"
 				};
@@ -2092,48 +2071,24 @@ void API::updateWorkspace(
 				}
 			}
 
-			field = "expirationDate";
-			if (JSONUtils::isPresent(userAPIKeyRoot, field))
+			if (JSONUtils::isPresent(userAPIKeyRoot, "expirationDate"))
 			{
 				expirationDateChanged = true;
-				newExpirationUtcDate = JSONUtils::as<string>(userAPIKeyRoot, field, "");
+				newExpirationUtcDate = JSONUtils::as<string>(userAPIKeyRoot, "expirationDate", "");
 			}
 
-			field = "createRemoveWorkspace";
-			newCreateRemoveWorkspace = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "ingestWorkflow";
-			newIngestWorkflow = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "createProfiles";
-			newCreateProfiles = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "deliveryAuthorization";
-			newDeliveryAuthorization = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "shareWorkspace";
-			newShareWorkspace = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "editMedia";
-			newEditMedia = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "editConfiguration";
-			newEditConfiguration = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "killEncoding";
-			newKillEncoding = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "cancelIngestionJob";
-			newCancelIngestionJob = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			field = "editEncodersPool";
-			newEditEncodersPool = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
-			newEditDeliveryServersPool = JSONUtils::as<bool>(userAPIKeyRoot, "editDeliveryServersPool", false);
-
-			field = "applicationRecorder";
-			newApplicationRecorder = JSONUtils::as<bool>(userAPIKeyRoot, field, false);
-
+			newCreateRemoveWorkspace = JSONUtils::as<bool>(userAPIKeyRoot, "createRemoveWorkspace", false);
+			newIngestWorkflow = JSONUtils::as<bool>(userAPIKeyRoot, "ingestWorkflow", false);
+			newCreateProfiles = JSONUtils::as<bool>(userAPIKeyRoot, "createProfiles", false);
+			newDeliveryAuthorization = JSONUtils::as<bool>(userAPIKeyRoot, "deliveryAuthorization", false);
+			newShareWorkspace = JSONUtils::as<bool>(userAPIKeyRoot, "shareWorkspace", false);
+			newEditMedia = JSONUtils::as<bool>(userAPIKeyRoot, "editMedia", false);
+			newEditConfiguration = JSONUtils::as<bool>(userAPIKeyRoot, "editConfiguration", false);
+			newKillEncoding = JSONUtils::as<bool>(userAPIKeyRoot, "killEncoding", false);
+			newCancelIngestionJob = JSONUtils::as<bool>(userAPIKeyRoot, "cancelIngestionJob", false);
+			newEditEncodersPool = JSONUtils::as<bool>(userAPIKeyRoot, "editEncodersPool", false);
+			newEnableDeliveryServer = JSONUtils::as<bool>(userAPIKeyRoot, "enableDeliveryServer", false);
+			newApplicationRecorder = JSONUtils::as<bool>(userAPIKeyRoot, "applicationRecorder", false);
 			newCreateRemoveLiveChannel = JSONUtils::as<bool>(userAPIKeyRoot, "createRemoveLiveChannel", false);
 			newUpdateEncoderAndDeliveryStats = JSONUtils::as<bool>(userAPIKeyRoot, "updateEncoderAndDeliveryStats", false);
 			newAppUploadMediaContent = JSONUtils::as<bool>(userAPIKeyRoot, "appUploadMediaContent", false);
@@ -2166,7 +2121,7 @@ void API::updateWorkspace(
 				currentCostForSupport_type_1,
 
 				newCreateRemoveWorkspace, newIngestWorkflow, newCreateProfiles, newDeliveryAuthorization, newShareWorkspace, newEditMedia,
-				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newEditDeliveryServersPool,
+				newEditConfiguration, newKillEncoding, newCancelIngestionJob, newEditEncodersPool, newEnableDeliveryServer,
 				newApplicationRecorder,
 				newCreateRemoveLiveChannel, newUpdateEncoderAndDeliveryStats,
 				newAppUploadMediaContent, newAppCaptureAndProxy, newAppStreamAndProxy

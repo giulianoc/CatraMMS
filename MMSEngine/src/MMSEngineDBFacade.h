@@ -1307,7 +1307,7 @@ class MMSEngineDBFacade
 	std::string createCode(
 		int64_t workspaceKey, int64_t userKey, const std::string &userEmail, CodeType codeType, bool admin, bool createRemoveWorkspace,
 		bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration,
-		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder,
+		bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool enableDeliveryServer, bool applicationRecorder,
 		bool createRemoveLiveChannel,
 		bool updateEncoderAndDeliveryStats,
 		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy
@@ -1331,8 +1331,8 @@ class MMSEngineDBFacade
 
 #ifdef __POSTGRES__
 	std::tuple<int64_t, int64_t, std::string> registerUserAndShareWorkspace(
-		std::string userName, std::string userEmailAddress, std::string userPassword, std::string userCountry, std::string userTimezone, std::string shareWorkspaceCode,
-		std::chrono::system_clock::time_point userExpirationDate
+		const std::string &userName, const std::string &userEmailAddress, const std::string &userPassword, const std::string &userCountry,
+		std::string userTimezone, const std::string &shareWorkspaceCode, std::chrono::system_clock::time_point userExpirationLocalDate
 	);
 #else
 	std::tuple<int64_t, int64_t, std::string> registerUserAndShareWorkspace(
@@ -1358,7 +1358,7 @@ class MMSEngineDBFacade
 	std::pair<int64_t, std::string> registerActiveDirectoryUser(
 		const std::string &userName, const std::string &userEmailAddress, const std::string &userCountry, std::string userTimezone,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool enableDeliveryServer,
 		bool applicationRecorder,
 		bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
 		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
@@ -1378,7 +1378,7 @@ class MMSEngineDBFacade
 		int64_t userKey, const std::string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization,
 		bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool editDeliveryServersPool,
+		bool editEncodersPool, bool enableDeliveryServer,
 		bool applicationRecorder, bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
 		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
@@ -1435,7 +1435,7 @@ class MMSEngineDBFacade
 
 		bool newCreateRemoveWorkspace, bool newIngestWorkflow, bool newCreateProfiles, bool newDeliveryAuthorization, bool newShareWorkspace,
 		bool newEditMedia, bool newEditConfiguration, bool newKillEncoding, bool newCancelIngestionJob,
-		bool newEditEncodersPool, bool newEditDeliveryServersPool,
+		bool newEditEncodersPool, bool newEnableDeliveryServer,
 		bool newApplicationRecorder, bool newCreateRemoveLiveChannel, bool newUpdateEncoderAndDeliveryStats,
 		bool newAppUploadMediaContent, bool newAppCaptureAndProxy, bool newAppStreamAndProxy
 	);
@@ -2515,6 +2515,7 @@ class MMSEngineDBFacade
 		const std::optional<std::string> &hostname, const std::optional<double>& latitude, const std::optional<double>& longitude,
 		const std::optional<double>& maxTXBandwidthInGbps
 	);
+	void enableDeliveryServer(int64_t deliveryServerKey, bool enabled);
 	void updateDeliveryServerAvgBandwidthUsage(
 		int64_t deliveryServerKey, const uint64_t &rxAvgBandwidthUsage, const uint64_t &txAvgBandwidthUsage, const uint64_t &rxPeakBandwidthUsage,
 		const uint64_t &txPeakBandwidthUsage
@@ -2705,7 +2706,7 @@ class MMSEngineDBFacade
 		PostgresConnTrans &trans, int64_t userKey, const std::string& userEmailAddress, bool createRemoveWorkspace, bool ingestWorkflow,
 		bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
+		bool editEncodersPool, bool enableDeliveryServer, bool applicationRecorder, bool createRemoveLiveChannel,
 		bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		int64_t workspaceKey, int expirationInDaysWorkspaceDefaultValue
 	);
@@ -2727,7 +2728,7 @@ class MMSEngineDBFacade
 	std::string createCode(
 		PostgresConnTrans &trans, int64_t workspaceKey, int64_t userKey, const std::string &userEmail, CodeType codeType, bool admin,
 		bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles, bool deliveryAuthorization, bool shareWorkspace, bool editMedia,
-		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool editDeliveryServersPool,
+		bool editConfiguration, bool killEncoding, bool cancelIngestionJob, bool editEncodersPool, bool enableDeliveryServer,
 		bool applicationRecorder,
 		bool createRemoveLiveChannel, bool updateEncoderAndDeliveryStats,
 		bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy
@@ -2802,7 +2803,7 @@ class MMSEngineDBFacade
 	std::pair<int64_t, std::string> addWorkspace(
 		PostgresConnTrans &trans, int64_t userKey, bool admin, bool createRemoveWorkspace, bool ingestWorkflow, bool createProfiles,
 		bool deliveryAuthorization, bool shareWorkspace, bool editMedia, bool editConfiguration, bool killEncoding, bool cancelIngestionJob,
-		bool editEncodersPool, bool editDeliveryServersPool, bool applicationRecorder, bool createRemoveLiveChannel,
+		bool editEncodersPool, bool enableDeliveryServer, bool applicationRecorder, bool createRemoveLiveChannel,
 		bool updateEncoderAndDeliveryStats, bool appUploadMediaContent, bool appCaptureAndProxy, bool appStreamAndProxy,
 		const std::string &workspaceName, const std::string &notes,
 		WorkspaceType workspaceType, const std::string &deliveryURL, EncodingPriority maxEncodingPriority, EncodingPeriod encodingPeriod,

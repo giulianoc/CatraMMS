@@ -119,9 +119,9 @@
 		}
 		if ($request_method = PUT) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyDeliveryServer&deliveryServerKey=$2 last;
+			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/(true|false)/?$ /api?x-api-version=$1&x-api-method=enableDeliveryServer&deliveryServerKey=$2&enabled=$3 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/bandwidthStats/([0-9]+)/([0-9]+)/([0-9]+)/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateDeliveryServerBandwidthStats&deliveryServerKey=$2&rxAvgBandwidthUsage=$3&txAvgBandwidthUsage=$4&rxPeakBandwidthUsage=$5&txPeakBandwidthUsage=$6 last;
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/cpuStats/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=updateDeliveryServerCPUUsageStats&deliveryServerKey=$2&cpuUsage=$3 last;
-			#rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServersPool/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=modifyDeliveryServersPool&deliveryServersPoolKey=$2 last;
 		}
 		if ($request_method = DELETE) {
 			rewrite ^/catramms/([0-9]+.[0-9]+.[0-9]+)/deliveryServer/([0-9]+)/?$ /api?x-api-version=$1&x-api-method=removeDeliveryServer&deliveryServerKey=$2 last;

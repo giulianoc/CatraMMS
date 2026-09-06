@@ -211,6 +211,10 @@ API::API(
 		{ modifyDeliveryServer(sThreadId, request, requestData); }
 	);
 	registerHandler(
+		"enableDeliveryServer", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
+		{ enableDeliveryServer(sThreadId, request, requestData); }
+	);
+	registerHandler(
 		"updateDeliveryServerBandwidthStats", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ updateDeliveryServerBandwidthStats(sThreadId, request, requestData); }
 	);
@@ -222,26 +226,6 @@ API::API(
 		"deliveryServerList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
 		{ deliveryServerList(sThreadId, request, requestData); }
 	);
-	/*
-	registerHandler(
-		"deliveryServersPoolList", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ deliveryServersPoolList(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"addDeliveryServersPool", [this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ addDeliveryServersPool(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"modifyDeliveryServersPool",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ modifyDeliveryServersPool(sThreadId, request, requestData); }
-	);
-	registerHandler(
-		"removeDeliveryServersPool",
-		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
-		{ removeDeliveryServersPool(sThreadId, request, requestData); }
-	);
-	*/
 	registerHandler(
 		"addAssociationWorkspaceDeliveryServer",
 		[this](const string_view &sThreadId, FCGX_Request &request, const FCGIRequestData &requestData)
@@ -1404,7 +1388,7 @@ shared_ptr<FCGIRequestData::AuthorizationDetails> API::checkAuthorization(const 
 			apiAuthorizationDetails->canShareWorkspace, apiAuthorizationDetails->canEditMedia,
 			apiAuthorizationDetails->canEditConfiguration, apiAuthorizationDetails->canKillEncoding,
 			apiAuthorizationDetails->canCancelIngestionJob,
-			apiAuthorizationDetails->canEditEncodersPool, apiAuthorizationDetails->canEditDeliveryServersPool,
+			apiAuthorizationDetails->canEditEncodersPool, apiAuthorizationDetails->canEnableDeliveryServer,
 			apiAuthorizationDetails->canApplicationRecorder, apiAuthorizationDetails->canCreateRemoveLiveChannel,
 			apiAuthorizationDetails->canUpdateEncoderAndDeliveryStats, apiAuthorizationDetails->canAppUploadMediaContent,
 			apiAuthorizationDetails->canAppCaptureAndProxy, apiAuthorizationDetails->canAppStreamAndProxy)

@@ -47,7 +47,7 @@ non il motore che spinge i byte.
 - **Lato API**: HTTP Basic Auth, username = `userKey` numerico, password = API key, verificata tramite
   `MMSEngineDBFacade::checkAPIKey`. Restituisce un `Workspace` più circa 17 flag di capability (`admin`,
   `canIngestWorkflow`, `canDeliveryAuthorization`, `canEditMedia`, `canEditConfiguration`,
-  `canKillEncoding`, `canEditEncodersPool`, `canEditDeliveryServersPool`, ecc. — vedi
+  `canKillEncoding`, `canEditEncodersPool`, `canEnableDeliveryServer`, ecc. — vedi
   `API::APIAuthorizationDetails` in `API.h`), controllati ad hoc all'inizio di ogni handler.
   `login` supporta anche opzionalmente il bind LDAP (`LdapWrapper`) in alternativa a email/password su DB.
 - **Lato Delivery**: nessuna Basic Auth. Token con scadenza temporale, cifrati con OpenSSL

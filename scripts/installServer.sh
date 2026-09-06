@@ -457,14 +457,18 @@ install-packages()
 		apt-get -y install incron
 		systemctl enable incron.service
 		mkdir -p /etc/systemd/system/incron.service.d
-		echo "[Service]" > /etc/systemd/system/incron.service.d/override.conf
-		echo "Restart=always" >> /etc/systemd/system/incron.service.d/override.conf
-		echo "#attende 3 secondi prima del riavvio" >> /etc/systemd/system/incron.service.d/override.conf
-		echo "RestartSec=3" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "[Unit]" > /etc/systemd/system/incron.service.d/override.conf
 		echo "#se il servizio viene spesso riavviato da systemd (supera la soglia StartLimitBurst in quel periodo StartLimitIntervalSec)," >> /etc/systemd/system/incron.service.d/override.conf
 		echo "#systemd blocca ulteriori riavvii e segna il servizio come “crashed permanently" >> /etc/systemd/system/incron.service.d/override.conf
 		echo "#Questo parametro disattiva il controllo del numero di restart" >> /etc/systemd/system/incron.service.d/override.conf
 		echo "StartLimitIntervalSec=0" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "[Service]" >> /etc/systemd/system/incron.service.d/override.conf
+		#echo "Restart=always" >> /etc/systemd/system/incron.service.d/override.conf
+		#on-failure evita di riavviare il servizio quando viene terminato intenzionalmente con successo
+		echo "Restart=on-failure" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "#attende 3 secondi prima del riavvio" >> /etc/systemd/system/incron.service.d/override.conf
+		echo "RestartSec=3" >> /etc/systemd/system/incron.service.d/override.conf
 		systemctl daemon-reload
 		service incron start
 
