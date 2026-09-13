@@ -18,7 +18,8 @@ ssh-port()
 		#verso lo stesso server di delivery nello stesso istante
 		echo "MaxSessions 100" >> /etc/ssh/sshd_config
 	fi
-	/etc/init.d/ssh restart
+	#/etc/init.d/ssh restart
+	systemctl restart ssh.service
 }
 
 mms-account-creation()
@@ -1794,7 +1795,7 @@ install-mms-MMS-package()
 
 	packageName=MMS
 	echo ""
-	mmsVersion=1.0.7079
+	mmsVersion=1.0.7147
 	echo -n "$packageName version (i.e.: $mmsVersion)? "
 	read version
 	if [ "$version" == "" ]; then
