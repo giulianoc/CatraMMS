@@ -31,7 +31,7 @@ do
 	before=$(date +%s)
 	echo "" >> $debugFilename
 
-	source /opt/catrasoftware/CatraMMS/scripts/servers.sh
+	source /opt/catrasoftware/catramms-private/servers.sh
 
 
 	#PROD

@@ -26,7 +26,7 @@ destModuleName=MMS
 #tarFileName=$moduleName-$version-$linuxName.tar.gz
 tarFileName=$destModuleName-$version.tar.gz
 
-source /opt/catrasoftware/CatraMMS/scripts/servers.sh
+source /opt/catrasoftware/catramms-private/servers.sh
 
 RED='\033[0;31m'
 NC='\033[0m' # No Color

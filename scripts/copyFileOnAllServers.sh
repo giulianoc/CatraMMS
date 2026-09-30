@@ -12,7 +12,7 @@ env=$1
 sourceFilePathName=$2
 destDirectoryPathName=$3
 
-source /opt/catrasoftware/CatraMMS/scripts/servers.sh
+source /opt/catrasoftware/catramms-private/servers.sh
 
 if [ "$env" == "prod" ];
 then
