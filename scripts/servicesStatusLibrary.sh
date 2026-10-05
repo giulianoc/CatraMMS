@@ -1,7 +1,9 @@
 #!/bin/bash
 
 #definisce la variabile d'ambiente MMS_DB_LOCALHOST
-source ~/mms/conf/mms-env.sh
+#se questi servizi vengono usati da un account diverso da mms, la riga sotto da errore a causa del char ~
+#source ~/mms/conf/mms-env.sh
+source /home/mms/mms/conf/mms-env.sh
 
 debugFilename=/tmp/servicesStatus.log
 debug=1
@@ -85,6 +87,10 @@ notify()
 	alarmNotificationPeriodInSeconds=$4
 	alarmDetails=$5
 	customersToBeSentToo=$6
+	logFilename=$7
+	if [ "$logFilename" == "" ]; then
+		logFilename=$debugFilename
+	fi
 
 	alarmNotificationPathFileName="/tmp/$notifyFileName"
 
@@ -94,12 +100,12 @@ notify()
 		now=$(date +%s)
 		elapsed=$((now-lastNotificationTime))
 		if [ $elapsed -lt $alarmNotificationPeriodInSeconds ]; then
-			echo "$(date +'%Y-%m-%d %H:%M:%S'): $alarmType not sent because too early, elapsed: $elapsed secs" >> $debugFilename
+			echo "$(date +'%Y-%m-%d %H:%M:%S'): $alarmType not sent because too early, elapsed: $elapsed secs" >> $logFilename
 			return 1
 		fi
 	fi
 
-	echo "$(date +'%Y-%m-%d %H:%M:%S'): Sending $alarmType" >> $debugFilename
+	echo "$(date +'%Y-%m-%d %H:%M:%S'): Sending $alarmType" >> $logFilename
 
 	touch $alarmNotificationPathFileName
 
@@ -115,8 +121,8 @@ notify()
 	#Forse per mandare ad una specifica coda!!! Boh
 	#alarmNotificationIntegration="/home/mms/mms/scripts/alarmNotificationIntegration.sh"
 	#if [ -x "$alarmNotificationIntegration" ]; then
-	#	echo "$(date +'%Y/%m/%d %H:%M:%S'): Calling $alarmNotificationIntegration" >> $debugFilename
-	#	$alarmNotificationIntegration "$alarmType" "${message}" >> $debugFilename 2>&1
+	#	echo "$(date +'%Y/%m/%d %H:%M:%S'): Calling $alarmNotificationIntegration" >> $logFilename
+	#	$alarmNotificationIntegration "$alarmType" "${message}" >> $logFilename 2>&1
 	#fi
 
 	return 0
@@ -842,6 +848,10 @@ raid_error()
 systemctlServiceUpAndRunning()
 {
 	serviceName=$1
+	logFilename=$2
+	if [ "$logFilename" == "" ]; then
+		logFilename=$debugFilename
+	fi
 
 	#systemctl is-active da solo puo' dare falsi positivi quando il servizio si trova in uno stato
 	#transitorio (es. "activating"/"reloading" durante un auto-restart appena avvenuto), che dura
@@ -853,14 +863,14 @@ systemctlServiceUpAndRunning()
 	activeState=""
 	subState=""
 	while [ $attempt -le $maxAttempts ]; do
-		activeState=$(systemctl show -p ActiveState --value "$serviceName" 2>>$debugFilename)
-		subState=$(systemctl show -p SubState --value "$serviceName" 2>>$debugFilename)
+		activeState=$(systemctl show -p ActiveState --value "$serviceName" 2>>$logFilename)
+		subState=$(systemctl show -p SubState --value "$serviceName" 2>>$logFilename)
 
 		if [ "$activeState" == "active" ]; then
 			break
 		fi
 
-		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, attempt $attempt/$maxAttempts, $serviceName not active yet. activeState: $activeState, subState: $subState" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, attempt $attempt/$maxAttempts, $serviceName not active yet. activeState: $activeState, subState: $subState" >> $logFilename
 
 		attempt=$((attempt+1))
 		if [ $attempt -le $maxAttempts ]; then
@@ -869,7 +879,7 @@ systemctlServiceUpAndRunning()
 	done
 
 	if [ "$activeState" == "active" ]; then
-		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName is active (subState: $subState, attempt: $attempt/$maxAttempts)" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName is active (subState: $subState, attempt: $attempt/$maxAttempts)" >> $logFilename
 
 		alarmNotificationPathFileName="/tmp/alarm_mms_${serviceName}_working"
 		if [ -f "$alarmNotificationPathFileName" ]; then
@@ -879,16 +889,16 @@ systemctlServiceUpAndRunning()
 		return 0
 	else
 		#diagnostica aggiuntiva per capire il motivo del down: Result/NRestarts/ExecMainStatus e le ultime righe di journalctl
-		result=$(systemctl show -p Result --value "$serviceName" 2>>$debugFilename)
-		nRestarts=$(systemctl show -p NRestarts --value "$serviceName" 2>>$debugFilename)
-		execMainStatus=$(systemctl show -p ExecMainStatus --value "$serviceName" 2>>$debugFilename)
-		lastJournalLines=$(journalctl -u "$serviceName" -n 10 --no-pager 2>>$debugFilename | tr '\n' '|')
+		result=$(systemctl show -p Result --value "$serviceName" 2>>$logFilename)
+		nRestarts=$(systemctl show -p NRestarts --value "$serviceName" 2>>$logFilename)
+		execMainStatus=$(systemctl show -p ExecMainStatus --value "$serviceName" 2>>$logFilename)
+		lastJournalLines=$(journalctl -u "$serviceName" -n 10 --no-pager 2>>$logFilename | tr '\n' '|')
 
-		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName IS NOT active after $maxAttempts attempts. activeState: $activeState, subState: $subState, result: $result, nRestarts: $nRestarts, execMainStatus: $execMainStatus, lastJournalLines: $lastJournalLines" >> $debugFilename
+		echo "$(date +'%Y-%m-%d %H:%M:%S'): alarm_mms_${serviceName}_working, $serviceName IS NOT active after $maxAttempts attempts. activeState: $activeState, subState: $subState, result: $result, nRestarts: $nRestarts, execMainStatus: $execMainStatus, lastJournalLines: $lastJournalLines" >> $logFilename
 
 		alarmNotificationPeriod=$((60 * 1))		#1 minuto
 		alarmDetails="$serviceName IS NOT active even with systemd auto restart (state: $activeState/$subState, result: $result, nRestarts: $nRestarts, execMainStatus: $execMainStatus)"
-		notify "$(hostname)" "alarm_mms_${serviceName}_working" "alarm_mms_${serviceName}_working" $alarmNotificationPeriod "$alarmDetails"
+		notify "$(hostname)" "alarm_mms_${serviceName}_working" "alarm_mms_${serviceName}_working" $alarmNotificationPeriod "$alarmDetails" "" "$logFilename"
 		return 1
 	fi
 }

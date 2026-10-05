@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ $# -ne 1 -a $# -ne 2 ]
+if [ $# -ne 1 -a $# -ne 2 -a $# -ne 3 ]
 then
-        echo "Usage $0 micro-service-name (i.e.: cibortv, catrammswebservices, icml) conf in case of catrammswebservices (<empty>, prod, test)"
+	echo "Usage $0 micro-service-name (i.e.: cibortv, catrammswebservices, icml) conf (in case of catrammswebservices <empty>, prod, test) branch (se serve)"
 
         exit
 fi
@@ -13,6 +13,7 @@ cd /opt/mms
 
 serviceFileName=$1
 conf=$2
+branch=$3
 
 if [ -d "$serviceFileName-0.1" ]; then
         rm -rf $serviceFileName-0.1
@@ -32,6 +33,13 @@ if [ ! -d "$serviceFileName" ]; then
 fi
 
 cd $serviceFileName
+
+# Checkout eventuale branch
+if [[ ! -z $branch ]]
+then
+	echo "checkout of the branch: $branch"
+	git checkout $branch
+fi
 
 #next if is for the catrammswebservices microservice
 if [[ "$conf" == *"test"* ]]; then
