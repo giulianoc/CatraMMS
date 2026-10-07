@@ -1675,6 +1675,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/* 2026-10-07: Eliminato perchè suggerito da claude (non usato)
 		{
 			// utile per MMSEngineDBFacade::retentionOfIngestionData
 			string sqlStatement = "create index if not exists MMS_IngestionRoot_idx3 on MMS_IngestionRoot ((status like 'Completed%') desc)";
@@ -1690,6 +1691,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			// utile per MMSEngineDBFacade::retentionOfIngestionData
@@ -1815,6 +1817,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/* 2026-10-07: Eliminato perchè suggerito da claude (non usato)
 		{
 			// usato da getEncodingJobsStatus
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx2 on MMS_IngestionJob "
@@ -1831,6 +1834,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			// usato da getIngestionJobsStatus
@@ -1842,6 +1846,38 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				    ingestionRootKey
 				)
 				WHERE status IN (
+				    'Start_TaskQueued',
+				    'SourceDownloadingInProgress',
+				    'SourceMovingInProgress',
+				    'SourceCopingInProgress',
+				    'SourceUploadingInProgress',
+				    'EncodingQueued'
+				)
+			)";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
+			// usato da getIngestionJobsStatus (status == "completed"), complementare a MMS_IngestionJob_idx3.
+			// Il predicato deve essere identico a quello generato in getIngestionJobsStatus, altrimenti l'indice non viene usato
+			string sqlStatement = R"(
+				CREATE INDEX if not exists MMS_IngestionJob_idx15
+				ON MMS_IngestionJob (
+				    startProcessing DESC,
+				    endProcessing DESC,
+				    ingestionRootKey
+				)
+				WHERE status NOT IN (
 				    'Start_TaskQueued',
 				    'SourceDownloadingInProgress',
 				    'SourceMovingInProgress',
@@ -1895,6 +1931,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/* 2026-10-07: Eliminato perchè suggerito da claude (non usato)
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx7 on MMS_IngestionJob (processingStartingFrom, "
 								  "scheduleStart_virtual, priority) WHERE processorMMS IS NULL AND toBeManaged_virtual";
@@ -1910,6 +1947,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		// 2024-01-14: usato poco
 		{
@@ -1927,6 +1965,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/* 2026-10-07: Eliminato perchè suggerito da claude (non usato)
 		{
 			// viene usato dalla select di getIngestionsToBeManaged
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx9 on MMS_IngestionJob(priority, processingstartingfrom, "
@@ -1943,6 +1982,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx10 on MMS_IngestionJob (status)";
@@ -1960,6 +2000,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		// 2024-01-14: non sembra sia usato
+		/* 2026-10-07: Eliminato perchè suggerito da claude (non usato)
 		{
 			string sqlStatement = "create index if not exists MMS_IngestionJob_idx11 on MMS_IngestionJob (label)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -1974,6 +2015,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			// usato da: select status from MMS_IngestionJob where ingestionRootKey = 491421
@@ -2681,6 +2723,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 			);
 		}
 
+		/* 2026-10-07: Eliminato perchè suggerito da claude (non usato)
 		{
 			string sqlStatement = "create index if not exists MMS_EncodingJob_idx2 on MMS_EncodingJob (utcScheduleStart_virtual)";
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
@@ -2695,6 +2738,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 				sqlStatement, trans.connection->getConnectionId(), elapsed
 			);
 		}
+		*/
 
 		{
 			string sqlStatement = "create index if not exists MMS_EncodingJob_idx3 on MMS_EncodingJob (typePriority, utcScheduleStart_virtual, "

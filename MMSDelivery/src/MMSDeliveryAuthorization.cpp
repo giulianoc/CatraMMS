@@ -652,11 +652,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 						// TODO: nello scenario attuale ho bisogno solamente di selezionare un delivery external
 						//	Mi riservo, in futuro, di capire gli scenari dove servono anche delivery host interni
-						optional<bool> external = true;
+						// optional<bool> external = true;
 						deliveryURL = std::format(
 							"{}://{}{}?token={},{}", _deliveryProtocol,
 							deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(
-								requestWorkspace, external, playerLatitude, playerLongitude,
+								requestWorkspace, nullopt, playerLatitude, playerLongitude,
 								_deliveryHost_authorizationThroughParameter),
 							deliveryURI, CurlWrapper::escape(md5Base64), expirationTime
 						);
@@ -688,11 +688,11 @@ pair<string, string> MMSDeliveryAuthorization::createDeliveryAuthorization(
 
 					// TODO: nello scenario attuale ho bisogno solamente di selezionare un delivery external
 					//	Mi riservo, in futuro, di capire gli scenari dove servono anche delivery host interni
-					optional<bool> external = true;
+					// optional<bool> external = true;
 					deliveryURL = std::format(
 						"{}://{}/token_{},{}{}", _deliveryProtocol,
 						deliveryHostToBeUsed ? *deliveryHostToBeUsed : getDeliveryHost(
-							requestWorkspace, external, playerLatitude, playerLongitude,
+							requestWorkspace, nullopt, playerLatitude, playerLongitude,
 							_deliveryHost_authorizationThroughPath),
 						md5Base64, expirationTime, deliveryURI
 					);

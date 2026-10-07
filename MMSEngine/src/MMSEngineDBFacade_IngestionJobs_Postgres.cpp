@@ -3468,7 +3468,8 @@ json MMSEngineDBFacade::getIngestionJobsStatus(
 				{}
 				{}
 				-- con ASC i nulls vanno di default alla fine, con DESC all'inizio.
-				-- E' importante lasciare i default perche cosi viene usato l'indice MMS_IngestionJob_idx3
+				-- E' importante lasciare i default perche cosi vengono usati gli indici
+				-- MMS_IngestionJob_idx3 (status notCompleted) e MMS_IngestionJob_idx15 (status completed)
 				order by ij.startProcessing {}, ij.endProcessing {}
 				limit {} offset {}
 				)",
