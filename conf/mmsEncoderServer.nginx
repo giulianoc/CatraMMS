@@ -71,9 +71,6 @@
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/playlist/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=changeLiveProxyPlaylist&encodingJobKey=$2 last;
 			rewrite ^/catramms/(v[0-9]+)/encoder/liveProxy/overlayText/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=changeLiveProxyOverlayText&encodingJobKey=$2 last;
 		}
-		if ($request_method = GET) {
-			rewrite ^/catramms/(v[0-9]+)/encoder/filterNotification/([0-9]+)/([0-9]+)/?$ /encoder?x-api-version=$1&x-api-method=filterNotification&ingestionJobKey=$2&encodingJobKey=$3 last;
-		}
 	}
 
 	#match qualunque URL o URI che inizia con /encoder

@@ -1372,6 +1372,102 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 						);
 					}
 				}
+				else
+				{
+					try
+					{
+						if (const auto blackDetectEvent = sourceLiveProxy->_callbackData->popFilterEvent("blackdetect"))
+						{
+							LOG_WARN(
+								"liveProxyMonitor. Black detected"
+								", ingestionJobKey: {}"
+								", encodingJobKey: {}"
+								", configurationLabel: {}"
+								", count: {}"
+								", firstReceivedTime: {}",
+								copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, configurationLabel,
+								blackDetectEvent->_count, Datetime::timePointAsLocalString(blackDetectEvent->_firstReceivedTime)
+							);
+
+							// TODO: eseguire il workflow associato all'evento black detected
+							/*
+							string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, const string& filterName, json ingestedParametersRoot)
+{
+	try
+	{
+							json eventTaskRoot = nullptr;
+							{
+								if (JSONUtils::isPresent(ingestedParametersRoot, "internalMMS"))
+								{
+									if (json internalMMSRoot = ingestedParametersRoot["internalMMS"]; JSONUtils::isPresent(internalMMSRoot, "events"))
+									{
+										json eventsRoot = internalMMSRoot["events"];
+
+										if (filterName == "blackdetect" || filterName == "blackframe" || filterName == "freezedetect"
+											|| filterName == "silentdetect")
+										{
+											if (JSONUtils::isPresent(eventsRoot, "onError"))
+												eventTaskRoot = eventsRoot["onError"];
+										}
+									}
+								}
+							}
+
+							if (eventTaskRoot == nullptr)
+							{
+								LOG_ERROR(
+									"buildFilterNotificationIngestionWorkflow, no events found in "
+									"Workflow"
+									", ingestionJobKey: {}",
+									ingestionJobKey
+								);
+
+								return "";
+							}
+
+							json workflowRoot;
+
+							workflowRoot["label"] = filterName;
+							workflowRoot["type"] = "Workflow";
+							workflowRoot["task"] = eventTaskRoot["task"];
+
+							string workflowMetadata = JSONUtils::toString(workflowRoot);
+
+							LOG_INFO(
+								"buildFilterNotificationIngestionWorkflow, Workflow generated"
+								", ingestionJobKey: {}"
+								", workflowMetadata: {}",
+								ingestionJobKey, workflowMetadata
+							);
+
+							return workflowMetadata;
+						}
+						catch (exception& e)
+						{
+							LOG_ERROR(
+								"buildFilterNotificationIngestionWorkflow failed"
+								", ingestionJobKey: {}"
+								", exception: {}",
+								ingestionJobKey, e.what()
+							);
+
+							throw;
+						}
+					}
+					*/
+						}
+					}
+					catch (exception &e)
+					{
+						LOG_ERROR(
+							"liveProxyMonitor Black detected check failed"
+							", copiedLiveProxy->_ingestionJobKey: {}"
+							", copiedLiveProxy->_encodingJobKey: {}"
+							", e.what(): {}",
+							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
+						);
+					}
+				}
 
 				LOG_INFO(
 					"liveProxyMonitor {}/{}"

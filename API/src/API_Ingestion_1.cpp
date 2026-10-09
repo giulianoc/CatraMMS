@@ -1409,11 +1409,9 @@ vector<int64_t> API::ingestionSingleTask(
 				}
 			}
 		}
-		field = "events";
-		internalMMSRoot[field] = eventsRoot;
+		internalMMSRoot["events"] = eventsRoot;
 
-		string internalMMSField = "internalMMS";
-		parametersRoot[internalMMSField] = internalMMSRoot;
+		parametersRoot["internalMMS"] = internalMMSRoot;
 	}
 	else if (type == "Live-Cut" || type == "YouTube-Live-Broadcast")
 	{

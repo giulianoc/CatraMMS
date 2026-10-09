@@ -168,6 +168,8 @@
 							"duration": 4
 						},
 						{
+						    // in case of blackdetect, the system will create a new workflow using the 'onError' event
+						    // of the current Live-Proxy task
 							"type": "blackdetect",
 							"black_min_duration": 2.0,
 							"pixel_black_th": 0.0

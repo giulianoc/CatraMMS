@@ -11,6 +11,7 @@
  */
 
 #include "FFMPEGEncoder.h"
+#include "../../CatraLibraries/FFMpegEngine/src/FFMpegFilters.h"
 #include "AddSilentAudio.h"
 #include "Convert.h"
 #include "CurlWrapper.h"
@@ -19,7 +20,6 @@
 #include "EncodeContent.h"
 #include "Encrypt.h"
 #include "FFMPEGEncoderDaemons.h"
-#include "FFMpegFilters.h"
 #include "GenerateFrames.h"
 #include "IntroOutroOverlay.h"
 #include "JSONUtils.h"
@@ -211,13 +211,6 @@ FFMPEGEncoder::FFMPEGEncoder(
 			const FCGIRequestData& requestData)
 		{
 			encodingStatus(sThreadId, request, requestData);
-		}
-	);
-	registerHandler("filterNotification",
-		[this](const string_view& sThreadId, FCGX_Request& request,
-			const FCGIRequestData& requestData)
-		{
-			filterNotification(sThreadId, request, requestData);
 		}
 	);
 	registerHandler("killEncodingJob",
@@ -1508,184 +1501,6 @@ void FFMPEGEncoder::encodingStatus(
 	}
 }
 
-void FFMPEGEncoder::filterNotification(
-	const string_view& sThreadId, FCGX_Request &request,
-	const FCGIRequestData& requestData
-)
-{
-	string api = "filterNotification";
-
-	LOG_INFO(
-		"Received {}"
-		", requestBody: {}",
-		api, requestData.requestBody
-	);
-
-	try
-	{
-		int64_t ingestionJobKey = requestData.getQueryParameter("ingestionJobKey", static_cast<int64_t>(-1), true);
-		int64_t encodingJobKey = requestData.getQueryParameter("encodingJobKey", static_cast<int64_t>(-1), true);
-		string filterName = requestData.getQueryParameter("filterName", string(), true);
-
-		bool encodingCompleted = false;
-		{
-			lock_guard<mutex> locker(*_encodingCompletedMutex);
-
-			auto it = _encodingCompletedMap->find(encodingJobKey);
-			if (it != _encodingCompletedMap->end())
-				encodingCompleted = true;
-		}
-
-		if (encodingCompleted)
-		{
-			string errorMessage = std::format(
-				"filterNotification, encoding is already finished"
-				", ingestionJobKey: {}"
-				", encodingJobKey: {}"
-				", encodingCompleted: {}",
-				ingestionJobKey, ingestionJobKey, encodingCompleted
-			);
-			LOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		bool liveProxyFound = false;
-		shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid> selectedLiveProxy;
-
-		for (const shared_ptr<FFMPEGEncoderBase::LiveProxyAndGrid>& liveProxy : *_liveProxiesCapability)
-		{
-			if (liveProxy->_encodingJobKey == encodingJobKey)
-			{
-				liveProxyFound = true;
-				selectedLiveProxy = liveProxy;
-
-				break;
-			}
-		}
-
-		if (!liveProxyFound)
-		{
-			string errorMessage = std::format(
-				"filterNotification, liveProxy not found"
-				", ingestionJobKey: {}"
-				", encodingJobKey: {}"
-				", liveProxyFound: {}",
-				ingestionJobKey, ingestionJobKey, liveProxyFound
-			);
-			LOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		// string mmsWorkflowIngestionURL;
-		string workflowMetadata;
-		try
-		{
-			json ingestedParametersRoot = selectedLiveProxy->_ingestedParametersRoot;
-			json encodingParametersRoot = selectedLiveProxy->_encodingParametersRoot;
-
-			workflowMetadata = buildFilterNotificationIngestionWorkflow(ingestionJobKey, filterName, ingestedParametersRoot);
-			if (!workflowMetadata.empty())
-			{
-				int64_t userKey;
-				string apiKey;
-				{
-					string field = "internalMMS";
-					if (JSONUtils::isPresent(ingestedParametersRoot, field))
-					{
-						json internalMMSRoot = ingestedParametersRoot[field];
-
-						field = "credentials";
-						if (JSONUtils::isPresent(internalMMSRoot, field))
-						{
-							json credentialsRoot = internalMMSRoot[field];
-
-							field = "userKey";
-							userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
-
-							field = "apiKey";
-							string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
-							apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-						}
-					}
-				}
-
-				{
-					/*
-					string field = "mmsWorkflowIngestionURL";
-					if (!JSONUtils::isPresent(encodingParametersRoot, field))
-					{
-						string errorMessage = std::format(
-							"Field is not present or it is null"
-							", _ingestionJobKey: {}"
-							", Field: {}",
-							ingestionJobKey, field
-						);
-						LOG_ERROR(errorMessage);
-
-						throw runtime_error(errorMessage);
-					}
-					mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
-					*/
-				}
-
-				vector<string> otherHeaders;
-				string sResponse = CurlWrapper::httpPostString(
-				   _mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey),
-				   workflowMetadata,
-				   "application/json", // contentType
-				   otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
-				   3 // maxRetryNumber
-				).second;
-			}
-		}
-		catch (exception& e)
-		{
-			string errorMessage = std::format(
-				"Ingested URL failed (runtime_error)"
-				", ingestionJobKey: {}"
-				", mmsWorkflowIngestionURL: {}"
-				", workflowMetadata: {}"
-				", exception: {}",
-				ingestionJobKey, _mmsWorkflowIngestionURL, workflowMetadata, e.what()
-			);
-			LOG_ERROR(errorMessage);
-
-			throw runtime_error(errorMessage);
-		}
-
-		string responseBody;
-		{
-			// it should never happen
-			json responseBodyRoot;
-
-			string field = "ingestionJobKey";
-			responseBodyRoot[field] = ingestionJobKey;
-
-			field = "encodingJobKey";
-			responseBodyRoot[field] = encodingJobKey;
-
-			responseBody = JSONUtils::toString(responseBodyRoot);
-		}
-
-		sendSuccess(sThreadId, requestData.responseBodyCompressed, request,
-			requestData.requestURI, requestData.requestMethod, 200, responseBody);
-	}
-	catch (exception &e)
-	{
-		LOG_ERROR(
-			"API failed"
-			", API: {}"
-			", requestBody: {}"
-			", e.what(): {}",
-			api, requestData.requestBody, e.what()
-		);
-
-		throw FastCGIError::HTTPError(500);
-	}
-}
-
 void FFMPEGEncoder::killEncodingJob(
 	const string_view& sThreadId, FCGX_Request &request,
 	const FCGIRequestData& requestData
@@ -2835,99 +2650,6 @@ int FFMPEGEncoder::getMaxLiveRecordingsCapability() const
 		);
 
 		return maxCapability;
-	}
-}
-
-string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, const string& filterName, json ingestedParametersRoot)
-{
-	try
-	{
-		string workflowMetadata;
-		/*
-		{
-			"label": "<workflow label>",
-			"type": "Workflow",
-			"task": <task of the event>
-		}
-		*/
-
-		json eventTaskRoot = nullptr;
-		{
-			string field = "internalMMS";
-			if (JSONUtils::isPresent(ingestedParametersRoot, field))
-			{
-				json internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "events";
-				if (JSONUtils::isPresent(internalMMSRoot, field))
-				{
-					json eventsRoot = internalMMSRoot[field];
-
-					if (filterName == "blackdetect" || filterName == "blackframe" || filterName == "freezedetect"
-						|| filterName == "silentdetect")
-					{
-						field = "onError";
-						if (JSONUtils::isPresent(eventsRoot, field))
-							eventTaskRoot = eventsRoot[field];
-					}
-					/*
-							  field = "onSuccess";
-							  if (JSONUtils::isPresent(eventsRoot,
-					   field)) addContentRoot[field] = eventsRoot[field];
-
-
-							  field = "onComplete";
-							  if (JSONUtils::isPresent(eventsRoot,
-					   field)) addContentRoot[field] = eventsRoot[field];
-					*/
-				}
-			}
-		}
-
-		if (eventTaskRoot == nullptr)
-		{
-			LOG_ERROR(
-				"buildFilterNotificationIngestionWorkflow, no events found in "
-				"Workflow"
-				", ingestionJobKey: {}",
-				ingestionJobKey
-			);
-
-			return "";
-		}
-
-		json workflowRoot;
-
-		string field = "label";
-		workflowRoot[field] = filterName;
-
-		field = "type";
-		workflowRoot[field] = "Workflow";
-
-		field = "task";
-		workflowRoot[field] = eventTaskRoot[field];
-
-		workflowMetadata = JSONUtils::toString(workflowRoot);
-
-		LOG_INFO(
-			"buildFilterNotificationIngestionWorkflow, Workflow generated"
-			", ingestionJobKey: {}"
-			", workflowMetadata: {}",
-			ingestionJobKey, workflowMetadata
-		);
-
-		return workflowMetadata;
-	}
-	catch (exception& e)
-	{
-		LOG_ERROR(
-			"buildFilterNotificationIngestionWorkflow failed"
-			", ingestionJobKey: {}"
-			", exception: {}",
-			ingestionJobKey, e.what()
-		);
-
-		throw;
 	}
 }
 

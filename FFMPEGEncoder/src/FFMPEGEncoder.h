@@ -187,10 +187,6 @@ protected:
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
 
-	void filterNotification(
-		const std::string_view& sThreadId, FCGX_Request &request,
-		const FCGIRequestData& requestData);
-
 	void killEncodingJob(
 		const std::string_view& sThreadId, FCGX_Request &request,
 		const FCGIRequestData& requestData);
@@ -283,8 +279,6 @@ protected:
 		// FCGX_Request& request,
 		const std::shared_ptr<FFMPEGEncoderBase::Encoding> &encoding, int64_t ingestionJobKey, int64_t encodingJobKey, const nlohmann::json &metadataRoot
 	) const;
-
-	static std::string buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, const std::string& filterName, nlohmann::json ingestedParametersRoot);
 
 	void encodingCompletedRetention() const;
 

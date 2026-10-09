@@ -201,23 +201,23 @@ do
 
 			echo "" >> $debugFilename
 			serviceName=encoder
-      baseEncoderURL=$2
+      			baseEncoderURL=$2
 			healthCheckURL=$baseEncoderURL/status
-      encoderAPIUser=1
-      encoderAPIPassword=SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHu3Iy6W94kQvSd4cJm.el3j
 			mms_service_running_by_healthCheckURL $serviceName "$healthCheckURL"
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect blackdetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
+			#echo "" >> $debugFilename
+      			#encoderAPIUser=1
+      			#encoderAPIPassword=SU1.8ZO1O2zVeBMNv9lzZ0whABXSAdjWrR~rpcnI5eaHu3Iy6W94kQvSd4cJm.el3j
+			#ffmpeg_filter_detect blackdetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect blackframe "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect blackframe "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect freezedetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect freezedetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
-			echo "" >> $debugFilename
-			ffmpeg_filter_detect silencedetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
+			#echo "" >> $debugFilename
+			#ffmpeg_filter_detect silencedetect "$baseEncoderURL" "$encoderAPIUser" "$encoderAPIPassword"
 
 			shift
 
