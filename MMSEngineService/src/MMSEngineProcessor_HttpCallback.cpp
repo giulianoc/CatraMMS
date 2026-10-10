@@ -65,8 +65,9 @@ void MMSEngineProcessor::httpCallbackThread(
 
 			if (JSONUtils::isPresent(parametersRoot, "headers"))
 			{
+				auto headers = JsonPath(&parametersRoot)["headers"].as<string>();
 				// semicolon as separator
-				stringstream ss(JsonPath(&parametersRoot)["headers"].as<string>());
+				stringstream ss(headers);
 				string token;
 				char delim = ';';
 				while (getline(ss, token, delim))
