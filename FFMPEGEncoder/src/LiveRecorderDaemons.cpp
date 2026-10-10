@@ -492,9 +492,10 @@ void LiveRecorderDaemons::stopVirtualVODIngestionThread()
 }
 
 tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput(
-	int64_t ingestionJobKey, int64_t encodingJobKey, string streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
-	string outputFileFormat, json encodingParametersRoot, json ingestedParametersRoot, string chunksTranscoderStagingContentsPath,
-	string chunksNFSStagingContentsPath, string segmentListFileName, string recordedFileNamePrefix, string lastRecordedAssetFileName,
+	int64_t ingestionJobKey, int64_t encodingJobKey, const string& streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
+	const string& outputFileFormat, const json& encodingParametersRoot, const json& ingestedParametersRoot,
+	const string& chunksTranscoderStagingContentsPath, const string& chunksNFSStagingContentsPath, const string& segmentListFileName,
+	const string& recordedFileNamePrefix, const string& lastRecordedAssetFileName,
 	double lastRecordedAssetDurationInSeconds, int64_t lastRecordedSegmentUtcStartTimeInMillisecs
 )
 {
@@ -543,7 +544,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 		{
 			if (!reachedNextFileToProcess)
 			{
-				if (lastRecordedAssetFileName == "")
+				if (lastRecordedAssetFileName.empty())
 				{
 					reachedNextFileToProcess = true;
 				}
@@ -578,7 +579,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				continue;
 			}
 
-			bool isFirstChunk = (lastRecordedAssetFileName == "");
+			bool isFirstChunk = lastRecordedAssetFileName.empty();
 
 			time_t utcCurrentRecordedFileCreationTime =
 				getMediaLiveRecorderStartTime(ingestionJobKey, encodingJobKey, currentRecordedAssetFileName, segmentDurationInSeconds, isFirstChunk);
@@ -599,8 +600,8 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 			}
 			*/
 
-			bool ingestionRowToBeUpdatedAsSuccess = isLastLiveRecorderFile(
-				ingestionJobKey, encodingJobKey, utcCurrentRecordedFileCreationTime, chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
+			bool ingestionRowToBeUpdatedAsSuccess = isLastLiveRecorderFile(ingestionJobKey, encodingJobKey,
+				utcCurrentRecordedFileCreationTime, chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
 				segmentDurationInSeconds, isFirstChunk
 			);
 			LOG_INFO(
@@ -610,7 +611,8 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 				", chunksTranscoderStagingContentsPath: {}"
 				", recordedFileNamePrefix: {}"
 				", ingestionRowToBeUpdatedAsSuccess: {}",
-				ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, recordedFileNamePrefix, ingestionRowToBeUpdatedAsSuccess
+				ingestionJobKey, encodingJobKey, chunksTranscoderStagingContentsPath, recordedFileNamePrefix,
+				ingestionRowToBeUpdatedAsSuccess
 			);
 
 			newLastRecordedAssetFileName = currentRecordedAssetFileName;
@@ -685,14 +687,11 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 			string uniqueName;
 			{
-				int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
-
-				uniqueName = to_string(recordingCode);
-				uniqueName += " - ";
-				uniqueName += to_string(utcCurrentRecordedFileCreationTime);
+				auto recordingCode = JsonPath(&ingestedParametersRoot)["recordingCode"].as<int64_t>(0);
+				uniqueName = std::format("{} - {}", recordingCode, utcCurrentRecordedFileCreationTime);
 			}
 
-			string ingestionJobLabel = JSONUtils::as<string>(encodingParametersRoot, "ingestionJobLabel", "");
+			auto ingestionJobLabel = JsonPath(&encodingParametersRoot)["ingestionJobLabel"].as<string>();
 
 			// UserData
 			json userDataRoot;
@@ -704,7 +703,7 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 				json liveRecordingChunkRoot;
 				{
-					int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
+					auto recordingCode = JsonPath(&ingestedParametersRoot)["recordingCode"].as<int64_t>(0);
 					// recordingCode is used by DB generated column
 					liveRecordingChunkRoot["recordingCode"] = recordingCode;
 				}
@@ -725,31 +724,9 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 			// Title
 			string addContentTitle;
 			{
-				/*
-				if (streamSourceType == "IP_PUSH")
+				if (ingestionJobLabel.empty())
 				{
-					int64_t recordingCode =
-				JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
-					addContentTitle = to_string(recordingCode);
-				}
-				else
-				{
-					// 2021-02-03: in this case, we will use the
-				'ConfigurationLabel' that
-					// it is much better that a code. Who will see the title of
-				the chunks will recognize
-					// easily the recording
-					addContentTitle =
-				ingestedParametersRoot.get("configurationLabel",
-				"").asString();
-				}
-				*/
-				// string ingestionJobLabel =
-				// encodingParametersRoot.get("ingestionJobLabel",
-				// "").asString();
-				if (ingestionJobLabel == "")
-				{
-					int64_t recordingCode = JSONUtils::as<int64_t>(ingestedParametersRoot, "recordingCode", 0);
+					auto recordingCode = JsonPath(&ingestedParametersRoot)["recordingCode"].as<int64_t>(0);
 					addContentTitle = to_string(recordingCode);
 				}
 				else
@@ -763,21 +740,6 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 					// from utc to local time
 					localtime_r(&utcCurrentRecordedFileCreationTime, &tmDateTime);
-
-					/*
-					sprintf (strCurrentRecordedFileTime,
-						"%04d-%02d-%02d %02d:%02d:%02d",
-						tmDateTime. tm_year + 1900,
-						tmDateTime. tm_mon + 1,
-						tmDateTime. tm_mday,
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-					*/
-
-					// sprintf(strCurrentRecordedFileTime, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
-
-					// addContentTitle += strCurrentRecordedFileTime; // local time
 					addContentTitle += std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				}
 
@@ -789,25 +751,8 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processStreamSegmenterOutput
 
 					// from utc to local time
 					localtime_r(&utcCurrentRecordedFileLastModificationTime, &tmDateTime);
-
-					/*
-					sprintf (strCurrentRecordedFileTime,
-						"%04d-%02d-%02d %02d:%02d:%02d",
-						tmDateTime. tm_year + 1900,
-						tmDateTime. tm_mon + 1,
-						tmDateTime. tm_mday,
-						tmDateTime. tm_hour,
-						tmDateTime. tm_min,
-						tmDateTime. tm_sec);
-					*/
-					// sprintf(strCurrentRecordedFileTime, "%02d:%02d:%02d", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
-
-					// addContentTitle += strCurrentRecordedFileTime; // local time
 					addContentTitle += std::format("{:0>2}:{:0>2}:{:0>2}", tmDateTime.tm_hour, tmDateTime.tm_min, tmDateTime.tm_sec);
 				}
-
-				// if (!main)
-				// 	addContentTitle += " (BCK)";
 			}
 
 			if (isFirstChunk)
@@ -1478,10 +1423,9 @@ tuple<string, double, int64_t> LiveRecorderDaemons::processHLSSegmenterOutput(
 }
 
 void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
-	int64_t ingestionJobKey, string chunksTranscoderStagingContentsPath, string currentRecordedAssetFileName, string chunksNFSStagingContentsPath,
-	string addContentTitle, string uniqueName,
-	// bool highAvailability,
-	json userDataRoot, string fileFormat, json ingestedParametersRoot, json encodingParametersRoot, bool copy
+	int64_t ingestionJobKey, const string& chunksTranscoderStagingContentsPath, const string& currentRecordedAssetFileName,
+	const string& chunksNFSStagingContentsPath, const string& addContentTitle, const string& uniqueName,
+	const json& userDataRoot, const string& fileFormat, const json& ingestedParametersRoot, const json& encodingParametersRoot, bool copy
 )
 {
 	try
@@ -1541,7 +1485,7 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 			);
 		}
 	}
-	catch (runtime_error e)
+	catch (const exception& e)
 	{
 		string errorMessage = e.what();
 		LOG_ERROR(
@@ -1565,89 +1509,27 @@ void LiveRecorderDaemons::ingestRecordedMediaInCaseOfInternalTranscoder(
 		);
 		fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
 
-		throw e;
-	}
-	catch (exception e)
-	{
-		LOG_ERROR(
-			"Ingested URL failed"
-			", ingestionJobKey: {}"
-			", exception: {}",
-			ingestionJobKey, e.what()
-		);
-
-		LOG_INFO(
-			"remove"
-			", generated chunk: {}{}",
-			chunksTranscoderStagingContentsPath, currentRecordedAssetFileName
-		);
-		fs::remove_all(chunksTranscoderStagingContentsPath + currentRecordedAssetFileName);
-
-		throw e;
+		throw;
 	}
 
-	// string mmsWorkflowIngestionURL;
 	string workflowMetadata;
 	try
 	{
-		workflowMetadata = buildChunkIngestionWorkflow(
-			ingestionJobKey,
-			false, // externalEncoder,
-			currentRecordedAssetFileName, chunksNFSStagingContentsPath, addContentTitle, uniqueName, userDataRoot, fileFormat, ingestedParametersRoot,
-			encodingParametersRoot
+		workflowMetadata = buildChunkIngestionWorkflow(ingestionJobKey, false,
+			currentRecordedAssetFileName, chunksNFSStagingContentsPath, addContentTitle, uniqueName,
+			userDataRoot, fileFormat, ingestedParametersRoot, encodingParametersRoot
 		);
 
-		int64_t userKey;
-		string apiKey;
-		{
-			string field = "internalMMS";
-			if (JSONUtils::isPresent(ingestedParametersRoot, field))
-			{
-				json internalMMSRoot = ingestedParametersRoot[field];
-
-				field = "credentials";
-				if (JSONUtils::isPresent(internalMMSRoot, field))
-				{
-					json credentialsRoot = internalMMSRoot[field];
-
-					field = "userKey";
-					userKey = JSONUtils::as<int64_t>(credentialsRoot, field, -1);
-
-					field = "apiKey";
-					string apiKeyEncrypted = JSONUtils::as<string>(credentialsRoot, field, "");
-					apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
-				}
-			}
-		}
-
-		{
-			/*
-			string field = "mmsWorkflowIngestionURL";
-			if (!JSONUtils::isPresent(encodingParametersRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", ingestionJobKey: {}"
-					", Field: {}",
-					ingestionJobKey, field
-				);
-				LOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			mmsWorkflowIngestionURL = JSONUtils::as<string>(encodingParametersRoot, field, "");
-			*/
-		}
+		auto userKey = JsonPath(&ingestedParametersRoot)["internalMMS"]["credentials"]["userKey"].as<int64_t>(-1);
+		auto apiKeyEncrypted = JsonPath(&ingestedParametersRoot)["internalMMS"]["credentials"]["apiKey"].as<string>();
+		auto apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
 		vector<string> otherHeaders;
-		string sResponse =
-			CurlWrapper::httpPostString(
-				_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds, CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
-				"application/json", // contentType
-				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
-				3 // maxRetryNumber
-			)
-				.second;
+		string sResponse = CurlWrapper::httpPostString(_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds,
+			CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+				"application/json", otherHeaders,
+				std::format(", ingestionJobKey: {}", ingestionJobKey), 3
+			).second;
 	}
 	catch (exception& e)
 	{

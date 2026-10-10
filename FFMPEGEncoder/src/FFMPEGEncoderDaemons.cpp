@@ -3,6 +3,7 @@
 
 #include "CurlWrapper.h"
 #include "Datetime.h"
+#include "Encrypt.h"
 #include "JSONUtils.h"
 #include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
@@ -1376,7 +1377,8 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 				{
 					try
 					{
-						if (const auto blackDetectEvent = sourceLiveProxy->_callbackData->popFilterEvent("blackdetect"))
+						if (const auto blackDetectEvent
+							= copiedLiveProxy->_callbackData->popFilterEvent("blackdetect"))
 						{
 							LOG_WARN(
 								"liveProxyMonitor. Black detected"
@@ -1389,72 +1391,44 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 								blackDetectEvent->_count, Datetime::timePointAsLocalString(blackDetectEvent->_firstReceivedTime)
 							);
 
-							// TODO: eseguire il workflow associato all'evento black detected
-							/*
-							string FFMPEGEncoder::buildFilterNotificationIngestionWorkflow(int64_t ingestionJobKey, const string& filterName, json ingestedParametersRoot)
-{
-	try
-	{
-							json eventTaskRoot = nullptr;
+							string workflowMetadata;
 							{
-								if (JSONUtils::isPresent(ingestedParametersRoot, "internalMMS"))
+								auto eventTaskRoot = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))["internalMMS"]
+									["events"]["onError"].as<json>(nullptr);
+								if (eventTaskRoot != nullptr)
 								{
-									if (json internalMMSRoot = ingestedParametersRoot["internalMMS"]; JSONUtils::isPresent(internalMMSRoot, "events"))
-									{
-										json eventsRoot = internalMMSRoot["events"];
+									json workflowRoot;
+									workflowRoot["label"] = std::format("black detected for {} seconds",
+										copiedLiveProxy->_callbackData->getBlackDetectMinDurationSecs());
+									workflowRoot["type"] = "Workflow";
+									workflowRoot["task"] = eventTaskRoot["task"];
 
-										if (filterName == "blackdetect" || filterName == "blackframe" || filterName == "freezedetect"
-											|| filterName == "silentdetect")
-										{
-											if (JSONUtils::isPresent(eventsRoot, "onError"))
-												eventTaskRoot = eventsRoot["onError"];
-										}
-									}
+									workflowMetadata = JSONUtils::toString(workflowRoot);
+
+									LOG_INFO(
+										"buildFilterNotificationIngestionWorkflow, Workflow generated"
+										", ingestionJobKey: {}"
+										", workflowMetadata: {}",
+										copiedLiveProxy->_ingestionJobKey, workflowMetadata
+									);
 								}
 							}
-
-							if (eventTaskRoot == nullptr)
+							if (!workflowMetadata.empty())
 							{
-								LOG_ERROR(
-									"buildFilterNotificationIngestionWorkflow, no events found in "
-									"Workflow"
-									", ingestionJobKey: {}",
-									ingestionJobKey
-								);
+								auto userKey = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))["internalMMS"]
+									["credentials"]["userKey"].as<int64_t>(-1);
+								auto apiKeyEncrypted = JsonPath(&(copiedLiveProxy->_ingestedParametersRoot))["internalMMS"]
+									["credentials"]["apiKey"].as<string>();
+								auto apiKey = Encrypt::opensslDecrypt(apiKeyEncrypted);
 
-								return "";
+								vector<string> otherHeaders;
+								string sResponse = CurlWrapper::httpPostString(_mmsWorkflowIngestionURL, _mmsAPITimeoutInSeconds,
+									CurlWrapper::basicAuthorization(to_string(userKey), apiKey), workflowMetadata,
+										"application/json", otherHeaders,
+										std::format(", ingestionJobKey: {}", copiedLiveProxy->_ingestionJobKey),
+										3
+									).second;
 							}
-
-							json workflowRoot;
-
-							workflowRoot["label"] = filterName;
-							workflowRoot["type"] = "Workflow";
-							workflowRoot["task"] = eventTaskRoot["task"];
-
-							string workflowMetadata = JSONUtils::toString(workflowRoot);
-
-							LOG_INFO(
-								"buildFilterNotificationIngestionWorkflow, Workflow generated"
-								", ingestionJobKey: {}"
-								", workflowMetadata: {}",
-								ingestionJobKey, workflowMetadata
-							);
-
-							return workflowMetadata;
-						}
-						catch (exception& e)
-						{
-							LOG_ERROR(
-								"buildFilterNotificationIngestionWorkflow failed"
-								", ingestionJobKey: {}"
-								", exception: {}",
-								ingestionJobKey, e.what()
-							);
-
-							throw;
-						}
-					}
-					*/
 						}
 					}
 					catch (exception &e)
@@ -1463,7 +1437,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 							"liveProxyMonitor Black detected check failed"
 							", copiedLiveProxy->_ingestionJobKey: {}"
 							", copiedLiveProxy->_encodingJobKey: {}"
-							", e.what(): {}",
+							", exception: {}",
 							copiedLiveProxy->_ingestionJobKey, copiedLiveProxy->_encodingJobKey, e.what()
 						);
 					}

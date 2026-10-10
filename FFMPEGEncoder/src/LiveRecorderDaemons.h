@@ -45,9 +45,10 @@ class LiveRecorderDaemons : public FFMPEGEncoderBase
 	bool _liveRecorderVirtualVODIngestionThreadShutdown;
 
 	std::tuple<std::string, double, int64_t> processStreamSegmenterOutput(
-		int64_t ingestionJobKey, int64_t encodingJobKey, std::string streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
-		std::string outputFileFormat, nlohmann::json encodingParametersRoot, nlohmann::json ingestedParametersRoot, std::string chunksTranscoderStagingContentsPath,
-		std::string chunksNFSStagingContentsPath, std::string segmentListFileName, std::string recordedFileNamePrefix, std::string lastRecordedAssetFileName,
+		int64_t ingestionJobKey, int64_t encodingJobKey, const std::string &streamSourceType, bool externalEncoder, int segmentDurationInSeconds,
+		const std::string &outputFileFormat, const json &encodingParametersRoot, const json &ingestedParametersRoot,
+		const std::string &chunksTranscoderStagingContentsPath, const std::string &chunksNFSStagingContentsPath,
+		const std::string &segmentListFileName, const std::string &recordedFileNamePrefix, const std::string &lastRecordedAssetFileName,
 		double lastRecordedAssetDurationInSeconds, int64_t lastRecordedSegmentUtcStartTimeInMillisecs
 	);
 
@@ -59,10 +60,10 @@ class LiveRecorderDaemons : public FFMPEGEncoderBase
 	);
 
 	void ingestRecordedMediaInCaseOfInternalTranscoder(
-		int64_t ingestionJobKey, std::string chunksTranscoderStagingContentsPath, std::string currentRecordedAssetFileName, std::string chunksNFSStagingContentsPath,
-		std::string addContentTitle, std::string uniqueName,
+		int64_t ingestionJobKey, const std::string &chunksTranscoderStagingContentsPath, const std::string &currentRecordedAssetFileName,
+		const std::string &chunksNFSStagingContentsPath, const std::string &addContentTitle, const std::string &uniqueName,
 		// bool highAvailability,
-		nlohmann::json userDataRoot, std::string fileFormat, nlohmann::json ingestedParametersRoot, nlohmann::json encodingParametersRoot, bool copy
+		const json &userDataRoot, const std::string &fileFormat, const json &ingestedParametersRoot, const json &encodingParametersRoot, bool copy
 	);
 
 	void ingestRecordedMediaInCaseOfExternalTranscoder(
