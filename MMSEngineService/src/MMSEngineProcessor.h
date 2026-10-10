@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include
+#include
 #include "ActiveEncodingsManager.h"
 #include "GetCpuUsage.h"
 #include "LocalAssetIngestionEvent.h"
@@ -205,8 +207,9 @@ class MMSEngineProcessor
 	);
 
 	void userHttpCallback(
-		int64_t ingestionJobKey, std::string httpProtocol, std::string httpHostName, int httpPort, std::string httpURI, std::string httpURLParameters, bool formData,
-		std::string httpMethod, long callbackTimeoutInSeconds, nlohmann::json userHeadersRoot, std::string &data, std::string userName, std::string password, int maxRetries
+		int64_t ingestionJobKey, const std::string &httpProtocol, const std::string &httpHostName, int httpPort, const std::string &httpURI,
+		const std::string &httpURLParameters, bool formData, const std::string &httpMethod, long callbackTimeoutInSeconds,
+		const nlohmann::json &userHeadersRoot, const std::string &httpBody, const std::string &userName, const std::string &password, int maxRetries
 	);
 
 	void localCopyContentThread(

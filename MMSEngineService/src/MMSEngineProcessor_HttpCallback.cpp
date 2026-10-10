@@ -1,6 +1,7 @@
 
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineProcessor.h"
 #include <regex>
 #include <tuple>
@@ -19,7 +20,7 @@ void MMSEngineProcessor::httpCallbackThread(
 
 	try
 	{
-		if (dependencies.size() == 0)
+		if (dependencies.empty())
 		{
 			string errorMessage = std::format(
 				"No configured any media to be notified (HTTP Callback)"
@@ -49,63 +50,23 @@ void MMSEngineProcessor::httpCallbackThread(
 		json httpHeadersRoot = json::array();
 		bool forwardInputMedia;
 		{
-			addMediaData = JSONUtils::as<bool>(parametersRoot, "addMediaData", true);
-			httpProtocol = JSONUtils::as<string>(parametersRoot, "protocol", "http");
-			userName = JSONUtils::as<string>(parametersRoot, "userName", "");
-			password = JSONUtils::as<string>(parametersRoot, "password", "");
-			string field = "hostName";
-			if (!JSONUtils::isPresent(parametersRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", _processorIdentifier: {}"
-					", Field: {}",
-					_processorIdentifier, field
-				);
-				LOG_ERROR(errorMessage);
+			addMediaData = JsonPath(&parametersRoot)["addMediaData"].as<bool>(true);
+			httpProtocol = JsonPath(&parametersRoot)["protocol"].as<string>("http");
+			userName = JsonPath(&parametersRoot)["userName"].as<string>();
+			password = JsonPath(&parametersRoot)["password"].as<string>();
+			httpHostName = JsonPath(&parametersRoot).required()["hostName"].as<string>();
+			httpPort = JsonPath(&parametersRoot)["port"].as<int32_t>(httpProtocol == "http" ? 80 : 443);
+			callbackTimeoutInSeconds = JsonPath(&parametersRoot)["timeout"].as<int32_t>(120);
+			httpURI = JsonPath(&parametersRoot).required()["uri"].as<string>();
+			httpURLParameters = JsonPath(&parametersRoot)["parameters"].as<string>();
+			formData = JsonPath(&parametersRoot)["formData"].as<bool>(false);
+			httpMethod = JsonPath(&parametersRoot)["method"].as<string>("POST");
+			httpBody = JsonPath(&parametersRoot)["httpBody"].as<string>();
 
-				throw runtime_error(errorMessage);
-			}
-			httpHostName = JSONUtils::as<string>(parametersRoot, field, "");
-
-			field = "port";
-			if (!JSONUtils::isPresent(parametersRoot, field))
-			{
-				if (httpProtocol == "http")
-					httpPort = 80;
-				else
-					httpPort = 443;
-			}
-			else
-				httpPort = JSONUtils::as<int32_t>(parametersRoot, field, 0);
-
-			callbackTimeoutInSeconds = JSONUtils::as<int32_t>(parametersRoot, "timeout", 120);
-
-			field = "uri";
-			if (!JSONUtils::isPresent(parametersRoot, field))
-			{
-				string errorMessage = std::format(
-					"Field is not present or it is null"
-					", _processorIdentifier: {}"
-					", Field: {}",
-					_processorIdentifier, field
-				);
-				LOG_ERROR(errorMessage);
-
-				throw runtime_error(errorMessage);
-			}
-			httpURI = JSONUtils::as<string>(parametersRoot, field, "");
-
-			httpURLParameters = JSONUtils::as<string>(parametersRoot, "parameters", "");
-			formData = JSONUtils::as<bool>(parametersRoot, "formData", false);
-			httpMethod = JSONUtils::as<string>(parametersRoot, "method", "POST");
-			httpBody = JSONUtils::as<string>(parametersRoot, "httpBody", "");
-
-			field = "headers";
-			if (JSONUtils::isPresent(parametersRoot, field))
+			if (JSONUtils::isPresent(parametersRoot, "headers"))
 			{
 				// semicolon as separator
-				stringstream ss(JSONUtils::as<string>(parametersRoot, field, ""));
+				stringstream ss(JsonPath(&parametersRoot)["headers"].as<string>());
 				string token;
 				char delim = ';';
 				while (getline(ss, token, delim))
@@ -113,16 +74,15 @@ void MMSEngineProcessor::httpCallbackThread(
 					if (!token.empty())
 						httpHeadersRoot.push_back(token);
 				}
-				// httpHeadersRoot = parametersRoot[field];
 			}
 
-			maxRetries = JSONUtils::as<int32_t>(parametersRoot, "maxRetries", 1);
-			forwardInputMedia = JSONUtils::as<bool>(parametersRoot, "forwardInputMedia", false);
+			maxRetries = JsonPath(&parametersRoot)["maxRetries"].as<int32_t>(1);
+			forwardInputMedia = JsonPath(&parametersRoot)["forwardInputMedia"].as<bool>(false);
 		}
 
 		if (addMediaData && (httpMethod == "POST" || httpMethod == "PUT"))
 		{
-			if (httpBody != "")
+			if (!httpBody.empty())
 			{
 				LOG_INFO(
 					"POST/PUT with httpBody"
@@ -203,7 +163,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							callbackTimeoutInSeconds, httpHeadersRoot, httpBody, userName, password, maxRetries
 						);
 					}
-					catch (exception e)
+					catch (const exception& e)
 					{
 						string errorMessage = std::format(
 							"http callback failed"
@@ -275,14 +235,10 @@ void MMSEngineProcessor::httpCallbackThread(
 
 									callbackMedatada["title"] = localTitle;
 
-									if (userData == "")
+									if (userData.empty())
 										callbackMedatada["userData"] = nullptr;
 									else
-									{
-										json userDataRoot = JSONUtils::toJson<json>(userData);
-
-										callbackMedatada["userData"] = userDataRoot;
-									}
+										callbackMedatada["userData"] = JSONUtils::toJson<json>(userData);
 								}
 
 								{
@@ -335,14 +291,10 @@ void MMSEngineProcessor::httpCallbackThread(
 									callbackMedatada["mediaItemKey"] = mediaItemKey;
 									callbackMedatada["title"] = localTitle;
 
-									if (userData == "")
+									if (userData.empty())
 										callbackMedatada["userData"] = nullptr;
 									else
-									{
-										json userDataRoot = JSONUtils::toJson<json>(userData);
-
-										callbackMedatada["userData"] = userDataRoot;
-									}
+										callbackMedatada["userData"] = JSONUtils::toJson<json>(userData);;
 								}
 
 								{
@@ -403,7 +355,7 @@ void MMSEngineProcessor::httpCallbackThread(
 							callbackTimeoutInSeconds, httpHeadersRoot, data, userName, password, maxRetries
 						);
 					}
-					catch (exception e)
+					catch (const exception& e)
 					{
 						string errorMessage = std::format(
 							"http callback failed"
@@ -434,11 +386,11 @@ void MMSEngineProcessor::httpCallbackThread(
 			try
 			{
 				userHttpCallback(
-					ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, httpMethod, callbackTimeoutInSeconds,
-					httpHeadersRoot, httpBody, userName, password, maxRetries
+					ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, httpMethod,
+					callbackTimeoutInSeconds, httpHeadersRoot, httpBody, userName, password, maxRetries
 				);
 			}
-			catch (exception e)
+			catch (const exception& e)
 			{
 				string errorMessage = std::format(
 					"http callback failed"
@@ -519,7 +471,7 @@ void MMSEngineProcessor::httpCallbackThread(
 					);
 					_mmsEngineDBFacade->addIngestionJobOutput(ingestionJobKey, mediaItemKey, physicalPathKey, -1);
 				}
-				catch (exception e)
+				catch (const exception& e)
 				{
 					string errorMessage = std::format(
 						"http callback failed"
@@ -546,7 +498,7 @@ void MMSEngineProcessor::httpCallbackThread(
 			"" // errorMessage
 		);
 	}
-	catch (exception &e)
+	catch (const exception &e)
 	{
 		LOG_ERROR(
 			"httpCallbackTask failed"
@@ -567,7 +519,7 @@ void MMSEngineProcessor::httpCallbackThread(
 		{
 			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 		}
-		catch (exception &ex)
+		catch (const exception &ex)
 		{
 			LOG_INFO(
 				"Update IngestionJob failed"
@@ -585,8 +537,9 @@ void MMSEngineProcessor::httpCallbackThread(
 }
 
 void MMSEngineProcessor::userHttpCallback(
-	int64_t ingestionJobKey, string httpProtocol, string httpHostName, int httpPort, string httpURI, string httpURLParameters, bool formData,
-	string httpMethod, long callbackTimeoutInSeconds, json userHeadersRoot, string &httpBody, string userName, string password, int maxRetries
+	int64_t ingestionJobKey, const string& httpProtocol, const string& httpHostName, int httpPort, const string& httpURI,
+	const string& httpURLParameters, bool formData, const string& httpMethod, long callbackTimeoutInSeconds,
+	const json& userHeadersRoot, const string &httpBody, const string& userName, const string& password, int maxRetries
 )
 {
 	string userURL;
@@ -610,34 +563,26 @@ void MMSEngineProcessor::userHttpCallback(
 		userURL = std::format("{}://{}:{}{}{}", httpProtocol, httpHostName, httpPort, httpURI, (formData ? "" : httpURLParameters));
 
 		vector<string> otherHeaders;
-		for (int userHeaderIndex = 0; userHeaderIndex < userHeadersRoot.size(); ++userHeaderIndex)
-		{
-			string userHeader = JSONUtils::as<string>(userHeadersRoot[userHeaderIndex]);
-
-			otherHeaders.push_back(userHeader);
-		}
+		for (const auto & userHeaderIndex : userHeadersRoot)
+			otherHeaders.push_back(JSONUtils::as<string>(userHeaderIndex));
 
 		if (httpMethod == "PUT")
 		{
 			if (formData)
 			{
-				vector<pair<string, string>> formData;
+				vector<pair<string, string>> vFormData;
 				{
-					json formDataParametersRoot = JSONUtils::toJson<json>(httpBody);
-					for (int formFieldIndex = 0; formFieldIndex < formDataParametersRoot.size(); formFieldIndex++)
+					for (const auto& formFieldRoot : JSONUtils::toJson<json>(httpBody))
 					{
-						json formFieldRoot = formDataParametersRoot[formFieldIndex];
-
-						auto name = JSONUtils::as<string>(formFieldRoot, "name", "");
-						auto value = JSONUtils::as<string>(formFieldRoot, "value", "");
-
+						auto name = JsonPath(&formFieldRoot)["name"].as<string>();
+						auto value = JsonPath(&formFieldRoot)["value"].as<string>();
 						if (!name.empty())
-							formData.emplace_back(name, value);
+							vFormData.emplace_back(name, value);
 					}
 				}
 
-				CurlWrapper::httpPutFormData(
-					userURL, formData, callbackTimeoutInSeconds, std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				CurlWrapper::httpPutFormData(userURL, vFormData, callbackTimeoutInSeconds,
+					std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 				);
 			}
 			else
@@ -646,9 +591,9 @@ void MMSEngineProcessor::userHttpCallback(
 				if (!httpBody.empty())
 					contentType = "application/json";
 
-				CurlWrapper::httpPutString(
-					userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), httpBody, contentType, otherHeaders,
-					std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				CurlWrapper::httpPutString(userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password),
+					httpBody, contentType, otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
+					maxRetries
 				);
 			}
 		}
@@ -656,23 +601,20 @@ void MMSEngineProcessor::userHttpCallback(
 		{
 			if (formData)
 			{
-				vector<pair<string, string>> formData;
+				vector<pair<string, string>> vFormData;
 				{
-					json formDataParametersRoot = JSONUtils::toJson<json>(httpBody);
-					for (int formFieldIndex = 0; formFieldIndex < formDataParametersRoot.size(); formFieldIndex++)
+					for (const auto& formFieldRoot : JSONUtils::toJson<json>(httpBody))
 					{
-						json formFieldRoot = formDataParametersRoot[formFieldIndex];
-
-						auto name = JSONUtils::as<string>(formFieldRoot, "name", "");
-						auto value = JSONUtils::as<string>(formFieldRoot, "value", "");
-
+						auto name = JsonPath(&formFieldRoot)["name"].as<string>();
+						auto value = JsonPath(&formFieldRoot)["value"].as<string>();
 						if (!name.empty())
-							formData.emplace_back(name, value);
+							vFormData.emplace_back(name, value);
 					}
 				}
 
-				CurlWrapper::httpPostFormData(
-					userURL, formData, callbackTimeoutInSeconds, std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				CurlWrapper::httpPostFormData(userURL, vFormData, callbackTimeoutInSeconds,
+					std::format(", ingestionJobKey: {}", ingestionJobKey),
+					maxRetries
 				);
 			}
 			else
@@ -681,21 +623,20 @@ void MMSEngineProcessor::userHttpCallback(
 				if (!httpBody.empty())
 					contentType = "application/json";
 
-				CurlWrapper::httpPostString(
-					userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), httpBody, contentType, otherHeaders,
-					std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+				CurlWrapper::httpPostString(userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password),
+					httpBody, contentType, otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey),
+					maxRetries
 				);
 			}
 		}
 		else if (httpMethod == "DELETE")
 		{
-			string contentType;
-			if (!httpBody.empty())
-				contentType = "application/json";
+			// string contentType;
+			// if (!httpBody.empty())
+			//	contentType = "application/json";
 
-			CurlWrapper::httpDelete(
-				userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), otherHeaders,
-				std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
+			CurlWrapper::httpDelete(userURL, callbackTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password),
+				otherHeaders, std::format(", ingestionJobKey: {}", ingestionJobKey), maxRetries
 			);
 		}
 		else // if (httpMethod == "GET")
