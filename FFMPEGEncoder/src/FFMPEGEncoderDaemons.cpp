@@ -1406,7 +1406,7 @@ void FFMPEGEncoderDaemons::startMonitorThread()
 									workflowMetadata = JSONUtils::toString(workflowRoot);
 
 									LOG_INFO(
-										"buildFilterNotificationIngestionWorkflow, Workflow generated"
+										"liveProxyMonitor. Black detected, Workflow generated"
 										", ingestionJobKey: {}"
 										", workflowMetadata: {}",
 										copiedLiveProxy->_ingestionJobKey, workflowMetadata
