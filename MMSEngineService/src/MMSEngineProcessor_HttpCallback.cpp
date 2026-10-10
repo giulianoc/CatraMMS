@@ -573,12 +573,10 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> vFormData;
 				{
-					for (const auto& formFieldRoot : JSONUtils::toJson<json>(httpBody))
+					for (auto& [key, value] : JSONUtils::toJson<json>(httpBody).items())
 					{
-						auto name = JsonPath(&formFieldRoot)["name"].as<string>();
-						auto value = JsonPath(&formFieldRoot)["value"].as<string>();
-						if (!name.empty())
-							vFormData.emplace_back(name, value);
+						if (!key.empty())
+							vFormData.emplace_back(key, JsonPath(&value).as<string>());
 					}
 				}
 
@@ -604,12 +602,10 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> vFormData;
 				{
-					for (const auto& formFieldRoot : JSONUtils::toJson<json>(httpBody))
+					for (auto& [key, value] : JSONUtils::toJson<json>(httpBody).items())
 					{
-						auto name = JsonPath(&formFieldRoot)["name"].as<string>();
-						auto value = JsonPath(&formFieldRoot)["value"].as<string>();
-						if (!name.empty())
-							vFormData.emplace_back(name, value);
+						if (!key.empty())
+							vFormData.emplace_back(key, JsonPath(&value).as<string>());
 					}
 				}
 
