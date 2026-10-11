@@ -561,12 +561,15 @@ void MMSEngineProcessor::userHttpCallback(
 			_processorIdentifier, ingestionJobKey, httpProtocol, httpHostName, httpPort, httpURI, httpURLParameters, formData, maxRetries
 		);
 
+		LOG_ERROR("aaa");
 		userURL = std::format("{}://{}:{}{}{}", httpProtocol, httpHostName, httpPort, httpURI, (formData ? "" : httpURLParameters));
 
+		LOG_ERROR("aaa");
 		vector<string> otherHeaders;
 		for (const auto & userHeader : userHeadersRoot)
 			otherHeaders.push_back(JsonPath(&userHeader).as<string>());
 
+		LOG_ERROR("aaa");
 		if (httpMethod == "PUT")
 		{
 			if (formData)
@@ -600,6 +603,7 @@ void MMSEngineProcessor::userHttpCallback(
 		{
 			if (formData)
 			{
+		LOG_ERROR("aaa");
 				vector<pair<string, string>> vFormData;
 				{
 					for (auto& [key, value] : JSONUtils::toJson<json>(httpBody).items())
@@ -609,10 +613,12 @@ void MMSEngineProcessor::userHttpCallback(
 					}
 				}
 
+		LOG_ERROR("aaa");
 				CurlWrapper::httpPostFormData(userURL, vFormData, callbackTimeoutInSeconds,
 					std::format(", ingestionJobKey: {}", ingestionJobKey),
 					maxRetries
 				);
+		LOG_ERROR("aaa");
 			}
 			else
 			{
