@@ -564,8 +564,8 @@ void MMSEngineProcessor::userHttpCallback(
 		userURL = std::format("{}://{}:{}{}{}", httpProtocol, httpHostName, httpPort, httpURI, (formData ? "" : httpURLParameters));
 
 		vector<string> otherHeaders;
-		for (const auto & userHeaderIndex : userHeadersRoot)
-			otherHeaders.push_back(JSONUtils::as<string>(userHeaderIndex));
+		for (const auto & userHeader : userHeadersRoot)
+			otherHeaders.push_back(JsonPath(&userHeader).as<string>());
 
 		if (httpMethod == "PUT")
 		{
