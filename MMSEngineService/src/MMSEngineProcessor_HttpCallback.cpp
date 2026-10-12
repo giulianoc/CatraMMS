@@ -573,7 +573,7 @@ void MMSEngineProcessor::userHttpCallback(
 			{
 				vector<pair<string, string>> vFormData;
 				{
-					for (json formParametersRoot = JSONUtils::toJson<json>(httpBody);
+					for (auto formParametersRoot = JSONUtils::toJson<json>(httpBody);
 						auto & [key, value] : formParametersRoot.items())
 					{
 						if (!key.empty())
@@ -601,20 +601,16 @@ void MMSEngineProcessor::userHttpCallback(
 		{
 			if (formData)
 			{
-		LOG_ERROR("aaa");
 				vector<pair<string, string>> vFormData;
 				{
-					for (json formParametersRoot = JSONUtils::toJson<json>(httpBody);
+					for (auto formParametersRoot = JSONUtils::toJson<json>(httpBody);
 						auto & [key, value] : formParametersRoot.items())
 					{
-		LOG_ERROR("aaa");
 						if (!key.empty())
 							vFormData.emplace_back(key, JsonPath(&value).as<string>());
-		LOG_ERROR("aaa");
 					}
 				}
 
-		LOG_ERROR("aaa");
 				CurlWrapper::httpPostFormData(userURL, vFormData, callbackTimeoutInSeconds,
 					std::format(", ingestionJobKey: {}", ingestionJobKey),
 					maxRetries
