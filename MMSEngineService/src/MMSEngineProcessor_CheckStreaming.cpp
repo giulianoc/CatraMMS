@@ -23,7 +23,7 @@ void MMSEngineProcessor::checkStreamingThread(
 		LOG_INFO("checkStreamingThread"
 			", _processorIdentifier: {}"
 			", ingestionJobKey: {}"
-			", _processorsThreadsNumber.use_count(): ", _processorIdentifier, ingestionJobKey_processorsThreadsNumber.use_count()
+			", _processorsThreadsNumber.use_count(): ", _processorIdentifier, ingestionJobKey, _processorsThreadsNumber.use_count()
 		);
 
 		string field = "inputType";
@@ -166,7 +166,7 @@ void MMSEngineProcessor::checkStreamingThread(
 			"" // errorMessage
 		);
 	}
-	catch (DBRecordNotFound &e)
+	catch (const exception &e)
 	{
 		LOG_ERROR(
 			"checkStreamingThread failed"
@@ -188,101 +188,14 @@ void MMSEngineProcessor::checkStreamingThread(
 		{
 			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
 		}
-		catch (runtime_error &re)
-		{
-			LOG_INFO(
-				"Update IngestionJob failed"
-				", _processorIdentifier: {}"
-				", ingestionJobKey: {}"
-				", errorMessage: {}",
-				_processorIdentifier, ingestionJobKey, re.what()
-			);
-		}
 		catch (exception &ex)
 		{
-			LOG_INFO(
+			LOG_ERROR(
 				"Update IngestionJob failed"
 				", _processorIdentifier: {}"
 				", ingestionJobKey: {}"
 				", errorMessage: {}",
 				_processorIdentifier, ingestionJobKey, ex.what()
-			);
-		}
-
-		return;
-	}
-	catch (runtime_error &e)
-	{
-		LOG_ERROR(
-			"checkStreamingThread failed"
-			", _processorIdentifier: {}"
-			", ingestionJobKey: {}"
-			", e.what(): {}",
-			_processorIdentifier, ingestionJobKey, e.what()
-		);
-
-		LOG_INFO(
-			"Update IngestionJob"
-			", _processorIdentifier: {}"
-			", ingestionJobKey: {}"
-			", IngestionStatus: End_IngestionFailure"
-			", errorMessage: {}",
-			_processorIdentifier, ingestionJobKey, e.what()
-		);
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			LOG_INFO(
-				"Update IngestionJob failed"
-				", _processorIdentifier: {}"
-				", ingestionJobKey: {}"
-				", errorMessage: {}",
-				_processorIdentifier, ingestionJobKey, re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			LOG_INFO(
-				"Update IngestionJob failed"
-				", _processorIdentifier: {}"
-				", ingestionJobKey: {}"
-				", errorMessage: {}",
-				_processorIdentifier, ingestionJobKey, ex.what()
-			);
-		}
-
-		return;
-	}
-	catch (exception &e)
-	{
-		LOG_ERROR(
-			string() + "checkStreamingThread failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey)
-		);
-
-		LOG_INFO(
-			string() + "Update IngestionJob" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", ingestionJobKey: " + to_string(ingestionJobKey) + ", IngestionStatus: " + "End_IngestionFailure" + ", errorMessage: " + e.what()
-		);
-		try
-		{
-			_mmsEngineDBFacade->updateIngestionJob(ingestionJobKey, MMSEngineDBFacade::IngestionStatus::End_IngestionFailure, e.what());
-		}
-		catch (runtime_error &re)
-		{
-			LOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + re.what()
-			);
-		}
-		catch (exception &ex)
-		{
-			LOG_INFO(
-				string() + "Update IngestionJob failed" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-				", ingestionJobKey: " + to_string(ingestionJobKey) + ", errorMessage: " + ex.what()
 			);
 		}
 
