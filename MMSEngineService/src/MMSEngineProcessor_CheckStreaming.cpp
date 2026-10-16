@@ -1,6 +1,7 @@
 
 #include "FFMpegWrapper.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "MMSEngineDBFacade.h"
 #include "MMSEngineProcessor.h"
 #include "spdlog/fmt/fmt.h"
@@ -19,20 +20,22 @@ void MMSEngineProcessor::checkStreamingThread(
 
 	try
 	{
-		LOG_INFO(
-			string() + "checkStreamingThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) + ", ingestionJobKey: " +
-			to_string(ingestionJobKey) + ", _processorsThreadsNumber.use_count(): " + to_string(_processorsThreadsNumber.use_count())
+		LOG_INFO("checkStreamingThread"
+			", _processorIdentifier: {}"
+			", ingestionJobKey: {}"
+			", _processorsThreadsNumber.use_count(): ", _processorIdentifier, ingestionJobKey_processorsThreadsNumber.use_count()
 		);
 
 		string field = "inputType";
 		if (!JSONUtils::isPresent(parametersRoot, field))
 		{
-			string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
+			string errorMessage = std::format("Field is not present or it is null"
+				", Field: {}", field);
 			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
 		}
-		string inputType = JSONUtils::as<string>(parametersRoot, field, "Stream");
+		auto inputType = JsonPath(&parametersRoot)[field].as<string>("Stream");
 
 		string streamingUrl;
 		if (inputType == "Stream")
@@ -40,22 +43,15 @@ void MMSEngineProcessor::checkStreamingThread(
 			string field = "configurationLabel";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", Field: {}", field);
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string configurationLabel = JSONUtils::as<string>(parametersRoot, field, "");
+			auto configurationLabel = JsonPath(&parametersRoot)[field].as<string>("");
 
-			/*
-			bool warningIfMissing = false;
-			tuple<int64_t, string, string, string, string, int64_t, bool, int, string, int, int, string, int, int, int, int, int, int64_t>
-				ipChannelDetails = _mmsEngineDBFacade->getStreamDetails(workspace->_workspaceKey, configurationLabel, warningIfMissing);
-			tie(ignore, streamSourceType, ignore, streamingUrl, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore, ignore,
-				ignore, ignore, ignore, ignore) = ipChannelDetails;
-			*/
-			string streamSourceType;
-			tie(streamSourceType, streamingUrl) = _mmsEngineDBFacade->stream_sourceTypeUrl(workspace->_workspaceKey, configurationLabel);
+			tie(ignore, streamingUrl) = _mmsEngineDBFacade->stream_sourceTypeUrl(workspace->_workspaceKey, configurationLabel);
 		}
 		else
 		{
@@ -66,34 +62,40 @@ void MMSEngineProcessor::checkStreamingThread(
 			string field = "streamingName";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", Field: {}", field);
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			string streamingName = JSONUtils::as<string>(parametersRoot, field, "");
+			auto streamingName = JsonPath(&parametersRoot)[field].as<string>("");
 
 			field = "streamingUrl";
 			if (!JSONUtils::isPresent(parametersRoot, field))
 			{
-				string errorMessage = string() + "Field is not present or it is null" + ", Field: " + field;
+				string errorMessage = std::format("Field is not present or it is null"
+					", Field: {}", field);
 				LOG_ERROR(errorMessage);
 
 				throw runtime_error(errorMessage);
 			}
-			streamingUrl = JSONUtils::as<string>(parametersRoot, field, "");
+			streamingUrl = JsonPath(&parametersRoot)[field].as<string>("");
 		}
 
-		bool isVideo = JSONUtils::as<bool>(parametersRoot, "isVideo", true);
+		bool isVideo = JsonPath(&parametersRoot)["isVideo"].as<bool>(true);
+		auto timeoutInSeconds = JsonPath(&parametersRoot)["timeoutInSeconds"].as<int32_t>(5);
 
-		LOG_INFO(
-			string() + "checkStreamingThread" + ", _processorIdentifier: " + to_string(_processorIdentifier) +
-			", _ingestionJobKey: " + to_string(ingestionJobKey) + ", inputType: " + inputType + ", streamingUrl: " + streamingUrl
+		LOG_INFO("checkStreamingThread"
+			", _processorIdentifier: {}"
+			", _ingestionJobKey: {}"
+			", inputType: {}"
+			", streamingUrl: {}", _processorIdentifier, ingestionJobKey, inputType, streamingUrl
 		);
 
-		if (streamingUrl == "")
+		if (streamingUrl.empty())
 		{
-			string errorMessage = string() + "streamingUrl is wrong" + ", streamingUrl: " + streamingUrl;
+			string errorMessage = std::format("streamingUrl is wrong"
+				", streamingUrl: {}", streamingUrl);
 			LOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
@@ -107,7 +109,6 @@ void MMSEngineProcessor::checkStreamingThread(
 				", streamingUrl: {}",
 				_processorIdentifier, ingestionJobKey, streamingUrl
 			);
-			int timeoutInSeconds = 20;
 			bool isMMSAssetPathName = false;
 			tuple<int64_t, long, json> mediaInfoDetails;
 			vector<tuple<int, int64_t, string, string, int, int, string, long>> videoTracks;
@@ -124,7 +125,7 @@ void MMSEngineProcessor::checkStreamingThread(
 				_processorIdentifier, ingestionJobKey, streamingUrl, videoTracks.size(), audioTracks.size()
 			);
 
-			if (isVideo && (videoTracks.size() == 0 || audioTracks.size() == 0))
+			if (isVideo && (videoTracks.empty() || audioTracks.empty()))
 			{
 				string errorMessage = std::format(
 					"Video with wrong video or audio tracks"
@@ -137,7 +138,7 @@ void MMSEngineProcessor::checkStreamingThread(
 				LOG_ERROR(errorMessage);
 				throw runtime_error(errorMessage);
 			}
-			else if (!isVideo && (videoTracks.size() > 0 || audioTracks.size() == 0))
+			if (!isVideo && (!videoTracks.empty() || audioTracks.empty()))
 			{
 				string errorMessage = std::format(
 					"Audio with wrong video or audio tracks"

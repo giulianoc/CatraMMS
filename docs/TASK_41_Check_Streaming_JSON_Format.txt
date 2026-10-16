@@ -25,6 +25,11 @@
 		// default: true
 		"isVideo": true,
 
+		// optional:
+		// The maximum time in seconds to wait for the streaming to be available
+		// default: 5
+		"timeoutInSeconds": 5,
+
 		// optional: If present, it specifies when the Task has to be executed. The processing of the task
 		//		can be delayed respect to the specified date based on his dependencies with other tasks.
 		//		The date format is:
