@@ -470,6 +470,10 @@ install-packages()
 		echo "Restart=on-failure" >> /etc/systemd/system/incron.service.d/override.conf
 		echo "#attende 3 secondi prima del riavvio" >> /etc/systemd/system/incron.service.d/override.conf
 		echo "RestartSec=3" >> /etc/systemd/system/incron.service.d/override.conf
+		#KillMode default è control-group. Con control-group, se incrond termina, systemd deve chiudere anche i 5 master SSH
+		# e gli rsync in corso, fino a 90 secondi, e il servizio resta in deactivating/stop-sigterm.
+		# È proprio lo stato riportato dall'allarme. Con KillMode=process il restart è immediato e gli rsync in corso non vengono interrotti
+		echo "KillMode=process" >> /etc/systemd/system/incron.service.d/override.conf
 		systemctl daemon-reload
 		service incron start
 

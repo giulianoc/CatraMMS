@@ -29,7 +29,8 @@ if [[ -n "${MMS_EXTERNAL_DELIVERY_SERVERS_TOBESYNCHED_BY_RSYNCD:-}" ]]; then
 	# Genera nuove regole
 	for dir in /var/mms/storage/MMSRepository/MMSLive/*/*; do
     		if [[ -d "$dir" && "$(basename "$dir")" =~ ^[0-9]+$ ]]; then
-        		echo "$dir	IN_MODIFY,IN_CREATE,IN_DELETE,IN_MOVE_SELF,IN_MOVE	/opt/mms/MMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
+        		#echo "$dir	IN_MODIFY,IN_CREATE,IN_DELETE,IN_MOVE_SELF,IN_MOVE	/opt/mms/MMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
+        		echo "$dir	IN_CLOSE_WRITE,IN_MOVED_TO	/opt/mms/MMS/scripts/incrontab.sh \$% \$@ \$#" >> "$NEW_RULES"
     		fi
 	done
 
