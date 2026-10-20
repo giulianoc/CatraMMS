@@ -684,6 +684,7 @@ json MMSEngineProcessor::getReviewedOutputsRoot(
 					},
 					.workspaceKey = workspace->_workspaceKey,
 					.type = "origin",
+					.enabled = nullopt,
 					.cdnEnabled = true
 				};
 				const shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = _mmsEngineDBFacade->deliveryServerQuery(deliveryServerListParams);
