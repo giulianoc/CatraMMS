@@ -124,10 +124,15 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				// 2023-02-07: added skip locked. Questa opzione è importante perchè evita che la select
 				//	attenda eventuali lock di altri engine. Considera che un lock su una riga causa anche
 				//	il lock di tutte le righe toccate dalla transazione
+				// 2026-10-19: aggiunta la join con MMS_IngestionRoot per evitare, per ogni riga, la query
+				//	workflowQuery_WorkspaceKeyIngestionDate (che usava anche un'altra connessione).
+				//	'for update of ij' blocca solamente le righe di MMS_IngestionJob, non quelle di MMS_IngestionRoot
+				//	(il problema del lock della join descritto nel commento 2022-01-06)
 				string sqlStatement = std::format("select ij.ingestionRootKey, ij.ingestionJobKey, ij.label, "
-												  "ij.metaDataContent, ij.status, ij.ingestionType "
-												  "from MMS_IngestionJob ij "
-												  "where ij.processorMMS is null ");
+					"ij.metaDataContent, ij.status, ij.ingestionType, ir.workspaceKey, "
+					"to_char(ir.ingestionDate, 'YYYY-MM-DD\"T\"HH24:MI:SS.MSZ') as formattedIngestionDate "
+					"from MMS_IngestionJob ij inner join MMS_IngestionRoot ir on ir.ingestionRootKey = ij.ingestionRootKey "
+					"where ij.processorMMS is null ");
 				if (onlyTasksNotInvolvingMMSEngineThreads)
 				{
 					string tasksNotInvolvingMMSEngineThreadsList = "'GroupOfTasks'"
@@ -157,10 +162,14 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					// "or (ij.status in ({}, {}, {}, {}) and ij.sourceBinaryTransferred = true)) "
 					"and toBeManaged_virtual "
 					"and ij.processingStartingFrom <= NOW() at time zone 'utc' "
-					"and NOW() at time zone 'utc' <= ij.processingStartingFrom + INTERVAL '{} days' "
+					// equivalente a: NOW() <= processingStartingFrom + INTERVAL. Scritta così la condizione è sulla colonna
+					// e può essere valutata sull'indice
+					"and ij.processingStartingFrom >= NOW() at time zone 'utc' - INTERVAL '{} days' "
 					"and scheduleStart_virtual < (NOW() at time zone 'utc' + INTERVAL '{} minutes') "
-					"order by ij.priority asc, ij.processingStartingFrom asc "
-					"limit {} offset {} for update skip locked",
+					// ingestionJobKey: rende l'ordinamento deterministico (offset stabile tra una chiamata e l'altra)
+					// ed è l'ultima colonna dell'indice MMS_IngestionJob_idx16, che evita il sort
+					"order by ij.priority asc, ij.processingStartingFrom asc, ij.ingestionJobKey asc "
+					"limit {} offset {} for update of ij skip locked",
 					// trans.transaction->quote(toString(IngestionStatus::Start_TaskQueued)),
 					// trans.transaction->quote(toString(IngestionStatus::SourceDownloadingInProgress)),
 					// trans.transaction->quote(toString(IngestionStatus::SourceMovingInProgress)),
@@ -169,8 +178,9 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					_doNotManageIngestionsOlderThanDays, timeBeforeToPrepareResourcesInMinutes, mysqlRowCount, _getIngestionJobsCurrentIndex
 				);
 				chrono::system_clock::time_point startSql = chrono::system_clock::now();
-				chrono::milliseconds internalSqlDuration(0);
 				result res = trans.transaction->exec(sqlStatement);
+				// durata della sola select (prima veniva misurata insieme al loop sotto che esegue altre query per ogni riga)
+				long selectElapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				if (res.size() < mysqlRowCount)
 					moreRows = false;
 				else
@@ -179,7 +189,6 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 				int resultSetIndex = 0;
 				for (auto row : res)
 				{
-					auto ingestionRootKey = row["ingestionRootKey"].as<int64_t>();
 					auto ingestionJobKey = row["ingestionJobKey"].as<int64_t>();
 					auto ingestionJobLabel = row["label"].as<string>();
 					auto metaDataContent = row["metaDataContent"].as<string>();
@@ -196,7 +205,8 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					);
 					resultSetIndex++;
 
-					auto [workspaceKey, ingestionDate] = workflowQuery_WorkspaceKeyIngestionDate(ingestionRootKey, false);
+					auto workspaceKey = row["workspaceKey"].as<int64_t>();
+					auto ingestionDate = row["formattedIngestionDate"].as<string>();
 
 					tuple<bool, int64_t, int, MMSEngineDBFacade::IngestionStatus> ingestionJobToBeManagedInfo =
 						isIngestionJobToBeManaged(ingestionJobKey, workspaceKey, ingestionStatus, ingestionType, trans);
@@ -241,15 +251,13 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 						);
 					}
 				}
-				long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 				SQLQUERYLOG(
-					"getIngestionsToBeManaged", elapsed,
+					"getIngestionsToBeManaged", selectElapsed,
 					"SQL statement"
 					", sqlStatement: @{}@"
 					", getConnectionId: @{}@"
 					", elapsed (millisecs): @{}@getIngestionsToBeManaged@",
-					sqlStatement, trans.connection->getConnectionId(),
-					chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count()
+					sqlStatement, trans.connection->getConnectionId(), selectElapsed
 				);
 
 				LOG_INFO(
@@ -257,8 +265,11 @@ void MMSEngineDBFacade::getIngestionsToBeManaged(
 					", _getIngestionJobsCurrentIndex: {}"
 					", res.size: {}"
 					", ingestionsToBeManaged.size(): {}"
-					", moreRows: {}",
-					_getIngestionJobsCurrentIndex, res.size(), ingestionsToBeManaged.size(), moreRows
+					", moreRows: {}"
+					", select elapsed (millisecs): {}"
+					", select + result set loop elapsed (millisecs): {}",
+					_getIngestionJobsCurrentIndex, res.size(), ingestionsToBeManaged.size(), moreRows, selectElapsed,
+					chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count()
 				);
 
 				if (res.empty())

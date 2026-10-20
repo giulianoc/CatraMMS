@@ -2068,6 +2068,30 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 		}
 
 		{
+			// viene usato dalla select di getIngestionsToBeManaged:
+			//	- il predicato (processorMMS IS NULL AND toBeManaged_virtual) deve essere identico a quello della select
+			//	- (priority, processingStartingFrom, ingestionJobKey) è l'order by della select: l'indice viene letto già ordinato,
+			//		senza sort, e la scansione si ferma dopo limit + offset righe
+			//	- le condizioni su processingStartingFrom e scheduleStart_virtual (colonne chiave) vengono valutate sull'indice,
+			//		la riga della tabella viene letta solo se le soddisfa
+			// In produzione crearlo prima con CREATE INDEX CONCURRENTLY (non blocca le scritture su MMS_IngestionJob)
+			string sqlStatement = "create index if not exists MMS_IngestionJob_idx16 on MMS_IngestionJob "
+				"(priority, processingStartingFrom, ingestionJobKey, scheduleStart_virtual) "
+				"WHERE processorMMS IS NULL AND toBeManaged_virtual";
+			chrono::system_clock::time_point startSql = chrono::system_clock::now();
+			trans.transaction->exec0(sqlStatement);
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
+			SQLQUERYLOG(
+				"default", elapsed,
+				"SQL statement"
+				", sqlStatement: @{}@"
+				", getConnectionId: @{}@"
+				", elapsed (millisecs): @{}@",
+				sqlStatement, trans.connection->getConnectionId(), elapsed
+			);
+		}
+
+		{
 			string sqlStatement = "create table if not exists MMS_IngestionJobDependency ("
 								  "ingestionJobDependencyKey  	bigint GENERATED ALWAYS AS IDENTITY,"
 								  "ingestionJobKey				bigint NOT NULL,"

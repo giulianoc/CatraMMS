@@ -212,7 +212,6 @@ MMSEngineDBFacade::MMSEngineDBFacade(
 
 		_logger->info(__FILEREF__ + "Creating SlaveDBConnectionPool...");
 		_slavePostgresConnectionPool = make_shared<DBConnectionPool<PostgresConnection>>(slaveDbPoolSize, _postgresSlaveConnectionFactory);
-		_logger->info(__FILEREF__ + "Created SlaveDBConnectionPool...");
 	}
 
 	// slow query
