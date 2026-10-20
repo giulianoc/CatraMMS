@@ -29,6 +29,7 @@ printf "${RED}"
 read -n 1 -s -r -p "Press any key to continue making the project"
 printf "${NC}"
 
+#make -j 8 VERBOSE=1
 make -j 8
 printf "${RED}"
 echo "rm -rf $deployDirectory/$moduleName"
