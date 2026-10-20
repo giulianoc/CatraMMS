@@ -54,6 +54,7 @@ void API::addDeliveryServer(
 		optional<int64_t> originDeliveryServerKey;
 		bool external;
 		bool enabled;
+		bool cdnEnabled;
 		string hostname;
 		string publicIP;
 		string internalIP;
@@ -73,6 +74,7 @@ void API::addDeliveryServer(
 					{}, true);
 			external = JSONUtils::as<bool>(requestBodyRoot, "external", false);
 			enabled = JSONUtils::as<bool>(requestBodyRoot, "enabled", true);
+			cdnEnabled = JSONUtils::as<bool>(requestBodyRoot, "cdnEnabled", true);
 			hostname = JSONUtils::as<string>(requestBodyRoot, "hostname", "", {}, true);
 			publicIP = JSONUtils::as<string>(requestBodyRoot, "publicIP", "", {}, true);
 			internalIP = JSONUtils::as<string>(requestBodyRoot, "internalIP", "", {}, true);
@@ -96,8 +98,10 @@ void API::addDeliveryServer(
 		json responseRoot;
 		try
 		{
-			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(label, type, originDeliveryServerKey,
-				external, enabled, publicIP, internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps);
+			int64_t deliveryServerKey = _mmsEngineDBFacade->addDeliveryServer(
+				label, type, originDeliveryServerKey, external, enabled, cdnEnabled, publicIP, internalIP,
+				hostname, latitude, longitude, maxTXBandwidthInGbps
+			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;
 		}
@@ -163,6 +167,7 @@ void API::modifyDeliveryServer(
 		optional<int64_t> originDeliveryServerKey;
 		optional<bool> external;
 		optional<bool> enabled;
+		optional<bool> cdnEnabled;
 		optional<string> publicIP;
 		optional<string> internalIP;
 		optional<string> hostname;
@@ -179,6 +184,7 @@ void API::modifyDeliveryServer(
 			originDeliveryServerKey = JSONUtils::asOpt<int64_t>(requestBodyRoot, "originDeliveryServerKey");
 			external = JSONUtils::asOpt<bool>(requestBodyRoot, "external");
 			enabled = JSONUtils::asOpt<bool>(requestBodyRoot, "enabled");
+			cdnEnabled = JSONUtils::asOpt<bool>(requestBodyRoot, "cdnEnabled");
 			publicIP = JSONUtils::asOpt<string>(requestBodyRoot, "publicIP");
 			internalIP = JSONUtils::asOpt<string>(requestBodyRoot, "internalIP");
 			hostname = JSONUtils::asOpt<string>(requestBodyRoot, "hostname");
@@ -205,8 +211,9 @@ void API::modifyDeliveryServer(
 			int64_t deliveryServerKey = requestData.getQueryParameter("deliveryServerKey", -1, true);
 
 			_mmsEngineDBFacade->modifyDeliveryServer(
-				deliveryServerKey, label, type, originDeliveryServerKey, external, enabled,
-				publicIP, internalIP, hostname, latitude, longitude, maxTXBandwidthInGbps
+				deliveryServerKey, label, type, originDeliveryServerKey, external, enabled, cdnEnabled,
+				publicIP, internalIP, hostname, latitude, longitude,
+				maxTXBandwidthInGbps
 			);
 
 			responseRoot["deliveryServerKey"] = deliveryServerKey;

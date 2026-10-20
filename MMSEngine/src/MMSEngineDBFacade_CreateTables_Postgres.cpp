@@ -1430,6 +1430,7 @@ void MMSEngineDBFacade::createTablesIfNeeded()
 					originDeliveryServerKey	bigint, -- null if type = origin (indica l'origin server associato ad un edge)
 					external boolean NOT NULL,
 					enabled boolean NOT NULL,
+					cdnEnabled boolean NOT NULL,
 					publicIP text NOT NULL,
 					internalIP text NOT NULL,
 					hostname text NOT NULL,

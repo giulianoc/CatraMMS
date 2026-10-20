@@ -2504,16 +2504,16 @@ class MMSEngineDBFacade
 
 
 	int64_t addDeliveryServer(
-		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
-		const std::string &publicIP, const std::string &internalIP, const std::string &hostname,
-		double latitude, double longitude, double maxTXBandwidthInGbps
+		const std::string &label, const std::string &type, std::optional<long long> originDeliveryServerKey, bool external, bool enabled,
+		bool cdnEnabled, const std::string &publicIP, const std::string &internalIP, const std::string &hostname, double latitude, double longitude,
+		double maxTXBandwidthInGbps
 	);
 	void modifyDeliveryServer(
-		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string>& type,
+		int64_t deliveryServerKey, const std::optional<std::string> &label, const std::optional<std::string> &type,
 		const std::optional<int64_t> &originDeliveryServerKey, std::optional<bool> external, std::optional<bool> enabled,
-		const std::optional<std::string> &publicIP, const std::optional<std::string> &internalIP,
-		const std::optional<std::string> &hostname, const std::optional<double>& latitude, const std::optional<double>& longitude,
-		const std::optional<double>& maxTXBandwidthInGbps
+		std::optional<bool> cdnEnabled, const std::optional<std::string> &publicIP, const std::optional<std::string> &internalIP,
+		const std::optional<std::string> &hostname, const std::optional<double> &latitude, const std::optional<double> &longitude,
+		const std::optional<double> &maxTXBandwidthInGbps
 	);
 	void enableDeliveryServer(int64_t deliveryServerKey, bool enabled);
 	void updateDeliveryServerAvgBandwidthUsage(
@@ -2542,6 +2542,7 @@ class MMSEngineDBFacade
 		std::optional<int64_t> deliveryServerKey;
 		std::string type;
 		std::optional<bool> enabled = true;
+		std::optional<bool> cdnEnabled;
 		std::optional<bool> external;
 		std::optional<int32_t> start;
 		std::optional<int32_t> rows;
