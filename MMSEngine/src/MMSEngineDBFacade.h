@@ -2504,7 +2504,7 @@ class MMSEngineDBFacade
 
 
 	int64_t addDeliveryServer(
-		const std::string &label, const std::string &type, std::optional<long long> originDeliveryServerKey, bool external, bool enabled,
+		const std::string &label, const std::string &type, std::optional<int64_t> originDeliveryServerKey, bool external, bool enabled,
 		bool cdnEnabled, const std::string &publicIP, const std::string &internalIP, const std::string &hostname, double latitude, double longitude,
 		double maxTXBandwidthInGbps
 	);
