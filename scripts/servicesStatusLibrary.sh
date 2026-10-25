@@ -788,7 +788,7 @@ systemctlServiceUpAndRunning()
 		activeState=$(systemctl show -p ActiveState --value "$serviceName" 2>>$logFilename)
 		subState=$(systemctl show -p SubState --value "$serviceName" 2>>$logFilename)
 
-		if [ "$activeState" == "active" ]; then
+		if [[ "$activeState" == "active" ]]; then
 			break
 		fi
 
@@ -822,6 +822,40 @@ systemctlServiceUpAndRunning()
 		alarmDetails="$serviceName IS NOT active even with systemd auto restart (state: $activeState/$subState, result: $result, nRestarts: $nRestarts, execMainStatus: $execMainStatus)"
 		notify "$(hostname)" "alarm_mms_${serviceName}_working" "alarm_mms_${serviceName}_working" $alarmNotificationPeriod "$alarmDetails" "" "$logFilename"
 		return 1
+	fi
+}
+
+#puo essere eseguito solo come root
+systemServiceRestartIfDown()
+{
+	serviceName=$1
+
+	systemServiceDebugFilename=/tmp/systemServiceRestartIfDown.log
+	if [ ! -f "$systemServiceDebugFilename" ]; then
+		echo "" > $systemServiceDebugFilename
+	else
+		filesize=$(stat -c %s $systemServiceDebugFilename)
+		if [ $filesize -gt 1000000 ]
+		then
+			echo "" > $systemServiceDebugFilename
+		fi
+	fi
+
+	if [[ $EUID -ne 0 ]]; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): Errore: questo script deve essere eseguito come root" >> $systemServiceDebugFilename
+		return 1
+	fi
+
+	if ! systemctl cat "$serviceName" >/dev/null 2>&1; then
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): Servizio $serviceName non presente"
+		return 1
+	fi
+
+	systemctlServiceUpAndRunning $serviceName $systemServiceDebugFilename
+	status=$?
+	if [ $status -eq 1 ]; then
+		systemctl restart $serviceName
+		echo "$(date +'%Y/%m/%d %H:%M:%S'): service $serviceName restarted" >> $systemServiceDebugFilename
 	fi
 }
 

@@ -939,37 +939,26 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityAndMetrics(
 			// earth_distance(ll_to_earth(40.712784, -74.005941), ll_to_earth(47.606209, -122.332071)) tra new york e seattle: 3869880 metri
 			// LIMIT 5: se ne prendiamo solo 1 abbiamo un rischio reale di "sticky server". Invece ne prendiamo 5 e ne selezioniamo uno
 			// random lato applicativo. Questo riduce moltissimo l’effetto "tutti sullo stesso".
+			// geoClass: classi di distanza di 1000 km (0 = < 1000 km, ..., 9 = < 10000 km, 10 = oltre).
+			// floor(distanza / 1000000) calcola la classe con una sola chiamata a earth_distance per riga
+			// (il precedente CASE ne eseguiva fino a 10)
+			// Le condizioni sugli *UpdateTime sono scritte come 'colonna >= now - interval' in modo da essere sargable;
+			// un valore NULL non soddisfa il confronto per cui non serve 'IS NOT NULL'
 			string sqlStatement = fmt::format(R"(
-				WITH rankedServers AS (
-					SELECT hostname, txAvgBandwidthUsage, cpuUsage,
-						CASE
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 2000000 THEN 0.1
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 3000000 THEN 0.2
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 4000000 THEN 0.3
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 5000000 THEN 0.4
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 6000000 THEN 0.5
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 8000000 THEN 0.7
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 10000000 THEN 0.9
-							ELSE 1.0   -- far
-						END AS geoClass
-					FROM MMS_DeliveryServer d, MMS_DeliveryServerWorkspaceMapping a
-					WHERE d.deliveryServerKey = a.deliveryServerKey
-					AND a.workspaceKey = {workspaceKey}
-					AND enabled = true
-					{externalCondition}
-					-- 0.75: 75% di utilizzo della banda massima, 1/8: conversione da bit a byte
-					AND d.txAvgBandwidthUsage <= d.maxTXBandwidthInGbps * 1000000000 * {maxTXBandwidthPerCent} / 8
-					AND cpuUsage < {maxCPUPerCent} -- escludiamo server con CPU > 80%
-					AND cpuUsageUpdateTime IS NOT NULL
-					AND bandwidthUsageUpdateTime IS NOT NULL
-					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
-					AND (NOW() at time zone 'utc' - cpuUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
-				)
-				SELECT hostname FROM rankedServers
-				ORDER BY geoClass, txAvgBandwidthUsage, cpuUsage
+				SELECT d.hostname
+				FROM MMS_DeliveryServerWorkspaceMapping a
+				JOIN MMS_DeliveryServer d ON d.deliveryServerKey = a.deliveryServerKey
+				WHERE a.workspaceKey = {workspaceKey}
+				AND d.enabled = true
+				{externalCondition}
+				-- 0.75: 75% di utilizzo della banda massima, 1/8: conversione da bit a byte
+				AND d.txAvgBandwidthUsage <= d.maxTXBandwidthInGbps * 1000000000 * {maxTXBandwidthPerCent} / 8
+				AND d.cpuUsage < {maxCPUPerCent} -- escludiamo server con CPU > 80%
+				AND d.bandwidthUsageUpdateTime >= (NOW() at time zone 'utc') - INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+				AND d.cpuUsageUpdateTime >= (NOW() at time zone 'utc') - INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+				ORDER BY
+					LEAST(floor(earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) / 1000000), 10), -- geoClass
+					d.txAvgBandwidthUsage, d.cpuUsage
 				LIMIT 5
 					)",
 				fmt::arg("workspaceKey", workspaceKey),
@@ -1062,24 +1051,11 @@ string MMSEngineDBFacade::getBestDeliveryServerBasedOnGeoProximityWithoutMetrics
 					AND a.workspaceKey = {workspaceKey}
 					AND enabled = true
 					{externalCondition}
-					AND cpuUsageUpdateTime IS NOT NULL
-					AND bandwidthUsageUpdateTime IS NOT NULL
-					AND (NOW() at time zone 'utc' - bandwidthUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
-					AND (NOW() at time zone 'utc' - cpuUsageUpdateTime) <= INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					AND bandwidthUsageUpdateTime >= (NOW() at time zone 'utc') - INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
+					AND cpuUsageUpdateTime >= (NOW() at time zone 'utc') - INTERVAL '{deliveryServersUnavailableIfNotReceivedStatsUpdatesInSeconds} seconds'
 					ORDER BY
-						CASE
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 1000000 THEN 0.0 -- very close
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 2000000 THEN 0.1
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 3000000 THEN 0.2
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 4000000 THEN 0.3
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 5000000 THEN 0.4
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 6000000 THEN 0.5
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 7000000 THEN 0.6
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 8000000 THEN 0.7
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 9000000 THEN 0.8
-							WHEN earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) < 10000000 THEN 0.9
-							ELSE 1.0   -- far
-						END,
+						-- geoClass: classi di distanza di 1000 km (vedi getBestDeliveryServerBasedOnGeoProximityAndMetrics)
+						LEAST(floor(earth_distance(ll_to_earth({playerLatitude}, {playerLongitude}), d.earthCoord) / 1000000), 10),
 						d.selectedLastTime
 					LIMIT 1 FOR UPDATE SKIP LOCKED
 				)

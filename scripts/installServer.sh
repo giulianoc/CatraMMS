@@ -2206,6 +2206,13 @@ echo ""
 read -n 1 -s -r -p "0 * * * * > /var/log/auth.log"
 echo ""
 echo ""
+if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "externalDelivery" ]; then
+	read -n 1 -s -r -p "crontab -e di root ed aggiungere"
+	echo ""
+	read -n 1 -s -r -p "*/5 * * * * . /opt/mms/MMS/scripts/servicesStatusLibrary.sh; systemServiceRestartIfDown systemd-resolved; systemServiceRestartIfDown nfs-kernel-server"
+	echo ""
+	echo ""
+fi
 
 #htpasswd: curl -u asdkljc0:iMCjYNGTTUYu8YQikBSC1UUA1wr2
 read -n 1 -s -r -p "in caso di integration, copiare il file .htpasswd in /etc (serve per il download di EPG e APK)"
