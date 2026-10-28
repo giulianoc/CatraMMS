@@ -698,8 +698,6 @@ json MMSEngineDBFacade::getStreamList(
 
 	try
 	{
-		string field;
-
 		LOG_INFO(
 			"getStreamList"
 			", workspaceKey: {}"
@@ -721,113 +719,60 @@ json MMSEngineDBFacade::getStreamList(
 		{
 			json requestParametersRoot;
 
-			{
-				field = "workspaceKey";
-				requestParametersRoot[field] = workspaceKey;
-			}
-
+			requestParametersRoot["workspaceKey"] = workspaceKey;
 			if (confKey != -1)
-			{
-				field = "confKey";
-				requestParametersRoot[field] = confKey;
-			}
-
-			{
-				field = "start";
-				requestParametersRoot[field] = start;
-			}
-
-			{
-				field = "rows";
-				requestParametersRoot[field] = rows;
-			}
-
+				requestParametersRoot["confKey"] = confKey;
+			requestParametersRoot["start"] = start;
+			requestParametersRoot["rows"] = rows;
 			if (!label.empty())
-			{
-				field = "label";
-				requestParametersRoot[field] = label;
-			}
-
-			{
-				field = "labelLike";
-				requestParametersRoot[field] = labelLike;
-			}
-
+				requestParametersRoot["label"] = label;
+			requestParametersRoot["labelLike"] = labelLike;
 			if (!url.empty())
-			{
-				field = "url";
-				requestParametersRoot[field] = url;
-			}
-
+				requestParametersRoot["url"] = url;
 			if (!sourceType.empty())
-			{
-				field = "sourceType";
-				requestParametersRoot[field] = sourceType;
-			}
-
+				requestParametersRoot["sourceType"] = sourceType;
 			if (!type.empty())
-			{
-				field = "type";
-				requestParametersRoot[field] = type;
-			}
-
+				requestParametersRoot["type"] = type;
 			if (!name.empty())
-			{
-				field = "name";
-				requestParametersRoot[field] = name;
-			}
-
+				requestParametersRoot["name"] = name;
 			if (!region.empty())
-			{
-				field = "region";
-				requestParametersRoot[field] = region;
-			}
-
+				requestParametersRoot["region"] = region;
 			if (!country.empty())
-			{
-				field = "country";
-				requestParametersRoot[field] = country;
-			}
-
+				requestParametersRoot["country"] = country;
 			if (!labelOrder.empty())
-			{
-				field = "labelOrder";
-				requestParametersRoot[field] = labelOrder;
-			}
+				requestParametersRoot["labelOrder"] = labelOrder;
 
-			field = "requestParameters";
-			streamListRoot[field] = requestParametersRoot;
+			streamListRoot["requestParameters"] = requestParametersRoot;
 		}
 
-		string sqlWhere = std::format("where workspaceKey = {} ", workspaceKey);
+		string sqlWhere = std::format("where s.workspaceKey = {} ", workspaceKey);
 		if (confKey != -1)
-			sqlWhere += std::format("and confKey = {} ", confKey);
+			sqlWhere += std::format("and s.confKey = {} ", confKey);
 		if (!label.empty())
 		{
 			if (labelLike)
-				sqlWhere += std::format("and LOWER(label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
+				sqlWhere += std::format("and LOWER(s.label) like LOWER({}) ", trans.transaction->quote("%" + label + "%"));
 			else
-				sqlWhere += std::format("and LOWER(label) = LOWER({}) ", trans.transaction->quote(label));
+				sqlWhere += std::format("and LOWER(s.label) = LOWER({}) ", trans.transaction->quote(label));
 		}
 		if (!url.empty())
-			sqlWhere += std::format("and url like {} ", trans.transaction->quote("%" + url + "%"));
+			sqlWhere += std::format("and s.url like {} ", trans.transaction->quote("%" + url + "%"));
 		if (!sourceType.empty())
-			sqlWhere += std::format("and sourceType = {} ", trans.transaction->quote(sourceType));
+			sqlWhere += std::format("and s.sourceType = {} ", trans.transaction->quote(sourceType));
 		if (!type.empty())
-			sqlWhere += std::format("and type = {} ", trans.transaction->quote(type));
+			sqlWhere += std::format("and s.type = {} ", trans.transaction->quote(type));
 		if (!name.empty())
-			sqlWhere += std::format("and LOWER(name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
+			sqlWhere += std::format("and LOWER(s.name) like LOWER({}) ", trans.transaction->quote("%" + name + "%"));
 		if (!region.empty())
-			sqlWhere += std::format("and region like {} ", trans.transaction->quote("%" + region + "%"));
+			sqlWhere += std::format("and s.region like {} ", trans.transaction->quote("%" + region + "%"));
 		if (!country.empty())
-			sqlWhere += std::format("and LOWER(country) like LOWER({}) ", trans.transaction->quote("%" + country + "%"));
+			sqlWhere += std::format("and LOWER(s.country) like LOWER({}) ", trans.transaction->quote("%" + country + "%"));
 
 		json responseRoot;
 		{
-			string sqlStatement = std::format("select count(*) from MMS_Conf_Stream {}", sqlWhere);
+			string sqlStatement = std::format("select count(*) from MMS_Conf_Stream s {}", sqlWhere);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			field = "numFound";
-			responseRoot[field] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
+			responseRoot["numFound"] = trans.transaction->exec1(sqlStatement)[0].as<int64_t>();
 			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"default", elapsed,
@@ -841,277 +786,233 @@ json MMSEngineDBFacade::getStreamList(
 
 		json streamsRoot = json::array();
 		{
+			// senza order by, limit/offset restituirebbero pagine non deterministiche
 			string orderByCondition;
 			if (!labelOrder.empty())
-				orderByCondition = std::format("order by label {}", labelOrder);
+				orderByCondition = std::format("order by s.label {}", labelOrder);
+			else
+				orderByCondition = "order by s.confKey";
 
 			string sqlStatement = std::format(
-				"select confKey, label, sourceType, encodersPoolKey, url, "
-				"pushProtocol, pushEncoderKey, pushPublicEncoderName, pushServerPort, pushUri, "
-				"pushListenTimeout, captureLiveVideoDeviceNumber, "
-				"captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth, "
-				"captureLiveHeight, captureLiveAudioDeviceNumber, "
-				"captureLiveChannelsNumber, tvSourceTVConfKey, "
-				"type, description, name, "
-				"region, country, "
-				"imageMediaItemKey, imageUniqueName, position, userData "
-				"from MMS_Conf_Stream {} {} "
+				"select s.confKey, s.label, s.sourceType, s.encodersPoolKey, s.url, "
+				"s.pushProtocol, s.pushEncoderKey, s.pushPublicEncoderName, s.pushServerPort, s.pushUri, "
+				"s.pushListenTimeout, s.captureLiveVideoDeviceNumber, "
+				"s.captureLiveVideoInputFormat, s.captureLiveFrameRate, s.captureLiveWidth, "
+				"s.captureLiveHeight, s.captureLiveAudioDeviceNumber, "
+				"s.captureLiveChannelsNumber, s.tvSourceTVConfKey, "
+				"s.type, s.description, s.name, "
+				"s.region, s.country, "
+				"s.imageMediaItemKey, s.imageUniqueName, s.position, s.userData, "
+				// join al posto delle query per riga (getEncodersPoolDetails / encoder_LabelPublicServerNameInternalServerName)
+				// MMS_EncodersPool.label è nullable: null solo se il pool non esiste
+				"case when ep.encodersPoolKey is null then null else coalesce(ep.label, '') end as encodersPoolLabel, "
+				"e.label as pushEncoderLabel, e.publicServerName as pushEncoderPublicServerName, "
+				"e.internalServerName as pushEncoderInternalServerName "
+				"from MMS_Conf_Stream s "
+				"left join MMS_EncodersPool ep on ep.encodersPoolKey = s.encodersPoolKey "
+				"left join MMS_Encoder e on s.sourceType = 'IP_PUSH' and e.encoderKey = s.pushEncoderKey "
+				"{} {} "
 				"limit {} offset {}",
 				sqlWhere, orderByCondition, rows, start
 			);
 			chrono::system_clock::time_point startSql = chrono::system_clock::now();
-			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(trans.transaction->exec(sqlStatement));
-			chrono::milliseconds internalSqlDuration(0);
+			shared_ptr<PostgresHelper::SqlResultSet> sqlResultSet = PostgresHelper::buildResult(
+				trans.transaction->exec(sqlStatement));
 			for (auto row : *sqlResultSet)
 			{
 				json streamRoot;
 
-				field = "confKey";
-				streamRoot[field] = row["confKey"].as<int64_t>();
-
-				field = "label";
-				streamRoot[field] = row["label"].as<string>();
+				streamRoot["confKey"] = row["confKey"].as<int64_t>();
+				streamRoot["label"] = row["label"].as<string>();
 
 				auto localSourceType = row["sourceType"].as<string>();
-				field = "sourceType";
-				streamRoot[field] = localSourceType;
+				streamRoot["sourceType"] = localSourceType;
 
-				field = "encodersPoolKey";
 				if (row["encodersPoolKey"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["encodersPoolKey"] = nullptr;
 				else
 				{
 					auto encodersPoolKey = row["encodersPoolKey"].as<int64_t>();
-					streamRoot[field] = encodersPoolKey;
+					streamRoot["encodersPoolKey"] = encodersPoolKey;
 
 					if (encodersPoolKey >= 0)
 					{
-						try
-						{
-							chrono::milliseconds sqlDuration(0);
-							string encodersPoolLabel = getEncodersPoolDetails(encodersPoolKey, &sqlDuration);
-							internalSqlDuration += sqlDuration;
-
-							field = "encodersPoolLabel";
-							streamRoot[field] = encodersPoolLabel;
-						}
-						catch (exception &e)
-						{
+						if (row["encodersPoolLabel"].isNull())
 							LOG_ERROR(
-								"getStreamList. getEncodersPoolDetails failed"
+								"getStreamList. EncodersPool was not found"
 								", confKey: {}"
 								", encodersPoolKey: {}",
 								JsonPath(&streamRoot)["confKey"].as<int64_t>(), encodersPoolKey
 							);
-						}
+						else
+							streamRoot["encodersPoolLabel"] = row["encodersPoolLabel"].as<string>();
 					}
 				}
 
 				// if (localSourceType == "IP_PULL")
 				{
-					field = "url";
 					if (row["url"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["url"] = nullptr;
 					else
-						streamRoot[field] = row["url"].as<string>();
+						streamRoot["url"] = row["url"].as<string>();
 				}
 				// else if (localSourceType == "IP_PUSH")
 				{
-					field = "pushProtocol";
 					if (row["pushProtocol"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["pushProtocol"] = nullptr;
 					else
-						streamRoot[field] = row["pushProtocol"].as<string>();
+						streamRoot["pushProtocol"] = row["pushProtocol"].as<string>();
 
 					bool pushPublicEncoderName = false;
 					if (!row["pushPublicEncoderName"].isNull())
 						pushPublicEncoderName = row["pushPublicEncoderName"].as<bool>();
 
-					field = "pushEncoderKey";
 					if (row["pushEncoderKey"].isNull())
 					{
-						streamRoot[field] = nullptr;
-
-						field = "pushPublicEncoderName";
-						streamRoot[field] = nullptr;
-
-						field = "pushEncoderLabel";
-						streamRoot[field] = nullptr;
-
-						field = "pushEncoderName";
-						streamRoot[field] = nullptr;
+						streamRoot["pushEncoderKey"] = nullptr;
+						streamRoot["pushPublicEncoderName"] = nullptr;
+						streamRoot["pushEncoderLabel"] = nullptr;
+						streamRoot["pushEncoderName"] = nullptr;
 					}
 					else
 					{
 						auto pushEncoderKey = row["pushEncoderKey"].as<int64_t>();
-						streamRoot[field] = pushEncoderKey;
+						streamRoot["pushEncoderKey"] = pushEncoderKey;
 
 						// 2026-03-03: l'idea è di inizializzare tutti i campi indipendentemente dal sourceType. In questo caso
 						// è stata aggiunta anche la condizione di IP_PUSH perchè molto spesso pushEncoderKey, quando non è IP_PUSH,
 						// ha un valore obsoleto che causa il fallimento della chiamata encoder_LabelPublicServerNameInternalServerName
 						if (localSourceType == "IP_PUSH" && pushEncoderKey >= 0)
 						{
-							try
-							{
-								field = "pushPublicEncoderName";
-								streamRoot[field] = pushPublicEncoderName;
+							streamRoot["pushPublicEncoderName"] = pushPublicEncoderName;
 
-								chrono::milliseconds sqlDuration(0);
-								auto [pushEncoderLabel, publicServerName, internalServerName] = // getEncoderDetails(pushEncoderKey);
-									encoder_LabelPublicServerNameInternalServerName(pushEncoderKey, fromMaster, &sqlDuration);
-								internalSqlDuration += sqlDuration;
-
-								field = "pushEncoderLabel";
-								streamRoot[field] = pushEncoderLabel;
-
-								field = "pushEncoderName";
-								if (pushPublicEncoderName)
-									streamRoot[field] = publicServerName;
-								else
-									streamRoot[field] = internalServerName;
-							}
-							catch (exception &e)
-							{
+							// pushEncoderLabel è NOT NULL in MMS_Encoder: null solo se l'encoder non esiste
+							if (row["pushEncoderLabel"].isNull())
 								LOG_ERROR(
-									"getStreamList. getEncoderDetails failed"
+									"getStreamList. encoder not found"
 									", confKey: {}"
-									", pushEncoderKey: {}"
-									", exception: {}",
-									JsonPath(&streamRoot)["confKey"].as<int64_t>(), pushEncoderKey, e.what()
+									", pushEncoderKey: {}",
+									JsonPath(&streamRoot)["confKey"].as<int64_t>(), pushEncoderKey
 								);
+							else
+							{
+								streamRoot["pushEncoderLabel"] = row["pushEncoderLabel"].as<string>();
+								if (pushPublicEncoderName)
+									streamRoot["pushEncoderName"] = row["pushEncoderPublicServerName"].as<string>();
+								else
+									streamRoot["pushEncoderName"] = row["pushEncoderInternalServerName"].as<string>();
 							}
 						}
 					}
 
-					field = "pushServerPort";
 					if (row["pushServerPort"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["pushServerPort"] = nullptr;
 					else
-						streamRoot[field] = row["pushServerPort"].as<int32_t>();
+						streamRoot["pushServerPort"] = row["pushServerPort"].as<int32_t>();
 
-					field = "pushUri";
 					if (row["pushUri"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["pushUri"] = nullptr;
 					else
-						streamRoot[field] = row["pushUri"].as<string>();
+						streamRoot["pushUri"] = row["pushUri"].as<string>();
 
-					field = "pushListenTimeout";
 					if (row["pushListenTimeout"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["pushListenTimeout"] = nullptr;
 					else
-						streamRoot[field] = row["pushListenTimeout"].as<int16_t>();
+						streamRoot["pushListenTimeout"] = row["pushListenTimeout"].as<int16_t>();
 				}
 				// else if (localSourceType == "CaptureLive")
 				{
-					field = "captureLiveVideoDeviceNumber";
 					if (row["captureLiveVideoDeviceNumber"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveVideoDeviceNumber"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveVideoDeviceNumber"].as<int16_t>();
+						streamRoot["captureLiveVideoDeviceNumber"] = row["captureLiveVideoDeviceNumber"].as<int16_t>();
 
-					field = "captureLiveVideoInputFormat";
 					if (row["captureLiveVideoInputFormat"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveVideoInputFormat"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveVideoInputFormat"].as<string>();
+						streamRoot["captureLiveVideoInputFormat"] = row["captureLiveVideoInputFormat"].as<string>();
 
-					field = "captureLiveFrameRate";
 					if (row["captureLiveFrameRate"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveFrameRate"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveFrameRate"].as<int16_t>();
+						streamRoot["captureLiveFrameRate"] = row["captureLiveFrameRate"].as<int16_t>();
 
-					field = "captureLiveWidth";
 					if (row["captureLiveWidth"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveWidth"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveWidth"].as<int16_t>();
+						streamRoot["captureLiveWidth"] = row["captureLiveWidth"].as<int16_t>();
 
-					field = "captureLiveHeight";
 					if (row["captureLiveHeight"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveHeight"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveHeight"].as<int16_t>();
+						streamRoot["captureLiveHeight"] = row["captureLiveHeight"].as<int16_t>();
 
-					field = "captureLiveAudioDeviceNumber";
 					if (row["captureLiveAudioDeviceNumber"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveAudioDeviceNumber"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveAudioDeviceNumber"].as<int16_t>();
+						streamRoot["captureLiveAudioDeviceNumber"] = row["captureLiveAudioDeviceNumber"].as<int16_t>();
 
-					field = "captureLiveChannelsNumber";
 					if (row["captureLiveChannelsNumber"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["captureLiveChannelsNumber"] = nullptr;
 					else
-						streamRoot[field] = row["captureLiveChannelsNumber"].as<int16_t>();
+						streamRoot["captureLiveChannelsNumber"] = row["captureLiveChannelsNumber"].as<int16_t>();
 				}
 				// else if (localSourceType == "TV")
 				{
-					field = "tvSourceTVConfKey";
 					if (row["tvSourceTVConfKey"].isNull())
-						streamRoot[field] = nullptr;
+						streamRoot["tvSourceTVConfKey"] = nullptr;
 					else
-						streamRoot[field] = row["tvSourceTVConfKey"].as<int64_t>();
+						streamRoot["tvSourceTVConfKey"] = row["tvSourceTVConfKey"].as<int64_t>();
 				}
 
-				field = "type";
 				if (row["type"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["type"] = nullptr;
 				else
-					streamRoot[field] = row["type"].as<string>();
+					streamRoot["type"] = row["type"].as<string>();
 
-				field = "description";
 				if (row["description"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["description"] = nullptr;
 				else
-					streamRoot[field] = row["description"].as<string>();
+					streamRoot["description"] = row["description"].as<string>();
 
-				field = "name";
 				if (row["name"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["name"] = nullptr;
 				else
-					streamRoot[field] = row["name"].as<string>();
+					streamRoot["name"] = row["name"].as<string>();
 
-				field = "region";
 				if (row["region"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["region"] = nullptr;
 				else
-					streamRoot[field] = row["region"].as<string>();
+					streamRoot["region"] = row["region"].as<string>();
 
-				field = "country";
 				if (row["country"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["country"] = nullptr;
 				else
-					streamRoot[field] = row["country"].as<string>();
+					streamRoot["country"] = row["country"].as<string>();
 
-				field = "imageMediaItemKey";
 				if (row["imageMediaItemKey"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["imageMediaItemKey"] = nullptr;
 				else
-					streamRoot[field] = row["imageMediaItemKey"].as<int64_t>();
+					streamRoot["imageMediaItemKey"] = row["imageMediaItemKey"].as<int64_t>();
 
-				field = "imageUniqueName";
 				if (row["imageUniqueName"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["imageUniqueName"] = nullptr;
 				else
-					streamRoot[field] = row["imageUniqueName"].as<string>();
+					streamRoot["imageUniqueName"] = row["imageUniqueName"].as<string>();
 
-				field = "position";
 				if (row["position"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["position"] = nullptr;
 				else
-					streamRoot[field] = row["position"].as<int32_t>();
+					streamRoot["position"] = row["position"].as<int32_t>();
 
-				field = "userData";
 				if (row["userData"].isNull())
-					streamRoot[field] = nullptr;
+					streamRoot["userData"] = nullptr;
 				else
-					streamRoot[field] = JSONUtils::toString(row["userData"].as<json>());
+					streamRoot["userData"] = JSONUtils::toString(row["userData"].as<json>());
 
 				streamsRoot.push_back(streamRoot);
 			}
-			long elapsed = chrono::duration_cast<chrono::milliseconds>((chrono::system_clock::now() - startSql) - internalSqlDuration).count();
-			// per questa query abbiamo l'indice ma recupera tanti dati e prende un po piu di tempo
+			long elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now() - startSql).count();
 			SQLQUERYLOG(
 				"getStreamList", elapsed,
 				"SQL statement"
@@ -1122,11 +1023,8 @@ json MMSEngineDBFacade::getStreamList(
 			);
 		}
 
-		field = "streams";
-		responseRoot[field] = streamsRoot;
-
-		field = "response";
-		streamListRoot[field] = responseRoot;
+		responseRoot["streams"] = streamsRoot;
+		streamListRoot["response"] = responseRoot;
 	}
 	catch (exception const &e)
 	{

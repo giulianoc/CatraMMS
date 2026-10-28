@@ -2209,7 +2209,7 @@ echo ""
 if [ "$moduleType" == "delivery" -o "$moduleType" == "api-and-delivery" -o "$moduleType" == "externalDelivery" ]; then
 	read -n 1 -s -r -p "crontab -e di root ed aggiungere"
 	echo ""
-	read -n 1 -s -r -p "*/5 * * * * . /opt/mms/MMS/scripts/servicesStatusLibrary.sh; systemServiceRestartIfDown systemd-resolved; systemServiceRestartIfDown nfs-kernel-server"
+	read -n 1 -s -r -p "*/5 * * * * /bin/bash -c 'source /opt/mms/MMS/scripts/servicesStatusLibrary.sh; systemServiceRestartIfDown systemd-resolved; systemServiceRestartIfDown nfs-kernel-server'"
 	echo ""
 	echo ""
 fi
