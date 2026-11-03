@@ -1,0 +1,30 @@
+# Immagine per la compilazione di CatraMMS su Ubuntu 26.04
+FROM ubuntu:26.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		ca-certificates \
+		wget \
+		build-essential \
+		git \
+		libarchive-tools \
+		cmake \
+		libfontconfig1-dev \
+		libharfbuzz-dev \
+		librtmp-dev \
+		libxml2-dev \
+		libasound2-dev \
+		libfribidi-dev \
+	&& rm -rf /var/lib/apt/lists/*
+
+# librerie ed eseguibili dei progetti di terze parti compilati, uno per sottodirectory (/deploy/<progetto>).
+# CMakeLists.txt li cerca in ${PROJECT_SOURCE_DIR}/../deploy e il progetto viene montato in /src
+ENV DEPLOY_DIR=/deploy
+
+# ogni progetto ha il suo layer: aggiungendo un progetto non vengono ricompilati i precedenti
+COPY deps/opencore-amr.sh /tmp/deps/
+RUN /tmp/deps/opencore-amr.sh
+
+WORKDIR /build

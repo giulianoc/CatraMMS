@@ -1,0 +1,119 @@
+# Immagine per la compilazione di CatraMMS su Ubuntu 24.04
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# il CMakeLists.txt richiede cmake >= 3.30.2 mentre Ubuntu 24.04 fornisce la 3.28:
+# cmake viene installato dal repository APT di Kitware
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends ca-certificates gpg wget \
+	&& wget -qO- https://apt.kitware.com/keys/kitware-archive-latest.asc \
+		| gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg \
+	&& echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ noble main" \
+		> /etc/apt/sources.list.d/kitware.list \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		build-essential \
+		git \
+		libarchive-tools \
+		cmake \
+		nasm \
+		libfontconfig1-dev \
+		libharfbuzz-dev \
+		librtmp-dev \
+		libxml2-dev \
+		libasound2-dev \
+		libfribidi-dev \
+		libssl-dev \
+		libcurl4-openssl-dev \
+		libjpeg-dev \
+		libpng-dev \
+		libpango1.0-dev \
+		libpq-dev \
+		libmaxminddb-dev \
+		libfcgi-dev \
+		libldap-dev \
+		zlib1g-dev \
+		lsb-release \
+	&& rm -rf /var/lib/apt/lists/*
+
+# librerie ed eseguibili dei progetti di terze parti compilati, uno per sottodirectory (/deploy/<progetto>).
+# CMakeLists.txt li cerca in ${PROJECT_SOURCE_DIR}/../deploy e il progetto viene montato in /src
+ENV DEPLOY_DIR=/deploy
+
+# ogni progetto ha il suo layer: aggiungendo un progetto non vengono ricompilati i precedenti
+COPY deps/opencore-amr.sh /tmp/deps/
+RUN /tmp/deps/opencore-amr.sh
+
+COPY deps/libogg.sh /tmp/deps/
+RUN /tmp/deps/libogg.sh
+
+COPY deps/libvorbis.sh /tmp/deps/
+RUN /tmp/deps/libvorbis.sh
+
+COPY deps/fdk-aac.sh /tmp/deps/
+RUN /tmp/deps/fdk-aac.sh
+
+COPY deps/libvpx.sh /tmp/deps/
+RUN /tmp/deps/libvpx.sh
+
+COPY deps/libwebm.sh /tmp/deps/
+RUN /tmp/deps/libwebm.sh
+
+COPY deps/x264.sh /tmp/deps/
+RUN /tmp/deps/x264.sh
+
+COPY deps/xvidcore.sh /tmp/deps/
+RUN /tmp/deps/xvidcore.sh
+
+COPY deps/lame.sh /tmp/deps/
+RUN /tmp/deps/lame.sh
+
+COPY deps/opus.sh /tmp/deps/
+RUN /tmp/deps/opus.sh
+
+COPY deps/x265.sh /tmp/deps/
+RUN /tmp/deps/x265.sh
+
+COPY deps/libaom.sh /tmp/deps/
+RUN /tmp/deps/libaom.sh
+
+COPY deps/libsdl.sh /tmp/deps/
+RUN /tmp/deps/libsdl.sh
+
+COPY deps/libsrt.sh /tmp/deps/
+RUN /tmp/deps/libsrt.sh
+
+COPY deps/ffmpeg.sh /tmp/deps/
+RUN /tmp/deps/ffmpeg.sh
+
+COPY deps/patches/opencv-4.14.0-ffmpeg9.patch /tmp/deps/patches/
+COPY deps/opencv.sh /tmp/deps/
+RUN /tmp/deps/opencv.sh
+
+COPY deps/aws-sdk-cpp.sh /tmp/deps/
+RUN /tmp/deps/aws-sdk-cpp.sh
+
+COPY deps/ImageMagick.sh /tmp/deps/
+RUN /tmp/deps/ImageMagick.sh
+
+COPY deps/libpqxx.sh /tmp/deps/
+RUN /tmp/deps/libpqxx.sh
+
+COPY deps/nginx.sh /tmp/deps/
+RUN /tmp/deps/nginx.sh
+
+COPY deps/spdlog.sh /tmp/deps/
+RUN /tmp/deps/spdlog.sh
+
+COPY deps/nlohmann.sh /tmp/deps/
+RUN /tmp/deps/nlohmann.sh
+
+# CatraMMS viene clonato da github: l'ADD scarica il commit corrente del branch e invalida la cache di questo
+# layer solo se il branch è cambiato (altrimenti docker riuserebbe sempre il layer con il codice vecchio)
+ARG CATRAMMS_BRANCH=master
+ADD https://api.github.com/repos/giulianoc/CatraMMS/git/refs/heads/${CATRAMMS_BRANCH} /tmp/deps/CatraMMS-ref.json
+COPY deps/CatraMMS.sh /tmp/deps/
+RUN /tmp/deps/CatraMMS.sh "$CATRAMMS_BRANCH"
+
+WORKDIR /build

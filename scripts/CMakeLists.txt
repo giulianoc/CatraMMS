@@ -48,7 +48,7 @@ set(SCRIPTs
     tvController.sh
     tvControllerLoop.sh
 #    tvController.sh.1
-    deploy.sh
+#    deploy.sh
     #installServer.sh commentato per evitare che venga copiato nei server
 #    getIngestionsToBeManaged.sh
     servicesStatusAgent.sh

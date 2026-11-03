@@ -13,6 +13,7 @@
 #include "API.h"
 #include "CurlWrapper.h"
 #include "JSONUtils.h"
+#include "JsonPath.h"
 #include "Validator.h"
 #include "spdlog/spdlog.h"
 #include <format>
@@ -1537,287 +1538,71 @@ void API::modifyStream(
 
 	try
 	{
-		string label;
-		string sourceType;
+		optional<string> label;
+		optional<string> sourceType;
 
-		int64_t encodersPoolKey;
-		string url;
-		string pushProtocol;
-		int64_t pushEncoderKey;
-		bool pushPublicEncoderName;
-		int pushServerPort;
-		string pushUri;
-		int pushListenTimeout;
-		int captureLiveVideoDeviceNumber;
-		string captureLiveVideoInputFormat;
-		int captureLiveFrameRate;
-		int captureLiveWidth;
-		int captureLiveHeight;
-		int captureLiveAudioDeviceNumber;
-		int captureLiveChannelsNumber;
-		int64_t tvSourceTVConfKey;
+		optional<int64_t> encodersPoolKey;
+		optional<string> url;
+		optional<string> pushProtocol;
+		optional<int64_t> pushEncoderKey;
+		optional<bool> pushPublicEncoderName;
+		optional<int> pushServerPort;
+		optional<string> pushUri;
+		optional<int> pushListenTimeout;
+		optional<int> captureLiveVideoDeviceNumber;
+		optional<string> captureLiveVideoInputFormat;
+		optional<int> captureLiveFrameRate;
+		optional<int> captureLiveWidth;
+		optional<int> captureLiveHeight;
+		optional<int> captureLiveAudioDeviceNumber;
+		optional<int> captureLiveChannelsNumber;
+		optional<int64_t> tvSourceTVConfKey;
 
-		string type;
-		string description;
-		string name;
-		string region;
-		string country;
-		int64_t imageMediaItemKey = -1;
-		string imageUniqueName;
-		int position = -1;
-		json userData;
-
-		bool labelToBeModified;
-		bool sourceTypeToBeModified;
-		bool encodersPoolKeyToBeModified;
-		bool urlToBeModified;
-		bool pushProtocolToBeModified;
-		bool pushEncoderKeyToBeModified;
-		bool pushPublicEncoderNameToBeModified;
-		bool pushServerPortToBeModified;
-		bool pushUriToBeModified;
-		bool pushListenTimeoutToBeModified;
-		bool captureLiveVideoDeviceNumberToBeModified;
-		bool captureLiveVideoInputFormatToBeModified;
-		bool captureLiveFrameRateToBeModified;
-		bool captureLiveWidthToBeModified;
-		bool captureLiveHeightToBeModified;
-		bool captureLiveAudioDeviceNumberToBeModified;
-		bool captureLiveChannelsNumberToBeModified;
-		bool tvSourceTVConfKeyToBeModified;
-		bool typeToBeModified;
-		bool descriptionToBeModified;
-		bool nameToBeModified;
-		bool regionToBeModified;
-		bool countryToBeModified;
-		bool imageToBeModified;
-		bool positionToBeModified;
-		bool userDataToBeModified;
+		optional<string> type;
+		optional<string> description;
+		optional<string> name;
+		optional<string> region;
+		optional<string> country;
+		optional<int64_t> imageMediaItemKey;
+		optional<string> imageUniqueName;
+		optional<int> position;
+		optional<nlohmann::json> userData;
 
 		try
 		{
 			json requestBodyRoot = JSONUtils::toJson<json>(requestData.requestBody);
 
-			labelToBeModified = false;
-			string field = "label";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				label = JSONUtils::as<string>(requestBodyRoot, field, "");
-				labelToBeModified = true;
-			}
+			label = JsonPath(&requestBodyRoot)["label"].asOpt<string>();
+			sourceType = JsonPath(&requestBodyRoot)["sourceType"].asOpt<string>();
+			encodersPoolKey = JsonPath(&requestBodyRoot)["encodersPoolKey"].asOpt<int64_t>();
+			url = JsonPath(&requestBodyRoot)["url"].asOpt<string>();
+			pushProtocol = JsonPath(&requestBodyRoot)["pushProtocol"].asOpt<string>();
+			pushEncoderKey = JsonPath(&requestBodyRoot)["pushEncoderKey"].asOpt<int64_t>();
+			pushPublicEncoderName = JsonPath(&requestBodyRoot)["pushPublicEncoderName"].asOpt<bool>();
+			pushServerPort = JsonPath(&requestBodyRoot)["pushServerPort"].asOpt<int>();
+			pushUri = JsonPath(&requestBodyRoot)["pushURI"].asOpt<string>();
+			pushListenTimeout = JsonPath(&requestBodyRoot)["pushListenTimeout"].asOpt<int>();
+			captureLiveVideoDeviceNumber = JsonPath(&requestBodyRoot)["captureLiveVideoDeviceNumber"].asOpt<int>();
+			captureLiveVideoInputFormat = JsonPath(&requestBodyRoot)["captureLiveVideoInputFormat"].asOpt<string>();
+			captureLiveFrameRate = JsonPath(&requestBodyRoot)["captureLiveFrameRate"].asOpt<int>();
+			captureLiveWidth = JsonPath(&requestBodyRoot)["captureLiveWidth"].asOpt<int>();
+			captureLiveHeight = JsonPath(&requestBodyRoot)["captureLiveHeight"].asOpt<int>();
+			captureLiveAudioDeviceNumber = JsonPath(&requestBodyRoot)["captureLiveAudioDeviceNumber"].asOpt<int>();
+			captureLiveChannelsNumber = JsonPath(&requestBodyRoot)["captureLiveChannelsNumber"].asOpt<int>();
+			tvSourceTVConfKey = JsonPath(&requestBodyRoot)["sourceTVConfKey"].asOpt<int64_t>();
+			type = JsonPath(&requestBodyRoot)["type"].asOpt<string>();
+			description = JsonPath(&requestBodyRoot)["description"].asOpt<string>();
+			name = JsonPath(&requestBodyRoot)["name"].asOpt<string>();
+			region = JsonPath(&requestBodyRoot)["region"].asOpt<string>();
+			country = JsonPath(&requestBodyRoot)["country"].asOpt<string>();
+			imageMediaItemKey = JsonPath(&requestBodyRoot)["imageMediaItemKey"].asOpt<int64_t>();
+			imageUniqueName = JsonPath(&requestBodyRoot)["imageUniqueName"].asOpt<string>();
 
-			sourceTypeToBeModified = false;
-			field = "sourceType";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				sourceType = JSONUtils::as<string>(requestBodyRoot, field, "");
-				sourceTypeToBeModified = true;
-			}
+			position = JsonPath(&requestBodyRoot)["position"].asOpt<int>();
+			if (!position && JsonPath(&requestBodyRoot)["position"].isNull())
+				position = -1;
 
-			encodersPoolKeyToBeModified = false;
-			field = "encodersPoolKey";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				encodersPoolKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
-				encodersPoolKeyToBeModified = true;
-			}
-
-			urlToBeModified = false;
-			field = "url";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				url = JSONUtils::as<string>(requestBodyRoot, field, "");
-				urlToBeModified = true;
-			}
-
-			pushProtocolToBeModified = false;
-			field = "pushProtocol";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				pushProtocol = JSONUtils::as<string>(requestBodyRoot, field, "");
-				pushProtocolToBeModified = true;
-			}
-
-			pushEncoderKeyToBeModified = false;
-			field = "pushEncoderKey";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				pushEncoderKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
-				pushEncoderKeyToBeModified = true;
-			}
-
-			pushPublicEncoderNameToBeModified = false;
-			field = "pushPublicEncoderName";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				pushPublicEncoderName = JSONUtils::as<bool>(requestBodyRoot, field, false);
-				pushPublicEncoderNameToBeModified = true;
-			}
-
-			pushServerPortToBeModified = false;
-			field = "pushServerPort";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				pushServerPort = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				pushServerPortToBeModified = true;
-			}
-
-			pushUriToBeModified = false;
-			field = "pushURI";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				pushUri = JSONUtils::as<string>(requestBodyRoot, field, "");
-				pushUriToBeModified = true;
-			}
-
-			pushListenTimeoutToBeModified = false;
-			field = "pushListenTimeout";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				pushListenTimeout = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				pushListenTimeoutToBeModified = true;
-			}
-
-			captureLiveVideoDeviceNumberToBeModified = false;
-			field = "captureLiveVideoDeviceNumber";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveVideoDeviceNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				captureLiveVideoDeviceNumberToBeModified = true;
-			}
-
-			captureLiveVideoInputFormatToBeModified = false;
-			field = "captureLiveVideoInputFormat";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveVideoInputFormat = JSONUtils::as<string>(requestBodyRoot, field, "");
-				captureLiveVideoInputFormatToBeModified = true;
-			}
-
-			captureLiveFrameRateToBeModified = false;
-			field = "captureLiveFrameRate";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveFrameRate = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				captureLiveFrameRateToBeModified = true;
-			}
-
-			captureLiveWidthToBeModified = false;
-			field = "captureLiveWidth";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveWidth = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				captureLiveWidthToBeModified = true;
-			}
-
-			captureLiveHeightToBeModified = false;
-			field = "captureLiveHeight";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveHeight = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				captureLiveHeightToBeModified = true;
-			}
-
-			captureLiveAudioDeviceNumberToBeModified = false;
-			field = "captureLiveAudioDeviceNumber";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveAudioDeviceNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				captureLiveAudioDeviceNumberToBeModified = true;
-			}
-
-			captureLiveChannelsNumberToBeModified = false;
-			field = "captureLiveChannelsNumber";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				captureLiveChannelsNumber = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				captureLiveChannelsNumberToBeModified = true;
-			}
-
-			tvSourceTVConfKeyToBeModified = false;
-			field = "sourceTVConfKey";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				tvSourceTVConfKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
-				tvSourceTVConfKeyToBeModified = true;
-			}
-
-			typeToBeModified = false;
-			field = "type";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				type = JSONUtils::as<string>(requestBodyRoot, field, "");
-				typeToBeModified = true;
-			}
-
-			descriptionToBeModified = false;
-			field = "description";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				description = JSONUtils::as<string>(requestBodyRoot, field, "");
-				descriptionToBeModified = true;
-			}
-
-			nameToBeModified = false;
-			field = "name";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				name = JSONUtils::as<string>(requestBodyRoot, field, "");
-				nameToBeModified = true;
-			}
-
-			regionToBeModified = false;
-			field = "region";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				region = JSONUtils::as<string>(requestBodyRoot, field, "");
-				regionToBeModified = true;
-			}
-
-			countryToBeModified = false;
-			field = "country";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				country = JSONUtils::as<string>(requestBodyRoot, field, "");
-				countryToBeModified = true;
-			}
-
-			imageToBeModified = false;
-			field = "imageMediaItemKey";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				imageMediaItemKey = JSONUtils::as<int64_t>(requestBodyRoot, field, -1);
-				imageToBeModified = true;
-			}
-
-			imageToBeModified = false;
-			field = "imageUniqueName";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				imageUniqueName = JSONUtils::as<string>(requestBodyRoot, field, "");
-				imageToBeModified = true;
-			}
-
-			positionToBeModified = false;
-			field = "position";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				position = JSONUtils::as<int32_t>(requestBodyRoot, field, -1);
-				positionToBeModified = true;
-			}
-			else if (JSONUtils::isNull(requestBodyRoot, field))
-			{
-				// in order to set the field as null into the DB
-				positionToBeModified = true;
-			}
-
-			userDataToBeModified = false;
-			field = "userData";
-			if (JSONUtils::isPresent(requestBodyRoot, field))
-			{
-				userData = requestBodyRoot[field];
-				userDataToBeModified = true;
-			}
+			userData = JsonPath(&requestBodyRoot)["userData"].asOpt<nlohmann::json>();
 		}
 		catch (exception &e)
 		{
@@ -1844,16 +1629,16 @@ void API::modifyStream(
 			}
 
 			json streamRoot = _mmsEngineDBFacade->modifyStream(
-				confKey, labelKey, apiAuthorizationDetails->workspace->_workspaceKey, labelToBeModified, label, sourceTypeToBeModified, sourceType,
-				encodersPoolKeyToBeModified, encodersPoolKey, urlToBeModified, url, pushProtocolToBeModified, pushProtocol,
-				pushEncoderKeyToBeModified, pushEncoderKey, pushPublicEncoderNameToBeModified, pushPublicEncoderName, pushServerPortToBeModified,
-				pushServerPort, pushUriToBeModified, pushUri, pushListenTimeoutToBeModified, pushListenTimeout,
-				captureLiveVideoDeviceNumberToBeModified, captureLiveVideoDeviceNumber, captureLiveVideoInputFormatToBeModified,
-				captureLiveVideoInputFormat, captureLiveFrameRateToBeModified, captureLiveFrameRate, captureLiveWidthToBeModified, captureLiveWidth,
-				captureLiveHeightToBeModified, captureLiveHeight, captureLiveAudioDeviceNumberToBeModified, captureLiveAudioDeviceNumber,
-				captureLiveChannelsNumberToBeModified, captureLiveChannelsNumber, tvSourceTVConfKeyToBeModified, tvSourceTVConfKey, typeToBeModified,
-				type, descriptionToBeModified, description, nameToBeModified, name, regionToBeModified, region, countryToBeModified, country,
-				imageToBeModified, imageMediaItemKey, imageUniqueName, positionToBeModified, position, userDataToBeModified, userData
+				confKey, labelKey, apiAuthorizationDetails->workspace->_workspaceKey, label, sourceType,
+				encodersPoolKey, url, pushProtocol,
+				pushEncoderKey, pushPublicEncoderName,
+				pushServerPort, pushUri, pushListenTimeout,
+				captureLiveVideoDeviceNumber,
+				captureLiveVideoInputFormat, captureLiveFrameRate, captureLiveWidth,
+				captureLiveHeight, captureLiveAudioDeviceNumber,
+				captureLiveChannelsNumber, tvSourceTVConfKey,
+				type, description, name, region, country,
+				imageMediaItemKey, imageUniqueName, position, userData
 			);
 
 			sResponse = JSONUtils::toString(streamRoot);

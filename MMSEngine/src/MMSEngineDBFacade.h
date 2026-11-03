@@ -2211,17 +2211,17 @@ class MMSEngineDBFacade
 	);
 
 	nlohmann::json modifyStream(
-		int64_t confKey, std::string labelKey, int64_t workspaceKey, bool labelToBeModified, std::string label, bool sourceTypeToBeModified, std::string sourceType,
-		bool encodersPoolKeyToBeModified, int64_t encodersPoolKey, bool urlToBeModified, std::string url, bool pushProtocolToBeModified,
-		std::string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey, bool pushPublicEncoderNameToBeModified,
-		bool pushPublicEncoderName, bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified, std::string pushUri,
-		bool pushListenTimeoutToBeModified, int pushListenTimeout, bool captureVideoDeviceNumberToBeModified, int captureVideoDeviceNumber,
-		bool captureVideoInputFormatToBeModified, std::string captureVideoInputFormat, bool captureFrameRateToBeModified, int captureFrameRate,
-		bool captureWidthToBeModified, int captureWidth, bool captureHeightToBeModified, int captureHeight, bool captureAudioDeviceNumberToBeModified,
-		int captureAudioDeviceNumber, bool captureChannelsNumberToBeModified, int captureChannelsNumber, bool tvSourceTVConfKeyToBeModified,
-		int64_t tvSourceTVConfKey, bool typeToBeModified, std::string type, bool descriptionToBeModified, std::string description, bool nameToBeModified,
-		std::string name, bool regionToBeModified, std::string region, bool countryToBeModified, std::string country, bool imageToBeModified,
-		int64_t imageMediaItemKey, std::string imageUniqueName, bool positionToBeModified, int position, bool userDataToBeModified, nlohmann::json userData
+		int64_t confKey, std::string labelKey, int64_t workspaceKey,
+
+		const std::optional<std::string>& label, const std::optional<std::string>& sourceType, std::optional<int64_t> encodersPoolKey,
+		const std::optional<std::string>& url, const std::optional<std::string>& pushProtocol, std::optional<int64_t> pushEncoderKey,
+		const std::optional<bool>& pushPublicEncoderName, std::optional<int> pushServerPort,
+		const std::optional<std::string>& pushUri, std::optional<int> pushListenTimeout, std::optional<int> captureLiveVideoDeviceNumber,
+		const std::optional<std::string>& captureLiveVideoInputFormat, std::optional<int> captureLiveFrameRate, std::optional<int> captureLiveWidth,
+		std::optional<int> captureLiveHeight, std::optional<int> captureLiveAudioDeviceNumber, std::optional<int> captureLiveChannelsNumber,
+		std::optional<int64_t> tvSourceTVConfKey, const std::optional<std::string>& type, const std::optional<std::string>& description,
+		const std::optional<std::string>& name, const std::optional<std::string>& region, const std::optional<std::string>& country, std::optional<int64_t> imageMediaItemKey,
+		const std::optional<std::string>& imageUniqueName, std::optional<int> position, const std::optional<nlohmann::json>& userData
 	);
 
 	void removeStream(int64_t workspaceKey, int64_t confKey, std::string label);

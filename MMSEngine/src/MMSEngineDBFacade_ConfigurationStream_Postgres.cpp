@@ -7,6 +7,7 @@
 #include "spdlog/spdlog.h"
 #include <FFMpegWrapper.h>
 #include <cstdint>
+#include <utility>
 
 using namespace std;
 using json = nlohmann::json;
@@ -163,34 +164,19 @@ json MMSEngineDBFacade::addStream(
 }
 
 json MMSEngineDBFacade::modifyStream(
-	int64_t confKey, string labelKey, int64_t workspaceKey, bool labelToBeModified, string label,
+	int64_t confKey, string labelKey, int64_t workspaceKey,
 
-	bool sourceTypeToBeModified, string sourceType, bool encodersPoolKeyToBeModified, int64_t encodersPoolKey, bool urlToBeModified, string url,
-	bool pushProtocolToBeModified, string pushProtocol, bool pushEncoderKeyToBeModified, int64_t pushEncoderKey,
-	bool pushPublicEncoderNameToBeModified, bool pushPublicEncoderName, bool pushServerPortToBeModified, int pushServerPort, bool pushUriToBeModified,
-	string pushUri, bool pushListenTimeoutToBeModified, int pushListenTimeout, bool captureLiveVideoDeviceNumberToBeModified,
-	int captureLiveVideoDeviceNumber, bool captureLiveVideoInputFormatToBeModified, string captureLiveVideoInputFormat,
-	bool captureLiveFrameRateToBeModified, int captureLiveFrameRate, bool captureLiveWidthToBeModified, int captureLiveWidth,
-	bool captureLiveHeightToBeModified, int captureLiveHeight, bool captureLiveAudioDeviceNumberToBeModified, int captureLiveAudioDeviceNumber,
-	bool captureLiveChannelsNumberToBeModified, int captureLiveChannelsNumber, bool tvSourceTVConfKeyToBeModified, int64_t tvSourceTVConfKey,
-
-	bool typeToBeModified, string type, bool descriptionToBeModified, string description, bool nameToBeModified, string name, bool regionToBeModified,
-	string region, bool countryToBeModified, string country, bool imageToBeModified, int64_t imageMediaItemKey, string imageUniqueName,
-	bool positionToBeModified, int position, bool userDataToBeModified, json userData
+	const optional<string>& label, const optional<string>& sourceType, optional<int64_t> encodersPoolKey,
+	const optional<string>& url, const optional<string>& pushProtocol, optional<int64_t> pushEncoderKey,
+	const optional<bool>& pushPublicEncoderName, optional<int> pushServerPort,
+	const optional<string>& pushUri, optional<int> pushListenTimeout, optional<int> captureLiveVideoDeviceNumber,
+	const optional<string>& captureLiveVideoInputFormat, optional<int> captureLiveFrameRate, optional<int> captureLiveWidth,
+	optional<int> captureLiveHeight, optional<int> captureLiveAudioDeviceNumber, optional<int> captureLiveChannelsNumber,
+	optional<int64_t> tvSourceTVConfKey, const optional<string>& type, const optional<string>& description,
+	const optional<string>& name, const optional<string>& region, const optional<string>& country, optional<int64_t> imageMediaItemKey,
+	const optional<string>& imageUniqueName, optional<int> position, const optional<json>& userData
 )
 {
-	/*
-	shared_ptr<PostgresConnection> conn = nullptr;
-
-	shared_ptr<DBConnectionPool<PostgresConnection>> connectionPool = _masterPostgresConnectionPool;
-
-	conn = connectionPool->borrow();
-	// uso il "modello" della doc. di libpqxx dove il costruttore della transazione è fuori del try/catch
-	// Se questo non dovesse essere vero, unborrow non sarà chiamata
-	// In alternativa, dovrei avere un try/catch per il borrow/transazione che sarebbe eccessivo
-	nontransaction trans{*(conn->_sqlConnection)};
-	*/
-
 	PostgresConnTrans trans(_masterPostgresConnectionPool, false);
 	try
 	{
@@ -198,55 +184,55 @@ json MMSEngineDBFacade::modifyStream(
 			string setSQL = "set ";
 			bool oneParameterPresent = false;
 
-			if (labelToBeModified)
+			if (label)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("label = " + trans.transaction->quote(label));
+				setSQL += ("label = " + trans.transaction->quote(*label));
 				oneParameterPresent = true;
 			}
 
-			if (sourceTypeToBeModified)
+			if (sourceType)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("sourceType = " + trans.transaction->quote(sourceType));
+				setSQL += ("sourceType = " + trans.transaction->quote(*sourceType));
 				oneParameterPresent = true;
 			}
 
-			if (encodersPoolKeyToBeModified)
+			if (encodersPoolKey)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("encodersPoolKey = " + (encodersPoolKey == -1 ? "null" : to_string(encodersPoolKey)));
+				setSQL += ("encodersPoolKey = " + (*encodersPoolKey == -1 ? "null" : to_string(*encodersPoolKey)));
 				oneParameterPresent = true;
 			}
 
-			if (urlToBeModified)
+			if (url)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("url = " + (url == "" ? "null" : trans.transaction->quote(url)));
+				setSQL += ("url = " + (url->empty() ? "null" : trans.transaction->quote(*url)));
 				oneParameterPresent = true;
 			}
 
-			if (pushProtocolToBeModified)
+			if (pushProtocol)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushProtocol = " + (pushProtocol == "" ? "null" : trans.transaction->quote(pushProtocol)));
+				setSQL += ("pushProtocol = " + (pushProtocol->empty() ? "null" : trans.transaction->quote(*pushProtocol)));
 				oneParameterPresent = true;
 			}
 
-			if (pushEncoderKeyToBeModified)
+			if (pushEncoderKey)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushEncoderKey = " + (pushEncoderKey == -1 ? "null" : to_string(pushEncoderKey)));
+				setSQL += ("pushEncoderKey = " + (*pushEncoderKey == -1 ? "null" : to_string(*pushEncoderKey)));
 				oneParameterPresent = true;
 			}
 
-			if (pushPublicEncoderNameToBeModified)
+			if (pushPublicEncoderName)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
@@ -254,164 +240,165 @@ json MMSEngineDBFacade::modifyStream(
 				oneParameterPresent = true;
 			}
 
-			if (pushServerPortToBeModified)
+			if (pushServerPort)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushServerPort = " + (pushServerPort == -1 ? "null" : to_string(pushServerPort)));
+				setSQL += ("pushServerPort = " + (*pushServerPort == -1 ? "null" : to_string(*pushServerPort)));
 				oneParameterPresent = true;
 			}
 
-			if (pushUriToBeModified)
+			if (pushUri)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushUri = " + (pushUri == "" ? "null" : trans.transaction->quote(pushUri)));
+				setSQL += ("pushUri = " + (pushUri->empty() ? "null" : trans.transaction->quote(*pushUri)));
 				oneParameterPresent = true;
 			}
 
-			if (pushListenTimeoutToBeModified)
+			if (pushListenTimeout)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("pushListenTimeout = " + (pushListenTimeout == -1 ? "null" : to_string(pushListenTimeout)));
+				setSQL += ("pushListenTimeout = " + (*pushListenTimeout == -1 ? "null" : to_string(*pushListenTimeout)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveVideoDeviceNumberToBeModified)
+			if (captureLiveVideoDeviceNumber)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL +=
-					("captureLiveVideoDeviceNumber = " + (captureLiveVideoDeviceNumber == -1 ? "null" : to_string(captureLiveVideoDeviceNumber)));
+					("captureLiveVideoDeviceNumber = " + (*captureLiveVideoDeviceNumber == -1 ? "null" : to_string(*captureLiveVideoDeviceNumber)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveVideoInputFormatToBeModified)
+			if (captureLiveVideoInputFormat)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL +=
 					("captureLiveVideoInputFormat = " +
-					 (captureLiveVideoInputFormat == "" ? "null" : trans.transaction->quote(captureLiveVideoInputFormat)));
+					 (captureLiveVideoInputFormat->empty() ? "null" : trans.transaction->quote(*captureLiveVideoInputFormat)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveFrameRateToBeModified)
+			if (captureLiveFrameRate)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureLiveFrameRate = " + (captureLiveFrameRate == -1 ? "null" : to_string(captureLiveFrameRate)));
+				setSQL += ("captureLiveFrameRate = " + (*captureLiveFrameRate == -1 ? "null" : to_string(*captureLiveFrameRate)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveWidthToBeModified)
+			if (captureLiveWidth)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureLiveWidth = " + (captureLiveWidth == -1 ? "null" : to_string(captureLiveWidth)));
+				setSQL += ("captureLiveWidth = " + (*captureLiveWidth == -1 ? "null" : to_string(*captureLiveWidth)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveHeightToBeModified)
+			if (captureLiveHeight)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureLiveHeight = " + (captureLiveHeight == -1 ? "null" : to_string(captureLiveHeight)));
+				setSQL += ("captureLiveHeight = " + (*captureLiveHeight == -1 ? "null" : to_string(*captureLiveHeight)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveAudioDeviceNumberToBeModified)
+			if (captureLiveAudioDeviceNumber)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
 				setSQL +=
-					("captureLiveAudioDeviceNumber = " + (captureLiveAudioDeviceNumber == -1 ? "null" : to_string(captureLiveAudioDeviceNumber)));
+					("captureLiveAudioDeviceNumber = " + (*captureLiveAudioDeviceNumber == -1 ? "null" : to_string(*captureLiveAudioDeviceNumber)));
 				oneParameterPresent = true;
 			}
 
-			if (captureLiveChannelsNumberToBeModified)
+			if (captureLiveChannelsNumber)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("captureLiveChannelsNumber = " + (captureLiveChannelsNumber == -1 ? "null" : to_string(captureLiveChannelsNumber)));
+				setSQL += ("captureLiveChannelsNumber = " + (*captureLiveChannelsNumber == -1 ? "null" : to_string(*captureLiveChannelsNumber)));
 				oneParameterPresent = true;
 			}
 
-			if (tvSourceTVConfKeyToBeModified)
+			if (tvSourceTVConfKey)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("tvSourceTVConfKey = " + (tvSourceTVConfKey == -1 ? "null" : to_string(tvSourceTVConfKey)));
+				setSQL += ("tvSourceTVConfKey = " + (*tvSourceTVConfKey == -1 ? "null" : to_string(*tvSourceTVConfKey)));
 				oneParameterPresent = true;
 			}
 
-			if (typeToBeModified)
+			if (type)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("type = " + (type == "" ? "null" : trans.transaction->quote(type)));
+				setSQL += ("type = " + (type->empty() ? "null" : trans.transaction->quote(*type)));
 				oneParameterPresent = true;
 			}
 
-			if (descriptionToBeModified)
+			if (description)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("description = " + (description == "" ? "null" : trans.transaction->quote(description)));
+				setSQL += ("description = " + (description->empty() ? "null" : trans.transaction->quote(*description)));
 				oneParameterPresent = true;
 			}
 
-			if (nameToBeModified)
+			if (name)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("name = " + (name == "" ? "null" : trans.transaction->quote(name)));
+				setSQL += ("name = " + (name->empty() ? "null" : trans.transaction->quote(*name)));
 				oneParameterPresent = true;
 			}
 
-			if (regionToBeModified)
+			if (region)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("region = " + (region == "" ? "null" : trans.transaction->quote(region)));
+				setSQL += ("region = " + (region->empty() ? "null" : trans.transaction->quote(*region)));
 				oneParameterPresent = true;
 			}
 
-			if (countryToBeModified)
+			if (country)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("country = " + (country == "" ? "null" : trans.transaction->quote(country)));
+				setSQL += ("country = " + (country->empty() ? "null" : trans.transaction->quote(*country)));
 				oneParameterPresent = true;
 			}
 
-			if (imageToBeModified)
+			if ((imageMediaItemKey && *imageMediaItemKey != -1)
+				|| imageUniqueName)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				if (imageMediaItemKey == -1)
-					setSQL +=
-						("imageMediaItemKey = null, imageUniqueName = " + (imageUniqueName == "" ? "null" : trans.transaction->quote(imageUniqueName))
-						);
+				if (imageMediaItemKey && *imageMediaItemKey != -1)
+					setSQL += ("imageMediaItemKey = " + to_string(*imageMediaItemKey) + ", imageUniqueName = null");
 				else
-					setSQL += ("imageMediaItemKey = " + to_string(imageMediaItemKey) + ", imageUniqueName = null");
+					setSQL +=
+						("imageMediaItemKey = null, imageUniqueName = " + (imageUniqueName->empty() ? "null" : trans.transaction->quote(*imageUniqueName))
+						);
 				oneParameterPresent = true;
 			}
 
-			if (positionToBeModified)
+			if (position)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("position = " + (position == -1 ? "null" : to_string(position)));
+				setSQL += ("position = " + (*position == -1 ? "null" : to_string(*position)));
 				oneParameterPresent = true;
 			}
 
-			if (userDataToBeModified)
+			if (userData)
 			{
 				if (oneParameterPresent)
 					setSQL += (", ");
-				setSQL += ("userData = " + (userData == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(userData))));
+				setSQL += ("userData = " + (*userData == nullptr ? "null" : trans.transaction->quote(JSONUtils::toString(*userData))));
 				oneParameterPresent = true;
 			}
 
@@ -465,16 +452,10 @@ json MMSEngineDBFacade::modifyStream(
 			int rows = 1;
 			// string label;
 			// se viene usata la labelKey come chiave per la modifica, labelLike sarà false
-			bool labelLike = confKey == -1 ? false : true;
-			string url;
-			string sourceType;
-			string type;
-			string name;
-			string region;
-			string country;
-			string labelOrder;
+			bool labelLike = confKey != -1;
 			json streamListRoot = getStreamList(
-				trans, workspaceKey, confKey, start, rows, labelKey, labelLike, url, sourceType, type, name, region, country, labelOrder
+				trans, workspaceKey, confKey, start, rows, std::move(labelKey), labelLike, string(), string(), string(),
+				string(), string(), string(), string()
 			);
 
 			string field = "response";
@@ -3304,69 +3285,43 @@ void MMSEngineDBFacade::updateChannelDataWithNewYouTubeURL(
 			channelDataRoot[field] = mmsDataRoot;
 		}
 
-		bool labelToBeModified = false;
-		string label;
-		bool sourceTypeToBeModified = false;
-		string sourceType;
-		bool encodersPoolToBeModified = false;
-		int64_t encodersPoolKey;
-		bool urlToBeModified = false;
-		string url;
-		bool pushProtocolToBeModified = false;
-		string pushProtocol;
-		bool pushEncoderKeyToBeModified = false;
-		int64_t pushEncoderKey = -1;
-		bool pushPublicEncoderNameToBeModified = false;
-		bool pushPublicEncoderName;
-		bool pushServerPortToBeModified = false;
-		int pushServerPort = -1;
-		bool pushUriToBeModified = false;
-		string pushUri;
-		bool pushListenTimeoutToBeModified = false;
-		int pushListenTimeout = -1;
-		bool captureVideoDeviceNumberToBeModified = false;
-		int captureVideoDeviceNumber = -1;
-		bool captureVideoInputFormatToBeModified = false;
-		string captureVideoInputFormat;
-		bool captureFrameRateToBeModified = false;
-		int captureFrameRate = -1;
-		bool captureWidthToBeModified = false;
-		int captureWidth = -1;
-		bool captureHeightToBeModified = false;
-		int captureHeight = -1;
-		bool captureAudioDeviceNumberToBeModified = false;
-		int captureAudioDeviceNumber = -1;
-		bool captureChannelsNumberToBeModified = false;
-		int captureChannelsNumber = -1;
-		bool tvSourceTVConfKeyToBeModified = false;
-		int64_t tvSourceTVConfKey = -1;
-		bool typeToBeModified = false;
-		string type;
-		bool descriptionToBeModified = false;
-		string description;
-		bool nameToBeModified = false;
-		string name;
-		bool regionToBeModified = false;
-		string region;
-		bool countryToBeModified = false;
-		string country;
-		bool imageToBeModified = false;
-		int64_t imageMediaItemKey = -1;
-		string imageUniqueName;
-		bool positionToBeModified = false;
-		int position = -1;
-		bool channelDataToBeModified = true;
+		optional<string> label;
+		optional<string> sourceType;
+		optional<int64_t> encodersPoolKey;
+		optional<string> url;
+		optional<string> pushProtocol;
+		optional<int64_t> pushEncoderKey;
+		optional<bool> pushPublicEncoderName;
+		optional<int> pushServerPort;
+		optional<string> pushUri;
+		optional<int> pushListenTimeout;
+		optional<int> captureVideoDeviceNumber;
+		optional<string> captureVideoInputFormat;
+		optional<int> captureFrameRate;
+		optional<int> captureWidth;
+		optional<int> captureHeight;
+		optional<int> captureAudioDeviceNumber;
+		optional<int> captureChannelsNumber;
+		optional<int64_t> tvSourceTVConfKey;
+		optional<string> type;
+		optional<string> description;
+		optional<string> name;
+		optional<string> region;
+		optional<string> country;
+		optional<int64_t> imageMediaItemKey;
+		optional<string> imageUniqueName;
+		optional<int> position = -1;
 
 		modifyStream(
-			confKey, "", workspace->_workspaceKey, labelToBeModified, label, sourceTypeToBeModified, sourceType, encodersPoolToBeModified,
-			encodersPoolKey, urlToBeModified, url, pushProtocolToBeModified, pushProtocol, pushEncoderKeyToBeModified, pushEncoderKey,
-			pushPublicEncoderNameToBeModified, pushPublicEncoderName, pushServerPortToBeModified, pushServerPort, pushUriToBeModified, pushUri,
-			pushListenTimeoutToBeModified, pushListenTimeout, captureVideoDeviceNumberToBeModified, captureVideoDeviceNumber,
-			captureVideoInputFormatToBeModified, captureVideoInputFormat, captureFrameRateToBeModified, captureFrameRate, captureWidthToBeModified,
-			captureWidth, captureHeightToBeModified, captureHeight, captureAudioDeviceNumberToBeModified, captureAudioDeviceNumber,
-			captureChannelsNumberToBeModified, captureChannelsNumber, tvSourceTVConfKeyToBeModified, tvSourceTVConfKey, typeToBeModified, type,
-			descriptionToBeModified, description, nameToBeModified, name, regionToBeModified, region, countryToBeModified, country, imageToBeModified,
-			imageMediaItemKey, imageUniqueName, positionToBeModified, position, channelDataToBeModified, channelDataRoot
+			confKey, "", workspace->_workspaceKey, label, sourceType,
+			encodersPoolKey, url, pushProtocol, pushEncoderKey,
+			pushPublicEncoderName, pushServerPort, pushUri,
+			pushListenTimeout, captureVideoDeviceNumber,
+			captureVideoInputFormat, captureFrameRate,
+			captureWidth, captureHeight, captureAudioDeviceNumber,
+			captureChannelsNumber, tvSourceTVConfKey, type,
+			description, name, region, country,
+			imageMediaItemKey, imageUniqueName, position, channelDataRoot
 		);
 	}
 	catch (DBRecordNotFound &e)
