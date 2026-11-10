@@ -72,6 +72,10 @@ rsyncBySSH()
 	#--mkpath (rsync >= 3.2.3, sia locale che remoto): crea nel server destinazione le directory mancanti di rsyncDest
 	#	(es. /var/mms/storage/MMSRepository/MMSLive/6 nel caso di server appena istallato), altrimenti rsync fallirebbe
 
+	#NON usare --inplace/--partial: con --inplace rsync riscrive (e tronca) lo stesso inode che nginx sta servendo ai client
+	#	causando nel delivery l'errore nginx "pread() read only X of Y". Senza --inplace rsync scrive su un file temporaneo
+	#	e poi fa un rename atomico: nginx continua a leggere il vecchio inode completo e i nuovi client ricevono quello nuovo
+
 	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
 	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
 	#che impiega piu tempo
@@ -123,14 +127,14 @@ rsyncBySSH()
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
 			timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
-				--partial --archive --progress --verbose --omit-dir-times --mkpath --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+				--archive --progress --verbose --omit-dir-times --mkpath --timeout=15 --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
     				"$rsyncSource" mms@{}:$rsyncDest
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
 				timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
-					--partial --archive --progress --verbose --omit-dir-times --mkpath --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+					--archive --progress --verbose --omit-dir-times --mkpath --timeout=15 --bwlimit=$BW_LIMIT \
 			  		--include "*/" --include "*.m3u8" --exclude "*" \
     					"$rsyncSource" mms@{}:$rsyncDest
 				status_m3u8=$?
@@ -153,14 +157,14 @@ rsyncBySSH()
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
 			timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
-				--partial --archive --omit-dir-times --mkpath --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+				--archive --omit-dir-times --mkpath --timeout=15 --bwlimit=$BW_LIMIT \
     				--include "*/" --include "*.ts" --exclude "*" \
 				$rsyncSource mms@{}:$rsyncDest
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
 				timeout $timeoutRsyncCommand rsync -e "ssh $SSH_OPTS" \
-					--partial --archive --omit-dir-times --mkpath --timeout=15 --inplace --bwlimit=$BW_LIMIT \
+					--archive --omit-dir-times --mkpath --timeout=15 --bwlimit=$BW_LIMIT \
 				  	--include "*/" --include "*.m3u8" --exclude "*" \
 					$rsyncSource mms@{}:$rsyncDest
 				status_m3u8=$?
@@ -188,6 +192,8 @@ rsyncByRSYNCD()
 	#--mkpath (rsync >= 3.2.3, sia locale che rsyncd remoto): crea, sotto il path del modulo mmsdata, le directory mancanti
 	#	di rsyncDest (es. /6 nel caso di server appena istallato), altrimenti rsync fallirebbe
 
+	#NON usare --inplace/--partial (vedi commento in rsyncBySSH)
+
 	#Poichè i files vengono trasferiti nei server definiti sotto in parallelo, 
 	#il tempo totale necessario non è la somma dei tempi di ogni server ma è dato dal server
 	#che impiega piu tempo
@@ -205,14 +211,14 @@ rsyncByRSYNCD()
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
 			timeout $timeoutRsyncCommand rsync \
-				--partial --archive --progress --verbose --omit-dir-times --mkpath --timeout=15 --inplace \
+				--archive --progress --verbose --omit-dir-times --mkpath --timeout=15 \
     				--include "*/" --include "*.ts" --exclude "*" \
     				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
 				timeout $timeoutRsyncCommand rsync \
-					--partial --archive --progress --verbose --omit-dir-times --mkpath --timeout=15 --inplace \
+					--archive --progress --verbose --omit-dir-times --mkpath --timeout=15 \
 			  		--include "*/" --include "*.m3u8" --exclude "*" \
     					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
 				status_m3u8=$?
@@ -234,14 +240,14 @@ rsyncByRSYNCD()
 			#	(se per più di SECONDS secondi non passa alcun dato sulla connessione), non la durata totale del comando
 			# 1. Sincronizza solo i file .ts
 			timeout $timeoutRsyncCommand rsync \
-				--partial --archive --omit-dir-times --mkpath --timeout=15 --inplace \
+				--archive --omit-dir-times --mkpath --timeout=15 \
     				--include "*/" --include "*.ts" --exclude "*" \
 				"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
 			status_ts=$?
 			if [[ $status_ts -eq 0 ]]; then
 				# 2. Sincronizza solo il file .m3u8
 				timeout $timeoutRsyncCommand rsync \
-					--partial --archive --omit-dir-times --mkpath --timeout=15 --inplace \
+					--archive --omit-dir-times --mkpath --timeout=15 \
 				  	--include "*/" --include "*.m3u8" --exclude "*" \
 					"$rsyncSource" "rsync://{}/mmsdata$rsyncDest"
 				status_m3u8=$?
